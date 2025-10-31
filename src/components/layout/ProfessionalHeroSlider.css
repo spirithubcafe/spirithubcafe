@@ -74,8 +74,8 @@
     rgba(26, 26, 46, 0.6) 50%,
     rgba(15, 15, 35, 0.9) 100%
   );
-  backdrop-filter: blur(1px);
   -webkit-backdrop-filter: blur(1px);
+  backdrop-filter: blur(1px);
 }
 
 /* Main Content Container */
@@ -138,8 +138,8 @@
   font-weight: 500;
   color: #fbbf24;
   margin-bottom: 1.5rem;
-  backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
 }
 
 .slide-title {
@@ -148,8 +148,8 @@
   line-height: 1.4; /* Increased for Arabic diacritics */
   margin: 0.75rem 0 1.25rem 0; /* More spacing */
   background: linear-gradient(135deg, #ffffff 0%, #fbbf24 100%);
-  background-clip: text;
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
   text-shadow: 0 4px 20px rgba(251, 191, 36, 0.3);
   padding: 0.5rem 0; /* Increased padding for Arabic diacritics */
@@ -330,8 +330,8 @@
 
 .stat-card {
   background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 1rem;
   padding: 2rem 1.5rem;

@@ -1,10 +1,8 @@
 import React from 'react';
-import { useTranslation } from 'react-i18next';
 import { Facebook, Instagram, Mail, MessageCircle } from 'lucide-react';
 import { useApp } from '../../hooks/useApp';
 
 export const Footer: React.FC = () => {
-  const { t } = useTranslation();
   const { language } = useApp();
 
   const quickLinks = [
