@@ -7,6 +7,13 @@ import { Footer } from './components/layout/Footer';
 import HomePage from './pages/HomePage';
 import ProfilePage from './pages/ProfilePage';
 import { AdminPanel } from './pages/AdminPanel';
+import { AboutPage } from './pages/AboutPage';
+import { ContactPage } from './pages/ContactPage';
+import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage';
+import { TermsConditionsPage } from './pages/TermsConditionsPage';
+import { DeliveryPolicyPage } from './pages/DeliveryPolicyPage';
+import { ProductsPage } from './pages/ProductsPage';
+import { ProductDetailPage } from './pages/ProductDetailPage';
 import { NotFound } from './components/pages/NotFound';
 import { useOverlayScrollbars } from './hooks/useOverlayScrollbars';
 import { OverlayScrollbars } from 'overlayscrollbars';
@@ -47,6 +54,13 @@ function AppContent() {
           <Route path="/" element={<HomePage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/admin" element={<AdminPanel />} />
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/contact" element={<ContactPage />} />
+          <Route path="/privacy" element={<PrivacyPolicyPage />} />
+          <Route path="/terms" element={<TermsConditionsPage />} />
+          <Route path="/delivery" element={<DeliveryPolicyPage />} />
+          <Route path="/products" element={<ProductsPage />} />
+          <Route path="/products/:productId" element={<ProductDetailPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>

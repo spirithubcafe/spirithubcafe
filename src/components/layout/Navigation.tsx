@@ -19,40 +19,26 @@ export const Navigation: React.FC = () => {
   const isHomePage = location.pathname === '/';
 
   const navItems = [
-    { key: 'home', label: t('nav.home'), href: '/' },
-    { key: 'products', label: t('nav.products'), href: '/#products' },
-    { key: 'about', label: t('nav.about'), href: '/#about' },
-    { key: 'contact', label: t('nav.contact'), href: '/#contact' }
+    { key: 'home', label: t('nav.home'), href: '/', isRoute: true },
+    { key: 'products', label: t('nav.products'), href: '/products', isRoute: true },
+    { key: 'about', label: t('nav.about'), href: '/about', isRoute: true },
+    { key: 'contact', label: t('nav.contact'), href: '/contact', isRoute: true }
   ];
 
   const NavContent = () => (
     <>
       {navItems.map((item) => (
-        item.key === 'home' ? (
-          <Link
-            key={item.key}
-            to={item.href}
-            className={`transition-colors duration-200 font-medium text-sm md:text-base lg:text-lg whitespace-nowrap ${
-              isHomePage 
-                ? 'text-white hover:text-amber-200' 
-                : 'text-gray-900 hover:text-amber-600'
-            }`}
-          >
-            {item.label}
-          </Link>
-        ) : (
-          <a
-            key={item.key}
-            href={item.href}
-            className={`transition-colors duration-200 font-medium text-sm md:text-base lg:text-lg whitespace-nowrap ${
-              isHomePage 
-                ? 'text-white hover:text-amber-200' 
-                : 'text-gray-900 hover:text-amber-600'
-            }`}
-          >
-            {item.label}
-          </a>
-        )
+        <Link
+          key={item.key}
+          to={item.href}
+          className={`transition-colors duration-200 font-medium text-sm md:text-base lg:text-lg whitespace-nowrap ${
+            isHomePage 
+              ? 'text-white hover:text-amber-200' 
+              : 'text-gray-900 hover:text-amber-600'
+          }`}
+        >
+          {item.label}
+        </Link>
       ))}
     </>
   );
@@ -210,23 +196,13 @@ export const Navigation: React.FC = () => {
               >
                 <div className="flex flex-col space-y-6 mt-8">
                   {navItems.map((item) => (
-                    item.key === 'home' ? (
-                      <Link
-                        key={item.key}
-                        to={item.href}
-                        className="text-white hover:text-amber-200 transition-colors duration-200 font-medium text-lg py-2"
-                      >
-                        {item.label}
-                      </Link>
-                    ) : (
-                      <a
-                        key={item.key}
-                        href={item.href}
-                        className="text-white hover:text-amber-200 transition-colors duration-200 font-medium text-lg py-2"
-                      >
-                        {item.label}
-                      </a>
-                    )
+                    <Link
+                      key={item.key}
+                      to={item.href}
+                      className="text-white hover:text-amber-200 transition-colors duration-200 font-medium text-lg py-2"
+                    >
+                      {item.label}
+                    </Link>
                   ))}
                   <div className="border-t border-amber-700 pt-6 space-y-4">
                     <Button
