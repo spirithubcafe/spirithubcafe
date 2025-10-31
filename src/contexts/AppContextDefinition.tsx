@@ -1,0 +1,32 @@
+import { createContext } from 'react';
+
+export interface Product {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  image: string;
+  category: string;
+  featured?: boolean;
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  description: string;
+  image: string;
+}
+
+export interface AppContextType {
+  language: string;
+  toggleLanguage: () => void;
+  products: Product[];
+  categories: Category[];
+  loading: boolean;
+  error: string | null;
+  fetchProducts: () => Promise<void>;
+  fetchCategories: () => Promise<void>;
+  t: (key: string) => string;
+}
+
+export const AppContext = createContext<AppContextType | undefined>(undefined);

@@ -1,44 +1,13 @@
-import React, { createContext, useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-
-// Types for API data
-export interface Product {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  image: string;
-  category: string;
-  featured?: boolean;
-}
-
-export interface Category {
-  id: string;
-  name: string;
-  description: string;
-  image: string;
-}
+import { AppContext, type Product, type Category, type AppContextType } from './AppContextDefinition';
 
 export interface User {
   id: string;
   name: string;
   email: string;
 }
-
-export interface AppContextType {
-  language: string;
-  toggleLanguage: () => void;
-  products: Product[];
-  categories: Category[];
-  loading: boolean;
-  error: string | null;
-  fetchProducts: () => Promise<void>;
-  fetchCategories: () => Promise<void>;
-  t: (key: string) => string;
-}
-
-export const AppContext = createContext<AppContextType | undefined>(undefined);
 
 interface AppProviderProps {
   children: ReactNode;

@@ -4,7 +4,7 @@ import { ShoppingCart, Eye } from 'lucide-react';
 import { Card, CardContent, CardFooter } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
-import type { Product } from '../../contexts/AppContext';
+import type { Product } from '../../contexts/AppContextDefinition';
 
 interface ProductCardProps {
   product: Product;

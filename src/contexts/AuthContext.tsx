@@ -1,29 +1,10 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { authService } from '../services/authService';
 import type { UserInfo, LoginResponse } from '../types/auth';
 
-// Auth Context Type
-export interface AuthContextType {
-  // State
-  isAuthenticated: boolean;
-  user: UserInfo | null;
-  isLoading: boolean;
-  
-  // Actions
-  login: (credentials: { username: string; password: string }) => Promise<LoginResponse>;
-  register: (userData: { username: string; email: string; password: string; confirmPassword: string }) => Promise<LoginResponse>;
-  logout: () => Promise<void>;
-  refreshUser: () => Promise<void>;
-  
-  // Utilities
-  hasRole: (role: string) => boolean;
-  hasAnyRole: (roles: string[]) => boolean;
-  isAdmin: () => boolean;
-}
-
-// Create Context
-export const AuthContext = createContext<AuthContextType | undefined>(undefined);
+// Import Context and type from separate file
+import { AuthContext, type AuthContextType } from './AuthContextDefinition';
 
 // Auth Provider Props
 interface AuthProviderProps {
