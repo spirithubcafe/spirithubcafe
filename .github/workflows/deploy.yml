@@ -31,16 +31,21 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 8
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "22"
-          cache: npm
+          cache: 'pnpm'
 
       - name: Install dependencies and build
         run: |
-          npm install
-          npm run build
+          pnpm install
+          pnpm run build
           cp dist/index.html dist/404.html
 
       - name: Setup Pages
