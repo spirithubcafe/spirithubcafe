@@ -1,0 +1,132 @@
+{
+  "nav": {
+    "home": "الرئيسية",
+    "products": "المنتجات",
+    "about": "من نحن",
+    "contact": "اتصل بنا",
+    "cart": "السلة"
+  },
+  "hero": {
+    "title": "سبيريت هب",
+    "subtitle": "تجربة قهوة استثنائية في كل رشفة",
+    "cta": "اكتشف منتجاتنا"
+  },
+  "sections": {
+    "featuredProducts": "المنتجات المميزة",
+    "categories": "الفئات",
+    "aboutUs": "من نحن",
+    "testimonials": "آراء العملاء"
+  },
+  "products": {
+    "viewDetails": "عرض التفاصيل",
+    "addToCart": "أضف للسلة",
+    "price": "السعر",
+    "category": "الفئة"
+  },
+  "footer": {
+    "company": "شركة سبيريت هب",
+    "rights": "جميع الحقوق محفوظة",
+    "followUs": "تابعنا على"
+  },
+  "language": {
+    "switch": "English",
+    "current": "العربية"
+  },
+  "auth": {
+    "login": "تسجيل الدخول",
+    "register": "إنشاء حساب",
+    "signin": "تسجيل الدخول",
+    "signup": "إنشاء حساب",
+    "signUp": "إنشاء حساب جديد",
+    "logout": "تسجيل الخروج",
+    "username": "اسم المستخدم",
+    "email": "البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "confirmPassword": "تأكيد كلمة المرور",
+    "enterUsername": "أدخل اسم المستخدم",
+    "enterEmail": "أدخل البريد الإلكتروني",
+    "enterPassword": "أدخل كلمة المرور",
+    "confirmPasswordPlaceholder": "أكد كلمة المرور",
+    "loginDescription": "أدخل بياناتك للوصول إلى حسابك",
+    "registerDescription": "أنشئ حسابًا جديدًا للبدء",
+    "loggingIn": "جاري تسجيل الدخول...",
+    "registering": "جاري إنشاء الحساب...",
+    "dontHaveAccount": "لا تملك حسابًا؟",
+    "alreadyHaveAccount": "تملك حسابًا بالفعل؟",
+    "forgotPassword": "نسيت كلمة المرور؟",
+    "rememberMe": "تذكرني",
+    "loginFailed": "فشل تسجيل الدخول. تحقق من بياناتك.",
+    "registerFailed": "فشل إنشاء الحساب. حاول مرة أخرى.",
+    "passwordsDoNotMatch": "كلمتا المرور غير متطابقتين",
+    "usernameRequired": "اسم المستخدم مطلوب",
+    "emailRequired": "البريد الإلكتروني مطلوب",
+    "passwordRequired": "كلمة المرور مطلوبة",
+    "invalidEmail": "أدخل بريدًا إلكترونيًا صحيحًا",
+    "passwordTooShort": "كلمة المرور يجب أن تكون 6 أحرف على الأقل"
+  },
+  "loading": "جاري التحميل...",
+  "error": "حدث خطأ ما",
+  "profile": {
+    "title": "الملف الشخصي",
+    "notAuthenticated": "لم يتم تسجيل الدخول",
+    "loginPrompt": "الرجاء تسجيل الدخول لعرض الملف الشخصي",
+    "view": "عرض الملف",
+    "settings": "الإعدادات",
+    "edit": "تعديل",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "logout": "تسجيل الخروج",
+    "email": "البريد الإلكتروني",
+    "noRoles": "بدون أدوار",
+    "displayName": "الاسم الظاهري",
+    "displayNamePlaceholder": "أدخل اسم العرض",
+    "notSet": "غير محدد",
+    "memberSince": "عضو منذ",
+    "unknown": "غير معروف",
+    "tab": {
+      "info": "معلومات",
+      "security": "الأمان",
+      "admin": "لوحة الإدارة"
+    },
+    "accountStatus": "حالة الحساب",
+    "active": "نشيط",
+    "inactive": "غير نشط",
+    "roles": "الأدوار",
+    "username": "اسم المستخدم",
+    "updateSuccess": "تم تحديث الملف بنجاح",
+    "updateError": "فشل في تحديث الملف"
+  },
+  "admin": {
+    "title": "لوحة الإدارة",
+    "subtitle": "إدارة أعمال مقهى القهوة",
+    "accessDenied": "تم رفض الوصول",
+    "adminRequired": "مطلوب صلاحيات المدير للوصول لهذه الصفحة",
+    "dashboard": "لوحة المعلومات",
+    "dashboardDesc": "نظرة عامة على النظام والإحصائيات",
+    "dashboardOverview": "نظرة عامة على النظام والمقاييس الرئيسية",
+    "manageUsers": "إدارة المستخدمين",
+    "usersDesc": "حسابات المستخدمين والصلاحيات",
+    "usersManagement": "عرض وإدارة حسابات المستخدمين والصلاحيات",
+    "manageProducts": "إدارة المنتجات",
+    "productsDesc": "منتجات القهوة والمخزون",
+    "productsManagement": "إضافة وتحرير وتنظيم منتجات القهوة والمخزون",
+    "manageOrders": "إدارة الطلبات",
+    "ordersDesc": "طلبات العملاء والمعاملات",
+    "ordersManagement": "معالجة وتتبع طلبات العملاء والمعاملات",
+    "reports": "التقارير",
+    "reportsDesc": "التحليلات ورؤى الأعمال",
+    "reportsAnalytics": "عرض التحليلات وتقارير المبيعات ورؤى الأعمال",
+    "systemSettings": "إعدادات النظام",
+    "systemDesc": "تكوين التطبيق",
+    "systemConfiguration": "تكوين إعدادات التطبيق والتفضيلات",
+    "modules": "وحدات الإدارة",
+    "modulesDesc": "اختر وحدة للإدارة",
+    "totalUsers": "إجمالي المستخدمين",
+    "totalOrders": "إجمالي الطلبات",
+    "totalProducts": "إجمالي المنتجات",
+    "comingSoon": "هذه الميزة قادمة قريباً..."
+  },
+  "common": {
+    "back": "رجوع"
+  }
+}

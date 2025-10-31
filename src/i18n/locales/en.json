@@ -1,0 +1,132 @@
+{
+  "nav": {
+    "home": "Home",
+    "products": "Products",
+    "about": "About",
+    "contact": "Contact",
+    "cart": "Cart"
+  },
+  "hero": {
+    "title": "Spirit Hub Cafe",
+    "subtitle": "An exceptional coffee experience in every sip",
+    "cta": "Discover Our Products"
+  },
+  "sections": {
+    "featuredProducts": "Featured Products",
+    "categories": "Categories",
+    "aboutUs": "About Us",
+    "testimonials": "Customer Reviews"
+  },
+  "products": {
+    "viewDetails": "View Details",
+    "addToCart": "Add to Cart",
+    "price": "Price",
+    "category": "Category"
+  },
+  "footer": {
+    "company": "Spirit Hub Cafe Company",
+    "rights": "All rights reserved",
+    "followUs": "Follow us on"
+  },
+  "language": {
+    "switch": "العربية",
+    "current": "English"
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "signin": "Sign In",
+    "signup": "Sign Up",
+    "signUp": "Sign Up",
+    "logout": "Logout",
+    "username": "Username",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "enterUsername": "Enter your username",
+    "enterEmail": "Enter your email",
+    "enterPassword": "Enter your password",
+    "confirmPasswordPlaceholder": "Confirm your password",
+    "loginDescription": "Enter your credentials to access your account",
+    "registerDescription": "Create a new account to get started",
+    "loggingIn": "Logging in...",
+    "registering": "Creating account...",
+    "dontHaveAccount": "Don't have an account?",
+    "alreadyHaveAccount": "Already have an account?",
+    "forgotPassword": "Forgot password?",
+    "rememberMe": "Remember me",
+    "loginFailed": "Login failed. Please check your credentials.",
+    "registerFailed": "Registration failed. Please try again.",
+    "passwordsDoNotMatch": "Passwords do not match",
+    "usernameRequired": "Username is required",
+    "emailRequired": "Email is required",
+    "passwordRequired": "Password is required",
+    "invalidEmail": "Please enter a valid email address",
+    "passwordTooShort": "Password must be at least 6 characters long"
+  },
+  "admin": {
+    "title": "Admin Panel",
+    "subtitle": "Manage your coffee shop business",
+    "accessDenied": "Access Denied",
+    "adminRequired": "Administrator privileges required to access this page",
+    "dashboard": "Dashboard",
+    "dashboardDesc": "System overview and statistics",
+    "dashboardOverview": "System overview and key metrics",
+    "manageUsers": "Manage Users",
+    "usersDesc": "User accounts and permissions",
+    "usersManagement": "View and manage user accounts and permissions",
+    "manageProducts": "Manage Products",
+    "productsDesc": "Coffee products and inventory",
+    "productsManagement": "Add, edit, and organize coffee products and inventory",
+    "manageOrders": "Manage Orders",
+    "ordersDesc": "Customer orders and transactions",
+    "ordersManagement": "Process and track customer orders and transactions",
+    "reports": "Reports",
+    "reportsDesc": "Analytics and business insights",
+    "reportsAnalytics": "View analytics, sales reports, and business insights",
+    "systemSettings": "System Settings",
+    "systemDesc": "Application configuration",
+    "systemConfiguration": "Configure application settings and preferences",
+    "modules": "Admin Modules",
+    "modulesDesc": "Select a module to manage",
+    "totalUsers": "Total Users",
+    "totalOrders": "Total Orders",
+    "totalProducts": "Total Products",
+    "comingSoon": "This feature is coming soon..."
+  },
+  "common": {
+    "back": "Back"
+  },
+  "profile": {
+    "title": "Profile",
+    "notAuthenticated": "Not authenticated",
+    "loginPrompt": "Please sign in to view your profile",
+    "view": "View Profile",
+    "settings": "Settings",
+    "edit": "Edit",
+    "save": "Save",
+    "cancel": "Cancel",
+    "logout": "Logout",
+    "email": "Email",
+    "noRoles": "No roles",
+    "displayName": "Display name",
+    "displayNamePlaceholder": "Enter display name",
+    "notSet": "Not set",
+    "memberSince": "Member since",
+    "unknown": "Unknown",
+    "tab": {
+      "info": "Info",
+      "security": "Security",
+      "admin": "Admin"
+    },
+    "accountStatus": "Account status",
+    "active": "Active",
+    "inactive": "Inactive",
+    "roles": "Roles",
+    "username": "Username",
+    "updateSuccess": "Profile updated successfully",
+    "updateError": "Failed to update profile"
+  },
+  "loading": "Loading...",
+  "error": "Something went wrong"
+}

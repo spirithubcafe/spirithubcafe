@@ -1,0 +1,150 @@
+/* Swiper Custom Styles - Fixed for Responsive */
+.hero-slideshow-container {
+  width: 100%;
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-swiper {
+  width: 100%;
+  height: 100%;
+}
+
+.hero-swiper .swiper-wrapper {
+  height: 100%;
+}
+
+.hero-swiper .swiper-slide {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-slide-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+  transition: none;
+}
+
+/* Pagination Styles */
+.hero-swiper .swiper-pagination-bullet {
+  width: 12px;
+  height: 12px;
+  background: rgba(255, 255, 255, 0.5);
+  opacity: 1;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.hero-swiper .swiper-pagination-bullet-active {
+  background: #d97706; /* amber-600 */
+  transform: scale(1.2);
+}
+
+/* Navigation Buttons */
+.hero-nav-button {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 20;
+  background: rgba(0, 0, 0, 0.4);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.hero-nav-button:hover {
+  background: rgba(0, 0, 0, 0.5);
+  transform: translateY(-50%) scale(1.1);
+}
+
+.hero-nav-button.prev {
+  left: 1rem;
+}
+
+.hero-nav-button.next {
+  right: 1rem;
+}
+
+/* Content Overlay */
+.hero-content-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 5;
+}
+
+.hero-content {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+  text-align: center;
+  color: white;
+  width: 90%;
+  max-width: 1200px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .hero-slideshow-container {
+    height: 80vh;
+    min-height: 600px;
+  }
+  
+  .hero-nav-button {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .hero-nav-button.prev {
+    left: 0.5rem;
+  }
+  
+  .hero-nav-button.next {
+    right: 0.5rem;
+  }
+  
+  .hero-content h1 {
+    font-size: 2rem !important;
+    line-height: 1.2;
+  }
+  
+  .hero-content p {
+    font-size: 1rem !important;
+    margin-bottom: 1.5rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-slideshow-container {
+    height: 70vh;
+    min-height: 500px;
+  }
+  
+  .hero-content h1 {
+    font-size: 1.75rem !important;
+  }
+  
+  .hero-content p {
+    font-size: 0.9rem !important;
+  }
+}
