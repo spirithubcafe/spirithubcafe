@@ -11,4 +11,26 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // React and core libraries
+          vendor: ['react', 'react-dom'],
+          // Icons and UI
+          ui: ['lucide-react'],
+          // i18n
+          i18n: ['react-i18next', 'i18next'],
+          // Router
+          router: ['react-router-dom']
+        }
+      }
+    },
+    // Increase chunk size warning limit
+    chunkSizeWarningLimit: 600,
+    // Enable source maps for production debugging
+    sourcemap: false,
+    // Minification settings
+    minify: 'esbuild'
+  }
 })
