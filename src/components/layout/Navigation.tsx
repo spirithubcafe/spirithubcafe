@@ -46,7 +46,7 @@ export const Navigation: React.FC = () => {
             <DropdownMenu key={item.key}>
               <DropdownMenuTrigger asChild>
                 <button
-                  className={`flex items-center gap-1 transition-colors duration-200 font-medium text-sm md:text-base lg:text-lg whitespace-nowrap ${
+                  className={`flex items-center gap-1 transition-colors duration-200 font-medium text-xs md:text-sm lg:text-base whitespace-nowrap ${
                     isHomePage 
                       ? 'text-white hover:text-amber-200' 
                       : 'text-gray-900 hover:text-amber-600'
@@ -95,7 +95,7 @@ export const Navigation: React.FC = () => {
           <Link
             key={item.key}
             to={item.href}
-            className={`transition-colors duration-200 font-medium text-sm md:text-base lg:text-lg whitespace-nowrap ${
+            className={`transition-colors duration-200 font-medium text-xs md:text-sm lg:text-base whitespace-nowrap ${
               isHomePage 
                 ? 'text-white hover:text-amber-200' 
                 : 'text-gray-900 hover:text-amber-600'
@@ -270,18 +270,7 @@ export const Navigation: React.FC = () => {
               >
                 <div className="flex h-full flex-col overflow-hidden">
                   <div className="relative bg-gradient-to-br from-[#3e2010] via-[#2c160b] to-[#170b06] px-6 py-5 shadow-lg">
-                    <div className="space-y-2">
-                      <p className="text-xs uppercase tracking-[0.35em] text-amber-200/70">
-                        {language === 'ar' ? 'مركز القهوة' : 'Spirit Hub'}
-                      </p>
-                      <h2 className="text-2xl font-semibold text-white">
-                        {language === 'ar'
-                          ? 'تصفح قائمتنا'
-                          : 'Explore the menu'}
-                      </h2>
-                    </div>
-
-                    <div className="mt-5">
+                    <div className="mt-0">
                       {isAuthenticated ? (
                         <div className="rounded-2xl bg-white/[0.04] p-4 backdrop-blur">
                           <UserProfile variant="inline" />
@@ -310,10 +299,7 @@ export const Navigation: React.FC = () => {
                   <div className="flex-1 overflow-y-auto px-6 py-6">
                     <nav className="space-y-6">
                       <div>
-                        <p className="text-xs uppercase tracking-[0.35em] text-amber-200/70">
-                          {language === 'ar' ? 'القائمة الرئيسية' : 'Main menu'}
-                        </p>
-                        <div className="mt-4 space-y-3">
+                        <div className="mt-0 space-y-3">
                           {navItems.map((item) => {
                             if (item.hasDropdown && item.key === 'products') {
                               return (

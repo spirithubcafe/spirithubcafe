@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Award } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useApp } from '../../hooks/useApp';
 import './ProfessionalHeroSlider.css';
@@ -28,8 +27,8 @@ export const ProfessionalHeroSlider: React.FC = () => {
     {
       id: '1',
       image: '/images/slides/slide1.webp',
-      title: language === 'ar' ? 'مرحباً بك في سبيريت هب' : 'Welcome to Spirit Hub Cafe',
-      subtitle: language === 'ar' ? 'تجربة قهوة استثنائية في كل رشفة' : 'An exceptional coffee experience in every sip',
+      title: language === 'ar' ? 'من الحبة إلى الكوب، نسعى للكمال' : 'FROM BEAN TO BREW, WE STRIVE FOR PERFECTION',
+      subtitle: language === 'ar' ? 'تجربة قهوة استثنائية في كل رشفة' : 'Our coffee beans are thoughtfully sourced and carefully roasted to honor producers\' hard work. By revealing each coffee\'s distinctive flavors, aromatics, and acidities, we let their stories shine through and provide customers with the best coffee beans in Oman.',
       description: language === 'ar' 
         ? 'نقدم لك أجود أنواع القهوة المحمصة بعناية فائقة من أفضل مزارع القهوة حول العالم'
         : 'We bring you the finest carefully roasted coffee from the best coffee farms around the world',
@@ -43,7 +42,7 @@ export const ProfessionalHeroSlider: React.FC = () => {
         language === 'ar' ? 'محمصة طازجة يومياً' : 'Fresh Roasted Daily',
         language === 'ar' ? 'خدمة 24/7' : '24/7 Service'
       ],
-      cta: language === 'ar' ? 'اطلب الآن' : 'Order Now'
+      cta: language === 'ar' ? 'تسوق الآن' : 'Shop Now'
     },
     {
       id: '2',
@@ -129,12 +128,12 @@ export const ProfessionalHeroSlider: React.FC = () => {
       {/* Main Content Container */}
       <div className="slider-content-container">
         <div className="container mx-auto px-4 h-full flex items-center">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 w-full items-center">
+          <div className="w-full items-center">
             
-            {/* Left Side - Content */}
+            {/* Content - Centered */}
             <motion.div
               key={`content-${currentSlide}`}
-              className="content-section"
+              className="content-section max-w-4xl mx-auto text-center"
               initial={{ x: language === 'ar' ? 100 : -100, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               transition={{ duration: 0.8, delay: 0.3 }}
@@ -159,19 +158,9 @@ export const ProfessionalHeroSlider: React.FC = () => {
                 {currentSlideData.subtitle}
               </motion.h2>
 
-              {/* Description */}
-              <motion.p
-                className="slide-description"
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 0.8, delay: 0.6 }}
-              >
-                {currentSlideData.description}
-              </motion.p>
-
               {/* CTA Button */}
               <motion.div
-                className="slide-cta"
+                className="slide-cta flex justify-center"
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.8, delay: 0.7 }}
@@ -181,34 +170,8 @@ export const ProfessionalHeroSlider: React.FC = () => {
                   className="cta-button"
                 >
                   {currentSlideData.cta}
-                  <Award className="w-5 h-5 ml-2" />
                 </Button>
               </motion.div>
-            </motion.div>
-
-            {/* Right Side - Stats */}
-            <motion.div
-              key={`stats-${currentSlide}`}
-              className="stats-section"
-              initial={{ x: language === 'ar' ? -100 : 100, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              transition={{ duration: 0.8, delay: 0.4 }}
-            >
-              <div className="stats-grid">
-                {currentSlideData.stats.map((stat, index) => (
-                  <motion.div
-                    key={index}
-                    className="stat-card"
-                    initial={{ scale: 0, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ duration: 0.6, delay: 0.6 + index * 0.1 }}
-                    whileHover={{ scale: 1.05 }}
-                  >
-                    <div className="stat-value">{stat.value}</div>
-                    <div className="stat-label">{stat.label}</div>
-                  </motion.div>
-                ))}
-              </div>
             </motion.div>
           </div>
         </div>
