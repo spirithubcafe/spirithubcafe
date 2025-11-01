@@ -3,7 +3,7 @@ import type { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import type { ApiError } from '../types/auth';
 
 // API Base Configuration
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://alsalmisaid-001-site3.anytempurl.com';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://spirithubapi.sbc.om';
 
 // Create axios instance with default configuration
 const createApiClient = (): AxiosInstance => {

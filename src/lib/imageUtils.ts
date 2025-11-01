@@ -7,7 +7,7 @@
  * Get the API base URL
  */
 export const getApiBaseUrl = (): string => {
-  return import.meta.env.VITE_API_BASE_URL || 'http://alsalmisaid-001-site3.anytempurl.com';
+  return import.meta.env.VITE_API_BASE_URL || 'https://spirithubapi.sbc.om';
 };
 
 /**
