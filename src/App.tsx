@@ -14,6 +14,7 @@ import { FAQPage } from './pages/FAQPage';
 import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage';
 import { TermsConditionsPage } from './pages/TermsConditionsPage';
 import { DeliveryPolicyPage } from './pages/DeliveryPolicyPage';
+import { RefundPolicyPage } from './pages/RefundPolicyPage';
 import { ProductsPage } from './pages/ProductsPage';
 import { ProductDetailPage } from './pages/ProductDetailPage';
 import { NotFound } from './components/pages/NotFound';
@@ -35,6 +36,7 @@ function AppContent() {
         <Route path="/privacy" element={<PrivacyPolicyPage />} />
         <Route path="/terms" element={<TermsConditionsPage />} />
         <Route path="/delivery" element={<DeliveryPolicyPage />} />
+        <Route path="/refund" element={<RefundPolicyPage />} />
         <Route path="/products" element={<ProductsPage />} />
         <Route path="/products/:productId" element={<ProductDetailPage />} />
         <Route path="*" element={<NotFound />} />
