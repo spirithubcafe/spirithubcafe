@@ -213,7 +213,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     
     try {
       // Fetch categories from API
-      const apiCategories = await categoryService.getHomepageCategories(10);
+      const apiCategories = await categoryService.getAll({ includeInactive: false });
       
       // Transform API categories to match AppContext format
       const transformedCategories: Category[] = apiCategories.map((cat: ApiCategory) => {
