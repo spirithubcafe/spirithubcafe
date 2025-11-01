@@ -1,9 +1,9 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Globe, ShoppingCart, Menu, ChevronDown } from 'lucide-react';
+import { Globe, ShoppingCart, Menu, ChevronDown, ChevronRight } from 'lucide-react';
 import { Button } from '../ui/button';
-import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet';
+import { Sheet, SheetContent, SheetTrigger, SheetClose } from '../ui/sheet';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,7 +13,7 @@ import {
 import { useApp } from '../../hooks/useApp';
 import { useAuth } from '../../hooks/useAuth';
 import { useCart } from '../../hooks/useCart';
-import { AuthButtons } from '../auth/AuthButtons';
+import { AuthButtons, LoginButton, RegisterButton } from '../auth/AuthButtons';
 import { UserProfile } from '../auth/UserProfile';
 
 export const Navigation: React.FC = () => {
@@ -22,6 +22,11 @@ export const Navigation: React.FC = () => {
   const { isAuthenticated } = useAuth();
   const { totalItems, openCart } = useCart();
   const location = useLocation();
+  const handleMobileCartOpen = React.useCallback(() => {
+    setTimeout(() => {
+      openCart();
+    }, 0);
+  }, [openCart]);
   
   // Check if we're on the home page
   const isHomePage = location.pathname === '/';
@@ -196,6 +201,7 @@ export const Navigation: React.FC = () => {
               <Button
                 variant="ghost"
                 size="sm"
+                onClick={openCart}
                 className={`transition-colors p-2 ${
                   isHomePage 
                     ? 'text-white hover:text-amber-200 hover:bg-white/10' 
@@ -233,6 +239,7 @@ export const Navigation: React.FC = () => {
             <Button
               variant="ghost"
               size="sm"
+              onClick={openCart}
               className={`transition-colors p-2 ${
                 isHomePage 
                   ? 'text-white hover:text-amber-200 hover:bg-white/10' 
@@ -259,70 +266,161 @@ export const Navigation: React.FC = () => {
               </SheetTrigger>
               <SheetContent
                 side={language === 'ar' ? 'left' : 'right'}
-                className="bg-gradient-to-b from-amber-900 to-amber-950 text-white border-amber-700 overflow-y-auto"
+                className="bg-[#120804] p-0 text-white"
               >
-                <div className="flex flex-col space-y-6 mt-8">
-                  {navItems.map((item) => {
-                    if (item.hasDropdown && item.key === 'products') {
-                      return (
-                        <div key={item.key} className="space-y-2">
-                          <Link
-                            to={item.href}
-                            className="text-white hover:text-amber-200 transition-colors duration-200 font-medium text-lg py-2 block"
-                          >
-                            {item.label}
-                          </Link>
-                          {/* Categories Submenu */}
-                          <div className="pl-4 space-y-2 border-l-2 border-amber-700">
-                            <Link
-                              to="/products"
-                              className="text-amber-200 hover:text-white transition-colors duration-200 text-sm py-1 block"
-                            >
-                              {language === 'ar' ? 'جميع المنتجات' : 'All Products'}
-                            </Link>
-                            {categories.map((category) => (
-                              <Link
-                                key={category.id}
-                                to={`/products?category=${category.id}`}
-                                className="text-amber-100 hover:text-white transition-colors duration-200 text-sm py-1 block"
-                              >
-                                {category.name}
-                              </Link>
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    }
-                    
-                    return (
-                      <Link
-                        key={item.key}
-                        to={item.href}
-                        className="text-white hover:text-amber-200 transition-colors duration-200 font-medium text-lg py-2"
-                      >
-                        {item.label}
-                      </Link>
-                    );
-                  })}
-                  <div className="border-t border-amber-700 pt-6 space-y-4">
-                    <Button
-                      variant="ghost"
-                      onClick={toggleLanguage}
-                      className="text-white hover:text-amber-200 hover:bg-white/10 w-full justify-start"
-                    >
-                      <Globe className="w-4 h-4 mr-2" />
-                      {t('language.switch')}
-                    </Button>
+                <div className="flex h-full flex-col overflow-hidden">
+                  <div className="relative bg-gradient-to-br from-[#3e2010] via-[#2c160b] to-[#170b06] px-6 py-5 shadow-lg">
+                    <div className="space-y-2">
+                      <p className="text-xs uppercase tracking-[0.35em] text-amber-200/70">
+                        {language === 'ar' ? 'مركز القهوة' : 'Spirit Hub'}
+                      </p>
+                      <h2 className="text-2xl font-semibold text-white">
+                        {language === 'ar'
+                          ? 'تصفح قائمتنا'
+                          : 'Explore the menu'}
+                      </h2>
+                    </div>
 
-                    {/* Mobile Authentication */}
-                    <div className="pt-4 space-y-2">
+                    <div className="mt-5">
                       {isAuthenticated ? (
-                        <>
+                        <div className="rounded-2xl bg-white/[0.04] p-4 backdrop-blur">
                           <UserProfile variant="inline" />
-                        </>
+                        </div>
                       ) : (
-                        <AuthButtons />
+                        <>
+                          <div className="rounded-2xl bg-white/[0.04] p-4 backdrop-blur">
+                            <div className="flex gap-2">
+                              <LoginButton
+                                variant="default"
+                                size="default"
+                                className="flex-1"
+                              />
+                              <RegisterButton
+                                variant="default"
+                                size="default"
+                                className="flex-1"
+                              />
+                            </div>
+                          </div>
+                        </>
                       )}
+                    </div>
+                  </div>
+
+                  <div className="flex-1 overflow-y-auto px-6 py-6">
+                    <nav className="space-y-6">
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.35em] text-amber-200/70">
+                          {language === 'ar' ? 'القائمة الرئيسية' : 'Main menu'}
+                        </p>
+                        <div className="mt-4 space-y-3">
+                          {navItems.map((item) => {
+                            if (item.hasDropdown && item.key === 'products') {
+                              return (
+                                <div key={item.key} className="space-y-3">
+                                  <SheetClose asChild>
+                                    <Link
+                                      to={item.href}
+                                      className="flex items-center justify-between rounded-2xl bg-white/[0.06] px-4 py-3 text-base font-medium text-white transition duration-200 hover:bg-white/[0.12]"
+                                    >
+                                      <span>{item.label}</span>
+                                      <ChevronRight className="h-4 w-4" />
+                                    </Link>
+                                  </SheetClose>
+
+                                  {categories.length > 0 && (
+                                    <div className={`space-y-2 pl-4 text-sm rtl:border-l-0 rtl:border-r rtl:pl-0 rtl:pr-4`}>
+                                      <SheetClose asChild>
+                                        <Link
+                                          to="/products"
+                                          className="flex items-center justify-between rounded-xl bg-white/[0.06] px-3 py-2 text-amber-100 transition hover:bg-white/[0.12]"
+                                        >
+                                          <span>
+                                            {language === 'ar' ? 'جميع المنتجات' : 'All products'}
+                                          </span>
+                                          <ChevronRight className="h-3.5 w-3.5" />
+                                        </Link>
+                                      </SheetClose>
+                                      {categories.map((category) => (
+                                        <SheetClose asChild key={category.id}>
+                                          <Link
+                                            to={`/products?category=${category.id}`}
+                                            className="flex items-center justify-between rounded-xl px-3 py-2 text-amber-100/90 transition hover:bg-white/[0.1] hover:text-white"
+                                          >
+                                            <span>{category.name}</span>
+                                            <ChevronRight className="h-3.5 w-3.5" />
+                                          </Link>
+                                        </SheetClose>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            }
+
+                            return (
+                              <SheetClose asChild key={item.key}>
+                                <Link
+                                  to={item.href}
+                                  className="flex items-center justify-between rounded-2xl bg-white/[0.06] px-4 py-3 text-base font-medium text-white transition duration-200 hover:bg-white/[0.12]"
+                                >
+                                  <span>{item.label}</span>
+                                  <ChevronRight className="h-4 w-4" />
+                                </Link>
+                              </SheetClose>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      <div className="space-y-3">
+                        <p className="text-xs uppercase tracking-[0.35em] text-amber-200/70">
+                          {language === 'ar' ? 'إجراءات سريعة' : 'Quick actions'}
+                        </p>
+                        <SheetClose asChild>
+                          <Button
+                            variant="ghost"
+                            size="lg"
+                            onClick={handleMobileCartOpen}
+                            className="w-full justify-between rounded-2xl bg-white/[0.06] px-4 py-3 text-base font-medium text-white transition duration-200 hover:bg-white/[0.12] hover:text-white"
+                          >
+                            <span className="flex items-center gap-3">
+                              <ShoppingCart className="h-4 w-4" />
+                              {language === 'ar' ? 'عرض السلة' : 'View cart'}
+                            </span>
+                            <span className="flex items-center gap-2 text-sm text-amber-200/80">
+                              {totalItems}
+                              <ChevronRight className="h-3.5 w-3.5" />
+                            </span>
+                          </Button>
+                        </SheetClose>
+                      </div>
+                    </nav>
+                  </div>
+
+                  <div className="bg-[#0d0603] px-6 py-5">
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="text-sm text-amber-100/80">
+                        <p className="font-medium">
+                          {language === 'ar'
+                            ? 'تبديل اللغة'
+                            : 'Switch language'}
+                        </p>
+                        <p>
+                          {language === 'ar'
+                            ? 'اختر بين العربية والإنجليزية.'
+                            : 'Choose Arabic or English.'}
+                        </p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={toggleLanguage}
+                        className="rounded-full bg-white/[0.06] px-4 py-2 text-white transition hover:bg-white/[0.12] hover:text-white"
+                      >
+                        <Globe className="mr-2 h-4 w-4" />
+                        {t('language.switch')}
+                      </Button>
                     </div>
                   </div>
                 </div>

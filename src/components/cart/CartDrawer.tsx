@@ -5,11 +5,28 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useCart } from '../../hooks/useCart';
 import { Button } from '../ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from '../ui/sheet';
+import { OverlayScrollbarsComponent } from 'overlayscrollbars-react';
 
 export const CartDrawer: React.FC = () => {
   const { i18n } = useTranslation();
   const isArabic = i18n.language === 'ar';
   const { items, removeFromCart, updateQuantity, clearCart, totalItems, totalPrice, isOpen, closeCart } = useCart();
+
+  const scrollOptions = React.useMemo(
+    () => ({
+      overflow: {
+        x: 'hidden',
+        y: 'scroll'
+      },
+      scrollbars: {
+        theme: 'os-theme-spirit-hub',
+        visibility: 'visible',
+        autoHide: 'never',
+        autoHideDelay: 0
+      }
+    }),
+    []
+  );
 
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && closeCart()}>
@@ -26,17 +43,23 @@ export const CartDrawer: React.FC = () => {
           </SheetTitle>
         </SheetHeader>
 
-        <div className="flex flex-col h-full py-6">
-          {items.length === 0 ? (
-            <div className="flex flex-col items-center justify-center flex-1 text-center">
-              <ShoppingCart className="w-16 h-16 text-gray-300 mb-4" />
-              <p className="text-gray-500">
-                {isArabic ? 'سلة التسوق فارغة' : 'Your cart is empty'}
-              </p>
-            </div>
-          ) : (
-            <>
-              <div className="flex-1 overflow-y-auto space-y-4">
+        {items.length === 0 ? (
+          <div className="flex flex-1 flex-col items-center justify-center text-center py-6">
+            <ShoppingCart className="w-16 h-16 text-gray-300 mb-4" />
+            <p className="text-gray-500">
+              {isArabic ? 'سلة التسوق فارغة' : 'Your cart is empty'}
+            </p>
+          </div>
+        ) : (
+          <>
+            <OverlayScrollbarsComponent
+              key={isArabic ? 'rtl' : 'ltr'}
+              dir={isArabic ? 'rtl' : 'ltr'}
+              options={scrollOptions}
+              style={{ height: '100%' }}
+              className="flex-1"
+            >
+              <div className="space-y-4 px-4 py-6">
                 <AnimatePresence mode="popLayout">
                   {items.map((item) => (
                     <motion.div
@@ -92,36 +115,36 @@ export const CartDrawer: React.FC = () => {
                   ))}
                 </AnimatePresence>
               </div>
+            </OverlayScrollbarsComponent>
 
-              <SheetFooter className="flex-col gap-4 mt-6 pt-6 border-t">
-                <div className="flex items-center justify-between text-lg font-bold">
-                  <span>{isArabic ? 'المجموع' : 'Total'}</span>
-                  <span className="text-amber-600">
-                    {totalPrice.toFixed(3)} {isArabic ? 'ر.ع' : 'OMR'}
-                  </span>
-                </div>
-                <div className="flex gap-2 w-full">
-                  <Button
-                    variant="outline"
-                    className="flex-1"
-                    onClick={clearCart}
-                  >
-                    {isArabic ? 'إفراغ السلة' : 'Clear Cart'}
-                  </Button>
-                  <Button
-                    className="flex-1 bg-amber-600 hover:bg-amber-700"
-                    onClick={() => {
-                      // TODO: Implement checkout
-                      alert(isArabic ? 'قريباً...' : 'Coming soon...');
-                    }}
-                  >
-                    {isArabic ? 'إتمام الطلب' : 'Checkout'}
-                  </Button>
-                </div>
-              </SheetFooter>
-            </>
-          )}
-        </div>
+            <SheetFooter className="gap-4 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/75">
+              <div className="flex items-center justify-between text-lg font-bold">
+                <span>{isArabic ? 'المجموع' : 'Total'}</span>
+                <span className="text-amber-600">
+                  {totalPrice.toFixed(3)} {isArabic ? 'ر.ع' : 'OMR'}
+                </span>
+              </div>
+              <div className="flex gap-2 w-full">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={clearCart}
+                >
+                  {isArabic ? 'إفراغ السلة' : 'Clear Cart'}
+                </Button>
+                <Button
+                  className="flex-1 bg-amber-600 hover:bg-amber-700"
+                  onClick={() => {
+                    // TODO: Implement checkout
+                    alert(isArabic ? 'قريباً...' : 'Coming soon...');
+                  }}
+                >
+                  {isArabic ? 'إتمام الطلب' : 'Checkout'}
+                </Button>
+              </div>
+            </SheetFooter>
+          </>
+        )}
       </SheetContent>
     </Sheet>
   );

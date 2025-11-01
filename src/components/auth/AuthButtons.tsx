@@ -10,12 +10,14 @@ interface AuthButtonsProps {
   variant?: 'default' | 'outline' | 'ghost';
   size?: 'default' | 'sm' | 'lg';
   showText?: boolean;
+  className?: string;
 }
 
 export const AuthButtons: React.FC<AuthButtonsProps> = ({ 
   variant = 'outline',
   size = 'sm',
-  showText = true
+  showText = true,
+  className
 }) => {
   const { isAuthenticated } = useAuth();
   const { t } = useApp();
@@ -26,7 +28,7 @@ export const AuthButtons: React.FC<AuthButtonsProps> = ({
 
   return (
     <AuthModal defaultView="login">
-      <Button variant={variant} size={size}>
+      <Button variant={variant} size={size} className={className}>
         <LogIn className="h-4 w-4" />
         {showText && <span className="mr-2">{t('auth.login')}</span>}
       </Button>
@@ -37,13 +39,14 @@ export const AuthButtons: React.FC<AuthButtonsProps> = ({
 // Separate login button component
 export const LoginButton: React.FC<AuthButtonsProps> = ({ 
   variant = 'outline', 
-  size = 'sm' 
+  size = 'sm',
+  className
 }) => {
   const { t } = useApp();
   
   return (
     <AuthModal defaultView="login">
-      <Button variant={variant} size={size}>
+      <Button variant={variant} size={size} className={className}>
         <LogIn className="h-4 w-4 mr-2" />
         {t('auth.login')}
       </Button>
@@ -54,13 +57,14 @@ export const LoginButton: React.FC<AuthButtonsProps> = ({
 // Separate register button component
 export const RegisterButton: React.FC<AuthButtonsProps> = ({ 
   variant = 'default', 
-  size = 'sm' 
+  size = 'sm',
+  className
 }) => {
   const { t } = useApp();
   
   return (
     <AuthModal defaultView="register">
-      <Button variant={variant} size={size}>
+      <Button variant={variant} size={size} className={className}>
         <UserPlus className="h-4 w-4 mr-2" />
         {t('auth.register')}
       </Button>

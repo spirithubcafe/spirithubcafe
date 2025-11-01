@@ -22,7 +22,7 @@ import { OverlayScrollbars } from 'overlayscrollbars';
 import './i18n';
 import './App.css';
 import './styles/overlayscrollbars.css';
-import 'overlayscrollbars/overlayscrollbars.css';
+import 'overlayscrollbars/styles/overlayscrollbars.css';
 
 function AppContent() {
   // Initialize OverlayScrollbars globally
