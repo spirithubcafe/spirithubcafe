@@ -4,8 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { AppContext, type Product, type Category, type AppContextType } from './AppContextDefinition';
 import { categoryService } from '../services/categoryService';
 import { productService } from '../services/productService';
-import type { Category as ApiCategory } from '../types/product';
-import { getCategoryImageUrl, getProductImageUrl } from '../lib/imageUtils';
+import type { Category as ApiCategory, Product as ApiProduct } from '../types/product';
+import { getCategoryImageUrl, resolveProductImageUrl } from '../lib/imageUtils';
 import { cacheUtils, imageCacheUtils } from '../lib/cacheUtils';
 
 export interface User {
@@ -72,59 +72,88 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     
     try {
       // Fetch products from API using main endpoint with pagination
-      const response = await productService.getAll({ 
-        page: 1, 
-        pageSize: 6,
-        includeInactive: false 
+      const response = await productService.getAll({
+        page: 1,
+        pageSize: 100, // Get all products
+        includeInactive: false,
       });
-      
+
       // Handle response - it might be array or paginated response
-      const products = Array.isArray(response) ? response : response.items || [];
-      
-      // Transform API products to match AppContext format
+      const products = (Array.isArray(response) ? response : response.items || []) as ApiProduct[];
+
+      type ApiProductExtended = ApiProduct & Record<string, unknown>;
+      type ProductPricing = {
+        minPrice?: number;
+        price?: number;
+      };
+
       const transformedProducts: Product[] = await Promise.all(
         products.map(async (prod) => {
-          // Get full product details to get images and variants
-          let imageUrl = '/images/products/default-product.webp';
-          let price = (prod as { minPrice?: number }).minPrice || 0;
-          let fullProduct = prod; // Use prod as fallback
-          
+          const baseProduct = prod as ApiProductExtended;
+          const basePricing = baseProduct as ProductPricing;
+          const initialMinPrice =
+            typeof basePricing.minPrice === 'number' ? basePricing.minPrice : undefined;
+          const initialPrice =
+            typeof basePricing.price === 'number' ? basePricing.price : undefined;
+
+          let price = initialMinPrice ?? initialPrice ?? 0;
+          let fullProduct: ApiProductExtended = baseProduct;
+
           try {
-            // Fetch full product details including images
-            fullProduct = await productService.getById(prod.id);
-            
-            // Get image from full product details
-            if (fullProduct.images && fullProduct.images.length > 0) {
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              const mainImg = fullProduct.images.find((img: any) => img.isMain) || fullProduct.images[0];
-              imageUrl = getProductImageUrl(mainImg.imagePath);
-            } else if (fullProduct.mainImage?.imagePath) {
-              imageUrl = getProductImageUrl(fullProduct.mainImage.imagePath);
-            }
-            
-            // Get price from variants if available
-            if (fullProduct.variants && fullProduct.variants.length > 0) {
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              const defaultVariant = fullProduct.variants.find((v: any) => v.isDefault) || fullProduct.variants[0];
-              price = defaultVariant.discountPrice || defaultVariant.price;
+            // Fetch detailed product to access images, variants, etc.
+            fullProduct = (await productService.getById(prod.id)) as ApiProductExtended;
+
+            if (Array.isArray(fullProduct.variants) && fullProduct.variants.length > 0) {
+              const defaultVariant =
+                fullProduct.variants.find((variant) => variant.isDefault) ??
+                fullProduct.variants[0];
+
+              if (defaultVariant) {
+                const variantPrice =
+                  defaultVariant.discountPrice ?? defaultVariant.price ?? price;
+                price = variantPrice;
+              }
+            } else {
+              const fullPricing = fullProduct as ProductPricing;
+              const fullMinPrice =
+                typeof fullPricing.minPrice === 'number' ? fullPricing.minPrice : undefined;
+              const fullBasePrice =
+                typeof fullPricing.price === 'number' ? fullPricing.price : undefined;
+              price = fullMinPrice ?? fullBasePrice ?? price;
             }
           } catch {
-            // Silently fail - use default values
+            // Silently fail - use fallback product data
           }
-          
+
+          const imageUrl = resolveProductImageUrl(fullProduct);
+          const fallbackCategoryName =
+            (typeof fullProduct.categoryName === 'string' && fullProduct.categoryName) || '';
+          const fallbackCategoryNameAr =
+            (typeof fullProduct.categoryNameAr === 'string' && fullProduct.categoryNameAr) || '';
+
           return {
             id: fullProduct.id.toString(),
             name: language === 'ar' && fullProduct.nameAr ? fullProduct.nameAr : fullProduct.name,
-            description: language === 'ar' && fullProduct.descriptionAr ? fullProduct.descriptionAr : fullProduct.description || '',
-            price: price,
+            description:
+              language === 'ar' && fullProduct.descriptionAr
+                ? fullProduct.descriptionAr
+                : fullProduct.description || '',
+            price,
             image: imageUrl,
-            category: language === 'ar' && fullProduct.category?.nameAr 
-              ? fullProduct.category.nameAr 
-              : (fullProduct as { categoryName?: string }).categoryName || fullProduct.category?.name || '',
-            tastingNotes: language === 'ar' && fullProduct.tastingNotesAr ? fullProduct.tastingNotesAr : fullProduct.tastingNotes,
-            featured: fullProduct.isFeatured
+            category:
+              language === 'ar'
+                ? fullProduct.category?.nameAr ||
+                  fallbackCategoryNameAr ||
+                  fullProduct.category?.name ||
+                  ''
+                : fallbackCategoryName || fullProduct.category?.name || '',
+            tastingNotes:
+              language === 'ar' && fullProduct.tastingNotesAr
+                ? fullProduct.tastingNotesAr
+                : fullProduct.tastingNotes,
+            featured: fullProduct.isFeatured,
           };
-        })
+        }),
       );
       
       setProducts(transformedProducts);
@@ -259,4 +288,3 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     </AppContext.Provider>
   );
 };
-

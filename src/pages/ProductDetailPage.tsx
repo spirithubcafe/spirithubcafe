@@ -1,163 +1,290 @@
-import React, { useState } from 'react';
-import { useParams, Link, Navigate } from 'react-router-dom';
+import { Fragment, useEffect, useMemo, useState } from 'react';
+import type { ChangeEvent } from 'react';
+import { Link, useParams } from 'react-router-dom';
+import {
+  ArrowLeft,
+  ArrowRight,
+  ChevronLeft,
+  ChevronRight,
+  Coffee,
+  Loader2,
+  ShoppingCart,
+  Star,
+} from 'lucide-react';
 import { useApp } from '../hooks/useApp';
-import { Coffee, Star, Clock, ShoppingCart, Plus, Minus, ArrowLeft, ArrowRight, Heart, Share2 } from 'lucide-react';
+import { productService } from '../services/productService';
+import { getProductImageUrl, handleImageError, resolveProductImageUrls } from '../lib/imageUtils';
+import type { Product as ApiProduct, ProductVariant } from '../types/product';
+import { useCart } from '../hooks/useCart';
+import { Button } from '../components/ui/button';
 
-interface ProductDetails {
-  id: string;
-  name: string;
-  nameAr: string;
-  description: string;
-  descriptionAr: string;
-  longDescription: string;
-  longDescriptionAr: string;
-  price: number;
-  images: string[];
-  category: string;
-  categoryAr: string;
-  rating: number;
-  reviewCount: number;
-  prepTime: string;
-  prepTimeAr: string;
-  featured: boolean;
-  available: boolean;
-  ingredients: string[];
-  ingredientsAr: string[];
-  nutritionalInfo: {
-    calories: number;
-    protein: number;
-    fat: number;
-    carbs: number;
-    caffeine?: number;
-  };
-  allergens: string[];
-  allergensAr: string[];
-  sizes: Array<{
-    name: string;
-    nameAr: string;
-    price: number;
-    ml?: number;
-  }>;
-}
+type LoadState = 'idle' | 'loading' | 'ready' | 'error';
 
-export const ProductDetailPage: React.FC = () => {
-  const { productId } = useParams<{ productId: string }>();
-  const { language } = useApp();
-  const [selectedSize, setSelectedSize] = useState(0);
-  const [quantity, setQuantity] = useState(1);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [isFavorite, setIsFavorite] = useState(false);
-
-  // Mock product data - في التطبيق الحقيقي، سيتم جلب هذه البيانات من API
-  const products: Record<string, ProductDetails> = {
-    'espresso-premium': {
-      id: 'espresso-premium',
-      name: 'Premium Espresso',
-      nameAr: 'إسبريسو مميز',
-      description: 'Rich and concentrated espresso made from premium Arabic beans',
-      descriptionAr: 'إسبريسو غني ومركز من حبوب القهوة العربية المميزة',
-      longDescription: 'Our Premium Espresso is crafted from the finest Arabic beans, sourced directly from the mountains of Yemen and Ethiopia. Each shot is pulled to perfection, creating a rich, full-bodied flavor with notes of chocolate and caramel. The crema on top is thick and golden, indicating the quality of our extraction process.',
-      longDescriptionAr: 'إسبريسو المميز مصنوع من أجود حبوب القهوة العربية، مصدرها مباشرة من جبال اليمن وإثيوبيا. كل جرعة محضرة بإتقان، تخلق نكهة غنية وقوية مع نفحات الشوكولاتة والكراميل. الكريمة في الأعلى سميكة وذهبية، مما يدل على جودة عملية الاستخراج.',
-      price: 7.2,
-      images: ['/images/products/espresso-1.jpg', '/images/products/espresso-2.jpg', '/images/products/espresso-3.jpg'],
-      category: 'hot-coffee',
-      categoryAr: 'قهوة ساخنة',
-      rating: 4.8,
-      reviewCount: 127,
-      prepTime: '3-5 min',
-      prepTimeAr: '3-5 دقائق',
-      featured: true,
-      available: true,
-      ingredients: ['Arabic Coffee Beans', 'Filtered Water'],
-      ingredientsAr: ['حبوب القهوة العربية', 'ماء مفلتر'],
-      nutritionalInfo: {
-        calories: 5,
-        protein: 0.3,
-        fat: 0.1,
-        carbs: 0.8,
-        caffeine: 120,
-      },
-      allergens: ['None'],
-      allergensAr: ['لا يوجد'],
-      sizes: [
-        { name: 'Single Shot', nameAr: 'جرعة واحدة', price: 7.2, ml: 30 },
-        { name: 'Double Shot', nameAr: 'جرعة مزدوجة', price: 10.0, ml: 60 },
-      ],
-    },
-    'cappuccino-classic': {
-      id: 'cappuccino-classic',
-      name: 'Classic Cappuccino',
-      nameAr: 'كابتشينو كلاسيكي',
-      description: 'Perfect balance of espresso, steamed milk, and foam',
-      descriptionAr: 'توازن مثالي بين الإسبريسو والحليب المبخر والرغوة',
-      longDescription: 'Our Classic Cappuccino is the perfect harmony of rich espresso, velvety steamed milk, and light, airy foam. Made with our signature espresso blend and fresh whole milk, this traditional Italian favorite delivers a smooth, creamy texture with a bold coffee flavor that will warm your soul.',
-      longDescriptionAr: 'الكابتشينو الكلاسيكي هو الانسجام المثالي بين الإسبريسو الغني والحليب المبخر الناعم والرغوة الخفيفة الهوائية. مصنوع من خلطة الإسبريسو المميزة والحليب الطازج الكامل الدسم، هذا المفضل الإيطالي التقليدي يقدم ملمساً ناعماً وكريمياً مع نكهة قهوة جريئة تدفئ الروح.',
-      price: 8.8,
-      images: ['/images/products/cappuccino-1.jpg', '/images/products/cappuccino-2.jpg'],
-      category: 'hot-coffee',
-      categoryAr: 'قهوة ساخنة',
-      rating: 4.7,
-      reviewCount: 203,
-      prepTime: '4-6 min',
-      prepTimeAr: '4-6 دقائق',
-      featured: true,
-      available: true,
-      ingredients: ['Arabic Coffee Beans', 'Fresh Whole Milk', 'Filtered Water'],
-      ingredientsAr: ['حبوب القهوة العربية', 'حليب طازج كامل الدسم', 'ماء مفلتر'],
-      nutritionalInfo: {
-        calories: 150,
-        protein: 8,
-        fat: 8,
-        carbs: 12,
-        caffeine: 80,
-      },
-      allergens: ['Dairy'],
-      allergensAr: ['منتجات الألبان'],
-      sizes: [
-        { name: 'Small', nameAr: 'صغير', price: 8.8, ml: 180 },
-        { name: 'Medium', nameAr: 'متوسط', price: 10.8, ml: 240 },
-        { name: 'Large', nameAr: 'كبير', price: 12.8, ml: 350 },
-      ],
-    },
-    // يمكن إضافة باقي المنتجات هنا...
-  };
-
-  const product = productId ? products[productId] : null;
-
-  if (!product) {
-    return <Navigate to="/products" replace />;
+const toNumber = (value: unknown): number | undefined => {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value;
   }
 
-  const currentPrice = product.sizes[selectedSize].price;
-  const totalPrice = currentPrice * quantity;
+  if (typeof value === 'string') {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }
 
-  const handleAddToCart = () => {
-    // هنا يمكن إضافة المنتج إلى السلة
-    alert(language === 'ar' 
-      ? `تمت إضافة ${quantity} من ${product.nameAr} إلى السلة` 
-      : `Added ${quantity} ${product.name} to cart`
-    );
+  return undefined;
+};
+
+const resolveVariantLabel = (variant: ProductVariant, language: string): string => {
+  const weightLabel =
+    variant.weight && variant.weightUnit ? `${variant.weight} ${variant.weightUnit}` : undefined;
+  const skuLabel = variant.variantSku;
+
+  if (language === 'ar') {
+    return weightLabel ?? skuLabel ?? `الخيار ${variant.id}`;
+  }
+
+  return skuLabel ?? weightLabel ?? `Option ${variant.id}`;
+};
+
+const resolvePrice = (product: ApiProduct, variant?: ProductVariant): number => {
+  if (variant) {
+    const discount = toNumber(variant.discountPrice);
+    const regular = toNumber(variant.price);
+    if (typeof discount === 'number' && discount > 0) {
+      return discount;
+    }
+    if (typeof regular === 'number') {
+      return regular;
+    }
+  }
+
+  const extras = product as unknown as { price?: number; minPrice?: number; basePrice?: number };
+  return extras.price ?? extras.minPrice ?? extras.basePrice ?? 0;
+};
+
+const formatCurrency = (value: number, language: string): string => {
+  const formatter = new Intl.NumberFormat(language === 'ar' ? 'ar-OM' : 'en-OM', {
+    style: 'currency',
+    currency: 'OMR',
+    minimumFractionDigits: 3,
+    maximumFractionDigits: 3,
+  });
+
+  return formatter.format(value);
+};
+
+export const ProductDetailPage = () => {
+  const { productId } = useParams<{ productId: string }>();
+  const { language } = useApp();
+  const cart = useCart();
+
+  const [state, setState] = useState<LoadState>('idle');
+  const [product, setProduct] = useState<ApiProduct | null>(null);
+  const [selectedVariantId, setSelectedVariantId] = useState<number | null>(null);
+  const [quantity, setQuantity] = useState(1);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchProduct = async () => {
+      if (!productId) {
+        setProduct(null);
+        setState('error');
+        setErrorMessage(
+          language === 'ar' ? 'لم يتم العثور على هذا المنتج.' : 'We could not find that product.',
+        );
+        return;
+      }
+
+      setState('loading');
+      setErrorMessage(null);
+
+      try {
+        const isNumeric = /^\d+$/.test(productId);
+        const result = isNumeric
+          ? await productService.getById(Number(productId))
+          : await productService.getBySlug(productId);
+
+        if (!isMounted) {
+          return;
+        }
+
+        setProduct(result);
+        const defaultVariant =
+          result.variants?.find((variant) => variant.isDefault) ?? result.variants?.[0] ?? null;
+        setSelectedVariantId(defaultVariant ? defaultVariant.id : null);
+        setQuantity(1);
+        setCurrentImageIndex(0);
+        setState('ready');
+      } catch (error) {
+        console.error('Failed to load product details', error);
+        if (!isMounted) {
+          return;
+        }
+
+        setProduct(null);
+        setState('error');
+        setErrorMessage(
+          language === 'ar'
+            ? 'حدث خطأ أثناء تحميل البيانات. الرجاء المحاولة لاحقاً.'
+            : 'Something went wrong while loading this product. Please try again later.',
+        );
+      }
+    };
+
+    fetchProduct();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [language, productId]);
+
+  const selectedVariant = useMemo(() => {
+    if (!product || !product.variants) {
+      return undefined;
+    }
+
+    return product.variants.find((variant) => variant.id === selectedVariantId) ??
+      product.variants.find((variant) => variant.isDefault) ??
+      product.variants[0];
+  }, [product, selectedVariantId]);
+
+  const images = useMemo(() => {
+    if (!product) {
+      return [getProductImageUrl(undefined)];
+    }
+
+    return resolveProductImageUrls(product as ApiProduct & Record<string, unknown>);
+  }, [product]);
+
+  const displayName = useMemo(() => {
+    if (!product) {
+      return '';
+    }
+
+    return language === 'ar' && product.nameAr ? product.nameAr : product.name;
+  }, [language, product]);
+
+  const displayDescription = useMemo(() => {
+    if (!product) {
+      return '';
+    }
+
+    const description = language === 'ar' ? product.descriptionAr : product.description;
+    return description ?? '';
+  }, [language, product]);
+
+  const categoryLabel = useMemo(() => {
+    if (!product) {
+      return '';
+    }
+
+    const categoryName =
+      language === 'ar'
+        ? product.category?.nameAr ?? product.category?.name
+        : product.category?.name ?? product.category?.nameAr;
+
+    if (categoryName) {
+      return categoryName;
+    }
+
+    const extras = product as unknown as { categoryName?: string; categoryNameAr?: string };
+    if (language === 'ar') {
+      return extras.categoryNameAr ?? extras.categoryName ?? '';
+    }
+    return extras.categoryName ?? extras.categoryNameAr ?? '';
+  }, [language, product]);
+
+  const price = useMemo(() => {
+    if (!product) {
+      return 0;
+    }
+
+    return resolvePrice(product, selectedVariant);
+  }, [product, selectedVariant]);
+
+  const isAvailable = product?.isActive ?? false;
+  const averageRating = product?.averageRating ?? 0;
+  const totalReviews = product?.reviewCount ?? 0;
+  const tastingNotes = product?.tastingNotes ?? product?.notes ?? '';
+
+  const incrementImage = (direction: 1 | -1) => {
+    setCurrentImageIndex((current) => {
+      const nextIndex = current + direction;
+      if (nextIndex < 0) {
+        return images.length - 1;
+      }
+      if (nextIndex >= images.length) {
+        return 0;
+      }
+      return nextIndex;
+    });
   };
 
-  const handleShare = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: language === 'ar' ? product.nameAr : product.name,
-          text: language === 'ar' ? product.descriptionAr : product.description,
-          url: window.location.href,
-        });
-      } catch (error) {
-        console.log('Error sharing:', error);
-      }
-    } else {
-      navigator.clipboard.writeText(window.location.href);
-      alert(language === 'ar' ? 'تم نسخ الرابط' : 'Link copied to clipboard');
+  const handleVariantChange = (event: ChangeEvent<HTMLSelectElement>) => {
+    const value = Number(event.target.value);
+    if (Number.isFinite(value)) {
+      setSelectedVariantId(value);
     }
   };
 
+  const decreaseQuantity = () => {
+    setQuantity((prev) => Math.max(1, prev - 1));
+  };
+
+  const increaseQuantity = () => {
+    setQuantity((prev) => Math.min(10, prev + 1));
+  };
+
+  const handleAddToCart = () => {
+    if (!product || price <= 0) {
+      return;
+    }
+
+    const variantKey = selectedVariant ? `-${selectedVariant.id}` : '';
+    const cartId = `${product.id}${variantKey}`;
+
+    const variantLabel = selectedVariant ? resolveVariantLabel(selectedVariant, language) : '';
+    const cartName = variantLabel ? `${displayName} - ${variantLabel}` : displayName;
+    const image = images[0] ?? getProductImageUrl(undefined);
+
+    cart.addToCart({
+      id: cartId,
+      name: cartName,
+      price,
+      image,
+      tastingNotes,
+    });
+
+    if (quantity > 1) {
+      cart.updateQuantity(cartId, quantity);
+    }
+
+    cart.openCart();
+  };
+
+  const addToCartLabel =
+    language === 'ar' ? 'إضافة إلى السلة' : 'Add to Cart';
+  const unavailableLabel =
+    language === 'ar' ? 'غير متوفر حالياً' : 'Currently unavailable';
+  const priceLabel =
+    language === 'ar' ? 'السعر' : 'Price';
+  const categoryText =
+    language === 'ar' ? 'الفئة' : 'Category';
+  const quantityLabel =
+    language === 'ar' ? 'الكمية' : 'Quantity';
+  const chooseOptionLabel =
+    language === 'ar' ? 'اختر الخيار' : 'Choose an option';
+  const reviewsLabel =
+    language === 'ar' ? 'مراجعات' : 'reviews';
+
   return (
-    <div className={`min-h-screen bg-gradient-to-br from-amber-50 to-orange-100 ${language === 'ar' ? 'rtl' : 'ltr'}`}>
+    <div
+      className={`min-h-screen bg-gradient-to-br from-amber-50 to-orange-100 ${
+        language === 'ar' ? 'rtl' : 'ltr'
+      }`}
+    >
       {/* Breadcrumb */}
       <div className="bg-white shadow-sm py-4">
         <div className="container mx-auto px-4">
@@ -169,253 +296,280 @@ export const ProductDetailPage: React.FC = () => {
             <Link to="/products" className="hover:text-amber-600 transition-colors">
               {language === 'ar' ? 'المنتجات' : 'Products'}
             </Link>
-            <span>/</span>
-            <span className="text-amber-700 font-semibold">
-              {language === 'ar' ? product.nameAr : product.name}
-            </span>
+            {product ? (
+              <Fragment>
+                <span>/</span>
+                <span className="text-amber-700 font-semibold">{displayName}</span>
+              </Fragment>
+            ) : null}
           </div>
         </div>
       </div>
 
-      {/* Product Detail */}
       <div className="py-12 bg-white">
         <div className="container mx-auto px-4">
-          <div className="max-w-7xl mx-auto">
-            <div className="grid lg:grid-cols-2 gap-12">
-              {/* Product Images */}
-              <div className="space-y-4">
-                <div className="relative bg-gradient-to-br from-amber-200 to-orange-300 rounded-2xl overflow-hidden aspect-square">
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <Coffee className="w-32 h-32 text-amber-800" />
-                  </div>
-                  {product.featured && (
-                    <div className="absolute top-4 left-4 bg-gradient-to-r from-yellow-400 to-orange-400 text-white px-4 py-2 rounded-full font-bold">
-                      {language === 'ar' ? 'مميز' : 'Featured'}
-                    </div>
-                  )}
+          <div className="max-w-6xl mx-auto">
+            {state === 'loading' ? (
+              <div className="flex justify-center py-24">
+                <div className="flex flex-col items-center gap-3 text-gray-600">
+                  <Loader2 className="w-10 h-10 animate-spin text-amber-600" />
+                  <span>{language === 'ar' ? 'جاري تحميل المنتج...' : 'Loading product...'}</span>
                 </div>
-                {product.images.length > 1 && (
-                  <div className="flex gap-2 overflow-x-auto pb-2">
-                    {product.images.map((_, index) => (
-                      <button
-                        key={index}
-                        onClick={() => setCurrentImageIndex(index)}
-                        aria-label={`${language === 'ar' ? 'عرض الصورة' : 'View image'} ${index + 1}`}
-                        className={`flex-shrink-0 w-20 h-20 bg-gradient-to-br from-amber-200 to-orange-300 rounded-lg overflow-hidden ${
-                          currentImageIndex === index ? 'ring-2 ring-amber-500' : ''
-                        }`}
-                      >
-                        <div className="w-full h-full flex items-center justify-center">
-                          <Coffee className="w-8 h-8 text-amber-800" />
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
               </div>
+            ) : null}
 
-              {/* Product Info */}
-              <div className="space-y-6">
-                {/* Header */}
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <h1 className="text-3xl font-bold text-gray-800">
-                      {language === 'ar' ? product.nameAr : product.name}
-                    </h1>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => setIsFavorite(!isFavorite)}
-                        aria-label={language === 'ar' ? (isFavorite ? 'إزالة من المفضلة' : 'إضافة للمفضلة') : (isFavorite ? 'Remove from favorites' : 'Add to favorites')}
-                        className={`p-2 rounded-full transition-colors ${
-                          isFavorite ? 'text-red-500 bg-red-50' : 'text-gray-400 hover:text-red-500'
-                        }`}
-                      >
-                        <Heart className={`w-6 h-6 ${isFavorite ? 'fill-current' : ''}`} />
-                      </button>
-                      <button
-                        onClick={handleShare}
-                        aria-label={language === 'ar' ? 'مشاركة المنتج' : 'Share product'}
-                        className="p-2 rounded-full text-gray-400 hover:text-amber-500 transition-colors"
-                      >
-                        <Share2 className="w-6 h-6" />
-                      </button>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-4 mb-4">
-                    <div className="flex items-center gap-1">
-                      <Star className="w-5 h-5 text-yellow-400 fill-current" />
-                      <span className="font-semibold">{product.rating}</span>
-                      <span className="text-gray-500 text-sm">({product.reviewCount} {language === 'ar' ? 'تقييم' : 'reviews'})</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-gray-500">
-                      <Clock className="w-4 h-4" />
-                      <span className="text-sm">{language === 'ar' ? product.prepTimeAr : product.prepTime}</span>
-                    </div>
-                  </div>
-                  
-                  <p className="text-gray-600 leading-relaxed">
-                    {language === 'ar' ? product.longDescriptionAr : product.longDescription}
-                  </p>
-                </div>
-
-                {/* Price */}
-                <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl p-6">
-                  <div className="text-3xl font-bold text-amber-700 mb-2">
-                    {totalPrice} {language === 'ar' ? 'ريال عماني' : 'OMR'}
-                  </div>
-                  {quantity > 1 && (
-                    <div className="text-gray-600">
-                      {currentPrice} {language === 'ar' ? 'ريال عماني × ' : 'OMR × '}{quantity}
-                    </div>
-                  )}
-                </div>
-
-                {/* Size Selection */}
-                {product.sizes.length > 1 && (
-                  <div>
-                    <h3 className="font-semibold text-gray-800 mb-3">
-                      {language === 'ar' ? 'الحجم' : 'Size'}
-                    </h3>
-                    <div className="grid grid-cols-2 gap-3">
-                      {product.sizes.map((size, index) => (
-                        <button
-                          key={index}
-                          onClick={() => setSelectedSize(index)}
-                          className={`p-3 border rounded-lg text-left transition-colors ${
-                            selectedSize === index
-                              ? 'border-amber-500 bg-amber-50 text-amber-700'
-                              : 'border-gray-300 hover:border-amber-300'
-                          }`}
-                        >
-                          <div className="font-semibold">
-                            {language === 'ar' ? size.nameAr : size.name}
-                          </div>
-                          <div className="text-sm text-gray-600">
-                            {size.price} {language === 'ar' ? 'ريال عماني' : 'OMR'}
-                            {size.ml && ` • ${size.ml}ml`}
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Quantity */}
-                <div>
-                  <h3 className="font-semibold text-gray-800 mb-3">
-                    {language === 'ar' ? 'الكمية' : 'Quantity'}
+            {state === 'error' ? (
+              <div className="text-center py-16">
+                <div className="flex flex-col gap-4 items-center">
+                  <Coffee className="w-16 h-16 text-gray-400" />
+                  <h3 className="text-xl font-semibold text-gray-700">
+                    {errorMessage ??
+                      (language === 'ar'
+                        ? 'حدث خطأ غير متوقع.'
+                        : 'An unexpected error occurred.')}
                   </h3>
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center border border-gray-300 rounded-lg">
-                      <button
-                        onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                        className="p-2 hover:bg-gray-100 transition-colors"
-                        disabled={quantity <= 1}
-                        aria-label={language === 'ar' ? 'تقليل الكمية' : 'Decrease quantity'}
-                      >
-                        <Minus className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => setQuantity(quantity + 1)}
-                        className="p-2 hover:bg-gray-100 transition-colors"
-                        aria-label={language === 'ar' ? 'زيادة الكمية' : 'Increase quantity'}
-                      >
-                        <Plus className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Add to Cart */}
-                <div className="flex gap-4">
-                  <button
-                    onClick={handleAddToCart}
-                    disabled={!product.available}
-                    className="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold py-4 px-6 rounded-lg hover:from-amber-600 hover:to-orange-600 transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <ShoppingCart className="w-5 h-5" />
-                    {product.available 
-                      ? (language === 'ar' ? 'إضافة للسلة' : 'Add to Cart')
-                      : (language === 'ar' ? 'غير متوفر' : 'Unavailable')
-                    }
-                  </button>
                   <Link
                     to="/products"
-                    className="px-6 py-4 border border-amber-500 text-amber-700 font-semibold rounded-lg hover:bg-amber-50 transition-colors flex items-center gap-2"
+                    className="inline-flex items-center gap-2 text-amber-600 hover:text-amber-700 font-semibold"
                   >
-                    {language === 'ar' ? <ArrowRight className="w-5 h-5" /> : <ArrowLeft className="w-5 h-5" />}
-                    {language === 'ar' ? 'العودة للمنتجات' : 'Back to Products'}
+                    {language === 'ar' ? 'العودة إلى المنتجات' : 'Back to products'}
                   </Link>
                 </div>
               </div>
-            </div>
+            ) : null}
 
-            {/* Additional Information */}
-            <div className="mt-16 grid md:grid-cols-3 gap-8">
-              {/* Ingredients */}
-              <div className="bg-white rounded-xl shadow-lg p-6">
-                <h3 className="text-xl font-bold text-gray-800 mb-4">
-                  {language === 'ar' ? 'المكونات' : 'Ingredients'}
-                </h3>
-                <ul className="space-y-2">
-                  {(language === 'ar' ? product.ingredientsAr : product.ingredients).map((ingredient, index) => (
-                    <li key={index} className="text-gray-600 flex items-center gap-2">
-                      <span className="w-2 h-2 bg-amber-500 rounded-full"></span>
-                      {ingredient}
-                    </li>
-                  ))}
-                </ul>
-              </div>
+            {state === 'ready' && product ? (
+              <>
+                <div className="grid lg:grid-cols-2 gap-12">
+                {/* Image Gallery */}
+                <div className="space-y-4">
+                  <div className="relative bg-gradient-to-br from-amber-200 to-orange-300 rounded-2xl overflow-hidden aspect-square">
+                    <img
+                      src={images[currentImageIndex]}
+                      alt={displayName}
+                      className="absolute inset-0 h-full w-full object-cover"
+                      onError={(event) =>
+                        handleImageError(event, '/images/products/default-product.webp')
+                      }
+                    />
 
-              {/* Nutritional Info */}
-              <div className="bg-white rounded-xl shadow-lg p-6">
-                <h3 className="text-xl font-bold text-gray-800 mb-4">
-                  {language === 'ar' ? 'القيم الغذائية' : 'Nutritional Info'}
-                </h3>
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">{language === 'ar' ? 'السعرات' : 'Calories'}</span>
-                    <span className="font-semibold">{product.nutritionalInfo.calories}</span>
+                    {product.isFeatured ? (
+                      <div className="absolute top-4 ltr:left-4 rtl:right-4 bg-gradient-to-r from-yellow-400 to-orange-400 text-white px-4 py-2 rounded-full font-bold shadow-md">
+                        {language === 'ar' ? 'مميز' : 'Featured'}
+                      </div>
+                    ) : null}
+
+                    {!isAvailable ? (
+                      <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                        <span className="bg-red-500 text-white px-4 py-2 rounded-lg font-semibold">
+                          {unavailableLabel}
+                        </span>
+                      </div>
+                    ) : null}
+
+                    {images.length > 1 ? (
+                      <div className="absolute inset-x-0 top-1/2 flex justify-between px-4 text-white">
+                        <button
+                          type="button"
+                          onClick={() => incrementImage(-1)}
+                          className="rounded-full bg-black/40 p-2 hover:bg-black/60 transition-colors"
+                          aria-label={language === 'ar' ? 'الصورة السابقة' : 'Previous image'}
+                        >
+                          <ChevronLeft className="w-5 h-5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => incrementImage(1)}
+                          className="rounded-full bg-black/40 p-2 hover:bg-black/60 transition-colors"
+                          aria-label={language === 'ar' ? 'الصورة التالية' : 'Next image'}
+                        >
+                          <ChevronRight className="w-5 h-5" />
+                        </button>
+                      </div>
+                    ) : null}
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">{language === 'ar' ? 'البروتين' : 'Protein'}</span>
-                    <span className="font-semibold">{product.nutritionalInfo.protein}g</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">{language === 'ar' ? 'الدهون' : 'Fat'}</span>
-                    <span className="font-semibold">{product.nutritionalInfo.fat}g</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">{language === 'ar' ? 'الكربوهيدرات' : 'Carbs'}</span>
-                    <span className="font-semibold">{product.nutritionalInfo.carbs}g</span>
-                  </div>
-                  {product.nutritionalInfo.caffeine && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">{language === 'ar' ? 'الكافيين' : 'Caffeine'}</span>
-                      <span className="font-semibold">{product.nutritionalInfo.caffeine}mg</span>
+
+                  {images.length > 1 ? (
+                    <div className="flex gap-3 overflow-x-auto pb-2">
+                      {images.map((image, index) => (
+                        <button
+                          key={image}
+                          type="button"
+                          onClick={() => setCurrentImageIndex(index)}
+                          className={`relative h-20 w-20 rounded-xl overflow-hidden border-2 ${
+                            currentImageIndex === index
+                              ? 'border-amber-500'
+                              : 'border-transparent'
+                          }`}
+                        >
+                          <img
+                            src={image}
+                            alt={`${displayName} thumbnail ${index + 1}`}
+                            className="h-full w-full object-cover"
+                            onError={(event) =>
+                              handleImageError(event, '/images/products/default-product.webp')
+                            }
+                          />
+                        </button>
+                      ))}
                     </div>
-                  )}
+                  ) : null}
+                </div>
+
+                {/* Product Information */}
+                <div className="space-y-6">
+                  <div>
+                    <div className="flex items-center gap-3 mb-4">
+                      <Link
+                        to="/products"
+                        className="inline-flex items-center gap-1 text-amber-600 hover:text-amber-700"
+                      >
+                        {language === 'ar' ? (
+                          <>
+                            الرجوع
+                            <ArrowRight className="w-4 h-4" />
+                          </>
+                        ) : (
+                          <>
+                            <ArrowLeft className="w-4 h-4" />
+                            Back
+                          </>
+                        )}
+                      </Link>
+                      {averageRating > 0 ? (
+                        <div className="flex items-center gap-1 text-sm text-gray-600">
+                          <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                          <span>{averageRating.toFixed(1)}</span>
+                          {totalReviews > 0 ? (
+                            <span className="text-gray-400">
+                              ({totalReviews} {reviewsLabel})
+                            </span>
+                          ) : null}
+                        </div>
+                      ) : null}
+                    </div>
+
+                    <h1 className="text-4xl font-bold text-gray-900 mb-4">{displayName}</h1>
+
+                    {categoryLabel ? (
+                      <div className="text-sm text-gray-500 mb-4">
+                        <span className="font-semibold text-gray-700">{categoryText}:</span>{' '}
+                        {categoryLabel}
+                      </div>
+                    ) : null}
+
+                    {/* Short description or tasting notes */}
+                    {tastingNotes ? (
+                      <p className="text-gray-600 leading-relaxed mb-4">{tastingNotes}</p>
+                    ) : null}
+                  </div>
+
+                  <div className="bg-amber-50 border border-amber-100 rounded-2xl p-6 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-600 font-semibold">{priceLabel}</span>
+                      <span className="text-3xl font-bold text-amber-700">
+                        {price > 0
+                          ? formatCurrency(price, language)
+                          : language === 'ar'
+                            ? 'السعر عند الطلب'
+                            : 'Price on request'}
+                      </span>
+                    </div>
+
+                    {product.variants && product.variants.length > 0 ? (
+                      <div className="space-y-2">
+                        <label className="text-sm font-semibold text-gray-700" htmlFor="variant">
+                          {chooseOptionLabel}
+                        </label>
+                        <select
+                          id="variant"
+                          onChange={handleVariantChange}
+                          value={selectedVariant?.id ?? ''}
+                          className="w-full rounded-lg border border-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                        >
+                          {product.variants.map((variant) => {
+                            const variantPrice = resolvePrice(product, variant);
+                            const label = resolveVariantLabel(variant, language);
+                            return (
+                              <option key={variant.id} value={variant.id}>
+                                {label} —{' '}
+                                {variantPrice > 0
+                                  ? formatCurrency(variantPrice, language)
+                                  : language === 'ar'
+                                    ? 'السعر عند الطلب'
+                                    : 'Price on request'}
+                              </option>
+                            );
+                          })}
+                        </select>
+                      </div>
+                    ) : null}
+
+                    <div className="flex flex-wrap items-center gap-4">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-gray-700">{quantityLabel}</span>
+                        <div className="flex items-center border border-gray-200 rounded-lg">
+                          <button
+                            type="button"
+                            onClick={decreaseQuantity}
+                            className="px-3 py-1 text-lg text-gray-600 hover:text-gray-800"
+                            disabled={quantity <= 1}
+                          >
+                            –
+                          </button>
+                          <span className="px-4 py-1 text-lg font-semibold text-gray-800">
+                            {quantity}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={increaseQuantity}
+                            className="px-3 py-1 text-lg text-gray-600 hover:text-gray-800"
+                            disabled={quantity >= 10}
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+
+                      <Button
+                        type="button"
+                        onClick={handleAddToCart}
+                        disabled={!isAvailable || price <= 0}
+                        className="inline-flex items-center gap-2 bg-amber-600 hover:bg-amber-700"
+                      >
+                        <ShoppingCart className="w-5 h-5" />
+                        {addToCartLabel}
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              {/* Allergens */}
-              <div className="bg-white rounded-xl shadow-lg p-6">
-                <h3 className="text-xl font-bold text-gray-800 mb-4">
-                  {language === 'ar' ? 'مسببات الحساسية' : 'Allergens'}
-                </h3>
-                <div className="space-y-2">
-                  {(language === 'ar' ? product.allergensAr : product.allergens).map((allergen, index) => (
-                    <span
-                      key={index}
-                      className="inline-block bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm mr-2 mb-2"
-                    >
-                      {allergen}
-                    </span>
-                  ))}
+              {/* Tabs Section for Description */}
+              {displayDescription && (
+                <div className="mt-12 bg-white rounded-2xl shadow-lg overflow-hidden">
+                  <div className="border-b border-gray-200">
+                    <div className="container mx-auto">
+                      <div className="flex">
+                        <button
+                          type="button"
+                          className="px-8 py-4 text-lg font-semibold text-gray-700 border-b-4 border-amber-600 bg-amber-50"
+                        >
+                          {language === 'ar' ? 'الوصف' : 'Description'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="p-8">
+                    <div 
+                      className="text-gray-600 leading-relaxed [&_p]:mb-4 [&_ul]:list-disc [&_ul]:ml-6 [&_ul]:mb-4 [&_ol]:list-decimal [&_ol]:ml-6 [&_ol]:mb-4 [&_li]:mb-2 [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mb-4 [&_h2]:text-xl [&_h2]:font-bold [&_h2]:mb-3 [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:mb-2 [&_strong]:font-bold [&_em]:italic [&_a]:text-amber-600 [&_a]:underline [&_a:hover]:text-amber-700 [&_img]:rounded-lg [&_img]:my-4"
+                      dangerouslySetInnerHTML={{ __html: displayDescription }}
+                    />
+                  </div>
                 </div>
-              </div>
-            </div>
+              )}
+              </>
+            ) : null}
           </div>
         </div>
       </div>

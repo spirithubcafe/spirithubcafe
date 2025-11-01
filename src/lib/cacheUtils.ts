@@ -3,9 +3,11 @@ export interface CacheItem<T> {
   data: T;
   timestamp: number;
   expiresAt: number;
+  version: number;
 }
 
 const CACHE_DURATION = 60 * 60 * 1000; // 1 hour in milliseconds
+const CACHE_VERSION = 4; // Increment this when cache structure changes
 
 export const cacheUtils = {
   set: <T>(key: string, data: T, duration: number = CACHE_DURATION): void => {
@@ -15,6 +17,7 @@ export const cacheUtils = {
         data,
         timestamp: now,
         expiresAt: now + duration,
+        version: CACHE_VERSION,
       };
       localStorage.setItem(key, JSON.stringify(cacheItem));
     } catch (error) {
@@ -29,6 +32,13 @@ export const cacheUtils = {
 
       const cacheItem: CacheItem<T> = JSON.parse(item);
       const now = Date.now();
+
+      // Check version mismatch - clear if version is different
+      if (!cacheItem.version || cacheItem.version !== CACHE_VERSION) {
+        console.log(`Cache version mismatch for ${key}, clearing...`);
+        localStorage.removeItem(key);
+        return null;
+      }
 
       // Check if cache has expired
       if (now > cacheItem.expiresAt) {
