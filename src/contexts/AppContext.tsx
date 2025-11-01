@@ -6,6 +6,7 @@ import { categoryService } from '../services/categoryService';
 import { productService } from '../services/productService';
 import type { Category as ApiCategory } from '../types/product';
 import { getCategoryImageUrl, getProductImageUrl } from '../lib/imageUtils';
+import { cacheUtils, imageCacheUtils } from '../lib/cacheUtils';
 
 export interface User {
   id: string;
@@ -55,6 +56,17 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 
   // Fetch products from API
   const fetchProducts = useCallback(async () => {
+    // Check cache first
+    const cacheKey = `spirithub_cache_products_${language}`;
+    const cachedData = cacheUtils.get<Product[]>(cacheKey);
+    
+    if (cachedData) {
+      console.log('📦 Using cached products for', language);
+      setProducts(cachedData);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError(null);
     
@@ -116,6 +128,18 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       );
       
       setProducts(transformedProducts);
+      
+      // Cache the data
+      cacheUtils.set(cacheKey, transformedProducts);
+      
+      // Preload and cache images in background
+      const imageUrls = transformedProducts.map(p => p.image);
+      imageCacheUtils.preloadImages(imageUrls).then(() => {
+        imageCacheUtils.markImagesCached(imageUrls);
+        console.log('✅ Product images cached');
+      });
+      
+      console.log('✅ Products fetched and cached for', language);
     } catch (err) {
       console.error('❌ Error fetching products:', err);
       setError('Failed to fetch products');
@@ -126,6 +150,17 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   }, [language]);
 
   const fetchCategories = useCallback(async () => {
+    // Check cache first
+    const cacheKey = `spirithub_cache_categories_${language}`;
+    const cachedData = cacheUtils.get<Category[]>(cacheKey);
+    
+    if (cachedData) {
+      console.log('📦 Using cached categories for', language);
+      setCategories(cachedData);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError(null);
     
@@ -147,6 +182,18 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       });
       
       setCategories(transformedCategories);
+      
+      // Cache the data
+      cacheUtils.set(cacheKey, transformedCategories);
+      
+      // Preload and cache images in background
+      const imageUrls = transformedCategories.map(c => c.image);
+      imageCacheUtils.preloadImages(imageUrls).then(() => {
+        imageCacheUtils.markImagesCached(imageUrls);
+        console.log('✅ Category images cached');
+      });
+      
+      console.log('✅ Categories fetched and cached for', language);
     } catch (err) {
       console.error('❌ Error fetching categories:', err);
       setError('Failed to fetch categories');
@@ -166,6 +213,33 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     document.documentElement.lang = language;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [language]);
+
+  // Background refresh every hour
+  useEffect(() => {
+    const REFRESH_INTERVAL = 60 * 60 * 1000; // 1 hour
+    
+    const refreshData = () => {
+      const productsCacheKey = `spirithub_cache_products_${language}`;
+      const categoriesCacheKey = `spirithub_cache_categories_${language}`;
+      
+      // Check if cache is expired and refresh in background
+      if (cacheUtils.isExpired(productsCacheKey)) {
+        console.log('🔄 Background refresh: Products');
+        fetchProducts();
+      }
+      
+      if (cacheUtils.isExpired(categoriesCacheKey)) {
+        console.log('🔄 Background refresh: Categories');
+        fetchCategories();
+      }
+    };
+    
+    // Set up interval for background refresh
+    const intervalId = setInterval(refreshData, REFRESH_INTERVAL);
+    
+    // Cleanup on unmount
+    return () => clearInterval(intervalId);
+  }, [language, fetchProducts, fetchCategories]);
 
   const value: AppContextType = {
     language,
