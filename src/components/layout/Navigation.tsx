@@ -1,9 +1,15 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Globe, ShoppingCart, Menu } from 'lucide-react';
+import { Globe, ShoppingCart, Menu, ChevronDown } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../ui/dropdown-menu';
 import { useApp } from '../../hooks/useApp';
 import { useAuth } from '../../hooks/useAuth';
 import { AuthButtons } from '../auth/AuthButtons';
@@ -11,7 +17,7 @@ import { UserProfile } from '../auth/UserProfile';
 
 export const Navigation: React.FC = () => {
   const { t } = useTranslation();
-  const { language, toggleLanguage } = useApp();
+  const { language, toggleLanguage, categories } = useApp();
   const { isAuthenticated } = useAuth();
   const location = useLocation();
   
@@ -19,27 +25,79 @@ export const Navigation: React.FC = () => {
   const isHomePage = location.pathname === '/';
 
   const navItems = [
-    { key: 'home', label: t('nav.home'), href: '/', isRoute: true },
-    { key: 'products', label: t('nav.products'), href: '/products', isRoute: true },
-    { key: 'about', label: t('nav.about'), href: '/about', isRoute: true },
-    { key: 'contact', label: t('nav.contact'), href: '/contact', isRoute: true }
+    { key: 'home', label: t('nav.home'), href: '/', isRoute: true, hasDropdown: false },
+    { key: 'products', label: t('nav.products'), href: '/products', isRoute: true, hasDropdown: true },
+    { key: 'about', label: t('nav.about'), href: '/about', isRoute: true, hasDropdown: false },
+    { key: 'contact', label: t('nav.contact'), href: '/contact', isRoute: true, hasDropdown: false }
   ];
 
   const NavContent = () => (
     <>
-      {navItems.map((item) => (
-        <Link
-          key={item.key}
-          to={item.href}
-          className={`transition-colors duration-200 font-medium text-sm md:text-base lg:text-lg whitespace-nowrap ${
-            isHomePage 
-              ? 'text-white hover:text-amber-200' 
-              : 'text-gray-900 hover:text-amber-600'
-          }`}
-        >
-          {item.label}
-        </Link>
-      ))}
+      {navItems.map((item) => {
+        if (item.hasDropdown && item.key === 'products') {
+          return (
+            <DropdownMenu key={item.key}>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className={`flex items-center gap-1 transition-colors duration-200 font-medium text-sm md:text-base lg:text-lg whitespace-nowrap ${
+                    isHomePage 
+                      ? 'text-white hover:text-amber-200' 
+                      : 'text-gray-900 hover:text-amber-600'
+                  }`}
+                >
+                  {item.label}
+                  <ChevronDown className="w-4 h-4" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent 
+                align="start" 
+                className="w-56 bg-white border border-gray-200 shadow-lg"
+              >
+                {/* All Products Link */}
+                <DropdownMenuItem asChild>
+                  <Link
+                    to="/products"
+                    className="w-full px-4 py-2 text-gray-900 hover:bg-amber-50 hover:text-amber-600 font-medium"
+                  >
+                    {language === 'ar' ? 'جميع المنتجات' : 'All Products'}
+                  </Link>
+                </DropdownMenuItem>
+                
+                {/* Divider */}
+                {categories.length > 0 && (
+                  <div className="h-px bg-gray-200 my-1" />
+                )}
+                
+                {/* Categories List */}
+                {categories.map((category) => (
+                  <DropdownMenuItem key={category.id} asChild>
+                    <Link
+                      to={`/products?category=${category.id}`}
+                      className="w-full px-4 py-2 text-gray-700 hover:bg-amber-50 hover:text-amber-600"
+                    >
+                      {category.name}
+                    </Link>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          );
+        }
+        
+        return (
+          <Link
+            key={item.key}
+            to={item.href}
+            className={`transition-colors duration-200 font-medium text-sm md:text-base lg:text-lg whitespace-nowrap ${
+              isHomePage 
+                ? 'text-white hover:text-amber-200' 
+                : 'text-gray-900 hover:text-amber-600'
+            }`}
+          >
+            {item.label}
+          </Link>
+        );
+      })}
     </>
   );
 
@@ -192,18 +250,51 @@ export const Navigation: React.FC = () => {
               </SheetTrigger>
               <SheetContent
                 side={language === 'ar' ? 'left' : 'right'}
-                className="bg-gradient-to-b from-amber-900 to-amber-950 text-white border-amber-700"
+                className="bg-gradient-to-b from-amber-900 to-amber-950 text-white border-amber-700 overflow-y-auto"
               >
                 <div className="flex flex-col space-y-6 mt-8">
-                  {navItems.map((item) => (
-                    <Link
-                      key={item.key}
-                      to={item.href}
-                      className="text-white hover:text-amber-200 transition-colors duration-200 font-medium text-lg py-2"
-                    >
-                      {item.label}
-                    </Link>
-                  ))}
+                  {navItems.map((item) => {
+                    if (item.hasDropdown && item.key === 'products') {
+                      return (
+                        <div key={item.key} className="space-y-2">
+                          <Link
+                            to={item.href}
+                            className="text-white hover:text-amber-200 transition-colors duration-200 font-medium text-lg py-2 block"
+                          >
+                            {item.label}
+                          </Link>
+                          {/* Categories Submenu */}
+                          <div className="pl-4 space-y-2 border-l-2 border-amber-700">
+                            <Link
+                              to="/products"
+                              className="text-amber-200 hover:text-white transition-colors duration-200 text-sm py-1 block"
+                            >
+                              {language === 'ar' ? 'جميع المنتجات' : 'All Products'}
+                            </Link>
+                            {categories.map((category) => (
+                              <Link
+                                key={category.id}
+                                to={`/products?category=${category.id}`}
+                                className="text-amber-100 hover:text-white transition-colors duration-200 text-sm py-1 block"
+                              >
+                                {category.name}
+                              </Link>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    }
+                    
+                    return (
+                      <Link
+                        key={item.key}
+                        to={item.href}
+                        className="text-white hover:text-amber-200 transition-colors duration-200 font-medium text-lg py-2"
+                      >
+                        {item.label}
+                      </Link>
+                    );
+                  })}
                   <div className="border-t border-amber-700 pt-6 space-y-4">
                     <Button
                       variant="ghost"
