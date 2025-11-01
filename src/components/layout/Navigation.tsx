@@ -12,6 +12,7 @@ import {
 } from '../ui/dropdown-menu';
 import { useApp } from '../../hooks/useApp';
 import { useAuth } from '../../hooks/useAuth';
+import { useCart } from '../../hooks/useCart';
 import { AuthButtons } from '../auth/AuthButtons';
 import { UserProfile } from '../auth/UserProfile';
 
@@ -19,6 +20,7 @@ export const Navigation: React.FC = () => {
   const { t } = useTranslation();
   const { language, toggleLanguage, categories } = useApp();
   const { isAuthenticated } = useAuth();
+  const { totalItems, openCart } = useCart();
   const location = useLocation();
   
   // Check if we're on the home page
@@ -141,13 +143,20 @@ export const Navigation: React.FC = () => {
             <Button
               variant="ghost"
               size="sm"
-              className={`transition-colors text-sm ${
+              onClick={openCart}
+              className={`relative transition-colors text-sm ${
                 isHomePage 
                   ? 'text-white hover:text-amber-200 hover:bg-white/10' 
                   : 'text-gray-900 hover:text-amber-600 hover:bg-gray-100'
               }`}
             >
               <ShoppingCart className="w-4 h-4 mr-1" />
+              {totalItems > 0 && (
+                <span className="absolute -top-1 -right-1 bg-amber-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                  {totalItems}
+                </span>
+              )}
+              {t('nav.cart')}
               {t('nav.cart')}
             </Button>
 

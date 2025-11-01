@@ -8,8 +8,8 @@ export const FeaturedProducts: React.FC = () => {
   const { t } = useTranslation();
   const { products, loading } = useApp();
 
-  // Show all products (not just featured ones)
-  const displayProducts = products.slice(0, 6);
+  // Show only 4 products with price > 0 in two rows (2 products per row)
+  const displayProducts = products.filter(p => p.price > 0).slice(0, 4);
 
   if (loading) {
     return (
