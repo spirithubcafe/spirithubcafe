@@ -1,5 +1,4 @@
 import { Fragment, useEffect, useMemo, useState } from 'react';
-import type { ChangeEvent } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -35,14 +34,16 @@ const toNumber = (value: unknown): number | undefined => {
 
 const resolveVariantLabel = (variant: ProductVariant, language: string): string => {
   const weightLabel =
-    variant.weight && variant.weightUnit ? `${variant.weight} ${variant.weightUnit}` : undefined;
+    variant.weight && variant.weightUnit ? `${variant.weight}${variant.weightUnit}` : undefined;
   const skuLabel = variant.variantSku;
 
   if (language === 'ar') {
+    // Arabic: Show weight first, fallback to SKU if no weight
     return weightLabel ?? skuLabel ?? `الخيار ${variant.id}`;
   }
 
-  return skuLabel ?? weightLabel ?? `Option ${variant.id}`;
+  // English: Show weight first, fallback to simple option name if no weight
+  return weightLabel ?? `Option ${variant.id}`;
 };
 
 const resolvePrice = (product: ApiProduct, variant?: ProductVariant): number => {
@@ -83,6 +84,11 @@ export const ProductDetailPage = () => {
   const [quantity, setQuantity] = useState(1);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Scroll to top when component mounts or productId changes
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [productId]);
 
   useEffect(() => {
     let isMounted = true;
@@ -222,13 +228,6 @@ export const ProductDetailPage = () => {
     });
   };
 
-  const handleVariantChange = (event: ChangeEvent<HTMLSelectElement>) => {
-    const value = Number(event.target.value);
-    if (Number.isFinite(value)) {
-      setSelectedVariantId(value);
-    }
-  };
-
   const decreaseQuantity = () => {
     setQuantity((prev) => Math.max(1, prev - 1));
   };
@@ -281,7 +280,7 @@ export const ProductDetailPage = () => {
 
   return (
     <div
-      className={`min-h-screen bg-gradient-to-br from-amber-50 to-orange-100 ${
+      className={`min-h-screen bg-gray-50 ${
         language === 'ar' ? 'rtl' : 'ltr'
       }`}
     >
@@ -306,9 +305,35 @@ export const ProductDetailPage = () => {
         </div>
       </div>
 
-      <div className="py-12 bg-white">
+      {/* Main Content */}
+      <div className="py-16">
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto">
+            {/* Back Button */}
+            {state === 'ready' && product && (
+              <div className="mb-6">
+                <Button
+                  variant="outline"
+                  asChild
+                  className="gap-2"
+                >
+                  <Link to="/products">
+                    {language === 'ar' ? (
+                      <>
+                        الرجوع
+                        <ArrowRight className="w-4 h-4" />
+                      </>
+                    ) : (
+                      <>
+                        <ArrowLeft className="w-4 h-4" />
+                        Back
+                      </>
+                    )}
+                  </Link>
+                </Button>
+              </div>
+            )}
+
             {state === 'loading' ? (
               <div className="flex justify-center py-24">
                 <div className="flex flex-col items-center gap-3 text-gray-600">
@@ -340,7 +365,10 @@ export const ProductDetailPage = () => {
 
             {state === 'ready' && product ? (
               <>
-                <div className="grid lg:grid-cols-2 gap-12">
+                {/* Product Details Card */}
+                <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+                  <div className="p-8">
+                    <div className="grid lg:grid-cols-2 gap-12">
                 {/* Image Gallery */}
                 <div className="space-y-4">
                   <div className="relative bg-gradient-to-br from-amber-200 to-orange-300 rounded-2xl overflow-hidden aspect-square">
@@ -420,22 +448,6 @@ export const ProductDetailPage = () => {
                 <div className="space-y-6">
                   <div>
                     <div className="flex items-center gap-3 mb-4">
-                      <Link
-                        to="/products"
-                        className="inline-flex items-center gap-1 text-amber-600 hover:text-amber-700"
-                      >
-                        {language === 'ar' ? (
-                          <>
-                            الرجوع
-                            <ArrowRight className="w-4 h-4" />
-                          </>
-                        ) : (
-                          <>
-                            <ArrowLeft className="w-4 h-4" />
-                            Back
-                          </>
-                        )}
-                      </Link>
                       {averageRating > 0 ? (
                         <div className="flex items-center gap-1 text-sm text-gray-600">
                           <Star className="w-4 h-4 text-yellow-400 fill-current" />
@@ -477,31 +489,41 @@ export const ProductDetailPage = () => {
                     </div>
 
                     {product.variants && product.variants.length > 0 ? (
-                      <div className="space-y-2">
-                        <label className="text-sm font-semibold text-gray-700" htmlFor="variant">
+                      <div className="space-y-3">
+                        <label className="text-sm font-semibold text-gray-700">
                           {chooseOptionLabel}
                         </label>
-                        <select
-                          id="variant"
-                          onChange={handleVariantChange}
-                          value={selectedVariant?.id ?? ''}
-                          className="w-full rounded-lg border border-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500"
-                        >
+                        <div className="flex flex-wrap gap-3">
                           {product.variants.map((variant) => {
                             const variantPrice = resolvePrice(product, variant);
                             const label = resolveVariantLabel(variant, language);
+                            const isSelected = selectedVariant?.id === variant.id;
+                            
                             return (
-                              <option key={variant.id} value={variant.id}>
-                                {label} —{' '}
-                                {variantPrice > 0
-                                  ? formatCurrency(variantPrice, language)
-                                  : language === 'ar'
-                                    ? 'السعر عند الطلب'
-                                    : 'Price on request'}
-                              </option>
+                              <button
+                                key={variant.id}
+                                type="button"
+                                onClick={() => setSelectedVariantId(variant.id)}
+                                className={`px-4 py-3 rounded-lg border-2 transition-all font-medium ${
+                                  isSelected
+                                    ? 'border-amber-500 bg-amber-500 text-white shadow-md'
+                                    : 'border-gray-300 bg-white text-gray-700 hover:border-amber-400 hover:bg-amber-50'
+                                }`}
+                              >
+                                <div className="flex flex-col items-center gap-1">
+                                  <span className="text-sm">{label}</span>
+                                  <span className={`text-xs font-bold ${isSelected ? 'text-white' : 'text-amber-600'}`}>
+                                    {variantPrice > 0
+                                      ? formatCurrency(variantPrice, language)
+                                      : language === 'ar'
+                                        ? 'السعر عند الطلب'
+                                        : 'Price on request'}
+                                  </span>
+                                </div>
+                              </button>
                             );
                           })}
-                        </select>
+                        </div>
                       </div>
                     ) : null}
 
@@ -544,10 +566,12 @@ export const ProductDetailPage = () => {
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
 
               {/* Tabs Section for Description */}
               {displayDescription && (
-                <div className="mt-12 bg-white rounded-2xl shadow-lg overflow-hidden">
+                <div className="mt-8 bg-white rounded-2xl shadow-lg overflow-hidden">
                   <div className="border-b border-gray-200">
                     <div className="container mx-auto">
                       <div className="flex">
