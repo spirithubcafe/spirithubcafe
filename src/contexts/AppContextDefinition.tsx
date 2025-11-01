@@ -19,6 +19,8 @@ export interface Category {
   name: string;
   description: string;
   image: string;
+  isDisplayedOnHomepage?: boolean;
+  displayOrder?: number;
 }
 
 export interface AppContextType {

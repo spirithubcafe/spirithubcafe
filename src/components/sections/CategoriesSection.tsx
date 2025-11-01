@@ -14,6 +14,11 @@ export const CategoriesSection: React.FC = () => {
     navigate(`/products?category=${categoryId}`);
   };
 
+  // Filter categories for homepage display and sort by displayOrder
+  const homepageCategories = categories
+    .filter(cat => cat.isDisplayedOnHomepage !== false)
+    .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+
   if (loading) {
     return (
       <section className="py-16 bg-white">
@@ -26,7 +31,7 @@ export const CategoriesSection: React.FC = () => {
     );
   }
 
-  if (!categories || categories.length === 0) {
+  if (!homepageCategories || homepageCategories.length === 0) {
     return (
       <section className="py-16 bg-white">
         <div className="container mx-auto px-4">
@@ -50,7 +55,7 @@ export const CategoriesSection: React.FC = () => {
 
         {/* Categories Grid - 5 columns */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-          {categories.map((category) => (
+          {homepageCategories.map((category) => (
             <div
               key={category.id}
               className="group cursor-pointer"
@@ -75,11 +80,6 @@ export const CategoriesSection: React.FC = () => {
                 <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-amber-600 transition-colors duration-200">
                   {category.name}
                 </h3>
-                {category.description && (
-                  <p className="text-sm text-gray-600 line-clamp-2 px-2">
-                    {category.description}
-                  </p>
-                )}
               </div>
             </div>
           ))}

@@ -225,7 +225,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
           slug: cat.slug,
           name: language === 'ar' && cat.nameAr ? cat.nameAr : cat.name,
           description: language === 'ar' && cat.descriptionAr ? cat.descriptionAr : cat.description || '',
-          image: imageUrl
+          image: imageUrl,
+          isDisplayedOnHomepage: cat.isDisplayedOnHomepage,
+          displayOrder: cat.displayOrder
         };
       });
       

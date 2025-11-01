@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useApp } from '../hooks/useApp';
 import { ProductCard } from '../components/products/ProductCard';
 import { Spinner } from '../components/ui/spinner';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 
 type CategoryOption = {
   id: string;
@@ -16,11 +16,22 @@ export const ProductsPage = () => {
   const { i18n } = useTranslation();
   const { products, categories, loading } = useApp();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const categoryFromUrl = searchParams.get('category');
   const [selectedCategory, setSelectedCategory] = useState<string>(categoryFromUrl || 'all');
   const [searchTerm, setSearchTerm] = useState('');
 
   const isArabic = i18n.language === 'ar';
+
+  // Handle category change and update URL
+  const handleCategoryChange = (categoryId: string) => {
+    setSelectedCategory(categoryId);
+    if (categoryId === 'all') {
+      navigate('/products', { replace: true });
+    } else {
+      navigate(`/products?category=${categoryId}`, { replace: true });
+    }
+  };
 
   // Scroll to top on page load or category change
   useEffect(() => {
@@ -171,7 +182,7 @@ export const ProductsPage = () => {
                   return (
                     <button
                       key={category.id}
-                      onClick={() => setSelectedCategory(category.id)}
+                      onClick={() => handleCategoryChange(category.id)}
                       className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${
                         isActive
                           ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md'
