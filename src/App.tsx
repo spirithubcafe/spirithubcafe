@@ -10,6 +10,7 @@ import ProfilePage from './pages/ProfilePage';
 import { AdminPanel } from './pages/AdminPanel';
 import { AboutPage } from './pages/AboutPage';
 import { ContactPage } from './pages/ContactPage';
+import { FAQPage } from './pages/FAQPage';
 import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage';
 import { TermsConditionsPage } from './pages/TermsConditionsPage';
 import { DeliveryPolicyPage } from './pages/DeliveryPolicyPage';
@@ -30,6 +31,7 @@ function AppContent() {
         <Route path="/admin" element={<AdminPanel />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/contact" element={<ContactPage />} />
+        <Route path="/faq" element={<FAQPage />} />
         <Route path="/privacy" element={<PrivacyPolicyPage />} />
         <Route path="/terms" element={<TermsConditionsPage />} />
         <Route path="/delivery" element={<DeliveryPolicyPage />} />
