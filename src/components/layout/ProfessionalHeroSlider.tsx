@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Star, Award } from 'lucide-react';
+import { Award } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useApp } from '../../hooks/useApp';
 import './ProfessionalHeroSlider.css';
@@ -169,27 +169,12 @@ export const ProfessionalHeroSlider: React.FC = () => {
                 {currentSlideData.description}
               </motion.p>
 
-              {/* Features */}
-              <motion.div
-                className="slide-features"
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 0.8, delay: 0.7 }}
-              >
-                {currentSlideData.features.map((feature, index) => (
-                  <div key={index} className="feature-item">
-                    <Star className="w-4 h-4 text-amber-400" />
-                    <span>{feature}</span>
-                  </div>
-                ))}
-              </motion.div>
-
               {/* CTA Button */}
               <motion.div
                 className="slide-cta"
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 0.8, delay: 0.8 }}
+                transition={{ duration: 0.8, delay: 0.7 }}
               >
                 <Button
                   size="lg"
