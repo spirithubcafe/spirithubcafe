@@ -1,5 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../hooks/useApp';
 import { Spinner } from '../ui/spinner';
 import { handleImageError } from '../../lib/imageUtils';
@@ -7,6 +8,11 @@ import { handleImageError } from '../../lib/imageUtils';
 export const CategoriesSection: React.FC = () => {
   const { t } = useTranslation();
   const { categories, loading } = useApp();
+  const navigate = useNavigate();
+
+  const handleCategoryClick = (categoryId: string) => {
+    navigate(`/products?category=${categoryId}`);
+  };
 
   if (loading) {
     return (
@@ -48,6 +54,7 @@ export const CategoriesSection: React.FC = () => {
             <div
               key={category.id}
               className="group cursor-pointer"
+              onClick={() => handleCategoryClick(category.id)}
             >
               {/* Category Image */}
               <div className="relative overflow-hidden rounded-lg aspect-square mb-4 border border-gray-200 group-hover:border-amber-400 transition-all duration-300">

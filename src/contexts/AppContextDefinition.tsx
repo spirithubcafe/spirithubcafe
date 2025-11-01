@@ -6,6 +6,8 @@ export interface Product {
   description: string;
   price: number;
   image: string;
+  categoryId?: string;
+  categorySlug?: string;
   category: string;
   tastingNotes?: string;
   featured?: boolean;
@@ -13,6 +15,7 @@ export interface Product {
 
 export interface Category {
   id: string;
+  slug?: string;
   name: string;
   description: string;
   image: string;

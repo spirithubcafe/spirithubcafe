@@ -1,6 +1,7 @@
 import React from 'react';
 import { useApp } from '../hooks/useApp';
 import { Coffee, Users, Award, Heart, Clock, MapPin } from 'lucide-react';
+import './AboutPage.css';
 
 export const AboutPage: React.FC = () => {
   const { language } = useApp();
@@ -58,14 +59,15 @@ export const AboutPage: React.FC = () => {
   return (
     <div className={`min-h-screen bg-gradient-to-br from-amber-50 to-orange-100 ${language === 'ar' ? 'rtl' : 'ltr'}`}>
       {/* Hero Section */}
-      <div className="relative h-96 bg-gradient-to-r from-amber-900 to-orange-800 overflow-hidden">
-        <div className="absolute inset-0 bg-black bg-opacity-40"></div>
+      <div className="relative h-64 overflow-hidden">
+        <div className="absolute inset-0 hero-background"></div>
+        <div className="absolute inset-0 glass-overlay"></div>
         <div className="relative container mx-auto px-4 h-full flex items-center justify-center text-center">
           <div className="max-w-3xl">
-            <h1 className="text-5xl font-bold text-white mb-4">
+            <h1 className="text-4xl font-bold text-white mb-3">
               {language === 'ar' ? 'من نحن' : 'About Us'}
             </h1>
-            <p className="text-xl text-amber-100 leading-relaxed">
+            <p className="text-lg text-amber-100 leading-relaxed">
               {language === 'ar' 
                 ? 'نحن مقهى سبيريت هب - مكان يجمع بين أصالة القهوة العربية وحداثة التقديم العالمي'
                 : 'We are Spirit Hub Café - a place that combines the authenticity of Arabic coffee with modern global presentation'

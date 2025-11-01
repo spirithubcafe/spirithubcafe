@@ -130,6 +130,28 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
             (typeof fullProduct.categoryName === 'string' && fullProduct.categoryName) || '';
           const fallbackCategoryNameAr =
             (typeof fullProduct.categoryNameAr === 'string' && fullProduct.categoryNameAr) || '';
+          const numericCategoryId =
+            (typeof fullProduct.categoryId === 'number' ? fullProduct.categoryId : undefined) ??
+            (fullProduct.category && typeof fullProduct.category.id === 'number'
+              ? fullProduct.category.id
+              : undefined);
+          const categoryIdString =
+            numericCategoryId !== undefined ? String(numericCategoryId) : undefined;
+          const categorySlug =
+            (fullProduct.category && typeof fullProduct.category.slug === 'string'
+              ? fullProduct.category.slug
+              : undefined) ??
+            (typeof fullProduct.categorySlug === 'string' ? fullProduct.categorySlug : undefined);
+          const categoryName =
+            language === 'ar'
+              ? fullProduct.category?.nameAr ||
+                fallbackCategoryNameAr ||
+                fullProduct.category?.name ||
+                fallbackCategoryName
+              : fullProduct.category?.name ||
+                fallbackCategoryName ||
+                fullProduct.category?.nameAr ||
+                fallbackCategoryNameAr;
 
           return {
             id: fullProduct.id.toString(),
@@ -140,13 +162,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
                 : fullProduct.description || '',
             price,
             image: imageUrl,
-            category:
-              language === 'ar'
-                ? fullProduct.category?.nameAr ||
-                  fallbackCategoryNameAr ||
-                  fullProduct.category?.name ||
-                  ''
-                : fallbackCategoryName || fullProduct.category?.name || '',
+            categoryId: categoryIdString,
+            categorySlug,
+            category: categoryName,
             tastingNotes:
               language === 'ar' && fullProduct.tastingNotesAr
                 ? fullProduct.tastingNotesAr
@@ -195,7 +213,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     
     try {
       // Fetch categories from API
-      const apiCategories = await categoryService.getHomepageCategories(10);
+      const apiCategories = await categoryService.getAll({ includeInactive: false });
       
       // Transform API categories to match AppContext format
       const transformedCategories: Category[] = apiCategories.map((cat: ApiCategory) => {
@@ -204,6 +222,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         
         return {
           id: cat.id.toString(),
+          slug: cat.slug,
           name: language === 'ar' && cat.nameAr ? cat.nameAr : cat.name,
           description: language === 'ar' && cat.descriptionAr ? cat.descriptionAr : cat.description || '',
           image: imageUrl

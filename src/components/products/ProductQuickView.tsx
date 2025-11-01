@@ -199,6 +199,7 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
                   onClick={handleClose}
                   type="button"
                   className="absolute top-3 ltr:right-3 rtl:left-3 bg-white/90 hover:bg-white rounded-full p-1.5 opacity-70 hover:opacity-100 transition-opacity shadow-md z-10"
+                  aria-label={isArabic ? 'إغلاق' : 'Close'}
                 >
                   <X className="h-4 w-4" />
                 </button>
