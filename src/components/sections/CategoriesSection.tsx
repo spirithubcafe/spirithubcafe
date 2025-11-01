@@ -1,9 +1,8 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { ArrowRight, ArrowLeft } from 'lucide-react';
-import { Card } from '../ui/card';
 import { useApp } from '../../hooks/useApp';
 import { Spinner } from '../ui/spinner';
+import { handleImageError } from '../../lib/imageUtils';
 
 export const CategoriesSection: React.FC = () => {
   const { t } = useTranslation();
@@ -13,8 +12,20 @@ export const CategoriesSection: React.FC = () => {
     return (
       <section className="py-16 bg-white">
         <div className="container mx-auto px-4">
-          <div className="flex justify-center">
+          <div className="flex justify-center items-center min-h-[300px]">
             <Spinner className="w-8 h-8" />
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (!categories || categories.length === 0) {
+    return (
+      <section className="py-16 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="text-center text-gray-500">
+            {t('sections.noCategories') || 'No categories available'}
           </div>
         </div>
       </section>
@@ -27,56 +38,49 @@ export const CategoriesSection: React.FC = () => {
         {/* Section Header */}
         <div className="text-center mb-12">
           <h2 className="text-4xl font-bold text-gray-900 mb-4">
-            {t('sections.categories')}
+            {t('sections.categories') || 'Our Categories'}
           </h2>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Discover our carefully curated coffee categories
+            {language === 'ar' 
+              ? 'اكتشف مجموعتنا المختارة بعناية من فئات القهوة'
+              : 'Discover our carefully curated coffee categories'
+            }
           </p>
         </div>
 
-        {/* Categories Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {/* Categories Grid - 5 columns */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
           {categories.map((category) => (
-            <Card
+            <div
               key={category.id}
-              className="group overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer border border-gray-200 hover:border-amber-300"
+              className="group cursor-pointer"
             >
               {/* Category Image */}
-              <div className="relative overflow-hidden aspect-[4/3]">
+              <div className="relative overflow-hidden rounded-lg aspect-square mb-4 border border-gray-200 group-hover:border-amber-400 transition-all duration-300">
                 <img
-                  src={category.image}
+                  src={category.image || '/images/slides/slide1.webp'}
                   alt={category.name}
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                  onError={(e) => {
-                    // Fallback image based on category
-                    e.currentTarget.src = '/images/slides/slide1.webp';
-                  }}
+                  onError={(e) => handleImageError(e, '/images/slides/slide1.webp')}
+                  loading="lazy"
                 />
                 
-                {/* Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-                
-                {/* Category Content Overlay */}
-                <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                  <h3 className="text-2xl font-bold mb-2 group-hover:text-amber-200 transition-colors duration-200">
-                    {category.name}
-                  </h3>
-                  <p className="text-sm opacity-90 mb-4">
+                {/* Subtle Overlay on Hover */}
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all duration-300" />
+              </div>
+              
+              {/* Category Content Below Image */}
+              <div className="text-center">
+                <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-amber-600 transition-colors duration-200">
+                  {category.name}
+                </h3>
+                {category.description && (
+                  <p className="text-sm text-gray-600 line-clamp-2 px-2">
                     {category.description}
                   </p>
-                  
-                  {/* Explore Button */}
-                  <div className="flex items-center text-amber-200 font-semibold group-hover:text-white transition-colors duration-200">
-                    <span className="mr-2">Explore</span>
-                    {language === 'ar' ? (
-                      <ArrowLeft className="w-4 h-4 group-hover:translate-x-[-4px] transition-transform duration-200" />
-                    ) : (
-                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" />
-                    )}
-                  </div>
-                </div>
+                )}
               </div>
-            </Card>
+            </div>
           ))}
         </div>
       </div>

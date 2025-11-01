@@ -2,7 +2,6 @@ import React from 'react';
 import { ProfessionalHeroSlider } from '../components/layout/ProfessionalHeroSlider';
 import { FeaturedProducts } from '../components/sections/FeaturedProducts';
 import { CategoriesSection } from '../components/sections/CategoriesSection';
-import { AboutSection } from '../components/sections/AboutSection';
 import { AuthStatusCard } from '../components/auth/AuthStatusCard';
 
 const HomePage: React.FC = () => {
@@ -19,7 +18,6 @@ const HomePage: React.FC = () => {
 
       <FeaturedProducts />
       <CategoriesSection />
-      <AboutSection />
     </>
   );
 };

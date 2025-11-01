@@ -2,6 +2,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AppContext, type Product, type Category, type AppContextType } from './AppContextDefinition';
+import { categoryService } from '../services/categoryService';
+import type { Category as ApiCategory } from '../types/product';
+import { getCategoryImageUrl } from '../lib/imageUtils';
 
 export interface User {
   id: string;
@@ -109,8 +112,29 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     setError(null);
     
     try {
-      // Mock data - replace with actual API call
-      const mockCategories: Category[] = [
+      // Fetch categories from API
+      const apiCategories = await categoryService.getHomepageCategories(10);
+      
+      // Transform API categories to match AppContext format
+      const transformedCategories: Category[] = apiCategories.map((cat: ApiCategory) => {
+        // Build full image URL using utility function
+        const imageUrl = getCategoryImageUrl(cat.imagePath);
+        
+        return {
+          id: cat.id.toString(),
+          name: language === 'ar' && cat.nameAr ? cat.nameAr : cat.name,
+          description: language === 'ar' && cat.descriptionAr ? cat.descriptionAr : cat.description || '',
+          image: imageUrl
+        };
+      });
+      
+      setCategories(transformedCategories);
+    } catch (err) {
+      console.error('❌ Error fetching categories:', err);
+      setError('Failed to fetch categories');
+      
+      // Fallback to mock data if API fails
+      const fallbackCategories: Category[] = [
         {
           id: '1',
           name: language === 'ar' ? 'قهوة ساخنة' : 'Hot Coffee',
@@ -130,11 +154,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
           image: '/images/slides/slide5.webp'
         }
       ];
-      
-      setCategories(mockCategories);
-    } catch (err) {
-      setError('Failed to fetch categories');
-      console.error('Error fetching categories:', err);
+      setCategories(fallbackCategories);
     } finally {
       setLoading(false);
     }
