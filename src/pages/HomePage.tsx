@@ -3,6 +3,7 @@ import { ProfessionalHeroSlider } from '../components/layout/ProfessionalHeroSli
 import { SustainabilitySection } from '../components/sections/SustainabilitySection';
 import { FeaturedProducts } from '../components/sections/FeaturedProducts';
 import { CategoriesSection } from '../components/sections/CategoriesSection';
+import { CoffeeSelectionSection } from '../components/sections/CoffeeSelectionSection';
 
 const HomePage: React.FC = () => {
   return (
@@ -10,8 +11,10 @@ const HomePage: React.FC = () => {
       <ProfessionalHeroSlider />
       <SustainabilitySection />
 
-      <FeaturedProducts />
+      <FeaturedProducts /> 
+      <CoffeeSelectionSection />
       <CategoriesSection />
+     
     </>
   );
 };
