@@ -16,12 +16,44 @@ export const ContactPage: React.FC = () => {
     e.preventDefault();
     setIsSubmitting(true);
     
-    // Simulate form submission
+    // Format message for WhatsApp
+    const messageParts = language === 'ar' 
+      ? [
+          '*رسالة جديدة من موقع Spirit Hub Cafe*',
+          '',
+          `*الاسم:* ${formData.name}`,
+          `*البريد الإلكتروني:* ${formData.email}`,
+          `*الموضوع:* ${formData.subject}`,
+          '',
+          '*الرسالة:*',
+          formData.message
+        ]
+      : [
+          '*New Message from Spirit Hub Cafe*',
+          '',
+          `*Name:* ${formData.name}`,
+          `*Email:* ${formData.email}`,
+          `*Subject:* ${formData.subject}`,
+          '',
+          '*Message:*',
+          formData.message
+        ];
+    
+    const whatsappMessage = encodeURIComponent(messageParts.join('\n'));
+    
+    // WhatsApp phone number
+    const whatsappNumber = '96891900005';
+    const whatsappUrl = `https://api.whatsapp.com/send?phone=${whatsappNumber}&text=${whatsappMessage}`;
+    
+    // Open WhatsApp in a new tab
+    window.open(whatsappUrl, '_blank');
+    
+    // Reset form and show success message
     setTimeout(() => {
-      alert(language === 'ar' ? 'تم إرسال رسالتك بنجاح! سنرد عليك قريباً.' : 'Your message has been sent successfully! We will get back to you soon.');
+      alert(language === 'ar' ? 'سيتم توجيهك إلى WhatsApp لإرسال رسالتك' : 'You will be redirected to WhatsApp to send your message');
       setFormData({ name: '', email: '', subject: '', message: '' });
       setIsSubmitting(false);
-    }, 2000);
+    }, 500);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -35,26 +67,26 @@ export const ContactPage: React.FC = () => {
     {
       icon: Phone,
       title: language === 'ar' ? 'اتصل بنا' : 'Call Us',
-      content: '+966 11 123 4567',
-      subContent: language === 'ar' ? 'متاح 24/7 لخدمتك' : 'Available 24/7 for you',
+      content: '+968 9190 0005',
+      subContent: '+968 7272 6999',
     },
     {
       icon: Mail,
       title: language === 'ar' ? 'راسلنا' : 'Email Us',
-      content: 'info@spirithub.cafe',
+      content: 'info@spirithubcafe.com',
       subContent: language === 'ar' ? 'نرد خلال 24 ساعة' : 'We respond within 24 hours',
     },
     {
       icon: MapPin,
       title: language === 'ar' ? 'زورنا' : 'Visit Us',
-      content: language === 'ar' ? 'شارع الأمير محمد بن عبدالعزيز' : 'Prince Mohammed bin Abdulaziz Street',
-      subContent: language === 'ar' ? 'حي الملز، الرياض' : 'Al-Malaz District, Riyadh',
+      content: language === 'ar' ? 'شارع الموج، مسقط - عمان' : 'Al Mouj St, Muscat - Oman',
+      subContent: language === 'ar' ? 'موقع مميز وسهل الوصول' : 'Prime location, easy access',
     },
     {
       icon: Clock,
       title: language === 'ar' ? 'ساعات العمل' : 'Working Hours',
-      content: language === 'ar' ? 'السبت - الأربعاء: 6 ص - 12 م' : 'Sat - Wed: 6 AM - 12 AM',
-      subContent: language === 'ar' ? 'الخميس - الجمعة: 6 ص - 1 ص' : 'Thu - Fri: 6 AM - 1 AM',
+      content: language === 'ar' ? 'يومياً: 7 ص - 12 م' : 'Daily: 7:00 AM - 12:00 AM',
+      subContent: language === 'ar' ? 'مفتوح جميع أيام الأسبوع' : 'Open 7 days a week',
     },
   ];
 
@@ -190,20 +222,30 @@ export const ContactPage: React.FC = () => {
 
             {/* Map & Additional Info */}
             <div className="space-y-8">
-              {/* Map Placeholder */}
+              {/* Map */}
               <div className="bg-white rounded-2xl shadow-2xl p-8">
                 <h3 className="text-2xl font-bold text-gray-800 mb-6">
                   {language === 'ar' ? 'موقعنا على الخريطة' : 'Find Us on Map'}
                 </h3>
-                <div className="bg-gradient-to-br from-amber-100 to-orange-200 rounded-lg h-64 flex items-center justify-center">
-                  <div className="text-center">
-                    <MapPin className="w-16 h-16 text-amber-600 mx-auto mb-4" />
-                    <p className="text-gray-700 font-semibold">
-                      {language === 'ar' ? 'خريطة تفاعلية' : 'Interactive Map'}
-                    </p>
-                    <p className="text-gray-600 text-sm mt-2">
-                      {language === 'ar' ? 'شارع الأمير محمد بن عبدالعزيز، الرياض' : 'Prince Mohammed bin Abdulaziz St, Riyadh'}
-                    </p>
+                <div className="rounded-lg overflow-hidden h-96 border-2 border-gray-200">
+                  <iframe
+                    src="https://www.openstreetmap.org/export/embed.html?bbox=58.250566,23.613926,58.262566,23.623926&layer=mapnik&marker=23.618926,58.256566"
+                    width="100%"
+                    height="100%"
+                    style={{ border: 0 }}
+                    loading="lazy"
+                    title={language === 'ar' ? 'موقع Spirit Hub Cafe' : 'Spirit Hub Cafe Location'}
+                  ></iframe>
+                  <div className="mt-4">
+                    <a
+                      href="https://www.openstreetmap.org/?mlat=23.618926&mlon=58.256566&zoom=16#map=16/23.61893/58.25657"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 text-amber-600 hover:text-amber-700 font-semibold"
+                    >
+                      <MapPin className="w-5 h-5" />
+                      {language === 'ar' ? 'عرض خريطة أكبر' : 'View Larger Map'}
+                    </a>
                   </div>
                 </div>
               </div>
@@ -215,7 +257,9 @@ export const ContactPage: React.FC = () => {
                 </h3>
                 <div className="grid grid-cols-3 gap-4">
                   <a
-                    href="https://wa.me/966111234567"
+                    href="https://api.whatsapp.com/send?phone=96891900005"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="bg-green-500 hover:bg-green-600 text-white p-4 rounded-xl flex flex-col items-center transition-colors"
                   >
                     <MessageCircle className="w-8 h-8 mb-2" />
@@ -223,13 +267,17 @@ export const ContactPage: React.FC = () => {
                   </a>
                   <a
                     href="https://instagram.com/spirithubcafe"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="bg-pink-500 hover:bg-pink-600 text-white p-4 rounded-xl flex flex-col items-center transition-colors"
                   >
                     <Instagram className="w-8 h-8 mb-2" />
-                    <span className="text-sm font-semibold">Instagram</span>
+                    <span className="text-sm font-semibold">@spirithubcafe</span>
                   </a>
                   <a
                     href="https://facebook.com/spirithubcafe"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-xl flex flex-col items-center transition-colors"
                   >
                     <Facebook className="w-8 h-8 mb-2" />
