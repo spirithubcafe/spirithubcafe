@@ -69,7 +69,7 @@ export const Footer: React.FC = () => {
             </div>
 
             {/* Other sections in smaller columns */}
-            <div className="lg:col-span-7 grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="lg:col-span-7 grid grid-cols-2 md:grid-cols-3 gap-8">
               {/* Quick Links */}
               <div className="space-y-6">
                 <h3 className="text-xl font-bold text-amber-200">
