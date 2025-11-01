@@ -197,6 +197,16 @@ html {
   overflow: hidden;
 }
 
+/* Hide scrollbar but keep functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari and Opera */
+}
+
 /* Custom gradient backgrounds */
 .hero-gradient {
   background: linear-gradient(135deg, #92400e 0%, #451a03 100%);
