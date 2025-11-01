@@ -1,13 +1,14 @@
 import React, { useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { ShoppingCart } from 'lucide-react';
+import { ShoppingCart, Eye } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Card, CardContent, CardFooter } from '../ui/card';
 import { Button } from '../ui/button';
 import { useCart } from '../../hooks/useCart';
 import type { Product } from '../../contexts/AppContextDefinition';
 import { handleImageError } from '../../lib/imageUtils';
+import { ProductQuickView } from './ProductQuickView';
 
 interface ProductCardProps {
   product: Product;
@@ -19,6 +20,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const isArabic = i18n.language === 'ar';
   const { addToCart, openCart } = useCart();
   const [isAnimating, setIsAnimating] = useState(false);
+  const [showQuickView, setShowQuickView] = useState(false);
+  const [isClosingQuickView, setIsClosingQuickView] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
   const handleAddToCart = async (e: React.MouseEvent) => {
@@ -44,9 +47,32 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   };
 
   const handleCardClick = () => {
+    // Don't navigate if we're in the process of closing the quick view
+    if (isClosingQuickView) {
+      return;
+    }
     // Scroll to top before navigation
     window.scrollTo({ top: 0, behavior: 'instant' });
     navigate(`/products/${product.id}`);
+  };
+
+  const handleQuickView = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent navigation when clicking quick view
+    setShowQuickView(true);
+  };
+
+  const handleQuickViewClose = (open: boolean) => {
+    if (!open) {
+      // Set flag to prevent navigation
+      setIsClosingQuickView(true);
+      setShowQuickView(false);
+      // Clear the flag after a short delay
+      setTimeout(() => {
+        setIsClosingQuickView(false);
+      }, 300);
+    } else {
+      setShowQuickView(open);
+    }
   };
 
   return (
@@ -104,22 +130,40 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         </div>
       </CardContent>
 
-      {/* Add to Cart Button - Compact */}
+      {/* Action Buttons - Compact */}
       <CardFooter className="p-3 pt-0">
-        <Button
-          size="sm"
-          className="w-full bg-amber-600 hover:bg-amber-700 text-white shadow-md hover:shadow-lg transition-all disabled:opacity-50"
-          onClick={handleAddToCart}
-          disabled={isAnimating || product.price <= 0}
-        >
-          <ShoppingCart className="w-3.5 h-3.5 mr-1.5" />
-          <span className="text-xs font-semibold">
-            {isAnimating 
-              ? (isArabic ? 'جاري الإضافة...' : 'Adding...') 
-              : (isArabic ? 'إضافة للسلة' : 'Add to Cart')}
-          </span>
-        </Button>
+        <div className="flex gap-2 w-full">
+          <Button
+            size="sm"
+            variant="outline"
+            className="border-amber-600 text-amber-600 hover:bg-amber-50 hover:border-amber-700 hover:text-amber-700 shadow-sm hover:shadow-md transition-all disabled:opacity-50"
+            onClick={handleQuickView}
+            disabled={isAnimating || product.price <= 0}
+          >
+            <Eye className="w-3.5 h-3.5" />
+          </Button>
+          <Button
+            size="sm"
+            className="flex-1 bg-amber-600 hover:bg-amber-700 text-white shadow-md hover:shadow-lg transition-all disabled:opacity-50"
+            onClick={handleAddToCart}
+            disabled={isAnimating || product.price <= 0}
+          >
+            <ShoppingCart className="w-3.5 h-3.5 mr-1.5" />
+            <span className="text-xs font-semibold">
+              {isAnimating 
+                ? (isArabic ? 'جاري الإضافة...' : 'Adding...') 
+                : (isArabic ? 'إضافة للسلة' : 'Add to Cart')}
+            </span>
+          </Button>
+        </div>
       </CardFooter>
+
+      {/* Quick View Modal */}
+      <ProductQuickView
+        product={product}
+        open={showQuickView}
+        onOpenChange={handleQuickViewClose}
+      />
     </Card>
   );
 };
