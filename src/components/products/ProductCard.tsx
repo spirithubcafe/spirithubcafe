@@ -166,7 +166,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           {product.name}
         </h3>
         <p className="text-xs text-amber-600 mb-2 line-clamp-1">
-          {product.tastingNotes || '---'}
+          {(isArabic ? product.tastingNotesAr : product.tastingNotes) || '---'}
         </p>
         {/* Price at bottom */}
         <div className="flex items-center justify-between pt-2 border-t border-gray-100">

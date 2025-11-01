@@ -150,7 +150,17 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
             <Loader2 className="w-10 h-10 animate-spin text-amber-600" />
           </div>
         ) : (
-          <div className="flex flex-col md:grid md:grid-cols-2 gap-0">
+          <div className="flex flex-col md:grid md:grid-cols-2 gap-0 relative">
+            {/* Close Button - Top Corner of Modal */}
+            <button
+              onClick={handleClose}
+              type="button"
+              className="absolute top-3 ltr:right-3 rtl:left-3 bg-white hover:bg-gray-100 rounded-full p-2 shadow-lg z-20 transition-colors"
+              aria-label={isArabic ? 'إغلاق' : 'Close'}
+            >
+              <X className="h-5 w-5 text-gray-700" />
+            </button>
+
             {/* Product Name and Reviews - Mobile Only (Top) */}
             <div className="md:hidden px-5 pt-4 pb-3 border-b border-gray-200">
               <h2 className="text-xl font-bold text-gray-900 mb-2 leading-tight">{product.name}</h2>
@@ -187,37 +197,29 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
             </div>
 
             {/* Product Image */}
-            <div className="relative bg-gradient-to-br from-amber-100 to-orange-100 overflow-hidden flex flex-col">
-              <div className="aspect-square relative flex-shrink-0">
+            <div className="relative overflow-hidden">
+              <div className="aspect-square relative">
                 <img
                   src={images[currentImageIndex]}
                   alt={product.name}
                   className="absolute inset-0 w-full h-full object-cover"
                   onError={(event) => handleImageError(event, '/images/products/default-product.webp')}
                 />
-                <button
-                  onClick={handleClose}
-                  type="button"
-                  className="absolute top-3 ltr:right-3 rtl:left-3 bg-white/90 hover:bg-white rounded-full p-1.5 opacity-70 hover:opacity-100 transition-opacity shadow-md z-10"
-                  aria-label={isArabic ? 'إغلاق' : 'Close'}
-                >
-                  <X className="h-4 w-4" />
-                </button>
               </div>
 
               {/* Thumbnail Gallery */}
               {images.length > 1 && (
-                <div className="bg-black/80 p-2">
+                <div className="bg-white/95 p-3 border-t border-gray-200">
                   <div className="flex gap-2 overflow-x-auto scrollbar-hide">
                     {images.map((image, index) => (
                       <button
                         key={index}
                         type="button"
                         onClick={handleThumbnailClick(index)}
-                        className={`relative h-12 w-12 rounded-md overflow-hidden flex-shrink-0 border-2 transition-all ${
+                        className={`relative h-16 w-16 rounded-lg overflow-hidden flex-shrink-0 border-2 transition-all ${
                           currentImageIndex === index
-                            ? 'border-amber-500 ring-2 ring-amber-300'
-                            : 'border-white/50 hover:border-white'
+                            ? 'border-amber-500 ring-2 ring-amber-300 shadow-md'
+                            : 'border-gray-300 hover:border-amber-400'
                         }`}
                       >
                         <img

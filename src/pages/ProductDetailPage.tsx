@@ -193,7 +193,9 @@ export const ProductDetailPage = () => {
   const isAvailable = product?.isActive ?? false;
   const averageRating = product?.averageRating ?? 0;
   const totalReviews = product?.reviewCount ?? 0;
-  const tastingNotes = product?.tastingNotes ?? product?.notes ?? '';
+  const tastingNotes = language === 'ar' 
+    ? (product?.tastingNotesAr ?? product?.notesAr ?? '') 
+    : (product?.tastingNotes ?? product?.notes ?? '');
 
   const incrementImage = (direction: 1 | -1) => {
     setCurrentImageIndex((current) => {

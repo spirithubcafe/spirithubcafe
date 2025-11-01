@@ -157,10 +157,12 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
           return {
             id: fullProduct.id.toString(),
             name: language === 'ar' && fullProduct.nameAr ? fullProduct.nameAr : fullProduct.name,
+            nameAr: fullProduct.nameAr,
             description:
               language === 'ar' && fullProduct.descriptionAr
                 ? fullProduct.descriptionAr
                 : fullProduct.description || '',
+            descriptionAr: fullProduct.descriptionAr,
             price,
             image: imageUrl,
             categoryId: categoryIdString,
@@ -170,6 +172,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
               language === 'ar' && fullProduct.tastingNotesAr
                 ? fullProduct.tastingNotesAr
                 : fullProduct.tastingNotes,
+            tastingNotesAr: fullProduct.tastingNotesAr,
             featured: fullProduct.isFeatured,
           };
         }),

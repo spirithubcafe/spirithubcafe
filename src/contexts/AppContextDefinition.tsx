@@ -3,13 +3,16 @@ import { createContext } from 'react';
 export interface Product {
   id: string;
   name: string;
+  nameAr?: string;
   description: string;
+  descriptionAr?: string;
   price: number;
   image: string;
   categoryId?: string;
   categorySlug?: string;
   category: string;
   tastingNotes?: string;
+  tastingNotesAr?: string;
   featured?: boolean;
 }
 
