@@ -249,55 +249,48 @@ export const ProductsPage = () => {
         </div>
       </div>
 
-      {/* Categories Info Section */}
+      {/* All Categories Section */}
       <div className="py-16 bg-white">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold text-center text-gray-800 mb-12">
-            {isArabic ? 'فئات مميزة' : 'Featured Categories'}
+            {isArabic ? 'جميع الفئات' : 'All Categories'}
           </h2>
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl shadow-lg p-8 text-center hover:shadow-xl transition-all hover:scale-105">
-              <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6 shadow-lg">
-                <Coffee className="w-10 h-10 text-white" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-800 mb-3">
-                {isArabic ? 'قهوة مختصة' : 'Specialty Coffee'}
-              </h3>
-              <p className="text-gray-600">
-                {isArabic
-                  ? 'مجموعة متنوعة من القهوة المحضرة بعناية من أجود الحبوب'
-                  : 'Variety of carefully prepared coffee from the finest beans'}
-              </p>
+          
+          {categories.length === 0 ? (
+            <div className="text-center text-gray-500">
+              {isArabic ? 'لا توجد فئات متاحة' : 'No categories available'}
             </div>
-
-            <div className="bg-gradient-to-br from-pink-50 to-red-50 rounded-2xl shadow-lg p-8 text-center hover:shadow-xl transition-all hover:scale-105">
-              <div className="bg-gradient-to-br from-pink-500 to-red-600 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6 shadow-lg">
-                <Coffee className="w-10 h-10 text-white" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-800 mb-3">
-                {isArabic ? 'حلويات طازجة' : 'Fresh Desserts'}
-              </h3>
-              <p className="text-gray-600">
-                {isArabic
-                  ? 'حلويات محضرة يومياً بأجود المكونات'
-                  : 'Daily prepared desserts with the finest ingredients'}
-              </p>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 max-w-7xl mx-auto">
+              {categories
+                .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0))
+                .map((category) => (
+                  <div
+                    key={category.id}
+                    className="group cursor-pointer"
+                    onClick={() => handleCategoryChange(category.id)}
+                  >
+                    {/* Category Image */}
+                    <div className="relative overflow-hidden rounded-lg aspect-square mb-4 border border-gray-200 group-hover:border-amber-400 transition-all duration-300">
+                      <img
+                        src={category.image || '/images/slides/slide1.webp'}
+                        alt={category.name}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                        loading="lazy"
+                      />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all duration-300" />
+                    </div>
+                    
+                    {/* Category Name */}
+                    <div className="text-center">
+                      <h3 className="text-lg font-bold text-gray-900 group-hover:text-amber-600 transition-colors duration-200">
+                        {category.name}
+                      </h3>
+                    </div>
+                  </div>
+                ))}
             </div>
-
-            <div className="bg-gradient-to-br from-green-50 to-teal-50 rounded-2xl shadow-lg p-8 text-center hover:shadow-xl transition-all hover:scale-105">
-              <div className="bg-gradient-to-br from-green-500 to-teal-600 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6 shadow-lg">
-                <Coffee className="w-10 h-10 text-white" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-800 mb-3">
-                {isArabic ? 'معجنات مخبوزة' : 'Baked Pastries'}
-              </h3>
-              <p className="text-gray-600">
-                {isArabic
-                  ? 'معجنات طازجة مخبوزة يومياً في مخبزنا'
-                  : 'Fresh pastries baked daily in our bakery'}
-              </p>
-            </div>
-          </div>
+          )}
         </div>
       </div>
     </div>
