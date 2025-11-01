@@ -36,8 +36,8 @@ export const FeaturedProducts: React.FC = () => {
           </p>
         </div>
 
-        {/* Products Grid - 6 columns in one row */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 sm:gap-6">
+        {/* Products Grid - 4 products in one row */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-4 sm:gap-6">
           {displayProducts.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
