@@ -1,6 +1,12 @@
 import React, { useState } from 'react';
+import { Phone, Mail, MapPin, Clock, MessageCircle, Send, Instagram, Facebook } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { useApp } from '../hooks/useApp';
-import { Mail, Phone, MapPin, Clock, Send, MessageCircle, Instagram, Facebook } from 'lucide-react';
+import { Input } from '../components/ui/input';
+import { Textarea } from '../components/ui/textarea';
+import { Label } from '../components/ui/label';
+import { Button } from '../components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import './ContactPage.css';
 
 export const ContactPage: React.FC = () => {
@@ -64,256 +70,421 @@ export const ContactPage: React.FC = () => {
     });
   };
 
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.2
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: {
+        type: "spring" as const,
+        stiffness: 100,
+        damping: 15
+      }
+    }
+  };
+
+  const cardHoverVariants = {
+    hover: {
+      y: -8,
+      boxShadow: "0 20px 40px rgba(0, 0, 0, 0.15)",
+      transition: {
+        type: "spring" as const,
+        stiffness: 400,
+        damping: 10
+      }
+    }
+  };
+
   const contactInfo = [
     {
       icon: Phone,
-      title: language === 'ar' ? 'اتصل بنا' : 'Call Us',
-      content: '+968 9190 0005',
-      subContent: '+968 7272 6999',
+      title: language === 'ar' ? 'الهاتف' : 'Phone',
+      value: '+968 9190 0005',
+      value2: '+968 7272 6999',
+      link: 'tel:+96891900005',
+      gradient: 'from-green-400 to-green-600'
     },
     {
       icon: Mail,
-      title: language === 'ar' ? 'راسلنا' : 'Email Us',
-      content: 'info@spirithubcafe.com',
-      subContent: language === 'ar' ? 'نرد خلال 24 ساعة' : 'We respond within 24 hours',
+      title: language === 'ar' ? 'البريد الإلكتروني' : 'Email',
+      value: 'info@spirithubcafe.com',
+      link: 'mailto:info@spirithubcafe.com',
+      gradient: 'from-blue-400 to-blue-600'
     },
     {
       icon: MapPin,
-      title: language === 'ar' ? 'زورنا' : 'Visit Us',
-      content: language === 'ar' ? 'شارع الموج، مسقط - عمان' : 'Al Mouj St, Muscat - Oman',
-      subContent: language === 'ar' ? 'موقع مميز وسهل الوصول' : 'Prime location, easy access',
+      title: language === 'ar' ? 'العنوان' : 'Location',
+      value: language === 'ar' ? 'شارع الموج، مسقط، عمان' : 'Al Mouj St, Muscat, Oman',
+      link: 'https://maps.google.com/?q=23.618926,58.256566',
+      gradient: 'from-purple-400 to-purple-600'
     },
     {
       icon: Clock,
       title: language === 'ar' ? 'ساعات العمل' : 'Working Hours',
-      content: language === 'ar' ? 'يومياً: 7 ص - 12 م' : 'Daily: 7:00 AM - 12:00 AM',
-      subContent: language === 'ar' ? 'مفتوح جميع أيام الأسبوع' : 'Open 7 days a week',
-    },
+      value: language === 'ar' ? 'يومياً: 7 صباحاً - 12 منتصف الليل' : 'Daily: 7 AM - 12 AM',
+      link: '#',
+      gradient: 'from-stone-600 to-stone-800'
+    }
   ];
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br from-amber-50 to-orange-100 ${language === 'ar' ? 'rtl' : 'ltr'}`}>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Hero Section */}
-      <div className="relative h-64 overflow-hidden">
-        <div className="absolute inset-0 hero-background"></div>
-        <div className="absolute inset-0 glass-overlay"></div>
-        <div className="relative container mx-auto px-4 h-full flex items-center justify-center text-center">
-          <div className="max-w-3xl">
-            <h1 className="text-4xl font-bold text-white mb-3">
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        className="relative bg-gradient-to-br from-stone-50 via-white to-stone-100 py-16 overflow-hidden"
+      >
+        <div 
+          className="absolute inset-0 opacity-5 hero-overlay-bg"
+        />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+          <div className="text-center">
+            <motion.h1 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2, duration: 0.6 }}
+              className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4"
+            >
               {language === 'ar' ? 'تواصل معنا' : 'Contact Us'}
-            </h1>
-            <p className="text-lg text-amber-100 leading-relaxed">
+            </motion.h1>
+            <motion.p 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4, duration: 0.6 }}
+              className="text-lg md:text-xl text-gray-700 max-w-3xl mx-auto"
+            >
               {language === 'ar' 
-                ? 'نحن هنا للإجابة على استفساراتك وتلقي اقتراحاتك'
-                : 'We are here to answer your questions and receive your suggestions'
-              }
-            </p>
+                ? 'نحن هنا للإجابة على جميع استفساراتك. لا تتردد في التواصل معنا عبر أي من القنوات التالية' 
+                : 'We\'re here to answer all your questions. Feel free to reach out to us through any of the following channels'}
+            </motion.p>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Contact Info Cards */}
-      <div className="py-16 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
-            {contactInfo.map((info, index) => (
-              <div key={index} className="bg-gradient-to-br from-amber-50 to-orange-100 rounded-2xl p-6 text-center shadow-lg hover:shadow-xl transition-shadow duration-300 hover:scale-105 transform transition-transform">
-                <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-full p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                  <info.icon className="w-8 h-8 text-white" />
-                </div>
-                <h3 className="text-lg font-bold text-gray-800 mb-2">{info.title}</h3>
-                <p className="text-amber-700 font-semibold mb-1">{info.content}</p>
-                <p className="text-gray-600 text-sm">{info.subContent}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Contact Form & Map Section */}
-      <div className="py-16 bg-gradient-to-br from-amber-50 to-orange-100">
-        <div className="container mx-auto px-4">
-          <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12">
-            {/* Contact Form */}
-            <div className="bg-white rounded-2xl shadow-2xl p-8">
-              <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">
-                {language === 'ar' ? 'أرسل لنا رسالة' : 'Send Us a Message'}
-              </h2>
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div>
-                  <label htmlFor="name" className="block text-sm font-semibold text-gray-700 mb-2">
-                    {language === 'ar' ? 'الاسم الكامل' : 'Full Name'}
-                  </label>
-                  <input
-                    type="text"
-                    id="name"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-colors"
-                    placeholder={language === 'ar' ? 'اكتب اسمك الكامل' : 'Enter your full name'}
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">
-                    {language === 'ar' ? 'البريد الإلكتروني' : 'Email Address'}
-                  </label>
-                  <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-colors"
-                    placeholder={language === 'ar' ? 'example@email.com' : 'example@email.com'}
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="subject" className="block text-sm font-semibold text-gray-700 mb-2">
-                    {language === 'ar' ? 'موضوع الرسالة' : 'Subject'}
-                  </label>
-                  <input
-                    type="text"
-                    id="subject"
-                    name="subject"
-                    value={formData.subject}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-colors"
-                    placeholder={language === 'ar' ? 'موضوع رسالتك' : 'Your message subject'}
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="message" className="block text-sm font-semibold text-gray-700 mb-2">
-                    {language === 'ar' ? 'الرسالة' : 'Message'}
-                  </label>
-                  <textarea
-                    id="message"
-                    name="message"
-                    rows={6}
-                    value={formData.message}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-colors resize-none"
-                    placeholder={language === 'ar' ? 'اكتب رسالتك هنا...' : 'Write your message here...'}
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full bg-gradient-to-r from-amber-600 to-orange-600 text-white font-bold py-4 px-6 rounded-lg hover:from-amber-700 hover:to-orange-700 transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <motion.div 
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16"
+        >
+          {contactInfo.map((info, index) => {
+            const IconComponent = info.icon;
+            return (
+              <motion.a
+                key={index}
+                href={info.link}
+                target={info.link.startsWith('http') ? '_blank' : undefined}
+                rel={info.link.startsWith('http') ? 'noopener noreferrer' : undefined}
+                variants={itemVariants}
+                whileHover="hover"
+                className="group block"
+              >
+                <motion.div
+                  variants={cardHoverVariants}
+                  className="bg-white rounded-2xl shadow-xl overflow-hidden h-full"
                 >
-                  {isSubmitting ? (
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  ) : (
-                    <Send className="w-5 h-5" />
-                  )}
-                  {isSubmitting 
-                    ? (language === 'ar' ? 'جاري الإرسال...' : 'Sending...')
-                    : (language === 'ar' ? 'إرسال الرسالة' : 'Send Message')
-                  }
-                </button>
-              </form>
-            </div>
+                  <div className={`bg-gradient-to-br ${info.gradient} p-6 text-white`}>
+                    <motion.div 
+                      className="flex items-center justify-center mb-4"
+                      whileHover={{ scale: 1.1, rotate: 5 }}
+                      transition={{ type: "spring", stiffness: 300 }}
+                    >
+                      <IconComponent className="w-8 h-8" />
+                    </motion.div>
+                    <h3 className="text-xl font-bold text-center mb-2">
+                      {info.title}
+                    </h3>
+                  </div>
+                  <div className="p-6 bg-gradient-to-br from-gray-50 to-white">
+                    <p className="text-center text-gray-700 font-medium break-words">
+                      {info.value}
+                    </p>
+                    {info.value2 && (
+                      <p className="text-center text-gray-700 font-medium break-words mt-1">
+                        {info.value2}
+                      </p>
+                    )}
+                  </div>
+                </motion.div>
+              </motion.a>
+            );
+          })}
+        </motion.div>
 
-            {/* Map & Additional Info */}
-            <div className="space-y-8">
-              {/* Map */}
-              <div className="bg-white rounded-2xl shadow-2xl p-8">
-                <h3 className="text-2xl font-bold text-gray-800 mb-6">
-                  {language === 'ar' ? 'موقعنا على الخريطة' : 'Find Us on Map'}
-                </h3>
-                <div className="rounded-lg overflow-hidden h-96 border-2 border-gray-200">
-                  <iframe
-                    src="https://www.openstreetmap.org/export/embed.html?bbox=58.250566,23.613926,58.262566,23.623926&layer=mapnik&marker=23.618926,58.256566"
-                    width="100%"
-                    height="100%"
-                    className="map-iframe"
-                    loading="lazy"
-                    title={language === 'ar' ? 'موقع Spirit Hub Cafe' : 'Spirit Hub Cafe Location'}
-                  ></iframe>
-                  <div className="mt-4">
+        {/* Form and Additional Info Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Contact Form */}
+          <motion.div
+            initial={{ opacity: 0, x: language === 'ar' ? 50 : -50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.6, duration: 0.6 }}
+          >
+            <Card className="border-0 shadow-2xl">
+              <CardHeader className="space-y-1 pb-6">
+                <CardTitle className="text-3xl font-bold text-gray-900">
+                  {language === 'ar' ? 'أرسل لنا رسالة' : 'Send us a Message'}
+                </CardTitle>
+                <CardDescription className="text-base">
+                  {language === 'ar' ? 'سنرد عليك في أقرب وقت ممكن' : 'We\'ll get back to you as soon as possible'}
+                </CardDescription>
+              </CardHeader>
+              
+              <CardContent>
+                <motion.div 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.8 }}
+                  className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 flex items-start gap-3"
+                >
+                  <MessageCircle className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-blue-900 text-sm font-medium">
+                      {language === 'ar' ? 'للرد السريع، تواصل معنا عبر واتساب!' : 'For faster response, contact us via WhatsApp!'}
+                    </p>
+                    <a 
+                      href="https://api.whatsapp.com/send?phone=96891900005"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:text-blue-700 text-sm font-semibold underline"
+                    >
+                      {language === 'ar' ? 'افتح واتساب' : 'Open WhatsApp'}
+                    </a>
+                  </div>
+                </motion.div>
+
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.9 }}
+                  >
+                    <Label htmlFor="name" className="text-sm font-semibold text-gray-700">
+                      {language === 'ar' ? 'الاسم الكامل' : 'Full Name'}
+                    </Label>
+                    <Input
+                      type="text"
+                      id="name"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleChange}
+                      required
+                      className="mt-2"
+                      placeholder={language === 'ar' ? 'اكتب اسمك الكامل' : 'Enter your full name'}
+                    />
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 1.0 }}
+                  >
+                    <Label htmlFor="email" className="text-sm font-semibold text-gray-700">
+                      {language === 'ar' ? 'البريد الإلكتروني' : 'Email Address'}
+                    </Label>
+                    <Input
+                      type="email"
+                      id="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      required
+                      className="mt-2"
+                      placeholder={language === 'ar' ? 'example@email.com' : 'example@email.com'}
+                    />
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 1.1 }}
+                  >
+                    <Label htmlFor="subject" className="text-sm font-semibold text-gray-700">
+                      {language === 'ar' ? 'موضوع الرسالة' : 'Subject'}
+                    </Label>
+                    <Input
+                      type="text"
+                      id="subject"
+                      name="subject"
+                      value={formData.subject}
+                      onChange={handleChange}
+                      required
+                      className="mt-2"
+                      placeholder={language === 'ar' ? 'موضوع رسالتك' : 'Your message subject'}
+                    />
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 1.2 }}
+                  >
+                    <Label htmlFor="message" className="text-sm font-semibold text-gray-700">
+                      {language === 'ar' ? 'الرسالة' : 'Message'}
+                    </Label>
+                    <Textarea
+                      id="message"
+                      name="message"
+                      rows={6}
+                      value={formData.message}
+                      onChange={handleChange}
+                      required
+                      className="mt-2 resize-none"
+                      placeholder={language === 'ar' ? 'اكتب رسالتك هنا...' : 'Write your message here...'}
+                    />
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 1.3 }}
+                  >
+                    <Button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="w-full bg-gradient-to-r from-stone-700 to-stone-900 hover:from-stone-800 hover:to-stone-950 text-white font-bold py-6 text-base"
+                    >
+                      {isSubmitting ? (
+                        <motion.div 
+                          animate={{ rotate: 360 }}
+                          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                          className="rounded-full h-5 w-5 border-b-2 border-white"
+                        />
+                      ) : (
+                        <>
+                          <Send className="w-5 h-5 mr-2" />
+                          {language === 'ar' ? 'إرسال الرسالة' : 'Send Message'}
+                        </>
+                      )}
+                    </Button>
+                  </motion.div>
+                </form>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          {/* Map & Additional Info */}
+          <motion.div 
+            initial={{ opacity: 0, x: language === 'ar' ? -50 : 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.6, duration: 0.6 }}
+            className="space-y-8"
+          >
+            {/* Map */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.8 }}
+            >
+              <Card className="border-0 shadow-2xl">
+                <CardHeader>
+                  <CardTitle className="text-2xl font-bold text-gray-800">
+                    {language === 'ar' ? 'موقعنا على الخريطة' : 'Find Us on Map'}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 1.0 }}
+                    className="rounded-lg overflow-hidden h-96 border-2 border-gray-200"
+                  >
+                    <iframe
+                      src="https://www.openstreetmap.org/export/embed.html?bbox=58.250566,23.613926,58.262566,23.623926&layer=mapnik&marker=23.618926,58.256566"
+                      width="100%"
+                      height="100%"
+                      className="map-iframe"
+                      loading="lazy"
+                      title={language === 'ar' ? 'موقع Spirit Hub Cafe' : 'Spirit Hub Cafe Location'}
+                    ></iframe>
+                  </motion.div>
+                  <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 1.2 }}
+                    className="mt-4"
+                  >
                     <a
                       href="https://www.openstreetmap.org/?mlat=23.618926&mlon=58.256566&zoom=16#map=16/23.61893/58.25657"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 text-amber-600 hover:text-amber-700 font-semibold"
+                      className="inline-flex items-center gap-2 text-stone-700 hover:text-stone-900 font-semibold transition-colors"
                     >
                       <MapPin className="w-5 h-5" />
                       {language === 'ar' ? 'عرض خريطة أكبر' : 'View Larger Map'}
                     </a>
-                  </div>
-                </div>
-              </div>
+                  </motion.div>
+                </CardContent>
+              </Card>
+            </motion.div>
 
-              {/* Social Media */}
-              <div className="bg-white rounded-2xl shadow-2xl p-8">
-                <h3 className="text-2xl font-bold text-gray-800 mb-6">
-                  {language === 'ar' ? 'تابعنا على' : 'Follow Us'}
-                </h3>
-                <div className="grid grid-cols-3 gap-4">
-                  <a
-                    href="https://api.whatsapp.com/send?phone=96891900005"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="bg-green-500 hover:bg-green-600 text-white p-4 rounded-xl flex flex-col items-center transition-colors"
-                  >
-                    <MessageCircle className="w-8 h-8 mb-2" />
-                    <span className="text-sm font-semibold">WhatsApp</span>
-                  </a>
-                  <a
-                    href="https://instagram.com/spirithubcafe"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="bg-pink-500 hover:bg-pink-600 text-white p-4 rounded-xl flex flex-col items-center transition-colors"
-                  >
-                    <Instagram className="w-8 h-8 mb-2" />
-                    <span className="text-sm font-semibold">@spirithubcafe</span>
-                  </a>
-                  <a
-                    href="https://facebook.com/spirithubcafe"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-xl flex flex-col items-center transition-colors"
-                  >
-                    <Facebook className="w-8 h-8 mb-2" />
-                    <span className="text-sm font-semibold">Facebook</span>
-                  </a>
-                </div>
-              </div>
-
-              {/* FAQ Quick Links */}
-              <div className="bg-white rounded-2xl shadow-2xl p-8">
-                <h3 className="text-2xl font-bold text-gray-800 mb-6">
-                  {language === 'ar' ? 'أسئلة شائعة' : 'Quick FAQ'}
-                </h3>
-                <div className="space-y-4">
-                  <div className="border-l-4 border-amber-500 pl-4">
-                    <h4 className="font-semibold text-gray-800">
-                      {language === 'ar' ? 'هل تقدمون خدمة التوصيل؟' : 'Do you offer delivery?'}
-                    </h4>
-                    <p className="text-gray-600 text-sm">
-                      {language === 'ar' ? 'نعم، نقدم خدمة التوصيل داخل الرياض خلال 30 دقيقة' : 'Yes, we offer delivery within Riyadh in 30 minutes'}
-                    </p>
+            {/* Social Media */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1.0 }}
+            >
+              <Card className="border-0 shadow-2xl">
+                <CardHeader>
+                  <CardTitle className="text-2xl font-bold text-gray-800">
+                    {language === 'ar' ? 'تابعنا على' : 'Follow Us'}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-3 gap-4">
+                    <motion.a
+                      href="https://api.whatsapp.com/send?phone=96891900005"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      whileHover={{ scale: 1.05, y: -5 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="bg-green-500 hover:bg-green-600 text-white p-4 rounded-xl flex flex-col items-center transition-colors shadow-lg"
+                    >
+                      <MessageCircle className="w-8 h-8 mb-2" />
+                      <span className="text-sm font-semibold">WhatsApp</span>
+                    </motion.a>
+                    <motion.a
+                      href="https://instagram.com/spirithubcafe"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      whileHover={{ scale: 1.05, y: -5 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="bg-pink-500 hover:bg-pink-600 text-white p-4 rounded-xl flex flex-col items-center transition-colors shadow-lg"
+                    >
+                      <Instagram className="w-8 h-8 mb-2" />
+                      <span className="text-sm font-semibold text-center">@spirithubcafe</span>
+                    </motion.a>
+                    <motion.a
+                      href="https://facebook.com/spirithubcafe"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      whileHover={{ scale: 1.05, y: -5 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-xl flex flex-col items-center transition-colors shadow-lg"
+                    >
+                      <Facebook className="w-8 h-8 mb-2" />
+                      <span className="text-sm font-semibold">Facebook</span>
+                    </motion.a>
                   </div>
-                  <div className="border-l-4 border-amber-500 pl-4">
-                    <h4 className="font-semibold text-gray-800">
-                      {language === 'ar' ? 'هل لديكم خيارات نباتية؟' : 'Do you have vegan options?'}
-                    </h4>
-                    <p className="text-gray-600 text-sm">
-                      {language === 'ar' ? 'نعم، لدينا مجموعة متنوعة من المشروبات والحلويات النباتية' : 'Yes, we have a variety of vegan drinks and desserts'}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </motion.div>
         </div>
       </div>
     </div>

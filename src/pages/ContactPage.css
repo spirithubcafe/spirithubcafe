@@ -6,6 +6,13 @@
   background-attachment: fixed;
 }
 
+.hero-overlay-bg {
+  background-image: url(/images/logo/back.jpg);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
 .glass-overlay {
   -webkit-backdrop-filter: blur(2px);
   backdrop-filter: blur(2px);
