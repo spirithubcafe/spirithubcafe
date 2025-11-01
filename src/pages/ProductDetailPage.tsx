@@ -84,6 +84,7 @@ export const ProductDetailPage = () => {
   const [quantity, setQuantity] = useState(1);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
 
   // Scroll to top when component mounts or productId changes
   useEffect(() => {
@@ -743,10 +744,36 @@ export const ProductDetailPage = () => {
                     </div>
                   </div>
                   <div className="p-8">
-                    <div 
-                      className="text-gray-600 leading-relaxed [&_p]:mb-4 [&_ul]:list-disc [&_ul]:ml-6 [&_ul]:mb-4 [&_ol]:list-decimal [&_ol]:ml-6 [&_ol]:mb-4 [&_li]:mb-2 [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mb-4 [&_h2]:text-xl [&_h2]:font-bold [&_h2]:mb-3 [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:mb-2 [&_strong]:font-bold [&_em]:italic [&_a]:text-amber-600 [&_a]:underline [&_a:hover]:text-amber-700 [&_img]:rounded-lg [&_img]:my-4"
-                      dangerouslySetInnerHTML={{ __html: displayDescription }}
-                    />
+                    <div className="relative">
+                      <div 
+                        className={`text-gray-600 leading-relaxed [&_p]:mb-4 [&_ul]:list-disc [&_ul]:ml-6 [&_ul]:mb-4 [&_ol]:list-decimal [&_ol]:ml-6 [&_ol]:mb-4 [&_li]:mb-2 [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mb-4 [&_h2]:text-xl [&_h2]:font-bold [&_h2]:mb-3 [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:mb-2 [&_strong]:font-bold [&_em]:italic [&_a]:text-amber-600 [&_a]:underline [&_a:hover]:text-amber-700 [&_img]:rounded-lg [&_img]:my-4 transition-all duration-300 ${
+                          !isDescriptionExpanded ? 'line-clamp-5' : ''
+                        }`}
+                        dangerouslySetInnerHTML={{ __html: displayDescription }}
+                      />
+                      {!isDescriptionExpanded && (
+                        <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-white to-transparent pointer-events-none"></div>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+                      className="mt-4 text-amber-600 hover:text-amber-700 font-semibold text-sm flex items-center gap-1 transition-colors"
+                    >
+                      {isDescriptionExpanded
+                        ? (language === 'ar' ? 'عرض أقل' : 'Read Less')
+                        : (language === 'ar' ? 'قراءة المزيد' : 'Read More')}
+                      <svg
+                        className={`w-4 h-4 transition-transform duration-300 ${
+                          isDescriptionExpanded ? 'rotate-180' : ''
+                        }`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
                   </div>
                 </div>
               )}
