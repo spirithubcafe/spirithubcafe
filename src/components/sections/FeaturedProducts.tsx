@@ -8,8 +8,8 @@ export const FeaturedProducts: React.FC = () => {
   const { t } = useTranslation();
   const { products, loading } = useApp();
 
-  // Show only 4 products with price > 0 in two rows (2 products per row)
-  const displayProducts = products.filter(p => p.price > 0).slice(0, 4);
+  // Show the 6 newest products
+  const displayProducts = products.slice(0, 6);
 
   if (loading) {
     return (
@@ -36,8 +36,8 @@ export const FeaturedProducts: React.FC = () => {
           </p>
         </div>
 
-        {/* Products Grid - 4 products in one row */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-4 sm:gap-6">
+        {/* Products Grid - 6 products */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-6 gap-4 sm:gap-6">
           {displayProducts.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
