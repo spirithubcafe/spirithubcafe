@@ -1,59 +1,88 @@
 import React from 'react';
 import { useApp } from '../hooks/useApp';
-import { Coffee, Users, Award, Heart, Clock, MapPin } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Award, Coffee, Heart, Shield } from 'lucide-react';
 import { PageHeader } from '../components/layout/PageHeader';
-import './AboutPage.css';
 
 export const AboutPage: React.FC = () => {
   const { language } = useApp();
 
-  const stats = [
+  const sections = [
     {
-      icon: Coffee,
-      number: '10,000+',
-      label: language === 'ar' ? 'كوب قهوة يومياً' : 'Cups served daily',
-    },
-    {
-      icon: Users,
-      number: '5,000+',
-      label: language === 'ar' ? 'عميل سعيد' : 'Happy customers',
-    },
-    {
-      icon: Award,
-      number: '15',
-      label: language === 'ar' ? 'جائزة دولية' : 'International awards',
-    },
-    {
-      icon: Heart,
-      number: '99%',
-      label: language === 'ar' ? 'رضا العملاء' : 'Customer satisfaction',
-    },
-  ];
+      id: 'mission',
+      title: 'Our Commitment to Quality',
+      titleAr: 'التزامنا بالجودة',
+      subtitle: 'OUR MISSION',
+      subtitleAr: 'مهمتنا',
+      content: `At SPIRIT HUB Coffee, we take great care in selecting only the finest specialty coffees to be part of our exclusive blend. Our team of experienced Q Graders and Roasters carefully manage each roast to create a unique selection of flavors and aromas designed to delight even the most discerning coffee lovers.
 
-  const team = [
-    {
-      name: language === 'ar' ? 'أحمد محمد' : 'Ahmad Mohammed',
-      role: language === 'ar' ? 'مؤسس ورئيس الطهاة' : 'Founder & Head Barista',
-      image: '/images/team/chef1.jpg',
-      description: language === 'ar' 
-        ? 'خبير في تحضير القهوة مع أكثر من 15 عاماً من الخبرة'
-        : 'Coffee expert with over 15 years of experience',
+We believe that quality is paramount, which is why we strictly adhere to the highest protocols and quality controls during cupping and testing. This ensures that every cup of SPIRIT HUB Coffee meets our high standards and delivers a truly exceptional taste experience.
+
+Our commitment extends beyond the coffee itself. We are dedicated to providing our customers with the best possible service and experience. Whether you are enjoying a cup at one of our cafés or brewing a fresh pot at home, we want you to be completely satisfied with your SPIRIT HUB Coffee journey.
+
+In short, at SPIRIT HUB Coffee, we are passionate about coffee and devoted to offering only the finest experiences. We invite you to try our exclusive blend and taste the difference for yourself.`,
+      contentAr: `في سبيريت هب للقهوة، نولي اهتماماً كبيراً باختيار أجود أنواع القهوة المتخصصة فقط لتكون جزءاً من مزيجنا الحصري. يدير فريقنا من المتذوقين والمحمصين ذوي الخبرة كل عملية تحميص بعناية لإنشاء مجموعة فريدة من النكهات والروائح المصممة لإسعاد حتى أكثر محبي القهوة تميزاً.
+
+نؤمن بأن الجودة هي الأهم، ولهذا السبب نلتزم بشدة بأعلى البروتوكولات وضوابط الجودة أثناء التذوق والاختبار. هذا يضمن أن كل فنجان من قهوة سبيريت هب يلبي معاييرنا العالية ويقدم تجربة طعم استثنائية حقاً.
+
+يمتد التزامنا إلى ما هو أبعد من القهوة نفسها. نحن ملتزمون بتزويد عملائنا بأفضل خدمة وتجربة ممكنة. سواء كنت تستمتع بفنجان في أحد مقاهينا أو تحضر إبريقاً طازجاً في المنزل، نريدك أن تكون راضياً تماماً عن رحلتك مع قهوة سبيريت هب.
+
+باختصار، في سبيريت هب للقهوة، نحن شغوفون بالقهوة ومكرسون لتقديم أفضل التجارب فقط. ندعوك لتجربة مزيجنا الحصري وتذوق الفرق بنفسك.`,
+      image: '/images/about/1.webp',
+      imagePosition: 'right' as const,
+      icon: Award,
     },
     {
-      name: language === 'ar' ? 'سارة أحمد' : 'Sarah Ahmed',
-      role: language === 'ar' ? 'مديرة العمليات' : 'Operations Manager',
-      image: '/images/team/manager1.jpg',
-      description: language === 'ar' 
-        ? 'متخصصة في إدارة المقاهي وتطوير الأعمال'
-        : 'Specialist in café management and business development',
+      id: 'quality',
+      title: 'The Art of Coffee',
+      titleAr: 'فن القهوة',
+      subtitle: 'QUALITY',
+      subtitleAr: 'الجودة',
+      content: `Coffee, a beloved beverage worldwide, is enjoyed by millions every day. Its flavor and aroma depend on key factors such as the bean type, roasting method, and brewing process.
+
+Many roasters ensure the highest standards by closely following harvesting seasons. This allows them to select the freshest, highest-quality beans, which are then carefully roasted to highlight their unique flavors and aromas.
+
+The roasting process is considered an art. Skilled roasters control temperature, time, and airflow to craft the perfect roast profile and bring out the best characteristics in each batch of beans.
+
+After roasting, coffee beans naturally contain high levels of CO2, which can affect flavor and aroma. To allow this gas to dissipate and the flavors to fully develop, it is recommended that coffee rests for 7 to 10 days before brewing.
+
+By following these steps, roasters produce exceptional coffee rich in flavor and aroma. So when you savor your next cup, take a moment to appreciate the care, craft, and dedication behind that perfect brew.`,
+      contentAr: `القهوة، المشروب المحبوب في جميع أنحاء العالم، يستمتع بها الملايين كل يوم. يعتمد طعمها ورائحتها على عوامل رئيسية مثل نوع الحبوب وطريقة التحميص وعملية التحضير.
+
+يضمن العديد من المحمصين أعلى المعايير من خلال متابعة مواسم الحصاد عن كثب. يتيح لهم ذلك اختيار أحدث الحبوب وأعلى جودة، والتي يتم تحميصها بعناية لإبراز نكهاتها وروائحها الفريدة.
+
+تعتبر عملية التحميص فناً. يتحكم المحمصون المهرة في درجة الحرارة والوقت وتدفق الهواء لصياغة ملف التحميص المثالي وإخراج أفضل الخصائص في كل دفعة من الحبوب.
+
+بعد التحميص، تحتوي حبوب القهوة بشكل طبيعي على مستويات عالية من ثاني أكسيد الكربون، والتي يمكن أن تؤثر على النكهة والرائحة. للسماح لهذا الغاز بالتبدد وتطوير النكهات بالكامل، يوصى بأن تستريح القهوة لمدة 7 إلى 10 أيام قبل التحضير.
+
+من خلال اتباع هذه الخطوات، ينتج المحمصون قهوة استثنائية غنية بالنكهة والرائحة. لذلك عندما تتذوق فنجانك التالي، خذ لحظة لتقدير العناية والحرفة والتفاني وراء هذا المشروب المثالي.`,
+      image: '/images/about/2.webp',
+      imagePosition: 'left' as const,
+      icon: Coffee,
     },
     {
-      name: language === 'ar' ? 'محمد علي' : 'Mohammed Ali',
-      role: language === 'ar' ? 'كبير الباريستا' : 'Senior Barista',
-      image: '/images/team/barista1.jpg',
-      description: language === 'ar' 
-        ? 'فنان في تحضير القهوة المختصة والمشروبات الإبداعية'
-        : 'Artist in specialty coffee and creative beverages',
+      id: 'accountability',
+      title: 'Accountability and Transparency',
+      titleAr: 'المساءلة والشفافية',
+      subtitle: 'ACCOUNTABILITY',
+      subtitleAr: 'المساءلة',
+      content: `Accountability and transparency are crucial for building trust and maintaining a positive reputation in business. At SPIRIT HUB Coffee, we take pride in sharing information and educating our community, customers, and clients about our unique coffee.
+
+By sharing this information, we aim to create openness and trust, fostering strong and lasting relationships with our audience. Excitingly, we publish details about our coffee on various media platforms, such as our website, social media, and newsletter.
+
+Moreover, our commitment extends beyond information sharing to being accountable for our actions and decisions. This entails taking responsibility for the quality of our coffee, as well as addressing our environmental and social impact.
+
+Transparent and accountable practices enable us to build a positive reputation and nurture long-term relationships with our customers and clients. Proudly presenting SPIRIT HUB Coffee to the world, we eagerly anticipate sharing our unique coffee with the community.`,
+      contentAr: `المساءلة والشفافية أمران بالغا الأهمية لبناء الثقة والحفاظ على سمعة إيجابية في الأعمال. في سبيريت هب للقهوة، نفخر بمشاركة المعلومات وتثقيف مجتمعنا وعملائنا وعملائنا حول قهوتنا الفريدة.
+
+من خلال مشاركة هذه المعلومات، نهدف إلى خلق الانفتاح والثقة، وتعزيز العلاقات القوية والدائمة مع جمهورنا. بحماس، ننشر تفاصيل حول قهوتنا على منصات إعلامية مختلفة، مثل موقعنا الإلكتروني ووسائل التواصل الاجتماعي والنشرة الإخبارية.
+
+علاوة على ذلك، يمتد التزامنا إلى ما هو أبعد من مشاركة المعلومات ليشمل المساءلة عن أفعالنا وقراراتنا. وهذا يستلزم تحمل المسؤولية عن جودة قهوتنا، بالإضافة إلى معالجة تأثيرنا البيئي والاجتماعي.
+
+تمكننا الممارسات الشفافة والمسؤولة من بناء سمعة إيجابية ورعاية علاقات طويلة الأمد مع عملائنا وعملائنا. بفخر نقدم قهوة سبيريت هب للعالم، ونتطلع بشغف لمشاركة قهوتنا الفريدة مع المجتمع.`,
+      image: '/images/about/3.webp',
+      imagePosition: 'right' as const,
+      icon: Shield,
     },
   ];
 
@@ -63,184 +92,132 @@ export const AboutPage: React.FC = () => {
       <PageHeader
         title="About Us"
         titleAr="من نحن"
-        subtitle="We are Spirit Hub Café - a place that combines the authenticity of Arabic coffee with modern global presentation"
-        subtitleAr="نحن مقهى سبيريت هب - مكان يجمع بين أصالة القهوة العربية وحداثة التقديم العالمي"
+        subtitle="Discover our story, passion, and commitment to exceptional coffee"
+        subtitleAr="اكتشف قصتنا وشغفنا والتزامنا بالقهوة الاستثنائية"
       />
 
-      {/* Story Section */}
-      <div className="py-16 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto">
-            <div className="grid md:grid-cols-2 gap-12 items-center">
-              <div>
-                <h2 className="text-3xl font-bold text-gray-800 mb-6">
-                  {language === 'ar' ? 'قصتنا' : 'Our Story'}
-                </h2>
-                <div className="space-y-4 text-gray-600 leading-relaxed">
-                  <p>
-                    {language === 'ar' 
-                      ? 'بدأت رحلتنا في عام 2020 بحلم بسيط: إنشاء مكان يجمع الناس حول حب القهوة الأصيلة. كنا نريد مقهى لا يقدم القهوة فحسب، بل يقدم تجربة ثقافية واجتماعية متكاملة.'
-                      : 'Our journey began in 2020 with a simple dream: to create a place that brings people together around the love of authentic coffee. We wanted a café that doesn\'t just serve coffee, but provides a complete cultural and social experience.'
-                    }
+      <div className="container mx-auto px-4 py-16 space-y-24">
+        {/* Section 1: Mission - Image Right */}
+        {sections.map((section, index) => (
+          <motion.div
+            key={section.id}
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8, delay: index * 0.2 }}
+            className={`flex flex-col ${
+              section.imagePosition === 'right' 
+                ? 'lg:flex-row' 
+                : 'lg:flex-row-reverse'
+            } gap-12 items-center`}
+          >
+            {/* Text Content */}
+            <div className="flex-1 space-y-6">
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 bg-gradient-to-br from-stone-700 to-stone-900 rounded-2xl flex items-center justify-center flex-shrink-0">
+                  <section.icon className="w-8 h-8 text-white" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-stone-600 tracking-wider mb-1">
+                    {language === 'ar' ? section.subtitleAr : section.subtitle}
                   </p>
-                  <p>
-                    {language === 'ar' 
-                      ? 'اليوم، أصبح سبيريت هب وجهة مفضلة لعشاق القهوة، حيث نقدم أجود أنواع القهوة المحمصة طازجة، مع احترام التقاليد العريقة ولمسة من الإبداع المعاصر.'
-                      : 'Today, Spirit Hub has become a favorite destination for coffee lovers, where we serve the finest freshly roasted coffee, respecting ancient traditions with a touch of contemporary creativity.'
-                    }
-                  </p>
-                  <p>
-                    {language === 'ar' 
-                      ? 'نحن نؤمن أن كل كوب قهوة يحكي قصة، ونسعى لجعل كل زيارة لمقهانا ذكرى جميلة تستحق التكرار.'
-                      : 'We believe that every cup of coffee tells a story, and we strive to make every visit to our café a beautiful memory worth repeating.'
-                    }
-                  </p>
+                  <h2 className="text-3xl lg:text-4xl font-bold text-gray-900">
+                    {language === 'ar' ? section.titleAr : section.title}
+                  </h2>
                 </div>
               </div>
-              <div className="relative">
-                <div className="bg-gradient-to-br from-amber-200 to-orange-300 rounded-2xl p-8 shadow-2xl">
-                  <Coffee className="w-24 h-24 text-amber-800 mx-auto mb-4" />
-                  <div className="text-center">
-                    <h3 className="text-2xl font-bold text-amber-900 mb-2">
-                      {language === 'ar' ? 'رؤيتنا' : 'Our Vision'}
-                    </h3>
-                    <p className="text-amber-800">
-                      {language === 'ar' 
-                        ? 'أن نكون المقهى الرائد في تقديم تجربة قهوة استثنائية تجمع بين الأصالة والحداثة'
-                        : 'To be the leading café in providing an exceptional coffee experience that combines authenticity and modernity'
-                      }
+              <div className="prose prose-lg max-w-none">
+                {(language === 'ar' ? section.contentAr : section.content)
+                  .split('\n\n')
+                  .map((paragraph, i) => (
+                    <p key={i} className="text-gray-700 leading-relaxed text-justify mb-4">
+                      {paragraph}
                     </p>
-                  </div>
-                </div>
+                  ))}
               </div>
             </div>
-          </div>
-        </div>
-      </div>
 
-      {/* Stats Section */}
-      <div className="py-16 bg-gradient-to-r from-amber-900 to-orange-800">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center text-white mb-12">
-            {language === 'ar' ? 'إنجازاتنا بالأرقام' : 'Our Achievements in Numbers'}
-          </h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {stats.map((stat, index) => (
-              <div key={index} className="text-center">
-                <div className="bg-white bg-opacity-20 rounded-full p-6 w-24 h-24 mx-auto mb-4 flex items-center justify-center">
-                  <stat.icon className="w-8 h-8 text-amber-200" />
-                </div>
-                <div className="text-3xl font-bold text-white mb-2">{stat.number}</div>
-                <div className="text-amber-200">{stat.label}</div>
+            {/* Image */}
+            <div className="flex-1">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.8, delay: index * 0.2 + 0.2 }}
+                className="relative rounded-3xl overflow-hidden shadow-2xl"
+              >
+                <img
+                  src={section.image}
+                  alt={language === 'ar' ? section.titleAr : section.title}
+                  className="w-full h-[500px] object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+              </motion.div>
+            </div>
+          </motion.div>
+        ))}
+
+        {/* Part 4: Values Box */}
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8 }}
+          className="bg-gradient-to-br from-stone-700 to-stone-900 rounded-3xl shadow-2xl p-12 text-white"
+        >
+          <div className="max-w-4xl mx-auto space-y-6">
+            <div className="flex items-center justify-center gap-4 mb-8">
+              <div className="w-16 h-16 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+                <Heart className="w-8 h-8 text-white" />
               </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Team Section */}
-      <div className="py-16 bg-white">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center text-gray-800 mb-12">
-            {language === 'ar' ? 'فريقنا المبدع' : 'Our Creative Team'}
-          </h2>
-          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            {team.map((member, index) => (
-              <div key={index} className="bg-gradient-to-br from-amber-50 to-orange-100 rounded-2xl p-6 text-center shadow-lg hover:shadow-xl transition-shadow duration-300">
-                <div className="w-32 h-32 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full mx-auto mb-4 flex items-center justify-center">
-                  <Users className="w-16 h-16 text-white" />
-                </div>
-                <h3 className="text-xl font-bold text-gray-800 mb-2">{member.name}</h3>
-                <p className="text-amber-700 font-semibold mb-3">{member.role}</p>
-                <p className="text-gray-600 text-sm leading-relaxed">{member.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Values Section */}
-      <div className="py-16 bg-gradient-to-br from-amber-50 to-orange-100">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center text-gray-800 mb-12">
-            {language === 'ar' ? 'قيمنا ومبادئنا' : 'Our Values & Principles'}
-          </h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            <div className="bg-white rounded-xl p-6 shadow-lg">
-              <Award className="w-12 h-12 text-amber-600 mb-4" />
-              <h3 className="text-xl font-bold text-gray-800 mb-3">
-                {language === 'ar' ? 'الجودة' : 'Quality'}
-              </h3>
-              <p className="text-gray-600">
-                {language === 'ar' 
-                  ? 'نلتزم بأعلى معايير الجودة في اختيار حبوب القهوة وطرق التحضير'
-                  : 'We commit to the highest quality standards in selecting coffee beans and preparation methods'
-                }
-              </p>
-            </div>
-            <div className="bg-white rounded-xl p-6 shadow-lg">
-              <Heart className="w-12 h-12 text-red-500 mb-4" />
-              <h3 className="text-xl font-bold text-gray-800 mb-3">
-                {language === 'ar' ? 'الشغف' : 'Passion'}
-              </h3>
-              <p className="text-gray-600">
-                {language === 'ar' 
-                  ? 'الشغف هو ما يدفعنا لتقديم أفضل ما لدينا في كل كوب قهوة'
-                  : 'Passion is what drives us to give our best in every cup of coffee'
-                }
-              </p>
-            </div>
-            <div className="bg-white rounded-xl p-6 shadow-lg">
-              <Users className="w-12 h-12 text-blue-500 mb-4" />
-              <h3 className="text-xl font-bold text-gray-800 mb-3">
-                {language === 'ar' ? 'المجتمع' : 'Community'}
-              </h3>
-              <p className="text-gray-600">
-                {language === 'ar' 
-                  ? 'نسعى لبناء مجتمع من محبي القهوة والثقافة العربية الأصيلة'
-                  : 'We strive to build a community of coffee and authentic Arabic culture lovers'
-                }
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Location & Hours */}
-      <div className="py-16 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-12">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-                <MapPin className="w-6 h-6 text-amber-600 mr-3" />
-                {language === 'ar' ? 'موقعنا' : 'Our Location'}
+              <h2 className="text-4xl lg:text-5xl font-bold text-center">
+                {language === 'ar' ? 'قيمنا' : 'VALUES'}
               </h2>
-              <div className="space-y-4 text-gray-600">
-                <p>{language === 'ar' ? 'شارع الأمير محمد بن عبدالعزيز' : 'Prince Mohammed bin Abdulaziz Street'}</p>
-                <p>{language === 'ar' ? 'حي الملز، الرياض 12345' : 'Al-Malaz District, Riyadh 12345'}</p>
-                <p>{language === 'ar' ? 'المملكة العربية السعودية' : 'Kingdom of Saudi Arabia'}</p>
-                <p className="font-semibold">+966 11 123 4567</p>
-              </div>
             </div>
-            <div>
-              <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-                <Clock className="w-6 h-6 text-amber-600 mr-3" />
-                {language === 'ar' ? 'ساعات العمل' : 'Opening Hours'}
-              </h2>
-              <div className="space-y-3 text-gray-600">
-                <div className="flex justify-between">
-                  <span>{language === 'ar' ? 'السبت - الأربعاء' : 'Saturday - Wednesday'}</span>
-                  <span>{language === 'ar' ? '6:00 ص - 12:00 م' : '6:00 AM - 12:00 AM'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>{language === 'ar' ? 'الخميس - الجمعة' : 'Thursday - Friday'}</span>
-                  <span>{language === 'ar' ? '6:00 ص - 1:00 ص' : '6:00 AM - 1:00 AM'}</span>
-                </div>
-              </div>
+            
+            <div className="text-center space-y-4">
+              <h3 className="text-2xl lg:text-3xl font-bold">
+                {language === 'ar' 
+                  ? 'سبيريت هب للتحميص والقهوة المتخصصة' 
+                  : 'SPIRIT HUB ROASTERY & SPECIALTY COFFEE'}
+              </h3>
+              <p className="text-lg text-stone-200">
+                {language === 'ar'
+                  ? 'تأسست في عُمان • تُدار محلياً • مستوحاة عالمياً'
+                  : 'Established in Oman • Locally Operated • Globally Inspired'}
+              </p>
+            </div>
+
+            <div className="prose prose-lg prose-invert max-w-none">
+              {(language === 'ar' 
+                ? `تأسست سبيريت هب للتحميص والقهوة المتخصصة في عُمان، وهي مكرسة لرفع مستوى تجربة القهوة لعملائها. مع التركيز القوي على القهوة المتخصصة، يسلط فريقنا الضوء على النكهات والروائح الفريدة لكل دفعة، مما يضمن أن كل فنجان يحكي قصة.
+
+نحن نقدر بعمق العمل الشاق للمزارعين الذين يزرعون ويحصدون حبوبنا. من خلال إظهار تفانيهم، تعترف سبيريت هب بمساهماتهم الأساسية في صناعة القهوة العالمية.
+
+يتجاوز شغفنا التقدير - نؤكد على علم القهوة. من دقة التحميص إلى إتقان التحضير، يتم دراسة كل خطوة بعناية لتقديم تجربة مميزة لا تُنسى.
+
+كشركة تعمل حصرياً من قبل فريق عماني، تدعم سبيريت هب بفخر الاقتصاد المحلي والمجتمع، مما يساعد على تعزيز أساس القهوة المتخصصة في عُمان.
+
+سبيريت هب أكثر من مجرد محمصة - إنها التزام بالجودة والاستدامة والمجتمع. كل فنجان يعكس التفاني في التميز، والمزارعين الذين يجعلون ذلك ممكناً، وروح عُمان.`
+                : `Founded in Oman, SPIRIT HUB Roastery & Specialty Coffee is dedicated to elevating the coffee experience for its customers. With a strong focus on specialty coffee, our team highlights the unique flavors and aromas of each batch, ensuring every cup tells a story.
+
+We deeply value the hard work of farmers who cultivate and harvest our beans. By showcasing their dedication, SPIRIT HUB recognizes their essential contributions to the global coffee industry.
+
+Our passion goes beyond appreciation—we emphasize the science of coffee. From roasting precision to brewing mastery, every step is carefully studied to deliver a distinctive and memorable experience.
+
+As a business exclusively operated by an Omani team, SPIRIT HUB proudly supports the local economy and community, helping strengthen the foundation of specialty coffee in Oman.
+
+SPIRIT HUB is more than a roastery—it is a commitment to quality, sustainability, and community. Every cup reflects dedication to excellence, the farmers who make it possible, and the spirit of Oman.`
+              ).split('\n\n').map((paragraph, i) => (
+                <p key={i} className="text-stone-100 leading-relaxed text-justify mb-4">
+                  {paragraph}
+                </p>
+              ))}
             </div>
           </div>
-        </div>
+        </motion.div>
       </div>
     </div>
   );
 };
+     
