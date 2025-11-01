@@ -162,7 +162,6 @@ export const Navigation: React.FC = () => {
                 </span>
               )}
               {t('nav.cart')}
-              {t('nav.cart')}
             </Button>
 
             {/* Authentication */}
