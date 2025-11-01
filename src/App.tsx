@@ -17,36 +17,10 @@ import { DeliveryPolicyPage } from './pages/DeliveryPolicyPage';
 import { ProductsPage } from './pages/ProductsPage';
 import { ProductDetailPage } from './pages/ProductDetailPage';
 import { NotFound } from './components/pages/NotFound';
-import { useOverlayScrollbars } from './hooks/useOverlayScrollbars';
-import { OverlayScrollbars } from 'overlayscrollbars';
 import './i18n';
 import './App.css';
-import './styles/overlayscrollbars.css';
-import 'overlayscrollbars/styles/overlayscrollbars.css';
 
 function AppContent() {
-  // Initialize OverlayScrollbars globally
-  useOverlayScrollbars();
-
-  // Force scrollbar initialization on mount
-  React.useEffect(() => {
-    // Ensure scrollbars are initialized on body
-    const bodyElement = document.body;
-    if (bodyElement && !bodyElement.hasAttribute('data-overlayscrollbars-initialize')) {
-      OverlayScrollbars(bodyElement, {
-        overflow: {
-          x: 'hidden',
-          y: 'scroll'
-        },
-        scrollbars: {
-          visibility: 'visible',
-          autoHide: 'never',
-          theme: 'os-theme-spirit-hub'
-        }
-      });
-    }
-  }, []);
-
   return (
     <div className="min-h-screen bg-white">
       <Navigation />

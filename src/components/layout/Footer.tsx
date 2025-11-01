@@ -117,7 +117,12 @@ export const Footer: React.FC = () => {
                   <p className="text-gray-300">
                     {language === 'ar' ? 'شارع الموج، مسقط، عُمان' : 'Al Mouj St, Muscat, Oman'}
                   </p>
-                  <div className="space-y-1">
+                  <div
+                    className={`space-y-1 ${
+                      language === 'ar' ? 'text-right' : 'text-left'
+                    }`}
+                    dir="ltr"
+                  >
                     <p className="text-gray-300">+968 9190 0005</p>
                     <p className="text-gray-300">+968 7272 6999</p>
                   </div>
