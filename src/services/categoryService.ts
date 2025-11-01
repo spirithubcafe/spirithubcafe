@@ -23,7 +23,7 @@ export const categoryService = {
         includeInactive: params?.includeInactive || false,
       },
     });
-    return response.data.data || [];
+    return response.data.data || response.data as any;
   },
 
   /**
@@ -35,7 +35,7 @@ export const categoryService = {
     const response = await http.get<ApiResponse<Category[]>>('/api/Categories/homepage', {
       params: { count },
     });
-    return response.data.data || [];
+    return response.data.data || response.data as any;
   },
 
   /**
@@ -44,7 +44,7 @@ export const categoryService = {
    */
   getCategoriesWithCount: async (): Promise<CategoryWithCount[]> => {
     const response = await http.get<ApiResponse<CategoryWithCount[]>>('/api/Categories/with-count');
-    return response.data.data || [];
+    return response.data.data || response.data as any;
   },
 
   /**
@@ -54,10 +54,7 @@ export const categoryService = {
    */
   getById: async (id: number): Promise<Category> => {
     const response = await http.get<ApiResponse<Category>>(`/api/Categories/${id}`);
-    if (!response.data.data) {
-      throw new Error('Category not found');
-    }
-    return response.data.data;
+    return response.data.data || response.data as any;
   },
 
   /**
@@ -67,10 +64,7 @@ export const categoryService = {
    */
   getBySlug: async (slug: string): Promise<Category> => {
     const response = await http.get<ApiResponse<Category>>(`/api/Categories/slug/${slug}`);
-    if (!response.data.data) {
-      throw new Error('Category not found');
-    }
-    return response.data.data;
+    return response.data.data || response.data as any;
   },
 
   /**
