@@ -1,26 +1,90 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { Coffee, Filter, Search } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useApp } from '../hooks/useApp';
 import { ProductCard } from '../components/products/ProductCard';
 import { Spinner } from '../components/ui/spinner';
+import { useSearchParams } from 'react-router-dom';
+
+type CategoryOption = {
+  id: string;
+  name: string;
+  slug?: string;
+};
 
 export const ProductsPage = () => {
   const { i18n } = useTranslation();
-  const { products, loading } = useApp();
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const { products, categories, loading } = useApp();
+  const [searchParams] = useSearchParams();
+  const categoryFromUrl = searchParams.get('category');
+  const [selectedCategory, setSelectedCategory] = useState<string>(categoryFromUrl || 'all');
   const [searchTerm, setSearchTerm] = useState('');
 
   const isArabic = i18n.language === 'ar';
 
+  // Scroll to top on page load or category change
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+
+  // Update selected category when URL changes
+  useEffect(() => {
+    if (categoryFromUrl) {
+      setSelectedCategory(categoryFromUrl);
+    } else {
+      setSelectedCategory('all');
+    }
+    // Scroll to top when category changes
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [categoryFromUrl]);
+
+  // Normalize selected category to a known category ID when categories change
+  useEffect(() => {
+    if (selectedCategory === 'all') {
+      return;
+    }
+
+    const matchBySlug = categories.find((cat) => cat.slug === selectedCategory);
+    if (matchBySlug && selectedCategory !== matchBySlug.id) {
+      setSelectedCategory(matchBySlug.id);
+    }
+  }, [categories, selectedCategory]);
+
+  // Get current category details
+  const currentCategory = useMemo(() => {
+    if (selectedCategory === 'all') {
+      return null;
+    }
+
+    return (
+      categories.find((cat) => cat.id === selectedCategory) ||
+      categories.find((cat) => cat.slug === selectedCategory) ||
+      null
+    );
+  }, [selectedCategory, categories]);
+
   // Filter products
   const filteredProducts = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase();
+    const activeCategoryId =
+      currentCategory?.id ??
+      (selectedCategory !== 'all' && /^\d+$/.test(selectedCategory) ? selectedCategory : null);
+    const activeCategorySlug =
+      currentCategory?.slug ??
+      (selectedCategory !== 'all' && !/^\d+$/.test(selectedCategory) ? selectedCategory : null);
+    const activeCategoryName = currentCategory?.name
+      ? currentCategory.name.trim().toLowerCase()
+      : null;
 
     return products.filter((product) => {
-      // Filter by category
+      // Filter by category using categoryId when available
       const matchesCategory =
-        selectedCategory === 'all' || product.category === selectedCategory;
+        selectedCategory === 'all' ||
+        (activeCategoryId && product.categoryId === activeCategoryId) ||
+        (activeCategorySlug && product.categorySlug === activeCategorySlug) ||
+        (activeCategoryName &&
+          product.category &&
+          product.category.trim().toLowerCase() === activeCategoryName);
 
       if (!matchesCategory) {
         return false;
@@ -34,24 +98,23 @@ export const ProductsPage = () => {
       const searchableText = `${product.name} ${product.description || ''} ${product.category || ''}`;
       return searchableText.toLowerCase().includes(normalizedSearch);
     });
-  }, [products, searchTerm, selectedCategory]);
+  }, [products, searchTerm, selectedCategory, currentCategory]);
 
   // Category options
-  const categoryOptions = useMemo(() => {
-    const allOption = {
+  const categoryOptions = useMemo<CategoryOption[]>(() => {
+    const allOption: CategoryOption = {
       id: 'all',
       name: isArabic ? 'جميع المنتجات' : 'All Products',
     };
 
-    const uniqueCategories = Array.from(
-      new Set(products.map((p) => p.category).filter(Boolean))
-    ).map((cat) => ({
-      id: cat,
-      name: cat,
+    const mappedCategories = categories.map<CategoryOption>((category) => ({
+      id: category.id,
+      name: category.name,
+      slug: category.slug,
     }));
 
-    return [allOption, ...uniqueCategories];
-  }, [products, isArabic]);
+    return [allOption, ...mappedCategories];
+  }, [categories, isArabic]);
 
   return (
     <div className={`min-h-screen bg-gray-50 ${isArabic ? 'rtl' : 'ltr'}`}>
@@ -62,12 +125,18 @@ export const ProductsPage = () => {
         <div className="relative container mx-auto px-4 h-full flex items-center justify-center text-center">
           <div className="max-w-3xl">
             <h1 className="text-5xl font-bold text-white mb-4 drop-shadow-lg">
-              {isArabic ? 'منتجاتنا' : 'Our Products'}
+              {currentCategory && selectedCategory !== 'all' 
+                ? currentCategory.name 
+                : (isArabic ? 'منتجاتنا' : 'Our Products')
+              }
             </h1>
             <p className="text-xl text-amber-100 leading-relaxed drop-shadow-md">
-              {isArabic
-                ? 'اكتشف مجموعتنا المميزة من القهوة والحلويات المحضرة بعناية'
-                : 'Discover our premium collection of carefully crafted coffee and desserts'}
+              {currentCategory && selectedCategory !== 'all'
+                ? currentCategory.description 
+                : (isArabic
+                    ? 'اكتشف مجموعتنا المميزة من القهوة والحلويات المحضرة بعناية'
+                    : 'Discover our premium collection of carefully crafted coffee and desserts')
+              }
             </p>
           </div>
         </div>
@@ -95,7 +164,9 @@ export const ProductsPage = () => {
               <div className="flex items-center gap-2 flex-wrap">
                 <Filter className="w-5 h-5 text-amber-600" />
                 {categoryOptions.map((category) => {
-                  const isActive = selectedCategory === category.id;
+                  const isActive =
+                    selectedCategory === category.id ||
+                    (category.slug && selectedCategory === category.slug);
 
                   return (
                     <button
