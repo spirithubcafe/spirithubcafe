@@ -33,6 +33,10 @@ const createApiClient = (): AxiosInstance => {
   // Response interceptor for error handling and token refresh
   client.interceptors.response.use(
     (response: AxiosResponse) => {
+      // Unwrap API response if it has the {success, data} structure
+      if (response.data && typeof response.data === 'object' && 'success' in response.data && 'data' in response.data) {
+        response.data = response.data.data;
+      }
       return response;
     },
     async (error) => {

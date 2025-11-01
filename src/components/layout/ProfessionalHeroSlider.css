@@ -5,7 +5,7 @@
   min-height: 800px; /* Increased for better Arabic text display */
   width: 100%;
   overflow: hidden;
-  background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #0f0f23 100%);
+  background: linear-gradient(135deg, rgba(30, 15, 5, 0.95) 0%, rgba(40, 20, 10, 0.9) 50%, rgba(30, 15, 5, 0.95) 100%);
   padding-top: 5.5rem; /* Increased padding for fixed navigation */
   padding-bottom: 2.5rem; /* Increased bottom padding for Arabic text */
 }
@@ -70,9 +70,9 @@
   bottom: 0;
   background: linear-gradient(
     135deg,
-    rgba(15, 15, 35, 0.8) 0%,
-    rgba(26, 26, 46, 0.6) 50%,
-    rgba(15, 15, 35, 0.9) 100%
+    rgba(30, 15, 5, 0.45) 0%,
+    rgba(40, 20, 10, 0.35) 50%,
+    rgba(30, 15, 5, 0.5) 100%
   );
   -webkit-backdrop-filter: blur(1px);
   backdrop-filter: blur(1px);
@@ -147,11 +147,8 @@
   font-weight: 800;
   line-height: 1.4; /* Increased for Arabic diacritics */
   margin: 0.75rem 0 1.25rem 0; /* More spacing */
-  background: linear-gradient(135deg, #ffffff 0%, #fbbf24 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  text-shadow: 0 4px 20px rgba(251, 191, 36, 0.3);
+  color: #ffffff;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.5);
   padding: 0.5rem 0; /* Increased padding for Arabic diacritics */
   text-rendering: optimizeLegibility; /* Better text rendering */
   -webkit-font-feature-settings: "liga", "kern";
@@ -161,10 +158,11 @@
 .slide-subtitle {
   font-size: 1.5rem;
   font-weight: 600;
-  color: #d1d5db;
+  color: #ffffff;
   margin: 0 0 1.75rem 0; /* Increased margin */
   line-height: 1.6; /* Increased for Arabic diacritics */
   padding: 0.375rem 0; /* Increased padding for Arabic diacritics */
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3), 0 4px 8px rgba(0, 0, 0, 0.4);
   text-rendering: optimizeLegibility; /* Better text rendering */
   -webkit-font-feature-settings: "liga", "kern";
   font-feature-settings: "liga", "kern";

@@ -3,8 +3,9 @@ import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AppContext, type Product, type Category, type AppContextType } from './AppContextDefinition';
 import { categoryService } from '../services/categoryService';
+import { productService } from '../services/productService';
 import type { Category as ApiCategory } from '../types/product';
-import { getCategoryImageUrl } from '../lib/imageUtils';
+import { getCategoryImageUrl, getProductImageUrl } from '../lib/imageUtils';
 
 export interface User {
   id: string;
@@ -52,56 +53,73 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     document.documentElement.lang = language;
   }, [i18n, language]); // Include dependencies
 
-  // Mock API functions (replace with actual API calls later)
+  // Fetch products from API
   const fetchProducts = useCallback(async () => {
     setLoading(true);
     setError(null);
     
     try {
-      // Mock data - replace with actual API call
-      const mockProducts: Product[] = [
-        {
-          id: '1',
-          name: language === 'ar' ? 'إسبريسو مميز' : 'Premium Espresso',
-          description: language === 'ar' ? 'قهوة إسبريسو غنية ومركزة' : 'Rich and concentrated espresso coffee',
-          price: 25.99,
-          image: '/images/slides/slide1.webp',
-          category: language === 'ar' ? 'قهوة ساخنة' : 'Hot Coffee',
-          featured: true
-        },
-        {
-          id: '2',
-          name: language === 'ar' ? 'كابتشينو كريمي' : 'Creamy Cappuccino',
-          description: language === 'ar' ? 'كابتشينو بالحليب المرغى' : 'Cappuccino with steamed milk foam',
-          price: 32.99,
-          image: '/images/slides/slide2.webp',
-          category: language === 'ar' ? 'قهوة ساخنة' : 'Hot Coffee',
-          featured: true
-        },
-        {
-          id: '3',
-          name: language === 'ar' ? 'لاتيه بالفانيليا' : 'Vanilla Latte',
-          description: language === 'ar' ? 'لاتيه مع نكهة الفانيليا الطبيعية' : 'Latte with natural vanilla flavor',
-          price: 28.99,
-          image: '/images/slides/slide3.webp',
-          category: language === 'ar' ? 'قهوة ساخنة' : 'Hot Coffee',
-          featured: false
-        },
-        {
-          id: '4',
-          name: language === 'ar' ? 'فرابتشينو بارد' : 'Cold Frappuccino',
-          description: language === 'ar' ? 'مشروب قهوة بارد ومنعش' : 'Refreshing cold coffee drink',
-          price: 35.99,
-          image: '/images/slides/slide4.webp',
-          category: language === 'ar' ? 'قهوة باردة' : 'Cold Coffee',
-          featured: true
-        }
-      ];
+      // Fetch products from API using main endpoint with pagination
+      const response = await productService.getAll({ 
+        page: 1, 
+        pageSize: 6,
+        includeInactive: false 
+      });
       
-      setProducts(mockProducts);
+      // Handle response - it might be array or paginated response
+      const products = Array.isArray(response) ? response : response.items || [];
+      
+      // Transform API products to match AppContext format
+      const transformedProducts: Product[] = await Promise.all(
+        products.map(async (prod) => {
+          // Get full product details to get images and variants
+          let imageUrl = '/images/products/default-product.webp';
+          let price = (prod as { minPrice?: number }).minPrice || 0;
+          let fullProduct = prod; // Use prod as fallback
+          
+          try {
+            // Fetch full product details including images
+            fullProduct = await productService.getById(prod.id);
+            
+            // Get image from full product details
+            if (fullProduct.images && fullProduct.images.length > 0) {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const mainImg = fullProduct.images.find((img: any) => img.isMain) || fullProduct.images[0];
+              imageUrl = getProductImageUrl(mainImg.imagePath);
+            } else if (fullProduct.mainImage?.imagePath) {
+              imageUrl = getProductImageUrl(fullProduct.mainImage.imagePath);
+            }
+            
+            // Get price from variants if available
+            if (fullProduct.variants && fullProduct.variants.length > 0) {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const defaultVariant = fullProduct.variants.find((v: any) => v.isDefault) || fullProduct.variants[0];
+              price = defaultVariant.discountPrice || defaultVariant.price;
+            }
+          } catch {
+            // Silently fail - use default values
+          }
+          
+          return {
+            id: fullProduct.id.toString(),
+            name: language === 'ar' && fullProduct.nameAr ? fullProduct.nameAr : fullProduct.name,
+            description: language === 'ar' && fullProduct.descriptionAr ? fullProduct.descriptionAr : fullProduct.description || '',
+            price: price,
+            image: imageUrl,
+            category: language === 'ar' && fullProduct.category?.nameAr 
+              ? fullProduct.category.nameAr 
+              : (fullProduct as { categoryName?: string }).categoryName || fullProduct.category?.name || '',
+            tastingNotes: language === 'ar' && fullProduct.tastingNotesAr ? fullProduct.tastingNotesAr : fullProduct.tastingNotes,
+            featured: fullProduct.isFeatured
+          };
+        })
+      );
+      
+      setProducts(transformedProducts);
     } catch (err) {
+      console.error('❌ Error fetching products:', err);
       setError('Failed to fetch products');
-      console.error('Error fetching products:', err);
+      setProducts([]);
     } finally {
       setLoading(false);
     }
@@ -132,29 +150,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     } catch (err) {
       console.error('❌ Error fetching categories:', err);
       setError('Failed to fetch categories');
-      
-      // Fallback to mock data if API fails
-      const fallbackCategories: Category[] = [
-        {
-          id: '1',
-          name: language === 'ar' ? 'قهوة ساخنة' : 'Hot Coffee',
-          description: language === 'ar' ? 'مجموعة متنوعة من المشروبات الساخنة' : 'A variety of hot beverages',
-          image: '/images/slides/slide1.webp'
-        },
-        {
-          id: '2',
-          name: language === 'ar' ? 'قهوة باردة' : 'Cold Coffee',
-          description: language === 'ar' ? 'مشروبات منعشة وباردة' : 'Refreshing cold beverages',
-          image: '/images/slides/slide2.webp'
-        },
-        {
-          id: '3',
-          name: language === 'ar' ? 'الحلويات' : 'Desserts',
-          description: language === 'ar' ? 'حلويات لذيذة تتناسب مع القهوة' : 'Delicious desserts that pair with coffee',
-          image: '/images/slides/slide5.webp'
-        }
-      ];
-      setCategories(fallbackCategories);
+      setCategories([]);
     } finally {
       setLoading(false);
     }
@@ -168,7 +164,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     // Set initial document direction
     document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
     document.documentElement.lang = language;
-  }, [language, fetchProducts, fetchCategories]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [language]);
 
   const value: AppContextType = {
     language,

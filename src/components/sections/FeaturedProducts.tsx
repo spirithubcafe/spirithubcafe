@@ -8,7 +8,8 @@ export const FeaturedProducts: React.FC = () => {
   const { t } = useTranslation();
   const { products, loading } = useApp();
 
-  const featuredProducts = products.filter(product => product.featured);
+  // Show all products (not just featured ones)
+  const displayProducts = products.slice(0, 6);
 
   if (loading) {
     return (
@@ -24,7 +25,7 @@ export const FeaturedProducts: React.FC = () => {
 
   return (
     <section id="products" className="py-16 bg-gray-50">
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center mb-12">
           <h2 className="text-4xl font-bold text-gray-900 mb-4">
@@ -35,21 +36,12 @@ export const FeaturedProducts: React.FC = () => {
           </p>
         </div>
 
-        {/* Products Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {featuredProducts.map((product) => (
+        {/* Products Grid - 6 columns in one row */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 sm:gap-6">
+          {displayProducts.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
         </div>
-
-        {/* View All Products Button */}
-        {featuredProducts.length > 0 && (
-          <div className="text-center mt-12">
-            <button className="bg-amber-600 hover:bg-amber-700 text-white px-8 py-3 rounded-full font-semibold text-lg transition-colors duration-200">
-              {t('nav.products')} - {t('products.viewDetails')}
-            </button>
-          </div>
-        )}
       </div>
     </section>
   );

@@ -46,10 +46,10 @@ export const Footer: React.FC = () => {
 
       {/* Content */}
       <div className="relative z-10">
-        <div className="container mx-auto px-4 py-16">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {/* Brand Section */}
-            <div className="space-y-6">
+        <div className="container mx-auto px-4 py-24 pt-32">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            {/* Brand Section - Takes more space */}
+            <div className="lg:col-span-5 space-y-6">
               <img 
                 src="/images/logo/logo-light.png" 
                 alt="Spirit Hub Roastery"
@@ -68,61 +68,64 @@ export const Footer: React.FC = () => {
               </div>
             </div>
 
-            {/* Quick Links */}
-            <div className="space-y-6">
-              <h3 className="text-xl font-bold text-amber-200">
-                {language === 'ar' ? 'روابط سريعة' : 'Quick Links'}
-              </h3>
-              <ul className="space-y-3">
-                {quickLinks.map((link) => (
-                  <li key={link.label}>
-                    <a
-                      href={link.href}
-                      className="text-gray-300 hover:text-amber-200 transition-colors duration-200 text-sm"
-                    >
-                      {link.label}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
+            {/* Other sections in smaller columns */}
+            <div className="lg:col-span-7 grid grid-cols-1 md:grid-cols-3 gap-8">
+              {/* Quick Links */}
+              <div className="space-y-6">
+                <h3 className="text-xl font-bold text-amber-200">
+                  {language === 'ar' ? 'روابط سريعة' : 'Quick Links'}
+                </h3>
+                <ul className="space-y-3">
+                  {quickLinks.map((link) => (
+                    <li key={link.label}>
+                      <a
+                        href={link.href}
+                        className="text-gray-300 hover:text-amber-200 transition-colors duration-200 text-sm"
+                      >
+                        {link.label}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
 
-            {/* Legal Pages */}
-            <div className="space-y-6">
-              <h3 className="text-xl font-bold text-amber-200">
-                {language === 'ar' ? 'الصفحات القانونية' : 'Legal Pages'}
-              </h3>
-              <ul className="space-y-3">
-                {legalLinks.map((link) => (
-                  <li key={link.label}>
-                    <a
-                      href={link.href}
-                      className="text-gray-300 hover:text-amber-200 transition-colors duration-200 text-sm"
-                    >
-                      {link.label}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
+              {/* Legal Pages */}
+              <div className="space-y-6">
+                <h3 className="text-xl font-bold text-amber-200">
+                  {language === 'ar' ? 'الصفحات القانونية' : 'Legal Pages'}
+                </h3>
+                <ul className="space-y-3">
+                  {legalLinks.map((link) => (
+                    <li key={link.label}>
+                      <a
+                        href={link.href}
+                        className="text-gray-300 hover:text-amber-200 transition-colors duration-200 text-sm"
+                      >
+                        {link.label}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
 
-            {/* Contact Us */}
-            <div className="space-y-6">
-              <h3 className="text-xl font-bold text-amber-200">
-                {language === 'ar' ? 'اتصل بنا' : 'Contact Us'}
-              </h3>
-              <div className="space-y-3 text-sm">
-                <p className="text-gray-300">
-                  {language === 'ar' ? 'شارع الموج، مسقط، عُمان' : 'Al Mouj St, Muscat, Oman'}
-                </p>
-                <div className="space-y-1">
-                  <p className="text-gray-300">+968 9190 0005</p>
-                  <p className="text-gray-300">+968 7272 6999</p>
+              {/* Contact Us */}
+              <div className="space-y-6">
+                <h3 className="text-xl font-bold text-amber-200">
+                  {language === 'ar' ? 'اتصل بنا' : 'Contact Us'}
+                </h3>
+                <div className="space-y-3 text-sm">
+                  <p className="text-gray-300">
+                    {language === 'ar' ? 'شارع الموج، مسقط، عُمان' : 'Al Mouj St, Muscat, Oman'}
+                  </p>
+                  <div className="space-y-1">
+                    <p className="text-gray-300">+968 9190 0005</p>
+                    <p className="text-gray-300">+968 7272 6999</p>
+                  </div>
+                  <p className="text-gray-300">info@spirithubcafe.com</p>
+                  <p className="text-gray-300 font-medium">
+                    {language === 'ar' ? 'يومياً: 7 صباحاً - 12 منتصف الليل' : 'Daily: 7 AM - 12 AM'}
+                  </p>
                 </div>
-                <p className="text-gray-300">info@spirithubcafe.com</p>
-                <p className="text-gray-300 font-medium">
-                  {language === 'ar' ? 'يومياً: 7 صباحاً - 12 منتصف الليل' : 'Daily: 7 AM - 12 AM'}
-                </p>
               </div>
             </div>
           </div>
@@ -130,11 +133,11 @@ export const Footer: React.FC = () => {
           {/* Social Links */}
           <div className="border-t border-gray-600/50 mt-12 pt-8">
             <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-              <div>
+              <div className="text-center md:text-start">
                 <h4 className="text-lg font-semibold text-amber-200 mb-4">
                   {language === 'ar' ? 'تابعنا' : 'Follow Us'}
                 </h4>
-                <div className="flex space-x-4 rtl:space-x-reverse">
+                <div className="flex gap-4 justify-center md:justify-start">
                   {socialLinks.map((social) => (
                     <a
                       key={social.label}
@@ -148,7 +151,7 @@ export const Footer: React.FC = () => {
                 </div>
               </div>
               
-              <div className="text-center md:text-right">
+              <div className="text-center md:text-end">
                 <p className="text-gray-400 text-sm">
                   © 2025 SPIRITHUB ROASTERY. {language === 'ar' ? 'جميع الحقوق محفوظة' : 'All rights reserved'}.
                 </p>

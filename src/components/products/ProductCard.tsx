@@ -1,9 +1,8 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { ShoppingCart, Eye } from 'lucide-react';
+import { ShoppingCart } from 'lucide-react';
 import { Card, CardContent, CardFooter } from '../ui/card';
 import { Button } from '../ui/button';
-import { Badge } from '../ui/badge';
 import type { Product } from '../../contexts/AppContextDefinition';
 
 interface ProductCardProps {
@@ -11,83 +10,54 @@ interface ProductCardProps {
 }
 
 export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
-  const { t } = useTranslation();
+  const { i18n } = useTranslation();
+  const isArabic = i18n.language === 'ar';
 
   return (
-    <Card className="group overflow-hidden hover:shadow-lg transition-all duration-300 bg-white border border-gray-200 hover:border-amber-300">
-      {/* Product Image */}
+    <Card className="group overflow-hidden hover:shadow-xl transition-all duration-300 bg-white border-0 shadow-md py-0">
+      {/* Product Image - Square aspect ratio */}
       <div className="relative overflow-hidden aspect-square">
         <img
           src={product.image}
           alt={product.name}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
           onError={(e) => {
-            // Fallback image if the provided image fails to load
             e.currentTarget.src = '/images/slides/slide1.webp';
           }}
         />
         
-        {/* Featured Badge */}
-        {product.featured && (
-          <Badge className="absolute top-2 left-2 bg-amber-600 hover:bg-amber-700 text-white">
-            {t('sections.featuredProducts')}
-          </Badge>
-        )}
-        
-        {/* Hover Actions */}
-        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
-          <div className="flex space-x-2">
-            <Button
-              size="sm"
-              variant="secondary"
-              className="bg-white/90 hover:bg-white text-gray-900"
-            >
-              <Eye className="w-4 h-4" />
-            </Button>
-            <Button
-              size="sm"
-              className="bg-amber-600 hover:bg-amber-700 text-white"
-            >
-              <ShoppingCart className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
+        {/* Gradient Overlay on hover */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
       </div>
 
-      {/* Product Content */}
-      <CardContent className="p-4">
-        <div className="space-y-2">
-          <h3 className="font-semibold text-lg text-gray-900 group-hover:text-amber-700 transition-colors duration-200">
-            {product.name}
-          </h3>
-          <p className="text-sm text-gray-600 line-clamp-2">
-            {product.description}
-          </p>
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-500">{product.category}</span>
-            <span className="text-xl font-bold text-amber-600">
-              ${product.price}
-            </span>
-          </div>
+      {/* Product Content - Compact */}
+      <CardContent className="p-3">
+        <h3 className="font-bold text-sm text-gray-900 line-clamp-2 mb-1 group-hover:text-amber-600 transition-colors min-h-[2.5rem]">
+          {product.name}
+        </h3>
+        <p className="text-xs text-amber-600 mb-2 line-clamp-1">
+          {product.tastingNotes || '---'}
+        </p>
+        {/* Price at bottom */}
+        <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+          <span className="text-xs text-gray-400">{isArabic ? 'السعر' : 'Price'}</span>
+          <span className="text-lg font-bold text-amber-600">
+            {product.price > 0 
+              ? `${product.price.toFixed(3)} ${isArabic ? 'ر.ع' : 'OMR'}` 
+              : (isArabic ? 'قريباً' : 'Soon')}
+          </span>
         </div>
       </CardContent>
 
-      {/* Product Actions */}
-      <CardFooter className="p-4 pt-0">
-        <div className="flex w-full space-x-2">
-          <Button
-            variant="outline"
-            className="flex-1 border-amber-200 text-amber-700 hover:bg-amber-50"
-          >
-            {t('products.viewDetails')}
-          </Button>
-          <Button
-            className="flex-1 bg-amber-600 hover:bg-amber-700 text-white"
-          >
-            <ShoppingCart className="w-4 h-4 mr-2" />
-            {t('products.addToCart')}
-          </Button>
-        </div>
+      {/* Add to Cart Button - Compact */}
+      <CardFooter className="p-3 pt-0">
+        <Button
+          size="sm"
+          className="w-full bg-amber-600 hover:bg-amber-700 text-white shadow-md hover:shadow-lg transition-all"
+        >
+          <ShoppingCart className="w-3.5 h-3.5 mr-1.5" />
+          <span className="text-xs font-semibold">{isArabic ? 'إضافة للسلة' : 'Add to Cart'}</span>
+        </Button>
       </CardFooter>
     </Card>
   );

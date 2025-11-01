@@ -7,6 +7,7 @@ export interface Product {
   price: number;
   image: string;
   category: string;
+  tastingNotes?: string;
   featured?: boolean;
 }
 
