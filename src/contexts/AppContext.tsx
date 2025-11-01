@@ -201,13 +201,16 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   }, [language]);
 
   const fetchCategories = useCallback(async () => {
-    // Check cache first
+    // Check cache first for both categories and allCategories
     const cacheKey = `spirithub_cache_categories_${language}`;
+    const allCategoriesCacheKey = `spirithub_cache_all_categories_${language}`;
     const cachedData = cacheUtils.get<Category[]>(cacheKey);
+    const cachedAllCategories = cacheUtils.get<Category[]>(allCategoriesCacheKey);
     
-    if (cachedData) {
+    if (cachedData && cachedAllCategories) {
       console.log('📦 Using cached categories for', language);
       setCategories(cachedData);
+      setAllCategories(cachedAllCategories);
       setLoading(false);
       return;
     }
@@ -245,7 +248,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       
       // Cache both datasets
       cacheUtils.set(cacheKey, homepageCategories);
-      cacheUtils.set(`spirithub_cache_all_categories_${language}`, transformedAllCategories);
+      cacheUtils.set(allCategoriesCacheKey, transformedAllCategories);
       
       // Preload and cache images in background
       const imageUrls = transformedAllCategories.map(c => c.image);
@@ -259,6 +262,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       console.error('❌ Error fetching categories:', err);
       setError('Failed to fetch categories');
       setCategories([]);
+      setAllCategories([]);
     } finally {
       setLoading(false);
     }
