@@ -3,6 +3,7 @@ import { Coffee, Filter, Search } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useApp } from '../hooks/useApp';
 import { ProductCard } from '../components/products/ProductCard';
+import { CategoriesSection } from '../components/sections/CategoriesSection';
 import { Spinner } from '../components/ui/spinner';
 
 export const ProductsPage = () => {
@@ -169,56 +170,7 @@ export const ProductsPage = () => {
       </div>
 
       {/* Categories Info Section */}
-      <div className="py-16 bg-white">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center text-gray-800 mb-12">
-            {isArabic ? 'فئات مميزة' : 'Featured Categories'}
-          </h2>
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl shadow-lg p-8 text-center hover:shadow-xl transition-all hover:scale-105">
-              <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6 shadow-lg">
-                <Coffee className="w-10 h-10 text-white" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-800 mb-3">
-                {isArabic ? 'قهوة مختصة' : 'Specialty Coffee'}
-              </h3>
-              <p className="text-gray-600">
-                {isArabic
-                  ? 'مجموعة متنوعة من القهوة المحضرة بعناية من أجود الحبوب'
-                  : 'Variety of carefully prepared coffee from the finest beans'}
-              </p>
-            </div>
-
-            <div className="bg-gradient-to-br from-pink-50 to-red-50 rounded-2xl shadow-lg p-8 text-center hover:shadow-xl transition-all hover:scale-105">
-              <div className="bg-gradient-to-br from-pink-500 to-red-600 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6 shadow-lg">
-                <Coffee className="w-10 h-10 text-white" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-800 mb-3">
-                {isArabic ? 'حلويات طازجة' : 'Fresh Desserts'}
-              </h3>
-              <p className="text-gray-600">
-                {isArabic
-                  ? 'حلويات محضرة يومياً بأجود المكونات'
-                  : 'Daily prepared desserts with the finest ingredients'}
-              </p>
-            </div>
-
-            <div className="bg-gradient-to-br from-green-50 to-teal-50 rounded-2xl shadow-lg p-8 text-center hover:shadow-xl transition-all hover:scale-105">
-              <div className="bg-gradient-to-br from-green-500 to-teal-600 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6 shadow-lg">
-                <Coffee className="w-10 h-10 text-white" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-800 mb-3">
-                {isArabic ? 'معجنات مخبوزة' : 'Baked Pastries'}
-              </h3>
-              <p className="text-gray-600">
-                {isArabic
-                  ? 'معجنات طازجة مخبوزة يومياً في مخبزنا'
-                  : 'Fresh pastries baked daily in our bakery'}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
+      <CategoriesSection />
     </div>
   );
 };
