@@ -150,7 +150,42 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
             <Loader2 className="w-10 h-10 animate-spin text-amber-600" />
           </div>
         ) : (
-          <div className="grid md:grid-cols-2 gap-0">
+          <div className="flex flex-col md:grid md:grid-cols-2 gap-0">
+            {/* Product Name and Reviews - Mobile Only (Top) */}
+            <div className="md:hidden px-5 pt-4 pb-3 border-b border-gray-200">
+              <h2 className="text-xl font-bold text-gray-900 mb-2 leading-tight">{product.name}</h2>
+              
+              {/* Reviews */}
+              {averageRating > 0 ? (
+                <div className="flex items-center gap-2">
+                  <div className="flex gap-0.5">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star
+                        key={star}
+                        className={`w-3.5 h-3.5 ${
+                          star <= averageRating
+                            ? 'text-yellow-400 fill-current'
+                            : 'text-gray-300'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-xs text-gray-600">
+                    ({averageRating.toFixed(1)}) · {totalReviews} {isArabic ? 'مراجعة' : 'reviews'}
+                  </span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <div className="flex gap-0.5">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star key={star} className="w-3.5 h-3.5 text-gray-300" />
+                    ))}
+                  </div>
+                  <span className="text-xs text-gray-400">(0.0) · 0 {isArabic ? 'مراجعة' : 'reviews'}</span>
+                </div>
+              )}
+            </div>
+
             {/* Product Image */}
             <div className="relative bg-gradient-to-br from-amber-100 to-orange-100 overflow-hidden flex flex-col">
               <div className="aspect-square relative flex-shrink-0">
@@ -201,8 +236,8 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
 
             {/* Product Details */}
             <div className="flex flex-col p-5 space-y-4">
-              {/* Product Name */}
-              <div>
+              {/* Product Name and Reviews - Desktop Only */}
+              <div className="hidden md:block">
                 <h2 className="text-2xl font-bold text-gray-900 mb-2 leading-tight">{product.name}</h2>
                 
                 {/* Reviews */}
