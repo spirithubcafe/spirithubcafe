@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useApp } from '../hooks/useApp';
 import { ProductCard } from '../components/products/ProductCard';
 import { Spinner } from '../components/ui/spinner';
+import { PageHeader } from '../components/layout/PageHeader';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
   Select,
@@ -136,29 +137,25 @@ export const ProductsPage = () => {
 
   return (
     <div className={`min-h-screen bg-gray-50 ${isArabic ? 'rtl' : 'ltr'}`}>
-      {/* Hero Section */}
-      <div className="relative h-80 bg-gradient-to-r from-amber-900 via-amber-800 to-orange-800 overflow-hidden">
-        <div className="absolute inset-0 bg-black/40"></div>
-        <div className="absolute inset-0 bg-[url('/images/slides/slide1.webp')] bg-cover bg-center opacity-20"></div>
-        <div className="relative container mx-auto px-4 h-full flex items-center justify-center text-center">
-          <div className="max-w-3xl">
-            <h1 className="text-5xl font-bold text-white mb-4 drop-shadow-lg">
-              {currentCategory && selectedCategory !== 'all' 
-                ? currentCategory.name 
-                : (isArabic ? 'منتجاتنا' : 'Our Products')
-              }
-            </h1>
-            <p className="text-xl text-amber-100 leading-relaxed drop-shadow-md">
-              {currentCategory && selectedCategory !== 'all'
-                ? currentCategory.description 
-                : (isArabic
-                    ? 'اكتشف مجموعتنا المميزة من القهوة والحلويات المحضرة بعناية'
-                    : 'Discover our premium collection of carefully crafted coffee and desserts')
-              }
-            </p>
-          </div>
-        </div>
-      </div>
+      {/* Page Header */}
+      <PageHeader
+        title={currentCategory && selectedCategory !== 'all' 
+          ? currentCategory.name 
+          : 'Our Products'
+        }
+        titleAr={currentCategory && selectedCategory !== 'all' 
+          ? currentCategory.name 
+          : 'منتجاتنا'
+        }
+        subtitle={currentCategory && selectedCategory !== 'all'
+          ? currentCategory.description 
+          : 'Discover our premium collection of carefully crafted coffee and desserts'
+        }
+        subtitleAr={currentCategory && selectedCategory !== 'all'
+          ? currentCategory.description 
+          : 'اكتشف مجموعتنا المميزة من القهوة والحلويات المحضرة بعناية'
+        }
+      />
 
       {/* Filters Section - Compact & Professional */}
       <div className="py-3 bg-gradient-to-r from-stone-900 via-neutral-900 to-stone-900 shadow-xl border-b border-stone-700/50 sticky top-0 z-50 backdrop-blur-lg">
@@ -193,7 +190,7 @@ export const ProductsPage = () => {
                       <SelectItem 
                         key={category.id} 
                         value={category.id}
-                        className="text-base font-medium text-white hover:bg-stone-600/50 focus:bg-stone-600/60 data-[state=checked]:bg-stone-600 cursor-pointer py-2.5"
+                        className="text-base font-medium text-white hover:bg-stone-600/50 focus:bg-stone-600/60 data-[state=checked]:bg-stone-600 cursor-pointer py-2.5 focus:outline-none focus-visible:outline-none focus-visible:ring-0"
                       >
                         {category.name}
                       </SelectItem>

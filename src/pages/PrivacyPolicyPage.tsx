@@ -1,6 +1,7 @@
 import React from 'react';
 import { useApp } from '../hooks/useApp';
 import { Shield, Lock, Eye, UserCheck } from 'lucide-react';
+import { PageHeader } from '../components/layout/PageHeader';
 
 export const PrivacyPolicyPage: React.FC = () => {
   const { language } = useApp();
@@ -37,25 +38,14 @@ export const PrivacyPolicyPage: React.FC = () => {
   ];
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br from-amber-50 to-orange-100 ${language === 'ar' ? 'rtl' : 'ltr'}`}>
-      {/* Hero Section */}
-      <div className="relative h-80 bg-gradient-to-r from-amber-900 to-orange-800 overflow-hidden">
-        <div className="absolute inset-0 bg-black bg-opacity-40"></div>
-        <div className="relative container mx-auto px-4 h-full flex items-center justify-center text-center">
-          <div className="max-w-3xl">
-            <Shield className="w-16 h-16 text-amber-200 mx-auto mb-4" />
-            <h1 className="text-5xl font-bold text-white mb-4">
-              {language === 'ar' ? 'سياسة الخصوصية' : 'Privacy Policy'}
-            </h1>
-            <p className="text-xl text-amber-100 leading-relaxed">
-              {language === 'ar' 
-                ? 'نحن نحترم خصوصيتك ونلتزم بحماية بياناتك الشخصية'
-                : 'We respect your privacy and are committed to protecting your personal data'
-              }
-            </p>
-          </div>
-        </div>
-      </div>
+    <div className={`min-h-screen bg-gradient-to-br from-stone-50 to-stone-100 ${language === 'ar' ? 'rtl' : 'ltr'}`}>
+      {/* Page Header */}
+      <PageHeader
+        title="Privacy Policy"
+        titleAr="سياسة الخصوصية"
+        subtitle="We respect your privacy and are committed to protecting your personal data"
+        subtitleAr="نحن نحترم خصوصيتك ونلتزم بحماية بياناتك الشخصية"
+      />
 
       {/* Main Content */}
       <div className="py-16 bg-white">

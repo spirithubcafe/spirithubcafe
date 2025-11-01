@@ -1,6 +1,7 @@
 import React from 'react';
 import { useApp } from '../hooks/useApp';
 import { Truck, Clock, MapPin, CreditCard, Package, AlertCircle } from 'lucide-react';
+import { PageHeader } from '../components/layout/PageHeader';
 
 export const DeliveryPolicyPage: React.FC = () => {
   const { language } = useApp();
@@ -33,25 +34,14 @@ export const DeliveryPolicyPage: React.FC = () => {
   ];
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br from-amber-50 to-orange-100 ${language === 'ar' ? 'rtl' : 'ltr'}`}>
-      {/* Hero Section */}
-      <div className="relative h-80 bg-gradient-to-r from-amber-900 to-orange-800 overflow-hidden">
-        <div className="absolute inset-0 bg-black bg-opacity-40"></div>
-        <div className="relative container mx-auto px-4 h-full flex items-center justify-center text-center">
-          <div className="max-w-3xl">
-            <Truck className="w-16 h-16 text-amber-200 mx-auto mb-4" />
-            <h1 className="text-5xl font-bold text-white mb-4">
-              {language === 'ar' ? 'سياسة التوصيل' : 'Delivery Policy'}
-            </h1>
-            <p className="text-xl text-amber-100 leading-relaxed">
-              {language === 'ar' 
-                ? 'نوصل لك أجود أنواع القهوة والحلويات إلى باب منزلك'
-                : 'We deliver the finest coffee and desserts right to your door'
-              }
-            </p>
-          </div>
-        </div>
-      </div>
+    <div className={`min-h-screen bg-gradient-to-br from-stone-50 to-stone-100 ${language === 'ar' ? 'rtl' : 'ltr'}`}>
+      {/* Page Header */}
+      <PageHeader
+        title="Delivery Policy"
+        titleAr="سياسة التوصيل"
+        subtitle="We deliver the finest coffee and desserts right to your door"
+        subtitleAr="نوصل لك أجود أنواع القهوة والحلويات إلى باب منزلك"
+      />
 
       {/* Delivery Areas */}
       <div className="py-16 bg-white">

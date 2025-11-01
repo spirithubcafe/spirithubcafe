@@ -1,6 +1,7 @@
 import React from 'react';
 import { useApp } from '../hooks/useApp';
 import { FileText, CheckCircle, AlertTriangle, Scale } from 'lucide-react';
+import { PageHeader } from '../components/layout/PageHeader';
 
 export const TermsConditionsPage: React.FC = () => {
   const { language } = useApp();
@@ -37,25 +38,14 @@ export const TermsConditionsPage: React.FC = () => {
   ];
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br from-amber-50 to-orange-100 ${language === 'ar' ? 'rtl' : 'ltr'}`}>
-      {/* Hero Section */}
-      <div className="relative h-80 bg-gradient-to-r from-amber-900 to-orange-800 overflow-hidden">
-        <div className="absolute inset-0 bg-black bg-opacity-40"></div>
-        <div className="relative container mx-auto px-4 h-full flex items-center justify-center text-center">
-          <div className="max-w-3xl">
-            <FileText className="w-16 h-16 text-amber-200 mx-auto mb-4" />
-            <h1 className="text-5xl font-bold text-white mb-4">
-              {language === 'ar' ? 'الشروط والأحكام' : 'Terms & Conditions'}
-            </h1>
-            <p className="text-xl text-amber-100 leading-relaxed">
-              {language === 'ar' 
-                ? 'الشروط والأحكام التي تحكم استخدام خدمات مقهى سبيريت هب'
-                : 'Terms and conditions governing the use of Spirit Hub Café services'
-              }
-            </p>
-          </div>
-        </div>
-      </div>
+    <div className={`min-h-screen bg-gradient-to-br from-stone-50 to-stone-100 ${language === 'ar' ? 'rtl' : 'ltr'}`}>
+      {/* Page Header */}
+      <PageHeader
+        title="Terms & Conditions"
+        titleAr="الشروط والأحكام"
+        subtitle="Terms and conditions governing the use of Spirit Hub Café services"
+        subtitleAr="الشروط والأحكام التي تحكم استخدام خدمات مقهى سبيريت هب"
+      />
 
       {/* Main Content */}
       <div className="py-16 bg-white">

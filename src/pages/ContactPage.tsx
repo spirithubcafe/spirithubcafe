@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Phone, Mail, MapPin, Clock, MessageCircle, Send, Instagram, Facebook } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useApp } from '../hooks/useApp';
+import { PageHeader } from '../components/layout/PageHeader';
 import { Input } from '../components/ui/input';
 import { Textarea } from '../components/ui/textarea';
 import { Label } from '../components/ui/label';
@@ -141,39 +142,13 @@ export const ContactPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      {/* Hero Section */}
-      <motion.div 
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="relative bg-gradient-to-br from-stone-50 via-white to-stone-100 py-16 overflow-hidden"
-      >
-        <div 
-          className="absolute inset-0 opacity-5 hero-overlay-bg"
-        />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-          <div className="text-center">
-            <motion.h1 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2, duration: 0.6 }}
-              className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4"
-            >
-              {language === 'ar' ? 'تواصل معنا' : 'Contact Us'}
-            </motion.h1>
-            <motion.p 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4, duration: 0.6 }}
-              className="text-lg md:text-xl text-gray-700 max-w-3xl mx-auto"
-            >
-              {language === 'ar' 
-                ? 'نحن هنا للإجابة على جميع استفساراتك. لا تتردد في التواصل معنا عبر أي من القنوات التالية' 
-                : 'We\'re here to answer all your questions. Feel free to reach out to us through any of the following channels'}
-            </motion.p>
-          </div>
-        </div>
-      </motion.div>
+      {/* Page Header */}
+      <PageHeader
+        title="Contact Us"
+        titleAr="تواصل معنا"
+        subtitle="We're here to answer all your questions. Feel free to reach out to us through any of the following channels"
+        subtitleAr="نحن هنا للإجابة على جميع استفساراتك. لا تتردد في التواصل معنا عبر أي من القنوات التالية"
+      />
 
       {/* Contact Info Cards */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
