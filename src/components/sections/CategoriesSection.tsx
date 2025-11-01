@@ -6,7 +6,7 @@ import { handleImageError } from '../../lib/imageUtils';
 
 export const CategoriesSection: React.FC = () => {
   const { t } = useTranslation();
-  const { categories, loading, language } = useApp();
+  const { categories, loading } = useApp();
 
   if (loading) {
     return (
@@ -37,15 +37,9 @@ export const CategoriesSection: React.FC = () => {
       <div className="container mx-auto px-4">
         {/* Section Header */}
         <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold text-gray-900 mb-4">
+          <h2 className="text-4xl font-bold text-gray-900 mb-4 uppercase">
             {t('sections.categories') || 'Our Categories'}
           </h2>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            {language === 'ar' 
-              ? 'اكتشف مجموعتنا المختارة بعناية من فئات القهوة'
-              : 'Discover our carefully curated coffee categories'
-            }
-          </p>
         </div>
 
         {/* Categories Grid - 5 columns */}
