@@ -274,9 +274,7 @@ export const ProductsPage = () => {
                 <button
                   key={category.id}
                   onClick={() => handleCategoryChange(category.id)}
-                  className={`group cursor-pointer text-left transition-all ${
-                    isActive ? 'ring-2 ring-amber-500' : ''
-                  }`}
+                  className="group cursor-pointer text-left transition-all"
                 >
                   {/* Category Image */}
                   <div className={`relative overflow-hidden rounded-lg aspect-square mb-4 border-2 transition-all duration-300 ${
