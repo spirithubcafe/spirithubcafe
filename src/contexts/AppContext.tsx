@@ -215,8 +215,13 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       // Fetch categories from API
       const apiCategories = await categoryService.getAll({ includeInactive: false });
       
+      // Filter categories for homepage display and sort by displayOrder
+      const homepageCategories = apiCategories
+        .filter(cat => cat.isDisplayedOnHomepage)
+        .sort((a, b) => a.displayOrder - b.displayOrder);
+      
       // Transform API categories to match AppContext format
-      const transformedCategories: Category[] = apiCategories.map((cat: ApiCategory) => {
+      const transformedCategories: Category[] = homepageCategories.map((cat: ApiCategory) => {
         // Build full image URL using utility function
         const imageUrl = getCategoryImageUrl(cat.imagePath);
         
