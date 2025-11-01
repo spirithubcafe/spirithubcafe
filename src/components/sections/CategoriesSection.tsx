@@ -72,14 +72,9 @@ export const CategoriesSection: React.FC = () => {
               
               {/* Category Content Below Image */}
               <div className="text-center">
-                <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-amber-600 transition-colors duration-200">
+                <h3 className="text-lg font-bold text-gray-900 group-hover:text-amber-600 transition-colors duration-200">
                   {category.name}
                 </h3>
-                {category.description && (
-                  <p className="text-sm text-gray-600 line-clamp-2 px-2">
-                    {category.description}
-                  </p>
-                )}
               </div>
             </div>
           ))}

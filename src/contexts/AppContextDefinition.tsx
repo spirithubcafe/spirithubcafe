@@ -26,6 +26,7 @@ export interface AppContextType {
   toggleLanguage: () => void;
   products: Product[];
   categories: Category[];
+  allCategories: Category[];
   loading: boolean;
   error: string | null;
   fetchProducts: () => Promise<void>;

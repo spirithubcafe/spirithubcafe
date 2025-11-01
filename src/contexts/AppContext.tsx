@@ -29,6 +29,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [allCategories, setAllCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -215,16 +216,12 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       // Fetch categories from API
       const apiCategories = await categoryService.getAll({ includeInactive: false });
       
-      // Filter categories for homepage display and sort by displayOrder
-      const homepageCategories = apiCategories
-        .filter(cat => cat.isDisplayedOnHomepage)
-        .sort((a, b) => a.displayOrder - b.displayOrder);
+      // Sort all categories by displayOrder
+      const sortedCategories = apiCategories.sort((a, b) => a.displayOrder - b.displayOrder);
       
-      // Transform API categories to match AppContext format
-      const transformedCategories: Category[] = homepageCategories.map((cat: ApiCategory) => {
-        // Build full image URL using utility function
+      // Transform all categories
+      const transformedAllCategories: Category[] = sortedCategories.map((cat: ApiCategory) => {
         const imageUrl = getCategoryImageUrl(cat.imagePath);
-        
         return {
           id: cat.id.toString(),
           slug: cat.slug,
@@ -234,13 +231,21 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         };
       });
       
-      setCategories(transformedCategories);
+      // Filter categories for homepage display
+      const homepageCategories = transformedAllCategories.filter((_cat, index) => {
+        const apiCat = sortedCategories[index];
+        return apiCat.isDisplayedOnHomepage;
+      });
       
-      // Cache the data
-      cacheUtils.set(cacheKey, transformedCategories);
+      setCategories(homepageCategories);
+      setAllCategories(transformedAllCategories);
+      
+      // Cache both datasets
+      cacheUtils.set(cacheKey, homepageCategories);
+      cacheUtils.set(`spirithub_cache_all_categories_${language}`, transformedAllCategories);
       
       // Preload and cache images in background
-      const imageUrls = transformedCategories.map(c => c.image);
+      const imageUrls = transformedAllCategories.map(c => c.image);
       imageCacheUtils.preloadImages(imageUrls).then(() => {
         imageCacheUtils.markImagesCached(imageUrls);
         console.log('✅ Category images cached');
@@ -299,6 +304,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     toggleLanguage,
     products,
     categories,
+    allCategories,
     loading,
     error,
     fetchProducts,

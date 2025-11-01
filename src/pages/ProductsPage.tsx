@@ -14,7 +14,7 @@ type CategoryOption = {
 
 export const ProductsPage = () => {
   const { i18n } = useTranslation();
-  const { products, categories, loading } = useApp();
+  const { products, allCategories, loading } = useApp();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const categoryFromUrl = searchParams.get('category');
@@ -49,17 +49,17 @@ export const ProductsPage = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [categoryFromUrl]);
 
-  // Normalize selected category to a known category ID when categories change
+  // Normalize selected category to a known category ID when allCategories change
   useEffect(() => {
     if (selectedCategory === 'all') {
       return;
     }
 
-    const matchBySlug = categories.find((cat) => cat.slug === selectedCategory);
+    const matchBySlug = allCategories.find((cat) => cat.slug === selectedCategory);
     if (matchBySlug && selectedCategory !== matchBySlug.id) {
       setSelectedCategory(matchBySlug.id);
     }
-  }, [categories, selectedCategory]);
+  }, [allCategories, selectedCategory]);
 
   // Get current category details
   const currentCategory = useMemo(() => {
@@ -68,11 +68,11 @@ export const ProductsPage = () => {
     }
 
     return (
-      categories.find((cat) => cat.id === selectedCategory) ||
-      categories.find((cat) => cat.slug === selectedCategory) ||
+      allCategories.find((cat) => cat.id === selectedCategory) ||
+      allCategories.find((cat) => cat.slug === selectedCategory) ||
       null
     );
-  }, [selectedCategory, categories]);
+  }, [selectedCategory, allCategories]);
 
   // Filter products
   const filteredProducts = useMemo(() => {
@@ -118,14 +118,14 @@ export const ProductsPage = () => {
       name: isArabic ? 'جميع المنتجات' : 'All Products',
     };
 
-    const mappedCategories = categories.map<CategoryOption>((category) => ({
+    const mappedCategories = allCategories.map<CategoryOption>((category) => ({
       id: category.id,
       name: category.name,
       slug: category.slug,
     }));
 
     return [allOption, ...mappedCategories];
-  }, [categories, isArabic]);
+  }, [allCategories, isArabic]);
 
   return (
     <div className={`min-h-screen bg-gray-50 ${isArabic ? 'rtl' : 'ltr'}`}>
@@ -249,54 +249,77 @@ export const ProductsPage = () => {
         </div>
       </div>
 
-      {/* Categories Info Section */}
+      {/* All Categories Section */}
       <div className="py-16 bg-white">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center text-gray-800 mb-12">
-            {isArabic ? 'فئات مميزة' : 'Featured Categories'}
-          </h2>
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl shadow-lg p-8 text-center hover:shadow-xl transition-all hover:scale-105">
-              <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6 shadow-lg">
-                <Coffee className="w-10 h-10 text-white" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-800 mb-3">
-                {isArabic ? 'قهوة مختصة' : 'Specialty Coffee'}
-              </h3>
-              <p className="text-gray-600">
-                {isArabic
-                  ? 'مجموعة متنوعة من القهوة المحضرة بعناية من أجود الحبوب'
-                  : 'Variety of carefully prepared coffee from the finest beans'}
-              </p>
-            </div>
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              {isArabic ? 'تصفح جميع الفئات' : 'Browse All Categories'}
+            </h2>
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              {isArabic 
+                ? 'اكتشف مجموعتنا الكاملة من القهوة والمنتجات المتخصصة' 
+                : 'Discover our complete collection of coffee and specialty products'}
+            </p>
+          </div>
 
-            <div className="bg-gradient-to-br from-pink-50 to-red-50 rounded-2xl shadow-lg p-8 text-center hover:shadow-xl transition-all hover:scale-105">
-              <div className="bg-gradient-to-br from-pink-500 to-red-600 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6 shadow-lg">
-                <Coffee className="w-10 h-10 text-white" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-800 mb-3">
-                {isArabic ? 'حلويات طازجة' : 'Fresh Desserts'}
-              </h3>
-              <p className="text-gray-600">
-                {isArabic
-                  ? 'حلويات محضرة يومياً بأجود المكونات'
-                  : 'Daily prepared desserts with the finest ingredients'}
-              </p>
-            </div>
-
-            <div className="bg-gradient-to-br from-green-50 to-teal-50 rounded-2xl shadow-lg p-8 text-center hover:shadow-xl transition-all hover:scale-105">
-              <div className="bg-gradient-to-br from-green-500 to-teal-600 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6 shadow-lg">
-                <Coffee className="w-10 h-10 text-white" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-800 mb-3">
-                {isArabic ? 'معجنات مخبوزة' : 'Baked Pastries'}
-              </h3>
-              <p className="text-gray-600">
-                {isArabic
-                  ? 'معجنات طازجة مخبوزة يومياً في مخبزنا'
-                  : 'Fresh pastries baked daily in our bakery'}
-              </p>
-            </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 max-w-7xl mx-auto">
+            {allCategories.map((category) => {
+              const isActive = selectedCategory === category.id || selectedCategory === category.slug;
+              
+              return (
+                <button
+                  key={category.id}
+                  onClick={() => handleCategoryChange(category.id)}
+                  className={`group cursor-pointer text-left transition-all ${
+                    isActive ? 'ring-2 ring-amber-500' : ''
+                  }`}
+                >
+                  {/* Category Image */}
+                  <div className={`relative overflow-hidden rounded-lg aspect-square mb-4 border-2 transition-all duration-300 ${
+                    isActive 
+                      ? 'border-amber-500 shadow-lg' 
+                      : 'border-gray-200 group-hover:border-amber-400 group-hover:shadow-md'
+                  }`}>
+                    <img
+                      src={category.image || '/images/slides/slide1.webp'}
+                      alt={category.name}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = '/images/slides/slide1.webp';
+                      }}
+                      loading="lazy"
+                    />
+                    
+                    {/* Overlay on Hover */}
+                    <div className={`absolute inset-0 transition-all duration-300 ${
+                      isActive 
+                        ? 'bg-amber-500/20' 
+                        : 'bg-black/0 group-hover:bg-black/10'
+                    }`} />
+                    
+                    {/* Active Badge */}
+                    {isActive && (
+                      <div className="absolute top-2 right-2 bg-amber-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                        {isArabic ? 'محدد' : 'Active'}
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Category Name */}
+                  <div className="text-center">
+                    <h3 className={`text-base font-bold transition-colors duration-200 ${
+                      isActive 
+                        ? 'text-amber-600' 
+                        : 'text-gray-900 group-hover:text-amber-600'
+                    }`}>
+                      {category.name}
+                    </h3>
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>
