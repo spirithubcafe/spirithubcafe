@@ -98,22 +98,28 @@ export const ProfessionalHeroSlider: React.FC = () => {
 
   const currentSlideData = slides[currentSlide];
 
+  // Function to go to next slide
+  const nextSlide = () => {
+    setCurrentSlide((prev) => (prev + 1) % slides.length);
+  };
+
   return (
     <section 
-      className="professional-hero-slider"
+      className="professional-hero-slider cursor-pointer"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onClick={nextSlide}
     >
-      {/* Background Images with Parallax Effect */}
+      {/* Background Images with Fade Effect */}
       <div className="slider-backgrounds">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentSlide}
             className="slide-background"
-            initial={{ scale: 1.1, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.95, opacity: 0 }}
-            transition={{ duration: 1.2, ease: "easeInOut" }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.8, ease: "easeInOut" }}
           >
             <img
               src={currentSlideData.image}
@@ -134,16 +140,17 @@ export const ProfessionalHeroSlider: React.FC = () => {
             <motion.div
               key={`content-${currentSlide}`}
               className="content-section max-w-4xl mx-auto text-center"
-              initial={{ x: language === 'ar' ? 100 : -100, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              transition={{ duration: 0.8, delay: 0.3 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
             >
               {/* Main Title */}
               <motion.h1
                 className="slide-title"
-                initial={{ y: 30, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 0.8, delay: 0.4 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.8, delay: 0.3 }}
               >
                 {currentSlideData.title}
               </motion.h1>
@@ -151,9 +158,9 @@ export const ProfessionalHeroSlider: React.FC = () => {
               {/* Subtitle */}
               <motion.h2
                 className="slide-subtitle"
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 0.8, delay: 0.5 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.8, delay: 0.4 }}
               >
                 {currentSlideData.subtitle}
               </motion.h2>
@@ -161,13 +168,14 @@ export const ProfessionalHeroSlider: React.FC = () => {
               {/* CTA Button */}
               <motion.div
                 className="slide-cta flex justify-center"
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 0.8, delay: 0.7 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.8, delay: 0.5 }}
               >
                 <Button
                   size="lg"
                   className="cta-button"
+                  onClick={(e) => e.stopPropagation()}
                 >
                   {currentSlideData.cta}
                 </Button>
@@ -183,7 +191,10 @@ export const ProfessionalHeroSlider: React.FC = () => {
           <motion.button
             key={index}
             className={`indicator ${index === currentSlide ? 'active' : ''}`}
-            onClick={() => setCurrentSlide(index)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setCurrentSlide(index);
+            }}
             whileHover={{ scale: 1.2 }}
             whileTap={{ scale: 0.9 }}
           >
