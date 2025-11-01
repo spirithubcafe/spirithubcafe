@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ShoppingCart, X, Coffee, Star, Loader2 } from 'lucide-react';
+import { ShoppingCart, X, Coffee, Star, Loader2, Flame, RotateCw, BarChart3, MapPin, Wheat, ClipboardList } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
   Dialog,
@@ -286,7 +286,7 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
                     <div className="grid grid-cols-2 gap-x-4 gap-y-2">
                       {fullProduct.roastLevel && (
                         <div className="flex items-start gap-1.5">
-                          <span className="text-amber-600 text-sm mt-0.5">🔥</span>
+                          <Flame className="w-3.5 h-3.5 text-amber-600 mt-0.5 flex-shrink-0" />
                           <div className="min-w-0 flex-1">
                             <span className="text-gray-500 block text-[10px] leading-tight">
                               {isArabic ? 'مستوى التحميص' : 'Roast Level'}
@@ -299,7 +299,7 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
                       )}
                       {fullProduct.process && (
                         <div className="flex items-start gap-1.5">
-                          <span className="text-amber-600 text-sm mt-0.5">🔄</span>
+                          <RotateCw className="w-3.5 h-3.5 text-amber-600 mt-0.5 flex-shrink-0" />
                           <div className="min-w-0 flex-1">
                             <span className="text-gray-500 block text-[10px] leading-tight">
                               {isArabic ? 'المعالجة' : 'Process'}
@@ -312,7 +312,7 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
                       )}
                       {fullProduct.variety && (
                         <div className="flex items-start gap-1.5">
-                          <span className="text-amber-600 text-sm mt-0.5">📊</span>
+                          <BarChart3 className="w-3.5 h-3.5 text-amber-600 mt-0.5 flex-shrink-0" />
                           <div className="min-w-0 flex-1">
                             <span className="text-gray-500 block text-[10px] leading-tight">
                               {isArabic ? 'الصنف' : 'Variety'}
@@ -325,7 +325,7 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
                       )}
                       {fullProduct.altitude && (
                         <div className="flex items-start gap-1.5">
-                          <span className="text-amber-600 text-sm mt-0.5">📍</span>
+                          <MapPin className="w-3.5 h-3.5 text-amber-600 mt-0.5 flex-shrink-0" />
                           <div className="min-w-0 flex-1">
                             <span className="text-gray-500 block text-[10px] leading-tight">
                               {isArabic ? 'الارتفاع' : 'Altitude'}
@@ -338,7 +338,7 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
                       )}
                       {fullProduct.farm && (
                         <div className="flex items-start gap-1.5 col-span-2">
-                          <span className="text-amber-600 text-sm mt-0.5">🌾</span>
+                          <Wheat className="w-3.5 h-3.5 text-amber-600 mt-0.5 flex-shrink-0" />
                           <div className="min-w-0 flex-1">
                             <span className="text-gray-500 block text-[10px] leading-tight">
                               {isArabic ? 'المزرعة' : 'Farm'}
@@ -355,7 +355,7 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
                     {(fullProduct.notes || fullProduct.notesAr || fullProduct.tastingNotes) && (
                       <div className="pt-2 border-t border-amber-200">
                         <div className="flex items-start gap-1.5">
-                          <span className="text-amber-600 text-sm mt-0.5">📋</span>
+                          <ClipboardList className="w-3.5 h-3.5 text-amber-600 mt-0.5 flex-shrink-0" />
                           <div className="flex-1 min-w-0">
                             <span className="text-gray-500 text-[10px] font-medium leading-tight block mb-0.5">
                               {isArabic ? 'الملاحظات:' : 'Notes:'}
