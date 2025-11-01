@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../hooks/useApp';
 import { Mail, Phone, MapPin, Clock, Send, MessageCircle, Instagram, Facebook } from 'lucide-react';
+import './ContactPage.css';
 
 export const ContactPage: React.FC = () => {
   const { language } = useApp();
@@ -93,14 +94,15 @@ export const ContactPage: React.FC = () => {
   return (
     <div className={`min-h-screen bg-gradient-to-br from-amber-50 to-orange-100 ${language === 'ar' ? 'rtl' : 'ltr'}`}>
       {/* Hero Section */}
-      <div className="relative h-80 bg-gradient-to-r from-amber-900 to-orange-800 overflow-hidden">
-        <div className="absolute inset-0 bg-black bg-opacity-40"></div>
+      <div className="relative h-64 overflow-hidden">
+        <div className="absolute inset-0 hero-background"></div>
+        <div className="absolute inset-0 glass-overlay"></div>
         <div className="relative container mx-auto px-4 h-full flex items-center justify-center text-center">
           <div className="max-w-3xl">
-            <h1 className="text-5xl font-bold text-white mb-4">
+            <h1 className="text-4xl font-bold text-white mb-3">
               {language === 'ar' ? 'تواصل معنا' : 'Contact Us'}
             </h1>
-            <p className="text-xl text-amber-100 leading-relaxed">
+            <p className="text-lg text-amber-100 leading-relaxed">
               {language === 'ar' 
                 ? 'نحن هنا للإجابة على استفساراتك وتلقي اقتراحاتك'
                 : 'We are here to answer your questions and receive your suggestions'
@@ -232,7 +234,7 @@ export const ContactPage: React.FC = () => {
                     src="https://www.openstreetmap.org/export/embed.html?bbox=58.250566,23.613926,58.262566,23.623926&layer=mapnik&marker=23.618926,58.256566"
                     width="100%"
                     height="100%"
-                    style={{ border: 0 }}
+                    className="map-iframe"
                     loading="lazy"
                     title={language === 'ar' ? 'موقع Spirit Hub Cafe' : 'Spirit Hub Cafe Location'}
                   ></iframe>

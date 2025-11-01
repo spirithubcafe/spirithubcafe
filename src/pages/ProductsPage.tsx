@@ -61,7 +61,6 @@ export const ProductsPage = () => {
         <div className="absolute inset-0 bg-[url('/images/slides/slide1.webp')] bg-cover bg-center opacity-20"></div>
         <div className="relative container mx-auto px-4 h-full flex items-center justify-center text-center">
           <div className="max-w-3xl">
-            <Coffee className="w-16 h-16 text-amber-200 mx-auto mb-4" />
             <h1 className="text-5xl font-bold text-white mb-4 drop-shadow-lg">
               {isArabic ? 'منتجاتنا' : 'Our Products'}
             </h1>
