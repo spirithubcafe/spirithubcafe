@@ -5,6 +5,13 @@ import { useApp } from '../hooks/useApp';
 import { ProductCard } from '../components/products/ProductCard';
 import { Spinner } from '../components/ui/spinner';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../components/ui/select';
 
 type CategoryOption = {
   id: string;
@@ -153,47 +160,46 @@ export const ProductsPage = () => {
         </div>
       </div>
 
-      {/* Filters Section */}
-      <div className="py-8 bg-white shadow-sm sticky top-0 z-10">
+      {/* Filters Section - Compact & Professional */}
+      <div className="py-3 bg-gradient-to-r from-stone-900 via-neutral-900 to-stone-900 shadow-xl border-b border-stone-700/50 sticky top-0 z-50 backdrop-blur-lg">
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto">
-            <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-              {/* Search */}
-              <div className="relative flex-1 max-w-md w-full">
-                <Search className="absolute top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 ltr:left-3 rtl:right-3 pointer-events-none" />
+            {/* Single Row Compact Layout */}
+            <div className="flex flex-row gap-2.5 items-center">
+              {/* Search Box - Compact & Sleek */}
+              <div className="relative flex-1 min-w-0">
+                <div className="absolute top-1/2 -translate-y-1/2 text-stone-400 w-4 h-4 ltr:left-3 rtl:right-3 pointer-events-none z-10">
+                  <Search className="w-4 h-4" />
+                </div>
                 <input
                   type="text"
-                  placeholder={isArabic ? 'ابحث عن منتج...' : 'Search for a product...'}
+                  placeholder={isArabic ? 'البحث...' : 'Search...'}
                   value={searchTerm}
                   onChange={(event) => setSearchTerm(event.target.value)}
-                  className={`w-full py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all ${isArabic ? 'pr-10 pl-4' : 'pl-10 pr-4'}`}
+                  className={`w-full py-2.5 px-3 border-0 rounded-lg focus:ring-2 focus:ring-stone-600 transition-all bg-stone-800/80 backdrop-blur-sm text-sm font-medium text-white placeholder:text-stone-500 shadow-sm hover:bg-stone-800 ${isArabic ? 'pr-10 pl-3' : 'pl-10 pr-3'}`}
                   aria-label={isArabic ? 'بحث المنتجات' : 'Search products'}
                 />
               </div>
 
-              {/* Category Filter */}
-              <div className="flex items-center gap-2 flex-wrap">
-                <Filter className="w-5 h-5 text-amber-600" />
-                {categoryOptions.map((category) => {
-                  const isActive =
-                    selectedCategory === category.id ||
-                    (category.slug && selectedCategory === category.slug);
-
-                  return (
-                    <button
-                      key={category.id}
-                      onClick={() => handleCategoryChange(category.id)}
-                      className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${
-                        isActive
-                          ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md'
-                          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                      }`}
-                      type="button"
-                    >
-                      {category.name}
-                    </button>
-                  );
-                })}
+              {/* Category Select - Shadcn UI */}
+              <div className="relative flex items-center gap-2">
+                <Filter className="w-5 h-5 text-stone-400" />
+                <Select value={selectedCategory} onValueChange={handleCategoryChange}>
+                  <SelectTrigger className="w-[160px] sm:w-[220px] h-10 bg-stone-800/80 border-0 text-stone-100 text-base font-semibold shadow-sm hover:bg-stone-700/80 backdrop-blur-sm">
+                    <SelectValue placeholder={isArabic ? 'اختر الفئة' : 'Select category'} />
+                  </SelectTrigger>
+                  <SelectContent className="bg-stone-800 border-stone-700 text-white z-50">
+                    {categoryOptions.map((category) => (
+                      <SelectItem 
+                        key={category.id} 
+                        value={category.id}
+                        className="text-base font-medium text-white hover:bg-stone-600/50 focus:bg-stone-600/60 data-[state=checked]:bg-stone-600 cursor-pointer py-2.5"
+                      >
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </div>

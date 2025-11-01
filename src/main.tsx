@@ -12,6 +12,7 @@ import '@fontsource/cairo/600.css';
 import '@fontsource/cairo/700.css';
 
 import './index.css'
+import './styles/color-overrides.css'
 import App from './App.tsx'
 
 createRoot(document.getElementById('root')!).render(

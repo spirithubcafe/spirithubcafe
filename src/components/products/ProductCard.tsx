@@ -73,8 +73,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   };
 
   const handleCardClick = () => {
-    // Don't navigate if we're in the process of closing the quick view
-    if (isClosingQuickView) {
+    // Don't navigate if quick view modal is open or in the process of closing
+    if (showQuickView || isClosingQuickView) {
       return;
     }
     // Scroll to top before navigation
