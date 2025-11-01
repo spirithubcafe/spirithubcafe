@@ -181,27 +181,6 @@ export const ProductDetailPage = () => {
     return description ?? '';
   }, [language, product]);
 
-  const categoryLabel = useMemo(() => {
-    if (!product) {
-      return '';
-    }
-
-    const categoryName =
-      language === 'ar'
-        ? product.category?.nameAr ?? product.category?.name
-        : product.category?.name ?? product.category?.nameAr;
-
-    if (categoryName) {
-      return categoryName;
-    }
-
-    const extras = product as unknown as { categoryName?: string; categoryNameAr?: string };
-    if (language === 'ar') {
-      return extras.categoryNameAr ?? extras.categoryName ?? '';
-    }
-    return extras.categoryName ?? extras.categoryNameAr ?? '';
-  }, [language, product]);
-
   const price = useMemo(() => {
     if (!product) {
       return 0;
@@ -269,14 +248,14 @@ export const ProductDetailPage = () => {
     language === 'ar' ? 'غير متوفر حالياً' : 'Currently unavailable';
   const priceLabel =
     language === 'ar' ? 'السعر' : 'Price';
-  const categoryText =
-    language === 'ar' ? 'الفئة' : 'Category';
   const quantityLabel =
     language === 'ar' ? 'الكمية' : 'Quantity';
   const chooseOptionLabel =
     language === 'ar' ? 'اختر الخيار' : 'Choose an option';
   const reviewsLabel =
     language === 'ar' ? 'مراجعات' : 'reviews';
+  const stockLabel =
+    language === 'ar' ? 'متوفر في المخزون' : 'In Stock';
 
   return (
     <div
@@ -308,7 +287,7 @@ export const ProductDetailPage = () => {
       {/* Main Content */}
       <div className="py-16">
         <div className="container mx-auto px-4">
-          <div className="max-w-6xl mx-auto">
+          <div className="mx-auto">
             {/* Back Button */}
             {state === 'ready' && product && (
               <div className="mb-6">
@@ -447,7 +426,9 @@ export const ProductDetailPage = () => {
                 {/* Product Information */}
                 <div className="space-y-6">
                   <div>
-                    <div className="flex items-center gap-3 mb-4">
+                    <h1 className="text-4xl font-bold text-gray-900 mb-4">{displayName}</h1>
+
+                    <div className="flex items-center gap-3 mb-6">
                       {averageRating > 0 ? (
                         <div className="flex items-center gap-1 text-sm text-gray-600">
                           <Star className="w-4 h-4 text-yellow-400 fill-current" />
@@ -458,26 +439,153 @@ export const ProductDetailPage = () => {
                             </span>
                           ) : null}
                         </div>
-                      ) : null}
+                      ) : (
+                        <div className="flex items-center gap-1 text-sm text-gray-400">
+                          <div className="flex gap-1">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <Star key={star} className="w-4 h-4 text-gray-300" />
+                            ))}
+                          </div>
+                          <span>(0.0) · 0 {reviewsLabel}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Coffee Information Card */}
+                  <div className="bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-100 rounded-2xl p-6 space-y-4">
+                    <div className="flex items-center gap-2 mb-4">
+                      <Coffee className="w-5 h-5 text-amber-700" />
+                      <h3 className="text-lg font-bold text-gray-900">
+                        {language === 'ar' ? 'معلومات القهوة' : 'Coffee Information'}
+                      </h3>
                     </div>
 
-                    <h1 className="text-4xl font-bold text-gray-900 mb-4">{displayName}</h1>
+                    <div className="space-y-3">
+                      {/* Roast Level */}
+                      {(language === 'ar' ? product.roastLevelAr : product.roastLevel) ? (
+                        <div className="flex items-center justify-between py-2 border-b border-amber-200">
+                          <div className="flex items-center gap-3 text-gray-700">
+                            <svg className="w-5 h-5 text-amber-700" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"/>
+                            </svg>
+                            <span className="font-semibold text-sm">
+                              {language === 'ar' ? 'مستوى التحميص:' : 'Roast Level:'}
+                            </span>
+                          </div>
+                          <span className="text-gray-900 font-semibold text-sm">
+                            {language === 'ar' ? product.roastLevelAr : product.roastLevel}
+                          </span>
+                        </div>
+                      ) : null}
 
-                    {categoryLabel ? (
-                      <div className="text-sm text-gray-500 mb-4">
-                        <span className="font-semibold text-gray-700">{categoryText}:</span>{' '}
-                        {categoryLabel}
-                      </div>
-                    ) : null}
+                      {/* Process */}
+                      {(language === 'ar' ? product.processAr : product.process) ? (
+                        <div className="flex items-center justify-between py-2 border-b border-amber-200">
+                          <div className="flex items-center gap-3 text-gray-700">
+                            <svg className="w-5 h-5 text-amber-700" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd"/>
+                            </svg>
+                            <span className="font-semibold text-sm">
+                              {language === 'ar' ? 'المعالجة:' : 'Process:'}
+                            </span>
+                          </div>
+                          <span className="text-gray-900 font-semibold text-sm">
+                            {language === 'ar' ? product.processAr : product.process}
+                          </span>
+                        </div>
+                      ) : null}
 
-                    {/* Short description or tasting notes */}
-                    {tastingNotes ? (
-                      <p className="text-gray-600 leading-relaxed mb-4">{tastingNotes}</p>
-                    ) : null}
+                      {/* Variety */}
+                      {(language === 'ar' ? product.varietyAr : product.variety) ? (
+                        <div className="flex items-center justify-between py-2 border-b border-amber-200">
+                          <div className="flex items-center gap-3 text-gray-700">
+                            <svg className="w-5 h-5 text-amber-700" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/>
+                            </svg>
+                            <span className="font-semibold text-sm">
+                              {language === 'ar' ? 'الصنف:' : 'Variety:'}
+                            </span>
+                          </div>
+                          <span className="text-gray-900 font-semibold text-sm">
+                            {language === 'ar' ? product.varietyAr : product.variety}
+                          </span>
+                        </div>
+                      ) : null}
+
+                      {/* Altitude */}
+                      {product.altitude ? (
+                        <div className="flex items-center justify-between py-2 border-b border-amber-200">
+                          <div className="flex items-center gap-3 text-gray-700">
+                            <svg className="w-5 h-5 text-amber-700" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd"/>
+                            </svg>
+                            <span className="font-semibold text-sm">
+                              {language === 'ar' ? 'الارتفاع:' : 'Altitude:'}
+                            </span>
+                          </div>
+                          <span className="text-gray-900 font-semibold text-sm">
+                            {product.altitude} {language === 'ar' ? 'متر فوق سطح البحر' : 'masl'}
+                          </span>
+                        </div>
+                      ) : null}
+
+                      {/* Notes / Tasting Notes */}
+                      {(language === 'ar' ? product.notesAr : product.notes) || tastingNotes ? (
+                        <div className="flex items-center justify-between py-2 border-b border-amber-200">
+                          <div className="flex items-center gap-3 text-gray-700">
+                            <svg className="w-5 h-5 text-amber-700" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
+                              <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd"/>
+                            </svg>
+                            <span className="font-semibold text-sm">
+                              {language === 'ar' ? 'الملاحظات:' : 'Notes:'}
+                            </span>
+                          </div>
+                          <span className="text-gray-900 font-semibold text-sm text-end" dir={language === 'ar' ? 'rtl' : 'ltr'}>
+                            {(language === 'ar' ? product.notesAr : product.notes) || tastingNotes}
+                          </span>
+                        </div>
+                      ) : null}
+
+                      {/* Farm */}
+                      {(language === 'ar' ? product.farmAr : product.farm) ? (
+                        <div className="flex items-center justify-between py-2 border-b border-amber-200">
+                          <div className="flex items-center gap-3 text-gray-700">
+                            <svg className="w-5 h-5 text-amber-700" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd"/>
+                            </svg>
+                            <span className="font-semibold text-sm">
+                              {language === 'ar' ? 'المزرعة:' : 'Farm:'}
+                            </span>
+                          </div>
+                          <span className="text-gray-900 font-semibold text-sm">
+                            {language === 'ar' ? product.farmAr : product.farm}
+                          </span>
+                        </div>
+                      ) : null}
+
+                      {/* Uses */}
+                      {(language === 'ar' ? product.usesAr : product.uses) ? (
+                        <div className="py-2 bg-red-50 border-2 border-red-200 rounded-xl px-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3 text-red-700">
+                              <Coffee className="w-5 h-5" />
+                              <span className="font-semibold text-sm">
+                                {language === 'ar' ? 'الاستخدامات:' : 'Uses:'}
+                              </span>
+                            </div>
+                            <span className="text-red-900 font-bold text-sm">
+                              {language === 'ar' ? product.usesAr : product.uses}
+                            </span>
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
                   </div>
 
                   <div className="bg-amber-50 border border-amber-100 rounded-2xl p-6 space-y-4">
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between pb-4 border-b border-amber-200">
                       <span className="text-gray-600 font-semibold">{priceLabel}</span>
                       <span className="text-3xl font-bold text-amber-700">
                         {price > 0
@@ -487,6 +595,14 @@ export const ProductDetailPage = () => {
                             : 'Price on request'}
                       </span>
                     </div>
+
+                    {/* Stock Status */}
+                    {isAvailable && (
+                      <div className="flex items-center gap-2 text-green-600">
+                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                        <span className="text-sm font-semibold">{stockLabel}</span>
+                      </div>
+                    )}
 
                     {product.variants && product.variants.length > 0 ? (
                       <div className="space-y-3">
@@ -498,6 +614,9 @@ export const ProductDetailPage = () => {
                             const variantPrice = resolvePrice(product, variant);
                             const label = resolveVariantLabel(variant, language);
                             const isSelected = selectedVariant?.id === variant.id;
+                            
+                            // Show original price if there's a discount
+                            const hasDiscount = variant.discountPrice && variant.discountPrice > 0 && variant.price && variant.discountPrice < variant.price;
                             
                             return (
                               <button
@@ -511,14 +630,21 @@ export const ProductDetailPage = () => {
                                 }`}
                               >
                                 <div className="flex flex-col items-center gap-1">
-                                  <span className="text-sm">{label}</span>
-                                  <span className={`text-xs font-bold ${isSelected ? 'text-white' : 'text-amber-600'}`}>
-                                    {variantPrice > 0
-                                      ? formatCurrency(variantPrice, language)
-                                      : language === 'ar'
-                                        ? 'السعر عند الطلب'
-                                        : 'Price on request'}
-                                  </span>
+                                  <span className="text-sm font-bold">{label}</span>
+                                  <div className="flex items-center gap-2">
+                                    {hasDiscount && (
+                                      <span className={`text-xs line-through ${isSelected ? 'text-white/70' : 'text-gray-400'}`}>
+                                        {formatCurrency(variant.price!, language)}
+                                      </span>
+                                    )}
+                                    <span className={`text-xs font-bold ${isSelected ? 'text-white' : 'text-amber-600'}`}>
+                                      {variantPrice > 0
+                                        ? formatCurrency(variantPrice, language)
+                                        : language === 'ar'
+                                          ? 'السعر عند الطلب'
+                                          : 'Price on request'}
+                                    </span>
+                                  </div>
                                 </div>
                               </button>
                             );
