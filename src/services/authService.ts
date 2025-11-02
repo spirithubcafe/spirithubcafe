@@ -164,10 +164,23 @@ export class AuthService {
         return false;
       }
       
-      // Check with server (using GET method as per API)
-      const response = await http.get<boolean>('/api/Account/IsAuthenticated');
-      
-      return response.data;
+      try {
+        // Check with server (using GET method as per API)
+        const response = await http.get('/api/Account/IsAuthenticated');
+        
+        // Handle different response formats
+        if (typeof response.data === 'boolean') {
+          return response.data;
+        } else if (response.status === 200) {
+          return true;
+        } else {
+          return false;
+        }
+      } catch (serverError) {
+        console.warn('Server authentication check failed:', serverError);
+        // If server check fails but token is valid locally, still authenticated
+        return true;
+      }
     } catch (error) {
       console.error('Authentication check error:', error);
       return false;
@@ -179,17 +192,49 @@ export class AuthService {
    */
   async getUserInfo(): Promise<UserInfo | null> {
     try {
-      const response = await http.get<UserInfo>('/api/Account/GetUserInfo');
+      const response = await http.get('/api/Account/GetUserInfo');
+      
+
       
       if (response.data) {
-        // Update local storage with fresh user data
-        localStorage.setItem('user', JSON.stringify(response.data));
-        return response.data;
+        // Check if the server response has the expected structure
+        const serverUserInfo = response.data as Partial<UserInfo> & Record<string, unknown>;
+        
+        // If roles are missing, try to get them from the token
+        let userInfo = serverUserInfo;
+        if (!serverUserInfo.roles || serverUserInfo.roles.length === 0) {
+          console.warn('Server response missing roles, extracting from token');
+          const token = tokenManager.getAccessToken();
+          if (token) {
+            const tokenUser = this.parseUserFromToken(token);
+            if (tokenUser && tokenUser.roles) {
+              userInfo = { ...serverUserInfo, roles: tokenUser.roles };
+            }
+          }
+        }
+        
+
+        
+        // Update local storage with enhanced user data
+        localStorage.setItem('user', JSON.stringify(userInfo));
+        return userInfo as UserInfo;
       }
       
       return null;
     } catch (error) {
       console.error('Get user info error:', error);
+      
+      // Fallback: try to extract user from token if API fails
+      const token = tokenManager.getAccessToken();
+      if (token) {
+        const userFromToken = this.parseUserFromToken(token);
+        if (userFromToken) {
+
+          localStorage.setItem('user', JSON.stringify(userFromToken));
+          return userFromToken;
+        }
+      }
+      
       throw error;
     }
   }
@@ -214,8 +259,14 @@ export class AuthService {
   getStoredUserInfo(): UserInfo | null {
     try {
       const userStr = localStorage.getItem('user');
-      return userStr ? JSON.parse(userStr) : null;
-    } catch {
+      if (userStr) {
+        const parsedUser = JSON.parse(userStr);
+  
+        return parsedUser;
+      }
+      return null;
+    } catch (error) {
+      console.error('Error parsing stored user info:', error);
       return null;
     }
   }
@@ -239,6 +290,13 @@ export class AuthService {
   }
 
   /**
+   * Parse user information from JWT token (public method)
+   */
+  parseUserFromTokenPublic(token: string): UserInfo | null {
+    return this.parseUserFromToken(token);
+  }
+
+  /**
    * Parse user information from JWT token
    */
   private parseUserFromToken(token: string): UserInfo | null {
@@ -246,16 +304,41 @@ export class AuthService {
       const payload = token.split('.')[1];
       const decodedPayload = JSON.parse(atob(payload));
       
-      return {
-        id: parseInt(decodedPayload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'] || '0'),
-        username: decodedPayload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'] || '',
-        displayName: decodedPayload['DisplayName'] || '',
-        roles: Array.isArray(decodedPayload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role']) 
-          ? decodedPayload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role']
-          : [decodedPayload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role']].filter(Boolean),
+      // Handle different possible role claim names
+      let roles: string[] = [];
+      const roleKeys = [
+        'http://schemas.microsoft.com/ws/2008/06/identity/claims/role',
+        'role',
+        'roles'
+      ];
+      
+      for (const key of roleKeys) {
+        if (decodedPayload[key]) {
+          if (Array.isArray(decodedPayload[key])) {
+            roles = decodedPayload[key];
+          } else {
+            roles = [decodedPayload[key]];
+          }
+          break;
+        }
+      }
+      
+      const userInfo = {
+        id: parseInt(decodedPayload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'] || 
+                    decodedPayload['sub'] || 
+                    decodedPayload['id'] || '0'),
+        username: decodedPayload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'] || 
+                 decodedPayload['username'] || 
+                 decodedPayload['name'] || '',
+        displayName: decodedPayload['DisplayName'] || 
+                    decodedPayload['display_name'] || 
+                    decodedPayload['name'] || '',
+        roles: roles.filter(Boolean),
         isActive: true,
         lastLoggedIn: new Date().toISOString()
       };
+      
+      return userInfo;
     } catch (error) {
       console.error('Error parsing JWT token:', error);
       return null;
@@ -276,13 +359,16 @@ export class AuthService {
     const accessToken = tokenManager.getAccessToken();
     const refreshToken = tokenManager.getRefreshToken();
     const user = this.getStoredUserInfo();
+    const isTokenValid = !!(accessToken && !tokenManager.isTokenExpired(accessToken));
+    
+
     
     return {
-      isAuthenticated: !!(accessToken && !tokenManager.isTokenExpired(accessToken)),
+      isAuthenticated: isTokenValid,
       user,
       accessToken,
       refreshToken,
-      hasValidToken: !!(accessToken && !tokenManager.isTokenExpired(accessToken))
+      hasValidToken: isTokenValid
     };
   }
 }

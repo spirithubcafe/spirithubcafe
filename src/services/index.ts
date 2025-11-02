@@ -8,6 +8,7 @@ export {
   productImageService,
 } from './productService';
 export { productReviewService } from './productReviewService';
+export { userService } from './userService';
 
 // Export types
 export type * from '../types/auth';

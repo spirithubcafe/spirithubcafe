@@ -138,8 +138,21 @@ export const tokenManager = {
     
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
-      return payload.exp * 1000 < Date.now();
-    } catch {
+      const expirationTime = payload.exp * 1000;
+      const currentTime = Date.now();
+      const isExpired = expirationTime < currentTime;
+      
+      // Debug log for token expiration
+      if (isExpired) {
+        console.warn('Token expired:', {
+          expiration: new Date(expirationTime).toISOString(),
+          current: new Date(currentTime).toISOString()
+        });
+      }
+      
+      return isExpired;
+    } catch (error) {
+      console.error('Error checking token expiration:', error);
       return true;
     }
   },

@@ -15,6 +15,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useCart } from '../../hooks/useCart';
 import { AuthButtons, LoginButton, RegisterButton } from '../auth/AuthButtons';
 import { UserProfile } from '../auth/UserProfile';
+import { MinimalUserProfile } from '../auth/MinimalUserProfile';
 
 export const Navigation: React.FC = () => {
   const { t } = useTranslation();
@@ -172,9 +173,7 @@ export const Navigation: React.FC = () => {
                   <div className="w-16 h-4 bg-gray-200 rounded animate-pulse hidden md:block"></div>
                 </div>
               ) : isAuthenticated ? (
-                <>
-                  <UserProfile showFullName />
-                </>
+                <MinimalUserProfile />
               ) : (
                 <AuthButtons />
               )}
@@ -218,7 +217,7 @@ export const Navigation: React.FC = () => {
               {isLoading ? (
                 <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse"></div>
               ) : isAuthenticated ? (
-                <UserProfile showFullName={false} />
+                <MinimalUserProfile />
               ) : (
                 <AuthButtons showText={false} />
               )}
