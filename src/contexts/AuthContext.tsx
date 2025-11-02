@@ -70,7 +70,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setIsAuthenticated(true);
         setUser(finalUser);
         
-        console.log('Authentication restored from localStorage:', finalUser);
+
         
         // Verify with server in background (non-blocking) 
         // Don't change loading state for this background verification
@@ -94,7 +94,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             // This handles offline scenarios
           });
       } else {
-        console.log('No valid token or user found');
+
         setIsAuthenticated(false);
         setUser(null);
       }
@@ -207,14 +207,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
    * Check if user is admin
    */
   const isAdmin = (): boolean => {
-    const result = hasRole('Admin') || hasRole('Administrator');
-    console.log('isAdmin check:', { 
-      user: user ? { username: user.username, roles: user.roles } : null,
-      hasAdminRole: hasRole('Admin'),
-      hasAdministratorRole: hasRole('Administrator'),
-      result 
-    });
-    return result;
+    return hasRole('Admin') || hasRole('Administrator');
   };
 
   // Context value

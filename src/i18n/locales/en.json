@@ -5,7 +5,11 @@
     "about": "About",
     "contact": "Contact",
     "cart": "Cart",
-    "admin": "Admin"
+    "admin": "Admin",
+    "profile": "Profile",
+    "favorites": "Favorites",
+    "orders": "Orders",
+    "settings": "Settings"
   },
   "hero": {
     "title": "Spirit Hub Cafe",
@@ -51,6 +55,7 @@
     "loginDescription": "Enter your credentials to access your account",
     "registerDescription": "Create a new account to get started",
     "loggingIn": "Logging in...",
+    "loggingOut": "Logging out...",
     "registering": "Creating account...",
     "dontHaveAccount": "Don't have an account?",
     "alreadyHaveAccount": "Already have an account?",

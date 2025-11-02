@@ -22,12 +22,7 @@ export const AdminLayout: React.FC = () => {
   const { user, isAdmin, hasRole, isLoading, isAuthenticated } = useAuth();
   const { t } = useApp();
 
-  console.log('AdminLayout render:', { 
-    isLoading, 
-    isAuthenticated, 
-    user: user ? { id: user.id, username: user.username, roles: user.roles } : null,
-    isAdminResult: user ? isAdmin() : 'no user'
-  });
+
 
   // Show loading spinner while authentication is being checked
   if (isLoading) {

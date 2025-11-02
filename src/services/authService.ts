@@ -194,7 +194,7 @@ export class AuthService {
     try {
       const response = await http.get('/api/Account/GetUserInfo');
       
-      console.log('Server user info response:', response.data);
+
       
       if (response.data) {
         // Check if the server response has the expected structure
@@ -213,7 +213,7 @@ export class AuthService {
           }
         }
         
-        console.log('Final user info with roles:', userInfo);
+
         
         // Update local storage with enhanced user data
         localStorage.setItem('user', JSON.stringify(userInfo));
@@ -229,7 +229,7 @@ export class AuthService {
       if (token) {
         const userFromToken = this.parseUserFromToken(token);
         if (userFromToken) {
-          console.log('Using user info from token fallback:', userFromToken);
+
           localStorage.setItem('user', JSON.stringify(userFromToken));
           return userFromToken;
         }
@@ -261,7 +261,7 @@ export class AuthService {
       const userStr = localStorage.getItem('user');
       if (userStr) {
         const parsedUser = JSON.parse(userStr);
-        console.log('Stored user info retrieved:', parsedUser);
+  
         return parsedUser;
       }
       return null;
@@ -361,12 +361,7 @@ export class AuthService {
     const user = this.getStoredUserInfo();
     const isTokenValid = !!(accessToken && !tokenManager.isTokenExpired(accessToken));
     
-    console.log('Auth state check:', {
-      hasToken: !!accessToken,
-      hasUser: !!user,
-      isTokenValid,
-      user: user ? { id: user.id, username: user.username, roles: user.roles } : null
-    });
+
     
     return {
       isAuthenticated: isTokenValid,
