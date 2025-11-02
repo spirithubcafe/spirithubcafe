@@ -53,30 +53,48 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Check current auth state from localStorage
       const authState = authService.getCurrentAuthState();
       
-      if (authState.hasValidToken) {
-        // Verify with server
-        const isValid = await authService.isAuthenticated();
+      if (authState.hasValidToken && authState.user) {
+        // Check if user has roles, if not, try to extract from token
+        let finalUser = authState.user;
         
-        if (isValid) {
-          setIsAuthenticated(true);
-          setUser(authState.user);
-          
-          // Refresh user info from server
-          try {
-            const freshUserInfo = await authService.getUserInfo();
-            if (freshUserInfo) {
-              setUser(freshUserInfo);
-            }
-          } catch (error) {
-            console.warn('Could not refresh user info:', error);
+        if (!finalUser.roles || finalUser.roles.length === 0) {
+          console.warn('User missing roles, extracting from token');
+          const tokenUser = authService.parseUserFromTokenPublic(authState.accessToken!);
+          if (tokenUser && tokenUser.roles) {
+            finalUser = { ...finalUser, roles: tokenUser.roles };
+            localStorage.setItem('user', JSON.stringify(finalUser));
           }
-        } else {
-          // Token invalid, clear auth state
-          await authService.logout();
-          setIsAuthenticated(false);
-          setUser(null);
         }
+        
+        // If we have a valid local token and user data, restore authentication immediately
+        setIsAuthenticated(true);
+        setUser(finalUser);
+        
+        console.log('Authentication restored from localStorage:', finalUser);
+        
+        // Verify with server in background (non-blocking) 
+        // Don't change loading state for this background verification
+        authService.isAuthenticated()
+          .then(isValid => {
+            if (!isValid) {
+              console.warn('Server says token is invalid, logging out');
+              authService.logout().then(() => {
+                setIsAuthenticated(false);
+                setUser(null);
+              });
+            } else {
+              // DON'T refresh user info automatically to avoid overwriting roles
+              // Only refresh if explicitly requested
+              console.log('Server authentication verified, keeping local user info');
+            }
+          })
+          .catch(error => {
+            console.warn('Server verification failed, keeping local auth state:', error);
+            // Keep the authentication state even if server check fails
+            // This handles offline scenarios
+          });
       } else {
+        console.log('No valid token or user found');
         setIsAuthenticated(false);
         setUser(null);
       }
@@ -189,7 +207,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
    * Check if user is admin
    */
   const isAdmin = (): boolean => {
-    return hasRole('Admin') || hasRole('Administrator');
+    const result = hasRole('Admin') || hasRole('Administrator');
+    console.log('isAdmin check:', { 
+      user: user ? { username: user.username, roles: user.roles } : null,
+      hasAdminRole: hasRole('Admin'),
+      hasAdministratorRole: hasRole('Administrator'),
+      result 
+    });
+    return result;
   };
 
   // Context value

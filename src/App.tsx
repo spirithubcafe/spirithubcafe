@@ -7,7 +7,13 @@ import { Footer } from './components/layout/Footer';
 import { CartDrawer } from './components/cart/CartDrawer';
 import HomePage from './pages/HomePage';
 import ProfilePage from './pages/ProfilePage';
-import { AdminPanel } from './pages/AdminPanel';
+import { 
+  AdminLayout, 
+  AdminDashboard, 
+  CategoriesManagement, 
+  ProductsManagement, 
+  UsersManagement 
+} from './components/admin';
 import { FavoritesPage } from './pages/FavoritesPage';
 import { OrdersPage } from './pages/OrdersPage';
 import { AboutPage } from './pages/AboutPage';
@@ -33,7 +39,12 @@ function AppContent() {
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/favorites" element={<FavoritesPage />} />
         <Route path="/orders" element={<OrdersPage />} />
-        <Route path="/admin" element={<AdminPanel />} />
+        <Route path="/admin/*" element={<AdminLayout />}>
+          <Route index element={<AdminDashboard />} />
+          <Route path="categories" element={<CategoriesManagement />} />
+          <Route path="products" element={<ProductsManagement />} />
+          <Route path="users" element={<UsersManagement />} />
+        </Route>
         <Route path="/about" element={<AboutPage />} />
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/faq" element={<FAQPage />} />

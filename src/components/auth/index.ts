@@ -4,3 +4,4 @@ export { UserProfile } from './UserProfile';
 export { LoginForm } from './LoginForm';
 export { RegisterForm } from './RegisterForm';
 export { AuthStatusCard } from './AuthStatusCard';
+export { AuthDebugPanel } from './AuthDebugPanel';
