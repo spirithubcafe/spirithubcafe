@@ -302,8 +302,8 @@ export const userService = {
   },
 
   resetPassword: async (id: number, newPassword: string): Promise<void> => {
-    // Mock implementation
-    console.log('Resetting password for user:', id);
+    // Mock implementation - in real app, this would call the API
+    console.log('Resetting password for user:', id, 'New password length:', newPassword.length);
   },
 
   getRoles: async (): Promise<Role[]> => {
