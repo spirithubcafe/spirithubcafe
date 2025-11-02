@@ -19,7 +19,6 @@ import {
   Shield,
   Heart,
   ShoppingBag,
-  Settings,
   Crown,
   ChevronDown
 } from 'lucide-react';
@@ -153,19 +152,6 @@ export const MinimalUserProfile: React.FC = () => {
             </div>
             <span className="text-sm font-medium text-gray-700 group-hover:text-green-700">
               {t('nav.orders')}
-            </span>
-            <ChevronDown className={`h-4 w-4 text-gray-400 ml-auto ${isRTL ? 'rotate-90' : '-rotate-90'}`} />
-          </DropdownMenuItem>
-
-          <DropdownMenuItem 
-            onClick={() => navigate('/settings')}
-            className="flex items-center gap-3 p-3 rounded-md cursor-pointer hover:bg-gray-50 transition-colors group"
-          >
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100 group-hover:bg-gray-200 transition-colors">
-              <Settings className="h-4 w-4 text-gray-600" />
-            </div>
-            <span className="text-sm font-medium text-gray-700 group-hover:text-gray-700">
-              {t('nav.settings')}
             </span>
             <ChevronDown className={`h-4 w-4 text-gray-400 ml-auto ${isRTL ? 'rotate-90' : '-rotate-90'}`} />
           </DropdownMenuItem>

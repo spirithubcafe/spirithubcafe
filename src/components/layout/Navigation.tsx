@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Globe, ShoppingCart, Menu, ChevronDown, ChevronRight, User, Heart, ShoppingBag, Settings, Shield } from 'lucide-react';
+import { Globe, ShoppingCart, Menu, ChevronDown, ChevronRight, User, Heart, ShoppingBag, Shield } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '../ui/sheet';
 import {
@@ -448,20 +448,6 @@ export const Navigation: React.FC = () => {
                                 <span className="flex items-center gap-3">
                                   <ShoppingBag className="h-4 w-4" />
                                   {language === 'ar' ? 'طلباتي' : 'My Orders'}
-                                </span>
-                                <ChevronRight className="h-4 w-4" />
-                              </Button>
-                            </SheetClose>
-                            
-                            <SheetClose asChild>
-                              <Button
-                                variant="ghost"
-                                size="lg"
-                                className="w-full justify-between rounded-2xl bg-white/[0.06] px-4 py-3 text-base font-medium text-white transition duration-200 hover:bg-white/[0.12] hover:text-white"
-                              >
-                                <span className="flex items-center gap-3">
-                                  <Settings className="h-4 w-4" />
-                                  {language === 'ar' ? 'الإعدادات' : 'Settings'}
                                 </span>
                                 <ChevronRight className="h-4 w-4" />
                               </Button>

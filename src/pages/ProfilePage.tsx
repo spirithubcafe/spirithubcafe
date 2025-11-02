@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useApp } from '../hooks/useApp';
@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
-import { Badge } from '../components/ui/badge';
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { 
   User, 
@@ -22,7 +22,7 @@ import {
   CreditCard,
   Settings,
   Shield,
-  Crown,
+
   Coffee,
   Star,
   Clock,
@@ -52,6 +52,47 @@ const ProfilePage: React.FC = () => {
     address: 'Muscat, Oman'
   });
 
+  // Get real user statistics from localStorage and context
+  const [userStats, setUserStats] = useState<ProfileStats>({
+    totalOrders: 0,
+    totalSpent: 0,
+    favoriteProducts: 0,
+    memberSince: '',
+    loyaltyPoints: 0
+  });
+
+  useEffect(() => {
+    // Calculate real stats from localStorage
+    try {
+      // Get order history from localStorage
+      const orderHistory = JSON.parse(localStorage.getItem('spirithub_order_history') || '[]');
+      const totalOrders = orderHistory.length;
+      const totalSpent = orderHistory.reduce((sum: number, order: { total?: number }) => sum + (order.total || 0), 0);
+
+      // Get favorites from localStorage  
+      const favorites = JSON.parse(localStorage.getItem('spirithub_favorites') || '[]');
+      const favoriteProducts = favorites.length;
+
+      setUserStats({
+        totalOrders,
+        totalSpent: parseFloat(totalSpent.toFixed(2)),
+        favoriteProducts,
+        memberSince: '',
+        loyaltyPoints: 0
+      });
+    } catch (error) {
+      console.error('Error loading user stats:', error);
+      // Fallback to default values
+      setUserStats({
+        totalOrders: 0,
+        totalSpent: 0,
+        favoriteProducts: 0,
+        memberSince: '',
+        loyaltyPoints: 0
+      });
+    }
+  }, []);
+
   if (!isAuthenticated || !user) {
     return (
       <div className={`min-h-screen bg-gray-50 pt-20 ${language === 'ar' ? 'rtl' : 'ltr'}`}>
@@ -78,14 +119,7 @@ const ProfilePage: React.FC = () => {
     );
   }
 
-  // Mock user stats - في الواقع هذه البيانات ستأتي من API
-  const userStats: ProfileStats = {
-    totalOrders: 24,
-    totalSpent: 156.50,
-    favoriteProducts: 8,
-    memberSince: 'November 2025',
-    loyaltyPoints: 1250
-  };
+
 
   const tabs = [
     {
@@ -153,67 +187,30 @@ const ProfilePage: React.FC = () => {
                   <h1 className="text-3xl font-bold text-foreground truncate">
                     {user.displayName || user.username}
                   </h1>
-                  <Badge variant="secondary">
-                    <Crown className="h-4 w-4 mr-1" />
-                    {t('profile.memberSince')} {userStats.memberSince}
-                  </Badge>
                 </div>
                 <p className="text-muted-foreground mb-4">
-                  {user.username} • {t('profile.loyaltyPoints')}: {userStats.loyaltyPoints.toLocaleString()}
+                  {user.username}
                 </p>
                 
-                {/* Quick Stats - Mobile Responsive */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                  <div className="text-center p-3 bg-muted rounded-lg border">
-                    <div className="text-2xl font-bold text-foreground">{userStats.totalOrders}</div>
-                    <div className="text-xs text-muted-foreground font-medium">{t('profile.totalOrders')}</div>
+                {/* Quick Stats - Full Width Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full">
+                  <div className="flex flex-col items-center justify-center p-4 sm:p-6 bg-white rounded-lg border border-gray-200 min-h-[100px] flex-1">
+                    <div className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">{userStats.totalOrders}</div>
+                    <div className="text-xs sm:text-sm text-gray-600 font-medium text-center">{t('profile.totalOrders')}</div>
                   </div>
-                  <div className="text-center p-3 bg-muted rounded-lg border">
-                    <div className="text-2xl font-bold text-foreground">OMR {userStats.totalSpent}</div>
-                    <div className="text-xs text-muted-foreground font-medium">{t('profile.totalSpent')}</div>
+                  <div className="flex flex-col items-center justify-center p-4 sm:p-6 bg-white rounded-lg border border-gray-200 min-h-[100px] flex-1">
+                    <div className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">OMR {userStats.totalSpent}</div>
+                    <div className="text-xs sm:text-sm text-gray-600 font-medium text-center">{t('profile.totalSpent')}</div>
                   </div>
-                  <div className="text-center p-3 bg-muted rounded-lg border">
-                    <div className="text-2xl font-bold text-foreground">{userStats.favoriteProducts}</div>
-                    <div className="text-xs text-muted-foreground font-medium">{t('profile.favorites')}</div>
-                  </div>
-                  <div className="text-center p-3 bg-muted rounded-lg border">
-                    <div className="text-2xl font-bold text-foreground">{userStats.loyaltyPoints}</div>
-                    <div className="text-xs text-muted-foreground font-medium">{t('profile.points')}</div>
+                  <div className="flex flex-col items-center justify-center p-4 sm:p-6 bg-white rounded-lg border border-gray-200 min-h-[100px] flex-1">
+                    <div className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">{userStats.favoriteProducts}</div>
+                    <div className="text-xs sm:text-sm text-gray-600 font-medium text-center">{t('profile.favorites')}</div>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Quick Actions */}
-            <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
-              <Button
-                variant={isEditing ? "default" : "outline"}
-                onClick={() => setIsEditing(!isEditing)}
-                className="flex-1 lg:flex-none min-w-[120px]"
-              >
-                {isEditing ? (
-                  <>
-                    <Save className="h-4 w-4 mr-2" />
-                    {t('common.save')}
-                  </>
-                ) : (
-                  <>
-                    <Edit2 className="h-4 w-4 mr-2" />
-                    {t('profile.editProfile')}
-                  </>
-                )}
-              </Button>
-              {isEditing && (
-                <Button
-                  variant="outline"
-                  onClick={handleCancel}
-                  className="flex-1 lg:flex-none min-w-[120px]"
-                >
-                  <X className="h-4 w-4 mr-2" />
-                  {t('common.cancel')}
-                </Button>
-              )}
-            </div>
+
           </div>
         </motion.div>
 
@@ -418,6 +415,56 @@ const ProfilePage: React.FC = () => {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Edit Profile Section - Moved to bottom */}
+        <Card className="mt-8">
+          <CardContent className="p-6">
+            <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-blue-100 rounded-lg">
+                  <Edit2 className="h-5 w-5 text-blue-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-lg text-gray-900">
+                    {t('profile.editProfile')}
+                  </h3>
+                  <p className="text-sm text-gray-500">
+                    {language === 'ar' ? 'قم بتحديث معلومات ملفك الشخصي' : 'Update your profile information and preferences'}
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-3 w-full sm:w-auto">
+                <Button
+                  variant={isEditing ? "default" : "outline"}
+                  onClick={() => setIsEditing(!isEditing)}
+                  className="flex-1 sm:flex-none min-w-[120px]"
+                >
+                  {isEditing ? (
+                    <>
+                      <Save className="h-4 w-4 mr-2" />
+                      {t('common.save')}
+                    </>
+                  ) : (
+                    <>
+                      <Edit2 className="h-4 w-4 mr-2" />
+                      {t('profile.editProfile')}
+                    </>
+                  )}
+                </Button>
+                {isEditing && (
+                  <Button
+                    variant="outline"
+                    onClick={handleCancel}
+                    className="flex-1 sm:flex-none min-w-[120px]"
+                  >
+                    <X className="h-4 w-4 mr-2" />
+                    {t('common.cancel')}
+                  </Button>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

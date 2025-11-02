@@ -1,7 +1,6 @@
 import React from 'react';
 import { useApp } from '../../hooks/useApp';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
-import { AuthDebugPanel } from '../auth/AuthDebugPanel';
 import { 
   Users, 
   Package, 
