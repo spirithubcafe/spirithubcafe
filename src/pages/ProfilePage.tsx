@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useApp } from '../hooks/useApp';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
@@ -9,8 +10,6 @@ import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
-import { Separator } from '../components/ui/separator';
-import { PageHeader } from '../components/layout/PageHeader';
 import { 
   User, 
   Mail, 
@@ -27,7 +26,14 @@ import {
   Crown,
   Coffee,
   Star,
-  Clock
+  Clock,
+  Settings,
+  HelpCircle,
+  Activity,
+  Calendar,
+  Gift,
+  TrendingUp,
+  ArrowLeft
 } from 'lucide-react';
 
 const ProfilePage: React.FC = () => {

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { ShoppingCart, Eye, Heart } from 'lucide-react';
@@ -6,6 +6,7 @@ import { motion } from 'motion/react';
 import { Card, CardContent, CardFooter } from '../ui/card';
 import { Button } from '../ui/button';
 import { useCart } from '../../hooks/useCart';
+import { useFavorites } from '../../hooks/useFavorites';
 import type { Product } from '../../contexts/AppContextDefinition';
 import { handleImageError } from '../../lib/imageUtils';
 import { ProductQuickView } from './ProductQuickView';
@@ -19,35 +20,28 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const navigate = useNavigate();
   const isArabic = i18n.language === 'ar';
   const { addToCart, openCart } = useCart();
+  const { toggleFavorite, isFavorite } = useFavorites();
   const [isAnimating, setIsAnimating] = useState(false);
   const [showQuickView, setShowQuickView] = useState(false);
   const [isClosingQuickView, setIsClosingQuickView] = useState(false);
-  const [isWishlisted, setIsWishlisted] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
-  // Load wishlist status from localStorage on mount
-  useEffect(() => {
-    const wishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
-    setIsWishlisted(wishlist.includes(String(product.id)));
-  }, [product.id]);
+  const isWishlisted = isFavorite(product.id);
 
   const handleToggleWishlist = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent navigation when clicking wishlist
     
-    const wishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
-    let updatedWishlist: string[];
+    // Convert Product to FavoriteItem format
+    const favoriteItem = {
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      image: product.image,
+      category: product.category,
+      rating: 4.5 // Default rating since Product doesn't have rating field
+    };
     
-    if (wishlist.includes(String(product.id))) {
-      // Remove from wishlist
-      updatedWishlist = wishlist.filter((id: string) => id !== String(product.id));
-      setIsWishlisted(false);
-    } else {
-      // Add to wishlist
-      updatedWishlist = [...wishlist, String(product.id)];
-      setIsWishlisted(true);
-    }
-    
-    localStorage.setItem('wishlist', JSON.stringify(updatedWishlist));
+    toggleFavorite(favoriteItem);
   };
 
   const handleAddToCart = async (e: React.MouseEvent) => {

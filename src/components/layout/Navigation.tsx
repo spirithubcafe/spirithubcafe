@@ -428,17 +428,16 @@ export const Navigation: React.FC = () => {
                             </SheetClose>
                             
                             <SheetClose asChild>
-                              <Button
-                                variant="ghost"
-                                size="lg"
-                                className="w-full justify-between rounded-2xl bg-white/[0.06] px-4 py-3 text-base font-medium text-white transition duration-200 hover:bg-white/[0.12] hover:text-white"
+                              <Link
+                                to="/favorites"
+                                className="flex items-center justify-between rounded-2xl bg-white/[0.06] px-4 py-3 text-base font-medium text-white transition duration-200 hover:bg-white/[0.12]"
                               >
                                 <span className="flex items-center gap-3">
                                   <Heart className="h-4 w-4" />
                                   {language === 'ar' ? 'المفضلة' : 'Favorites'}
                                 </span>
                                 <ChevronRight className="h-4 w-4" />
-                              </Button>
+                              </Link>
                             </SheetClose>
                             
                             <SheetClose asChild>
@@ -470,19 +469,7 @@ export const Navigation: React.FC = () => {
                             </SheetClose>
                             
                             {/* Admin Button - Only show for admin users */}
-                            {(() => {
-                              console.log('Mobile Navigation - User:', user);
-                              console.log('Mobile Navigation - User Roles:', user?.roles);
-                              console.log('Mobile Navigation - Is authenticated:', isAuthenticated);
-                              // Temporarily show admin button for testing if logged in
-                              return user && (
-                                user.roles?.includes('Admin') || 
-                                user.roles?.includes('admin') || 
-                                user.roles?.includes('Administrator') ||
-                                // Fallback for testing - show if any user is logged in
-                                isAuthenticated
-                              );
-                            })() && (
+                            {user && (user.roles?.includes('Admin') || user.roles?.includes('admin') || user.roles?.includes('Administrator')) && (
                               <SheetClose asChild>
                                 <Link
                                   to="/admin"

@@ -8,6 +8,12 @@ import { CartDrawer } from './components/cart/CartDrawer';
 import HomePage from './pages/HomePage';
 import ProfilePage from './pages/ProfilePage';
 import { AdminPanel } from './pages/AdminPanel';
+import { FavoritesPage } from './pages/FavoritesPage';
+import { OrdersPage } from './pages/OrdersPage';
+import { NotificationsPage } from './pages/NotificationsPage';
+import { SettingsPage } from './pages/SettingsPage';
+import { HelpPage } from './pages/HelpPage';
+import { PaymentPage } from './pages/PaymentPage';
 import { AboutPage } from './pages/AboutPage';
 import { ContactPage } from './pages/ContactPage';
 import { FAQPage } from './pages/FAQPage';
@@ -29,6 +35,12 @@ function AppContent() {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/favorites" element={<FavoritesPage />} />
+        <Route path="/orders" element={<OrdersPage />} />
+        <Route path="/notifications" element={<NotificationsPage />} />
+        <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/help" element={<HelpPage />} />
+        <Route path="/payment" element={<PaymentPage />} />
         <Route path="/admin" element={<AdminPanel />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/contact" element={<ContactPage />} />
