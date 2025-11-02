@@ -200,8 +200,8 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
             </div>
 
             {/* Product Image */}
-            <div className="relative overflow-hidden">
-              <div className="aspect-square relative">
+            <div className="relative overflow-hidden bg-gray-50 p-3">
+              <div className="aspect-square relative rounded-xl overflow-hidden">
                 <img
                   src={images[currentImageIndex]}
                   alt={product.name}
@@ -212,7 +212,7 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
 
               {/* Thumbnail Gallery */}
               {images.length > 1 && (
-                <div className="bg-white/95 p-3 border-t border-gray-200">
+                <div className="bg-white/95 p-3 border-t border-gray-200 -mx-3 -mb-3 mt-3">
                   <div className="flex gap-2 overflow-x-auto scrollbar-hide">
                     {images.map((image, index) => (
                       <button
