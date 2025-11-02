@@ -33,6 +33,8 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
   const [selectedVariantId, setSelectedVariantId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isZooming, setIsZooming] = useState(false);
+  const [zoomPosition, setZoomPosition] = useState({ x: 0, y: 0 });
 
   // Fetch full product details when modal opens
   useEffect(() => {
@@ -147,6 +149,21 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
     setCurrentImageIndex(index);
   };
 
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    setZoomPosition({ x, y });
+  };
+
+  const handleMouseEnter = () => {
+    setIsZooming(true);
+  };
+
+  const handleMouseLeave = () => {
+    setIsZooming(false);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0" showCloseButton={false}>
@@ -206,11 +223,25 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
 
             {/* Product Image */}
             <div className="relative overflow-hidden bg-gray-50 p-3">
-              <div className="aspect-square relative rounded-xl overflow-hidden">
+              <div 
+                className="aspect-square relative rounded-xl overflow-hidden cursor-zoom-in"
+                onMouseMove={handleMouseMove}
+                onMouseEnter={handleMouseEnter}
+                onMouseLeave={handleMouseLeave}
+              >
                 <img
                   src={images[currentImageIndex]}
                   alt={product.name}
-                  className="absolute inset-0 w-full h-full object-cover"
+                  className={`absolute inset-0 w-full h-full object-cover transition-transform duration-200 ${
+                    isZooming ? 'scale-150' : 'scale-100'
+                  }`}
+                  style={
+                    isZooming
+                      ? {
+                          transformOrigin: `${zoomPosition.x}% ${zoomPosition.y}%`,
+                        }
+                      : undefined
+                  }
                   onError={(event) => handleImageError(event, '/images/products/default-product.webp')}
                 />
               </div>
