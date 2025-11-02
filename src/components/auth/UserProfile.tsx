@@ -72,39 +72,69 @@ export const UserProfile: React.FC<UserProfileProps> = ({
 
   if (variant === 'inline') {
     return (
-      <div className="flex items-center gap-3 p-3 rounded-lg border bg-card">
-        <Avatar className="h-10 w-10">
-          <AvatarImage src="" alt={userName} />
-          <AvatarFallback>{getInitials(userName)}</AvatarFallback>
-        </Avatar>
-        
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-card-foreground truncate">
-            {userName}
-          </p>
-          {userEmail && (
-            <p className="text-xs text-muted-foreground truncate">
-              {userEmail}
-            </p>
-          )}
+      <div className="space-y-3">
+        {/* User Info */}
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <Avatar className="h-12 w-12 ring-2 ring-white/20">
+              <AvatarImage src="" alt={userName} />
+              <AvatarFallback className="bg-stone-600 text-white font-semibold text-lg">
+                {getInitials(userName)}
+              </AvatarFallback>
+            </Avatar>
+            {/* VIP Badge */}
+            <div className="absolute -top-1 -right-1">
+              <Crown className="h-4 w-4 text-yellow-400 drop-shadow-sm" />
+            </div>
+          </div>
+          
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <p className="text-base font-semibold text-white truncate">
+                {userName}
+              </p>
+              <Badge variant="secondary" className="bg-yellow-500/20 text-yellow-300 text-xs">
+                VIP
+              </Badge>
+            </div>
+            {userEmail && (
+              <p className="text-sm text-white/70 truncate">
+                {userEmail}
+              </p>
+            )}
+          </div>
         </div>
         
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleLogout}
-          disabled={isLoggingOut}
-          className="shrink-0"
-        >
-          {isLoggingOut ? (
-            <Spinner className="h-4 w-4" />
-          ) : (
-            <>
-              <LogOut className="h-4 w-4 mr-1" />
-              {t('auth.logout')}
-            </>
+        {/* Action Buttons */}
+        <div className="flex gap-2">
+          {/* Admin Panel Button - Only show if user is admin */}
+          {user.roles?.includes('admin') && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/admin')}
+              className="flex-1 bg-blue-600/20 text-blue-300 hover:bg-blue-600/30 hover:text-blue-200 border border-blue-600/30"
+            >
+              <Shield className="h-4 w-4 mr-2" />
+              {t('nav.admin')}
+            </Button>
           )}
-        </Button>
+          
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleLogout}
+            disabled={isLoggingOut}
+            className="flex-1 bg-red-600/20 text-red-300 hover:bg-red-600/30 hover:text-red-200 border border-red-600/30"
+          >
+            {isLoggingOut ? (
+              <Spinner className="h-4 w-4 mr-2" />
+            ) : (
+              <LogOut className="h-4 w-4 mr-2" />
+            )}
+            {t('auth.logout')}
+          </Button>
+        </div>
       </div>
     );
   }

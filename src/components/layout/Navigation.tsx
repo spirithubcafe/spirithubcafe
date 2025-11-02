@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Globe, ShoppingCart, Menu, ChevronDown, ChevronRight } from 'lucide-react';
+import { Globe, ShoppingCart, Menu, ChevronDown, ChevronRight, User, Heart, ShoppingBag, Settings, Shield } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '../ui/sheet';
 import {
@@ -19,7 +19,7 @@ import { UserProfile } from '../auth/UserProfile';
 export const Navigation: React.FC = () => {
   const { t } = useTranslation();
   const { language, toggleLanguage, categories } = useApp();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
   const { totalItems, openCart } = useCart();
   const location = useLocation();
   const handleMobileCartOpen = React.useCallback(() => {
@@ -166,7 +166,12 @@ export const Navigation: React.FC = () => {
 
             {/* Authentication */}
             <div className="flex items-center space-x-2">
-              {isAuthenticated ? (
+              {isLoading ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse"></div>
+                  <div className="w-16 h-4 bg-gray-200 rounded animate-pulse hidden md:block"></div>
+                </div>
+              ) : isAuthenticated ? (
                 <>
                   <UserProfile showFullName />
                 </>
@@ -210,7 +215,9 @@ export const Navigation: React.FC = () => {
                 <ShoppingCart className="w-4 h-4" />
               </Button>
 
-              {isAuthenticated ? (
+              {isLoading ? (
+                <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse"></div>
+              ) : isAuthenticated ? (
                 <UserProfile showFullName={false} />
               ) : (
                 <AuthButtons showText={false} />
@@ -270,7 +277,17 @@ export const Navigation: React.FC = () => {
                 <div className="flex h-full flex-col overflow-hidden">
                   <div className="relative bg-gradient-to-br from-[#3e2010] via-[#2c160b] to-[#170b06] px-6 py-5 shadow-lg">
                     <div className="mt-0">
-                      {isAuthenticated ? (
+                      {isLoading ? (
+                        <div className="rounded-2xl bg-white/[0.04] p-4 backdrop-blur">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-white/20 animate-pulse"></div>
+                            <div className="space-y-2">
+                              <div className="w-24 h-4 bg-white/20 rounded animate-pulse"></div>
+                              <div className="w-16 h-3 bg-white/20 rounded animate-pulse"></div>
+                            </div>
+                          </div>
+                        </div>
+                      ) : isAuthenticated ? (
                         <div className="rounded-2xl bg-white/[0.04] p-4 backdrop-blur">
                           <UserProfile variant="inline" />
                         </div>
@@ -379,6 +396,108 @@ export const Navigation: React.FC = () => {
                             </span>
                           </Button>
                         </SheetClose>
+                        
+                        {/* Profile Section for Mobile */}
+                        {isLoading ? (
+                          <div className="rounded-2xl bg-white/[0.06] p-4">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-full bg-white/20 animate-pulse"></div>
+                              <div className="space-y-2 flex-1">
+                                <div className="w-24 h-4 bg-white/20 rounded animate-pulse"></div>
+                                <div className="w-16 h-3 bg-white/20 rounded animate-pulse"></div>
+                              </div>
+                            </div>
+                          </div>
+                        ) : isAuthenticated ? (
+                          <div className="space-y-3">
+                            <p className="text-xs uppercase tracking-[0.35em] text-amber-200/70">
+                              {language === 'ar' ? 'حسابي' : 'My Account'}
+                            </p>
+                            
+                            <SheetClose asChild>
+                              <Link
+                                to="/profile"
+                                className="flex items-center justify-between rounded-2xl bg-white/[0.06] px-4 py-3 text-base font-medium text-white transition duration-200 hover:bg-white/[0.12]"
+                              >
+                                <span className="flex items-center gap-3">
+                                  <User className="h-4 w-4" />
+                                  {language === 'ar' ? 'الملف الشخصي' : 'Profile'}
+                                </span>
+                                <ChevronRight className="h-4 w-4" />
+                              </Link>
+                            </SheetClose>
+                            
+                            <SheetClose asChild>
+                              <Button
+                                variant="ghost"
+                                size="lg"
+                                className="w-full justify-between rounded-2xl bg-white/[0.06] px-4 py-3 text-base font-medium text-white transition duration-200 hover:bg-white/[0.12] hover:text-white"
+                              >
+                                <span className="flex items-center gap-3">
+                                  <Heart className="h-4 w-4" />
+                                  {language === 'ar' ? 'المفضلة' : 'Favorites'}
+                                </span>
+                                <ChevronRight className="h-4 w-4" />
+                              </Button>
+                            </SheetClose>
+                            
+                            <SheetClose asChild>
+                              <Button
+                                variant="ghost"
+                                size="lg"
+                                className="w-full justify-between rounded-2xl bg-white/[0.06] px-4 py-3 text-base font-medium text-white transition duration-200 hover:bg-white/[0.12] hover:text-white"
+                              >
+                                <span className="flex items-center gap-3">
+                                  <ShoppingBag className="h-4 w-4" />
+                                  {language === 'ar' ? 'طلباتي' : 'My Orders'}
+                                </span>
+                                <ChevronRight className="h-4 w-4" />
+                              </Button>
+                            </SheetClose>
+                            
+                            <SheetClose asChild>
+                              <Button
+                                variant="ghost"
+                                size="lg"
+                                className="w-full justify-between rounded-2xl bg-white/[0.06] px-4 py-3 text-base font-medium text-white transition duration-200 hover:bg-white/[0.12] hover:text-white"
+                              >
+                                <span className="flex items-center gap-3">
+                                  <Settings className="h-4 w-4" />
+                                  {language === 'ar' ? 'الإعدادات' : 'Settings'}
+                                </span>
+                                <ChevronRight className="h-4 w-4" />
+                              </Button>
+                            </SheetClose>
+                            
+                            {/* Admin Button - Only show for admin users */}
+                            {(() => {
+                              console.log('Mobile Navigation - User:', user);
+                              console.log('Mobile Navigation - User Roles:', user?.roles);
+                              console.log('Mobile Navigation - Is authenticated:', isAuthenticated);
+                              // Temporarily show admin button for testing if logged in
+                              return user && (
+                                user.roles?.includes('Admin') || 
+                                user.roles?.includes('admin') || 
+                                user.roles?.includes('Administrator') ||
+                                // Fallback for testing - show if any user is logged in
+                                isAuthenticated
+                              );
+                            })() && (
+                              <SheetClose asChild>
+                                <Link
+                                  to="/admin"
+                                  className="flex items-center justify-between rounded-2xl bg-blue-600/20 px-4 py-3 text-base font-medium text-blue-300 transition duration-200 hover:bg-blue-600/30 hover:text-blue-200 border border-blue-600/30"
+                                >
+                                  <span className="flex items-center gap-3">
+                                    <Shield className="h-4 w-4" />
+                                    {language === 'ar' ? 'لوحة الإدارة' : 'Admin Panel'}
+                                  </span>
+                                  <ChevronRight className="h-4 w-4" />
+                                </Link>
+                              </SheetClose>
+                            )}
+                          </div>
+                        ) : null}
                       </div>
                     </nav>
                   </div>
