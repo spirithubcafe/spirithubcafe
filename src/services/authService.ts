@@ -198,16 +198,17 @@ export class AuthService {
       
       if (response.data) {
         // Check if the server response has the expected structure
-        let userInfo = response.data as Partial<UserInfo> & Record<string, unknown>;
+        const serverUserInfo = response.data as Partial<UserInfo> & Record<string, unknown>;
         
         // If roles are missing, try to get them from the token
-        if (!userInfo.roles || userInfo.roles.length === 0) {
+        let userInfo = serverUserInfo;
+        if (!serverUserInfo.roles || serverUserInfo.roles.length === 0) {
           console.warn('Server response missing roles, extracting from token');
           const token = tokenManager.getAccessToken();
           if (token) {
             const tokenUser = this.parseUserFromToken(token);
             if (tokenUser && tokenUser.roles) {
-              userInfo.roles = tokenUser.roles;
+              userInfo = { ...serverUserInfo, roles: tokenUser.roles };
             }
           }
         }
