@@ -46,7 +46,7 @@ export const Navigation: React.FC = () => {
             <DropdownMenu key={item.key}>
               <DropdownMenuTrigger asChild>
                 <button
-                  className={`flex items-center gap-1 transition-colors duration-200 font-medium text-xs md:text-sm lg:text-base whitespace-nowrap ${
+                  className={`flex items-center gap-1 transition-colors duration-200 font-medium text-xs md:text-xs lg:text-sm whitespace-nowrap ${
                     isHomePage 
                       ? 'text-white hover:text-amber-200' 
                       : 'text-gray-900 hover:text-amber-600'
@@ -95,7 +95,7 @@ export const Navigation: React.FC = () => {
           <Link
             key={item.key}
             to={item.href}
-            className={`transition-colors duration-200 font-medium text-xs md:text-sm lg:text-base whitespace-nowrap ${
+            className={`transition-colors duration-200 font-medium text-xs md:text-xs lg:text-sm whitespace-nowrap ${
               isHomePage 
                 ? 'text-white hover:text-amber-200' 
                 : 'text-gray-900 hover:text-amber-600'
@@ -149,7 +149,7 @@ export const Navigation: React.FC = () => {
               variant="ghost"
               size="sm"
               onClick={openCart}
-              className={`relative transition-colors text-sm ${
+              className={`relative transition-colors text-xs ${
                 isHomePage 
                   ? 'text-white hover:text-amber-200 hover:bg-white/10' 
                   : 'text-gray-900 hover:text-amber-600 hover:bg-gray-100'

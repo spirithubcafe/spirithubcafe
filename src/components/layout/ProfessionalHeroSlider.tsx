@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Button } from '../ui/button';
 import { useApp } from '../../hooks/useApp';
 import './ProfessionalHeroSlider.css';
 
@@ -42,7 +41,7 @@ export const ProfessionalHeroSlider: React.FC = () => {
         language === 'ar' ? 'محمصة طازجة يومياً' : 'Fresh Roasted Daily',
         language === 'ar' ? 'خدمة 24/7' : '24/7 Service'
       ],
-      cta: language === 'ar' ? 'تسوق الآن' : 'Shop Now'
+      cta: language === 'ar' ? 'تسوق الآن' : 'SHOP NOW'
     },
     {
       id: '2',
@@ -62,7 +61,7 @@ export const ProfessionalHeroSlider: React.FC = () => {
         language === 'ar' ? 'باريستا محترف' : 'Professional Barista',
         language === 'ar' ? 'جودة مضمونة' : 'Guaranteed Quality'
       ],
-      cta: language === 'ar' ? 'تعرف علينا' : 'Learn More'
+      cta: language === 'ar' ? 'تسوق الآن' : 'SHOP NOW'
     },
     {
       id: '3',
@@ -82,7 +81,7 @@ export const ProfessionalHeroSlider: React.FC = () => {
         language === 'ar' ? 'مساحات عمل' : 'Work Spaces',
         language === 'ar' ? 'أجواء هادئة' : 'Quiet Atmosphere'
       ],
-      cta: language === 'ar' ? 'احجز مكانك' : 'Reserve Your Spot'
+      cta: language === 'ar' ? 'تسوق الآن' : 'SHOP NOW'
     }
   ];
 
@@ -172,13 +171,13 @@ export const ProfessionalHeroSlider: React.FC = () => {
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.8, delay: 0.5 }}
               >
-                <Button
-                  size="lg"
-                  className="cta-button"
+                <a
+                  href="/#products"
+                  className="inline-block bg-red-500 hover:bg-red-600 text-white font-semibold px-6 py-3 rounded-md transition-all duration-300 text-base uppercase tracking-wide"
                   onClick={(e) => e.stopPropagation()}
                 >
                   {currentSlideData.cta}
-                </Button>
+                </a>
               </motion.div>
             </motion.div>
           </div>
