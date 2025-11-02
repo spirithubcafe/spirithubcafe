@@ -2,13 +2,11 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useApp } from '../hooks/useApp';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import { Badge } from '../components/ui/badge';
-import { Input } from '../components/ui/input';
-import { Label } from '../components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { 
   User, 
@@ -22,23 +20,30 @@ import {
   ShoppingBag, 
   Bell, 
   CreditCard,
+  Settings,
   Shield,
   Crown,
   Coffee,
   Star,
   Clock,
-  Settings,
-  HelpCircle,
   Activity,
-  Calendar,
-  Gift,
-  TrendingUp,
-  ArrowLeft
+  ArrowLeft,
+  Camera
 } from 'lucide-react';
+
+interface ProfileStats {
+  totalOrders: number;
+  totalSpent: number;
+  favoriteProducts: number;
+  memberSince: string;
+  loyaltyPoints: number;
+}
 
 const ProfilePage: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
-  const { language } = useApp();
+  const { t, language } = useApp();
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState('overview');
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState({
     displayName: user?.displayName || '',
@@ -49,453 +54,370 @@ const ProfilePage: React.FC = () => {
 
   if (!isAuthenticated || !user) {
     return (
-      <div className={`min-h-screen bg-gradient-to-br from-stone-50 to-stone-100 ${language === 'ar' ? 'rtl' : 'ltr'}`}>
-        <PageHeader
-          title="Profile"
-          titleAr="الملف الشخصي"
-          subtitle="Access your account information"
-          subtitleAr="الوصول إلى معلومات حسابك"
-        />
-        <div className="container mx-auto px-4 py-16">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="max-w-md mx-auto"
-          >
-            <Card>
-              <CardHeader>
-                <CardTitle>{language === 'ar' ? 'الملف الشخصي' : 'Profile'}</CardTitle>
-                <CardDescription>
-                  {language === 'ar' ? 'لم يتم تسجيل الدخول' : 'Not authenticated'}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  {language === 'ar' ? 'يرجى تسجيل الدخول للوصول إلى ملفك الشخصي' : 'Please login to access your profile'}
-                </p>
-              </CardContent>
-            </Card>
-          </motion.div>
+      <div className={`min-h-screen bg-gray-50 pt-20 ${language === 'ar' ? 'rtl' : 'ltr'}`}>
+        <div className="max-w-4xl mx-auto px-4 py-8">
+          <Card className="w-full max-w-md mx-auto text-center">
+            <CardHeader>
+              <User className="h-16 w-16 text-stone-400 mx-auto mb-4" />
+              <CardTitle className="text-2xl">
+                {t('auth.loginRequired')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-600 mb-6">
+                {t('profile.loginPrompt')}
+              </p>
+              <Button onClick={() => navigate('/')}>
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                {t('common.backHome')}
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       </div>
     );
   }
 
-  const getInitials = (name?: string) => {
-    if (!name) return 'U';
-    return name
-      .split(' ')
-      .map(n => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-  };
-
-  const userName = user.displayName || user.username || 'User';
-  const userStats = {
+  // Mock user stats - في الواقع هذه البيانات ستأتي من API
+  const userStats: ProfileStats = {
     totalOrders: 24,
-    favoriteItems: 8,
-    loyaltyPoints: 1250,
-    memberSince: '2025'
+    totalSpent: 156.50,
+    favoriteProducts: 8,
+    memberSince: 'November 2025',
+    loyaltyPoints: 1250
   };
 
-  const handleSave = () => {
-    // Save logic here
+  const tabs = [
+    {
+      id: 'overview',
+      label: t('profile.tabs.overview'),
+      labelAr: 'نظرة عامة',
+      icon: Activity
+    },
+    {
+      id: 'orders',
+      label: t('profile.tabs.orders'),
+      labelAr: 'الطلبات',
+      icon: ShoppingBag
+    },
+    {
+      id: 'favorites',
+      label: t('profile.tabs.favorites'),
+      labelAr: 'المفضلة',
+      icon: Heart
+    }
+  ];
+
+  const handleCancel = () => {
+    setEditData({
+      displayName: user?.displayName || '',
+      email: user?.username || '',
+      phone: '+968 9876 5432',
+      address: 'Muscat, Oman'
+    });
     setIsEditing(false);
   };
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br from-stone-50 to-stone-100 ${language === 'ar' ? 'rtl' : 'ltr'}`}>
-      <PageHeader
-        title="My Profile"
-        titleAr="ملفي الشخصي"
-        subtitle="Manage your account and preferences"
-        subtitleAr="إدارة حسابك وتفضيلاتك"
-      />
-
-      <div className="container mx-auto px-4 py-16 space-y-8">
-        {/* Profile Header */}
+    <div className={`min-h-screen bg-background pt-20 pb-12 ${language === 'ar' ? 'rtl' : 'ltr'}`}>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Header Section - Professional & Responsive */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-3xl shadow-lg overflow-hidden"
+          className="mb-8"
         >
-          <div className="bg-stone-700 px-8 py-12">
-            <div className="flex items-center gap-6">
-              <div className="relative">
-                <Avatar className="h-24 w-24 ring-4 ring-white/20">
-                  <AvatarImage src="" alt={userName} />
-                  <AvatarFallback className="bg-stone-600 text-white font-bold text-2xl">
-                    {getInitials(userName)}
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 p-6 bg-card rounded-lg border shadow-sm">
+            {/* User Info Section */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 flex-1">
+              {/* Avatar */}
+              <div className="relative group">
+                <Avatar className="h-24 w-24 ring-2 ring-border shadow-md">
+                  <AvatarImage src="/placeholder-avatar.jpg" alt={user.displayName || 'User'} />
+                  <AvatarFallback className="text-2xl bg-muted text-muted-foreground">
+                    {user.displayName?.charAt(0) || user.username?.charAt(0) || 'U'}
                   </AvatarFallback>
                 </Avatar>
-                <div className="absolute -top-2 -right-2">
-                  <Crown className="h-8 w-8 text-yellow-400 drop-shadow-lg" />
-                </div>
+                <button 
+                  className="absolute inset-0 bg-black/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center"
+                  title={t('profile.changePhoto')}
+                  aria-label={t('profile.changePhoto')}
+                >
+                  <Camera className="h-4 w-4 text-white" />
+                </button>
               </div>
-              
-              <div className="flex-1 text-white">
+
+              {/* User Details */}
+              <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-3 mb-2">
-                  <h1 className="text-3xl font-bold">{userName}</h1>
-                  <Badge className="bg-yellow-400 text-yellow-900 font-semibold">
+                  <h1 className="text-3xl font-bold text-foreground truncate">
+                    {user.displayName || user.username}
+                  </h1>
+                  <Badge variant="secondary">
                     <Crown className="h-4 w-4 mr-1" />
-                    VIP Member
+                    {t('profile.memberSince')} {userStats.memberSince}
                   </Badge>
                 </div>
-                <p className="text-white/80 mb-1">{user.username}</p>
-                <p className="text-white/70 text-sm">
-                  {language === 'ar' ? `عضو منذ ${userStats.memberSince}` : `Member since ${userStats.memberSince}`}
+                <p className="text-muted-foreground mb-4">
+                  {user.username} • {t('profile.loyaltyPoints')}: {userStats.loyaltyPoints.toLocaleString()}
                 </p>
+                
+                {/* Quick Stats - Mobile Responsive */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  <div className="text-center p-3 bg-muted rounded-lg border">
+                    <div className="text-2xl font-bold text-foreground">{userStats.totalOrders}</div>
+                    <div className="text-xs text-muted-foreground font-medium">{t('profile.totalOrders')}</div>
+                  </div>
+                  <div className="text-center p-3 bg-muted rounded-lg border">
+                    <div className="text-2xl font-bold text-foreground">OMR {userStats.totalSpent}</div>
+                    <div className="text-xs text-muted-foreground font-medium">{t('profile.totalSpent')}</div>
+                  </div>
+                  <div className="text-center p-3 bg-muted rounded-lg border">
+                    <div className="text-2xl font-bold text-foreground">{userStats.favoriteProducts}</div>
+                    <div className="text-xs text-muted-foreground font-medium">{t('profile.favorites')}</div>
+                  </div>
+                  <div className="text-center p-3 bg-muted rounded-lg border">
+                    <div className="text-2xl font-bold text-foreground">{userStats.loyaltyPoints}</div>
+                    <div className="text-xs text-muted-foreground font-medium">{t('profile.points')}</div>
+                  </div>
+                </div>
               </div>
-
-              <Button
-                onClick={() => setIsEditing(!isEditing)}
-                variant="secondary"
-                className="bg-white/10 hover:bg-white/20 text-white border-white/20"
-              >
-                <Edit2 className="h-4 w-4 mr-2" />
-                {language === 'ar' ? 'تعديل' : 'Edit'}
-              </Button>
             </div>
-          </div>
 
-          {/* Stats */}
-          <div className="p-8">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              <div className="text-center">
-                <div className="bg-green-100 w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-2">
-                  <ShoppingBag className="h-6 w-6 text-green-600" />
-                </div>
-                <p className="text-2xl font-bold text-gray-900">{userStats.totalOrders}</p>
-                <p className="text-sm text-gray-600">
-                  {language === 'ar' ? 'إجمالي الطلبات' : 'Total Orders'}
-                </p>
-              </div>
-              
-              <div className="text-center">
-                <div className="bg-red-100 w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-2">
-                  <Heart className="h-6 w-6 text-red-600" />
-                </div>
-                <p className="text-2xl font-bold text-gray-900">{userStats.favoriteItems}</p>
-                <p className="text-sm text-gray-600">
-                  {language === 'ar' ? 'المفضلة' : 'Favorites'}
-                </p>
-              </div>
-              
-              <div className="text-center">
-                <div className="bg-blue-100 w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-2">
-                  <Star className="h-6 w-6 text-blue-600" />
-                </div>
-                <p className="text-2xl font-bold text-gray-900">{userStats.loyaltyPoints}</p>
-                <p className="text-sm text-gray-600">
-                  {language === 'ar' ? 'نقاط الولاء' : 'Loyalty Points'}
-                </p>
-              </div>
-              
-              <div className="text-center">
-                <div className="bg-purple-100 w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-2">
-                  <Coffee className="h-6 w-6 text-purple-600" />
-                </div>
-                <p className="text-2xl font-bold text-gray-900">156</p>
-                <p className="text-sm text-gray-600">
-                  {language === 'ar' ? 'أكواب القهوة' : 'Cups Enjoyed'}
-                </p>
-              </div>
+            {/* Quick Actions */}
+            <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+              <Button
+                variant={isEditing ? "default" : "outline"}
+                onClick={() => setIsEditing(!isEditing)}
+                className="flex-1 lg:flex-none min-w-[120px]"
+              >
+                {isEditing ? (
+                  <>
+                    <Save className="h-4 w-4 mr-2" />
+                    {t('common.save')}
+                  </>
+                ) : (
+                  <>
+                    <Edit2 className="h-4 w-4 mr-2" />
+                    {t('profile.editProfile')}
+                  </>
+                )}
+              </Button>
+              {isEditing && (
+                <Button
+                  variant="outline"
+                  onClick={handleCancel}
+                  className="flex-1 lg:flex-none min-w-[120px]"
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  {t('common.cancel')}
+                </Button>
+              )}
             </div>
           </div>
         </motion.div>
 
-        {/* Profile Tabs */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-        >
-          <Tabs defaultValue="personal" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4 bg-white rounded-2xl p-2 shadow-sm">
-              <TabsTrigger value="personal" className="rounded-xl">
-                <User className="h-4 w-4 mr-2" />
-                {language === 'ar' ? 'شخصي' : 'Personal'}
-              </TabsTrigger>
-              <TabsTrigger value="orders" className="rounded-xl">
-                <ShoppingBag className="h-4 w-4 mr-2" />
-                {language === 'ar' ? 'الطلبات' : 'Orders'}
-              </TabsTrigger>
-              <TabsTrigger value="favorites" className="rounded-xl">
-                <Heart className="h-4 w-4 mr-2" />
-                {language === 'ar' ? 'المفضلة' : 'Favorites'}
-              </TabsTrigger>
-              <TabsTrigger value="settings" className="rounded-xl">
-                <Bell className="h-4 w-4 mr-2" />
-                {language === 'ar' ? 'الإعدادات' : 'Settings'}
-              </TabsTrigger>
-            </TabsList>
+        {/* Professional Tab System */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-3 mb-8 h-auto">
+            {tabs.map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <TabsTrigger
+                  key={tab.id}
+                  value={tab.id}
+                  className="flex flex-col items-center gap-2 p-4 h-auto min-h-[80px]"
+                >
+                  <Icon className="h-5 w-5" />
+                  <span className="text-sm font-medium">
+                    {language === 'ar' ? tab.labelAr : tab.label}
+                  </span>
+                </TabsTrigger>
+              );
+            })}
+          </TabsList>
 
-            {/* Personal Information Tab */}
-            <TabsContent value="personal">
-              <Card className="rounded-2xl shadow-lg">
+          <TabsContent value="overview" className="space-y-6">
+            <div className="grid gap-6 lg:grid-cols-2">
+              {/* Profile Information Card */}
+              <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <User className="h-5 w-5" />
-                    {language === 'ar' ? 'المعلومات الشخصية' : 'Personal Information'}
+                    {t('profile.personalInfo')}
                   </CardTitle>
-                  <CardDescription>
-                    {language === 'ar' ? 'إدارة بياناتك الشخصية' : 'Manage your personal data'}
-                  </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="displayName">
-                        {language === 'ar' ? 'الاسم الكامل' : 'Full Name'}
-                      </Label>
-                      <div className="flex items-center gap-2">
-                        <User className="h-4 w-4 text-gray-400" />
-                        {isEditing ? (
-                          <Input
-                            id="displayName"
-                            value={editData.displayName}
-                            onChange={(e) => setEditData({...editData, displayName: e.target.value})}
-                          />
-                        ) : (
-                          <span className="flex-1 p-2">{userName}</span>
-                        )}
+                <CardContent className="space-y-4">
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3 p-3 rounded-lg bg-muted">
+                      <Mail className="h-4 w-4 text-muted-foreground" />
+                      <div>
+                        <p className="text-sm text-muted-foreground">{t('profile.email')}</p>
+                        <p className="font-medium">{user.username}</p>
                       </div>
                     </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="email">
-                        {language === 'ar' ? 'البريد الإلكتروني' : 'Email Address'}
-                      </Label>
-                      <div className="flex items-center gap-2">
-                        <Mail className="h-4 w-4 text-gray-400" />
-                        {isEditing ? (
-                          <Input
-                            id="email"
-                            type="email"
-                            value={editData.email}
-                            onChange={(e) => setEditData({...editData, email: e.target.value})}
-                          />
-                        ) : (
-                          <span className="flex-1 p-2">{user.username}</span>
-                        )}
+                    <div className="flex items-center gap-3 p-3 rounded-lg bg-muted">
+                      <Phone className="h-4 w-4 text-muted-foreground" />
+                      <div>
+                        <p className="text-sm text-muted-foreground">{t('profile.phone')}</p>
+                        <p className="font-medium">{editData.phone}</p>
                       </div>
                     </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="phone">
-                        {language === 'ar' ? 'رقم الهاتف' : 'Phone Number'}
-                      </Label>
-                      <div className="flex items-center gap-2">
-                        <Phone className="h-4 w-4 text-gray-400" />
-                        {isEditing ? (
-                          <Input
-                            id="phone"
-                            value={editData.phone}
-                            onChange={(e) => setEditData({...editData, phone: e.target.value})}
-                          />
-                        ) : (
-                          <span className="flex-1 p-2">{editData.phone}</span>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="address">
-                        {language === 'ar' ? 'العنوان' : 'Address'}
-                      </Label>
-                      <div className="flex items-center gap-2">
-                        <MapPin className="h-4 w-4 text-gray-400" />
-                        {isEditing ? (
-                          <Input
-                            id="address"
-                            value={editData.address}
-                            onChange={(e) => setEditData({...editData, address: e.target.value})}
-                          />
-                        ) : (
-                          <span className="flex-1 p-2">{editData.address}</span>
-                        )}
+                    <div className="flex items-center gap-3 p-3 rounded-lg bg-muted">
+                      <MapPin className="h-4 w-4 text-muted-foreground" />
+                      <div>
+                        <p className="text-sm text-muted-foreground">{t('profile.address')}</p>
+                        <p className="font-medium">{editData.address}</p>
                       </div>
                     </div>
                   </div>
+                </CardContent>
+              </Card>
 
-                  {isEditing && (
-                    <div className="flex items-center gap-2 pt-4 border-t">
-                      <Button onClick={handleSave} className="bg-green-600 hover:bg-green-700">
-                        <Save className="h-4 w-4 mr-2" />
-                        {language === 'ar' ? 'حفظ' : 'Save Changes'}
-                      </Button>
-                      <Button variant="outline" onClick={() => setIsEditing(false)}>
-                        <X className="h-4 w-4 mr-2" />
-                        {language === 'ar' ? 'إلغاء' : 'Cancel'}
-                      </Button>
+              {/* Quick Actions Card */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Activity className="h-5 w-5" />
+                    {t('profile.quickActions')}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start h-12"
+                    onClick={() => navigate('/orders')}
+                  >
+                    <ShoppingBag className="h-4 w-4 mr-3" />
+                    {t('profile.viewOrders')}
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start h-12"
+                    onClick={() => navigate('/favorites')}
+                  >
+                    <Heart className="h-4 w-4 mr-3" />
+                    {t('profile.manageFavorites')}
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="orders">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <ShoppingBag className="h-5 w-5" />
+                  {t('profile.orderHistory')}
+                </CardTitle>
+                <CardDescription>
+                  {t('profile.recentOrders')}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {[1, 2, 3].map((order) => (
+                    <div key={order} className="flex items-center gap-4 p-4 rounded-lg bg-muted hover:bg-muted/80 transition-colors">
+                      <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                        <Coffee className="h-6 w-6 text-primary" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-semibold">
+                          {language === 'ar' ? `طلب #${1000 + order}` : `Order #${1000 + order}`}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {language === 'ar' ? 'قهوة إسبريسو مزدوجة + كرواسون' : 'Double Espresso + Croissant'}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold">12.50 OMR</p>
+                        <div className="flex items-center gap-1">
+                          <Clock className="h-3 w-3 text-muted-foreground" />
+                          <span className="text-xs text-muted-foreground font-medium">
+                            {language === 'ar' ? 'تم التسليم' : 'Delivered'}
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-            {/* Orders Tab */}
-            <TabsContent value="orders">
-              <Card className="rounded-2xl shadow-lg">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <ShoppingBag className="h-5 w-5" />
-                    {language === 'ar' ? 'تاريخ الطلبات' : 'Order History'}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {/* Recent Orders */}
-                    {[1, 2, 3].map((order) => (
-                      <div key={order} className="flex items-center gap-4 p-4 rounded-xl bg-gray-50">
-                        <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
-                          <Coffee className="h-6 w-6 text-amber-600" />
-                        </div>
-                        <div className="flex-1">
-                          <p className="font-semibold">
-                            {language === 'ar' ? `طلب #${1000 + order}` : `Order #${1000 + order}`}
-                          </p>
-                          <p className="text-sm text-gray-600">
-                            {language === 'ar' ? 'قهوة إسبريسو + كرواسون' : 'Espresso Coffee + Croissant'}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-semibold">12.50 OMR</p>
-                          <div className="flex items-center gap-1">
-                            <Clock className="h-3 w-3 text-green-600" />
-                            <span className="text-xs text-green-600">
-                              {language === 'ar' ? 'تم التسليم' : 'Delivered'}
-                            </span>
-                          </div>
-                        </div>
+          <TabsContent value="favorites">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Heart className="h-5 w-5" />
+                  {t('profile.favoriteProducts')}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {[1, 2, 3, 4].map((item) => (
+                    <div key={item} className="flex items-center gap-4 p-4 rounded-lg bg-muted hover:bg-muted/80 transition-colors">
+                      <div className="w-16 h-16 bg-primary/10 rounded-lg flex items-center justify-center">
+                        <Coffee className="h-8 w-8 text-primary" />
                       </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* Favorites Tab */}
-            <TabsContent value="favorites">
-              <Card className="rounded-2xl shadow-lg">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Heart className="h-5 w-5" />
-                    {language === 'ar' ? 'المنتجات المفضلة' : 'Favorite Products'}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid md:grid-cols-2 gap-4">
-                    {/* Favorite Items */}
-                    {[1, 2, 3, 4].map((item) => (
-                      <div key={item} className="flex items-center gap-4 p-4 rounded-xl bg-gray-50">
-                        <div className="w-16 h-16 bg-amber-200 rounded-xl flex items-center justify-center">
-                          <Coffee className="h-8 w-8 text-amber-700" />
-                        </div>
-                        <div className="flex-1">
-                          <p className="font-semibold">
-                            {language === 'ar' ? 'قهوة أرابيكا بريميوم' : 'Premium Arabica Coffee'}
-                          </p>
-                          <p className="text-sm text-gray-600">8.50 OMR</p>
-                          <div className="flex items-center gap-1 mt-1">
-                            <Star className="h-4 w-4 text-yellow-500 fill-current" />
-                            <span className="text-sm">4.8</span>
-                          </div>
-                        </div>
-                        <Button size="sm" variant="outline">
-                          <ShoppingBag className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* Settings Tab */}
-            <TabsContent value="settings">
-              <Card className="rounded-2xl shadow-lg">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Bell className="h-5 w-5" />
-                    {language === 'ar' ? 'إعدادات الحساب' : 'Account Settings'}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between p-4 rounded-xl bg-gray-50">
-                      <div className="flex items-center gap-3">
-                        <Bell className="h-5 w-5 text-blue-600" />
-                        <div>
-                          <p className="font-medium">
-                            {language === 'ar' ? 'إشعارات الطلبات' : 'Order Notifications'}
-                          </p>
-                          <p className="text-sm text-gray-600">
-                            {language === 'ar' ? 'تلقي تحديثات حول طلباتك' : 'Receive updates about your orders'}
-                          </p>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold truncate">
+                          {language === 'ar' ? 'قهوة أرابيكا بريميوم' : 'Premium Arabica Coffee'}
+                        </p>
+                        <p className="text-sm text-muted-foreground">8.50 OMR</p>
+                        <div className="flex items-center gap-1 mt-1">
+                          <Star className="h-4 w-4 text-primary fill-current" />
+                          <span className="text-sm font-medium">4.8</span>
                         </div>
                       </div>
                       <Button size="sm" variant="outline">
-                        {language === 'ar' ? 'تفعيل' : 'Enable'}
+                        <ShoppingBag className="h-4 w-4" />
                       </Button>
                     </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-                    <div className="flex items-center justify-between p-4 rounded-xl bg-gray-50">
-                      <div className="flex items-center gap-3">
-                        <CreditCard className="h-5 w-5 text-green-600" />
-                        <div>
-                          <p className="font-medium">
-                            {language === 'ar' ? 'طرق الدفع' : 'Payment Methods'}
-                          </p>
-                          <p className="text-sm text-gray-600">
-                            {language === 'ar' ? 'إدارة بطاقاتك المحفوظة' : 'Manage your saved cards'}
-                          </p>
-                        </div>
-                      </div>
-                      <Button size="sm" variant="outline">
-                        {language === 'ar' ? 'إدارة' : 'Manage'}
-                      </Button>
-                    </div>
-
-                    <div className="flex items-center justify-between p-4 rounded-xl bg-gray-50">
-                      <div className="flex items-center gap-3">
-                        <Shield className="h-5 w-5 text-purple-600" />
-                        <div>
-                          <p className="font-medium">
-                            {language === 'ar' ? 'الأمان والخصوصية' : 'Security & Privacy'}
-                          </p>
-                          <p className="text-sm text-gray-600">
-                            {language === 'ar' ? 'إعدادات الأمان وكلمة المرور' : 'Security settings and password'}
-                          </p>
-                        </div>
-                      </div>
-                      <Button size="sm" variant="outline">
-                        {language === 'ar' ? 'تحديث' : 'Update'}
-                      </Button>
-                    </div>
-                  </div>
-
-                  <Separator />
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-red-600">
-                        {language === 'ar' ? 'حذف الحساب' : 'Delete Account'}
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        {language === 'ar' ? 'حذف حسابك نهائياً' : 'Permanently delete your account'}
-                      </p>
-                    </div>
-                    <Button variant="destructive" size="sm">
-                      {language === 'ar' ? 'حذف' : 'Delete'}
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        </motion.div>
+          <TabsContent value="settings">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Settings className="h-5 w-5" />
+                  {t('profile.accountSettings')}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start h-12"
+                  onClick={() => navigate('/profile/notifications')}
+                >
+                  <Bell className="h-4 w-4 mr-3" />
+                  {t('profile.notificationSettings')}
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start h-12"
+                  onClick={() => navigate('/profile/payment')}
+                >
+                  <CreditCard className="h-4 w-4 mr-3" />
+                  {t('profile.paymentMethods')}
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start h-12"
+                  onClick={() => navigate('/profile/help')}
+                >
+                  <Shield className="h-4 w-4 mr-3" />
+                  {t('profile.helpSupport')}
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

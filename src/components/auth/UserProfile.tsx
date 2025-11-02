@@ -16,15 +16,11 @@ import {
 } from '../ui/dropdown-menu';
 import { 
   User, 
-  Settings, 
   LogOut,
   ChevronDown,
   Shield,
   Heart,
   ShoppingBag,
-  Bell,
-  CreditCard,
-  HelpCircle,
   Crown
 } from 'lucide-react';
 
@@ -239,57 +235,6 @@ export const UserProfile: React.FC<UserProfileProps> = ({
             <p className="font-semibold text-gray-800 group-hover:text-gray-900">{t('profile.orders')}</p>
           </DropdownMenuItem>
 
-          <DropdownMenuSeparator className="my-3 bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
-          
-          <DropdownMenuLabel className="px-3 py-2 text-xs font-bold text-stone-500 uppercase tracking-wider bg-gray-50/50 rounded-md mb-2">
-            {t('profile.preferences')}
-          </DropdownMenuLabel>
-          
-          <DropdownMenuItem 
-            onClick={() => navigate('/notifications')}
-            className="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-200 cursor-pointer group"
-          >
-            <div className="p-2 rounded-lg bg-blue-100 group-hover:bg-blue-200 transition-colors">
-              <Bell className="h-4 w-4 text-blue-600" />
-            </div>
-            <p className="font-semibold text-gray-800 group-hover:text-gray-900">{t('profile.notifications')}</p>
-          </DropdownMenuItem>
-          
-          <DropdownMenuItem 
-            onClick={() => navigate('/settings')}
-            className="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-gradient-to-r hover:from-gray-50 hover:to-slate-50 transition-all duration-200 cursor-pointer group"
-          >
-            <div className="p-2 rounded-lg bg-gray-100 group-hover:bg-gray-200 transition-colors">
-              <Settings className="h-4 w-4 text-gray-600" />
-            </div>
-            <p className="font-semibold text-gray-800 group-hover:text-gray-900">{t('profile.settings')}</p>
-          </DropdownMenuItem>
-
-          <DropdownMenuSeparator className="my-3 bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
-          
-          <DropdownMenuLabel className="px-3 py-2 text-xs font-bold text-stone-500 uppercase tracking-wider bg-gray-50/50 rounded-md mb-2">
-            {t('profile.support')}
-          </DropdownMenuLabel>
-          
-          <DropdownMenuItem 
-            onClick={() => navigate('/help')}
-            className="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-gradient-to-r hover:from-purple-50 hover:to-violet-50 transition-all duration-200 cursor-pointer group"
-          >
-            <div className="p-2 rounded-lg bg-purple-100 group-hover:bg-purple-200 transition-colors">
-              <HelpCircle className="h-4 w-4 text-purple-600" />
-            </div>
-            <p className="font-semibold text-gray-800 group-hover:text-gray-900">{t('profile.help')}</p>
-          </DropdownMenuItem>
-          
-          <DropdownMenuItem 
-            onClick={() => navigate('/payment')}
-            className="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-gradient-to-r hover:from-indigo-50 hover:to-blue-50 transition-all duration-200 cursor-pointer group"
-          >
-            <div className="p-2 rounded-lg bg-indigo-100 group-hover:bg-indigo-200 transition-colors">
-              <CreditCard className="h-4 w-4 text-indigo-600" />
-            </div>
-            <p className="font-semibold text-gray-800 group-hover:text-gray-900">{t('profile.payment')}</p>
-          </DropdownMenuItem>
         
           {/* Admin Panel Link - Only for Admin users */}
           {user && (user.roles?.includes('Admin') || user.roles?.includes('admin')) && (
