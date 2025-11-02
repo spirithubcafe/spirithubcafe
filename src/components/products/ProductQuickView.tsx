@@ -280,57 +280,57 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
 
               {/* Coffee Information - Compact Grid on Mobile */}
               {fullProduct && (fullProduct.roastLevel || fullProduct.process || fullProduct.variety || fullProduct.altitude || fullProduct.farm || fullProduct.tastingNotes || fullProduct.notes || fullProduct.uses) && (
-                <div className="grid grid-cols-2 md:flex md:flex-col gap-x-2 gap-y-0.5 md:gap-1 text-[10px] md:text-xs">
+                <div className="space-y-1 md:space-y-1.5 text-[11px] md:text-xs">
                   {fullProduct.roastLevel && (
-                    <div className="flex items-center gap-1 md:gap-2">
-                      <Flame className="w-3 h-3 md:w-3.5 md:h-3.5 text-amber-600 flex-shrink-0" />
-                      <span className="text-gray-500 text-[9px] md:text-[10px]">{isArabic ? 'التحميص:' : 'Roast:'}</span>
-                      <span className="font-semibold text-gray-900 text-[10px] md:text-xs truncate">
+                    <div className="flex items-center gap-2">
+                      <Flame className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                      <span className="text-gray-500 min-w-[60px] md:min-w-[70px]">{isArabic ? 'التحميص:' : 'Roast:'}</span>
+                      <span className="font-semibold text-gray-900">
                         {isArabic && fullProduct.roastLevelAr ? fullProduct.roastLevelAr : fullProduct.roastLevel}
                       </span>
                     </div>
                   )}
                   {fullProduct.process && (
-                    <div className="flex items-center gap-1 md:gap-2">
-                      <RotateCw className="w-3 h-3 md:w-3.5 md:h-3.5 text-amber-600 flex-shrink-0" />
-                      <span className="text-gray-500 text-[9px] md:text-[10px]">{isArabic ? 'المعالجة:' : 'Process:'}</span>
-                      <span className="font-semibold text-gray-900 text-[10px] md:text-xs truncate">
+                    <div className="flex items-center gap-2">
+                      <RotateCw className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                      <span className="text-gray-500 min-w-[60px] md:min-w-[70px]">{isArabic ? 'المعالجة:' : 'Process:'}</span>
+                      <span className="font-semibold text-gray-900">
                         {isArabic && fullProduct.processAr ? fullProduct.processAr : fullProduct.process}
                       </span>
                     </div>
                   )}
                   {fullProduct.variety && (
-                    <div className="flex items-center gap-1 md:gap-2">
-                      <BarChart3 className="w-3 h-3 md:w-3.5 md:h-3.5 text-amber-600 flex-shrink-0" />
-                      <span className="text-gray-500 text-[9px] md:text-[10px]">{isArabic ? 'الصنف:' : 'Variety:'}</span>
-                      <span className="font-semibold text-gray-900 text-[10px] md:text-xs truncate">
+                    <div className="flex items-center gap-2">
+                      <BarChart3 className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                      <span className="text-gray-500 min-w-[60px] md:min-w-[70px]">{isArabic ? 'الصنف:' : 'Variety:'}</span>
+                      <span className="font-semibold text-gray-900">
                         {isArabic && fullProduct.varietyAr ? fullProduct.varietyAr : fullProduct.variety}
                       </span>
                     </div>
                   )}
                   {fullProduct.altitude && (
-                    <div className="flex items-center gap-1 md:gap-2">
-                      <MapPin className="w-3 h-3 md:w-3.5 md:h-3.5 text-amber-600 flex-shrink-0" />
-                      <span className="text-gray-500 text-[9px] md:text-[10px]">{isArabic ? 'الارتفاع:' : 'Altitude:'}</span>
-                      <span className="font-semibold text-gray-900 text-[10px] md:text-xs truncate">
+                    <div className="flex items-center gap-2">
+                      <MapPin className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                      <span className="text-gray-500 min-w-[60px] md:min-w-[70px]">{isArabic ? 'الارتفاع:' : 'Altitude:'}</span>
+                      <span className="font-semibold text-gray-900">
                         {fullProduct.altitude} {isArabic ? 'م' : 'masl'}
                       </span>
                     </div>
                   )}
                   {fullProduct.farm && (
-                    <div className="flex items-center gap-1 md:gap-2">
-                      <Wheat className="w-3 h-3 md:w-3.5 md:h-3.5 text-amber-600 flex-shrink-0" />
-                      <span className="text-gray-500 text-[9px] md:text-[10px]">{isArabic ? 'المزرعة:' : 'Farm:'}</span>
-                      <span className="font-semibold text-gray-900 text-[10px] md:text-xs truncate">
+                    <div className="flex items-center gap-2">
+                      <Wheat className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                      <span className="text-gray-500 min-w-[60px] md:min-w-[70px]">{isArabic ? 'المزرعة:' : 'Farm:'}</span>
+                      <span className="font-semibold text-gray-900">
                         {isArabic && fullProduct.farmAr ? fullProduct.farmAr : fullProduct.farm}
                       </span>
                     </div>
                   )}
                   {(fullProduct.notes || fullProduct.notesAr || fullProduct.tastingNotes) && (
-                    <div className="flex items-start gap-1 md:gap-2 col-span-2 md:col-span-1">
-                      <ClipboardList className="w-3 h-3 md:w-3.5 md:h-3.5 text-amber-600 flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-500 text-[9px] md:text-[10px]">{isArabic ? 'النكهات:' : 'Notes:'}</span>
-                      <span className="font-semibold text-gray-900 flex-1 text-[10px] md:text-xs line-clamp-1">
+                    <div className="flex items-start gap-2">
+                      <ClipboardList className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                      <span className="text-gray-500 min-w-[60px] md:min-w-[70px]">{isArabic ? 'النكهات:' : 'Notes:'}</span>
+                      <span className="font-semibold text-gray-900 flex-1">
                         {isArabic && fullProduct.notesAr 
                           ? fullProduct.notesAr 
                           : fullProduct.notes || fullProduct.tastingNotes}
@@ -338,10 +338,10 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
                     </div>
                   )}
                   {(fullProduct.uses || fullProduct.usesAr) && (
-                    <div className="flex items-start gap-1 md:gap-2 col-span-2 md:col-span-1">
-                      <Coffee className="w-3 h-3 md:w-3.5 md:h-3.5 text-amber-600 flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-500 text-[9px] md:text-[10px]">{isArabic ? 'الاستخدامات:' : 'Uses:'}</span>
-                      <span className="font-semibold text-gray-900 flex-1 text-[10px] md:text-xs line-clamp-1">
+                    <div className="flex items-start gap-2">
+                      <Coffee className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                      <span className="text-gray-500 min-w-[60px] md:min-w-[70px]">{isArabic ? 'الاستخدامات:' : 'Uses:'}</span>
+                      <span className="font-semibold text-gray-900 flex-1">
                         {isArabic && fullProduct.usesAr ? fullProduct.usesAr : fullProduct.uses}
                       </span>
                     </div>
@@ -398,14 +398,14 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
                             }`}
                           >
                             <div className="flex flex-col items-center">
-                              <span className="text-[10px] md:text-[11px] font-bold leading-tight">{label}</span>
+                              <span className="text-[11px] md:text-[13px] font-bold leading-tight">{label}</span>
                               <div className="flex items-center gap-0.5 mt-0.5">
                                 {hasDiscount && (
-                                  <span className={`text-[7px] md:text-[8px] line-through ${isSelected ? 'text-white/70' : 'text-amber-600/60'}`}>
+                                  <span className={`text-[9px] md:text-[10px] line-through ${isSelected ? 'text-white/70' : 'text-amber-600/60'}`}>
                                     {variant.price.toFixed(3)}
                                   </span>
                                 )}
-                                <span className={`text-[8px] md:text-[9px] font-semibold ${isSelected ? 'text-white' : 'text-amber-800'}`}>
+                                <span className={`text-[10px] md:text-[11px] font-semibold ${isSelected ? 'text-white' : 'text-amber-800'}`}>
                                   {variantPrice.toFixed(3)}
                                 </span>
                               </div>
@@ -466,6 +466,13 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
                 >
                   {isArabic ? 'عرض التفاصيل' : 'Full Details'}
                 </Button>
+              </div>
+
+              {/* Roasted Fresh in Oman Text */}
+              <div className="text-center">
+                <p className="text-xs text-gray-400">
+                  {isArabic ? 'محمص طازج في عمان' : 'Roasted Fresh in Oman'}
+                </p>
               </div>
             </div>
           </div>
