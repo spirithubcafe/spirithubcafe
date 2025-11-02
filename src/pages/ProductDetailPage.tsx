@@ -33,8 +33,16 @@ const toNumber = (value: unknown): number | undefined => {
 };
 
 const resolveVariantLabel = (variant: ProductVariant, language: string): string => {
-  const weightLabel =
-    variant.weight && variant.weightUnit ? `${variant.weight}${variant.weightUnit}` : undefined;
+  // Display "1kg" instead of "1000g" for better UX, but keep actual weight as 1000g for Aramex
+  let weightLabel: string | undefined;
+  if (variant.weight && variant.weightUnit) {
+    if (variant.weight === 1000 && variant.weightUnit.toLowerCase() === 'g') {
+      weightLabel = '1kg';
+    } else {
+      weightLabel = `${variant.weight}${variant.weightUnit}`;
+    }
+  }
+  
   const skuLabel = variant.variantSku;
 
   if (language === 'ar') {

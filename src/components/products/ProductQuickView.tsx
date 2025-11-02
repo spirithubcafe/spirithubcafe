@@ -68,9 +68,14 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
   }, [fullProduct, product.image]);
 
   const resolveVariantLabel = (variant: ProductVariant): string => {
-    const weightLabel =
-      variant.weight && variant.weightUnit ? `${variant.weight}${variant.weightUnit}` : undefined;
-    return weightLabel ?? `Option ${variant.id}`;
+    // Display "1kg" instead of "1000g" for better UX, but keep actual weight as 1000g for Aramex
+    if (variant.weight && variant.weightUnit) {
+      if (variant.weight === 1000 && variant.weightUnit.toLowerCase() === 'g') {
+        return '1kg';
+      }
+      return `${variant.weight}${variant.weightUnit}`;
+    }
+    return `Option ${variant.id}`;
   };
 
   const resolvePrice = (): number => {
