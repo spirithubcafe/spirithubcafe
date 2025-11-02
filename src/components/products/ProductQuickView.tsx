@@ -180,7 +180,7 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
             <button
               onClick={handleClose}
               type="button"
-              className="absolute top-3 ltr:right-3 rtl:left-3 bg-white hover:bg-gray-100 rounded-full p-2 shadow-lg z-20 transition-colors"
+              className="sticky md:absolute top-3 ltr:right-3 rtl:left-3 bg-white hover:bg-gray-100 rounded-full p-2 shadow-lg z-20 transition-colors ltr:ml-auto rtl:mr-auto"
               aria-label={isArabic ? 'إغلاق' : 'Close'}
             >
               <X className="h-5 w-5 text-gray-700" />
