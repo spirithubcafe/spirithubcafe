@@ -390,7 +390,7 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
                             key={variant.id}
                             type="button"
                             onClick={() => setSelectedVariantId(variant.id)}
-                            className={`px-4 py-1 rounded-full border transition-all ${
+                            className={`px-4 py-1 rounded-md border transition-all ${
                               isSelected
                                 ? 'border-amber-700 bg-amber-700 text-white shadow-sm'
                                 : 'border-gray-300 bg-white text-gray-700 hover:border-amber-500'
