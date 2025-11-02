@@ -134,8 +134,7 @@ export const AdminDashboard: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Debug Panel - Remove this in production */}
-      {import.meta.env.DEV && <AuthDebugPanel />}
+ 
     </div>
   );
 };
