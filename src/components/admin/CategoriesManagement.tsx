@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useApp } from '../../hooks/useApp';
+import { cn } from '../../lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -10,7 +11,19 @@ import { Badge } from '../ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../ui/alert-dialog';
-import { Grid3X3, Plus, Edit, Trash2, Eye, EyeOff, Search, Loader2, Package } from 'lucide-react';
+import {
+  Grid3X3,
+  Plus,
+  Edit,
+  Trash2,
+  Eye,
+  EyeOff,
+  Search,
+  Loader2,
+  Package,
+  ArrowUp,
+  ArrowDown,
+} from 'lucide-react';
 import { categoryService } from '../../services/categoryService';
 
 // Based on OpenAPI CategoryCreateUpdateDto schema
@@ -52,6 +65,7 @@ export const CategoriesManagement: React.FC = () => {
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [reordering, setReordering] = useState(false);
   const [formData, setFormData] = useState<CategoryCreateUpdateDto>({
     name: '',
     nameAr: '',
@@ -64,10 +78,66 @@ export const CategoriesManagement: React.FC = () => {
     displayOrder: 0,
     taxPercentage: 0
   });
+  const [slugAvailable, setSlugAvailable] = useState<boolean | null>(null);
+  const [checkingSlug, setCheckingSlug] = useState(false);
+  const [slugMessage, setSlugMessage] = useState<string | null>(null);
 
   useEffect(() => {
     loadCategories();
   }, []);
+
+  useEffect(() => {
+    if (!isDialogOpen) {
+      setSlugAvailable(null);
+      setSlugMessage(null);
+      setCheckingSlug(false);
+    }
+  }, [isDialogOpen]);
+
+  useEffect(() => {
+    if (!isDialogOpen) {
+      return;
+    }
+
+    if (!formData.slug) {
+      setSlugAvailable(null);
+      setSlugMessage(null);
+      return;
+    }
+
+    let isMounted = true;
+    setCheckingSlug(true);
+    const handler = window.setTimeout(async () => {
+      try {
+        const available = await categoryService.checkSlug(
+          formData.slug,
+          editingCategory?.id
+        );
+        if (!isMounted) {
+          return;
+        }
+        setSlugAvailable(available);
+        setSlugMessage(
+          available ? t('admin.categories.slugAvailable') : t('admin.categories.slugUnavailable')
+        );
+      } catch (error) {
+        console.error('Error checking slug availability:', error);
+        if (isMounted) {
+          setSlugAvailable(null);
+          setSlugMessage(t('admin.categories.slugCheckError'));
+        }
+      } finally {
+        if (isMounted) {
+          setCheckingSlug(false);
+        }
+      }
+    }, 350);
+
+    return () => {
+      isMounted = false;
+      window.clearTimeout(handler);
+    };
+  }, [formData.slug, editingCategory?.id, isDialogOpen, t]);
 
   const loadCategories = async () => {
     try {
@@ -96,6 +166,8 @@ export const CategoriesManagement: React.FC = () => {
       displayOrder: categories.length,
       taxPercentage: 0
     });
+    setSlugAvailable(null);
+    setSlugMessage(null);
     setIsDialogOpen(true);
   };
 
@@ -113,6 +185,8 @@ export const CategoriesManagement: React.FC = () => {
       displayOrder: category.displayOrder,
       taxPercentage: category.taxPercentage
     });
+    setSlugAvailable(null);
+    setSlugMessage(null);
     setIsDialogOpen(true);
   };
 
@@ -121,6 +195,12 @@ export const CategoriesManagement: React.FC = () => {
     setSubmitting(true);
     
     try {
+      if (slugAvailable === false) {
+        setSlugMessage(t('admin.categories.slugUnavailable'));
+        setSubmitting(false);
+        return;
+      }
+
       if (editingCategory) {
         // PUT /api/Categories/{id}
         await categoryService.update(editingCategory.id, formData);
@@ -174,9 +254,54 @@ export const CategoriesManagement: React.FC = () => {
     }));
   };
 
-  const filteredCategories = categories.filter(category =>
-    category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (category.nameAr && category.nameAr.includes(searchTerm))
+  const handleReorderCategory = async (categoryId: number, direction: 'up' | 'down') => {
+    const ordered = [...categories].sort((a, b) => a.displayOrder - b.displayOrder);
+    const currentIndex = ordered.findIndex((category) => category.id === categoryId);
+    if (currentIndex === -1) {
+      return;
+    }
+
+    const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+    if (targetIndex < 0 || targetIndex >= ordered.length) {
+      return;
+    }
+
+    setReordering(true);
+    try {
+      const [movedCategory] = ordered.splice(currentIndex, 1);
+      ordered.splice(targetIndex, 0, movedCategory);
+
+      const orderMap = ordered.reduce<Record<number, number>>((map, category, index) => {
+        map[category.id] = index;
+        return map;
+      }, {});
+
+      await categoryService.reorder(orderMap);
+      await loadCategories();
+    } catch (error) {
+      console.error('Error reordering categories:', error);
+    } finally {
+      setReordering(false);
+    }
+  };
+
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+  const filteredCategories = categories.filter((category) => {
+    if (!normalizedSearch) {
+      return true;
+    }
+
+    return (
+      category.name.toLowerCase().includes(normalizedSearch) ||
+      (category.nameAr && category.nameAr.toLowerCase().includes(normalizedSearch)) ||
+      category.slug.toLowerCase().includes(normalizedSearch)
+    );
+  });
+
+  const sortedCategories = useMemo(
+    () =>
+      [...filteredCategories].sort((a, b) => a.displayOrder - b.displayOrder),
+    [filteredCategories]
   );
 
   if (loading) {
@@ -232,14 +357,14 @@ export const CategoriesManagement: React.FC = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredCategories.length === 0 ? (
+              {sortedCategories.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                     {t('admin.categories.noCategories')}
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredCategories.map((category) => (
+                sortedCategories.map((category, index) => (
                   <TableRow key={category.id}>
                     <TableCell className="font-medium">{category.name}</TableCell>
                     <TableCell className="text-muted-foreground">
@@ -264,7 +389,31 @@ export const CategoriesManagement: React.FC = () => {
                         <span>{category.productCount || 0}</span>
                       </div>
                     </TableCell>
-                    <TableCell className="text-center">{category.displayOrder}</TableCell>
+                    <TableCell className="text-center">
+                      <div className="flex items-center justify-center gap-2">
+                        <span className="font-mono text-sm">{category.displayOrder}</span>
+                        <div className="flex flex-col gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6"
+                            onClick={() => handleReorderCategory(category.id, 'up')}
+                            disabled={reordering || index === 0}
+                          >
+                            <ArrowUp className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6"
+                            onClick={() => handleReorderCategory(category.id, 'down')}
+                            disabled={reordering || index === sortedCategories.length - 1}
+                          >
+                            <ArrowDown className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    </TableCell>
                     <TableCell className="text-center">
                       <div className="flex items-center justify-center space-x-2">
                         <Button
@@ -358,7 +507,29 @@ export const CategoriesManagement: React.FC = () => {
                   onChange={(e) => setFormData(prev => ({ ...prev, slug: e.target.value }))}
                   placeholder={t('admin.categories.slugPlaceholder')}
                   required
+                  className={cn(
+                    slugAvailable === false &&
+                      'border-destructive focus-visible:ring-destructive/60',
+                    slugAvailable &&
+                      'border-green-500/80 focus-visible:ring-green-500/50'
+                  )}
                 />
+                <div className="flex min-h-[1.25rem] items-center gap-2 text-xs">
+                  {checkingSlug && (
+                    <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+                  )}
+                  {slugMessage && (
+                    <span
+                      className={cn(
+                        slugAvailable === false && 'text-destructive',
+                        slugAvailable === true && 'text-green-600',
+                        slugAvailable === null && 'text-muted-foreground'
+                      )}
+                    >
+                      {slugMessage}
+                    </span>
+                  )}
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">

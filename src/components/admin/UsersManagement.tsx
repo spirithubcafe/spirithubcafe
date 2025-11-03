@@ -51,7 +51,7 @@ export const UsersManagement: React.FC = () => {
         
         // Load roles
         const rolesData = await userService.getRoles();
-        setRoles(rolesData);
+        setRoles(Array.isArray(rolesData) ? rolesData : []);
 
         // Load users with filters
         const usersData = await userService.getAll({
@@ -80,7 +80,7 @@ export const UsersManagement: React.FC = () => {
       
       // Load roles
       const rolesData = await userService.getRoles();
-      setRoles(rolesData);
+      setRoles(Array.isArray(rolesData) ? rolesData : []);
 
       // Load users with filters
       const usersData = await userService.getAll({
@@ -249,7 +249,7 @@ export const UsersManagement: React.FC = () => {
               <SelectContent>
                 <SelectItem value="all">{t('admin.users.allRoles')}</SelectItem>
                 {roles.map((role) => (
-                  <SelectItem key={role.id} value={role.name.toLowerCase()}>
+                  <SelectItem key={role.id} value={role.name}>
                     {role.name}
                   </SelectItem>
                 ))}

@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useApp } from '../../hooks/useApp';
+import { cn } from '../../lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -11,59 +12,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../ui/alert-dialog';
-import { Package, Plus, Edit, Trash2, Eye, EyeOff, Search, Loader2, Star, Coffee } from 'lucide-react';
-import { productService } from '../../services/productService';
+import { Package, Plus, Edit, Trash2, Eye, EyeOff, Search, Loader2, Star, Coffee, Layers } from 'lucide-react';
+import { productService, productVariantService } from '../../services/productService';
 import { categoryService } from '../../services/categoryService';
-import type { Product, Category } from '../../types/product';
+import type {
+  Product,
+  Category,
+  ProductVariant,
+  ProductVariantCreateDto,
+  ProductVariantUpdateDto,
+  ProductCreateUpdateDto,
+} from '../../types/product';
 
-// Based on OpenAPI ProductCreateUpdateDto schema
-interface ProductCreateUpdateDto {
-  sku: string;
-  name: string;
-  nameAr?: string;
-  description?: string;
-  descriptionAr?: string;
-  notes?: string;
-  notesAr?: string;
-  aromaticProfile?: string;
-  aromaticProfileAr?: string;
-  intensity?: number;
-  compatibility?: string;
-  compatibilityAr?: string;
-  uses?: string;
-  usesAr?: string;
-  isActive: boolean;
-  isDigital: boolean;
-  isFeatured: boolean;
-  isOrganic: boolean;
-  isFairTrade: boolean;
-  imageAlt?: string;
-  imageAltAr?: string;
-  launchDate?: string;
-  expiryDate?: string;
-  displayOrder: number;
-  origin?: string;
-  tastingNotes?: string;
-  tastingNotesAr?: string;
-  brewingInstructions?: string;
-  brewingInstructionsAr?: string;
-  roastLevel?: string;
-  roastLevelAr?: string;
-  process?: string;
-  processAr?: string;
-  variety?: string;
-  varietyAr?: string;
-  altitude?: number;
-  farm?: string;
-  farmAr?: string;
-  metaTitle?: string;
-  metaDescription?: string;
-  metaKeywords?: string;
-  tags?: string;
-  slug?: string;
-  categoryId: number;
-  mainImageId?: number;
-}
+type VariantFormData = Omit<ProductVariantCreateDto, 'productId'>;
 
 interface ProductFilters {
   categoryId?: number;
@@ -86,6 +47,34 @@ export const ProductsManagement: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const pageSize = 20;
+  const [skuAvailable, setSkuAvailable] = useState<boolean | null>(null);
+  const [checkingSku, setCheckingSku] = useState(false);
+  const [skuMessage, setSkuMessage] = useState<string | null>(null);
+  const [slugAvailable, setSlugAvailable] = useState<boolean | null>(null);
+  const [checkingSlug, setCheckingSlug] = useState(false);
+  const [slugMessage, setSlugMessage] = useState<string | null>(null);
+  const [isVariantsDialogOpen, setIsVariantsDialogOpen] = useState(false);
+  const [variantLoading, setVariantLoading] = useState(false);
+  const [variantSubmitting, setVariantSubmitting] = useState(false);
+  const [variantFormVisible, setVariantFormVisible] = useState(false);
+  const [editingVariant, setEditingVariant] = useState<ProductVariant | null>(null);
+  const [variantFormData, setVariantFormData] = useState<VariantFormData>({
+    variantSku: '',
+    weight: 0,
+    weightUnit: 'g',
+    price: 0,
+    discountPrice: undefined,
+    length: undefined,
+    width: undefined,
+    height: undefined,
+    stockQuantity: 0,
+    lowStockThreshold: 0,
+    isActive: true,
+    isDefault: false,
+    displayOrder: 0,
+  });
+  const [variants, setVariants] = useState<ProductVariant[]>([]);
+  const [variantParentProduct, setVariantParentProduct] = useState<Product | null>(null);
 
   const [formData, setFormData] = useState<ProductCreateUpdateDto>({
     sku: '',
@@ -168,6 +157,101 @@ export const ProductsManagement: React.FC = () => {
     loadDataAsync();
   }, [currentPage, searchTerm, selectedCategory, statusFilter, pageSize]);
 
+  useEffect(() => {
+    if (!isDialogOpen) {
+      setSkuAvailable(null);
+      setSkuMessage(null);
+      setSlugAvailable(null);
+      setSlugMessage(null);
+      setCheckingSku(false);
+      setCheckingSlug(false);
+    }
+  }, [isDialogOpen]);
+
+  useEffect(() => {
+    if (!isDialogOpen) {
+      return;
+    }
+
+    if (!formData.sku) {
+      setSkuAvailable(null);
+      setSkuMessage(null);
+      return;
+    }
+
+    let isMounted = true;
+    setCheckingSku(true);
+    const handler = window.setTimeout(async () => {
+      try {
+        const available = await productService.checkSku(formData.sku, editingProduct?.id);
+        if (!isMounted) {
+          return;
+        }
+        setSkuAvailable(available);
+        setSkuMessage(
+          available ? t('admin.products.skuAvailable') : t('admin.products.skuUnavailable')
+        );
+      } catch (error) {
+        console.error('Error checking SKU availability:', error);
+        if (isMounted) {
+          setSkuAvailable(null);
+          setSkuMessage(t('admin.products.skuCheckError'));
+        }
+      } finally {
+        if (isMounted) {
+          setCheckingSku(false);
+        }
+      }
+    }, 350);
+
+    return () => {
+      isMounted = false;
+      window.clearTimeout(handler);
+    };
+  }, [formData.sku, editingProduct?.id, isDialogOpen, t]);
+
+  useEffect(() => {
+    if (!isDialogOpen) {
+      return;
+    }
+
+    if (!formData.slug) {
+      setSlugAvailable(null);
+      setSlugMessage(null);
+      return;
+    }
+
+    let isMounted = true;
+    setCheckingSlug(true);
+    const handler = window.setTimeout(async () => {
+      try {
+        const available = await productService.checkSlug(formData.slug, editingProduct?.id);
+        if (!isMounted) {
+          return;
+        }
+        setSlugAvailable(available);
+        setSlugMessage(
+          available ? t('admin.products.slugAvailable') : t('admin.products.slugUnavailable')
+        );
+      } catch (error) {
+        console.error('Error checking product slug:', error);
+        if (isMounted) {
+          setSlugAvailable(null);
+          setSlugMessage(t('admin.products.slugCheckError'));
+        }
+      } finally {
+        if (isMounted) {
+          setCheckingSlug(false);
+        }
+      }
+    }, 350);
+
+    return () => {
+      isMounted = false;
+      window.clearTimeout(handler);
+    };
+  }, [formData.slug, editingProduct?.id, isDialogOpen, t]);
+
   const loadData = async () => {
     try {
       setLoading(true);
@@ -246,6 +330,10 @@ export const ProductsManagement: React.FC = () => {
       slug: '',
       categoryId: categories[0]?.id || 0
     });
+    setSkuAvailable(null);
+    setSkuMessage(null);
+    setSlugAvailable(null);
+    setSlugMessage(null);
     setIsDialogOpen(true);
   };
 
@@ -295,6 +383,10 @@ export const ProductsManagement: React.FC = () => {
       slug: product.slug || '',
       categoryId: product.categoryId
     });
+    setSkuAvailable(null);
+    setSkuMessage(null);
+    setSlugAvailable(null);
+    setSlugMessage(null);
     setIsDialogOpen(true);
   };
 
@@ -303,6 +395,18 @@ export const ProductsManagement: React.FC = () => {
     setSubmitting(true);
     
     try {
+      if (skuAvailable === false) {
+        setSkuMessage(t('admin.products.skuUnavailable'));
+        setSubmitting(false);
+        return;
+      }
+
+      if (slugAvailable === false) {
+        setSlugMessage(t('admin.products.slugUnavailable'));
+        setSubmitting(false);
+        return;
+      }
+
       if (editingProduct) {
         // PUT /api/Products/{id}
         await productService.update(editingProduct.id, formData);
@@ -349,6 +453,141 @@ export const ProductsManagement: React.FC = () => {
     }
   };
 
+  const resetVariantForm = (displayOrder: number = variants.length) => {
+    setVariantFormData({
+      variantSku: '',
+      weight: 0,
+      weightUnit: 'g',
+      price: 0,
+      discountPrice: undefined,
+      length: undefined,
+      width: undefined,
+      height: undefined,
+      stockQuantity: 0,
+      lowStockThreshold: 0,
+      isActive: true,
+      isDefault: false,
+      displayOrder,
+    });
+    setVariantFormVisible(true);
+  };
+
+  const loadVariants = async (productId: number) => {
+    try {
+      setVariantLoading(true);
+      const variantData = await productVariantService.getByProduct(productId);
+      const ordered = [...variantData].sort(
+        (a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0)
+      );
+      setVariants(ordered);
+    } catch (error) {
+      console.error('Error loading product variants:', error);
+      setVariants([]);
+    } finally {
+      setVariantLoading(false);
+    }
+  };
+
+  const handleOpenVariants = async (product: Product) => {
+    setVariantParentProduct(product);
+    setEditingVariant(null);
+    setVariantFormVisible(false);
+    setIsVariantsDialogOpen(true);
+    await loadVariants(product.id);
+  };
+
+  const handleVariantCreate = () => {
+    resetVariantForm(variants.length);
+    setEditingVariant(null);
+  };
+
+  const handleVariantEdit = (variant: ProductVariant) => {
+    setEditingVariant(variant);
+    setVariantFormData({
+      variantSku: variant.variantSku,
+      weight: variant.weight,
+      weightUnit: variant.weightUnit,
+      price: variant.price,
+      discountPrice: variant.discountPrice,
+      length: variant.length,
+      width: variant.width,
+      height: variant.height,
+      stockQuantity: variant.stockQuantity,
+      lowStockThreshold: variant.lowStockThreshold,
+      isActive: variant.isActive,
+      isDefault: variant.isDefault,
+      displayOrder: variant.displayOrder,
+    });
+    setVariantFormVisible(true);
+  };
+
+  const handleVariantSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!variantParentProduct) {
+      return;
+    }
+
+    setVariantSubmitting(true);
+    try {
+      if (editingVariant) {
+        const updatePayload: ProductVariantUpdateDto = {
+          variantSku: variantFormData.variantSku,
+          weight: variantFormData.weight,
+          weightUnit: variantFormData.weightUnit,
+          price: variantFormData.price,
+          discountPrice: variantFormData.discountPrice,
+          length: variantFormData.length,
+          width: variantFormData.width,
+          height: variantFormData.height,
+          stockQuantity: variantFormData.stockQuantity,
+          lowStockThreshold: variantFormData.lowStockThreshold,
+          isActive: variantFormData.isActive,
+          isDefault: variantFormData.isDefault,
+          displayOrder: variantFormData.displayOrder,
+        };
+        await productVariantService.update(editingVariant.id, updatePayload);
+      } else {
+        const createPayload: ProductVariantCreateDto = {
+          productId: variantParentProduct.id,
+          variantSku: variantFormData.variantSku,
+          weight: variantFormData.weight,
+          weightUnit: variantFormData.weightUnit,
+          price: variantFormData.price,
+          discountPrice: variantFormData.discountPrice,
+          length: variantFormData.length,
+          width: variantFormData.width,
+          height: variantFormData.height,
+          stockQuantity: variantFormData.stockQuantity,
+          lowStockThreshold: variantFormData.lowStockThreshold,
+          isActive: variantFormData.isActive,
+          isDefault: variantFormData.isDefault,
+          displayOrder: variantFormData.displayOrder,
+        };
+        await productVariantService.create(variantParentProduct.id, createPayload);
+      }
+
+      await loadVariants(variantParentProduct.id);
+      setVariantFormVisible(false);
+      setEditingVariant(null);
+    } catch (error) {
+      console.error('Error saving variant:', error);
+    } finally {
+      setVariantSubmitting(false);
+    }
+  };
+
+  const handleVariantDelete = async (variantId: number) => {
+    if (!variantParentProduct) {
+      return;
+    }
+    try {
+      await productVariantService.delete(variantId);
+      await loadVariants(variantParentProduct.id);
+    } catch (error) {
+      console.error('Error deleting variant:', error);
+    }
+  };
+
   const generateSlug = (name: string) => {
     return name
       .toLowerCase()
@@ -378,8 +617,9 @@ export const ProductsManagement: React.FC = () => {
   }
 
   return (
-    <Card>
-      <CardHeader>
+    <>
+      <Card>
+        <CardHeader>
         <CardTitle className="flex items-center space-x-2">
           <Package className="h-6 w-6" />
           <span>{t('admin.products.title')}</span>
@@ -492,6 +732,14 @@ export const ProductsManagement: React.FC = () => {
                     </TableCell>
                     <TableCell className="text-center">
                       <div className="flex items-center justify-center space-x-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleOpenVariants(product)}
+                          aria-label={t('admin.products.manageVariants')}
+                        >
+                          <Layers className="h-4 w-4" />
+                        </Button>
                         <Button
                           variant="ghost"
                           size="sm"
@@ -615,7 +863,29 @@ export const ProductsManagement: React.FC = () => {
                     onChange={(e) => setFormData(prev => ({ ...prev, sku: e.target.value }))}
                     placeholder={t('admin.products.skuPlaceholder')}
                     required
+                    className={cn(
+                      skuAvailable === false &&
+                        'border-destructive focus-visible:ring-destructive/60',
+                      skuAvailable &&
+                        'border-green-500/80 focus-visible:ring-green-500/50'
+                    )}
                   />
+                  <div className="flex min-h-[1.25rem] items-center gap-2 text-xs">
+                    {checkingSku && (
+                      <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+                    )}
+                    {skuMessage && (
+                      <span
+                        className={cn(
+                          skuAvailable === false && 'text-destructive',
+                          skuAvailable === true && 'text-green-600',
+                          skuAvailable === null && 'text-muted-foreground'
+                        )}
+                      >
+                        {skuMessage}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="slug">{t('admin.products.slug')}</Label>
@@ -624,7 +894,29 @@ export const ProductsManagement: React.FC = () => {
                     value={formData.slug}
                     onChange={(e) => setFormData(prev => ({ ...prev, slug: e.target.value }))}
                     placeholder={t('admin.products.slugPlaceholder')}
+                    className={cn(
+                      slugAvailable === false &&
+                        'border-destructive focus-visible:ring-destructive/60',
+                      slugAvailable &&
+                        'border-green-500/80 focus-visible:ring-green-500/50'
+                    )}
                   />
+                  <div className="flex min-h-[1.25rem] items-center gap-2 text-xs">
+                    {checkingSlug && (
+                      <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+                    )}
+                    {slugMessage && (
+                      <span
+                        className={cn(
+                          slugAvailable === false && 'text-destructive',
+                          slugAvailable === true && 'text-green-600',
+                          slugAvailable === null && 'text-muted-foreground'
+                        )}
+                      >
+                        {slugMessage}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="categoryId">{t('admin.products.category')} *</Label>
@@ -754,5 +1046,355 @@ export const ProductsManagement: React.FC = () => {
         </Dialog>
       </CardContent>
     </Card>
+
+    <Dialog
+      open={isVariantsDialogOpen}
+      onOpenChange={(open) => {
+        setIsVariantsDialogOpen(open);
+        if (!open) {
+          setVariantParentProduct(null);
+          setVariants([]);
+          setVariantFormVisible(false);
+          setEditingVariant(null);
+        }
+      }}
+    >
+      <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>
+            {variantParentProduct
+              ? t('admin.products.variantsFor', { name: variantParentProduct.name })
+              : t('admin.products.variants')}
+          </DialogTitle>
+        </DialogHeader>
+
+        {variantParentProduct ? (
+          <div className="space-y-6">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">
+                  {t('admin.products.variantSummary', { count: variants.length })}
+                </p>
+              </div>
+              <Button onClick={handleVariantCreate} className="self-start sm:self-auto">
+                <Plus className="mr-2 h-4 w-4" />
+                {t('admin.products.addVariant')}
+              </Button>
+            </div>
+
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t('admin.products.variantSku')}</TableHead>
+                    <TableHead className="text-center">{t('admin.products.variantWeight')}</TableHead>
+                    <TableHead className="text-center">{t('admin.products.variantPrice')}</TableHead>
+                    <TableHead className="text-center">{t('admin.products.variantStock')}</TableHead>
+                    <TableHead className="text-center">{t('admin.products.variantStatus')}</TableHead>
+                    <TableHead className="text-center">{t('admin.products.variantActions')}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {variantLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="py-6 text-center text-muted-foreground">
+                        <Loader2 className="mr-2 inline h-4 w-4 animate-spin" />
+                        {t('common.loading')}
+                      </TableCell>
+                    </TableRow>
+                  ) : variants.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="py-6 text-center text-muted-foreground">
+                        {t('admin.products.noVariants')}
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    variants.map((variant) => {
+                      const isLowStock = variant.stockQuantity <= variant.lowStockThreshold;
+                      return (
+                        <TableRow
+                          key={variant.id}
+                          className={cn(isLowStock && 'bg-amber-50/60')}
+                        >
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono text-sm">{variant.variantSku}</span>
+                              {variant.isDefault && (
+                                <Badge variant="outline" className="text-xs">
+                                  {t('admin.products.defaultVariant')}
+                                </Badge>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-center text-sm">
+                            {variant.weight} {variant.weightUnit}
+                          </TableCell>
+                          <TableCell className="text-center text-sm">
+                            {variant.price.toLocaleString(undefined, {
+                              style: 'currency',
+                              currency: 'OMR',
+                            })}
+                          </TableCell>
+                          <TableCell className="text-center text-sm">
+                            <span
+                              className={cn(
+                                isLowStock ? 'text-red-600 font-medium' : 'text-foreground'
+                              )}
+                            >
+                              {variant.stockQuantity}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Badge variant={variant.isActive ? 'default' : 'secondary'}>
+                              {variant.isActive
+                                ? t('admin.products.active')
+                                : t('admin.products.inactive')}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <div className="flex items-center justify-center gap-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleVariantEdit(variant)}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button variant="ghost" size="sm">
+                                    <Trash2 className="h-4 w-4 text-red-500" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>
+                                      {t('admin.products.deleteVariantConfirm')}
+                                    </AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      {t('admin.products.deleteVariantWarning', {
+                                        sku: variant.variantSku,
+                                      })}
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => handleVariantDelete(variant.id)}
+                                      className="bg-red-600 hover:bg-red-700"
+                                    >
+                                      {t('common.delete')}
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+
+            {variantFormVisible && (
+              <form
+                onSubmit={handleVariantSubmit}
+                className="space-y-4 rounded-lg border bg-card/40 p-4"
+              >
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="variantSku">{t('admin.products.variantSku')} *</Label>
+                    <Input
+                      id="variantSku"
+                      value={variantFormData.variantSku}
+                      onChange={(event) =>
+                        setVariantFormData((prev) => ({
+                          ...prev,
+                          variantSku: event.target.value,
+                        }))
+                      }
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="variantWeight">{t('admin.products.variantWeight')}</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="variantWeight"
+                        type="number"
+                        value={variantFormData.weight ?? 0}
+                        min="0"
+                        step="0.01"
+                        onChange={(event) =>
+                          setVariantFormData((prev) => ({
+                            ...prev,
+                            weight: parseFloat(event.target.value) || 0,
+                          }))
+                        }
+                      />
+                      <Select
+                        value={variantFormData.weightUnit}
+                        onValueChange={(value) =>
+                          setVariantFormData((prev) => ({ ...prev, weightUnit: value }))
+                        }
+                      >
+                        <SelectTrigger className="w-20">
+                          <SelectValue placeholder="Unit" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="g">g</SelectItem>
+                          <SelectItem value="kg">kg</SelectItem>
+                          <SelectItem value="oz">oz</SelectItem>
+                          <SelectItem value="lb">lb</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="variantPrice">{t('admin.products.variantPrice')} *</Label>
+                    <Input
+                      id="variantPrice"
+                      type="number"
+                      min="0"
+                      step="0.001"
+                      value={variantFormData.price ?? 0}
+                      onChange={(event) =>
+                        setVariantFormData((prev) => ({
+                          ...prev,
+                          price: parseFloat(event.target.value) || 0,
+                        }))
+                      }
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="discountPrice">
+                      {t('admin.products.variantDiscountPrice')}
+                    </Label>
+                    <Input
+                      id="discountPrice"
+                      type="number"
+                      min="0"
+                      step="0.001"
+                      value={variantFormData.discountPrice ?? ''}
+                      onChange={(event) =>
+                        setVariantFormData((prev) => ({
+                          ...prev,
+                          discountPrice: event.target.value
+                            ? parseFloat(event.target.value)
+                            : undefined,
+                        }))
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="stockQuantity">
+                      {t('admin.products.variantStock')}
+                    </Label>
+                    <Input
+                      id="stockQuantity"
+                      type="number"
+                      min="0"
+                      value={variantFormData.stockQuantity}
+                      onChange={(event) =>
+                        setVariantFormData((prev) => ({
+                          ...prev,
+                          stockQuantity: parseInt(event.target.value) || 0,
+                        }))
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="lowStockThreshold">
+                      {t('admin.products.variantLowStock')}
+                    </Label>
+                    <Input
+                      id="lowStockThreshold"
+                      type="number"
+                      min="0"
+                      value={variantFormData.lowStockThreshold}
+                      onChange={(event) =>
+                        setVariantFormData((prev) => ({
+                          ...prev,
+                          lowStockThreshold: parseInt(event.target.value) || 0,
+                        }))
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="displayOrder">
+                      {t('admin.products.variantOrder')}
+                    </Label>
+                    <Input
+                      id="displayOrder"
+                      type="number"
+                      min="0"
+                      value={variantFormData.displayOrder ?? 0}
+                      onChange={(event) =>
+                        setVariantFormData((prev) => ({
+                          ...prev,
+                          displayOrder: parseInt(event.target.value) || 0,
+                        }))
+                      }
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="variantActive"
+                      checked={variantFormData.isActive}
+                      onCheckedChange={(checked) =>
+                        setVariantFormData((prev) => ({ ...prev, isActive: checked }))
+                      }
+                    />
+                    <Label htmlFor="variantActive">
+                      {t('admin.products.variantActive')}
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="variantDefault"
+                      checked={variantFormData.isDefault}
+                      onCheckedChange={(checked) =>
+                        setVariantFormData((prev) => ({ ...prev, isDefault: checked }))
+                      }
+                    />
+                    <Label htmlFor="variantDefault">
+                      {t('admin.products.variantDefault')}
+                    </Label>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end gap-2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => {
+                      setVariantFormVisible(false);
+                      setEditingVariant(null);
+                    }}
+                  >
+                    {t('common.cancel')}
+                  </Button>
+                  <Button type="submit" disabled={variantSubmitting}>
+                    {variantSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    {editingVariant ? t('common.update') : t('common.create')}
+                  </Button>
+                </div>
+              </form>
+            )}
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            {t('admin.products.noProductSelected')}
+          </p>
+        )}
+      </DialogContent>
+    </Dialog>
+  </>
   );
 };

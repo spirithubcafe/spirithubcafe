@@ -1,139 +1,265 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useApp } from '../../hooks/useApp';
+import { adminService, type AdminDashboardStats } from '../../services/adminService';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
-import { 
-  Users, 
-  Package, 
-  ShoppingCart,
+import { Badge } from '../ui/badge';
+import {
+  Users,
+  Package,
   Grid3X3,
-  Activity
+  Activity,
+  AlertTriangle,
+  Loader2,
 } from 'lucide-react';
 
 export const AdminDashboard: React.FC = () => {
   const { t } = useApp();
+  const [stats, setStats] = useState<AdminDashboardStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const stats = [
-    {
-      title: t('admin.categories.title'),
-      value: '12',
-      description: t('admin.categories.description'),
-      icon: Grid3X3,
-      color: 'purple'
-    },
-    {
-      title: t('admin.products.title'),
-      value: '48',
-      description: t('admin.products.description'),
-      icon: Package,
-      color: 'orange'
-    },
-    {
-      title: t('admin.users.title'),
-      value: '156',
-      description: t('admin.users.description'),
-      icon: Users,
-      color: 'green'
-    },
-    {
-      title: t('admin.manageOrders'),
-      value: '89',
-      description: t('admin.ordersDesc'),
-      icon: ShoppingCart,
-      color: 'blue'
-    }
-  ];
+  useEffect(() => {
+    let isMounted = true;
 
-  const getColorClasses = (color: string) => {
-    const colorMap = {
-      purple: 'text-purple-600',
-      orange: 'text-orange-600',
-      green: 'text-green-600',
-      blue: 'text-blue-600'
+    const loadStats = async () => {
+      try {
+        setLoading(true);
+        const result = await adminService.getDashboardStats();
+        if (isMounted) {
+          setStats(result);
+        }
+      } catch (err) {
+        console.error('Failed to load admin dashboard statistics:', err);
+        if (isMounted) {
+          setError(t('common.error'));
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
     };
-    return colorMap[color as keyof typeof colorMap] || colorMap.blue;
-  };
+
+    loadStats();
+    return () => {
+      isMounted = false;
+    };
+  }, [t]);
+
+  const metricCards = stats
+    ? [
+        {
+          title: t('admin.categories.title'),
+          primary: stats.categories.total,
+          secondary: t('admin.dashboardActiveCount', {
+            count: stats.categories.active,
+          }),
+          icon: Grid3X3,
+          accent: 'text-purple-600',
+        },
+        {
+          title: t('admin.products.title'),
+          primary: stats.products.total,
+          secondary: t('admin.dashboardFeaturedAndActive', {
+            featured: stats.products.featured,
+            active: stats.products.active,
+          }),
+          icon: Package,
+          accent: 'text-orange-600',
+          badges: stats.products.lowStock > 0
+            ? [
+                {
+                  label: t('admin.dashboardLowStock', {
+                    count: stats.products.lowStock,
+                  }),
+                  variant: 'destructive' as const,
+                },
+              ]
+            : undefined,
+        },
+        {
+          title: t('admin.users.title'),
+          primary: stats.users.totalUsers,
+          secondary: t('admin.dashboardActiveUsers', {
+            count: stats.users.activeUsers,
+          }),
+          icon: Users,
+          accent: 'text-emerald-600',
+          badges:
+            stats.users.adminUsers > 0
+              ? [
+                  {
+                    label: t('admin.dashboardAdmins', {
+                      count: stats.users.adminUsers,
+                    }),
+                    variant: 'outline' as const,
+                  },
+                ]
+              : undefined,
+        },
+        {
+          title: t('admin.reports'),
+          primary: stats.reviews.pending,
+          secondary: t('admin.dashboardPendingReviews'),
+          icon: AlertTriangle,
+          accent: 'text-amber-600',
+          badges:
+            stats.reviews.pending > 0
+              ? [
+                  {
+                    label: t('admin.dashboardAttention'),
+                    variant: 'destructive' as const,
+                  },
+                ]
+              : undefined,
+        },
+      ]
+    : [];
 
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold mb-2">{t('admin.dashboard')}</h2>
+        <h2 className="mb-2 text-2xl font-bold">{t('admin.dashboard')}</h2>
         <p className="text-muted-foreground">{t('admin.dashboardDesc')}</p>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, index) => {
-          const Icon = stat.icon;
-          return (
-            <Card key={index}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  {stat.title}
-                </CardTitle>
-                <Icon className={`h-4 w-4 ${getColorClasses(stat.color)}`} />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stat.value}</div>
-                <p className="text-xs text-muted-foreground">
-                  {stat.description}
-                </p>
-              </CardContent>
-            </Card>
-          );
-        })}
+      {error && (
+        <Card className="border border-destructive/40 bg-destructive/5">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-destructive">
+              <AlertTriangle className="h-4 w-4" />
+              {error}
+            </CardTitle>
+            <CardDescription>{t('admin.dashboardError')}</CardDescription>
+          </CardHeader>
+        </Card>
+      )}
+
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+        {loading
+          ? Array.from({ length: 4 }).map((_, index) => (
+              <Card key={`metric-skeleton-${index}`} className="border-dashed">
+                <CardHeader className="pb-2">
+                  <div className="flex items-center justify-between">
+                    <span className="h-4 w-24 animate-pulse rounded bg-muted" />
+                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <div className="h-6 w-16 animate-pulse rounded bg-muted" />
+                  <div className="h-4 w-32 animate-pulse rounded bg-muted/80" />
+                </CardContent>
+              </Card>
+            ))
+          : metricCards.map(({ title, primary, secondary, icon: Icon, accent, badges }, index) => (
+              <Card key={`${title}-${index}`}>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">{title}</CardTitle>
+                  <Icon className={`h-4 w-4 ${accent}`} />
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <div className="text-2xl font-bold">{primary.toLocaleString()}</div>
+                  <p className="text-xs text-muted-foreground">{secondary}</p>
+                  {badges && (
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      {badges.map((badge, badgeIndex) => (
+                        <Badge key={badgeIndex} variant={badge.variant} className="text-[11px]">
+                          {badge.label}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
       </div>
 
-      {/* Recent Activity */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Activity className="h-5 w-5" />
             {t('admin.recentActivity')}
           </CardTitle>
-          <CardDescription>
-            {t('admin.recentActivityDesc')}
-          </CardDescription>
+          <CardDescription>{t('admin.recentActivityDesc')}</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            <div className="flex items-center space-x-4">
-              <div className="flex h-2 w-2 rounded-full bg-green-500"></div>
-              <div className="flex-1 space-y-1">
-                <p className="text-sm font-medium leading-none">
-                  New product added: "Ethiopian Yirgacheffe"
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  2 minutes ago
-                </p>
+          {loading ? (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              {t('common.loading')}
+            </div>
+          ) : stats ? (
+            <div className="space-y-4 text-sm">
+              <div className="flex items-start gap-3">
+                <div className="mt-1 h-2 w-2 rounded-full bg-purple-500" />
+                <div>
+                  <p className="font-medium">
+                    {t('admin.dashboardActiveCategories', {
+                      count: stats.categories.active,
+                    })}
+                  </p>
+                  <p className="text-muted-foreground">
+                    {t('admin.dashboardTotalCategories', {
+                      count: stats.categories.total,
+                    })}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="mt-1 h-2 w-2 rounded-full bg-orange-500" />
+                <div>
+                  <p className="font-medium">
+                    {t('admin.dashboardFeaturedProducts', {
+                      count: stats.products.featured,
+                    })}
+                  </p>
+                  <p className="text-muted-foreground">
+                    {t('admin.dashboardActiveProducts', {
+                      count: stats.products.active,
+                    })}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="mt-1 h-2 w-2 rounded-full bg-emerald-500" />
+                <div>
+                  <p className="font-medium">
+                    {t('admin.dashboardActiveUsersLabel', {
+                      count: stats.users.activeUsers,
+                    })}
+                  </p>
+                  <p className="text-muted-foreground">
+                    {t('admin.dashboardTotalUsers', {
+                      count: stats.users.totalUsers,
+                    })}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="mt-1 h-2 w-2 rounded-full bg-amber-500" />
+                <div>
+                  <p className="font-medium">
+                    {t('admin.dashboardPendingReviewsLabel', {
+                      count: stats.reviews.pending,
+                    })}
+                  </p>
+                  <p className="text-muted-foreground">
+                    {stats.products.lowStock > 0
+                      ? t('admin.dashboardLowStockNotice', {
+                          count: stats.products.lowStock,
+                        })
+                      : t('admin.dashboardAllStockHealthy')}
+                  </p>
+                </div>
               </div>
             </div>
-            <div className="flex items-center space-x-4">
-              <div className="flex h-2 w-2 rounded-full bg-blue-500"></div>
-              <div className="flex-1 space-y-1">
-                <p className="text-sm font-medium leading-none">
-                  User registered: john.doe@example.com
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  15 minutes ago
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-4">
-              <div className="flex h-2 w-2 rounded-full bg-orange-500"></div>
-              <div className="flex-1 space-y-1">
-                <p className="text-sm font-medium leading-none">
-                  Order completed: #12345
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  1 hour ago
-                </p>
-              </div>
-            </div>
-          </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              {t('admin.dashboardNoData')}
+            </p>
+          )}
         </CardContent>
       </Card>
-
- 
     </div>
   );
 };
