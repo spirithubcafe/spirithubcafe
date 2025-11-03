@@ -1,5 +1,7 @@
 import type { AxiosError } from 'axios';
 import { apiClient } from './apiClient';
+import type { ApiResponse } from '@/types/product';
+import type { LoginResponse } from '@/types/auth';
 
 // Based on OpenAPI schema
 export interface User {
@@ -160,7 +162,9 @@ const shouldFallbackToMock = (error: unknown): error is AdminUserApiError => {
   if (!error || typeof error !== 'object') return false;
   const axiosError = error as AdminUserApiError;
   const status = axiosError.response?.status;
-  return status === 404 || status === 405 || status === 501;
+  // Fallback to mock for 404 (Not Found), 405 (Method Not Allowed), 501 (Not Implemented)
+  // Also fallback for 500+ server errors as the endpoint might not be ready
+  return status === 404 || status === 405 || status === 501 || (status !== undefined && status >= 500);
 };
 
 const buildPaginatedResponse = (
@@ -216,49 +220,49 @@ const getMockRoles = (): Role[] => [...defaultRoles];
 export const userService = {
   // Authentication endpoints from OpenAPI
   login: async (username: string, password: string) => {
-    const response = await apiClient.post('/api/Account/Login', { username, password });
-    return response.data;
+    const response = await apiClient.post<ApiResponse<LoginResponse>>('/api/Account/Login', { username, password });
+    return response.data.data;
   },
 
   refreshToken: async (refreshToken: string) => {
-    const response = await apiClient.post('/api/Account/RefreshToken', { refreshToken });
-    return response.data;
+    const response = await apiClient.post<ApiResponse<LoginResponse>>('/api/Account/RefreshToken', { refreshToken });
+    return response.data.data;
   },
 
   logout: async (refreshToken?: string) => {
-    const response = await apiClient.get('/api/Account/Logout', {
+    const response = await apiClient.get<ApiResponse<void>>('/api/Account/Logout', {
       params: { refreshToken },
     });
-    return response.data;
+    return response.data.data;
   },
 
   getAntiforgeryToken: async () => {
-    const response = await apiClient.get('/api/Account/GetAntiforgeryToken');
-    return response.data;
+    const response = await apiClient.get<ApiResponse<string>>('/api/Account/GetAntiforgeryToken');
+    return response.data.data;
   },
 
   isAuthenticated: async (): Promise<boolean> => {
     try {
-      const response = await apiClient.get('/api/Account/IsAuthenticated');
-      return response.data;
+      const response = await apiClient.get<ApiResponse<boolean>>('/api/Account/IsAuthenticated');
+      return response.data.data;
     } catch {
       return false;
     }
   },
 
   getUserInfo: async (): Promise<User> => {
-    const response = await apiClient.get('/api/Account/GetUserInfo');
-    return response.data;
+    const response = await apiClient.get<ApiResponse<User>>('/api/Account/GetUserInfo');
+    return response.data.data;
   },
 
   changePassword: async (data: ChangePasswordViewModel) => {
-    const response = await apiClient.post('/api/ChangePassword', data);
-    return response.data;
+    const response = await apiClient.post<ApiResponse<void>>('/api/ChangePassword', data);
+    return response.data.data;
   },
 
   getAll: async (params?: UserQueryParams): Promise<PaginatedResponse<User>> => {
     try {
-      const response = await apiClient.get<PaginatedResponse<User>>(ADMIN_USERS_ENDPOINT, {
+      const response = await apiClient.get<ApiResponse<User[]>>(ADMIN_USERS_ENDPOINT, {
         params: {
           page: params?.page || 1,
           pageSize: params?.pageSize || 20,
@@ -267,8 +271,39 @@ export const userService = {
           isActive: params?.isActive,
         },
       });
-      return response.data;
+      
+      console.log('[userService.getAll] Raw API response:', response.data);
+      
+      // Handle the ApiResponse structure with pagination
+      const apiData = response.data;
+      
+      // Check if data exists and is an array
+      if (!apiData || !apiData.data) {
+        console.warn('[userService.getAll] No data in response, falling back to mock');
+        return buildPaginatedResponse(mockUsers, params);
+      }
+      
+      if (apiData.pagination) {
+        return {
+          items: Array.isArray(apiData.data) ? apiData.data : [],
+          totalCount: apiData.pagination.totalCount,
+          page: apiData.pagination.currentPage,
+          pageSize: apiData.pagination.pageSize,
+          totalPages: apiData.pagination.totalPages,
+        };
+      }
+      
+      // Fallback if no pagination info
+      const items = Array.isArray(apiData.data) ? apiData.data : [];
+      return {
+        items,
+        totalCount: items.length,
+        page: params?.page || 1,
+        pageSize: params?.pageSize || 20,
+        totalPages: Math.max(1, Math.ceil(items.length / (params?.pageSize || 20))),
+      };
     } catch (error) {
+      console.error('[userService.getAll] Error:', error);
       if (shouldFallbackToMock(error)) {
         console.warn(
           '[userService] Falling back to mock user data because admin endpoints are unavailable.'
@@ -281,8 +316,8 @@ export const userService = {
 
   getRoles: async (): Promise<Role[]> => {
     try {
-      const response = await apiClient.get<Role[]>(ADMIN_ROLES_ENDPOINT);
-      return response.data;
+      const response = await apiClient.get<ApiResponse<Role[]>>(ADMIN_ROLES_ENDPOINT);
+      return response.data.data;
     } catch (error) {
       if (shouldFallbackToMock(error)) {
         return getMockRoles();
@@ -293,8 +328,8 @@ export const userService = {
 
   create: async (data: UserCreateDto): Promise<User> => {
     try {
-      const response = await apiClient.post<User>(ADMIN_USERS_ENDPOINT, data);
-      return response.data;
+      const response = await apiClient.post<ApiResponse<User>>(ADMIN_USERS_ENDPOINT, data);
+      return response.data.data;
     } catch (error) {
       if (shouldFallbackToMock(error)) {
         const nextId = Math.max(0, ...mockUsers.map((user) => user.id)) + 1;
@@ -320,8 +355,8 @@ export const userService = {
 
   update: async (id: number, data: UserUpdateDto): Promise<User> => {
     try {
-      const response = await apiClient.put<User>(`${ADMIN_USERS_ENDPOINT}/${id}`, data);
-      return response.data;
+      const response = await apiClient.put<ApiResponse<User>>(`${ADMIN_USERS_ENDPOINT}/${id}`, data);
+      return response.data.data;
     } catch (error) {
       if (shouldFallbackToMock(error)) {
         const index = mockUsers.findIndex((user) => user.id === id);
@@ -361,10 +396,10 @@ export const userService = {
 
   toggleActive: async (id: number): Promise<User> => {
     try {
-      const response = await apiClient.patch<User>(
+      const response = await apiClient.patch<ApiResponse<User>>(
         `${ADMIN_USERS_ENDPOINT}/${id}/toggle-active`
       );
-      return response.data;
+      return response.data.data;
     } catch (error) {
       if (shouldFallbackToMock(error)) {
         const index = mockUsers.findIndex((user) => user.id === id);
@@ -398,25 +433,44 @@ export const userService = {
   },
 
   getStats: async (): Promise<UserStats> => {
-    const usersResponse = await userService.getAll({
-      page: 1,
-      pageSize: 200,
-    });
-    const users = usersResponse.items;
+    try {
+      const usersResponse = await userService.getAll({
+        page: 1,
+        pageSize: 200,
+      });
+      
+      console.log('[userService.getStats] Users response:', usersResponse);
+      
+      const users = usersResponse.items || [];
 
-    const totalUsers = usersResponse.totalCount ?? users.length;
-    const activeUsers = users.filter((user) => user.isActive).length;
-    const inactiveUsers = users.filter((user) => !user.isActive).length;
-    const adminUsers = users.filter((user) =>
-      user.userRoles?.some((ur) => ur.role.name.toLowerCase() === 'admin')
-    ).length;
+      const totalUsers = usersResponse.totalCount ?? users.length;
+      const activeUsers = users.filter((user) => user.isActive).length;
+      const inactiveUsers = users.filter((user) => !user.isActive).length;
+      const adminUsers = users.filter((user) =>
+        user.userRoles?.some((ur) => ur.role.name.toLowerCase() === 'admin')
+      ).length;
 
-    return {
-      totalUsers,
-      activeUsers,
-      inactiveUsers,
-      adminUsers,
-    };
+      return {
+        totalUsers,
+        activeUsers,
+        inactiveUsers,
+        adminUsers,
+      };
+    } catch (error) {
+      console.error('[userService.getStats] Error:', error);
+      // Return stats from mock data as fallback
+      const mockResponse = buildPaginatedResponse(mockUsers);
+      const users = mockResponse.items;
+      
+      return {
+        totalUsers: mockResponse.totalCount,
+        activeUsers: users.filter((user) => user.isActive).length,
+        inactiveUsers: users.filter((user) => !user.isActive).length,
+        adminUsers: users.filter((user) =>
+          user.userRoles?.some((ur) => ur.role.name.toLowerCase() === 'admin')
+        ).length,
+      };
+    }
   },
 };
 
