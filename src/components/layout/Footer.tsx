@@ -7,9 +7,9 @@ export const Footer: React.FC = () => {
 
   const quickLinks = [
     { label: language === 'ar' ? 'الرئيسية' : 'Home', href: '/' },
-    { label: language === 'ar' ? 'المتجر' : 'Shop', href: '/#products' },
-    { label: language === 'ar' ? 'من نحن' : 'About', href: '/#about' },
-    { label: language === 'ar' ? 'اتصل بنا' : 'Contact Us', href: '/#contact' }
+    { label: language === 'ar' ? 'المتجر' : 'Shop', href: '/products' },
+    { label: language === 'ar' ? 'من نحن' : 'About', href: '/about' },
+    { label: language === 'ar' ? 'اتصل بنا' : 'Contact Us', href: '/contact' }
   ];
 
   const legalLinks = [

@@ -25,37 +25,7 @@ import {
   ArrowDown,
 } from 'lucide-react';
 import { categoryService } from '../../services/categoryService';
-
-// Based on OpenAPI CategoryCreateUpdateDto schema
-interface Category {
-  id: number;
-  name: string;
-  nameAr?: string;
-  slug: string;
-  description?: string;
-  descriptionAr?: string;
-  imagePath?: string;
-  isActive: boolean;
-  isDisplayedOnHomepage: boolean;
-  displayOrder: number;
-  taxPercentage: number;
-  productCount?: number;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-interface CategoryCreateUpdateDto {
-  name: string;
-  nameAr?: string;
-  slug: string;
-  description?: string;
-  descriptionAr?: string;
-  imagePath?: string;
-  isActive: boolean;
-  isDisplayedOnHomepage: boolean;
-  displayOrder: number;
-  taxPercentage: number;
-}
+import type { Category, CategoryCreateUpdateDto } from '../../types/product';
 
 export const CategoriesManagement: React.FC = () => {
   const { t } = useApp();
@@ -201,17 +171,51 @@ export const CategoriesManagement: React.FC = () => {
         return;
       }
 
+      // Ensure all required fields are present and valid
+      const dataToSend: CategoryCreateUpdateDto = {
+        slug: formData.slug.trim(),
+        name: formData.name.trim(),
+        nameAr: formData.nameAr?.trim() || undefined,
+        description: formData.description?.trim() || undefined,
+        descriptionAr: formData.descriptionAr?.trim() || undefined,
+        imagePath: formData.imagePath?.trim() || undefined,
+        isActive: formData.isActive,
+        isDisplayedOnHomepage: formData.isDisplayedOnHomepage,
+        displayOrder: Number(formData.displayOrder),
+        taxPercentage: Number(formData.taxPercentage)
+      };
+
+      console.log('[CategoriesManagement] Submitting data:', dataToSend);
+
       if (editingCategory) {
         // PUT /api/Categories/{id}
-        await categoryService.update(editingCategory.id, formData);
+        await categoryService.update(editingCategory.id, dataToSend);
       } else {
         // POST /api/Categories
-        await categoryService.create(formData);
+        await categoryService.create(dataToSend);
       }
       setIsDialogOpen(false);
       loadCategories();
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error saving category:', error);
+      
+      const apiError = error as { message?: string; statusCode?: number; errors?: Record<string, string[]>; response?: unknown };
+      console.error('Error details:', {
+        message: apiError.message,
+        statusCode: apiError.statusCode,
+        errors: apiError.errors,
+        response: apiError.response
+      });
+      
+      // Show error message to user
+      if (apiError.errors) {
+        const errorMessages = Object.entries(apiError.errors)
+          .map(([field, messages]) => `${field}: ${Array.isArray(messages) ? messages.join(', ') : messages}`)
+          .join('\n');
+        alert(`Validation errors:\n${errorMessages}`);
+      } else {
+        alert(apiError.message || 'Failed to save category');
+      }
     } finally {
       setSubmitting(false);
     }

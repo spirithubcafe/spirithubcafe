@@ -73,8 +73,8 @@ export const categoryService = {
    * @returns Promise with created category
    */
   create: async (data: CategoryCreateUpdateDto): Promise<Category> => {
-    const response = await http.post<Category>('/api/Categories', data);
-    return response.data;
+    const response = await http.post<ApiResponse<Category>>('/api/Categories', data);
+    return response.data.data || (response.data as unknown as Category);
   },
 
   /**
@@ -84,8 +84,8 @@ export const categoryService = {
    * @returns Promise with updated category
    */
   update: async (id: number, data: CategoryCreateUpdateDto): Promise<Category> => {
-    const response = await http.put<Category>(`/api/Categories/${id}`, data);
-    return response.data;
+    const response = await http.put<ApiResponse<Category>>(`/api/Categories/${id}`, data);
+    return response.data.data || (response.data as unknown as Category);
   },
 
   /**
