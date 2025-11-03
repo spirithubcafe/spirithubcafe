@@ -188,7 +188,7 @@ export const AdminLayout: React.FC = () => {
       icon: FileText,
       path: '/admin/orders',
       roles: ['Admin', 'Manager'],
-      badge: 'Soon',
+      badge: t('common.soon'),
       disabled: true,
     },
     {
@@ -198,7 +198,7 @@ export const AdminLayout: React.FC = () => {
       icon: TrendingUp,
       path: '/admin/reports',
       roles: ['Admin', 'Manager'],
-      badge: 'Soon',
+      badge: t('common.soon'),
       disabled: true,
     },
     {
@@ -208,7 +208,7 @@ export const AdminLayout: React.FC = () => {
       icon: Settings,
       path: '/admin/settings',
       roles: ['Admin'],
-      badge: 'Soon',
+      badge: t('common.soon'),
       disabled: true,
     },
   ];
@@ -220,19 +220,19 @@ export const AdminLayout: React.FC = () => {
   const navGroups: AdminNavGroup[] = [
     {
       id: 'overview',
-      label: 'Overview',
+      label: t('admin.navGroups.overview'),
       items: availableNavItems.filter((item) => item.id === 'dashboard'),
     },
     {
       id: 'management',
-      label: 'Management',
+      label: t('admin.navGroups.management'),
       items: availableNavItems.filter((item) =>
         ['categories', 'products', 'users'].includes(item.id)
       ),
     },
     {
       id: 'operations',
-      label: 'Operations',
+      label: t('admin.navGroups.operations'),
       items: availableNavItems.filter((item) =>
         ['orders', 'reports', 'system'].includes(item.id)
       ),
@@ -277,6 +277,16 @@ export const AdminLayout: React.FC = () => {
 
   const handleLogout = async () => {
     await logout();
+  };
+
+  const translateRoleName = (roleName?: string) => {
+    if (!roleName) {
+      return '';
+    }
+    const normalized = roleName.trim().toLowerCase();
+    const key = `admin.roles.${normalized}`;
+    const translated = t(key);
+    return translated === key ? roleName : translated;
   };
 
   const renderSidebar = (
@@ -434,10 +444,10 @@ export const AdminLayout: React.FC = () => {
             {!collapsed && (
               <div className="flex flex-col leading-tight">
                 <span className="text-[11px] font-medium uppercase tracking-[0.3em] text-muted-foreground/80">
-                  SpiritHub
+                  {t('admin.brandName')}
                 </span>
                 <span className="text-sm font-semibold text-foreground">
-                  Admin Console
+                  {t('admin.consoleName')}
                 </span>
               </div>
             )}
@@ -471,7 +481,7 @@ export const AdminLayout: React.FC = () => {
                       variant="outline"
                       className="border-transparent bg-primary/10 text-primary"
                     >
-                      {primaryRole}
+                      {translateRoleName(primaryRole)}
                     </Badge>
                   )}
                   <span className="truncate">@{user.username}</span>
@@ -515,7 +525,7 @@ export const AdminLayout: React.FC = () => {
                     size="icon"
                     className="md:hidden"
                     onClick={() => setIsMobileSidebarOpen(true)}
-                    aria-label="Open sidebar"
+                    aria-label={t('admin.accessibility.openSidebar')}
                   >
                     <Menu className="h-5 w-5" />
                   </Button>
@@ -529,8 +539,8 @@ export const AdminLayout: React.FC = () => {
                     onClick={handleSidebarToggle}
                     aria-label={
                       isSidebarCollapsed
-                        ? 'Expand sidebar'
-                        : 'Collapse sidebar'
+                        ? t('admin.accessibility.expandSidebar')
+                        : t('admin.accessibility.collapseSidebar')
                     }
                     aria-pressed={isSidebarCollapsed}
                   >
@@ -561,7 +571,7 @@ export const AdminLayout: React.FC = () => {
                     onChange={(event) => setModuleSearch(event.target.value)}
                     placeholder={t('admin.modulesDesc')}
                     className="h-10 rounded-full border-border/60 bg-muted/60 pl-10 text-sm shadow-inner focus-visible:ring-2 focus-visible:ring-primary/30"
-                    aria-label="Search admin modules"
+                    aria-label={t('admin.accessibility.searchModules')}
                   />
                 </form>
 
@@ -594,7 +604,7 @@ export const AdminLayout: React.FC = () => {
                           </span>
                           {primaryRole && (
                             <span className="text-xs text-muted-foreground">
-                              {primaryRole}
+                              {translateRoleName(primaryRole)}
                             </span>
                           )}
                         </div>

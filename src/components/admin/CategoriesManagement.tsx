@@ -212,9 +212,9 @@ export const CategoriesManagement: React.FC = () => {
         const errorMessages = Object.entries(apiError.errors)
           .map(([field, messages]) => `${field}: ${Array.isArray(messages) ? messages.join(', ') : messages}`)
           .join('\n');
-        alert(`Validation errors:\n${errorMessages}`);
+        alert(`${t('admin.categories.validationErrors')}\n${errorMessages}`);
       } else {
-        alert(apiError.message || 'Failed to save category');
+        alert(apiError.message ?? t('admin.categories.saveError'));
       }
     } finally {
       setSubmitting(false);

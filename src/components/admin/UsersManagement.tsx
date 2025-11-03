@@ -210,6 +210,15 @@ export const UsersManagement: React.FC = () => {
     }
   };
 
+  const translateRoleName = (roleName?: string) => {
+    if (!roleName) {
+      return '';
+    }
+    const key = `admin.roles.${roleName.trim().toLowerCase()}`;
+    const translated = t(key);
+    return translated === key ? roleName : translated;
+  };
+
   if (loading) {
     return (
       <Card>
@@ -250,7 +259,7 @@ export const UsersManagement: React.FC = () => {
                 <SelectItem value="all">{t('admin.users.allRoles')}</SelectItem>
                 {roles.map((role) => (
                   <SelectItem key={role.id} value={role.name}>
-                    {role.name}
+                    {translateRoleName(role.name)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -305,7 +314,7 @@ export const UsersManagement: React.FC = () => {
                             variant={getRoleBadgeVariant(userRole.role.name)}
                             className="text-xs"
                           >
-                            {userRole.role.name}
+                            {translateRoleName(userRole.role.name)}
                           </Badge>
                         )) || '-'}
                       </div>
@@ -479,7 +488,7 @@ export const UsersManagement: React.FC = () => {
                         className="rounded border-gray-300"
                       />
                       <Badge variant={getRoleBadgeVariant(role.name)}>
-                        {role.name}
+                        {translateRoleName(role.name)}
                       </Badge>
                     </label>
                   ))}

@@ -76,7 +76,11 @@
     "accessDenied": "Access Denied",
     "adminRequired": "Administrator privileges required to access this page",
     "panel": "Admin Panel",
+    "adminPanel": "Admin Panel",
+    "brandName": "SpiritHub",
+    "consoleName": "Admin Console",
     "welcome": "Welcome",
+    "welcomeMessage": "Welcome back,",
     "backHome": "Back to Home",
     "dashboard": "Dashboard",
     "dashboardDesc": "System overview and statistics",
@@ -102,6 +106,21 @@
     "systemDesc": "Application configuration",
     "systemConfiguration": "Configure application settings and preferences",
     "modulesDesc": "Select a module to manage",
+    "active": "Active",
+    "featured": "Featured",
+    "lowStock": "Low stock",
+    "admins": "Admins",
+    "pendingReviews": "Pending reviews",
+    "needsAttention": "Needs attention",
+    "activeCategories": "Active categories",
+    "totalCategories": "Total categories",
+    "outOf": "out of",
+    "featuredProducts": "Featured products",
+    "activeProducts": "Active products",
+    "activeUsers": "Active users",
+    "productsLowStock": "products low on stock",
+    "allStockHealthy": "All inventory levels look healthy",
+    "noData": "No admin data available yet.",
     "totalUsers": "Total Users",
     "totalOrders": "Total Orders",
     "totalProducts": "Total Products",
@@ -125,6 +144,26 @@
     "dashboardLowStockNotice": "{{count}} variants are running low on stock",
     "dashboardAllStockHealthy": "Inventory levels look healthy",
     "dashboardNoData": "No dashboard data available yet.",
+    "navGroups": {
+      "overview": "Overview",
+      "management": "Management",
+      "operations": "Operations"
+    },
+    "accessibility": {
+      "openSidebar": "Open sidebar",
+      "expandSidebar": "Expand sidebar",
+      "collapseSidebar": "Collapse sidebar",
+      "searchModules": "Search admin modules"
+    },
+    "roles": {
+      "admin": "Admin",
+      "manager": "Manager",
+      "editor": "Editor",
+      "user": "User",
+      "customer": "Customer",
+      "support": "Support",
+      "unknown": "Unknown role"
+    },
     "categories": {
       "title": "Categories Management",
       "add": "Add Category",
@@ -157,7 +196,9 @@
       "search": "Search categories...",
       "noCategories": "No categories found",
       "deleteConfirm": "Delete Category",
-      "deleteWarning": "Are you sure you want to delete this category?"
+      "deleteWarning": "Are you sure you want to delete this category?",
+      "validationErrors": "Validation errors:",
+      "saveError": "Failed to save category"
     },
     "products": {
       "title": "Products Management",
@@ -270,7 +311,9 @@
     "of": "of",
     "previous": "Previous",
     "next": "Next",
-    "error": "Something went wrong"
+    "error": "Something went wrong",
+    "noResultsFound": "No results found",
+    "soon": "Soon"
   },
   "profile": {
     "title": "Profile",

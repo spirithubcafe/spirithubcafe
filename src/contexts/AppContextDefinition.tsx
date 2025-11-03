@@ -34,7 +34,7 @@ export interface AppContextType {
   error: string | null;
   fetchProducts: () => Promise<void>;
   fetchCategories: () => Promise<void>;
-  t: (key: string) => string;
+  t: (key: string, options?: Record<string, unknown>) => string;
 }
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);

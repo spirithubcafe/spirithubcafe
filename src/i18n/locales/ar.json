@@ -149,7 +149,11 @@
     "accessDenied": "تم رفض الوصول",
     "adminRequired": "مطلوب صلاحيات المدير للوصول لهذه الصفحة",
     "panel": "لوحة الإدارة",
+    "adminPanel": "لوحة الإدارة",
+    "brandName": "سبيريت هب",
+    "consoleName": "وحدة تحكم الإدارة",
     "welcome": "مرحباً",
+    "welcomeMessage": "مرحباً بعودتك،",
     "backHome": "العودة للرئيسية",
     "dashboard": "لوحة المعلومات",
     "dashboardDesc": "نظرة عامة على النظام والإحصائيات",
@@ -175,6 +179,21 @@
     "systemConfiguration": "تكوين إعدادات التطبيق والتفضيلات",
     "modules": "وحدات الإدارة",
     "modulesDesc": "اختر وحدة للإدارة",
+    "active": "نشط",
+    "featured": "مميز",
+    "lowStock": "منخفض المخزون",
+    "admins": "المسؤولون",
+    "pendingReviews": "مراجعات قيد الانتظار",
+    "needsAttention": "يحتاج إلى اهتمام",
+    "activeCategories": "التصنيفات النشطة",
+    "totalCategories": "إجمالي التصنيفات",
+    "outOf": "من أصل",
+    "featuredProducts": "المنتجات المميزة",
+    "activeProducts": "المنتجات النشطة",
+    "activeUsers": "المستخدمون النشطون",
+    "productsLowStock": "منتجات منخفضة المخزون",
+    "allStockHealthy": "جميع مستويات المخزون سليمة",
+    "noData": "لا توجد بيانات إدارية بعد.",
     "totalUsers": "إجمالي المستخدمين",
     "totalOrders": "إجمالي الطلبات",
     "totalProducts": "إجمالي المنتجات",
@@ -198,6 +217,26 @@
     "dashboardLowStockNotice": "{{count}} متغير منخفض المخزون",
     "dashboardAllStockHealthy": "مستويات المخزون سليمة",
     "dashboardNoData": "لا توجد بيانات للوحة التحكم بعد.",
+    "navGroups": {
+      "overview": "نظرة عامة",
+      "management": "الإدارة",
+      "operations": "العمليات"
+    },
+    "accessibility": {
+      "openSidebar": "فتح الشريط الجانبي",
+      "expandSidebar": "توسيع الشريط الجانبي",
+      "collapseSidebar": "طي الشريط الجانبي",
+      "searchModules": "البحث في وحدات الإدارة"
+    },
+    "roles": {
+      "admin": "مسؤول",
+      "manager": "مدير",
+      "editor": "محرر",
+      "user": "مستخدم",
+      "customer": "عميل",
+      "support": "دعم",
+      "unknown": "دور غير معروف"
+    },
     "categories": {
       "title": "إدارة التصنيفات",
       "add": "إضافة تصنيف",
@@ -230,7 +269,9 @@
       "search": "البحث في التصنيفات...",
       "noCategories": "لم يتم العثور على تصنيفات",
       "deleteConfirm": "حذف التصنيف",
-      "deleteWarning": "هل أنت متأكد من حذف هذا التصنيف؟"
+      "deleteWarning": "هل أنت متأكد من حذف هذا التصنيف؟",
+      "validationErrors": "أخطاء التحقق:",
+      "saveError": "فشل حفظ التصنيف"
     },
     "products": {
       "title": "إدارة المنتجات",
@@ -506,6 +547,8 @@
     "of": "من",
     "previous": "السابق",
     "next": "التالي",
-    "error": "حدث خطأ ما"
+    "error": "حدث خطأ ما",
+    "noResultsFound": "لا توجد نتائج",
+    "soon": "قريباً"
   }
 }
