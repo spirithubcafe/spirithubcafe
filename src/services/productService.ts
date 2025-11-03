@@ -14,6 +14,7 @@ import type {
   ProductImageCreateDto,
   ProductImageUpdateDto,
   ProductImageReorderDto,
+  ApiResponse,
 } from '../types/product';
 
 /**
@@ -27,7 +28,7 @@ export const productService = {
    * @returns Promise with paginated products
    */
   getAll: async (params?: ProductQueryParams): Promise<PaginatedResponse<Product>> => {
-    const response = await http.get<PaginatedResponse<Product>>('/api/Products', {
+    const response = await http.get<ApiResponse<Product[]>>('/api/Products', {
       params: {
         page: params?.page || 1,
         pageSize: params?.pageSize || 20,
@@ -37,35 +38,46 @@ export const productService = {
         isFeatured: params?.isFeatured,
       },
     });
-    return response.data;
+    
+    // Backend returns {success, data, pagination}
+    const apiResponse = response.data;
+    return {
+      items: apiResponse.data || [],
+      totalCount: apiResponse.pagination?.totalCount || 0,
+      totalPages: apiResponse.pagination?.totalPages || 1,
+      currentPage: apiResponse.pagination?.currentPage || 1,
+      pageSize: apiResponse.pagination?.pageSize || 20,
+    };
   },
 
   /**
    * Get featured products
-   * @param count Number of products to fetch
+   * @param count Number of products to return
    * @returns Promise with array of featured products
    */
   getFeatured: async (count: number = 10): Promise<Product[]> => {
-    const response = await http.get<Product[]>('/api/Products/featured', {
+    const response = await http.get<ApiResponse<Product[]>>('/api/Products/featured', {
       params: { count },
     });
-    return response.data;
+    const apiResponse = response.data;
+    return apiResponse.data || [];
   },
 
   /**
    * Get latest products
-   * @param count Number of products to fetch
+   * @param count Number of products to return
    * @returns Promise with array of latest products
    */
   getLatest: async (count: number = 10): Promise<Product[]> => {
-    const response = await http.get<Product[]>('/api/Products/latest', {
+    const response = await http.get<ApiResponse<Product[]>>('/api/Products/latest', {
       params: { count },
     });
-    return response.data;
+    const apiResponse = response.data;
+    return apiResponse.data || [];
   },
 
   /**
-   * Get products by category
+   * Get products by category with pagination
    * @param categoryId Category ID
    * @param params Pagination parameters
    * @returns Promise with paginated products
@@ -74,7 +86,7 @@ export const productService = {
     categoryId: number,
     params?: { page?: number; pageSize?: number }
   ): Promise<PaginatedResponse<Product>> => {
-    const response = await http.get<PaginatedResponse<Product>>(
+    const response = await http.get<ApiResponse<Product[]>>(
       `/api/Products/category/${categoryId}`,
       {
         params: {
@@ -83,17 +95,23 @@ export const productService = {
         },
       }
     );
-    return response.data;
-  },
-
-  /**
+    
+    const apiResponse = response.data;
+    return {
+      items: apiResponse.data || [],
+      totalCount: apiResponse.pagination?.totalCount || 0,
+      totalPages: apiResponse.pagination?.totalPages || 1,
+      currentPage: apiResponse.pagination?.currentPage || 1,
+      pageSize: apiResponse.pagination?.pageSize || 20,
+    };
+  },  /**
    * Get product by ID
    * @param id Product ID
    * @returns Promise with product details
    */
   getById: async (id: number): Promise<Product> => {
-    const response = await http.get<Product>(`/api/Products/${id}`);
-    return response.data;
+    const response = await http.get<ApiResponse<Product>>(`/api/Products/${id}`);
+    return response.data.data || (response.data as unknown as Product);
   },
 
   /**
@@ -102,8 +120,8 @@ export const productService = {
    * @returns Promise with product details
    */
   getBySlug: async (slug: string): Promise<Product> => {
-    const response = await http.get<Product>(`/api/Products/slug/${slug}`);
-    return response.data;
+    const response = await http.get<ApiResponse<Product>>(`/api/Products/slug/${slug}`);
+    return response.data.data || (response.data as unknown as Product);
   },
 
   /**
@@ -112,8 +130,8 @@ export const productService = {
    * @returns Promise with product details
    */
   getBySku: async (sku: string): Promise<Product> => {
-    const response = await http.get<Product>(`/api/Products/sku/${sku}`);
-    return response.data;
+    const response = await http.get<ApiResponse<Product>>(`/api/Products/sku/${sku}`);
+    return response.data.data || (response.data as unknown as Product);
   },
 
   /**
@@ -122,14 +140,22 @@ export const productService = {
    * @returns Promise with paginated search results
    */
   search: async (params: ProductSearchParams): Promise<PaginatedResponse<Product>> => {
-    const response = await http.get<PaginatedResponse<Product>>('/api/Products/search', {
+    const response = await http.get<ApiResponse<Product[]>>('/api/Products', {
       params: {
-        q: params.q,
+        searchTerm: params.q,
         page: params.page || 1,
         pageSize: params.pageSize || 20,
       },
     });
-    return response.data;
+    
+    const apiResponse = response.data;
+    return {
+      items: apiResponse.data || [],
+      totalCount: apiResponse.pagination?.totalCount || 0,
+      totalPages: apiResponse.pagination?.totalPages || 1,
+      currentPage: apiResponse.pagination?.currentPage || 1,
+      pageSize: apiResponse.pagination?.pageSize || 20,
+    };
   },
 
   /**
@@ -139,10 +165,11 @@ export const productService = {
    * @returns Promise with array of related products
    */
   getRelated: async (id: number, count: number = 4): Promise<Product[]> => {
-    const response = await http.get<Product[]>(`/api/Products/${id}/related`, {
+    const response = await http.get<ApiResponse<Product[]>>(`/api/Products/${id}/related`, {
       params: { count },
     });
-    return response.data;
+    const apiResponse = response.data;
+    return apiResponse.data || [];
   },
 
   /**

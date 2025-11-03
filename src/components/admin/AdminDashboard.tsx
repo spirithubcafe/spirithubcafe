@@ -51,27 +51,20 @@ export const AdminDashboard: React.FC = () => {
         {
           title: t('admin.categories.title'),
           primary: stats.categories.total,
-          secondary: t('admin.dashboardActiveCount', {
-            count: stats.categories.active,
-          }),
+          secondary: `${stats.categories.active} ${t('admin.active')}`,
           icon: Grid3X3,
           accent: 'text-purple-600',
         },
         {
           title: t('admin.products.title'),
           primary: stats.products.total,
-          secondary: t('admin.dashboardFeaturedAndActive', {
-            featured: stats.products.featured,
-            active: stats.products.active,
-          }),
+          secondary: `${stats.products.featured} ${t('admin.featured')}, ${stats.products.active} ${t('admin.active')}`,
           icon: Package,
           accent: 'text-orange-600',
           badges: stats.products.lowStock > 0
             ? [
                 {
-                  label: t('admin.dashboardLowStock', {
-                    count: stats.products.lowStock,
-                  }),
+                  label: `${stats.products.lowStock} ${t('admin.lowStock')}`,
                   variant: 'destructive' as const,
                 },
               ]
@@ -80,18 +73,14 @@ export const AdminDashboard: React.FC = () => {
         {
           title: t('admin.users.title'),
           primary: stats.users.totalUsers,
-          secondary: t('admin.dashboardActiveUsers', {
-            count: stats.users.activeUsers,
-          }),
+          secondary: `${stats.users.activeUsers} ${t('admin.active')}`,
           icon: Users,
           accent: 'text-emerald-600',
           badges:
             stats.users.adminUsers > 0
               ? [
                   {
-                    label: t('admin.dashboardAdmins', {
-                      count: stats.users.adminUsers,
-                    }),
+                    label: `${stats.users.adminUsers} ${t('admin.admins')}`,
                     variant: 'outline' as const,
                   },
                 ]
@@ -100,14 +89,14 @@ export const AdminDashboard: React.FC = () => {
         {
           title: t('admin.reports'),
           primary: stats.reviews.pending,
-          secondary: t('admin.dashboardPendingReviews'),
+          secondary: t('admin.pendingReviews'),
           icon: AlertTriangle,
           accent: 'text-amber-600',
           badges:
             stats.reviews.pending > 0
               ? [
                   {
-                    label: t('admin.dashboardAttention'),
+                    label: t('admin.needsAttention'),
                     variant: 'destructive' as const,
                   },
                 ]
@@ -194,14 +183,10 @@ export const AdminDashboard: React.FC = () => {
                 <div className="mt-1 h-2 w-2 rounded-full bg-purple-500" />
                 <div>
                   <p className="font-medium">
-                    {t('admin.dashboardActiveCategories', {
-                      count: stats.categories.active,
-                    })}
+                    {stats.categories.active} {t('admin.activeCategories')}
                   </p>
                   <p className="text-muted-foreground">
-                    {t('admin.dashboardTotalCategories', {
-                      count: stats.categories.total,
-                    })}
+                    {t('admin.outOf')} {stats.categories.total} {t('admin.totalCategories')}
                   </p>
                 </div>
               </div>
@@ -209,14 +194,10 @@ export const AdminDashboard: React.FC = () => {
                 <div className="mt-1 h-2 w-2 rounded-full bg-orange-500" />
                 <div>
                   <p className="font-medium">
-                    {t('admin.dashboardFeaturedProducts', {
-                      count: stats.products.featured,
-                    })}
+                    {stats.products.featured} {t('admin.featuredProducts')}
                   </p>
                   <p className="text-muted-foreground">
-                    {t('admin.dashboardActiveProducts', {
-                      count: stats.products.active,
-                    })}
+                    {stats.products.active} {t('admin.activeProducts')}
                   </p>
                 </div>
               </div>
@@ -224,14 +205,10 @@ export const AdminDashboard: React.FC = () => {
                 <div className="mt-1 h-2 w-2 rounded-full bg-emerald-500" />
                 <div>
                   <p className="font-medium">
-                    {t('admin.dashboardActiveUsersLabel', {
-                      count: stats.users.activeUsers,
-                    })}
+                    {stats.users.activeUsers} {t('admin.activeUsers')}
                   </p>
                   <p className="text-muted-foreground">
-                    {t('admin.dashboardTotalUsers', {
-                      count: stats.users.totalUsers,
-                    })}
+                    {t('admin.outOf')} {stats.users.totalUsers} {t('admin.totalUsers')}
                   </p>
                 </div>
               </div>
@@ -239,23 +216,19 @@ export const AdminDashboard: React.FC = () => {
                 <div className="mt-1 h-2 w-2 rounded-full bg-amber-500" />
                 <div>
                   <p className="font-medium">
-                    {t('admin.dashboardPendingReviewsLabel', {
-                      count: stats.reviews.pending,
-                    })}
+                    {stats.reviews.pending} {t('admin.pendingReviews')}
                   </p>
                   <p className="text-muted-foreground">
                     {stats.products.lowStock > 0
-                      ? t('admin.dashboardLowStockNotice', {
-                          count: stats.products.lowStock,
-                        })
-                      : t('admin.dashboardAllStockHealthy')}
+                      ? `${stats.products.lowStock} ${t('admin.productsLowStock')}`
+                      : t('admin.allStockHealthy')}
                   </p>
                 </div>
               </div>
             </div>
           ) : (
             <p className="text-sm text-muted-foreground">
-              {t('admin.dashboardNoData')}
+              {t('admin.noData')}
             </p>
           )}
         </CardContent>

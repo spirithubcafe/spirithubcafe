@@ -5,6 +5,7 @@ import type {
   ProductReviewUpdateDto,
   ProductReviewSummary,
   PaginatedResponse,
+  ApiResponse,
 } from '../types/product';
 
 /**
@@ -24,13 +25,21 @@ export const productReviewService = {
     page: number = 1,
     pageSize: number = 20
   ): Promise<PaginatedResponse<ProductReview>> => {
-    const response = await http.get<PaginatedResponse<ProductReview>>(
+    const response = await http.get<ApiResponse<ProductReview[]>>(
       `/api/ProductReviews/product/${productId}`,
       {
         params: { page, pageSize },
       }
     );
-    return response.data;
+    
+    const apiResponse = response.data;
+    return {
+      items: apiResponse.data || [],
+      totalCount: apiResponse.pagination?.totalCount || 0,
+      totalPages: apiResponse.pagination?.totalPages || 1,
+      currentPage: apiResponse.pagination?.currentPage || page,
+      pageSize: apiResponse.pagination?.pageSize || pageSize,
+    };
   },
 
   /**
@@ -39,10 +48,10 @@ export const productReviewService = {
    * @returns Promise with review summary
    */
   getSummary: async (productId: number): Promise<ProductReviewSummary> => {
-    const response = await http.get<ProductReviewSummary>(
+    const response = await http.get<ApiResponse<ProductReviewSummary>>(
       `/api/ProductReviews/product/${productId}/summary`
     );
-    return response.data;
+    return response.data.data || (response.data as unknown as ProductReviewSummary);
   },
 
   /**
@@ -51,8 +60,8 @@ export const productReviewService = {
    * @returns Promise with review details
    */
   getById: async (id: number): Promise<ProductReview> => {
-    const response = await http.get<ProductReview>(`/api/ProductReviews/${id}`);
-    return response.data;
+    const response = await http.get<ApiResponse<ProductReview>>(`/api/ProductReviews/${id}`);
+    return response.data.data || (response.data as unknown as ProductReview);
   },
 
   /**
@@ -60,8 +69,8 @@ export const productReviewService = {
    * @returns Promise with array of user's reviews
    */
   getMyReviews: async (): Promise<ProductReview[]> => {
-    const response = await http.get<ProductReview[]>('/api/ProductReviews/my-reviews');
-    return response.data;
+    const response = await http.get<ApiResponse<ProductReview[]>>('/api/ProductReviews/my-reviews');
+    return response.data.data || (response.data as unknown as ProductReview[]);
   },
 
   /**
@@ -70,8 +79,8 @@ export const productReviewService = {
    * @returns Promise with created review
    */
   create: async (data: ProductReviewCreateDto): Promise<ProductReview> => {
-    const response = await http.post<ProductReview>('/api/ProductReviews', data);
-    return response.data;
+    const response = await http.post<ApiResponse<ProductReview>>('/api/ProductReviews', data);
+    return response.data.data || (response.data as unknown as ProductReview);
   },
 
   /**
@@ -81,8 +90,8 @@ export const productReviewService = {
    * @returns Promise with updated review
    */
   update: async (id: number, data: ProductReviewUpdateDto): Promise<ProductReview> => {
-    const response = await http.put<ProductReview>(`/api/ProductReviews/${id}`, data);
-    return response.data;
+    const response = await http.put<ApiResponse<ProductReview>>(`/api/ProductReviews/${id}`, data);
+    return response.data.data || (response.data as unknown as ProductReview);
   },
 
   /**
@@ -100,10 +109,10 @@ export const productReviewService = {
    * @returns Promise with updated review
    */
   approve: async (id: number): Promise<ProductReview> => {
-    const response = await http.patch<ProductReview>(
+    const response = await http.patch<ApiResponse<ProductReview>>(
       `/api/ProductReviews/${id}/approve`
     );
-    return response.data;
+    return response.data.data || (response.data as unknown as ProductReview);
   },
 
   /**
@@ -112,8 +121,8 @@ export const productReviewService = {
    * @returns Promise with updated review
    */
   reject: async (id: number): Promise<ProductReview> => {
-    const response = await http.patch<ProductReview>(`/api/ProductReviews/${id}/reject`);
-    return response.data;
+    const response = await http.patch<ApiResponse<ProductReview>>(`/api/ProductReviews/${id}/reject`);
+    return response.data.data || (response.data as unknown as ProductReview);
   },
 
   /**
@@ -126,13 +135,21 @@ export const productReviewService = {
     page: number = 1,
     pageSize: number = 20
   ): Promise<PaginatedResponse<ProductReview>> => {
-    const response = await http.get<PaginatedResponse<ProductReview>>(
+    const response = await http.get<ApiResponse<ProductReview[]>>(
       '/api/ProductReviews/pending',
       {
         params: { page, pageSize },
       }
     );
-    return response.data;
+    
+    const apiResponse = response.data;
+    return {
+      items: apiResponse.data || [],
+      totalCount: apiResponse.pagination?.totalCount || 0,
+      totalPages: apiResponse.pagination?.totalPages || 1,
+      currentPage: apiResponse.pagination?.currentPage || page,
+      pageSize: apiResponse.pagination?.pageSize || pageSize,
+    };
   },
 
   /**
@@ -141,10 +158,10 @@ export const productReviewService = {
    * @returns Promise with boolean
    */
   canReview: async (productId: number): Promise<boolean> => {
-    const response = await http.get<boolean>(
+    const response = await http.get<ApiResponse<boolean>>(
       `/api/ProductReviews/product/${productId}/check`
     );
-    return response.data;
+    return response.data.data ?? (response.data as unknown as boolean);
   },
 };
 

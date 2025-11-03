@@ -225,7 +225,7 @@ export const ProductsManagement: React.FC = () => {
     setCheckingSlug(true);
     const handler = window.setTimeout(async () => {
       try {
-        const available = await productService.checkSlug(formData.slug, editingProduct?.id);
+        const available = await productService.checkSlug(formData.slug || '', editingProduct?.id);
         if (!isMounted) {
           return;
         }
@@ -1063,7 +1063,7 @@ export const ProductsManagement: React.FC = () => {
         <DialogHeader>
           <DialogTitle>
             {variantParentProduct
-              ? t('admin.products.variantsFor', { name: variantParentProduct.name })
+              ? `${t('admin.products.variantsFor')} ${variantParentProduct.name}`
               : t('admin.products.variants')}
           </DialogTitle>
         </DialogHeader>
@@ -1073,7 +1073,7 @@ export const ProductsManagement: React.FC = () => {
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">
-                  {t('admin.products.variantSummary', { count: variants.length })}
+                  {variants.length} {t('admin.products.variants')}
                 </p>
               </div>
               <Button onClick={handleVariantCreate} className="self-start sm:self-auto">
@@ -1172,9 +1172,7 @@ export const ProductsManagement: React.FC = () => {
                                       {t('admin.products.deleteVariantConfirm')}
                                     </AlertDialogTitle>
                                     <AlertDialogDescription>
-                                      {t('admin.products.deleteVariantWarning', {
-                                        sku: variant.variantSku,
-                                      })}
+                                      {t('admin.products.deleteVariantWarning')} ({variant.variantSku})
                                     </AlertDialogDescription>
                                   </AlertDialogHeader>
                                   <AlertDialogFooter>

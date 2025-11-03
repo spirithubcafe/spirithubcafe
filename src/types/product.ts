@@ -291,12 +291,14 @@ export interface PaginationParams {
 
 export interface PaginatedResponse<T> {
   items: T[];
-  page: number;
-  pageSize: number;
   totalCount: number;
   totalPages: number;
-  hasNextPage: boolean;
-  hasPreviousPage: boolean;
+  currentPage?: number;
+  pageSize?: number;
+  hasNextPage?: boolean;
+  hasPreviousPage?: boolean;
+  // Legacy support
+  page?: number;
 }
 
 // Product Query Parameters
@@ -323,4 +325,12 @@ export interface ApiResponse<T> {
   count?: number;
   message?: string;
   errors?: Record<string, string[]>;
+  pagination?: {
+    currentPage: number;
+    pageSize: number;
+    totalCount: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrevious: boolean;
+  };
 }

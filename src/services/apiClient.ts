@@ -30,12 +30,14 @@ const createApiClient = (): AxiosInstance => {
     }
   );
 
-  // Response interceptor for error handling and token refresh
+    // Response interceptor for error handling and token refresh
   client.interceptors.response.use(
     (response: AxiosResponse) => {
       // Unwrap API response if it has the {success, data} structure
       if (response.data && typeof response.data === 'object' && 'success' in response.data && 'data' in response.data) {
-        response.data = response.data.data;
+        // Keep the full response structure for endpoints that need pagination
+        // Individual services will handle unwrapping as needed
+        return response;
       }
       return response;
     },
@@ -49,18 +51,17 @@ const createApiClient = (): AxiosInstance => {
         try {
           const refreshToken = localStorage.getItem('refreshToken');
           if (refreshToken) {
-            const refreshResponse = await client.post('/api/Account/RefreshToken', {
-              refreshToken
+            // Try to refresh the token
+            const refreshResponse = await axios.post(`${API_BASE_URL}/api/Account/RefreshToken`, {
+              refreshToken,
             });
 
-            if (refreshResponse.data?.accessToken) {
-              localStorage.setItem('accessToken', refreshResponse.data.accessToken);
-              if (refreshResponse.data?.refreshToken) {
-                localStorage.setItem('refreshToken', refreshResponse.data.refreshToken);
-              }
-
-              // Retry original request with new token
-              originalRequest.headers.Authorization = `Bearer ${refreshResponse.data.accessToken}`;
+            if (refreshResponse.data?.access_token) {
+              localStorage.setItem('accessToken', refreshResponse.data.access_token);
+              localStorage.setItem('refreshToken', refreshResponse.data.refresh_token);
+              
+              // Retry the original request with new token
+              originalRequest.headers.Authorization = `Bearer ${refreshResponse.data.access_token}`;
               return client(originalRequest);
             }
           }
@@ -70,9 +71,10 @@ const createApiClient = (): AxiosInstance => {
           localStorage.removeItem('refreshToken');
           localStorage.removeItem('user');
           
-          // Dispatch custom event for auth state change
-          window.dispatchEvent(new CustomEvent('auth-logout'));
-          
+          // Only redirect if we're not already on the login page
+          if (window.location.pathname !== '/login') {
+            window.location.href = '/login';
+          }
           return Promise.reject(refreshError);
         }
       }
