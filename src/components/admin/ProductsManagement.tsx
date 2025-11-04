@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../hooks/useApp';
 import { cn } from '../../lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
@@ -35,6 +36,7 @@ interface ProductFilters {
 
 export const ProductsManagement: React.FC = () => {
   const { t } = useApp();
+  const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -285,109 +287,11 @@ export const ProductsManagement: React.FC = () => {
   };
 
   const handleCreateProduct = () => {
-    setEditingProduct(null);
-    setFormData({
-      sku: '',
-      name: '',
-      nameAr: '',
-      description: '',
-      descriptionAr: '',
-      notes: '',
-      notesAr: '',
-      aromaticProfile: '',
-      aromaticProfileAr: '',
-      intensity: 1,
-      compatibility: '',
-      compatibilityAr: '',
-      uses: '',
-      usesAr: '',
-      isActive: true,
-      isDigital: false,
-      isFeatured: false,
-      isOrganic: false,
-      isFairTrade: false,
-      imageAlt: '',
-      imageAltAr: '',
-      displayOrder: 0,
-      origin: '',
-      tastingNotes: '',
-      tastingNotesAr: '',
-      brewingInstructions: '',
-      brewingInstructionsAr: '',
-      roastLevel: '',
-      roastLevelAr: '',
-      process: '',
-      processAr: '',
-      variety: '',
-      varietyAr: '',
-      altitude: undefined,
-      farm: '',
-      farmAr: '',
-      metaTitle: '',
-      metaDescription: '',
-      metaKeywords: '',
-      tags: '',
-      slug: '',
-      categoryId: categories[0]?.id || 0
-    });
-    setSkuAvailable(null);
-    setSkuMessage(null);
-    setSlugAvailable(null);
-    setSlugMessage(null);
-    setIsDialogOpen(true);
+    navigate('/admin/products/add');
   };
 
   const handleEditProduct = (product: Product) => {
-    setEditingProduct(product);
-    setFormData({
-      sku: product.sku,
-      name: product.name,
-      nameAr: product.nameAr || '',
-      description: product.description || '',
-      descriptionAr: product.descriptionAr || '',
-      notes: product.notes || '',
-      notesAr: product.notesAr || '',
-      aromaticProfile: product.aromaticProfile || '',
-      aromaticProfileAr: product.aromaticProfileAr || '',
-      intensity: product.intensity || 1,
-      compatibility: product.compatibility || '',
-      compatibilityAr: product.compatibilityAr || '',
-      uses: product.uses || '',
-      usesAr: product.usesAr || '',
-      isActive: product.isActive,
-      isDigital: product.isDigital || false,
-      isFeatured: product.isFeatured || false,
-      isOrganic: product.isOrganic || false,
-      isFairTrade: product.isFairTrade || false,
-      imageAlt: product.imageAlt || '',
-      imageAltAr: product.imageAltAr || '',
-      displayOrder: product.displayOrder || 0,
-      origin: product.origin || '',
-      tastingNotes: product.tastingNotes || '',
-      tastingNotesAr: product.tastingNotesAr || '',
-      brewingInstructions: product.brewingInstructions || '',
-      brewingInstructionsAr: product.brewingInstructionsAr || '',
-      roastLevel: product.roastLevel || '',
-      roastLevelAr: product.roastLevelAr || '',
-      process: product.process || '',
-      processAr: product.processAr || '',
-      variety: product.variety || '',
-      varietyAr: product.varietyAr || '',
-      altitude: product.altitude,
-      farm: product.farm || '',
-      farmAr: product.farmAr || '',
-      metaTitle: product.metaTitle || '',
-      metaDescription: product.metaDescription || '',
-      metaKeywords: product.metaKeywords || '',
-      tags: product.tags || '',
-      slug: product.slug || '',
-      categoryId: product.categoryId
-    });
-    setSkuAvailable(null);
-    setSkuMessage(null);
-    setSlugAvailable(null);
-    setSlugMessage(null);
-    setIsDialogOpen(true);
+    navigate(`/admin/products/edit/${product.id}`);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -435,8 +339,29 @@ export const ProductsManagement: React.FC = () => {
 
   const handleToggleActive = async (productId: number) => {
     try {
-      // PATCH /api/Products/{id}/toggle-active
-      await productService.toggleActive(productId);
+      const product = products.find(p => p.id === productId);
+      if (!product) return;
+      
+      const updateData: any = {
+        sku: product.sku,
+        name: product.name,
+        nameAr: product.nameAr,
+        slug: product.slug,
+        categoryId: product.categoryId,
+        isActive: !product.isActive,
+        isDigital: product.isDigital,
+        isFeatured: product.isFeatured,
+        isOrganic: product.isOrganic,
+        isFairTrade: product.isFairTrade,
+        displayOrder: product.displayOrder,
+        description: product.description,
+        descriptionAr: product.descriptionAr,
+        notes: product.notes,
+        notesAr: product.notesAr,
+        intensity: product.intensity || 1,
+      };
+      
+      await productService.update(productId, updateData);
       loadData();
     } catch (error) {
       console.error('Error toggling product status:', error);
@@ -445,8 +370,29 @@ export const ProductsManagement: React.FC = () => {
 
   const handleToggleFeatured = async (productId: number) => {
     try {
-      // PATCH /api/Products/{id}/toggle-featured
-      await productService.toggleFeatured(productId);
+      const product = products.find(p => p.id === productId);
+      if (!product) return;
+      
+      const updateData: any = {
+        sku: product.sku,
+        name: product.name,
+        nameAr: product.nameAr,
+        slug: product.slug,
+        categoryId: product.categoryId,
+        isActive: product.isActive,
+        isDigital: product.isDigital,
+        isFeatured: !product.isFeatured,
+        isOrganic: product.isOrganic,
+        isFairTrade: product.isFairTrade,
+        displayOrder: product.displayOrder,
+        description: product.description,
+        descriptionAr: product.descriptionAr,
+        notes: product.notes,
+        notesAr: product.notesAr,
+        intensity: product.intensity || 1,
+      };
+      
+      await productService.update(productId, updateData);
       loadData();
     } catch (error) {
       console.error('Error toggling product featured status:', error);

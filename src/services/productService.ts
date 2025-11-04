@@ -208,7 +208,7 @@ export const productService = {
    * @returns Promise with updated product
    */
   toggleActive: async (id: number): Promise<Product> => {
-    const response = await http.patch<Product>(`/api/Products/${id}/toggle-active`);
+    const response = await http.patch<Product>(`/api/Products/${id}`);
     return response.data;
   },
 

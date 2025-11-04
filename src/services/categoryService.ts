@@ -103,7 +103,7 @@ export const categoryService = {
    * @returns Promise with updated category
    */
   toggleActive: async (id: number): Promise<Category> => {
-    const response = await http.patch<Category>(`/api/Categories/${id}/toggle-active`);
+    const response = await http.patch<Category>(`/api/Categories/${id}`);
     return response.data;
   },
 

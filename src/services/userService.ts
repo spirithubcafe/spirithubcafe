@@ -397,7 +397,7 @@ export const userService = {
   toggleActive: async (id: number): Promise<User> => {
     try {
       const response = await apiClient.patch<ApiResponse<User>>(
-        `${ADMIN_USERS_ENDPOINT}/${id}/toggle-active`
+        `${ADMIN_USERS_ENDPOINT}/${id}`
       );
       return response.data.data;
     } catch (error) {

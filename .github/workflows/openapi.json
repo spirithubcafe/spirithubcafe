@@ -409,7 +409,7 @@
         }
       }
     },
-    "/api/Categories/{id}/toggle-active": {
+    "/api/Categories/{id}": {
       "patch": {
         "tags": [
           "Categories"
@@ -1240,7 +1240,7 @@
         }
       }
     },
-    "/api/Products/{id}/toggle-active": {
+    "/api/Products/{id}": {
       "patch": {
         "tags": [
           "Products"
