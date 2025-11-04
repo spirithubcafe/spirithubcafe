@@ -14,6 +14,8 @@ import {
   ProductsManagement, 
   UsersManagement 
 } from './components/admin';
+import { CategoryAddPage } from './pages/CategoryAddPage';
+import { CategoryEditPage } from './pages/CategoryEditPage';
 import { FavoritesPage } from './pages/FavoritesPage';
 import { OrdersPage } from './pages/OrdersPage';
 import { AboutPage } from './pages/AboutPage';
@@ -42,6 +44,8 @@ function AppContent() {
         <Route path="/admin/*" element={<AdminLayout />}>
           <Route index element={<AdminDashboard />} />
           <Route path="categories" element={<CategoriesManagement />} />
+          <Route path="categories/add" element={<CategoryAddPage />} />
+          <Route path="categories/edit/:id" element={<CategoryEditPage />} />
           <Route path="products" element={<ProductsManagement />} />
           <Route path="users" element={<UsersManagement />} />
         </Route>
