@@ -98,12 +98,11 @@ export const ContactPage: React.FC = () => {
 
   const cardHoverVariants = {
     hover: {
-      y: -8,
-      boxShadow: "0 20px 40px rgba(0, 0, 0, 0.15)",
+      y: -4,
       transition: {
         type: "spring" as const,
-        stiffness: 400,
-        damping: 10
+        stiffness: 320,
+        damping: 18
       }
     }
   };
@@ -114,29 +113,25 @@ export const ContactPage: React.FC = () => {
       title: language === 'ar' ? 'الهاتف' : 'Phone',
       value: '+968 9190 0005',
       value2: '+968 7272 6999',
-      link: 'tel:+96891900005',
-      gradient: 'from-green-400 to-green-600'
+      link: 'tel:+96891900005'
     },
     {
       icon: Mail,
       title: language === 'ar' ? 'البريد الإلكتروني' : 'Email',
       value: 'info@spirithubcafe.com',
-      link: 'mailto:info@spirithubcafe.com',
-      gradient: 'from-blue-400 to-blue-600'
+      link: 'mailto:info@spirithubcafe.com'
     },
     {
       icon: MapPin,
       title: language === 'ar' ? 'العنوان' : 'Location',
       value: language === 'ar' ? 'شارع الموج، مسقط، عمان' : 'Al Mouj St, Muscat, Oman',
-      link: 'https://maps.google.com/?q=23.618926,58.256566',
-      gradient: 'from-purple-400 to-purple-600'
+      link: 'https://maps.google.com/?q=23.618926,58.256566'
     },
     {
       icon: Clock,
       title: language === 'ar' ? 'ساعات العمل' : 'Working Hours',
       value: language === 'ar' ? 'يومياً: 7 صباحاً - 12 منتصف الليل' : 'Daily: 7 AM - 12 AM',
-      link: '#',
-      gradient: 'from-stone-600 to-stone-800'
+      link: '#'
     }
   ];
 
@@ -172,29 +167,22 @@ export const ContactPage: React.FC = () => {
               >
                 <motion.div
                   variants={cardHoverVariants}
-                  className="bg-white rounded-2xl shadow-xl overflow-hidden h-full"
+                  className="rounded-2xl border bg-card text-card-foreground shadow-sm h-full p-6 flex flex-col gap-6 transition-colors group-hover:border-primary/40"
                 >
-                  <div className={`bg-gradient-to-br ${info.gradient} p-6 text-white`}>
-                    <motion.div 
-                      className="flex items-center justify-center mb-4"
-                      whileHover={{ scale: 1.1, rotate: 5 }}
-                      transition={{ type: "spring", stiffness: 300 }}
-                    >
-                      <IconComponent className="w-8 h-8" />
-                    </motion.div>
-                    <h3 className="text-xl font-bold text-center mb-2">
-                      {info.title}
-                    </h3>
-                  </div>
-                  <div className="p-6 bg-gradient-to-br from-gray-50 to-white">
-                    <p className="text-center text-gray-700 font-medium break-words">
-                      {info.value}
-                    </p>
-                    {info.value2 && (
-                      <p className="text-center text-gray-700 font-medium break-words mt-1">
-                        {info.value2}
+                  <div className="flex items-center gap-4">
+                    <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center text-primary shadow-sm">
+                      <IconComponent className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold">{info.title}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        {language === 'ar' ? 'تفاصيل التواصل' : 'Get in touch'}
                       </p>
-                    )}
+                    </div>
+                  </div>
+                  <div className="text-base font-medium text-foreground space-y-1">
+                    <p className="break-words">{info.value}</p>
+                    {info.value2 && <p className="break-words">{info.value2}</p>}
                   </div>
                 </motion.div>
               </motion.a>
@@ -210,7 +198,7 @@ export const ContactPage: React.FC = () => {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.6, duration: 0.6 }}
           >
-            <Card className="border-0 shadow-2xl">
+            <Card className="shadow-sm">
               <CardHeader className="space-y-1 pb-6">
                 <CardTitle className="text-3xl font-bold text-gray-900">
                   {language === 'ar' ? 'أرسل لنا رسالة' : 'Send us a Message'}
@@ -225,18 +213,18 @@ export const ContactPage: React.FC = () => {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.8 }}
-                  className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 flex items-start gap-3"
+                  className="rounded-lg border bg-muted/40 p-4 mb-6 flex items-start gap-3 text-sm text-muted-foreground"
                 >
-                  <MessageCircle className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                  <MessageCircle className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="text-blue-900 text-sm font-medium">
+                    <p className="font-medium text-foreground">
                       {language === 'ar' ? 'للرد السريع، تواصل معنا عبر واتساب!' : 'For faster response, contact us via WhatsApp!'}
                     </p>
                     <a 
                       href="https://api.whatsapp.com/send?phone=96891900005"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-blue-600 hover:text-blue-700 text-sm font-semibold underline"
+                      className="text-primary hover:text-primary/80 font-semibold underline"
                     >
                       {language === 'ar' ? 'افتح واتساب' : 'Open WhatsApp'}
                     </a>
@@ -366,7 +354,7 @@ export const ContactPage: React.FC = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.8 }}
             >
-              <Card className="border-0 shadow-2xl">
+              <Card className="shadow-sm">
                 <CardHeader>
                   <CardTitle className="text-2xl font-bold text-gray-800">
                     {language === 'ar' ? 'موقعنا على الخريطة' : 'Find Us on Map'}
@@ -414,7 +402,7 @@ export const ContactPage: React.FC = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 1.0 }}
             >
-              <Card className="border-0 shadow-2xl">
+              <Card className="shadow-sm">
                 <CardHeader>
                   <CardTitle className="text-2xl font-bold text-gray-800">
                     {language === 'ar' ? 'تابعنا على' : 'Follow Us'}
@@ -428,10 +416,10 @@ export const ContactPage: React.FC = () => {
                       rel="noopener noreferrer"
                       whileHover={{ scale: 1.05, y: -5 }}
                       whileTap={{ scale: 0.95 }}
-                      className="bg-green-500 hover:bg-green-600 text-white p-4 rounded-xl flex flex-col items-center transition-colors shadow-lg"
+                      className="border rounded-xl bg-card text-card-foreground p-4 flex flex-col items-center transition-colors shadow-sm hover:border-primary/60 hover:text-primary"
                     >
-                      <MessageCircle className="w-8 h-8 mb-2" />
-                      <span className="text-sm font-semibold">WhatsApp</span>
+                      <MessageCircle className="w-8 h-8 mb-2 text-primary" />
+                      <span className="text-sm font-semibold text-center">WhatsApp</span>
                     </motion.a>
                     <motion.a
                       href="https://instagram.com/spirithubcafe"
@@ -439,9 +427,9 @@ export const ContactPage: React.FC = () => {
                       rel="noopener noreferrer"
                       whileHover={{ scale: 1.05, y: -5 }}
                       whileTap={{ scale: 0.95 }}
-                      className="bg-pink-500 hover:bg-pink-600 text-white p-4 rounded-xl flex flex-col items-center transition-colors shadow-lg"
+                      className="border rounded-xl bg-card text-card-foreground p-4 flex flex-col items-center transition-colors shadow-sm hover:border-primary/60 hover:text-primary"
                     >
-                      <Instagram className="w-8 h-8 mb-2" />
+                      <Instagram className="w-8 h-8 mb-2 text-primary" />
                       <span className="text-sm font-semibold text-center">@spirithubcafe</span>
                     </motion.a>
                     <motion.a
@@ -450,10 +438,10 @@ export const ContactPage: React.FC = () => {
                       rel="noopener noreferrer"
                       whileHover={{ scale: 1.05, y: -5 }}
                       whileTap={{ scale: 0.95 }}
-                      className="bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-xl flex flex-col items-center transition-colors shadow-lg"
+                      className="border rounded-xl bg-card text-card-foreground p-4 flex flex-col items-center transition-colors shadow-sm hover:border-primary/60 hover:text-primary"
                     >
-                      <Facebook className="w-8 h-8 mb-2" />
-                      <span className="text-sm font-semibold">Facebook</span>
+                      <Facebook className="w-8 h-8 mb-2 text-primary" />
+                      <span className="text-sm font-semibold text-center">Facebook</span>
                     </motion.a>
                   </div>
                 </CardContent>

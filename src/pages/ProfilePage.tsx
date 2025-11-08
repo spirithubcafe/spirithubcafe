@@ -8,6 +8,7 @@ import { Button } from '../components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import type { LucideIcon } from 'lucide-react';
 import { 
   User, 
   Mail, 
@@ -28,7 +29,8 @@ import {
   Clock,
   Activity,
   ArrowLeft,
-  Camera
+  Camera,
+  ChevronRight
 } from 'lucide-react';
 
 interface ProfileStats {
@@ -121,6 +123,14 @@ const ProfilePage: React.FC = () => {
 
 
 
+  type MenuAction = {
+    id: string;
+    title: string;
+    description: string;
+    icon: LucideIcon;
+    onClick: () => void;
+  };
+
   const tabs = [
     {
       id: 'overview',
@@ -151,6 +161,52 @@ const ProfilePage: React.FC = () => {
     });
     setIsEditing(false);
   };
+
+  const quickActions: MenuAction[] = [
+    {
+      id: 'orders',
+      icon: ShoppingBag,
+      title: t('profile.viewOrders'),
+      description: language === 'ar' ? 'تتبع مشترياتك الأخيرة' : 'Keep track of your recent purchases',
+      onClick: () => navigate('/orders')
+    },
+    {
+      id: 'favorites',
+      icon: Heart,
+      title: t('profile.manageFavorites'),
+      description: language === 'ar' ? 'نظّم مشروباتك المفضلة' : 'Organize the drinks you love most',
+      onClick: () => navigate('/favorites')
+    }
+  ];
+
+  const settingsActions: MenuAction[] = [
+    {
+      id: 'notifications',
+      icon: Bell,
+      title: t('profile.notificationSettings'),
+      description: language === 'ar' ? 'عدّل تنبيهات الطلبات والعروض' : 'Fine-tune order alerts and offers',
+      onClick: () => navigate('/profile/notifications')
+    },
+    {
+      id: 'payment',
+      icon: CreditCard,
+      title: t('profile.paymentMethods'),
+      description: language === 'ar' ? 'أدر طرق الدفع بكل أمان' : 'Manage your payment methods securely',
+      onClick: () => navigate('/profile/payment')
+    },
+    {
+      id: 'support',
+      icon: Shield,
+      title: t('profile.helpSupport'),
+      description: language === 'ar' ? 'اطلب المساعدة أو الدعم' : 'Get assistance or reach support',
+      onClick: () => navigate('/profile/help')
+    }
+  ];
+
+  const chevronDirectionClass =
+    language === 'ar'
+      ? 'rotate-180 group-hover:-translate-x-0.5'
+      : 'group-hover:translate-x-0.5';
 
   return (
     <div className={`min-h-screen bg-background pt-20 pb-12 ${language === 'ar' ? 'rtl' : 'ltr'}`}>
@@ -280,22 +336,34 @@ const ProfilePage: React.FC = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <Button 
-                    variant="outline" 
-                    className="w-full justify-start h-12"
-                    onClick={() => navigate('/orders')}
-                  >
-                    <ShoppingBag className="h-4 w-4 mr-3" />
-                    {t('profile.viewOrders')}
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    className="w-full justify-start h-12"
-                    onClick={() => navigate('/favorites')}
-                  >
-                    <Heart className="h-4 w-4 mr-3" />
-                    {t('profile.manageFavorites')}
-                  </Button>
+                  {quickActions.map((action) => {
+                    const Icon = action.icon;
+                    return (
+                      <button
+                        key={action.id}
+                        type="button"
+                        onClick={action.onClick}
+                        className="group w-full rounded-2xl border bg-card/80 px-5 py-4 flex items-center justify-between transition-all duration-200 hover:border-primary/50 hover:bg-card hover:shadow-sm"
+                      >
+                        <span className="flex items-center gap-4">
+                          <span className="h-12 w-12 rounded-xl bg-muted flex items-center justify-center text-primary shadow-sm">
+                            <Icon className="h-5 w-5" />
+                          </span>
+                          <span className="text-left">
+                            <span className="block text-base font-semibold text-foreground">
+                              {action.title}
+                            </span>
+                            <span className="text-sm text-muted-foreground">
+                              {action.description}
+                            </span>
+                          </span>
+                        </span>
+                        <ChevronRight
+                          className={`h-5 w-5 text-muted-foreground transition-transform ${chevronDirectionClass}`}
+                        />
+                      </button>
+                    );
+                  })}
                 </CardContent>
               </Card>
             </div>
@@ -386,31 +454,35 @@ const ProfilePage: React.FC = () => {
                   {t('profile.accountSettings')}
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-start h-12"
-                  onClick={() => navigate('/profile/notifications')}
-                >
-                  <Bell className="h-4 w-4 mr-3" />
-                  {t('profile.notificationSettings')}
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-start h-12"
-                  onClick={() => navigate('/profile/payment')}
-                >
-                  <CreditCard className="h-4 w-4 mr-3" />
-                  {t('profile.paymentMethods')}
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-start h-12"
-                  onClick={() => navigate('/profile/help')}
-                >
-                  <Shield className="h-4 w-4 mr-3" />
-                  {t('profile.helpSupport')}
-                </Button>
+              <CardContent className="space-y-3">
+                {settingsActions.map((action) => {
+                  const Icon = action.icon;
+                  return (
+                    <button
+                      key={action.id}
+                      type="button"
+                      onClick={action.onClick}
+                      className="group w-full rounded-2xl border bg-card/80 px-5 py-4 flex items-center justify-between transition-all duration-200 hover:border-primary/50 hover:bg-card hover:shadow-sm"
+                    >
+                      <span className="flex items-center gap-4">
+                        <span className="h-12 w-12 rounded-xl bg-muted flex items-center justify-center text-primary shadow-sm">
+                          <Icon className="h-5 w-5" />
+                        </span>
+                        <span className="text-left">
+                          <span className="block text-base font-semibold text-foreground">
+                            {action.title}
+                          </span>
+                          <span className="text-sm text-muted-foreground">
+                            {action.description}
+                          </span>
+                        </span>
+                      </span>
+                      <ChevronRight
+                        className={`h-5 w-5 text-muted-foreground transition-transform ${chevronDirectionClass}`}
+                      />
+                    </button>
+                  );
+                })}
               </CardContent>
             </Card>
           </TabsContent>

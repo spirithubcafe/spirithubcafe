@@ -14,10 +14,12 @@ import {
   DropdownMenuTrigger,
   DropdownMenuLabel
 } from '../ui/dropdown-menu';
+import type { LucideIcon } from 'lucide-react';
 import { 
   User, 
   LogOut,
   ChevronDown,
+  ChevronRight,
   Shield,
   Heart,
   ShoppingBag,
@@ -35,7 +37,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({
 }) => {
   const navigate = useNavigate();
   const { user, logout, isAuthenticated } = useAuth();
-  const { t } = useApp();
+  const { t, language } = useApp();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   if (!isAuthenticated || !user) {
@@ -65,6 +67,77 @@ export const UserProfile: React.FC<UserProfileProps> = ({
 
   const userName = user.displayName || user.username || 'User';
   const userEmail = user.username || '';
+  const userHandle = user.username
+    ? `@${user.username.split('@')[0]}`
+    : '@member';
+
+  type MenuEntry = {
+    id: string;
+    label: string;
+    icon: LucideIcon;
+    bubble: string;
+    hover: string;
+    to: string;
+  };
+
+  const dropdownItems: MenuEntry[] = [
+    {
+      id: 'profile',
+      label: t('profile.view'),
+      icon: User,
+      bubble: 'bg-blue-100 text-blue-600',
+      hover: 'hover:bg-blue-50/80',
+      to: '/profile',
+    },
+    {
+      id: 'favorites',
+      label: t('profile.favorites'),
+      icon: Heart,
+      bubble: 'bg-rose-100 text-rose-500',
+      hover: 'hover:bg-rose-50/80',
+      to: '/favorites',
+    },
+    {
+      id: 'orders',
+      label: t('profile.orders'),
+      icon: ShoppingBag,
+      bubble: 'bg-emerald-100 text-emerald-600',
+      hover: 'hover:bg-emerald-50/80',
+      to: '/orders',
+    },
+  ] as const;
+
+  const adminItems: MenuEntry[] = [
+    {
+      id: 'admin',
+      label: t('admin.title'),
+      icon: Shield,
+      bubble: 'bg-violet-100 text-violet-600',
+      hover: 'hover:bg-violet-50/80',
+      to: '/admin',
+    },
+  ] as const;
+
+  const renderMenuItem = (item: MenuEntry, highlightClass = 'text-gray-900') => {
+    const Icon = item.icon;
+    return (
+      <DropdownMenuItem
+        key={item.id}
+        onClick={() => navigate(item.to)}
+        className={`group flex items-center justify-between gap-3 rounded-2xl border border-transparent px-4 py-3 text-sm font-semibold ${highlightClass} transition-all duration-200 data-[highlighted]:bg-transparent data-[highlighted]:text-current ${item.hover}`}
+      >
+        <span className="flex items-center gap-3">
+          <span className={`inline-flex h-10 w-10 items-center justify-center rounded-2xl ${item.bubble}`}>
+            <Icon className="h-5 w-5" />
+          </span>
+          {item.label}
+        </span>
+        <ChevronRight
+          className={`h-4 w-4 text-muted-foreground transition-transform ${chevronDirectionClass}`}
+        />
+      </DropdownMenuItem>
+    );
+  };
 
   if (variant === 'inline') {
     return (
@@ -135,6 +208,10 @@ export const UserProfile: React.FC<UserProfileProps> = ({
     );
   }
 
+  const chevronDirectionClass = language === 'ar'
+    ? 'rotate-180 group-hover:-translate-x-0.5'
+    : 'group-hover:translate-x-0.5';
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -167,106 +244,73 @@ export const UserProfile: React.FC<UserProfileProps> = ({
         </Button>
       </DropdownMenuTrigger>
       
-      <DropdownMenuContent align="end" className="w-80 p-0 border-0 shadow-2xl bg-white/95 backdrop-blur-md">
+      <DropdownMenuContent
+        align="end"
+        className="w-80 rounded-3xl border border-gray-100 bg-white p-0 shadow-2xl"
+      >
         {/* User Header */}
-        <div className="p-6 bg-gradient-to-br from-stone-800 via-stone-700 to-stone-600 text-white relative overflow-hidden">
-          <div className="absolute inset-0 bg-black/10"></div>
-          <div className="relative flex items-center gap-4">
+        <div className="px-5 pt-5 pb-4">
+          <div className="flex items-center gap-4">
             <div className="relative">
-              <Avatar className="h-14 w-14 ring-3 ring-white/30 shadow-lg">
+              <Avatar className="h-14 w-14 ring-2 ring-white shadow-md">
                 <AvatarImage src="" alt={userName} />
-                <AvatarFallback className="bg-gradient-to-br from-stone-600 to-stone-500 text-white font-bold text-xl">
+                <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-500 text-white text-xl font-semibold">
                   {getInitials(userName)}
                 </AvatarFallback>
               </Avatar>
-              <div className="absolute -top-1 -right-1 bg-gradient-to-r from-yellow-400 to-yellow-500 p-1 rounded-full">
-                <Crown className="h-3 w-3 text-yellow-900" />
-              </div>
+              <span className="absolute -top-1 -right-1 rounded-full bg-yellow-400 p-1 shadow">
+                <Crown className="h-3 w-3 text-amber-900" />
+              </span>
             </div>
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <p className="font-bold truncate text-lg">{userName}</p>
-                <Badge className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-yellow-900 text-xs px-2 py-1 font-medium shadow-sm">
-                  VIP
-                </Badge>
-              </div>
-              {userEmail && (
-                <p className="text-sm text-white/90 truncate font-medium">{userEmail}</p>
-              )}
-              <p className="text-xs text-white/70 mt-1">
-                {t('profile.memberSince')} {t('profile.november')} 2025
-              </p>
+              <p className="text-base font-semibold text-gray-900 truncate">{userName}</p>
+              <p className="text-sm text-gray-500 truncate">{userHandle}</p>
             </div>
+            <Badge className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">
+              VIP
+            </Badge>
           </div>
         </div>
 
-        <div className="p-3">
-          <DropdownMenuLabel className="px-3 py-2 text-xs font-bold text-stone-500 uppercase tracking-wider bg-gray-50/50 rounded-md mb-2">
+        <DropdownMenuSeparator className="bg-gray-100" />
+
+        <div className="flex flex-col gap-2 p-4">
+          <DropdownMenuLabel className="px-1 text-xs font-semibold uppercase tracking-widest text-gray-400">
             {t('profile.account')}
           </DropdownMenuLabel>
-          
-          <DropdownMenuItem 
-            onClick={() => navigate('/profile')}
-            className="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-gradient-to-r hover:from-stone-50 hover:to-stone-100 transition-all duration-200 cursor-pointer group"
-          >
-            <div className="p-2 rounded-lg bg-blue-100 group-hover:bg-blue-200 transition-colors">
-              <User className="h-4 w-4 text-blue-600" />
-            </div>
-            <p className="font-semibold text-gray-800 group-hover:text-gray-900">{t('profile.view')}</p>
-          </DropdownMenuItem>
-          
-          <DropdownMenuItem 
-            onClick={() => navigate('/favorites')}
-            className="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-gradient-to-r hover:from-red-50 hover:to-pink-50 transition-all duration-200 cursor-pointer group"
-          >
-            <div className="p-2 rounded-lg bg-red-100 group-hover:bg-red-200 transition-colors">
-              <Heart className="h-4 w-4 text-red-600" />
-            </div>
-            <p className="font-semibold text-gray-800 group-hover:text-gray-900">{t('profile.favorites')}</p>
-          </DropdownMenuItem>
-          
-          <DropdownMenuItem 
-            onClick={() => navigate('/orders')}
-            className="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 transition-all duration-200 cursor-pointer group"
-          >
-            <div className="p-2 rounded-lg bg-green-100 group-hover:bg-green-200 transition-colors">
-              <ShoppingBag className="h-4 w-4 text-green-600" />
-            </div>
-            <p className="font-semibold text-gray-800 group-hover:text-gray-900">{t('profile.orders')}</p>
-          </DropdownMenuItem>
 
-        
-          {/* Admin Panel Link - Only for Admin users */}
+          {dropdownItems.map((item) => renderMenuItem(item))}
+
           {user && (user.roles?.includes('Admin') || user.roles?.includes('admin')) && (
             <>
-              <DropdownMenuSeparator className="my-3 bg-gradient-to-r from-transparent via-red-200 to-transparent" />
-              <DropdownMenuItem 
-                onClick={() => navigate('/admin')}
-                className="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-gradient-to-r hover:from-red-50 hover:to-rose-50 transition-all duration-200 cursor-pointer group border border-red-200/50 hover:border-red-300/70 mx-2"
-              >
-                <div className="p-2 rounded-lg bg-red-100 group-hover:bg-red-200 transition-colors">
-                  <Shield className="h-4 w-4 text-red-600" />
-                </div>
-                <p className="font-semibold text-red-700 group-hover:text-red-800">{t('admin.title')}</p>
-              </DropdownMenuItem>
+              <DropdownMenuSeparator className="bg-gray-100" />
+              <DropdownMenuLabel className="px-1 text-xs font-semibold uppercase tracking-widest text-gray-400">
+                {t('nav.admin')}
+              </DropdownMenuLabel>
+              {adminItems.map((item) => renderMenuItem(item, 'text-violet-700'))}
             </>
           )}
-          
-          <DropdownMenuSeparator className="my-3 bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
-          
-          <DropdownMenuItem 
+
+          <DropdownMenuSeparator className="bg-gray-100" />
+
+          <DropdownMenuItem
             onClick={handleLogout}
             disabled={isLoggingOut}
-            className="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-gradient-to-r hover:from-red-50 hover:to-rose-50 transition-all duration-200 cursor-pointer group mx-2 mb-2"
+            className="group flex items-center justify-between gap-3 rounded-2xl border border-transparent px-4 py-3 text-sm font-semibold text-rose-600 transition-all duration-200 hover:border-rose-100 hover:bg-rose-50 data-[highlighted]:bg-transparent data-[highlighted]:text-rose-700"
           >
-            <div className="p-2 rounded-lg bg-red-100 group-hover:bg-red-200 transition-colors">
-              {isLoggingOut ? (
-                <Spinner className="h-4 w-4 text-red-600" />
-              ) : (
-                <LogOut className="h-4 w-4 text-red-600" />
-              )}
-            </div>
-            <p className="font-semibold text-red-700 group-hover:text-red-800">{t('auth.logout')}</p>
+            <span className="flex items-center gap-3">
+              <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-rose-100 text-rose-600">
+                {isLoggingOut ? (
+                  <Spinner className="h-4 w-4" />
+                ) : (
+                  <LogOut className="h-5 w-5" />
+                )}
+              </span>
+              {t('auth.logout')}
+            </span>
+            <ChevronRight
+              className={`h-4 w-4 text-rose-400 transition-transform ${chevronDirectionClass}`}
+            />
           </DropdownMenuItem>
         </div>
       </DropdownMenuContent>
