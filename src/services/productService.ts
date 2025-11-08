@@ -17,6 +17,24 @@ import type {
   ApiResponse,
 } from '../types/product';
 
+const unwrapApiResponse = <T>(payload: ApiResponse<T> | T | undefined): T | undefined => {
+  if (!payload) {
+    return undefined;
+  }
+
+  if (
+    typeof payload === 'object' &&
+    payload !== null &&
+    'success' in payload &&
+    'data' in payload
+  ) {
+    const apiPayload = payload as ApiResponse<T>;
+    return apiPayload.data ?? undefined;
+  }
+
+  return payload as T;
+};
+
 /**
  * Product Service
  * Handles all product-related API operations
@@ -274,10 +292,11 @@ export const productVariantService = {
    * @returns Promise with array of variants
    */
   getByProduct: async (productId: number): Promise<ProductVariant[]> => {
-    const response = await http.get<ProductVariant[]>(
+    const response = await http.get<ApiResponse<ProductVariant[]> | ProductVariant[]>(
       `/api/Products/${productId}/variants`
     );
-    return response.data;
+    const data = unwrapApiResponse<ProductVariant[]>(response.data);
+    return data ?? (Array.isArray(response.data) ? (response.data as ProductVariant[]) : []);
   },
 
   /**
@@ -286,8 +305,11 @@ export const productVariantService = {
    * @returns Promise with variant details
    */
   getById: async (id: number): Promise<ProductVariant> => {
-    const response = await http.get<ProductVariant>(`/api/Products/variants/${id}`);
-    return response.data;
+    const response = await http.get<ApiResponse<ProductVariant> | ProductVariant>(
+      `/api/Products/variants/${id}`
+    );
+    const data = unwrapApiResponse<ProductVariant>(response.data);
+    return data ?? (response.data as ProductVariant);
   },
 
   /**
@@ -297,11 +319,12 @@ export const productVariantService = {
    * @returns Promise with created variant
    */
   create: async (productId: number, data: ProductVariantCreateDto): Promise<ProductVariant> => {
-    const response = await http.post<ProductVariant>(
+    const response = await http.post<ApiResponse<ProductVariant> | ProductVariant>(
       `/api/Products/${productId}/variants`,
       data
     );
-    return response.data;
+    const payload = unwrapApiResponse<ProductVariant>(response.data);
+    return payload ?? (response.data as ProductVariant);
   },
 
   /**
@@ -311,11 +334,12 @@ export const productVariantService = {
    * @returns Promise with updated variant
    */
   update: async (id: number, data: ProductVariantUpdateDto): Promise<ProductVariant> => {
-    const response = await http.put<ProductVariant>(
+    const response = await http.put<ApiResponse<ProductVariant> | ProductVariant>(
       `/api/Products/variants/${id}`,
       data
     );
-    return response.data;
+    const payload = unwrapApiResponse<ProductVariant>(response.data);
+    return payload ?? (response.data as ProductVariant);
   },
 
   /**
@@ -337,11 +361,12 @@ export const productVariantService = {
     id: number,
     data: ProductVariantStockUpdateDto
   ): Promise<ProductVariant> => {
-    const response = await http.patch<ProductVariant>(
+    const response = await http.patch<ApiResponse<ProductVariant> | ProductVariant>(
       `/api/Products/variants/${id}/stock`,
       data
     );
-    return response.data;
+    const payload = unwrapApiResponse<ProductVariant>(response.data);
+    return payload ?? (response.data as ProductVariant);
   },
 
   /**
@@ -354,11 +379,12 @@ export const productVariantService = {
     id: number,
     data: ProductVariantPriceUpdateDto
   ): Promise<ProductVariant> => {
-    const response = await http.patch<ProductVariant>(
+    const response = await http.patch<ApiResponse<ProductVariant> | ProductVariant>(
       `/api/Products/variants/${id}/price`,
       data
     );
-    return response.data;
+    const payload = unwrapApiResponse<ProductVariant>(response.data);
+    return payload ?? (response.data as ProductVariant);
   },
 };
 
@@ -373,8 +399,11 @@ export const productImageService = {
    * @returns Promise with array of images
    */
   getByProduct: async (productId: number): Promise<ProductImage[]> => {
-    const response = await http.get<ProductImage[]>(`/api/Products/${productId}/images`);
-    return response.data;
+    const response = await http.get<ApiResponse<ProductImage[]> | ProductImage[]>(
+      `/api/Products/${productId}/images`
+    );
+    const data = unwrapApiResponse<ProductImage[]>(response.data);
+    return data ?? (Array.isArray(response.data) ? (response.data as ProductImage[]) : []);
   },
 
   /**
@@ -383,8 +412,11 @@ export const productImageService = {
    * @returns Promise with image details
    */
   getById: async (id: number): Promise<ProductImage> => {
-    const response = await http.get<ProductImage>(`/api/Products/images/${id}`);
-    return response.data;
+    const response = await http.get<ApiResponse<ProductImage> | ProductImage>(
+      `/api/Products/images/${id}`
+    );
+    const data = unwrapApiResponse<ProductImage>(response.data);
+    return data ?? (response.data as ProductImage);
   },
 
   /**
@@ -394,11 +426,12 @@ export const productImageService = {
    * @returns Promise with created image
    */
   create: async (productId: number, data: ProductImageCreateDto): Promise<ProductImage> => {
-    const response = await http.post<ProductImage>(
+    const response = await http.post<ApiResponse<ProductImage> | ProductImage>(
       `/api/Products/${productId}/images`,
       data
     );
-    return response.data;
+    const payload = unwrapApiResponse<ProductImage>(response.data);
+    return payload ?? (response.data as ProductImage);
   },
 
   /**
@@ -408,8 +441,12 @@ export const productImageService = {
    * @returns Promise with updated image
    */
   update: async (id: number, data: ProductImageUpdateDto): Promise<ProductImage> => {
-    const response = await http.put<ProductImage>(`/api/Products/images/${id}`, data);
-    return response.data;
+    const response = await http.put<ApiResponse<ProductImage> | ProductImage>(
+      `/api/Products/images/${id}`,
+      data
+    );
+    const payload = unwrapApiResponse<ProductImage>(response.data);
+    return payload ?? (response.data as ProductImage);
   },
 
   /**
@@ -427,10 +464,11 @@ export const productImageService = {
    * @returns Promise with updated image
    */
   setMain: async (id: number): Promise<ProductImage> => {
-    const response = await http.patch<ProductImage>(
+    const response = await http.patch<ApiResponse<ProductImage> | ProductImage>(
       `/api/Products/images/${id}/set-main`
     );
-    return response.data;
+    const payload = unwrapApiResponse<ProductImage>(response.data);
+    return payload ?? (response.data as ProductImage);
   },
 
   /**

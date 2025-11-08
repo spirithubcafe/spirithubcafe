@@ -13,9 +13,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../ui/alert-dialog';
-import { Package, Plus, Edit, Trash2, Eye, EyeOff, Search, Loader2, Star, Coffee, Layers } from 'lucide-react';
-import { productService, productVariantService } from '../../services/productService';
+import { Package, Plus, Edit, Trash2, Eye, EyeOff, Search, Loader2, Star, Coffee, Layers, Image as ImageIcon, Crown } from 'lucide-react';
+import { productService, productVariantService, productImageService } from '../../services/productService';
 import { categoryService } from '../../services/categoryService';
+import { resolveImageFromProductImage, getProductImageUrl } from '../../lib/imageUtils';
 import type {
   Product,
   Category,
@@ -23,9 +24,24 @@ import type {
   ProductVariantCreateDto,
   ProductVariantUpdateDto,
   ProductCreateUpdateDto,
+  ProductImage,
+  ProductImageCreateDto,
+  ProductImageUpdateDto,
 } from '../../types/product';
 
 type VariantFormData = Omit<ProductVariantCreateDto, 'productId'>;
+
+type ImageFormData = {
+  fileName: string;
+  imagePath: string;
+  altText?: string;
+  altTextAr?: string;
+  displayOrder: number;
+  isMain: boolean;
+  fileSize: number;
+  width?: number;
+  height?: number;
+};
 
 interface ProductFilters {
   categoryId?: number;
@@ -77,6 +93,24 @@ export const ProductsManagement: React.FC = () => {
   });
   const [variants, setVariants] = useState<ProductVariant[]>([]);
   const [variantParentProduct, setVariantParentProduct] = useState<Product | null>(null);
+  const [isImagesDialogOpen, setIsImagesDialogOpen] = useState(false);
+  const [imageLoading, setImageLoading] = useState(false);
+  const [imageSubmitting, setImageSubmitting] = useState(false);
+  const [imageFormVisible, setImageFormVisible] = useState(false);
+  const [editingImage, setEditingImage] = useState<ProductImage | null>(null);
+  const [imageParentProduct, setImageParentProduct] = useState<Product | null>(null);
+  const [images, setImages] = useState<ProductImage[]>([]);
+  const [imageFormData, setImageFormData] = useState<ImageFormData>({
+    fileName: '',
+    imagePath: '',
+    altText: '',
+    altTextAr: '',
+    displayOrder: 0,
+    isMain: false,
+    fileSize: 0,
+    width: undefined,
+    height: undefined,
+  });
 
   const [formData, setFormData] = useState<ProductCreateUpdateDto>({
     sku: '',
@@ -526,11 +560,146 @@ export const ProductsManagement: React.FC = () => {
     if (!variantParentProduct) {
       return;
     }
+
     try {
       await productVariantService.delete(variantId);
       await loadVariants(variantParentProduct.id);
     } catch (error) {
       console.error('Error deleting variant:', error);
+    }
+  };
+
+  const resetImageForm = (displayOrder: number = images.length) => {
+    setImageFormData({
+      fileName: '',
+      imagePath: '',
+      altText: '',
+      altTextAr: '',
+      displayOrder,
+      isMain: images.length === 0,
+      fileSize: 0,
+      width: undefined,
+      height: undefined,
+    });
+    setImageFormVisible(true);
+  };
+
+  const loadImages = async (productId: number) => {
+    try {
+      setImageLoading(true);
+      const imageData = await productImageService.getByProduct(productId);
+      const ordered = [...imageData].sort(
+        (a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0)
+      );
+      setImages(ordered);
+    } catch (error) {
+      console.error('Error loading product images:', error);
+      setImages([]);
+    } finally {
+      setImageLoading(false);
+    }
+  };
+
+  const handleOpenImages = async (product: Product) => {
+    setImageParentProduct(product);
+    setEditingImage(null);
+    setImageFormVisible(false);
+    setIsImagesDialogOpen(true);
+    await loadImages(product.id);
+  };
+
+  const handleImageCreate = () => {
+    resetImageForm(images.length);
+    setEditingImage(null);
+  };
+
+  const handleImageEdit = (image: ProductImage) => {
+    setEditingImage(image);
+    setImageFormData({
+      fileName: image.fileName,
+      imagePath: image.imagePath,
+      altText: image.altText || '',
+      altTextAr: image.altTextAr || '',
+      displayOrder: image.displayOrder ?? 0,
+      isMain: image.isMain,
+      fileSize: image.fileSize || 0,
+      width: image.width,
+      height: image.height,
+    });
+    setImageFormVisible(true);
+  };
+
+  const handleImageSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!imageParentProduct) {
+      return;
+    }
+
+    setImageSubmitting(true);
+    try {
+      if (editingImage) {
+        const updatePayload: ProductImageUpdateDto = {
+          altText: imageFormData.altText,
+          altTextAr: imageFormData.altTextAr,
+          displayOrder: imageFormData.displayOrder,
+        };
+        await productImageService.update(editingImage.id, updatePayload);
+        if (imageFormData.isMain && !editingImage.isMain) {
+          await productImageService.setMain(editingImage.id);
+        }
+      } else {
+        const createPayload: ProductImageCreateDto = {
+          productId: imageParentProduct.id,
+          fileName: imageFormData.fileName.trim() || `image-${Date.now()}`,
+          imagePath: imageFormData.imagePath.trim(),
+          altText: imageFormData.altText || undefined,
+          altTextAr: imageFormData.altTextAr || undefined,
+          displayOrder: imageFormData.displayOrder,
+          isMain: imageFormData.isMain,
+          fileSize: imageFormData.fileSize || 0,
+          width: imageFormData.width,
+          height: imageFormData.height,
+        };
+        await productImageService.create(imageParentProduct.id, createPayload);
+      }
+
+      await loadImages(imageParentProduct.id);
+      setImageFormVisible(false);
+      setEditingImage(null);
+    } catch (error) {
+      console.error('Error saving product image:', error);
+    } finally {
+      setImageSubmitting(false);
+    }
+  };
+
+  const handleImageDelete = async (imageId: number) => {
+    if (!imageParentProduct) {
+      return;
+    }
+
+    if (!window.confirm(t('admin.products.deleteImageWarning'))) {
+      return;
+    }
+
+    try {
+      await productImageService.delete(imageId);
+      await loadImages(imageParentProduct.id);
+    } catch (error) {
+      console.error('Error deleting product image:', error);
+    }
+  };
+
+  const handleSetMainImage = async (imageId: number) => {
+    if (!imageParentProduct) {
+      return;
+    }
+
+    try {
+      await productImageService.setMain(imageId);
+      await loadImages(imageParentProduct.id);
+    } catch (error) {
+      console.error('Error updating main product image:', error);
     }
   };
 
@@ -685,6 +854,14 @@ export const ProductsManagement: React.FC = () => {
                           aria-label={t('admin.products.manageVariants')}
                         >
                           <Layers className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleOpenImages(product)}
+                          aria-label={t('admin.products.manageImages')}
+                        >
+                          <ImageIcon className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="ghost"
@@ -1009,7 +1186,7 @@ export const ProductsManagement: React.FC = () => {
         <DialogHeader>
           <DialogTitle>
             {variantParentProduct
-              ? `${t('admin.products.variantsFor')} ${variantParentProduct.name}`
+              ? t('admin.products.variantsFor', { name: variantParentProduct.name })
               : t('admin.products.variants')}
           </DialogTitle>
         </DialogHeader>
@@ -1337,6 +1514,320 @@ export const ProductsManagement: React.FC = () => {
             {t('admin.products.noProductSelected')}
           </p>
         )}
+      </DialogContent>
+    </Dialog>
+
+    <Dialog
+      open={isImagesDialogOpen}
+      onOpenChange={(open) => {
+        setIsImagesDialogOpen(open);
+        if (!open) {
+          setImageParentProduct(null);
+          setImages([]);
+          setImageFormVisible(false);
+          setEditingImage(null);
+          setImageFormData({
+            fileName: '',
+            imagePath: '',
+            altText: '',
+            altTextAr: '',
+            displayOrder: 0,
+            isMain: false,
+            fileSize: 0,
+            width: undefined,
+            height: undefined,
+          });
+        }
+      }}
+    >
+      <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>
+            {imageParentProduct
+              ? t('admin.products.imagesFor', { name: imageParentProduct.name })
+              : t('admin.products.images')}
+          </DialogTitle>
+        </DialogHeader>
+
+        {imageParentProduct ? (
+          <div className="space-y-6">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">
+                  {images.length} {t('admin.products.images')}
+                </p>
+              </div>
+              <Button onClick={handleImageCreate} className="self-start sm:self-auto">
+                <Plus className="mr-2 h-4 w-4" />
+                {t('admin.products.addImage')}
+              </Button>
+            </div>
+
+            {imageLoading ? (
+              <div className="flex justify-center py-10 text-muted-foreground">
+                <Loader2 className="h-5 w-5 animate-spin" />
+              </div>
+            ) : images.length === 0 ? (
+              <div className="rounded-md border border-dashed p-6 text-center text-muted-foreground">
+                {t('admin.products.noImages')}
+              </div>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2">
+                {images.map((image) => {
+                  const previewUrl =
+                    resolveImageFromProductImage(image) ?? getProductImageUrl(image?.imagePath);
+                  return (
+                  <Card
+                    key={image.id}
+                    className={cn(image.isMain && 'border-amber-500')}
+                  >
+                    <CardContent className="space-y-3 p-4">
+                      <div className="relative aspect-video w-full overflow-hidden rounded-md bg-muted">
+                        <img
+                          src={previewUrl}
+                          alt={image.altText || image.fileName}
+                          className="h-full w-full object-cover"
+                          onError={(event) => {
+                            event.currentTarget.src = '/images/products/default-product.webp';
+                          }}
+                        />
+                        {image.isMain && (
+                          <Badge className="absolute top-2 left-2 bg-amber-600 text-white">
+                            {t('admin.products.imageMain')}
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="space-y-1 text-sm">
+                        <p className="font-semibold">{image.fileName}</p>
+                        <p className="text-muted-foreground break-words">{image.imagePath}</p>
+                        {image.altText && (
+                          <p className="text-muted-foreground">{image.altText}</p>
+                        )}
+                        {image.altTextAr && (
+                          <p className="text-muted-foreground" dir="rtl">
+                            {image.altTextAr}
+                          </p>
+                        )}
+                        <p className="text-xs text-muted-foreground">
+                          {t('admin.products.imageDisplayOrder')}: {image.displayOrder ?? 0}
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleImageEdit(image)}
+                        >
+                          {t('common.edit')}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleSetMainImage(image.id)}
+                          disabled={image.isMain}
+                        >
+                          <Crown className="mr-1 h-4 w-4" />
+                          {t('admin.products.setAsMain')}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-600 hover:text-red-700"
+                          onClick={() => handleImageDelete(image.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+              </div>
+            )}
+
+            {imageFormVisible && (
+              <form
+                onSubmit={handleImageSubmit}
+                className="space-y-4 rounded-lg border bg-card/40 p-4"
+              >
+                <h4 className="text-base font-semibold">
+                  {editingImage ? t('admin.products.editImage') : t('admin.products.addImage')}
+                </h4>
+
+                {!editingImage && (
+                  <>
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label htmlFor="imagePath">{t('admin.products.imagePath')} *</Label>
+                        <Input
+                          id="imagePath"
+                          value={imageFormData.imagePath}
+                          onChange={(event) =>
+                            setImageFormData((prev) => ({
+                              ...prev,
+                              imagePath: event.target.value,
+                            }))
+                          }
+                          placeholder={t('admin.products.imageUrlPlaceholder')}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="fileName">{t('admin.products.imageFileName')} *</Label>
+                        <Input
+                          id="fileName"
+                          value={imageFormData.fileName}
+                          onChange={(event) =>
+                            setImageFormData((prev) => ({
+                              ...prev,
+                              fileName: event.target.value,
+                            }))
+                          }
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                      <div className="space-y-2">
+                        <Label htmlFor="fileSize">{t('admin.products.imageFileSize')}</Label>
+                        <Input
+                          id="fileSize"
+                          type="number"
+                          value={imageFormData.fileSize}
+                          onChange={(event) =>
+                            setImageFormData((prev) => ({
+                              ...prev,
+                              fileSize: Number(event.target.value) || 0,
+                            }))
+                          }
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="imageWidth">{t('admin.products.imageWidth')}</Label>
+                        <Input
+                          id="imageWidth"
+                          type="number"
+                          value={imageFormData.width ?? ''}
+                          onChange={(event) =>
+                            setImageFormData((prev) => ({
+                              ...prev,
+                              width: event.target.value
+                                ? Number(event.target.value)
+                                : undefined,
+                            }))
+                          }
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="imageHeight">{t('admin.products.imageHeight')}</Label>
+                        <Input
+                          id="imageHeight"
+                          type="number"
+                          value={imageFormData.height ?? ''}
+                          onChange={(event) =>
+                            setImageFormData((prev) => ({
+                              ...prev,
+                              height: event.target.value
+                                ? Number(event.target.value)
+                                : undefined,
+                            }))
+                          }
+                        />
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="imageAlt">{t('admin.products.imageAlt')}</Label>
+                    <Input
+                      id="imageAlt"
+                      value={imageFormData.altText || ''}
+                      onChange={(event) =>
+                        setImageFormData((prev) => ({
+                          ...prev,
+                          altText: event.target.value,
+                        }))
+                      }
+                      placeholder={t('admin.products.imageAltPlaceholder')}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="imageAltAr">{t('admin.products.imageAltAr')}</Label>
+                    <Input
+                      id="imageAltAr"
+                      value={imageFormData.altTextAr || ''}
+                      onChange={(event) =>
+                        setImageFormData((prev) => ({
+                          ...prev,
+                          altTextAr: event.target.value,
+                        }))
+                      }
+                      placeholder={t('admin.products.imageAltArPlaceholder')}
+                      dir="rtl"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="imageDisplayOrder">
+                      {t('admin.products.imageDisplayOrder')}
+                    </Label>
+                    <Input
+                      id="imageDisplayOrder"
+                      type="number"
+                      value={imageFormData.displayOrder}
+                      onChange={(event) =>
+                        setImageFormData((prev) => ({
+                          ...prev,
+                          displayOrder: Number(event.target.value) || 0,
+                        }))
+                      }
+                    />
+                  </div>
+                  <div className="flex items-center space-x-2 rounded-md border p-3">
+                    <Switch
+                      id="imageIsMain"
+                      checked={imageFormData.isMain}
+                      onCheckedChange={(checked) =>
+                        setImageFormData((prev) => ({
+                          ...prev,
+                          isMain: checked,
+                        }))
+                      }
+                    />
+                    <Label htmlFor="imageIsMain" className="font-medium">
+                      {t('admin.products.imageMain')}
+                    </Label>
+                  </div>
+                </div>
+
+                <p className="text-xs text-muted-foreground">
+                  {t('admin.products.imageFormHint')}
+                </p>
+
+                <div className="flex justify-end gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setImageFormVisible(false);
+                      setEditingImage(null);
+                    }}
+                  >
+                    {t('common.cancel')}
+                  </Button>
+                  <Button type="submit" disabled={imageSubmitting}>
+                    {imageSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    {editingImage ? t('common.update') : t('common.create')}
+                  </Button>
+                </div>
+              </form>
+            )}
+          </div>
+        ) : null}
       </DialogContent>
     </Dialog>
   </>

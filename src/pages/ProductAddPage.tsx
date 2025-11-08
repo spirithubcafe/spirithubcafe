@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 import { useApp } from '../hooks/useApp';
@@ -12,12 +12,77 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { ArrowLeft, Loader2, Save } from 'lucide-react';
 import { productService } from '../services/productService';
 import { categoryService } from '../services/categoryService';
-import type { ProductCreateUpdateDto, Category } from '../types/product';
+import type { ProductCreateUpdateDto, Category, Product } from '../types/product';
 import { cn } from '../lib/utils';
 
-export const ProductAddPage: React.FC = () => {
+interface ProductFormPageProps {
+  mode?: 'create' | 'edit';
+  productId?: number;
+}
+
+const mapProductToFormData = (product: Product): ProductCreateUpdateDto => ({
+  sku: product.sku || '',
+  name: product.name || '',
+  nameAr: product.nameAr || '',
+  description: product.description || '',
+  descriptionAr: product.descriptionAr || '',
+  notes: product.notes || '',
+  notesAr: product.notesAr || '',
+  aromaticProfile: product.aromaticProfile || '',
+  aromaticProfileAr: product.aromaticProfileAr || '',
+  intensity: product.intensity ?? 1,
+  compatibility: product.compatibility || '',
+  compatibilityAr: product.compatibilityAr || '',
+  uses: product.uses || '',
+  usesAr: product.usesAr || '',
+  isActive: product.isActive,
+  isDigital: product.isDigital,
+  isFeatured: product.isFeatured,
+  isOrganic: product.isOrganic,
+  isFairTrade: product.isFairTrade,
+  imageAlt: product.imageAlt || '',
+  imageAltAr: product.imageAltAr || '',
+  launchDate: product.launchDate,
+  expiryDate: product.expiryDate,
+  displayOrder: product.displayOrder ?? 0,
+  origin: product.origin || '',
+  tastingNotes: product.tastingNotes || '',
+  tastingNotesAr: product.tastingNotesAr || '',
+  brewingInstructions: product.brewingInstructions || '',
+  brewingInstructionsAr: product.brewingInstructionsAr || '',
+  roastLevel: product.roastLevel || '',
+  roastLevelAr: product.roastLevelAr || '',
+  process: product.process || '',
+  processAr: product.processAr || '',
+  variety: product.variety || '',
+  varietyAr: product.varietyAr || '',
+  altitude: product.altitude,
+  farm: product.farm || '',
+  farmAr: product.farmAr || '',
+  metaTitle: product.metaTitle || '',
+  metaDescription: product.metaDescription || '',
+  metaKeywords: product.metaKeywords || '',
+  tags: product.tags || '',
+  slug: product.slug || '',
+  categoryId: product.categoryId || 0,
+  mainImageId: product.mainImageId,
+});
+
+export const ProductAddPage: React.FC<ProductFormPageProps> = ({
+  mode = 'create',
+  productId,
+}) => {
   const { t } = useApp();
   const navigate = useNavigate();
+  const params = useParams<{ productId?: string }>();
+  const routeProductId = params.productId ? Number(params.productId) : undefined;
+  const resolvedProductId =
+    typeof productId === 'number'
+      ? productId
+      : typeof routeProductId === 'number' && !Number.isNaN(routeProductId)
+        ? routeProductId
+        : undefined;
+  const isEditMode = mode === 'edit' || typeof resolvedProductId === 'number';
   const [submitting, setSubmitting] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const quillRefDesc = useRef<ReactQuill>(null);
@@ -80,6 +145,8 @@ export const ProductAddPage: React.FC = () => {
   const [slugAvailable, setSlugAvailable] = useState<boolean | null>(null);
   const [checkingSlug, setCheckingSlug] = useState(false);
   const [slugMessage, setSlugMessage] = useState<string | null>(null);
+  const [isInitializing, setIsInitializing] = useState(isEditMode);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     loadCategories();
@@ -96,7 +163,7 @@ export const ProductAddPage: React.FC = () => {
     setCheckingSku(true);
     const handler = window.setTimeout(async () => {
       try {
-        const available = await productService.checkSku(formData.sku);
+        const available = await productService.checkSku(formData.sku, resolvedProductId);
         if (!isMounted) return;
         setSkuAvailable(available);
         setSkuMessage(available ? t('admin.products.skuAvailable') : t('admin.products.skuUnavailable'));
@@ -115,7 +182,7 @@ export const ProductAddPage: React.FC = () => {
       isMounted = false;
       window.clearTimeout(handler);
     };
-  }, [formData.sku, t]);
+  }, [formData.sku, resolvedProductId, t]);
 
   useEffect(() => {
     if (!formData.slug) {
@@ -128,7 +195,7 @@ export const ProductAddPage: React.FC = () => {
     setCheckingSlug(true);
     const handler = window.setTimeout(async () => {
       try {
-        const available = await productService.checkSlug(formData.slug!);
+        const available = await productService.checkSlug(formData.slug!, resolvedProductId);
         if (!isMounted) return;
         setSlugAvailable(available);
         setSlugMessage(available ? t('admin.products.slugAvailable') : t('admin.products.slugUnavailable'));
@@ -147,7 +214,47 @@ export const ProductAddPage: React.FC = () => {
       isMounted = false;
       window.clearTimeout(handler);
     };
-  }, [formData.slug, t]);
+  }, [formData.slug, resolvedProductId, t]);
+
+  useEffect(() => {
+    if (!isEditMode) {
+      setIsInitializing(false);
+      return;
+    }
+
+    if (!resolvedProductId) {
+      setLoadError(t('admin.products.loadFailed'));
+      setIsInitializing(false);
+      return;
+    }
+
+    let isMounted = true;
+    const fetchProduct = async () => {
+      setIsInitializing(true);
+      setLoadError(null);
+      try {
+        const product = await productService.getById(resolvedProductId);
+        if (!isMounted) return;
+        setFormData(mapProductToFormData(product));
+        setSkuAvailable(true);
+        setSlugAvailable(true);
+      } catch (error) {
+        console.error('Error loading product:', error);
+        if (isMounted) {
+          setLoadError(t('admin.products.loadFailed'));
+        }
+      } finally {
+        if (isMounted) {
+          setIsInitializing(false);
+        }
+      }
+    };
+
+    fetchProduct();
+    return () => {
+      isMounted = false;
+    };
+  }, [isEditMode, resolvedProductId, t]);
 
   const loadCategories = async () => {
     try {
@@ -192,10 +299,14 @@ export const ProductAddPage: React.FC = () => {
         return;
       }
 
-      await productService.create(formData);
+      if (isEditMode && resolvedProductId) {
+        await productService.update(resolvedProductId, formData);
+      } else {
+        await productService.create(formData);
+      }
       navigate('/admin/products');
     } catch (error: unknown) {
-      console.error('Error creating product:', error);
+      console.error('Error saving product:', error);
       const apiError = error as { message?: string; errors?: Record<string, string[]> };
       
       if (apiError.errors) {
@@ -230,13 +341,46 @@ export const ProductAddPage: React.FC = () => {
     'link'
   ];
 
+  const pageTitle = isEditMode ? t('admin.products.edit') : t('admin.products.add');
+  const submitLabel = isEditMode ? t('common.update') : t('common.create');
+
+  if (isEditMode && isInitializing) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center py-20">
+        <div className="text-center text-muted-foreground space-y-3">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto" />
+          <p>{t('common.loading')}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isEditMode && loadError) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+        <Card className="max-w-md w-full">
+          <CardHeader>
+            <CardTitle>{pageTitle}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-muted-foreground">{loadError}</p>
+            <Button onClick={() => navigate('/admin/products')} variant="outline" className="gap-2">
+              <ArrowLeft className="h-4 w-4" />
+              {t('common.back')}
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="container mx-auto px-4 max-w-6xl">
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle>{t('admin.products.add')}</CardTitle>
+              <CardTitle>{pageTitle}</CardTitle>
               <Button variant="outline" onClick={() => navigate('/admin/products')}>
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 {t('common.back')}
@@ -479,7 +623,7 @@ export const ProductAddPage: React.FC = () => {
                 <Button type="submit" disabled={submitting || skuAvailable === false || slugAvailable === false}>
                   {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   <Save className="mr-2 h-4 w-4" />
-                  {t('common.create')}
+                  {submitLabel}
                 </Button>
               </div>
             </form>
