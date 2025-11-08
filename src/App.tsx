@@ -3,6 +3,7 @@ import { AppProvider } from './contexts/AppContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
 import { Navigation } from './components/layout/Navigation';
+import { ScrollToTop } from './components/layout/ScrollToTop';
 import { Footer } from './components/layout/Footer';
 import { CartDrawer } from './components/cart/CartDrawer';
 import HomePage from './pages/HomePage';
@@ -41,6 +42,7 @@ function AppContent() {
     <div className="min-h-screen bg-white">
       <Navigation />
       <CartDrawer />
+      <ScrollToTop />
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/profile" element={<ProfilePage />} />
