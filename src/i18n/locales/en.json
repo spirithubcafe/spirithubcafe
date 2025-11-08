@@ -68,7 +68,8 @@
     "emailRequired": "Email is required",
     "passwordRequired": "Password is required",
     "invalidEmail": "Please enter a valid email address",
-    "passwordTooShort": "Password must be at least 6 characters long"
+    "passwordTooShort": "Password must be at least 6 characters long",
+    "loginRequired": "Please log in to continue"
   },
   "admin": {
     "title": "Admin Panel",
