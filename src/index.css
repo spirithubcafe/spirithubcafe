@@ -188,6 +188,29 @@ html {
   background: var(--scrollbar-thumb-hover);
 }
 
+/* OverlayScrollbars theme overrides: use site CSS variables so the custom OS theme matches light/dark */
+.os-theme-custom .os-scrollbar-track {
+  background: var(--scrollbar-track) !important;
+  border-radius: 9999px !important;
+}
+
+.os-theme-custom .os-scrollbar-handle {
+  background: var(--scrollbar-thumb) !important;
+  border-radius: 9999px !important;
+  border: 2px solid transparent !important;
+  background-clip: padding-box !important;
+  transition: background 0.2s ease !important;
+}
+
+.os-theme-custom .os-scrollbar-handle:hover {
+  background: var(--scrollbar-thumb-hover) !important;
+}
+
+.os-theme-custom .os-scrollbar {
+  width: 10px !important;
+  height: 10px !important;
+}
+
 /* Text clamp utility for product descriptions */
 .line-clamp-2 {
   display: -webkit-box;
