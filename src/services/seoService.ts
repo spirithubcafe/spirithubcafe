@@ -109,10 +109,29 @@ const getPublicOverview = async (): Promise<SeoOverview> => {
     ...EMPTY_OVERVIEW,
     sitemap,
     productFeed,
-    activeProductCount: productFeed.entryCount,
-    activeCategoryCount: 0,
     baseUrl: window.location.origin,
   };
+};
+
+const fetchActiveCounts = async (): Promise<{ productCount: number; categoryCount: number }> => {
+  try {
+    const [productResponse, categories] = await Promise.all([
+      productService.getAll({ page: 1, pageSize: 500, includeInactive: false }),
+      categoryService.getAll({ includeInactive: false }),
+    ]);
+
+    const productCount = Array.isArray(productResponse)
+      ? productResponse.length
+      : productResponse.totalCount ?? productResponse.items?.length ?? 0;
+
+    return {
+      productCount,
+      categoryCount: categories.length,
+    };
+  } catch (error) {
+    console.warn('Unable to fetch active counts for SEO overview', error);
+    return { productCount: 0, categoryCount: 0 };
+  }
 };
 
 const downloadFile = (fileName: string, contents: string) => {
@@ -231,7 +250,12 @@ export const seoService = {
   isApiEnabled: isLocalEnvironment,
 
   async getOverview(): Promise<SeoOverview> {
-    return getPublicOverview();
+    const [overview, counts] = await Promise.all([getPublicOverview(), fetchActiveCounts()]);
+    return {
+      ...overview,
+      activeProductCount: counts.productCount,
+      activeCategoryCount: counts.categoryCount,
+    };
   },
 
   async generateSitemap(): Promise<SeoGenerationResult> {
