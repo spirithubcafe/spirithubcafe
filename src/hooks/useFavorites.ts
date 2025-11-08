@@ -11,6 +11,20 @@ export interface FavoriteItem {
 }
 
 const FAVORITES_STORAGE_KEY = 'spirithub_favorites';
+const FAVORITES_EVENT = 'spirithub:favoritesUpdated';
+
+const readFavoritesFromStorage = (): FavoriteItem[] => {
+  if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+    return [];
+  }
+  try {
+    const savedFavorites = localStorage.getItem(FAVORITES_STORAGE_KEY);
+    return savedFavorites ? JSON.parse(savedFavorites) : [];
+  } catch (error) {
+    console.error('Error loading favorites:', error);
+    return [];
+  }
+};
 
 export const useFavorites = () => {
   const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
@@ -19,28 +33,34 @@ export const useFavorites = () => {
   // Load favorites from localStorage on mount
   useEffect(() => {
     const loadFavorites = () => {
-      try {
-        const savedFavorites = localStorage.getItem(FAVORITES_STORAGE_KEY);
-        if (savedFavorites) {
-          const parsedFavorites = JSON.parse(savedFavorites);
-          setFavorites(parsedFavorites);
-        }
-      } catch (error) {
-        console.error('Error loading favorites:', error);
-        setFavorites([]);
-      } finally {
-        setIsLoading(false);
-      }
+      const parsedFavorites = readFavoritesFromStorage();
+      setFavorites(parsedFavorites);
+      setIsLoading(false);
+    };
+
+    const handleFavoritesUpdate = (event: Event) => {
+      const customEvent = event as CustomEvent<FavoriteItem[] | undefined>;
+      const updatedFavorites = customEvent.detail ?? readFavoritesFromStorage();
+      setFavorites(updatedFavorites);
     };
 
     loadFavorites();
+    window.addEventListener(FAVORITES_EVENT, handleFavoritesUpdate);
+
+    return () => {
+      window.removeEventListener(FAVORITES_EVENT, handleFavoritesUpdate);
+    };
   }, []);
 
   // Save favorites to localStorage
   const saveFavorites = (newFavorites: FavoriteItem[]) => {
+    if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+      return;
+    }
     try {
       localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(newFavorites));
       setFavorites(newFavorites);
+      window.dispatchEvent(new CustomEvent(FAVORITES_EVENT, { detail: newFavorites }));
     } catch (error) {
       console.error('Error saving favorites:', error);
     }
@@ -92,8 +112,12 @@ export const useFavorites = () => {
 
   // Clear all favorites
   const clearFavorites = () => {
+    if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+      return;
+    }
     localStorage.removeItem(FAVORITES_STORAGE_KEY);
     setFavorites([]);
+    window.dispatchEvent(new CustomEvent(FAVORITES_EVENT, { detail: [] }));
   };
 
   return {
