@@ -16,6 +16,8 @@ import { getProductImageUrl, handleImageError, resolveProductImageUrls } from '.
 import type { Product as ApiProduct, ProductVariant } from '../types/product';
 import { useCart } from '../hooks/useCart';
 import { Button } from '../components/ui/button';
+import { Seo } from '../components/seo/Seo';
+import { siteMetadata, resolveAbsoluteUrl } from '../config/siteMetadata';
 
 type LoadState = 'idle' | 'loading' | 'ready' | 'error';
 
@@ -198,6 +200,85 @@ export const ProductDetailPage = () => {
     return resolvePrice(product, selectedVariant);
   }, [product, selectedVariant]);
 
+  const plainDescription = useMemo(() => {
+    if (!displayDescription) {
+      return '';
+    }
+    return displayDescription.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  }, [displayDescription]);
+
+  const canonicalUrl = useMemo(() => {
+    if (!product) {
+      return `${siteMetadata.baseUrl}/products`;
+    }
+    const slugOrId = (product.slug && product.slug.trim()) || String(product.id);
+    return `${siteMetadata.baseUrl}/products/${slugOrId}`;
+  }, [product]);
+
+  const seoTitle = product ? displayName : language === 'ar' ? 'تفاصيل المنتج' : 'Product details';
+
+  const seoDescription = useMemo(() => {
+    if (plainDescription) {
+      return plainDescription;
+    }
+
+    if (product) {
+      return language === 'ar'
+        ? `اكتشف ${displayName} من سبيريت هب كافيه بطعم محمص بعناية في مسقط.`
+        : `Discover ${displayName} from Spirit Hub Cafe, roasted fresh in Muscat.`;
+    }
+
+    return language === 'ar'
+      ? 'منتج القهوة المختصة من سبيريت هب كافيه.'
+      : 'A specialty coffee product from Spirit Hub Cafe.';
+  }, [displayName, language, plainDescription, product]);
+
+  const structuredData = useMemo(() => {
+    if (!product) {
+      return null;
+    }
+
+    const imageList = images
+      .map((img) => resolveAbsoluteUrl(img))
+      .filter((src): src is string => Boolean(src));
+
+    const offerPrice = price > 0 ? price.toFixed(3) : undefined;
+    const aggregate =
+      product.reviewCount && product.reviewCount > 0
+        ? {
+            '@type': 'AggregateRating',
+            ratingValue: product.averageRating ?? 0,
+            reviewCount: product.reviewCount,
+          }
+        : undefined;
+
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'Product',
+      name: displayName,
+      description: seoDescription,
+      sku: product.sku,
+      image: imageList,
+      brand: {
+        '@type': 'Brand',
+        name: siteMetadata.siteName,
+      },
+      offers: offerPrice
+        ? {
+            '@type': 'Offer',
+            priceCurrency: 'OMR',
+            price: offerPrice,
+            availability: product.isActive
+              ? 'https://schema.org/InStock'
+              : 'https://schema.org/OutOfStock',
+            url: canonicalUrl,
+          }
+        : undefined,
+      aggregateRating: aggregate,
+      category: product.category?.name,
+    };
+  }, [canonicalUrl, displayName, images, price, product, seoDescription]);
+
   const isAvailable = product?.isActive ?? false;
   const averageRating = product?.averageRating ?? 0;
   const totalReviews = product?.reviewCount ?? 0;
@@ -274,6 +355,19 @@ export const ProductDetailPage = () => {
         language === 'ar' ? 'rtl' : 'ltr'
       }`}
     >
+      <Seo
+        title={seoTitle}
+        description={seoDescription}
+        keywords={[
+          displayName,
+          product?.category?.name || '',
+          'Spirit Hub Cafe',
+          'specialty coffee Oman',
+        ].filter(Boolean)}
+        canonical={canonicalUrl}
+        structuredData={structuredData ?? undefined}
+        type="product"
+      />
       {/* Breadcrumb */}
       <div className="bg-white shadow-sm py-4">
         <div className="container mx-auto px-4">

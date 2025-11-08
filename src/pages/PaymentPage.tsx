@@ -8,6 +8,8 @@ import { Separator } from '../components/ui/separator';
 import { useApp } from '../hooks/useApp';
 import { useCart } from '../hooks/useCart';
 import type { CheckoutOrder } from '../types/checkout';
+import { Seo } from '../components/seo/Seo';
+import { siteMetadata } from '../config/siteMetadata';
 
 const PENDING_ORDER_STORAGE_KEY = 'spirithub_pending_checkout';
 const LAST_SUCCESS_STORAGE_KEY = 'spirithub_last_success_order';
@@ -94,6 +96,17 @@ export const PaymentPage: React.FC = () => {
   if (!order) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+        <Seo
+          title={language === 'ar' ? 'الدفع' : 'Payment'}
+          description={
+            language === 'ar'
+              ? 'نقوم بإعداد تفاصيل الدفع الخاصة بك.'
+              : 'Preparing your secure payment session.'
+          }
+          canonical={`${siteMetadata.baseUrl}/payment`}
+          noindex
+          robots="noindex, nofollow"
+        />
         <PageHeader
           title="Payment"
           titleAr="الدفع"
@@ -114,6 +127,17 @@ export const PaymentPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+      <Seo
+        title={language === 'ar' ? 'الدفع' : 'Payment'}
+        description={
+          language === 'ar'
+            ? 'أكمل عملية الدفع لطلب سبيريت هب كافيه.'
+            : 'Complete the secure payment for your Spirit Hub Cafe order.'
+        }
+        canonical={`${siteMetadata.baseUrl}/payment`}
+        noindex
+        robots="noindex, nofollow"
+      />
       <PageHeader
         title="Payment"
         titleAr="الدفع"

@@ -1,11 +1,26 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useApp } from '../hooks/useApp';
 import { Truck, Clock, MapPin, Package, AlertCircle, CheckCircle, Mail, Phone } from 'lucide-react';
 import { PageHeader } from '../components/layout/PageHeader';
 import { motion } from 'framer-motion';
+import { Seo } from '../components/seo/Seo';
+import { siteMetadata } from '../config/siteMetadata';
 
 export const DeliveryPolicyPage: React.FC = () => {
   const { language } = useApp();
+  const seoCopy = useMemo(
+    () =>
+      language === 'ar'
+        ? {
+            title: 'سياسة التوصيل والشحن',
+            description: 'تعرف على جداول الشحن وخيارات التسليم ورسوم التوصيل لدى سبيريت هب كافيه.',
+          }
+        : {
+            title: 'Delivery & shipping policy',
+            description: 'Understand transit times, shipping methods, and coverage for Spirit Hub Cafe orders.',
+          },
+    [language]
+  );
 
   const sections = [
     {
@@ -85,7 +100,18 @@ export const DeliveryPolicyPage: React.FC = () => {
  
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br from-stone-50 to-stone-100 ${language === 'ar' ? 'rtl' : 'ltr'}`}>
+    <div
+      className={`min-h-screen bg-gradient-to-br from-stone-50 to-stone-100 ${
+        language === 'ar' ? 'rtl' : 'ltr'
+      }`}
+    >
+      <Seo
+        title={seoCopy.title}
+        description={seoCopy.description}
+        keywords={['Spirit Hub Cafe delivery', 'سياسة الشحن سبيريت هب']}
+        canonical={`${siteMetadata.baseUrl}/delivery`}
+        type="article"
+      />
       {/* Page Header */}
       <PageHeader
         title="Delivery Policy"

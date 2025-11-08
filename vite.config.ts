@@ -1,13 +1,65 @@
 import path from "path"
 import { readFileSync } from "fs"
+import fs from "fs/promises"
 import tailwindcss from "@tailwindcss/vite"
 import react from "@vitejs/plugin-react-swc"
 import { VitePWA } from "vite-plugin-pwa"
-import { defineConfig } from "vite"
+import { defineConfig, type ViteDevServer } from "vite"
+import type { IncomingMessage, ServerResponse } from "http"
 
 const pwaManifest = JSON.parse(
   readFileSync(new URL("./public/manifest.webmanifest", import.meta.url), "utf-8")
 )
+
+const seoWriterPlugin = () => ({
+  name: "seo-writer",
+  configureServer(server: ViteDevServer) {
+    server.middlewares.use((req: IncomingMessage, res: ServerResponse, next) => {
+      if (!req.url) {
+        return next()
+      }
+
+      const requestUrl = new URL(req.url, "http://localhost")
+      if (requestUrl.pathname !== "/__seo/save-file" || req.method !== "POST") {
+        return next()
+      }
+
+      let body = ""
+      req.on("data", (chunk: Buffer) => {
+        body += chunk.toString()
+      })
+
+      req.on("end", async () => {
+        try {
+          const payload = JSON.parse(body || "{}")
+          const fileName = payload.fileName
+          const contents = payload.contents
+
+          if (!fileName || typeof contents !== "string") {
+            res.statusCode = 400
+            res.setHeader("Content-Type", "application/json")
+            res.end(JSON.stringify({ success: false, message: "Invalid payload." }))
+            return
+          }
+
+          const publicDir = path.resolve(__dirname, "public")
+          const targetPath = path.join(publicDir, fileName)
+
+          await fs.rm(targetPath, { force: true })
+          await fs.writeFile(targetPath, contents, "utf8")
+
+          res.statusCode = 200
+          res.setHeader("Content-Type", "application/json")
+          res.end(JSON.stringify({ success: true, path: targetPath }))
+        } catch (error) {
+          res.statusCode = 500
+          res.setHeader("Content-Type", "application/json")
+          res.end(JSON.stringify({ success: false, message: (error as Error).message }))
+        }
+      })
+    })
+  }
+})
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -63,7 +115,8 @@ export default defineConfig({
         navigateFallback: "index.html",
         type: "module"
       }
-    })
+    }),
+    seoWriterPlugin()
   ],
   resolve: {
     alias: {

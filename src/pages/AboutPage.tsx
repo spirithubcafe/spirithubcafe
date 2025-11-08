@@ -1,11 +1,40 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useApp } from '../hooks/useApp';
 import { motion } from 'framer-motion';
 import { Award, Coffee, Heart, Shield } from 'lucide-react';
 import { PageHeader } from '../components/layout/PageHeader';
+import { Seo } from '../components/seo/Seo';
+import { siteMetadata } from '../config/siteMetadata';
 
 export const AboutPage: React.FC = () => {
   const { language } = useApp();
+  const seoCopy = useMemo(
+    () =>
+      language === 'ar'
+        ? {
+            title: 'عن سبيريت هب كافيه',
+            description:
+              'تعرف على فلسفة سبيريت هب كافيه في اختيار وتحميص القهوة المختصة وبناء مجتمع قهوة نابض في عمان.',
+          }
+        : {
+            title: 'About Spirit Hub Cafe',
+            description:
+              'Learn how Spirit Hub Cafe sources high-elevation beans, roasts them with Q Graders, and keeps Muscat’s specialty coffee scene vibrant.',
+          },
+    [language]
+  );
+
+  const structuredData = useMemo(
+    () => ({
+      '@context': 'https://schema.org',
+      '@type': 'AboutPage',
+      url: `${siteMetadata.baseUrl}/about`,
+      name: seoCopy.title,
+      description: seoCopy.description,
+      inLanguage: language === 'ar' ? 'ar' : 'en',
+    }),
+    [language, seoCopy.description, seoCopy.title]
+  );
 
   const sections = [
     {
@@ -87,7 +116,19 @@ Transparent and accountable practices enable us to build a positive reputation a
   ];
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br from-stone-50 to-stone-100 ${language === 'ar' ? 'rtl' : 'ltr'}`}>
+    <div
+      className={`min-h-screen bg-gradient-to-br from-stone-50 to-stone-100 ${
+        language === 'ar' ? 'rtl' : 'ltr'
+      }`}
+    >
+      <Seo
+        title={seoCopy.title}
+        description={seoCopy.description}
+        keywords={['about Spirit Hub Cafe', 'coffee roastery story', 'قصة سبيريت هب']}
+        structuredData={structuredData}
+        type="article"
+        canonical={`${siteMetadata.baseUrl}/about`}
+      />
       {/* Page Header */}
       <PageHeader
         title="About Us"

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Phone, Mail, MapPin, Clock, MessageCircle, Send, Instagram, Facebook } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useApp } from '../hooks/useApp';
@@ -9,9 +9,46 @@ import { Label } from '../components/ui/label';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import './ContactPage.css';
+import { Seo } from '../components/seo/Seo';
+import { siteMetadata } from '../config/siteMetadata';
 
 export const ContactPage: React.FC = () => {
   const { language } = useApp();
+  const seoCopy = useMemo(
+    () =>
+      language === 'ar'
+        ? {
+            title: 'تواصل معنا',
+            description:
+              'اتصل بسبيريت هب كافيه في مسقط عبر الهاتف أو البريد أو واتساب لتنسيق الطلبات، الحجز، والاستفسارات حول القهوة المختصة.',
+          }
+        : {
+            title: 'Contact Spirit Hub Cafe',
+            description:
+              'Reach Spirit Hub Cafe in Muscat via phone, email, or WhatsApp to plan private tastings, wholesale partnerships, or coffee support.',
+          },
+    [language]
+  );
+
+  const structuredData = useMemo(
+    () => ({
+      '@context': 'https://schema.org',
+      '@type': 'ContactPage',
+      url: `${siteMetadata.baseUrl}/contact`,
+      name: seoCopy.title,
+      description: seoCopy.description,
+      contactPoint: [
+        {
+          '@type': 'ContactPoint',
+          telephone: '+96891900005',
+          contactType: 'customer service',
+          areaServed: 'OM',
+          availableLanguage: ['en', 'ar'],
+        },
+      ],
+    }),
+    [seoCopy.description, seoCopy.title]
+  );
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -147,6 +184,13 @@ export const ContactPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      <Seo
+        title={seoCopy.title}
+        description={seoCopy.description}
+        keywords={['contact Spirit Hub Cafe', 'coffee support Oman', 'سبيريت هب تواصل']}
+        structuredData={structuredData}
+        canonical={`${siteMetadata.baseUrl}/contact`}
+      />
       {/* Page Header */}
       <PageHeader
         title="Contact Us"

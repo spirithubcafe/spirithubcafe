@@ -6,6 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Button } from '../components/ui/button';
 import { useApp } from '../hooks/useApp';
 import type { CheckoutOrder } from '../types/checkout';
+import { Seo } from '../components/seo/Seo';
+import { siteMetadata } from '../config/siteMetadata';
 
 const PENDING_ORDER_STORAGE_KEY = 'spirithub_pending_checkout';
 
@@ -29,6 +31,17 @@ export const PaymentFailurePage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-red-50 to-white">
+      <Seo
+        title={isArabic ? 'فشل الدفع' : 'Payment failed'}
+        description={
+          isArabic
+            ? 'لم يكتمل الدفع. حاول مجدداً أو اختر طريقة أخرى.'
+            : 'Your payment could not be completed. Try again or use another method.'
+        }
+        canonical={`${siteMetadata.baseUrl}/payment/failure`}
+        noindex
+        robots="noindex, nofollow"
+      />
       <PageHeader
         title="Payment Failed"
         titleAr="عملية الدفع فشلت"

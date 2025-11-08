@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useApp } from '../hooks/useApp';
 import { PageHeader } from '../components/layout/PageHeader';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, HelpCircle, ShoppingCart, Package, RefreshCw, LogIn, Key, CreditCard } from 'lucide-react';
+import { Seo } from '../components/seo/Seo';
+import { siteMetadata } from '../config/siteMetadata';
 
 interface FAQItem {
   id: string;
@@ -16,6 +18,21 @@ interface FAQItem {
 export const FAQPage: React.FC = () => {
   const { language } = useApp();
   const [openItems, setOpenItems] = useState<string[]>(['1']);
+  const seoCopy = useMemo(
+    () =>
+      language === 'ar'
+        ? {
+            title: 'الأسئلة الشائعة',
+            description:
+              'أجوبة واضحة حول الطلبات، الشحن، الحسابات، وطرق الدفع في سبيريت هب كافيه.',
+          }
+        : {
+            title: 'Frequently asked questions',
+            description:
+              'Clear answers about ordering, shipping, accounts, and payments at Spirit Hub Cafe.',
+          },
+    [language]
+  );
 
   const toggleItem = (id: string) => {
     setOpenItems(prev => 
@@ -126,8 +143,35 @@ export const FAQPage: React.FC = () => {
     }
   ];
 
+  const structuredData = useMemo(
+    () => ({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: faqs.map((faq) => ({
+        '@type': 'Question',
+        name: language === 'ar' ? faq.questionAr : faq.question,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: (language === 'ar' ? faq.answerAr : faq.answer).join('\n'),
+        },
+      })),
+    }),
+    [faqs, language]
+  );
+
   return (
-    <div className={`min-h-screen bg-gradient-to-br from-stone-50 to-stone-100 ${language === 'ar' ? 'rtl' : 'ltr'}`}>
+    <div
+      className={`min-h-screen bg-gradient-to-br from-stone-50 to-stone-100 ${
+        language === 'ar' ? 'rtl' : 'ltr'
+      }`}
+    >
+      <Seo
+        title={seoCopy.title}
+        description={seoCopy.description}
+        keywords={['Spirit Hub Cafe FAQ', 'coffee order help', 'الأسئلة الشائعة سبيريت هب']}
+        canonical={`${siteMetadata.baseUrl}/faq`}
+        structuredData={structuredData}
+      />
       {/* Page Header */}
       <PageHeader
         title="Frequently Asked Questions"

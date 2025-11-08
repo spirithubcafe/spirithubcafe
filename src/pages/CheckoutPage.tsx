@@ -18,6 +18,8 @@ import { Separator } from '../components/ui/separator';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../components/ui/form';
 import { cn } from '@/lib/utils';
 import type { CheckoutOrder } from '../types/checkout';
+import { Seo } from '../components/seo/Seo';
+import { siteMetadata } from '../config/siteMetadata';
 
 const checkoutSchema = z
   .object({
@@ -187,6 +189,17 @@ export const CheckoutPage: React.FC = () => {
   if (items.length === 0) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white">
+        <Seo
+          title={language === 'ar' ? 'الدفع' : 'Checkout'}
+          description={
+            language === 'ar'
+              ? 'سلة التسوق فارغة حالياً. أضف منتجات للمتابعة إلى الدفع.'
+              : 'Your cart is empty. Add products before heading to checkout.'
+          }
+          canonical={`${siteMetadata.baseUrl}/checkout`}
+          noindex
+          robots="noindex, nofollow"
+        />
         <PageHeader
           title="Checkout"
           titleAr="إتمام الشراء"
@@ -207,6 +220,17 @@ export const CheckoutPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+      <Seo
+        title={language === 'ar' ? 'الدفع الآمن' : 'Secure checkout'}
+        description={
+          language === 'ar'
+            ? 'أكمل طلبك من سبيريت هب كافيه في صفحة دفع آمنة وخاصة.'
+            : 'Complete your Spirit Hub Cafe order on a private, secure checkout page.'
+        }
+        canonical={`${siteMetadata.baseUrl}/checkout`}
+        noindex
+        robots="noindex, nofollow"
+      />
       <PageHeader
         title="Checkout"
         titleAr="إتمام الشراء"

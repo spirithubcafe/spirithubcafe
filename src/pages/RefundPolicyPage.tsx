@@ -1,11 +1,26 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useApp } from '../hooks/useApp';
 import { RotateCcw, Package, AlertTriangle, RefreshCw, Clock, Mail, CheckCircle, XCircle } from 'lucide-react';
 import { PageHeader } from '../components/layout/PageHeader';
 import { motion } from 'framer-motion';
+import { Seo } from '../components/seo/Seo';
+import { siteMetadata } from '../config/siteMetadata';
 
 export const RefundPolicyPage: React.FC = () => {
   const { language } = useApp();
+  const seoCopy = useMemo(
+    () =>
+      language === 'ar'
+        ? {
+            title: 'سياسة الاستبدال والاسترجاع',
+            description: 'تعلم كيف تتعامل سبيريت هب كافيه مع المرتجعات، الاستبدالات، والطلبات التالفة.',
+          }
+        : {
+            title: 'Refund & return policy',
+            description: 'Learn how Spirit Hub Cafe handles returns, exchanges, and damaged orders.',
+          },
+    [language]
+  );
 
   const sections = [
     {
@@ -84,7 +99,18 @@ export const RefundPolicyPage: React.FC = () => {
   ];
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br from-stone-50 to-stone-100 ${language === 'ar' ? 'rtl' : 'ltr'}`}>
+    <div
+      className={`min-h-screen bg-gradient-to-br from-stone-50 to-stone-100 ${
+        language === 'ar' ? 'rtl' : 'ltr'
+      }`}
+    >
+      <Seo
+        title={seoCopy.title}
+        description={seoCopy.description}
+        keywords={['Spirit Hub Cafe refund', 'سياسة الاسترجاع سبيريت هب']}
+        canonical={`${siteMetadata.baseUrl}/refund`}
+        type="article"
+      />
       {/* Page Header */}
       <PageHeader
         title="Refund Policy"

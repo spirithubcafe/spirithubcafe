@@ -1,11 +1,39 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useApp } from '../hooks/useApp';
 import { FileText, CheckCircle, ShoppingCart, Truck, RotateCcw, Copyright, Shield, Scale, Mail, Phone } from 'lucide-react';
 import { PageHeader } from '../components/layout/PageHeader';
 import { motion } from 'framer-motion';
+import { Seo } from '../components/seo/Seo';
+import { siteMetadata } from '../config/siteMetadata';
 
 export const TermsConditionsPage: React.FC = () => {
   const { language } = useApp();
+  const seoCopy = useMemo(
+    () =>
+      language === 'ar'
+        ? {
+            title: 'الشروط والأحكام',
+            description:
+              'تعرف على شروط استخدام موقع سبيريت هب كافيه وسياسات الطلب والشحن والمرتجعات.',
+          }
+        : {
+            title: 'Terms & conditions',
+            description:
+              'Review Spirit Hub Cafe’s terms for ordering, shipping, refunds, and site usage.',
+          },
+    [language]
+  );
+
+  const structuredData = useMemo(
+    () => ({
+      '@context': 'https://schema.org',
+      '@type': 'TermsAndConditions',
+      url: `${siteMetadata.baseUrl}/terms`,
+      inLanguage: language === 'ar' ? 'ar' : 'en',
+      description: seoCopy.description,
+    }),
+    [language, seoCopy.description]
+  );
 
   const sections = [
     {
@@ -75,7 +103,18 @@ export const TermsConditionsPage: React.FC = () => {
   ];
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br from-stone-50 to-stone-100 ${language === 'ar' ? 'rtl' : 'ltr'}`}>
+    <div
+      className={`min-h-screen bg-gradient-to-br from-stone-50 to-stone-100 ${
+        language === 'ar' ? 'rtl' : 'ltr'
+      }`}
+    >
+      <Seo
+        title={seoCopy.title}
+        description={seoCopy.description}
+        keywords={['Spirit Hub Cafe terms', 'الشروط والأحكام سبيريت هب']}
+        canonical={`${siteMetadata.baseUrl}/terms`}
+        structuredData={structuredData}
+      />
       {/* Page Header */}
       <PageHeader
         title="Terms & Conditions"

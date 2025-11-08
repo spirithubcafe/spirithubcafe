@@ -13,6 +13,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../components/ui/select';
+import { Seo } from '../components/seo/Seo';
+import { siteMetadata } from '../config/siteMetadata';
 
 type CategoryOption = {
   id: string;
@@ -22,7 +24,7 @@ type CategoryOption = {
 
 export const ProductsPage = () => {
   const { i18n } = useTranslation();
-  const { products, allCategories, loading } = useApp();
+  const { products, allCategories, loading, language } = useApp();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const categoryFromUrl = searchParams.get('category');
@@ -30,6 +32,10 @@ export const ProductsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
 
   const isArabic = i18n.language === 'ar';
+  const canonicalUrl = useMemo(() => {
+    const suffix = categoryFromUrl ? `?category=${categoryFromUrl}` : '';
+    return `${siteMetadata.baseUrl}/products${suffix}`;
+  }, [categoryFromUrl]);
 
   // Handle category change and update URL
   const handleCategoryChange = (categoryId: string) => {
@@ -119,6 +125,42 @@ export const ProductsPage = () => {
     });
   }, [products, searchTerm, selectedCategory, currentCategory]);
 
+  const seoContent = useMemo(() => {
+    if (currentCategory && selectedCategory !== 'all') {
+      return language === 'ar'
+        ? {
+            title: `منتجات ${currentCategory.name}`,
+            description: `تسوق مجموعة ${currentCategory.name} من سبيريت هب كافيه واكتشف محامص القهوة المتخصصة في عمان.`,
+          }
+        : {
+            title: `${currentCategory.name} coffee`,
+            description: `Explore ${currentCategory.name} selections from Spirit Hub Cafe, roasted fresh in Muscat.`,
+          };
+    }
+    return language === 'ar'
+      ? {
+          title: 'تسوق جميع منتجات القهوة',
+          description: 'اختر من تشكيلة سبيريت هب كافيه من الحبوب المحمصة، الكبسولات، وأدوات التخمير.',
+        }
+      : {
+          title: 'Shop specialty coffee products',
+          description: 'Browse Spirit Hub Cafe beans, capsules, and brew gear roasted weekly in Oman.',
+        };
+  }, [currentCategory, language, selectedCategory]);
+
+  const structuredData = useMemo(
+    () => ({
+      '@context': 'https://schema.org',
+      '@type': 'CollectionPage',
+      url: canonicalUrl,
+      name: seoContent.title,
+      description: seoContent.description,
+      inLanguage: language === 'ar' ? 'ar' : 'en',
+      numberOfItems: filteredProducts.length,
+    }),
+    [canonicalUrl, filteredProducts.length, language, seoContent.description, seoContent.title]
+  );
+
   // Category options
   const categoryOptions = useMemo<CategoryOption[]>(() => {
     const allOption: CategoryOption = {
@@ -137,6 +179,18 @@ export const ProductsPage = () => {
 
   return (
     <div className={`min-h-screen bg-gray-50 ${isArabic ? 'rtl' : 'ltr'}`}>
+      <Seo
+        title={seoContent.title}
+        description={seoContent.description}
+        keywords={[
+          'oman coffee beans',
+          'specialty coffee products',
+          currentCategory?.name || 'Spirit Hub Cafe catalog',
+        ]}
+        canonical={canonicalUrl}
+        structuredData={structuredData}
+        type="website"
+      />
       {/* Page Header */}
       <PageHeader
         title={currentCategory && selectedCategory !== 'all' 

@@ -41,6 +41,7 @@ import {
   LogOut,
   ChevronDown,
   User,
+  Globe,
 } from 'lucide-react';
 import {
   Card,
@@ -182,6 +183,14 @@ export const AdminLayout: React.FC = () => {
       roles: ['Admin'],
     },
     {
+      id: 'seo',
+      label: t('admin.manageSeo'),
+      description: t('admin.seoDesc'),
+      icon: Globe,
+      path: '/admin/seo',
+      roles: ['Admin', 'Manager'],
+    },
+    {
       id: 'orders',
       label: t('admin.manageOrders'),
       description: t('admin.ordersDesc'),
@@ -234,7 +243,7 @@ export const AdminLayout: React.FC = () => {
       id: 'operations',
       label: t('admin.navGroups.operations'),
       items: availableNavItems.filter((item) =>
-        ['orders', 'reports', 'system'].includes(item.id)
+        ['orders', 'reports', 'system', 'seo'].includes(item.id)
       ),
     },
   ].filter((group) => group.items.length > 0);

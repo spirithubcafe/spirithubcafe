@@ -14,14 +14,27 @@ import {
   Package
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { Seo } from '../components/seo/Seo';
+import { siteMetadata } from '../config/siteMetadata';
 
 export const FavoritesPage: React.FC = () => {
-  const { t } = useApp();
+  const { t, language } = useApp();
   const navigate = useNavigate();
   const { favorites, isLoading, removeFromFavorites } = useFavorites();
 
   return (
     <div className="min-h-screen bg-gray-50 pt-20">
+      <Seo
+        title={language === 'ar' ? 'مفضلتي الخاصة' : 'My favorite coffees'}
+        description={
+          language === 'ar'
+            ? 'تتبع منتجاتك المفضلة في سبيريت هب كافيه، هذه الصفحة مخصصة لك فقط.'
+            : 'Keep a private list of your favorite Spirit Hub Cafe products.'
+        }
+        canonical={`${siteMetadata.baseUrl}/favorites`}
+        noindex
+        robots="noindex, nofollow"
+      />
       <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Page Header */}
         <motion.div

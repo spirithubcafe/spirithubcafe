@@ -8,12 +8,13 @@ import { Footer } from './components/layout/Footer';
 import { CartDrawer } from './components/cart/CartDrawer';
 import HomePage from './pages/HomePage';
 import ProfilePage from './pages/ProfilePage';
-import { 
-  AdminLayout, 
-  AdminDashboard, 
-  CategoriesManagement, 
-  ProductsManagement, 
-  UsersManagement 
+import {
+  AdminLayout,
+  AdminDashboard,
+  CategoriesManagement,
+  ProductsManagement,
+  UsersManagement,
+  SeoManagement,
 } from './components/admin';
 import { CategoryAddPage } from './pages/CategoryAddPage';
 import { CategoryEditPage } from './pages/CategoryEditPage';
@@ -55,6 +56,7 @@ function AppContent() {
           <Route path="categories/edit/:id" element={<CategoryEditPage />} />
           <Route path="products" element={<ProductsManagement />} />
           <Route path="products/add" element={<ProductAddPage />} />
+          <Route path="seo" element={<SeoManagement />} />
           <Route path="users" element={<UsersManagement />} />
         </Route>
         <Route path="/about" element={<AboutPage />} />

@@ -7,6 +7,8 @@ import { Button } from '../components/ui/button';
 import { Separator } from '../components/ui/separator';
 import { useApp } from '../hooks/useApp';
 import type { CheckoutOrder } from '../types/checkout';
+import { Seo } from '../components/seo/Seo';
+import { siteMetadata } from '../config/siteMetadata';
 
 const LAST_SUCCESS_STORAGE_KEY = 'spirithub_last_success_order';
 
@@ -33,6 +35,17 @@ export const PaymentSuccessPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+      <Seo
+        title={isArabic ? 'تم الدفع بنجاح' : 'Payment successful'}
+        description={
+          isArabic
+            ? 'تم تأكيد طلبك من سبيريت هب كافيه. يمكنك تتبع الشحنة من لوحة الطلبات.'
+            : 'Your Spirit Hub Cafe order is confirmed. Track the shipment from your orders dashboard.'
+        }
+        canonical={`${siteMetadata.baseUrl}/payment/success`}
+        noindex
+        robots="noindex, nofollow"
+      />
       <PageHeader
         title="Payment Successful"
         titleAr="تم الدفع بنجاح"

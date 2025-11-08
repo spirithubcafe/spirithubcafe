@@ -6,6 +6,8 @@ import { motion } from 'framer-motion';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
+import { Seo } from '../components/seo/Seo';
+import { siteMetadata } from '../config/siteMetadata';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import type { LucideIcon } from 'lucide-react';
@@ -54,6 +56,13 @@ const ProfilePage: React.FC = () => {
     address: 'Muscat, Oman'
   });
 
+  const seoTitle = language === 'ar' ? 'ملفي الشخصي' : 'My profile';
+  const seoDescription =
+    language === 'ar'
+      ? 'أدر بياناتك الشخصية وطلباتك المفضلة في سبيريت هب كافيه.'
+      : 'Manage your Spirit Hub Cafe account, favorites, and orders.';
+  const canonicalProfileUrl = `${siteMetadata.baseUrl}/profile`;
+
   // Get real user statistics from localStorage and context
   const [userStats, setUserStats] = useState<ProfileStats>({
     totalOrders: 0,
@@ -98,6 +107,13 @@ const ProfilePage: React.FC = () => {
   if (!isAuthenticated || !user) {
     return (
       <div className={`min-h-screen bg-gray-50 pt-20 ${language === 'ar' ? 'rtl' : 'ltr'}`}>
+        <Seo
+          title={seoTitle}
+          description={seoDescription}
+          canonical={canonicalProfileUrl}
+          noindex
+          robots="noindex, nofollow"
+        />
         <div className="max-w-4xl mx-auto px-4 py-8">
           <Card className="w-full max-w-md mx-auto text-center">
             <CardHeader>
@@ -210,6 +226,13 @@ const ProfilePage: React.FC = () => {
 
   return (
     <div className={`min-h-screen bg-background pt-20 pb-12 ${language === 'ar' ? 'rtl' : 'ltr'}`}>
+      <Seo
+        title={seoTitle}
+        description={seoDescription}
+        canonical={canonicalProfileUrl}
+        noindex
+        robots="noindex, nofollow"
+      />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header Section - Professional & Responsive */}
         <motion.div

@@ -1,11 +1,39 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useApp } from '../hooks/useApp';
 import { Shield, Lock, Eye, UserCheck, Cookie, Users, Globe, FileText, Mail, Phone } from 'lucide-react';
 import { PageHeader } from '../components/layout/PageHeader';
 import { motion } from 'framer-motion';
+import { Seo } from '../components/seo/Seo';
+import { siteMetadata } from '../config/siteMetadata';
 
 export const PrivacyPolicyPage: React.FC = () => {
   const { language } = useApp();
+  const seoCopy = useMemo(
+    () =>
+      language === 'ar'
+        ? {
+            title: 'سياسة الخصوصية',
+            description:
+              'تعرف على كيفية جمع واستخدام وحماية بياناتك الشخصية على موقع سبيريت هب كافيه.',
+          }
+        : {
+            title: 'Privacy policy',
+            description:
+              'Learn how Spirit Hub Cafe collects, uses, and protects your personal data.',
+          },
+    [language]
+  );
+
+  const structuredData = useMemo(
+    () => ({
+      '@context': 'https://schema.org',
+      '@type': 'PrivacyPolicy',
+      url: `${siteMetadata.baseUrl}/privacy`,
+      description: seoCopy.description,
+      inLanguage: language === 'ar' ? 'ar' : 'en',
+    }),
+    [language, seoCopy.description]
+  );
 
   const sections = [
     {
@@ -115,7 +143,19 @@ export const PrivacyPolicyPage: React.FC = () => {
   ];
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br from-stone-50 to-stone-100 ${language === 'ar' ? 'rtl' : 'ltr'}`}>
+    <div
+      className={`min-h-screen bg-gradient-to-br from-stone-50 to-stone-100 ${
+        language === 'ar' ? 'rtl' : 'ltr'
+      }`}
+    >
+      <Seo
+        title={seoCopy.title}
+        description={seoCopy.description}
+        keywords={['Spirit Hub Cafe privacy', 'سياسة الخصوصية سبيريت هب']}
+        canonical={`${siteMetadata.baseUrl}/privacy`}
+        structuredData={structuredData}
+        type="article"
+      />
       {/* Page Header */}
       <PageHeader
         title="Privacy Policy"

@@ -17,6 +17,8 @@ import {
   ArrowLeft
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { Seo } from '../components/seo/Seo';
+import { siteMetadata } from '../config/siteMetadata';
 
 interface OrderItem {
   id: string;
@@ -44,7 +46,7 @@ const statusConfig = {
 
 export const OrdersPage: React.FC = () => {
   const { isAuthenticated } = useAuth();
-  const { t } = useApp();
+  const { t, language } = useApp();
   const navigate = useNavigate();
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -104,6 +106,17 @@ export const OrdersPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 pt-20">
+      <Seo
+        title={language === 'ar' ? 'طلباتي' : 'My orders'}
+        description={
+          language === 'ar'
+            ? 'تابع حالة طلباتك السابقة من سبيريت هب كافيه.'
+            : 'Review the status of your Spirit Hub Cafe orders.'
+        }
+        canonical={`${siteMetadata.baseUrl}/orders`}
+        noindex
+        robots="noindex, nofollow"
+      />
       <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Page Header */}
         <motion.div
