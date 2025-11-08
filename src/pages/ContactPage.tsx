@@ -107,13 +107,23 @@ export const ContactPage: React.FC = () => {
     }
   };
 
-  const contactInfo = [
+  type ContactInfoItem = {
+    icon: React.ComponentType<{ className?: string }>;
+    title: string;
+    value: string;
+    value2?: string;
+    link: string;
+    forceLtr?: boolean;
+  };
+
+  const contactInfo: ContactInfoItem[] = [
     {
       icon: Phone,
       title: language === 'ar' ? 'الهاتف' : 'Phone',
       value: '+968 9190 0005',
       value2: '+968 7272 6999',
-      link: 'tel:+96891900005'
+      link: 'tel:+96891900005',
+      forceLtr: true
     },
     {
       icon: Mail,
@@ -181,8 +191,20 @@ export const ContactPage: React.FC = () => {
                     </div>
                   </div>
                   <div className="text-base font-medium text-foreground space-y-1">
-                    <p className="break-words">{info.value}</p>
-                    {info.value2 && <p className="break-words">{info.value2}</p>}
+                    <p
+                      className="break-words font-medium tracking-wide"
+                      dir={info.forceLtr ? 'ltr' : undefined}
+                    >
+                      {info.value}
+                    </p>
+                    {info.value2 && (
+                      <p
+                        className="break-words font-medium tracking-wide"
+                        dir={info.forceLtr ? 'ltr' : undefined}
+                      >
+                        {info.value2}
+                      </p>
+                    )}
                   </div>
                 </motion.div>
               </motion.a>
