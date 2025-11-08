@@ -2,6 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ShoppingCart, Plus, Minus, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../hooks/useCart';
 import { Button } from '../ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from '../ui/sheet';
@@ -9,6 +10,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from '../ui
 export const CartDrawer: React.FC = () => {
   const { i18n } = useTranslation();
   const isArabic = i18n.language === 'ar';
+  const navigate = useNavigate();
   const { items, removeFromCart, updateQuantity, clearCart, totalItems, totalPrice, isOpen, closeCart } = useCart();
 
   return (
@@ -112,8 +114,8 @@ export const CartDrawer: React.FC = () => {
                 <Button
                   className="flex-1 bg-amber-600 hover:bg-amber-700"
                   onClick={() => {
-                    // TODO: Implement checkout
-                    alert(isArabic ? 'قريباً...' : 'Coming soon...');
+                    closeCart();
+                    navigate('/checkout');
                   }}
                 >
                   {isArabic ? 'إتمام الطلب' : 'Checkout'}

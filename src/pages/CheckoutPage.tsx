@@ -1,0 +1,614 @@
+import React, { useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { motion } from 'framer-motion';
+import { Gift, Mail, MapPin, Phone, Package } from 'lucide-react';
+import { useApp } from '../hooks/useApp';
+import { useCart } from '../hooks/useCart';
+import { PageHeader } from '../components/layout/PageHeader';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { Textarea } from '../components/ui/textarea';
+import { RadioGroup, RadioGroupItem } from '../components/ui/radio-group';
+import { Switch } from '../components/ui/switch';
+import { Separator } from '../components/ui/separator';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../components/ui/form';
+import { cn } from '@/lib/utils';
+import type { CheckoutOrder } from '../types/checkout';
+
+const checkoutSchema = z
+  .object({
+    fullName: z.string().min(3, 'Please enter your full name'),
+    email: z.string().email('Enter a valid email'),
+    phone: z.string().min(6, 'Enter a valid phone number'),
+    country: z.string().min(2, 'Country is required'),
+    city: z.string().min(2, 'City is required'),
+    address: z.string().min(4, 'Address is required'),
+    notes: z.string().optional(),
+    shippingMethod: z.string(),
+    isGift: z.boolean(),
+    recipientName: z.string().optional(),
+    recipientPhone: z.string().optional(),
+    recipientCountry: z.string().optional(),
+    recipientCity: z.string().optional(),
+    recipientAddress: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (!data.isGift) return;
+
+    const requiredGiftFields = [
+      { key: 'recipientName', message: 'Recipient name is required' },
+      { key: 'recipientPhone', message: 'Recipient phone is required' },
+      { key: 'recipientCountry', message: 'Recipient country is required' },
+      { key: 'recipientCity', message: 'Recipient city is required' },
+      { key: 'recipientAddress', message: 'Recipient address is required' },
+    ] as const;
+
+    requiredGiftFields.forEach((field) => {
+      const value = data[field.key];
+      if (!value || value.trim().length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: [field.key],
+          message: field.message,
+        });
+      }
+    });
+  });
+
+type CheckoutFormValues = z.infer<typeof checkoutSchema>;
+
+const shippingMethods = [
+  {
+    id: 'pickup',
+    label: {
+      en: 'Pickup from Nool Oman Shop',
+      ar: 'استلام من متجر نول عمان',
+    },
+    description: {
+      en: 'Collect your order from our Muscat location. We will notify you when it is ready.',
+      ar: 'استلم طلبك من موقعنا في مسقط. سنخبرك حالما يصبح جاهزاً.',
+    },
+    eta: {
+      en: 'Ready within 24 hours',
+      ar: 'جاهز خلال 24 ساعة',
+    },
+    price: 0,
+    badge: {
+      en: 'Free',
+      ar: 'مجاني',
+    },
+  },
+  {
+    id: 'aramex',
+    label: {
+      en: 'Aramex Courier',
+      ar: 'أرامكس للشحن',
+    },
+    description: {
+      en: 'Fast door-to-door delivery across Oman and GCC with live tracking.',
+      ar: 'توصيل سريع إلى الباب في جميع أنحاء عُمان ودول الخليج مع تتبع مباشر.',
+    },
+    eta: {
+      en: '2-4 business days',
+      ar: '٢-٤ أيام عمل',
+    },
+    price: 3.5,
+    badge: {
+      en: 'Best for gifts',
+      ar: 'مثالي للهدايا',
+    },
+  },
+];
+
+const formatCurrency = (value: number, label: string) => `${value.toFixed(3)} ${label}`;
+
+export const CheckoutPage: React.FC = () => {
+  const { language } = useApp();
+  const isArabic = language === 'ar';
+  const navigate = useNavigate();
+  const { items, totalPrice } = useCart();
+
+  const form = useForm<CheckoutFormValues>({
+    resolver: zodResolver(checkoutSchema),
+    defaultValues: {
+      fullName: '',
+      email: '',
+      phone: '',
+      country: 'Oman',
+      city: '',
+      address: '',
+      notes: '',
+      shippingMethod: shippingMethods[0].id,
+      isGift: false,
+      recipientName: '',
+      recipientPhone: '',
+      recipientCountry: '',
+      recipientCity: '',
+      recipientAddress: '',
+    },
+  });
+
+  const watchedShipping = form.watch('shippingMethod');
+  const watchIsGift = form.watch('isGift');
+  const selectedShipping = shippingMethods.find((method) => method.id === watchedShipping) ?? shippingMethods[0];
+  const currencyLabel = isArabic ? 'ر.ع' : 'OMR';
+
+  const subtotal = useMemo(() => totalPrice, [totalPrice]);
+  const shippingCost = selectedShipping.price;
+  const grandTotal = subtotal + shippingCost;
+
+  const handleSubmit = (values: CheckoutFormValues) => {
+    if (items.length === 0) {
+      return;
+    }
+
+    const order: CheckoutOrder = {
+      id: `SPH-${Date.now()}`,
+      createdAt: new Date().toISOString(),
+      items: items.map((item) => ({ ...item })),
+      shippingMethod: {
+        id: selectedShipping.id,
+        name: selectedShipping.label.en,
+        nameAr: selectedShipping.label.ar,
+        eta: selectedShipping.eta.en,
+        etaAr: selectedShipping.eta.ar,
+        cost: selectedShipping.price,
+      },
+      totals: {
+        subtotal,
+        shipping: shippingCost,
+        total: grandTotal,
+      },
+      checkoutDetails: {
+        fullName: values.fullName,
+        email: values.email,
+        phone: values.phone,
+        country: values.country,
+        city: values.city,
+        address: values.address,
+        notes: values.notes,
+        isGift: values.isGift,
+        recipientName: values.recipientName,
+        recipientPhone: values.recipientPhone,
+        recipientCountry: values.recipientCountry,
+        recipientCity: values.recipientCity,
+        recipientAddress: values.recipientAddress,
+      },
+    };
+
+    sessionStorage.setItem('spirithub_pending_checkout', JSON.stringify(order));
+    navigate('/payment', { state: { order } });
+  };
+
+  if (items.length === 0) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white">
+        <PageHeader
+          title="Checkout"
+          titleAr="إتمام الشراء"
+          subtitle="Your cart is empty. Add products to continue."
+          subtitleAr="سلة التسوق فارغة. أضف منتجات للمتابعة."
+        />
+        <div className="max-w-3xl mx-auto px-4 py-16 text-center space-y-6">
+          <p className="text-lg text-gray-600">
+            {isArabic ? 'لا توجد منتجات في السلة حالياً.' : 'There are no products in your cart yet.'}
+          </p>
+          <Button className="bg-amber-600 hover:bg-amber-700" onClick={() => navigate('/products')}>
+            {isArabic ? 'تسوق المنتجات' : 'Browse Products'}
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+      <PageHeader
+        title="Checkout"
+        titleAr="إتمام الشراء"
+        subtitle="Confirm your order details and choose how you would like to receive your coffee."
+        subtitleAr="أكد تفاصيل طلبك واختر طريقة الاستلام أو الشحن المناسبة."
+      />
+
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="grid gap-8 lg:grid-cols-[2fr,1fr]">
+          <div className="space-y-8">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
+                <Card className="shadow-xl border-gray-100">
+                  <CardHeader>
+                    <CardTitle className="text-2xl font-semibold flex items-center gap-3">
+                      <Package className="w-6 h-6 text-amber-600" />
+                      {isArabic ? 'بيانات التواصل والتسليم' : 'Contact & Delivery Details'}
+                    </CardTitle>
+                    <CardDescription>
+                      {isArabic
+                        ? 'استخدم نفس المعلومات للتسليم أو أدخل بيانات الشخص الذي سيتسلم الشحنة.'
+                        : 'Provide your contact details and the address where we should deliver the order.'}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <FormField
+                        control={form.control}
+                        name="fullName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{isArabic ? 'الاسم الكامل' : 'Full Name'}</FormLabel>
+                            <FormControl>
+                              <Input placeholder={isArabic ? 'أدخل اسمك' : 'Enter your full name'} {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{isArabic ? 'البريد الإلكتروني' : 'Email Address'}</FormLabel>
+                            <FormControl>
+                              <Input type="email" placeholder="name@email.com" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <FormField
+                        control={form.control}
+                        name="phone"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{isArabic ? 'رقم الهاتف' : 'Phone Number'}</FormLabel>
+                            <FormControl>
+                              <Input type="tel" placeholder="+968 0000 0000" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="country"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{isArabic ? 'الدولة' : 'Country'}</FormLabel>
+                            <FormControl>
+                              <Input placeholder={isArabic ? 'الدولة' : 'Country'} {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <FormField
+                        control={form.control}
+                        name="city"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{isArabic ? 'المدينة' : 'City'}</FormLabel>
+                            <FormControl>
+                              <Input placeholder={isArabic ? 'اسم المدينة' : 'City name'} {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="address"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{isArabic ? 'العنوان الكامل' : 'Full Address'}</FormLabel>
+                            <FormControl>
+                              <Input placeholder={isArabic ? 'الشارع، المبنى، الشقة' : 'Street, building, apartment'} {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="shadow-xl border-gray-100">
+                  <CardHeader>
+                    <CardTitle className="text-2xl font-semibold flex items-center gap-3">
+                      <MapPin className="w-6 h-6 text-amber-600" />
+                      {isArabic ? 'طريقة التسليم' : 'Delivery Method'}
+                    </CardTitle>
+                    <CardDescription>
+                      {isArabic ? 'اختر ما إذا كنت تريد الاستلام من المتجر أو استخدام الشحن.' : 'Choose between picking up your order or home delivery.'}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="shippingMethod"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormControl>
+                            <RadioGroup value={field.value} onValueChange={field.onChange} className="space-y-4">
+                              {shippingMethods.map((method) => (
+                                <label
+                                  key={method.id}
+                                  className={cn(
+                                    'flex gap-4 rounded-2xl border bg-white/70 p-4 shadow-sm transition-all',
+                                    field.value === method.id
+                                      ? 'border-amber-500 ring-2 ring-amber-100'
+                                      : 'border-gray-200 hover:border-gray-300'
+                                  )}
+                                >
+                                  <RadioGroupItem value={method.id} className="mt-2" />
+                                  <div className="flex-1">
+                                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                                      <div>
+                                        <p className="font-semibold text-lg">
+                                          {isArabic ? method.label.ar : method.label.en}
+                                        </p>
+                                        <p className="text-sm text-gray-500">
+                                          {isArabic ? method.description.ar : method.description.en}
+                                        </p>
+                                      </div>
+                                      <div className="text-right">
+                                        <p className="font-bold text-amber-600">
+                                          {method.price === 0
+                                            ? isArabic ? 'مجاني' : 'Free'
+                                            : formatCurrency(method.price, currencyLabel)}
+                                        </p>
+                                        <p className="text-xs text-gray-500">
+                                          {isArabic ? method.eta.ar : method.eta.en}
+                                        </p>
+                                      </div>
+                                    </div>
+                                    <div className="mt-3 inline-flex items-center rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
+                                      {isArabic ? method.badge.ar : method.badge.en}
+                                    </div>
+                                  </div>
+                                </label>
+                              ))}
+                            </RadioGroup>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </CardContent>
+                </Card>
+
+                <Card className="shadow-xl border-gray-100">
+                  <CardHeader>
+                    <CardTitle className="text-2xl font-semibold flex items-center gap-3">
+                      <Gift className="w-6 h-6 text-amber-600" />
+                      {isArabic ? 'هل هذا الطلب هدية؟' : 'Is this order a gift?'}
+                    </CardTitle>
+                    <CardDescription>
+                      {isArabic
+                        ? 'يمكنك إرسال الطلب مباشرةً إلى من تحب مع إدخال عنوانه ورقم التواصل.'
+                        : 'Send this order directly to someone you love by filling in their delivery details.'}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <FormField
+                      control={form.control}
+                      name="isGift"
+                      render={({ field }) => (
+                        <FormItem className="flex items-center justify-between rounded-2xl border px-4 py-3">
+                          <div>
+                            <FormLabel className="text-base font-semibold">
+                              {isArabic ? 'أرسلها كهدية' : 'Send as a gift'}
+                            </FormLabel>
+                            <p className="text-sm text-gray-500">
+                              {isArabic
+                                ? 'سندرج بطاقة صغيرة تحمل اسم المرسل والمستلم.'
+                                : 'We will include a small card with sender and recipient names.'}
+                            </p>
+                          </div>
+                          <FormControl>
+                            <Switch checked={field.value} onCheckedChange={field.onChange} />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+
+                    {watchIsGift && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="grid gap-4"
+                      >
+                        <FormField
+                          control={form.control}
+                          name="recipientName"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>{isArabic ? 'اسم المستلم' : 'Recipient Name'}</FormLabel>
+                              <FormControl>
+                                <Input placeholder={isArabic ? 'اسم المستلم' : "Recipient's full name"} {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <div className="grid gap-4 md:grid-cols-2">
+                          <FormField
+                            control={form.control}
+                            name="recipientPhone"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>{isArabic ? 'هاتف المستلم' : 'Recipient Phone'}</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="+968 0000 0000" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="recipientCountry"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>{isArabic ? 'دولة المستلم' : 'Recipient Country'}</FormLabel>
+                                <FormControl>
+                                  <Input placeholder={isArabic ? 'الدولة' : 'Country'} {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                        <div className="grid gap-4 md:grid-cols-2">
+                          <FormField
+                            control={form.control}
+                            name="recipientCity"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>{isArabic ? 'مدينة المستلم' : 'Recipient City'}</FormLabel>
+                                <FormControl>
+                                  <Input placeholder={isArabic ? 'اسم المدينة' : 'City'} {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="recipientAddress"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>{isArabic ? 'عنوان المستلم' : 'Recipient Address'}</FormLabel>
+                                <FormControl>
+                                  <Input placeholder={isArabic ? 'تفاصيل العنوان' : 'Full delivery address'} {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      </motion.div>
+                    )}
+
+                    <FormField
+                      control={form.control}
+                      name="notes"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{isArabic ? 'ملاحظات إضافية' : 'Additional Notes'}</FormLabel>
+                          <FormControl>
+                            <Textarea rows={4} placeholder={isArabic ? 'أضف تعليمات خاصة للطلب' : 'Add delivery notes or roasting preferences'} {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </CardContent>
+                </Card>
+
+                <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+                  <Button type="button" variant="outline" onClick={() => navigate(-1)} className="sm:w-auto">
+                    {isArabic ? 'العودة' : 'Back'}
+                  </Button>
+                  <Button type="submit" className="bg-amber-600 hover:bg-amber-700 sm:w-auto">
+                    {isArabic ? 'متابعة إلى الدفع' : 'Proceed to Payment'}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </div>
+
+          <div className="space-y-6">
+            <Card className="shadow-xl border-gray-100">
+              <CardHeader>
+                <CardTitle className="text-2xl font-semibold">
+                  {isArabic ? 'ملخص الطلب' : 'Order Summary'}
+                </CardTitle>
+                <CardDescription>
+                  {isArabic ? 'راجع المنتجات ومجموع الطلب قبل الدفع.' : 'Review your cart items and total before paying.'}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-4 max-h-[320px] overflow-y-auto pr-1">
+                  {items.map((item) => (
+                    <div key={item.id} className="flex gap-4 border-b border-dashed border-gray-100 pb-4 last:border-none">
+                      <img src={item.image} alt={item.name} className="h-16 w-16 rounded-lg object-cover" />
+                      <div className="flex-1">
+                        <p className="font-semibold text-sm">{item.name}</p>
+                        {item.tastingNotes && (
+                          <p className="text-xs text-amber-600">{item.tastingNotes}</p>
+                        )}
+                        <p className="text-sm text-gray-500">
+                          {isArabic ? 'الكمية' : 'Qty'}: {item.quantity}
+                        </p>
+                      </div>
+                      <div className="text-right font-semibold text-amber-600">
+                        {formatCurrency(item.price * item.quantity, currencyLabel)}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <Separator />
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between text-gray-600">
+                    <span>{isArabic ? 'المجموع الفرعي' : 'Subtotal'}</span>
+                    <span>{formatCurrency(subtotal, currencyLabel)}</span>
+                  </div>
+                  <div className="flex justify-between text-gray-600">
+                    <span>
+                      {isArabic ? 'الشحن' : 'Shipping'} ({isArabic ? selectedShipping.label.ar : selectedShipping.label.en})
+                    </span>
+                    <span>
+                      {selectedShipping.price === 0
+                        ? isArabic ? 'مجاني' : 'Free'
+                        : formatCurrency(shippingCost, currencyLabel)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between font-semibold text-lg text-amber-700">
+                    <span>{isArabic ? 'الإجمالي' : 'Total'}</span>
+                    <span>{formatCurrency(grandTotal, currencyLabel)}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-amber-100 bg-amber-50/70 shadow-sm">
+              <CardHeader className="space-y-2">
+                <CardTitle className="flex items-center gap-2 text-amber-800">
+                  <Phone className="w-4 h-4" />
+                  {isArabic ? 'نساعدك دائماً' : 'We are here to help'}
+                </CardTitle>
+                <CardDescription className="text-amber-900/80">
+                  {isArabic
+                    ? 'لأي استفسار عن الطلب أو الشحن، تواصل معنا عبر الواتساب أو الهاتف.'
+                    : 'If you need help with your order or delivery, reach us on WhatsApp or by phone.'}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-2 text-sm text-amber-900">
+                <p className="flex items-center gap-2">
+                  <Phone className="w-4 h-4" />
+                  +968 9190 0005
+                </p>
+                <p className="flex items-center gap-2">
+                  <Mail className="w-4 h-4" />
+                  info@spirithubcafe.com
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default CheckoutPage;
