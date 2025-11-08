@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import { useApp } from '../../hooks/useApp';
 import './ProfessionalHeroSlider.css';
 
@@ -171,13 +172,13 @@ export const ProfessionalHeroSlider: React.FC = () => {
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.8, delay: 0.5 }}
               >
-                <a
-                  href="/#products"
+                <Link
+                  to="/products"
                   className="inline-block bg-red-500 hover:bg-red-600 text-white font-semibold px-6 py-3 rounded-md transition-all duration-300 text-base uppercase tracking-wide"
                   onClick={(e) => e.stopPropagation()}
                 >
                   {currentSlideData.cta}
-                </a>
+                </Link>
               </motion.div>
             </motion.div>
           </div>
