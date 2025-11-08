@@ -56,7 +56,7 @@ export const NotFound: React.FC = () => {
             </Button>
           </Link>
           
-          <Link to="/#products">
+          <Link to="/products">
             <Button 
               variant="outline" 
               size="lg"

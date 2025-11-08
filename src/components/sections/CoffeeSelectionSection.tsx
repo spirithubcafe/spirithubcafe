@@ -42,7 +42,7 @@ export const CoffeeSelectionSection: React.FC = () => {
 
           {/* Shop Now Button */}
           <a
-            href="/#products"
+            href="/products"
             className="inline-block bg-red-500 hover:bg-red-600 text-white font-semibold px-6 py-3 rounded-md transition-all duration-300 text-base uppercase tracking-wide"
           >
             {language === 'ar' ? 'تسوق الآن' : 'SHOP NOW'}
