@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../hooks/useCart';
 import { Button } from '../ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from '../ui/sheet';
+import { ScrollArea } from '../ui/scroll-area';
 
 export const CartDrawer: React.FC = () => {
   const { i18n } = useTranslation();
@@ -37,7 +38,7 @@ export const CartDrawer: React.FC = () => {
           </div>
         ) : (
           <>
-            <div className="flex-1 overflow-y-auto px-4 py-6">
+            <ScrollArea className="flex-1 px-4 py-6">
               <div className="space-y-4">
                 <AnimatePresence mode="popLayout">
                   {items.map((item) => (
@@ -94,7 +95,7 @@ export const CartDrawer: React.FC = () => {
                   ))}
                 </AnimatePresence>
               </div>
-            </div>
+            </ScrollArea>
 
             <SheetFooter className="gap-4 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/75">
               <div className="flex items-center justify-between text-lg font-bold">

@@ -16,6 +16,7 @@ import { useCart } from '../../hooks/useCart';
 import { AuthButtons, LoginButton, RegisterButton } from '../auth/AuthButtons';
 import { UserProfile } from '../auth/UserProfile';
 import { MinimalUserProfile } from '../auth/MinimalUserProfile';
+import { ScrollArea } from '../ui/scroll-area';
 
 export const Navigation: React.FC = () => {
   const { t } = useTranslation();
@@ -311,8 +312,9 @@ export const Navigation: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="flex-1 overflow-y-auto px-6 py-6">
-                    <nav className="space-y-6">
+                  <div className="flex-1 px-6 py-6">
+                    <ScrollArea className="h-full">
+                      <nav className="space-y-6">
                       <div>
                         <div className="mt-0 space-y-3">
                           {navItems.map((item) => {
@@ -471,7 +473,8 @@ export const Navigation: React.FC = () => {
                           </div>
                         ) : null}
                       </div>
-                    </nav>
+                      </nav>
+                    </ScrollArea>
                   </div>
 
                   <div className="bg-[#0d0603] px-6 py-5">

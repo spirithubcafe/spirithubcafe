@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ShoppingCart, X, Coffee, Star, Loader2, Flame, RotateCw, BarChart3, MapPin, Wheat, ClipboardList } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import {
+import { 
   Dialog,
   DialogContent,
 } from '../ui/dialog';
@@ -166,7 +166,7 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0" showCloseButton={false}>
+    <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0" showCloseButton={false}>
         {loading ? (
           <div className="flex justify-center py-16">
             <Loader2 className="w-10 h-10 animate-spin text-amber-600" />
@@ -230,9 +230,7 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
                           src={image}
                           alt={`${product.name} thumbnail ${index + 1}`}
                           className="h-full w-full object-cover"
-                          onError={(event) =>
-                            handleImageError(event, '/images/products/default-product.webp')
-                          }
+                          onError={(event) => handleImageError(event, '/images/products/default-product.webp')}
                         />
                       </button>
                     ))}
@@ -240,7 +238,6 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
                 </div>
               )}
             </div>
-
             {/* Product Details */}
             <div className="flex flex-col p-2 md:p-5 space-y-1.5 md:space-y-4">
               {/* Product Name and Reviews */}
@@ -457,8 +454,6 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
                   <ShoppingCart className="w-3.5 h-3.5 md:w-4 md:h-4 ltr:mr-1 rtl:ml-1 md:ltr:mr-1.5 md:rtl:ml-1.5" />
                   {isArabic ? 'إضافة للسلة' : 'Add to Cart'}
                 </Button>
-
-                {/* View Full Details Button */}
                 <Button
                   onClick={handleViewFullDetails}
                   variant="outline"

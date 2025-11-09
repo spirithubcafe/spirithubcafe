@@ -18,6 +18,7 @@ import App from './App.tsx'
 // Overlayscrollbars: import styles and init globally so all scrollable areas get styled
 import 'overlayscrollbars/styles/overlayscrollbars.css'
 import { OverlayScrollbars } from 'overlayscrollbars'
+import { initScrollbars } from './lib/scrollbars'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -44,3 +45,6 @@ if (typeof window !== 'undefined') {
     // console.warn('OverlayScrollbars init failed', e)
   }
 }
+
+// Also attach Overlayscrollbars to all modals, drawers and overflow containers dynamically
+initScrollbars()
