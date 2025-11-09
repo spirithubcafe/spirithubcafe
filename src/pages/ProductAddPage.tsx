@@ -9,7 +9,9 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Switch } from '../components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { ArrowLeft, Loader2, Save } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { Textarea } from '../components/ui/textarea';
+import { ArrowLeft, Loader2, Save, Coffee, Image, Settings, Tag } from 'lucide-react';
 import { productService } from '../services/productService';
 import { categoryService } from '../services/categoryService';
 import type { ProductCreateUpdateDto, Category, Product } from '../types/product';
@@ -389,231 +391,624 @@ export const ProductAddPage: React.FC<ProductFormPageProps> = ({
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Basic Info */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">{t('admin.products.basicInfo')}</h3>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="sku">{t('admin.products.sku')} *</Label>
-                    <Input
-                      id="sku"
-                      value={formData.sku}
-                      onChange={(e) => setFormData(prev => ({ ...prev, sku: e.target.value }))}
-                      placeholder={t('admin.products.skuPlaceholder')}
-                      required
-                      className={cn(
-                        skuAvailable === false && 'border-destructive',
-                        skuAvailable && 'border-green-500'
-                      )}
-                    />
-                    <div className="flex min-h-[1.25rem] items-center gap-2 text-xs">
-                      {checkingSku && <Loader2 className="h-3 w-3 animate-spin" />}
-                      {skuMessage && (
-                        <span className={cn(
-                          skuAvailable === false && 'text-destructive',
-                          skuAvailable === true && 'text-green-600'
-                        )}>
-                          {skuMessage}
-                        </span>
-                      )}
+              <Tabs defaultValue="basic-info" className="w-full">
+                <TabsList className="grid w-full grid-cols-5">
+                  <TabsTrigger value="basic-info">Basic Information</TabsTrigger>
+                  <TabsTrigger value="coffee-details">
+                    <Coffee className="h-4 w-4 mr-2" />
+                    Coffee Details
+                  </TabsTrigger>
+                  <TabsTrigger value="images">
+                    <Image className="h-4 w-4 mr-2" />
+                    Images
+                  </TabsTrigger>
+                  <TabsTrigger value="pricing">
+                    <Tag className="h-4 w-4 mr-2" />
+                    Pricing & Variants
+                  </TabsTrigger>
+                  <TabsTrigger value="seo-settings">
+                    <Settings className="h-4 w-4 mr-2" />
+                    SEO & Settings
+                  </TabsTrigger>
+                </TabsList>
+
+                {/* Basic Information Tab */}
+                <TabsContent value="basic-info" className="space-y-6">
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold">{t('admin.products.basicInfo')}</h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="sku">{t('admin.products.sku')} *</Label>
+                        <Input
+                          id="sku"
+                          value={formData.sku}
+                          onChange={(e) => setFormData(prev => ({ ...prev, sku: e.target.value }))}
+                          placeholder={t('admin.products.skuPlaceholder')}
+                          required
+                          className={cn(
+                            skuAvailable === false && 'border-destructive',
+                            skuAvailable && 'border-green-500'
+                          )}
+                        />
+                        <div className="flex min-h-[1.25rem] items-center gap-2 text-xs">
+                          {checkingSku && <Loader2 className="h-3 w-3 animate-spin" />}
+                          {skuMessage && (
+                            <span className={cn(
+                              skuAvailable === false && 'text-destructive',
+                              skuAvailable === true && 'text-green-600'
+                            )}>
+                              {skuMessage}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="category">{t('admin.products.category')} *</Label>
+                        <Select
+                          value={formData.categoryId?.toString()}
+                          onValueChange={(value) => setFormData(prev => ({ ...prev, categoryId: parseInt(value) }))}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder={t('admin.products.selectCategory')} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {categories.map((category) => (
+                              <SelectItem key={category.id} value={category.id.toString()}>
+                                {category.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="name">{t('admin.products.name')} *</Label>
+                        <Input
+                          id="name"
+                          value={formData.name}
+                          onChange={(e) => handleNameChange(e.target.value)}
+                          placeholder={t('admin.products.namePlaceholder')}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="nameAr">{t('admin.products.nameAr')}</Label>
+                        <Input
+                          id="nameAr"
+                          value={formData.nameAr}
+                          onChange={(e) => setFormData(prev => ({ ...prev, nameAr: e.target.value }))}
+                          placeholder={t('admin.products.nameArPlaceholder')}
+                          dir="rtl"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="slug">{t('admin.products.slug')} *</Label>
+                      <Input
+                        id="slug"
+                        value={formData.slug}
+                        onChange={(e) => setFormData(prev => ({ ...prev, slug: e.target.value }))}
+                        placeholder={t('admin.products.slugPlaceholder')}
+                        required
+                        className={cn(
+                          slugAvailable === false && 'border-destructive',
+                          slugAvailable && 'border-green-500'
+                        )}
+                      />
+                      <div className="flex min-h-[1.25rem] items-center gap-2 text-xs">
+                        {checkingSlug && <Loader2 className="h-3 w-3 animate-spin" />}
+                        {slugMessage && (
+                          <span className={cn(
+                            slugAvailable === false && 'text-destructive',
+                            slugAvailable === true && 'text-green-600'
+                          )}>
+                            {slugMessage}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>{t('admin.products.description')}</Label>
+                      <ReactQuill
+                        ref={quillRefDesc}
+                        theme="snow"
+                        value={formData.description}
+                        onChange={(value) => setFormData(prev => ({ ...prev, description: value }))}
+                        modules={quillModules}
+                        formats={quillFormats}
+                        className="bg-white"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>{t('admin.products.descriptionAr')}</Label>
+                      <ReactQuill
+                        ref={quillRefDescAr}
+                        theme="snow"
+                        value={formData.descriptionAr}
+                        onChange={(value) => setFormData(prev => ({ ...prev, descriptionAr: value }))}
+                        modules={quillModules}
+                        formats={quillFormats}
+                        className="bg-white"
+                        style={{ direction: 'rtl' }}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>{t('admin.products.notes')}</Label>
+                      <ReactQuill
+                        ref={quillRefNotes}
+                        theme="snow"
+                        value={formData.notes}
+                        onChange={(value) => setFormData(prev => ({ ...prev, notes: value }))}
+                        modules={quillModules}
+                        formats={quillFormats}
+                        className="bg-white"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>{t('admin.products.notesAr')}</Label>
+                      <ReactQuill
+                        ref={quillRefNotesAr}
+                        theme="snow"
+                        value={formData.notesAr}
+                        onChange={(value) => setFormData(prev => ({ ...prev, notesAr: value }))}
+                        modules={quillModules}
+                        formats={quillFormats}
+                        className="bg-white"
+                        style={{ direction: 'rtl' }}
+                      />
                     </div>
                   </div>
+                </TabsContent>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="category">{t('admin.products.category')} *</Label>
-                    <Select
-                      value={formData.categoryId?.toString()}
-                      onValueChange={(value) => setFormData(prev => ({ ...prev, categoryId: parseInt(value) }))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder={t('admin.products.selectCategory')} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {categories.map((category) => (
-                          <SelectItem key={category.id} value={category.id.toString()}>
-                            {category.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
+                {/* Coffee Details Tab */}
+                <TabsContent value="coffee-details" className="space-y-6">
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold">Coffee Details</h3>
+                    <p className="text-sm text-muted-foreground">Roast level, processing method, origin and tasting notes</p>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="origin">Origin/Region</Label>
+                        <Input
+                          id="origin"
+                          value={formData.origin || ''}
+                          onChange={(e) => setFormData(prev => ({ ...prev, origin: e.target.value }))}
+                          placeholder="Colombia"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="intensity">Intensity (1-10)</Label>
+                        <Input
+                          id="intensity"
+                          type="number"
+                          value={formData.intensity}
+                          onChange={(e) => setFormData(prev => ({ ...prev, intensity: parseInt(e.target.value) || 1 }))}
+                          min="1"
+                          max="10"
+                        />
+                      </div>
+                    </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">{t('admin.products.name')} *</Label>
-                    <Input
-                      id="name"
-                      value={formData.name}
-                      onChange={(e) => handleNameChange(e.target.value)}
-                      placeholder={t('admin.products.namePlaceholder')}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="nameAr">{t('admin.products.nameAr')}</Label>
-                    <Input
-                      id="nameAr"
-                      value={formData.nameAr}
-                      onChange={(e) => setFormData(prev => ({ ...prev, nameAr: e.target.value }))}
-                      placeholder={t('admin.products.nameArPlaceholder')}
-                      dir="rtl"
-                    />
-                  </div>
-                </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="roastLevel">Roast Level</Label>
+                        <Select
+                          value={formData.roastLevel || ''}
+                          onValueChange={(value) => setFormData(prev => ({ ...prev, roastLevel: value }))}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Light Roast" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Light Roast">Light Roast</SelectItem>
+                            <SelectItem value="Medium Roast">Medium Roast</SelectItem>
+                            <SelectItem value="Medium-Dark Roast">Medium-Dark Roast</SelectItem>
+                            <SelectItem value="Dark Roast">Dark Roast</SelectItem>
+                            <SelectItem value="French Roast">French Roast</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="roastLevelAr">Roast Level (Arabic)</Label>
+                        <Input
+                          id="roastLevelAr"
+                          value={formData.roastLevelAr || ''}
+                          onChange={(e) => setFormData(prev => ({ ...prev, roastLevelAr: e.target.value }))}
+                          placeholder="تحميص فاتح"
+                          dir="rtl"
+                        />
+                      </div>
+                    </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="slug">{t('admin.products.slug')} *</Label>
-                  <Input
-                    id="slug"
-                    value={formData.slug}
-                    onChange={(e) => setFormData(prev => ({ ...prev, slug: e.target.value }))}
-                    placeholder={t('admin.products.slugPlaceholder')}
-                    required
-                    className={cn(
-                      slugAvailable === false && 'border-destructive',
-                      slugAvailable && 'border-green-500'
-                    )}
-                  />
-                  <div className="flex min-h-[1.25rem] items-center gap-2 text-xs">
-                    {checkingSlug && <Loader2 className="h-3 w-3 animate-spin" />}
-                    {slugMessage && (
-                      <span className={cn(
-                        slugAvailable === false && 'text-destructive',
-                        slugAvailable === true && 'text-green-600'
-                      )}>
-                        {slugMessage}
-                      </span>
-                    )}
-                  </div>
-                </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="process">Processing Method</Label>
+                        <Select
+                          value={formData.process || ''}
+                          onValueChange={(value) => setFormData(prev => ({ ...prev, process: value }))}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Honey Process" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Honey Process">Honey Process</SelectItem>
+                            <SelectItem value="Washed">Washed</SelectItem>
+                            <SelectItem value="Natural">Natural</SelectItem>
+                            <SelectItem value="Semi-Washed">Semi-Washed</SelectItem>
+                            <SelectItem value="Anaerobic">Anaerobic</SelectItem>
+                            <SelectItem value="Carbonic Maceration">Carbonic Maceration</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="processAr">Processing Method (Arabic)</Label>
+                        <Input
+                          id="processAr"
+                          value={formData.processAr || ''}
+                          onChange={(e) => setFormData(prev => ({ ...prev, processAr: e.target.value }))}
+                          placeholder="معالجة العسل"
+                          dir="rtl"
+                        />
+                      </div>
+                    </div>
 
-                <div className="space-y-2">
-                  <Label>{t('admin.products.description')}</Label>
-                  <ReactQuill
-                    ref={quillRefDesc}
-                    theme="snow"
-                    value={formData.description}
-                    onChange={(value) => setFormData(prev => ({ ...prev, description: value }))}
-                    modules={quillModules}
-                    formats={quillFormats}
-                    className="bg-white"
-                  />
-                </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="variety">Coffee Variety</Label>
+                        <Input
+                          id="variety"
+                          value={formData.variety || ''}
+                          onChange={(e) => setFormData(prev => ({ ...prev, variety: e.target.value }))}
+                          placeholder="Arj – 1483 HH"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="varietyAr">Coffee Variety (Arabic)</Label>
+                        <Input
+                          id="varietyAr"
+                          value={formData.varietyAr || ''}
+                          onChange={(e) => setFormData(prev => ({ ...prev, varietyAr: e.target.value }))}
+                          placeholder="آرج – 1483 HH"
+                          dir="rtl"
+                        />
+                      </div>
+                    </div>
 
-                <div className="space-y-2">
-                  <Label>{t('admin.products.descriptionAr')}</Label>
-                  <ReactQuill
-                    ref={quillRefDescAr}
-                    theme="snow"
-                    value={formData.descriptionAr}
-                    onChange={(value) => setFormData(prev => ({ ...prev, descriptionAr: value }))}
-                    modules={quillModules}
-                    formats={quillFormats}
-                    className="bg-white"
-                    style={{ direction: 'rtl' }}
-                  />
-                </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="altitude">Altitude (meters)</Label>
+                        <Input
+                          id="altitude"
+                          type="number"
+                          value={formData.altitude || ''}
+                          onChange={(e) => setFormData(prev => ({ ...prev, altitude: e.target.value ? parseInt(e.target.value) : undefined }))}
+                          placeholder="1750"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="farm">Farm/Estate</Label>
+                        <Input
+                          id="farm"
+                          value={formData.farm || ''}
+                          onChange={(e) => setFormData(prev => ({ ...prev, farm: e.target.value }))}
+                          placeholder="Aroma Nativo"
+                        />
+                      </div>
+                    </div>
 
-                <div className="space-y-2">
-                  <Label>{t('admin.products.notes')}</Label>
-                  <ReactQuill
-                    ref={quillRefNotes}
-                    theme="snow"
-                    value={formData.notes}
-                    onChange={(value) => setFormData(prev => ({ ...prev, notes: value }))}
-                    modules={quillModules}
-                    formats={quillFormats}
-                    className="bg-white"
-                  />
-                </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="farmAr">Farm/Estate (Arabic)</Label>
+                      <Input
+                        id="farmAr"
+                        value={formData.farmAr || ''}
+                        onChange={(e) => setFormData(prev => ({ ...prev, farmAr: e.target.value }))}
+                        placeholder="أروما ناتيفو"
+                        dir="rtl"
+                      />
+                    </div>
 
-                <div className="space-y-2">
-                  <Label>{t('admin.products.notesAr')}</Label>
-                  <ReactQuill
-                    ref={quillRefNotesAr}
-                    theme="snow"
-                    value={formData.notesAr}
-                    onChange={(value) => setFormData(prev => ({ ...prev, notesAr: value }))}
-                    modules={quillModules}
-                    formats={quillFormats}
-                    className="bg-white"
-                    style={{ direction: 'rtl' }}
-                  />
-                </div>
-              </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="tastingNotes">Tasting Notes (English)</Label>
+                        <Textarea
+                          id="tastingNotes"
+                          value={formData.tastingNotes || ''}
+                          onChange={(e) => setFormData(prev => ({ ...prev, tastingNotes: e.target.value }))}
+                          placeholder="Peach, Berries, Floral, Passion Fruit"
+                          rows={3}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="tastingNotesAr">Tasting Notes (Arabic)</Label>
+                        <Textarea
+                          id="tastingNotesAr"
+                          value={formData.tastingNotesAr || ''}
+                          onChange={(e) => setFormData(prev => ({ ...prev, tastingNotesAr: e.target.value }))}
+                          placeholder="الخوخ، التوت الأزرق"
+                          rows={3}
+                          dir="rtl"
+                        />
+                      </div>
+                    </div>
 
-              {/* Settings */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">{t('admin.products.settings')}</h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="isActive"
-                      checked={formData.isActive}
-                      onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isActive: checked }))}
-                    />
-                    <Label htmlFor="isActive">{t('admin.products.active')}</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="isFeatured"
-                      checked={formData.isFeatured}
-                      onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isFeatured: checked }))}
-                    />
-                    <Label htmlFor="isFeatured">{t('admin.products.featured')}</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="isOrganic"
-                      checked={formData.isOrganic}
-                      onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isOrganic: checked }))}
-                    />
-                    <Label htmlFor="isOrganic">{t('admin.products.organic')}</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="isFairTrade"
-                      checked={formData.isFairTrade}
-                      onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isFairTrade: checked }))}
-                    />
-                    <Label htmlFor="isFairTrade">{t('admin.products.fairTrade')}</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="isDigital"
-                      checked={formData.isDigital}
-                      onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isDigital: checked }))}
-                    />
-                    <Label htmlFor="isDigital">{t('admin.products.digital')}</Label>
-                  </div>
-                </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="brewingInstructions">Brewing Instructions (English)</Label>
+                        <Textarea
+                          id="brewingInstructions"
+                          value={formData.brewingInstructions || ''}
+                          onChange={(e) => setFormData(prev => ({ ...prev, brewingInstructions: e.target.value }))}
+                          placeholder="Pour over: 1:15 ratio, 200°F water temperature"
+                          rows={3}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="brewingInstructionsAr">Brewing Instructions (Arabic)</Label>
+                        <Textarea
+                          id="brewingInstructionsAr"
+                          value={formData.brewingInstructionsAr || ''}
+                          onChange={(e) => setFormData(prev => ({ ...prev, brewingInstructionsAr: e.target.value }))}
+                          placeholder="صب فوق: نسبة 1:15، درجة حرارة الماء 95 درجة مئوية"
+                          rows={3}
+                          dir="rtl"
+                        />
+                      </div>
+                    </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="displayOrder">{t('admin.products.displayOrder')}</Label>
-                    <Input
-                      id="displayOrder"
-                      type="number"
-                      value={formData.displayOrder}
-                      onChange={(e) => setFormData(prev => ({ ...prev, displayOrder: parseInt(e.target.value) || 0 }))}
-                      min="0"
-                    />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="compatibility">Compatibility (English)</Label>
+                        <Textarea
+                          id="compatibility"
+                          value={formData.compatibility || ''}
+                          onChange={(e) => setFormData(prev => ({ ...prev, compatibility: e.target.value }))}
+                          placeholder="Compatible with Nespresso machines"
+                          rows={2}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="compatibilityAr">Compatibility (Arabic)</Label>
+                        <Textarea
+                          id="compatibilityAr"
+                          value={formData.compatibilityAr || ''}
+                          onChange={(e) => setFormData(prev => ({ ...prev, compatibilityAr: e.target.value }))}
+                          placeholder="متوافق مع آلات نيسبريسو"
+                          rows={2}
+                          dir="rtl"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="isFairTrade"
+                        checked={formData.isFairTrade}
+                        onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isFairTrade: checked }))}
+                      />
+                      <Label htmlFor="isFairTrade">Fair Trade</Label>
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="intensity">{t('admin.products.intensity')}</Label>
-                    <Input
-                      id="intensity"
-                      type="number"
-                      value={formData.intensity}
-                      onChange={(e) => setFormData(prev => ({ ...prev, intensity: parseInt(e.target.value) || 1 }))}
-                      min="1"
-                      max="10"
-                    />
+                </TabsContent>
+
+                {/* Images Tab */}
+                <TabsContent value="images" className="space-y-6">
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold">Product Images</h3>
+                    <p className="text-sm text-muted-foreground">Manage product images and their display settings</p>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="imageAlt">Main Image Alt Text</Label>
+                        <Input
+                          id="imageAlt"
+                          value={formData.imageAlt || ''}
+                          onChange={(e) => setFormData(prev => ({ ...prev, imageAlt: e.target.value }))}
+                          placeholder="Coffee bag image"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="imageAltAr">Main Image Alt Text (Arabic)</Label>
+                        <Input
+                          id="imageAltAr"
+                          value={formData.imageAltAr || ''}
+                          onChange={(e) => setFormData(prev => ({ ...prev, imageAltAr: e.target.value }))}
+                          placeholder="صورة كيس القهوة"
+                          dir="rtl"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center">
+                      <p className="text-muted-foreground">Additional image management features will be available after the product is created.</p>
+                    </div>
                   </div>
-                </div>
-              </div>
+                </TabsContent>
+
+                {/* Pricing & Variants Tab */}
+                <TabsContent value="pricing" className="space-y-6">
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold">Pricing & Variants</h3>
+                    <p className="text-sm text-muted-foreground">Product variants and pricing information</p>
+                    
+                    <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center">
+                      <p className="text-muted-foreground">Variant management features will be available after the product is created.</p>
+                    </div>
+                  </div>
+                </TabsContent>
+
+                {/* SEO & Settings Tab */}
+                <TabsContent value="seo-settings" className="space-y-6">
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold">SEO & Settings</h3>
+                    
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      <div className="flex items-center space-x-2">
+                        <Switch
+                          id="isActive"
+                          checked={formData.isActive}
+                          onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isActive: checked }))}
+                        />
+                        <Label htmlFor="isActive">{t('admin.products.active')}</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Switch
+                          id="isFeatured"
+                          checked={formData.isFeatured}
+                          onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isFeatured: checked }))}
+                        />
+                        <Label htmlFor="isFeatured">{t('admin.products.featured')}</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Switch
+                          id="isOrganic"
+                          checked={formData.isOrganic}
+                          onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isOrganic: checked }))}
+                        />
+                        <Label htmlFor="isOrganic">{t('admin.products.organic')}</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Switch
+                          id="isDigital"
+                          checked={formData.isDigital}
+                          onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isDigital: checked }))}
+                        />
+                        <Label htmlFor="isDigital">{t('admin.products.digital')}</Label>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="displayOrder">{t('admin.products.displayOrder')}</Label>
+                      <Input
+                        id="displayOrder"
+                        type="number"
+                        value={formData.displayOrder}
+                        onChange={(e) => setFormData(prev => ({ ...prev, displayOrder: parseInt(e.target.value) || 0 }))}
+                        min="0"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="metaTitle">Meta Title</Label>
+                        <Input
+                          id="metaTitle"
+                          value={formData.metaTitle || ''}
+                          onChange={(e) => setFormData(prev => ({ ...prev, metaTitle: e.target.value }))}
+                          placeholder="SEO title for search engines"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="tags">Tags (comma separated)</Label>
+                        <Input
+                          id="tags"
+                          value={formData.tags || ''}
+                          onChange={(e) => setFormData(prev => ({ ...prev, tags: e.target.value }))}
+                          placeholder="coffee, specialty, organic"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="metaDescription">Meta Description</Label>
+                      <Textarea
+                        id="metaDescription"
+                        value={formData.metaDescription || ''}
+                        onChange={(e) => setFormData(prev => ({ ...prev, metaDescription: e.target.value }))}
+                        placeholder="SEO description for search engines"
+                        rows={3}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="metaKeywords">Meta Keywords (comma separated)</Label>
+                      <Input
+                        id="metaKeywords"
+                        value={formData.metaKeywords || ''}
+                        onChange={(e) => setFormData(prev => ({ ...prev, metaKeywords: e.target.value }))}
+                        placeholder="coffee, bean, roast, specialty"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="launchDate">Launch Date</Label>
+                        <Input
+                          id="launchDate"
+                          type="datetime-local"
+                          value={formData.launchDate || ''}
+                          onChange={(e) => setFormData(prev => ({ ...prev, launchDate: e.target.value }))}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="expiryDate">Expiry Date</Label>
+                        <Input
+                          id="expiryDate"
+                          type="datetime-local"
+                          value={formData.expiryDate || ''}
+                          onChange={(e) => setFormData(prev => ({ ...prev, expiryDate: e.target.value }))}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="aromaticProfile">Aromatic Profile</Label>
+                        <Textarea
+                          id="aromaticProfile"
+                          value={formData.aromaticProfile || ''}
+                          onChange={(e) => setFormData(prev => ({ ...prev, aromaticProfile: e.target.value }))}
+                          placeholder="Floral, fruity, with hints of chocolate"
+                          rows={2}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="aromaticProfileAr">Aromatic Profile (Arabic)</Label>
+                        <Textarea
+                          id="aromaticProfileAr"
+                          value={formData.aromaticProfileAr || ''}
+                          onChange={(e) => setFormData(prev => ({ ...prev, aromaticProfileAr: e.target.value }))}
+                          placeholder="زهري، فاكهي، مع لمحات من الشوكولاتة"
+                          rows={2}
+                          dir="rtl"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="uses">Uses</Label>
+                        <Textarea
+                          id="uses"
+                          value={formData.uses || ''}
+                          onChange={(e) => setFormData(prev => ({ ...prev, uses: e.target.value }))}
+                          placeholder="Espresso, drip coffee, French press"
+                          rows={2}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="usesAr">Uses (Arabic)</Label>
+                        <Textarea
+                          id="usesAr"
+                          value={formData.usesAr || ''}
+                          onChange={(e) => setFormData(prev => ({ ...prev, usesAr: e.target.value }))}
+                          placeholder="إسبرسو، قهوة بالتنقيط، كبسة فرنسية"
+                          rows={2}
+                          dir="rtl"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </TabsContent>
+              </Tabs>
 
               {/* Action Buttons */}
               <div className="flex justify-end space-x-2 pt-4 border-t">
