@@ -8,7 +8,7 @@ interface SlideData {
   id: string;
   image: string;
   title: string;
-  subtitle: string;
+  subtitle: string | string[];
   description: string;
   stats: { value: string; label: string }[];
   features: string[];
@@ -156,14 +156,22 @@ export const ProfessionalHeroSlider: React.FC = () => {
               </motion.h1>
 
               {/* Subtitle */}
-              <motion.h2
+              <motion.div
                 className="slide-subtitle"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.8, delay: 0.4 }}
               >
-                {currentSlideData.subtitle}
-              </motion.h2>
+                {Array.isArray(currentSlideData.subtitle) ? (
+                  currentSlideData.subtitle.map((line, index) => (
+                    <div key={index} className="subtitle-line">
+                      {line}
+                    </div>
+                  ))
+                ) : (
+                  currentSlideData.subtitle
+                )}
+              </motion.div>
 
               {/* CTA Button */}
               <motion.div

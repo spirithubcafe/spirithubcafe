@@ -39,17 +39,17 @@ export const CategoriesSection: React.FC = () => {
   }
 
   return (
-    <section className="py-16 bg-white">
+    <section className="py-8 bg-white">
       <div className="container mx-auto px-4">
         {/* Section Header */}
-        <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold text-gray-900 mb-4 uppercase">
+        <div className="text-center mb-6">
+          <h2 className="text-4xl font-bold text-gray-900 mb-3 uppercase">
             {t('sections.categories') || 'Our Categories'}
           </h2>
         </div>
 
         {/* Categories Grid - 5 columns */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
           {categories.map((category) => (
             <div
               key={category.id}
@@ -57,7 +57,7 @@ export const CategoriesSection: React.FC = () => {
               onClick={() => handleCategoryClick(category.id)}
             >
               {/* Category Image */}
-              <div className="relative overflow-hidden rounded-lg aspect-square mb-4 border border-gray-200 group-hover:border-amber-400 transition-all duration-300">
+              <div className="relative overflow-hidden rounded-lg aspect-square mb-2 border border-gray-200 group-hover:border-amber-400 transition-all duration-300">
                 <img
                   src={category.image || '/images/slides/slide1.webp'}
                   alt={category.name}
