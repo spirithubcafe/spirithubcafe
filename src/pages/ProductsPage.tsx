@@ -307,15 +307,15 @@ export const ProductsPage = () => {
       </div>
 
       {/* All Categories Section */}
-      <div className="py-16 bg-white">
+      <div className="py-8 bg-white">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              {isArabic ? 'تصفح جميع الفئات' : 'Browse All Categories'}
+          <div className="text-center mb-6">
+            <h2 className="text-2xl font-bold text-gray-900">
+              {isArabic ? 'تصفح جميع الفئات' : 'BROWSE ALL CATEGORIES'}
             </h2>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 max-w-7xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 max-w-7xl mx-auto">
             {allCategories.map((category) => {
               const isActive = selectedCategory === category.id || selectedCategory === category.slug;
               
