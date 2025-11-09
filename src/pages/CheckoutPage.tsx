@@ -67,8 +67,8 @@ const shippingMethods = [
   {
     id: 'pickup',
     label: {
-      en: 'Pickup from Nool Oman Shop',
-      ar: 'استلام من متجر نول عمان',
+      en: 'Pickup from Shop',
+      ar: 'استلام من المتجر',
     },
     description: {
       en: 'Collect your order from our Muscat location. We will notify you when it is ready.',
@@ -82,6 +82,26 @@ const shippingMethods = [
     badge: {
       en: 'Free',
       ar: 'مجاني',
+    },
+  },
+  {
+    id: 'nool',
+    label: {
+      en: 'Nool Delivery',
+      ar: 'توصيل نول',
+    },
+    description: {
+      en: 'Fast local delivery within Muscat area with our own delivery team.',
+      ar: 'توصيل محلي سريع داخل منطقة مسقط مع فريق التوصيل الخاص بنا.',
+    },
+    eta: {
+      en: '1-2 business days',
+      ar: '١-٢ أيام عمل',
+    },
+    price: 2.0,
+    badge: {
+      en: 'Fast delivery',
+      ar: 'توصيل سريع',
     },
   },
   {
