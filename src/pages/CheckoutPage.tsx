@@ -241,8 +241,16 @@ export const CheckoutPage: React.FC = () => {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)}>
+            {/* Back button at the top */}
+            <div className="mb-8">
+              <Button type="button" variant="outline" onClick={() => navigate(-1)} className="w-auto">
+                {isArabic ? 'العودة' : 'Back'}
+              </Button>
+            </div>
+
             <div className="grid gap-8 lg:grid-cols-[1fr_400px] xl:grid-cols-[1fr_450px]">
-              <div className="space-y-8 order-2 lg:order-1">
+              {/* Contact & Delivery Details - Order 1 on all screens */}
+              <div className="space-y-8 order-1">
                 <Card className="shadow-xl border-gray-100">
                   <CardHeader>
                     <CardTitle className="text-2xl font-semibold flex items-center gap-3">
@@ -475,69 +483,71 @@ export const CheckoutPage: React.FC = () => {
                 </Card>
               </div>
 
-              <div className="w-full lg:w-[400px] xl:w-[450px] space-y-6 lg:sticky lg:top-6 order-1 lg:order-2">
-            <Card className="shadow-xl border-gray-100">
-              <CardHeader>
-                <CardTitle className="text-xl font-semibold flex items-center gap-2">
-                  <MapPin className="w-5 h-5 text-amber-600" />
-                  {isArabic ? 'طريقة التسليم' : 'Delivery Method'}
-                </CardTitle>
-                <CardDescription>
-                  {isArabic ? 'اختر ما إذا كنت تريد الاستلام من المتجر أو استخدام الشحن.' : 'Choose between picking up your order or home delivery.'}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <FormField
-                  control={form.control}
-                  name="shippingMethod"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormControl>
-                        <RadioGroup value={field.value} onValueChange={field.onChange} className="space-y-3">
-                          {shippingMethods.map((method) => (
-                            <label
-                              key={method.id}
-                              className={cn(
-                                'flex gap-3 rounded-xl border bg-white p-3 shadow-sm transition-all cursor-pointer',
-                                field.value === method.id
-                                  ? 'border-amber-500 ring-2 ring-amber-100'
-                                  : 'border-gray-200 hover:border-gray-300'
-                              )}
-                            >
-                              <RadioGroupItem value={method.id} className="mt-1" />
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-start justify-between gap-2 mb-1">
-                                  <p className="font-semibold text-sm">
-                                    {isArabic ? method.label.ar : method.label.en}
-                                  </p>
-                                  <p className="font-bold text-amber-600 text-sm whitespace-nowrap">
-                                    {method.price === 0
-                                      ? isArabic ? 'مجاني' : 'Free'
-                                      : formatCurrency(method.price, currencyLabel)}
-                                  </p>
-                                </div>
-                                <p className="text-xs text-gray-600 mb-2">
-                                  {isArabic ? method.description.ar : method.description.en}
-                                </p>
-                                <div className="flex items-center justify-between">
-                                  <span className="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
-                                    {isArabic ? method.badge.ar : method.badge.en}
-                                  </span>
-                                  <p className="text-xs text-gray-500">
-                                    {isArabic ? method.eta.ar : method.eta.en}
-                                  </p>
-                                </div>
-                              </div>
-                            </label>
-                          ))}
-                        </RadioGroup>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </CardContent>
-            </Card>
+              {/* Sidebar for desktop with both delivery method and order summary */}
+              <div className="w-full lg:w-[400px] xl:w-[450px] space-y-6 lg:sticky lg:top-6 order-2">
+                {/* Delivery Method - Responsive positioning */}
+                <Card className="shadow-xl border-gray-100">
+                  <CardHeader>
+                    <CardTitle className="text-xl font-semibold flex items-center gap-2">
+                      <MapPin className="w-5 h-5 text-amber-600" />
+                      {isArabic ? 'طريقة التسليم' : 'Delivery Method'}
+                    </CardTitle>
+                    <CardDescription>
+                      {isArabic ? 'اختر ما إذا كنت تريد الاستلام من المتجر أو استخدام الشحن.' : 'Choose between picking up your order or home delivery.'}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <FormField
+                      control={form.control}
+                      name="shippingMethod"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormControl>
+                            <RadioGroup value={field.value} onValueChange={field.onChange} className="space-y-3">
+                              {shippingMethods.map((method) => (
+                                <label
+                                  key={method.id}
+                                  className={cn(
+                                    'flex gap-3 rounded-xl border bg-white p-3 shadow-sm transition-all cursor-pointer',
+                                    field.value === method.id
+                                      ? 'border-amber-500 ring-2 ring-amber-100'
+                                      : 'border-gray-200 hover:border-gray-300'
+                                  )}
+                                >
+                                  <RadioGroupItem value={method.id} className="mt-1" />
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-start justify-between gap-2 mb-1">
+                                      <p className="font-semibold text-sm">
+                                        {isArabic ? method.label.ar : method.label.en}
+                                      </p>
+                                      <p className="font-bold text-amber-600 text-sm whitespace-nowrap">
+                                        {method.price === 0
+                                          ? isArabic ? 'مجاني' : 'Free'
+                                          : formatCurrency(method.price, currencyLabel)}
+                                      </p>
+                                    </div>
+                                    <p className="text-xs text-gray-600 mb-2">
+                                      {isArabic ? method.description.ar : method.description.en}
+                                    </p>
+                                    <div className="flex items-center justify-between">
+                                      <span className="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
+                                        {isArabic ? method.badge.ar : method.badge.en}
+                                      </span>
+                                      <p className="text-xs text-gray-500">
+                                        {isArabic ? method.eta.ar : method.eta.en}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </label>
+                              ))}
+                            </RadioGroup>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </CardContent>
+                </Card>
 
             <Card className="shadow-xl border-gray-100">
               <CardHeader>
@@ -592,6 +602,12 @@ export const CheckoutPage: React.FC = () => {
               </CardContent>
             </Card>
 
+            <div className="flex justify-center">
+              <Button type="submit" className="bg-amber-600 hover:bg-amber-700 w-full sm:w-auto">
+                {isArabic ? 'متابعة إلى الدفع' : 'Proceed to Payment'}
+              </Button>
+            </div>
+
             <Card className="border-amber-100 bg-amber-50/70 shadow-sm">
               <CardHeader className="space-y-2">
                 <CardTitle className="flex items-center gap-2 text-amber-800">
@@ -615,15 +631,6 @@ export const CheckoutPage: React.FC = () => {
                 </p>
               </CardContent>
             </Card>
-          </div>
-
-          <div className="lg:col-span-2 flex flex-col gap-3 sm:flex-row sm:justify-end">
-            <Button type="button" variant="outline" onClick={() => navigate(-1)} className="sm:w-auto">
-              {isArabic ? 'العودة' : 'Back'}
-            </Button>
-            <Button type="submit" className="bg-amber-600 hover:bg-amber-700 sm:w-auto">
-              {isArabic ? 'متابعة إلى الدفع' : 'Proceed to Payment'}
-            </Button>
           </div>
         </div>
       </form>
