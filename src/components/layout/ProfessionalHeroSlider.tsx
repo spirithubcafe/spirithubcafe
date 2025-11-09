@@ -40,8 +40,24 @@ export const ProfessionalHeroSlider: React.FC = () => {
     {
       id: '1',
       image: '/images/slides/slide1.webp',
-      title: language === 'ar' ? 'مرحباً بكم في سبيريت هب للتحميص والقهوة المختصة' : 'WELCOME TO SPIRITHUB ROASTERY AND SPECIALTY COFFEE',
-      subtitle: '',
+      title: language === 'ar' ? 'مرحباً بكم في محمصة سبيريت هب للقهوة المختصة' : 'WELCOME TO SPIRITHUB ROASTERY AND SPECIALTY COFFEE',
+      subtitle: language === 'ar' ? (isMobile ? [
+        'حبوب قهوة مختارة بعناية ومحمصة بخبرة',
+        'لتكريم عمل المنتجين وإبراز النكهات المميزة',
+        'أفضل حبوب القهوة في عُمان'
+      ] : [
+        'يتم اختيار حبوب القهوة لدينا بعناية وتحميصها بدقة لتكريم العمل الشاق للمنتجين.',
+        'من خلال إبراز النكهات والروائح والحموضة المميزة لكل قهوة، ندع قصصهم تتألق',
+        'ونقدم لعملائنا أفضل حبوب القهوة في عُمان.'
+      ]) : (isMobile ? [
+        'Thoughtfully sourced and expertly roasted',
+        'to honor producers and reveal distinctive flavors',
+        'The best coffee beans in Oman'
+      ] : [
+        'Our coffee beans are thoughtfully sourced and carefully roasted to honor producers\' hard work.',
+        'By revealing each coffee\'s distinctive flavors, aromatics, and acidities, we let their stories shine through',
+        'and provide to customers the best coffee beans in Oman.'
+      ]),
       description: language === 'ar' 
         ? 'نقدم لك أجود أنواع القهوة المحمصة بعناية فائقة من أفضل مزارع القهوة حول العالم'
         : 'We bring you the finest carefully roasted coffee from the best coffee farms around the world',
@@ -60,8 +76,16 @@ export const ProfessionalHeroSlider: React.FC = () => {
     {
       id: '2',
       image: '/images/slides/slide2.webp',
-      title: language === 'ar' ? 'حرفية في التحضير' : 'Craftsmanship in Preparation',
-      subtitle: language === 'ar' ? 'خبرة تمتد لسنوات في فن صناعة القهوة' : 'Years of expertise in the art of coffee making',
+      title: language === 'ar' ? 'فلتر ورقي لتنقيط القهوة على شكل قرص UFO صديق للبيئة' : 'ECO-FRIENDLY UFO DISK DRIP COFFEE PAPER FILTER',
+      subtitle: language === 'ar' ? [
+        'مهمتنا هي إثراء يوم كل عميل بتجربة قهوة مصنوعة يدوياً.',
+        'من خلال محمصة سبيريت هب، نضمن جودة ونكهة استثنائية في كل كوب، من الحبوب المختارة بعناية إلى التحميص الخبير.',
+        'أينما نقدم خدماتنا، تتألق شغفنا وإخلاصنا، مما يجعل كل رشفة لا تُنسى.'
+      ] : [
+        'Our mission is to enrich each customer\'s day with a hand-crafted coffee experience.',
+        'Through SpiritHub Roastery, we guarantee exceptional quality and flavor in every cup, from carefully selected beans to expert roasting.',
+        'Wherever we serve, our passion and dedication shine through, making every sip unforgettable.'
+      ],
       description: language === 'ar'
         ? 'باريستا محترفون يحضرون لك كل كوب بحب وإتقان باستخدام أحدث التقنيات'
         : 'Professional baristas prepare every cup with love and precision using the latest techniques',
@@ -80,8 +104,16 @@ export const ProfessionalHeroSlider: React.FC = () => {
     {
       id: '3',
       image: '/images/slides/slide3.webp',
-      title: language === 'ar' ? 'أجواء مثالية للاسترخاء' : 'Perfect Atmosphere for Relaxation',
-      subtitle: language === 'ar' ? 'مساحة مريحة ودافئة للاستمتاع بوقتك' : 'A comfortable and warm space to enjoy your time',
+      title: language === 'ar' ? 'أجواء مثالية للاسترخاء' : 'COFFEE CAPSULES SELECTIONS',
+      subtitle: language === 'ar' ? [
+        'اليوم، يسعدنا أن نُقدّم لكم إنجازًا جديدًا في رحلتنا: تشكيلة حصرية من كبسولات القهوة!',
+        'هذه الأنواع الخمسة الاستثنائية من القهوة، المُختارة بعناية،',
+        'تُضفي جوهرًا أصيلًا على فنجانكم.'
+      ] : [
+        'Today, we are thrilled to introduce a new milestone in our journey: exclusive coffee capsules selections!',
+        'Carefully curated, these 5 exceptional coffee varieties',
+        'bring the authentic essence of their origins right to your cup.'
+      ],
       description: language === 'ar'
         ? 'تصميم داخلي أنيق وموسيقى هادئة وإضاءة مثالية لتجربة لا تُنسى'
         : 'Elegant interior design, soothing music, and perfect lighting for an unforgettable experience',
@@ -137,7 +169,7 @@ export const ProfessionalHeroSlider: React.FC = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.8, ease: "easeInOut" }}
+            transition={{ duration: 1.2, ease: "easeInOut" }}
           >
             <img
               src={currentSlideData.image}
