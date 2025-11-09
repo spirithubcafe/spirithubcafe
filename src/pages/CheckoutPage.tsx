@@ -20,6 +20,8 @@ import { cn } from '@/lib/utils';
 import type { CheckoutOrder } from '../types/checkout';
 import { Seo } from '../components/seo/Seo';
 import { siteMetadata } from '../config/siteMetadata';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import { computeShippingMethods, getCitiesByCountry, getCountries } from '@/lib/shipping';
 
 const checkoutSchema = z
   .object({
@@ -62,69 +64,7 @@ const checkoutSchema = z
   });
 
 type CheckoutFormValues = z.infer<typeof checkoutSchema>;
-
-const shippingMethods = [
-  {
-    id: 'pickup',
-    label: {
-      en: 'Pickup from Shop',
-      ar: 'استلام من المتجر',
-    },
-    description: {
-      en: 'Collect your order from our Muscat location. We will notify you when it is ready.',
-      ar: 'استلم طلبك من موقعنا في مسقط. سنخبرك حالما يصبح جاهزاً.',
-    },
-    eta: {
-      en: 'Ready within 24 hours',
-      ar: 'جاهز خلال 24 ساعة',
-    },
-    price: 0,
-    badge: {
-      en: 'Free',
-      ar: 'مجاني',
-    },
-  },
-  {
-    id: 'nool',
-    label: {
-      en: 'Nool Delivery',
-      ar: 'توصيل نول',
-    },
-    description: {
-      en: 'Fast local delivery within Muscat area with our own delivery team.',
-      ar: 'توصيل محلي سريع داخل منطقة مسقط مع فريق التوصيل الخاص بنا.',
-    },
-    eta: {
-      en: '1-2 business days',
-      ar: '١-٢ أيام عمل',
-    },
-    price: 2.0,
-    badge: {
-      en: 'Fast delivery',
-      ar: 'توصيل سريع',
-    },
-  },
-  {
-    id: 'aramex',
-    label: {
-      en: 'Aramex Courier',
-      ar: 'أرامكس للشحن',
-    },
-    description: {
-      en: 'Fast door-to-door delivery across Oman and GCC with live tracking.',
-      ar: 'توصيل سريع إلى الباب في جميع أنحاء عُمان ودول الخليج مع تتبع مباشر.',
-    },
-    eta: {
-      en: '2-4 business days',
-      ar: '٢-٤ أيام عمل',
-    },
-    price: 3.5,
-    badge: {
-      en: 'Best for gifts',
-      ar: 'مثالي للهدايا',
-    },
-  },
-];
+// Dynamic shipping methods computed based on selected country/city
 
 const formatCurrency = (value: number, label: string) => `${value.toFixed(3)} ${label}`;
 
@@ -140,23 +80,49 @@ export const CheckoutPage: React.FC = () => {
       fullName: '',
       email: '',
       phone: '',
-      country: 'Oman',
-      city: '',
+      country: 'OM', // store ISO2 code
+      city: '', // store city slug
       address: '',
       notes: '',
-      shippingMethod: shippingMethods[0].id,
+      shippingMethod: 'pickup',
       isGift: false,
       recipientName: '',
       recipientPhone: '',
-      recipientCountry: '',
+      recipientCountry: 'OM',
       recipientCity: '',
       recipientAddress: '',
     },
   });
 
+  const watchCountry = form.watch('country');
+  const watchCity = form.watch('city');
+  const watchRecipientCountry = form.watch('recipientCountry');
+  const watchRecipientCity = form.watch('recipientCity');
   const watchedShipping = form.watch('shippingMethod');
   const watchIsGift = form.watch('isGift');
+  
+  // Use recipient's country/city for shipping if it's a gift, otherwise use customer's
+  const effectiveCountry = watchIsGift ? watchRecipientCountry : watchCountry;
+  const effectiveCity = watchIsGift ? watchRecipientCity : watchCity;
+  
+  const shippingMethods = React.useMemo(() => 
+    computeShippingMethods({ countryIso2: effectiveCountry, citySlug: effectiveCity }), 
+    [effectiveCountry, effectiveCity]
+  );
+  
   const selectedShipping = shippingMethods.find((method) => method.id === watchedShipping) ?? shippingMethods[0];
+  
+  React.useEffect(() => {
+    // If current method not available after country/gift change, reset to first
+    if (!shippingMethods.some(m => m.id === form.getValues('shippingMethod'))) {
+      form.setValue('shippingMethod', shippingMethods[0].id);
+    }
+    // Disallow 'nool' outside Oman
+    if (effectiveCountry !== 'OM' && form.getValues('shippingMethod') === 'nool') {
+      form.setValue('shippingMethod', shippingMethods[0].id);
+    }
+  }, [shippingMethods, effectiveCountry, form]);
+
   const currencyLabel = isArabic ? 'ر.ع' : 'OMR';
 
   const subtotal = useMemo(() => totalPrice, [totalPrice]);
@@ -208,7 +174,7 @@ export const CheckoutPage: React.FC = () => {
 
   if (items.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white">
+  <div className="min-h-screen bg-linear-to-br from-gray-50 to-white">
         <Seo
           title={language === 'ar' ? 'الدفع' : 'Checkout'}
           description={
@@ -226,7 +192,7 @@ export const CheckoutPage: React.FC = () => {
           subtitle="Your cart is empty. Add products to continue."
           subtitleAr="سلة التسوق فارغة. أضف منتجات للمتابعة."
         />
-        <div className="max-w-3xl mx-auto px-4 py-16 text-center space-y-6">
+  <div className="max-w-3xl mx-auto px-4 py-16 text-center space-y-6">
           <p className="text-lg text-gray-600">
             {isArabic ? 'لا توجد منتجات في السلة حالياً.' : 'There are no products in your cart yet.'}
           </p>
@@ -239,7 +205,7 @@ export const CheckoutPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+  <div className="min-h-screen bg-linear-to-b from-gray-50 to-white">
       <Seo
         title={language === 'ar' ? 'الدفع الآمن' : 'Secure checkout'}
         description={
@@ -258,7 +224,7 @@ export const CheckoutPage: React.FC = () => {
         subtitleAr="أكد تفاصيل طلبك واختر طريقة الاستلام أو الشحن المناسبة."
       />
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+  <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)}>
             {/* Back button at the top */}
@@ -334,7 +300,16 @@ export const CheckoutPage: React.FC = () => {
                           <FormItem>
                             <FormLabel>{isArabic ? 'الدولة' : 'Country'}</FormLabel>
                             <FormControl>
-                              <Input placeholder={isArabic ? 'الدولة' : 'Country'} {...field} />
+                              <Select value={field.value} onValueChange={(val) => { field.onChange(val); form.setValue('city', ''); }}>
+                                <SelectTrigger size="default" className="w-full">
+                                  <SelectValue placeholder={isArabic ? 'اختر الدولة' : 'Select country'} />
+                                </SelectTrigger>
+                                <SelectContent className="max-h-64">
+                                  {getCountries().map(c => (
+                                    <SelectItem key={c.iso2} value={c.iso2}>{isArabic ? c.name_ar : c.name_en}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -350,7 +325,16 @@ export const CheckoutPage: React.FC = () => {
                           <FormItem>
                             <FormLabel>{isArabic ? 'المدينة' : 'City'}</FormLabel>
                             <FormControl>
-                              <Input placeholder={isArabic ? 'اسم المدينة' : 'City name'} {...field} />
+                              <Select value={field.value} onValueChange={field.onChange} disabled={!watchCountry}>
+                                <SelectTrigger size="default" className="w-full">
+                                  <SelectValue placeholder={isArabic ? 'اختر المدينة' : 'Select city'} />
+                                </SelectTrigger>
+                                <SelectContent className="max-h-64">
+                                  {getCitiesByCountry(watchCountry).map(city => (
+                                    <SelectItem key={city.slug} value={city.slug}>{isArabic ? city.name_ar : city.name_en}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -448,7 +432,16 @@ export const CheckoutPage: React.FC = () => {
                               <FormItem>
                                 <FormLabel>{isArabic ? 'دولة المستلم' : 'Recipient Country'}</FormLabel>
                                 <FormControl>
-                                  <Input placeholder={isArabic ? 'الدولة' : 'Country'} {...field} />
+                                  <Select value={field.value} onValueChange={(val) => { field.onChange(val); form.setValue('recipientCity', ''); }}>
+                                    <SelectTrigger size="default" className="w-full">
+                                      <SelectValue placeholder={isArabic ? 'اختر الدولة' : 'Select country'} />
+                                    </SelectTrigger>
+                                    <SelectContent className="max-h-64">
+                                      {getCountries().map(c => (
+                                        <SelectItem key={c.iso2} value={c.iso2}>{isArabic ? c.name_ar : c.name_en}</SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -463,7 +456,16 @@ export const CheckoutPage: React.FC = () => {
                               <FormItem>
                                 <FormLabel>{isArabic ? 'مدينة المستلم' : 'Recipient City'}</FormLabel>
                                 <FormControl>
-                                  <Input placeholder={isArabic ? 'اسم المدينة' : 'City'} {...field} />
+                                  <Select value={field.value} onValueChange={field.onChange} disabled={!watchRecipientCountry}>
+                                    <SelectTrigger size="default" className="w-full">
+                                      <SelectValue placeholder={isArabic ? 'اختر المدينة' : 'Select city'} />
+                                    </SelectTrigger>
+                                    <SelectContent className="max-h-64">
+                                      {getCitiesByCountry(watchRecipientCountry).map(city => (
+                                        <SelectItem key={city.slug} value={city.slug}>{isArabic ? city.name_ar : city.name_en}</SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -579,7 +581,7 @@ export const CheckoutPage: React.FC = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="space-y-4 max-h-[320px] overflow-y-auto pr-1">
+                <div className="space-y-4 max-h-80 overflow-y-auto pr-1">
                   {items.map((item) => (
                     <div key={item.id} className="flex gap-4 border-b border-dashed border-gray-100 pb-4 last:border-none">
                       <img src={item.image} alt={item.name} className="h-16 w-16 rounded-lg object-cover" />
