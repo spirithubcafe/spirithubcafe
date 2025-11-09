@@ -3,6 +3,7 @@ import { AppProvider } from './contexts/AppContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
 import { Navigation } from './components/layout/Navigation';
+import { MobileBottomNav } from './components/layout/MobileBottomNav';
 import { ScrollToTop } from './components/layout/ScrollToTop';
 import { Footer } from './components/layout/Footer';
 import { CartDrawer } from './components/cart/CartDrawer';
@@ -47,7 +48,7 @@ function MainContent() {
   const isHomePage = location.pathname === '/';
   
   return (
-    <main className={isHomePage ? '' : 'pt-16 md:pt-20'}>
+    <main className={`${isHomePage ? 'pb-20 md:pb-0' : 'pt-16 md:pt-20 pb-20 md:pb-0'}`}>
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/profile" element={<ProfilePage />} />
@@ -92,6 +93,7 @@ function AppContent() {
       <CartDrawer />
       <ScrollToTop />
       <MainContent />
+      <MobileBottomNav />
       <Footer />
     </div>
   );
