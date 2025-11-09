@@ -313,11 +313,6 @@ export const ProductsPage = () => {
             <h2 className="text-3xl font-bold text-gray-900 mb-4">
               {isArabic ? 'تصفح جميع الفئات' : 'Browse All Categories'}
             </h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              {isArabic 
-                ? 'اكتشف مجموعتنا الكاملة من القهوة والمنتجات المتخصصة' 
-                : 'Discover our complete collection of coffee and specialty products'}
-            </p>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 max-w-7xl mx-auto">
