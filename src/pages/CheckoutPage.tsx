@@ -23,6 +23,22 @@ import { siteMetadata } from '../config/siteMetadata';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { computeShippingMethods, getCitiesByCountry, getCountries } from '@/lib/shipping';
 
+// Map country ISO2 -> international dialing code for placeholders
+const COUNTRY_CALLING_CODES: Record<string, string> = {
+  OM: '+968',
+  AE: '+971',
+  SA: '+966',
+  QA: '+974',
+  KW: '+965',
+  BH: '+973',
+};
+
+function getPhonePlaceholderForCountry(iso2?: string) {
+  const code = (iso2 && COUNTRY_CALLING_CODES[iso2]) || COUNTRY_CALLING_CODES.OM;
+  // Simple common placeholder pattern; callers may replace with more accurate formats later
+  return `${code} 0000 0000`;
+}
+
 const checkoutSchema = z
   .object({
     fullName: z.string().min(3, 'Please enter your full name'),
@@ -332,18 +348,21 @@ export const CheckoutPage: React.FC = () => {
 
 
                                             <FormField
-                        control={form.control}
-                        name="phone"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>{isArabic ? 'رقم الهاتف' : 'Phone Number'}</FormLabel>
-                            <FormControl>
-                              <Input type="tel" placeholder="+968 0000 0000" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                                                control={form.control}
+                                                name="phone"
+                                                render={({ field }) => {
+                                                  const phonePlaceholder = getPhonePlaceholderForCountry(watchCountry);
+                                                  return (
+                                                    <FormItem>
+                                                      <FormLabel>{isArabic ? 'رقم الهاتف' : 'Phone Number'}</FormLabel>
+                                                      <FormControl>
+                                                        <Input type="tel" dir="ltr" placeholder={phonePlaceholder} {...field} />
+                                                      </FormControl>
+                                                      <FormMessage />
+                                                    </FormItem>
+                                                  );
+                                                }}
+                                              />
                       <FormField
                         control={form.control}
                         name="address"
@@ -378,8 +397,8 @@ export const CheckoutPage: React.FC = () => {
                       control={form.control}
                       name="isGift"
                       render={({ field }) => (
-                        <FormItem className="flex items-center justify-between rounded-2xl border px-4 py-3">
-                          <div>
+                        <FormItem className="flex items-center justify-between gap-4 rounded-2xl border px-4 py-3">
+                          <div className="flex-1 min-w-0">
                             <FormLabel className="text-base font-semibold">
                               {isArabic ? 'أرسلها كهدية' : 'Send as a gift'}
                             </FormLabel>
@@ -389,7 +408,7 @@ export const CheckoutPage: React.FC = () => {
                                 : 'We will include a small card with sender and recipient names.'}
                             </p>
                           </div>
-                          <FormControl>
+                          <FormControl className="shrink-0" dir="ltr">
                             <Switch checked={field.value} onCheckedChange={field.onChange} />
                           </FormControl>
                         </FormItem>
@@ -470,9 +489,13 @@ export const CheckoutPage: React.FC = () => {
                             render={({ field }) => (
                               <FormItem>
                                 <FormLabel>{isArabic ? 'هاتف المستلم' : 'Recipient Phone'}</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="+968 0000 0000" {...field} />
-                                </FormControl>
+                                  <FormControl>
+                                    {(() => {
+                                      const rc = watchRecipientCountry || watchCountry;
+                                      const recipientPlaceholder = getPhonePlaceholderForCountry(rc);
+                                      return <Input dir="ltr" placeholder={recipientPlaceholder} {...field} />;
+                                    })()}
+                                  </FormControl>
                                 <FormMessage />
                               </FormItem>
                             )}
