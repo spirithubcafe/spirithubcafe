@@ -280,19 +280,7 @@ export const CheckoutPage: React.FC = () => {
                     </div>
 
                     <div className="grid gap-4 md:grid-cols-2">
-                      <FormField
-                        control={form.control}
-                        name="phone"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>{isArabic ? 'رقم الهاتف' : 'Phone Number'}</FormLabel>
-                            <FormControl>
-                              <Input type="tel" placeholder="+968 0000 0000" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+
                       <FormField
                         control={form.control}
                         name="country"
@@ -315,10 +303,8 @@ export const CheckoutPage: React.FC = () => {
                           </FormItem>
                         )}
                       />
-                    </div>
 
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <FormField
+                                            <FormField
                         control={form.control}
                         name="city"
                         render={({ field }) => (
@@ -335,6 +321,24 @@ export const CheckoutPage: React.FC = () => {
                                   ))}
                                 </SelectContent>
                               </Select>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className="grid gap-4 md:grid-cols-2">
+
+
+                                            <FormField
+                        control={form.control}
+                        name="phone"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{isArabic ? 'رقم الهاتف' : 'Phone Number'}</FormLabel>
+                            <FormControl>
+                              <Input type="tel" placeholder="+968 0000 0000" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -412,19 +416,7 @@ export const CheckoutPage: React.FC = () => {
                           )}
                         />
                         <div className="grid gap-4 md:grid-cols-2">
-                          <FormField
-                            control={form.control}
-                            name="recipientPhone"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>{isArabic ? 'هاتف المستلم' : 'Recipient Phone'}</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="+968 0000 0000" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
+
                           <FormField
                             control={form.control}
                             name="recipientCountry"
@@ -447,9 +439,8 @@ export const CheckoutPage: React.FC = () => {
                               </FormItem>
                             )}
                           />
-                        </div>
-                        <div className="grid gap-4 md:grid-cols-2">
-                          <FormField
+
+                                                    <FormField
                             control={form.control}
                             name="recipientCity"
                             render={({ field }) => (
@@ -466,6 +457,21 @@ export const CheckoutPage: React.FC = () => {
                                       ))}
                                     </SelectContent>
                                   </Select>
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                        <div className="grid gap-4 md:grid-cols-2">
+                          <FormField
+                            control={form.control}
+                            name="recipientPhone"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>{isArabic ? 'هاتف المستلم' : 'Recipient Phone'}</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="+968 0000 0000" {...field} />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -624,11 +630,13 @@ export const CheckoutPage: React.FC = () => {
               </CardContent>
             </Card>
 
-            <div className="flex justify-center">
-              <Button type="submit" className="bg-amber-600 hover:bg-amber-700 w-full sm:w-auto">
-                {isArabic ? 'متابعة إلى الدفع' : 'Proceed to Payment'}
-              </Button>
-            </div>
+            <Button 
+              type="submit" 
+              size="lg"
+              className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold text-lg py-6"
+            >
+              {isArabic ? 'متابعة إلى الدفع' : 'Proceed to Payment'}
+            </Button>
 
           </div>
         </div>
