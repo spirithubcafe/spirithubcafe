@@ -48,7 +48,7 @@ function MainContent() {
   const isHomePage = location.pathname === '/';
   
   return (
-    <main className={`${isHomePage ? 'pb-20 md:pb-0' : 'pt-16 md:pt-20 pb-20 md:pb-0'}`}>
+    <main className={`${isHomePage ? 'pb-16 md:pb-0' : 'pt-16 md:pt-20 pb-16 md:pb-0'}`}>
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/profile" element={<ProfilePage />} />
