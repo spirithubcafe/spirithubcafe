@@ -67,8 +67,8 @@ const shippingMethods = [
   {
     id: 'pickup',
     label: {
-      en: 'Pickup from Nool Oman Shop',
-      ar: 'استلام من متجر نول عمان',
+      en: 'Pickup from Shop',
+      ar: 'استلام من المتجر',
     },
     description: {
       en: 'Collect your order from our Muscat location. We will notify you when it is ready.',
@@ -82,6 +82,26 @@ const shippingMethods = [
     badge: {
       en: 'Free',
       ar: 'مجاني',
+    },
+  },
+  {
+    id: 'nool',
+    label: {
+      en: 'Nool Delivery',
+      ar: 'توصيل نول',
+    },
+    description: {
+      en: 'Fast local delivery within Muscat area with our own delivery team.',
+      ar: 'توصيل محلي سريع داخل منطقة مسقط مع فريق التوصيل الخاص بنا.',
+    },
+    eta: {
+      en: '1-2 business days',
+      ar: '١-٢ أيام عمل',
+    },
+    price: 2.0,
+    badge: {
+      en: 'Fast delivery',
+      ar: 'توصيل سريع',
     },
   },
   {
@@ -251,7 +271,7 @@ export const CheckoutPage: React.FC = () => {
             <div className="grid gap-8 lg:grid-cols-[1fr_400px] xl:grid-cols-[1fr_450px]">
               {/* Contact & Delivery Details - Order 1 on all screens */}
               <div className="space-y-8 order-1">
-                <Card className="shadow-xl border-gray-100">
+                <Card>
                   <CardHeader>
                     <CardTitle className="text-2xl font-semibold flex items-center gap-3">
                       <Package className="w-6 h-6 text-amber-600" />
@@ -353,7 +373,7 @@ export const CheckoutPage: React.FC = () => {
                   </CardContent>
                 </Card>
 
-                <Card className="shadow-xl border-gray-100">
+                <Card className="bg-pink-50/80 border-pink-100">
                   <CardHeader>
                     <CardTitle className="text-2xl font-semibold flex items-center gap-3">
                       <Gift className="w-6 h-6 text-amber-600" />
@@ -486,7 +506,7 @@ export const CheckoutPage: React.FC = () => {
               {/* Sidebar for desktop with both delivery method and order summary */}
               <div className="w-full lg:w-[400px] xl:w-[450px] space-y-6 lg:sticky lg:top-6 order-2">
                 {/* Delivery Method - Responsive positioning */}
-                <Card className="shadow-xl border-gray-100">
+                <Card>
                   <CardHeader>
                     <CardTitle className="text-xl font-semibold flex items-center gap-2">
                       <MapPin className="w-5 h-5 text-amber-600" />
@@ -549,7 +569,7 @@ export const CheckoutPage: React.FC = () => {
                   </CardContent>
                 </Card>
 
-            <Card className="shadow-xl border-gray-100">
+            <Card>
               <CardHeader>
                 <CardTitle className="text-xl font-semibold">
                   {isArabic ? 'ملخص الطلب' : 'Order Summary'}
@@ -608,29 +628,6 @@ export const CheckoutPage: React.FC = () => {
               </Button>
             </div>
 
-            <Card className="border-amber-100 bg-amber-50/70 shadow-sm">
-              <CardHeader className="space-y-2">
-                <CardTitle className="flex items-center gap-2 text-amber-800">
-                  <Phone className="w-4 h-4" />
-                  {isArabic ? 'نساعدك دائماً' : 'We are here to help'}
-                </CardTitle>
-                <CardDescription className="text-amber-900/80">
-                  {isArabic
-                    ? 'لأي استفسار عن الطلب أو الشحن، تواصل معنا عبر الواتساب أو الهاتف.'
-                    : 'If you need help with your order or delivery, reach us on WhatsApp or by phone.'}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-2 text-sm text-amber-900">
-                <p className="flex items-center gap-2">
-                  <Phone className="w-4 h-4" />
-                  +968 9190 0005
-                </p>
-                <p className="flex items-center gap-2">
-                  <Mail className="w-4 h-4" />
-                  info@spirithubcafe.com
-                </p>
-              </CardContent>
-            </Card>
           </div>
         </div>
       </form>
