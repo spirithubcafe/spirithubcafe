@@ -62,6 +62,7 @@ export const ProductsManagement: React.FC = () => {
   const [editingProduct] = useState<Product | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [deletingProductId, setDeletingProductId] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const pageSize = 20;
@@ -361,13 +362,122 @@ export const ProductsManagement: React.FC = () => {
     }
   };
 
-  const handleDeleteProduct = async (productId: number) => {
+  const handleDeleteProduct = async (productId: number, force: boolean = false) => {
     try {
+      setDeletingProductId(productId);
+      
+      const product = products.find(p => p.id === productId);
+      
+      if (!force && product && !canDeleteProduct(product)) {
+        const confirmForce = window.confirm(
+          `This product has dependencies (variants/images). Do you want to delete it anyway?\n\n` +
+          `⚠️ WARNING: This will permanently delete the product and ALL its:\n` +
+          `- Variants (${product.variants?.length || 0})\n` +
+          `- Images (${product.images?.length || 0})\n` +
+          `- Associated data\n\n` +
+          `This action CANNOT be undone. Are you absolutely sure?`
+        );
+        
+        if (!confirmForce) {
+          setDeletingProductId(null);
+          return;
+        }
+      }
+      
+      // Try to delete related entities first to avoid foreign key constraint errors
+      if (product) {
+        try {
+          // Delete all variants first
+          if (product.variants && product.variants.length > 0) {
+            console.log(`Deleting ${product.variants.length} variants...`);
+            for (const variant of product.variants) {
+              try {
+                await productVariantService.delete(variant.id);
+              } catch (variantError) {
+                console.warn(`Failed to delete variant ${variant.id}:`, variantError);
+              }
+            }
+          }
+          
+          // Delete all images first
+          if (product.images && product.images.length > 0) {
+            console.log(`Deleting ${product.images.length} images...`);
+            for (const image of product.images) {
+              try {
+                await productImageService.delete(image.id);
+              } catch (imageError) {
+                console.warn(`Failed to delete image ${image.id}:`, imageError);
+              }
+            }
+          }
+        } catch (cleanupError) {
+          console.warn('Some dependencies could not be cleaned up:', cleanupError);
+        }
+      }
+      
       // DELETE /api/Products/{id}
       await productService.delete(productId);
+      // Show success message
+      console.log(`Product ${productId} deleted successfully`);
+      alert('Product deleted successfully!');
       loadData();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting product:', error);
+      
+      let errorMessage = 'Unknown error occurred';
+      let isConstraintError = false;
+      
+      if (error.response) {
+        // Server responded with error status
+        const status = error.response.status;
+        const data = error.response.data;
+        const errorText = data?.message || data?.title || '';
+        
+        // Check for foreign key constraint errors
+        if (errorText.includes('association') && errorText.includes('foreign key') || 
+            errorText.includes('cascade delete') || errorText.includes('ProductImage')) {
+          isConstraintError = true;
+          errorMessage = 'Database constraint error: Product has related data that must be removed first.';
+        } else if (status === 400) {
+          errorMessage = data?.message || 'Bad request - product cannot be deleted';
+        } else if (status === 404) {
+          errorMessage = 'Product not found';
+        } else if (status === 409) {
+          errorMessage = 'Product cannot be deleted - it may have dependencies (variants, images, or orders)';
+        } else if (status === 403) {
+          errorMessage = 'Access denied - you do not have permission to delete products';
+        } else if (status === 500) {
+          errorMessage = 'Server error - please try again later';
+        } else {
+          errorMessage = `Server returned error ${status}: ${data?.message || 'Unknown server error'}`;
+        }
+      } else if (error.request) {
+        errorMessage = 'No response from server - check your internet connection';
+      } else {
+        errorMessage = error.message || 'Request setup error';
+      }
+      
+      // Show detailed error message to user
+      if (isConstraintError) {
+        const retryOption = window.confirm(
+          `Failed to delete product due to database constraints.\n\n` +
+          `Error: ${errorMessage}\n\n` +
+          `This typically happens when:\n` +
+          `- Product has images or variants with database references\n` +
+          `- Server doesn't support cascade deletes\n\n` +
+          `SOLUTION: Use the 🔧 Manage Images and 📦 Manage Variants buttons to manually remove all related data first, then try deleting again.\n\n` +
+          `Click OK to open the product management area, or Cancel to close this dialog.`
+        );
+        
+        if (retryOption) {
+          // Navigate to edit page where user can manage variants and images
+          navigate(`/admin/products/edit/${productId}`);
+        }
+      } else {
+        alert(`Failed to delete product.\n\nError: ${errorMessage}\n\nTip: Use the Manage Images and Manage Variants buttons to remove dependencies first.`);
+      }
+    } finally {
+      setDeletingProductId(null);
     }
   };
 
@@ -712,6 +822,98 @@ export const ProductsManagement: React.FC = () => {
       .replace(/^-+|-+$/g, '');
   };
 
+  const canDeleteProduct = (product: Product): boolean => {
+    // Check if product has variants
+    if (product.variants && product.variants.length > 0) {
+      return false;
+    }
+    
+    // Check if product has images
+    if (product.images && product.images.length > 0) {
+      return false;
+    }
+    
+    return true;
+  };
+
+  const getDeleteWarningMessage = (product: Product): string => {
+    const issues = [];
+    
+    if (product.variants && product.variants.length > 0) {
+      issues.push(`${product.variants.length} variant(s)`);
+    }
+    
+    if (product.images && product.images.length > 0) {
+      issues.push(`${product.images.length} image(s)`);
+    }
+    
+    if (issues.length > 0) {
+      return `This product has ${issues.join(' and ')} that must be removed first.`;
+    }
+    
+    return '';
+  };
+
+  const handleCleanDelete = async (productId: number) => {
+    const product = products.find(p => p.id === productId);
+    if (!product) return;
+
+    const confirmClean = window.confirm(
+      `CLEAN DELETE: This will systematically remove all product dependencies first.\n\n` +
+      `Steps:\n` +
+      `1. Delete all variants (${product.variants?.length || 0})\n` +
+      `2. Delete all images (${product.images?.length || 0})\n` +
+      `3. Delete the product\n\n` +
+      `This method avoids database constraint errors. Continue?`
+    );
+
+    if (!confirmClean) return;
+
+    try {
+      setDeletingProductId(productId);
+
+      // Step 1: Load fresh variant data and delete
+      try {
+        const variantData = await productVariantService.getByProduct(productId);
+        if (variantData.length > 0) {
+          alert(`Removing ${variantData.length} product variants...`);
+          for (const variant of variantData) {
+            await productVariantService.delete(variant.id);
+            console.log(`Deleted variant: ${variant.variantSku}`);
+          }
+        }
+      } catch (variantError) {
+        console.warn('Error cleaning variants:', variantError);
+      }
+
+      // Step 2: Load fresh image data and delete
+      try {
+        const imageData = await productImageService.getByProduct(productId);
+        if (imageData.length > 0) {
+          alert(`Removing ${imageData.length} product images...`);
+          for (const image of imageData) {
+            await productImageService.delete(image.id);
+            console.log(`Deleted image: ${image.fileName}`);
+          }
+        }
+      } catch (imageError) {
+        console.warn('Error cleaning images:', imageError);
+      }
+
+      // Step 3: Delete the product itself
+      await productService.delete(productId);
+      alert('✅ Product and all dependencies deleted successfully!');
+      loadData();
+
+    } catch (error: any) {
+      console.error('Error in clean delete:', error);
+      alert(`Clean delete failed at final step:\n${error.response?.data?.message || error.message}\n\nThe product may now be deletable manually since dependencies were removed.`);
+      loadData(); // Refresh to show updated state
+    } finally {
+      setDeletingProductId(null);
+    }
+  };
+
   const handleNameChange = (value: string) => {
     setFormData(prev => ({
       ...prev,
@@ -890,25 +1092,83 @@ export const ProductsManagement: React.FC = () => {
                         </Button>
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="sm">
-                              <Trash2 className="h-4 w-4 text-red-500" />
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              title={!canDeleteProduct(product) ? `⚠️ Has dependencies: ${getDeleteWarningMessage(product)}` : 'Delete product'}
+                            >
+                              <Trash2 className={`h-4 w-4 ${!canDeleteProduct(product) ? 'text-orange-500' : 'text-red-500'}`} />
                             </Button>
                           </AlertDialogTrigger>
-                          <AlertDialogContent>
+                          <AlertDialogContent className="max-w-md">
                             <AlertDialogHeader>
                               <AlertDialogTitle>{t('admin.products.deleteConfirm')}</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                {t('admin.products.deleteWarning')} "{product.name}"
+                              <AlertDialogDescription className="space-y-3">
+                                <p>{t('admin.products.deleteWarning')} "{product.name}"</p>
+                                
+                                {product.variants && product.variants.length > 0 && (
+                                  <div className="text-sm bg-blue-50 p-2 rounded border border-blue-200">
+                                    <strong>📦 Variants:</strong> {product.variants.length} variant(s) will also be deleted
+                                  </div>
+                                )}
+                                
+                                {product.images && product.images.length > 0 && (
+                                  <div className="text-sm bg-green-50 p-2 rounded border border-green-200">
+                                    <strong>🖼️ Images:</strong> {product.images.length} image(s) will also be deleted
+                                  </div>
+                                )}
+                                
+                                {!canDeleteProduct(product) && (
+                                  <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                                    <p className="text-yellow-800 text-sm font-medium">
+                                      ⚠️ This product has dependencies:
+                                    </p>
+                                    <p className="text-yellow-700 text-sm mt-1">
+                                      {getDeleteWarningMessage(product)}
+                                    </p>
+                                    <p className="text-yellow-700 text-sm mt-2">
+                                      <strong>Options:</strong>
+                                    </p>
+                                    <ul className="text-yellow-700 text-sm mt-1 list-disc list-inside space-y-1">
+                                      <li><strong>🔧 Clean Delete:</strong> Systematically removes dependencies first (recommended)</li>
+                                      <li><strong>Delete Now:</strong> Forces deletion (may cause database errors)</li>
+                                      <li><strong>Manual:</strong> Use Manage buttons above to remove dependencies first</li>
+                                    </ul>
+                                  </div>
+                                )}
+                                
+                                <div className="text-xs text-gray-500 border-t pt-2">
+                                  <strong>Note:</strong> This action cannot be undone. All product data will be permanently removed.
+                                </div>
                               </AlertDialogDescription>
                             </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => handleDeleteProduct(product.id)}
-                                className="bg-red-600 hover:bg-red-700"
-                              >
-                                {t('common.delete')}
-                              </AlertDialogAction>
+                            <AlertDialogFooter className="flex-col space-y-2">
+                              <div className="flex w-full gap-2">
+                                <AlertDialogCancel className="flex-1">{t('common.cancel')}</AlertDialogCancel>
+                                <Button
+                                  onClick={() => handleCleanDelete(product.id)}
+                                  variant="outline"
+                                  className="flex-1 border-blue-600 text-blue-600 hover:bg-blue-50"
+                                  disabled={deletingProductId === product.id}
+                                >
+                                  {deletingProductId === product.id && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                  🔧 Clean Delete
+                                </Button>
+                                <AlertDialogAction
+                                  onClick={() => handleDeleteProduct(product.id, true)}
+                                  className="flex-1 bg-red-600 hover:bg-red-700"
+                                  disabled={deletingProductId === product.id}
+                                >
+                                  {deletingProductId === product.id && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                  {t('common.delete')} Now
+                                </AlertDialogAction>
+                              </div>
+                              
+                              {!canDeleteProduct(product) && (
+                                <p className="text-xs text-center text-blue-600">
+                                  💡 Try "Clean Delete" to avoid constraint errors
+                                </p>
+                              )}
                             </AlertDialogFooter>
                           </AlertDialogContent>
                         </AlertDialog>
