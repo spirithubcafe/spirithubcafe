@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { motion } from 'framer-motion';
-import { Gift, Mail, MapPin, Phone, Package } from 'lucide-react';
+import { Gift, MapPin, Package } from 'lucide-react';
 import { useApp } from '../hooks/useApp';
 import { useCart } from '../hooks/useCart';
 import { PageHeader } from '../components/layout/PageHeader';
