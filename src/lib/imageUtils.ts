@@ -91,7 +91,7 @@ const PRODUCT_PRIORITY_KEYS = [
 
 type AnyRecord = Record<string, unknown>;
 type ProductLike = Product & AnyRecord;
-type ProductImageLike = ProductImage & AnyRecord;
+type ProductImageLike = ProductImage | AnyRecord;
 
 const isNonEmptyString = (value: unknown): value is string => {
   return typeof value === 'string' && value.trim().length > 0;

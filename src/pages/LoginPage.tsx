@@ -120,7 +120,7 @@ export const LoginPage: React.FC = () => {
             </p>
 
             <div className="space-y-5">
-              {benefits.map((benefit, index) => (
+              {benefits.map((benefit) => (
                 <div key={benefit.title} className="flex items-start gap-4">
                   <div className="rounded-full bg-amber-100 text-amber-700 p-3">
                     <benefit.icon className="h-5 w-5" />
