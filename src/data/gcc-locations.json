@@ -1,0 +1,144 @@
+{
+  "countries": [
+    {
+      "name_en": "Oman",
+      "name_ar": "عُمان",
+      "iso2": "OM",
+      "cities": [
+        { "slug": "muscat", "name_en": "Muscat", "name_ar": "مسقط", "cityCode": "MCT" },
+        { "slug": "seeb", "name_en": "Seeb", "name_ar": "السيب", "cityCode": "SEB" },
+        { "slug": "mutrah", "name_en": "Muttrah", "name_ar": "مطرح", "cityCode": "MTH" },
+        { "slug": "bawshar", "name_en": "Bawshar", "name_ar": "بوشر", "cityCode": "BWS" },
+        { "slug": "amerat", "name_en": "Al Amerat", "name_ar": "العامرات", "cityCode": "AMR" },
+        { "slug": "qurm", "name_en": "Al Qurm", "name_ar": "القرم", "cityCode": "QRM" },
+        { "slug": "khasab", "name_en": "Khasab", "name_ar": "خصب", "cityCode": "KHS" },
+        { "slug": "sohar", "name_en": "Sohar", "name_ar": "صحار", "cityCode": "SOH" },
+        { "slug": "salalah", "name_en": "Salalah", "name_ar": "صلالة", "cityCode": "SLL" },
+        { "slug": "nizwa", "name_en": "Nizwa", "name_ar": "نزوى", "cityCode": "NZW" },
+        { "slug": "sur", "name_en": "Sur", "name_ar": "صور", "cityCode": "SUR" },
+        { "slug": "barka", "name_en": "Barka", "name_ar": "بركاء", "cityCode": "BRK" },
+        { "slug": "rustaq", "name_en": "Rustaq", "name_ar": "الرستاق", "cityCode": "RST" },
+        { "slug": "ibri", "name_en": "Ibri", "name_ar": "عبري", "cityCode": "IBR" },
+        { "slug": "buraimi", "name_en": "Al Buraimi", "name_ar": "البريمي", "cityCode": "BUR" },
+        { "slug": "duqm", "name_en": "Duqm", "name_ar": "الدقم", "cityCode": "DQM" },
+        { "slug": "bidbid", "name_en": "Bidbid", "name_ar": "بدبد", "cityCode": "BDB" },
+        { "slug": "ibra", "name_en": "Ibra", "name_ar": "إبراء", "cityCode": "IBR" },
+        { "slug": "bahla", "name_en": "Bahla", "name_ar": "بهلا", "cityCode": "BHL" },
+        { "slug": "samail", "name_en": "Samail", "name_ar": "سمائل", "cityCode": "SML" },
+        { "slug": "shinas", "name_en": "Shinas", "name_ar": "شناص", "cityCode": "SHN" },
+        { "slug": "khabura", "name_en": "Al Khabura", "name_ar": "الخابورة", "cityCode": "KHB" },
+        { "slug": "suwaiq", "name_en": "Al Suwaiq", "name_ar": "السويق", "cityCode": "SWQ" },
+        { "slug": "liwa", "name_en": "Liwa", "name_ar": "لوى", "cityCode": "LWA" },
+        { "slug": "saham", "name_en": "Saham", "name_ar": "صحم", "cityCode": "SHM" },
+        { "slug": "masirah", "name_en": "Masirah", "name_ar": "مصيرة", "cityCode": "MSR" },
+        { "slug": "adam", "name_en": "Adam", "name_ar": "أدم", "cityCode": "ADM" },
+        { "slug": "mudhaibi", "name_en": "Al Mudhaibi", "name_ar": "المضيبي", "cityCode": "MDH" }
+      ]
+    },
+    {
+      "name_en": "United Arab Emirates",
+      "name_ar": "الإمارات العربية المتحدة",
+      "iso2": "AE",
+      "cities": [
+        { "slug": "dubai", "name_en": "Dubai", "name_ar": "دبي", "cityCode": "DXB" },
+        { "slug": "abu-dhabi", "name_en": "Abu Dhabi", "name_ar": "أبوظبي", "cityCode": "AUH" },
+        { "slug": "sharjah", "name_en": "Sharjah", "name_ar": "الشارقة", "cityCode": "SHJ" },
+        { "slug": "ajman", "name_en": "Ajman", "name_ar": "عجمان", "cityCode": "AJM" },
+        { "slug": "ras-al-khaimah", "name_en": "Ras Al Khaimah", "name_ar": "رأس الخيمة", "cityCode": "RAK" },
+        { "slug": "fujairah", "name_en": "Fujairah", "name_ar": "الفجيرة", "cityCode": "FJR" },
+        { "slug": "umm-al-quwain", "name_en": "Umm Al Quwain", "name_ar": "أم القيوين", "cityCode": "UAQ" },
+        { "slug": "al-ain", "name_en": "Al Ain", "name_ar": "العين", "cityCode": "AAN" },
+        { "slug": "khor-fakkan", "name_en": "Khor Fakkan", "name_ar": "خورفكان", "cityCode": "KHF" },
+        { "slug": "dhaid", "name_en": "Dhaid", "name_ar": "الذيد", "cityCode": "DHD" },
+        { "slug": "dibba", "name_en": "Dibba", "name_ar": "دبا", "cityCode": "DBB" },
+        { "slug": "kalba", "name_en": "Kalba", "name_ar": "كلباء", "cityCode": "KLB" },
+        { "slug": "jebel-ali", "name_en": "Jebel Ali", "name_ar": "جبل علي", "cityCode": "JEA" }
+      ]
+    },
+    {
+      "name_en": "Saudi Arabia",
+      "name_ar": "المملكة العربية السعودية",
+      "iso2": "SA",
+      "cities": [
+        { "slug": "riyadh", "name_en": "Riyadh", "name_ar": "الرياض", "cityCode": "RUH" },
+        { "slug": "jeddah", "name_en": "Jeddah", "name_ar": "جدة", "cityCode": "JED" },
+        { "slug": "mecca", "name_en": "Makkah", "name_ar": "مكة المكرمة", "cityCode": "MKK" },
+        { "slug": "medina", "name_en": "Madinah", "name_ar": "المدينة المنورة", "cityCode": "MED" },
+        { "slug": "dammam", "name_en": "Dammam", "name_ar": "الدمام", "cityCode": "DMM" },
+        { "slug": "khobar", "name_en": "Khobar", "name_ar": "الخبر", "cityCode": "KHB" },
+        { "slug": "dhahran", "name_en": "Dhahran", "name_ar": "الظهران", "cityCode": "DHA" },
+        { "slug": "jubail", "name_en": "Jubail", "name_ar": "الجبيل", "cityCode": "JUB" },
+        { "slug": "khamis-mushait", "name_en": "Khamis Mushait", "name_ar": "خميس مشيط", "cityCode": "KMX" },
+        { "slug": "abha", "name_en": "Abha", "name_ar": "أبها", "cityCode": "AHB" },
+        { "slug": "taif", "name_en": "Taif", "name_ar": "الطائف", "cityCode": "TIF" },
+        { "slug": "tabuk", "name_en": "Tabuk", "name_ar": "تبوك", "cityCode": "TUU" },
+        { "slug": "hail", "name_en": "Hail", "name_ar": "حائل", "cityCode": "HAS" },
+        { "slug": "najran", "name_en": "Najran", "name_ar": "نجران", "cityCode": "EAM" },
+        { "slug": "yanbu", "name_en": "Yanbu", "name_ar": "ينبع", "cityCode": "YNB" },
+        { "slug": "al-qatif", "name_en": "Al Qatif", "name_ar": "القطيف", "cityCode": "QTF" },
+        { "slug": "hafar-al-batin", "name_en": "Hafar Al Batin", "name_ar": "حفر الباطن", "cityCode": "HBT" },
+        { "slug": "al-hasa", "name_en": "Al Hasa", "name_ar": "الأحساء", "cityCode": "HOF" },
+        { "slug": "jizan", "name_en": "Jizan", "name_ar": "جازان", "cityCode": "GIZ" },
+        { "slug": "al-kharj", "name_en": "Al Kharj", "name_ar": "الخرج", "cityCode": "KHJ" },
+        { "slug": "arar", "name_en": "Arar", "name_ar": "عرعر", "cityCode": "RAE" },
+        { "slug": "sakaka", "name_en": "Sakaka", "name_ar": "سكاكا", "cityCode": "AJF" },
+        { "slug": "qurayyat", "name_en": "Qurayyat", "name_ar": "القريات", "cityCode": "URY" },
+        { "slug": "buraydah", "name_en": "Buraydah", "name_ar": "بريدة", "cityCode": "BUR" },
+        { "slug": "unaizah", "name_en": "Unaizah", "name_ar": "عنيزة", "cityCode": "UZH" }
+      ]
+    },
+    {
+      "name_en": "Qatar",
+      "name_ar": "قطر",
+      "iso2": "QA",
+      "cities": [
+        { "slug": "doha", "name_en": "Doha", "name_ar": "الدوحة", "cityCode": "DOH" },
+        { "slug": "al-rayyan", "name_en": "Al Rayyan", "name_ar": "الريان", "cityCode": "RAY" },
+        { "slug": "al-wakrah", "name_en": "Al Wakrah", "name_ar": "الوكرة", "cityCode": "WKR" },
+        { "slug": "al-khor", "name_en": "Al Khor", "name_ar": "الخور", "cityCode": "KHR" },
+        { "slug": "umm-salal", "name_en": "Umm Salal", "name_ar": "أم صلال", "cityCode": "UMS" },
+        { "slug": "al-daayen", "name_en": "Al Daayen", "name_ar": "الضعاين", "cityCode": "DAY" },
+        { "slug": "lusail", "name_en": "Lusail", "name_ar": "لوسيل", "cityCode": "LSL" },
+        { "slug": "mesaieed", "name_en": "Mesaieed", "name_ar": "مسيعيد", "cityCode": "MSE" },
+        { "slug": "dukhan", "name_en": "Dukhan", "name_ar": "دخان", "cityCode": "DKH" },
+        { "slug": "al-shamal", "name_en": "Al Shamal", "name_ar": "الشمال", "cityCode": "SHM" }
+      ]
+    },
+    {
+      "name_en": "Kuwait",
+      "name_ar": "الكويت",
+      "iso2": "KW",
+      "cities": [
+        { "slug": "kuwait-city", "name_en": "Kuwait City", "name_ar": "مدينة الكويت", "cityCode": "KWI" },
+        { "slug": "hawalli", "name_en": "Hawalli", "name_ar": "حولي", "cityCode": "HAW" },
+        { "slug": "salmiya", "name_en": "Salmiya", "name_ar": "السالمية", "cityCode": "SLM" },
+        { "slug": "farwaniya", "name_en": "Farwaniya", "name_ar": "الفروانية", "cityCode": "FAR" },
+        { "slug": "jahra", "name_en": "Jahra", "name_ar": "الجهراء", "cityCode": "JAH" },
+        { "slug": "ahmadi", "name_en": "Ahmadi", "name_ar": "الأحمدي", "cityCode": "AHM" },
+        { "slug": "fahaheel", "name_en": "Fahaheel", "name_ar": "الفحيحيل", "cityCode": "FAH" },
+        { "slug": "mangaf", "name_en": "Mangaf", "name_ar": "المنقف", "cityCode": "MNG" },
+        { "slug": "sabah-al-salem", "name_en": "Sabah Al Salem", "name_ar": "صباح السالم", "cityCode": "SBS" },
+        { "slug": "jleeb-al-shuyoukh", "name_en": "Jleeb Al Shuyoukh", "name_ar": "جليب الشيوخ", "cityCode": "JLS" },
+        { "slug": "mahboula", "name_en": "Mahboula", "name_ar": "المهبولة", "cityCode": "MHB" },
+        { "slug": "fintas", "name_en": "Fintas", "name_ar": "الفنطاس", "cityCode": "FNT" }
+      ]
+    },
+    {
+      "name_en": "Bahrain",
+      "name_ar": "البحرين",
+      "iso2": "BH",
+      "cities": [
+        { "slug": "manama", "name_en": "Manama", "name_ar": "المنامة", "cityCode": "BAH" },
+        { "slug": "muharraq", "name_en": "Muharraq", "name_ar": "المحرق", "cityCode": "MUH" },
+        { "slug": "riffa", "name_en": "Riffa", "name_ar": "الرفاع", "cityCode": "RIF" },
+        { "slug": "hamad-town", "name_en": "Hamad Town", "name_ar": "مدينة حمد", "cityCode": "HAM" },
+        { "slug": "isa-town", "name_en": "Isa Town", "name_ar": "مدينة عيسى", "cityCode": "ISA" },
+        { "slug": "sitra", "name_en": "Sitra", "name_ar": "سترة", "cityCode": "SIT" },
+        { "slug": "budaiya", "name_en": "Budaiya", "name_ar": "البديع", "cityCode": "BUD" },
+        { "slug": "jidhafs", "name_en": "Jidhafs", "name_ar": "جدحفص", "cityCode": "JID" },
+        { "slug": "saar", "name_en": "Saar", "name_ar": "سار", "cityCode": "SAR" },
+        { "slug": "tubli", "name_en": "Tubli", "name_ar": "توبلي", "cityCode": "TUB" }
+      ]
+    }
+  ]
+}

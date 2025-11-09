@@ -15,6 +15,13 @@ const SELECTORS = [
   '.overflow-x-auto'
 ].join(',')
 
+const EXCLUDE_SELECTORS = [
+  '[data-slot="select-content"]',
+  '[data-slot="select-viewport"]',
+  '[data-radix-popper-content-wrapper]',
+  '[data-radix-portal]'
+].join(',')
+
 const applied = new Map<Element, OsInstance>()
 
 function applyTo(el: Element) {
@@ -24,6 +31,10 @@ function applyTo(el: Element) {
   // Skip if element is 'fixed' positioned (likely a modal/dialog root)
   const style = window.getComputedStyle(el)
   if (style.position === 'fixed') return
+  
+  // Skip Radix Portal elements (Select, Popover, etc.) to avoid DOM conflicts
+  if (el.matches(EXCLUDE_SELECTORS) || el.closest(EXCLUDE_SELECTORS)) return
+  
   try {
     const instance = OverlayScrollbars(el as HTMLElement, {
       className: 'os-theme-custom',

@@ -12,7 +12,6 @@ function ScrollArea({ className, options, children, ...props }: Props) {
       data-slot="scroll-area"
       className={cn("os-theme-custom", className)}
       options={{
-        className: "os-theme-custom",
         scrollbars: { autoHide: 'leave', clickScroll: true, dragScroll: true },
         ...options
       } as any}
