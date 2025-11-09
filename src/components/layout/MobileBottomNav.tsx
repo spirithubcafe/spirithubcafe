@@ -59,8 +59,8 @@ export const MobileBottomNav: React.FC = () => {
     <>
       {/* Main navigation */}
       <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden">
-        {/* Navigation container - matching header style */}
-        <div className="mx-2 mb-2 bg-white border border-gray-200 shadow-md rounded-xl overflow-hidden">
+        {/* Navigation container - matching header glass style */}
+        <div className="mx-2 mb-2 bg-black/30 backdrop-blur-sm border border-white/10 shadow-lg rounded-xl overflow-hidden">
           {/* Navigation content */}
           <div className="relative flex items-center justify-around py-1.5 px-1">
             {navItems.map((item) => {
@@ -75,17 +75,17 @@ export const MobileBottomNav: React.FC = () => {
                     onClick={() => handleItemClick(item)}
                     className={`group relative flex flex-col items-center justify-center p-2 min-w-[50px] rounded-lg transition-all duration-300 ease-out transform ${
                       active
-                        ? 'text-amber-600 scale-105'
-                        : 'text-gray-600 hover:text-amber-600 hover:scale-105 active:scale-95'
+                        ? 'text-white scale-105'
+                        : 'text-white/80 hover:text-amber-700 hover:scale-105 active:scale-95'
                     }`}
                   >
                     {/* Active background indicator */}
                     {active && (
-                      <div className="absolute inset-0 bg-gradient-to-br from-amber-100/80 to-amber-50/60 rounded-lg border border-amber-200/50 shadow-md" />
+                      <div className="absolute inset-0 bg-gradient-to-br from-amber-400/20 to-amber-500/10 rounded-lg border border-amber-400/30 shadow-md" />
                     )}
                     
                     {/* Hover background */}
-                    <div className="absolute inset-0 bg-amber-50/0 group-hover:bg-amber-50/60 rounded-lg transition-all duration-300" />
+                    <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 rounded-lg transition-all duration-300" />
                     
                     <div className="relative flex flex-col items-center">
                       <div className="relative">
@@ -94,7 +94,11 @@ export const MobileBottomNav: React.FC = () => {
                           {item.badge && item.badge > 99 ? '9+' : item.badge || 0}
                         </div>
                       </div>
-                      {/* Cart label removed - only show icon and badge */}
+                      <span className={`text-xs font-semibold mt-1 leading-none transition-all duration-300 ${
+                        active ? 'text-white' : 'text-white/70 group-hover:text-amber-700'
+                      }`}>
+                        {item.label}
+                      </span>
                     </div>
                   </button>
                 );
@@ -107,22 +111,22 @@ export const MobileBottomNav: React.FC = () => {
                   to={item.path!}
                   className={`group relative flex flex-col items-center justify-center p-2 min-w-[50px] rounded-lg transition-all duration-300 ease-out transform ${
                     active
-                      ? 'text-amber-600 scale-105'
-                      : 'text-gray-600 hover:text-amber-600 hover:scale-105 active:scale-95'
+                      ? 'text-white scale-105'
+                      : 'text-white/80 hover:text-amber-700 hover:scale-105 active:scale-95'
                   }`}
                 >
                   {/* Active background indicator */}
                   {active && (
-                    <div className="absolute inset-0 bg-gradient-to-br from-amber-100/80 to-amber-50/60 rounded-lg border border-amber-200/50 shadow-md" />
+                    <div className="absolute inset-0 bg-gradient-to-br from-amber-400/20 to-amber-500/10 rounded-lg border border-amber-400/30 shadow-md" />
                   )}
                   
                   {/* Hover background */}
-                  <div className="absolute inset-0 bg-amber-50/0 group-hover:bg-amber-50/60 rounded-lg transition-all duration-300" />
+                  <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 rounded-lg transition-all duration-300" />
                   
                   <div className="relative flex flex-col items-center">
                     <Icon className={`w-5 h-5 transition-all duration-300 ${active ? 'drop-shadow-sm' : ''}`} />
                     <span className={`text-xs font-semibold mt-1 leading-none transition-all duration-300 ${
-                      active ? 'text-amber-700' : 'text-gray-500 group-hover:text-amber-600'
+                      active ? 'text-white' : 'text-white/70 group-hover:text-amber-700'
                     }`}>
                       {item.label}
                     </span>
