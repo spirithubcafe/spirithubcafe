@@ -21,14 +21,27 @@ export const ProfessionalHeroSlider: React.FC = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPlaying] = useState(true);
   const [isHovered, setIsHovered] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Check if device is mobile
+  useEffect(() => {
+    const checkIsMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkIsMobile();
+    window.addEventListener('resize', checkIsMobile);
+    
+    return () => window.removeEventListener('resize', checkIsMobile);
+  }, []);
 
   // Professional slide data with rich content
-  const slides: SlideData[] = [
+  const allSlides: SlideData[] = [
     {
       id: '1',
       image: '/images/slides/slide1.webp',
-      title: language === 'ar' ? 'من الحبة إلى الكوب، نسعى للكمال' : 'FROM BEAN TO BREW, WE STRIVE FOR PERFECTION',
-      subtitle: language === 'ar' ? 'تجربة قهوة استثنائية في كل رشفة' : 'Our coffee beans are thoughtfully sourced and carefully roasted to honor producers\' hard work. By revealing each coffee\'s distinctive flavors, aromatics, and acidities, we let their stories shine through and provide customers with the best coffee beans in Oman.',
+      title: language === 'ar' ? 'مرحباً بكم في سبيريت هب للتحميص والقهوة المختصة' : 'WELCOME TO SPIRITHUB ROASTERY AND SPECIALTY COFFEE',
+      subtitle: '',
       description: language === 'ar' 
         ? 'نقدم لك أجود أنواع القهوة المحمصة بعناية فائقة من أفضل مزارع القهوة حول العالم'
         : 'We bring you the finest carefully roasted coffee from the best coffee farms around the world',
@@ -86,29 +99,34 @@ export const ProfessionalHeroSlider: React.FC = () => {
     }
   ];
 
-  // Auto-play functionality
+  // Filter slides based on device type - mobile shows only first slide
+  const slides = isMobile ? [allSlides[0]] : allSlides;
+
+  // Auto-play functionality - only on desktop with multiple slides
   useEffect(() => {
-    if (isPlaying && !isHovered) {
+    if (isPlaying && !isHovered && !isMobile && slides.length > 1) {
       const timer = setInterval(() => {
         setCurrentSlide((prev) => (prev + 1) % slides.length);
       }, 6000);
       return () => clearInterval(timer);
     }
-  }, [isPlaying, isHovered, slides.length]);
+  }, [isPlaying, isHovered, isMobile, slides.length]);
 
   const currentSlideData = slides[currentSlide];
 
-  // Function to go to next slide
+  // Function to go to next slide - only on desktop
   const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % slides.length);
+    if (!isMobile && slides.length > 1) {
+      setCurrentSlide((prev) => (prev + 1) % slides.length);
+    }
   };
 
   return (
     <section 
-      className="professional-hero-slider cursor-pointer"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      onClick={nextSlide}
+      className={`professional-hero-slider ${!isMobile && slides.length > 1 ? 'cursor-pointer' : ''}`}
+      onMouseEnter={() => !isMobile && setIsHovered(true)}
+      onMouseLeave={() => !isMobile && setIsHovered(false)}
+      onClick={!isMobile && slides.length > 1 ? nextSlide : undefined}
     >
       {/* Background Images with Fade Effect */}
       <div className="slider-backgrounds">
@@ -193,32 +211,34 @@ export const ProfessionalHeroSlider: React.FC = () => {
         </div>
       </div>
 
-      {/* Slide Indicators */}
-      <div className="slide-indicators">
-        {slides.map((_, index) => (
-          <motion.button
-            key={index}
-            className={`indicator ${index === currentSlide ? 'active' : ''}`}
-            onClick={(e) => {
-              e.stopPropagation();
-              setCurrentSlide(index);
-            }}
-            whileHover={{ scale: 1.2 }}
-            whileTap={{ scale: 0.9 }}
-          >
-            <div className="indicator-progress">
-              <motion.div
-                className="progress-fill"
-                initial={{ width: 0 }}
-                animate={{ 
-                  width: index === currentSlide && isPlaying && !isHovered ? '100%' : '0%' 
-                }}
-                transition={{ duration: 6, ease: 'linear' }}
-              />
-            </div>
-          </motion.button>
-        ))}
-      </div>
+      {/* Slide Indicators - only show on desktop or when multiple slides */}
+      {(!isMobile && slides.length > 1) && (
+        <div className="slide-indicators">
+          {slides.map((_, index) => (
+            <motion.button
+              key={index}
+              className={`indicator ${index === currentSlide ? 'active' : ''}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                setCurrentSlide(index);
+              }}
+              whileHover={{ scale: 1.2 }}
+              whileTap={{ scale: 0.9 }}
+            >
+              <div className="indicator-progress">
+                <motion.div
+                  className="progress-fill"
+                  initial={{ width: 0 }}
+                  animate={{ 
+                    width: index === currentSlide && isPlaying && !isHovered ? '100%' : '0%' 
+                  }}
+                  transition={{ duration: 6, ease: 'linear' }}
+                />
+              </div>
+            </motion.button>
+          ))}
+        </div>
+      )}
     </section>
   );
 };
