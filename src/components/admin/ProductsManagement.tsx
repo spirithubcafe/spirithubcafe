@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../ui/alert-dialog';
-import { Package, Plus, Edit, Trash2, Eye, EyeOff, Search, Loader2, Star, Coffee, Layers, Image as ImageIcon, Crown } from 'lucide-react';
+import { Package, Plus, Edit, Trash2, Eye, EyeOff, Search, Loader2, Star, Coffee, Layers, Image as ImageIcon, Crown, AlertTriangle, Info, Wrench, Box, Camera } from 'lucide-react';
 import { productService, productVariantService, productImageService } from '../../services/productService';
 import { categoryService } from '../../services/categoryService';
 import { resolveImageFromProductImage, getProductImageUrl } from '../../lib/imageUtils';
@@ -371,7 +371,7 @@ export const ProductsManagement: React.FC = () => {
       if (!force && product && !canDeleteProduct(product)) {
         const confirmForce = window.confirm(
           `This product has dependencies (variants/images). Do you want to delete it anyway?\n\n` +
-          `⚠️ WARNING: This will permanently delete the product and ALL its:\n` +
+          `WARNING: This will permanently delete the product and ALL its:\n` +
           `- Variants (${product.variants?.length || 0})\n` +
           `- Images (${product.images?.length || 0})\n` +
           `- Associated data\n\n` +
@@ -902,7 +902,7 @@ export const ProductsManagement: React.FC = () => {
 
       // Step 3: Delete the product itself
       await productService.delete(productId);
-      alert('✅ Product and all dependencies deleted successfully!');
+      alert('Product and all dependencies deleted successfully!');
       loadData();
 
     } catch (error: any) {
@@ -1095,7 +1095,7 @@ export const ProductsManagement: React.FC = () => {
                             <Button 
                               variant="ghost" 
                               size="sm"
-                              title={!canDeleteProduct(product) ? `⚠️ Has dependencies: ${getDeleteWarningMessage(product)}` : 'Delete product'}
+                              title={!canDeleteProduct(product) ? `Has dependencies: ${getDeleteWarningMessage(product)}` : 'Delete product'}
                             >
                               <Trash2 className={`h-4 w-4 ${!canDeleteProduct(product) ? 'text-orange-500' : 'text-red-500'}`} />
                             </Button>
@@ -1108,20 +1108,27 @@ export const ProductsManagement: React.FC = () => {
                                 
                                 {product.variants && product.variants.length > 0 && (
                                   <div className="text-sm bg-blue-50 p-2 rounded border border-blue-200">
-                                    <strong>📦 Variants:</strong> {product.variants.length} variant(s) will also be deleted
+                                    <strong className="flex items-center gap-1">
+                                      <Box className="h-4 w-4" />
+                                      Variants:
+                                    </strong> {product.variants.length} variant(s) will also be deleted
                                   </div>
                                 )}
                                 
                                 {product.images && product.images.length > 0 && (
                                   <div className="text-sm bg-green-50 p-2 rounded border border-green-200">
-                                    <strong>🖼️ Images:</strong> {product.images.length} image(s) will also be deleted
+                                    <strong className="flex items-center gap-1">
+                                      <Camera className="h-4 w-4" />
+                                      Images:
+                                    </strong> {product.images.length} image(s) will also be deleted
                                   </div>
                                 )}
                                 
                                 {!canDeleteProduct(product) && (
                                   <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md">
-                                    <p className="text-yellow-800 text-sm font-medium">
-                                      ⚠️ This product has dependencies:
+                                    <p className="text-yellow-800 text-sm font-medium flex items-center gap-1">
+                                      <AlertTriangle className="h-4 w-4" />
+                                      This product has dependencies:
                                     </p>
                                     <p className="text-yellow-700 text-sm mt-1">
                                       {getDeleteWarningMessage(product)}
@@ -1130,7 +1137,7 @@ export const ProductsManagement: React.FC = () => {
                                       <strong>Options:</strong>
                                     </p>
                                     <ul className="text-yellow-700 text-sm mt-1 list-disc list-inside space-y-1">
-                                      <li><strong>🔧 Clean Delete:</strong> Systematically removes dependencies first (recommended)</li>
+                                      <li><strong className="inline-flex items-center gap-1"><Wrench className="h-3 w-3" />Clean Delete:</strong> Systematically removes dependencies first (recommended)</li>
                                       <li><strong>Delete Now:</strong> Forces deletion (may cause database errors)</li>
                                       <li><strong>Manual:</strong> Use Manage buttons above to remove dependencies first</li>
                                     </ul>
@@ -1152,7 +1159,8 @@ export const ProductsManagement: React.FC = () => {
                                   disabled={deletingProductId === product.id}
                                 >
                                   {deletingProductId === product.id && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                  🔧 Clean Delete
+                                  <Wrench className="mr-2 h-4 w-4" />
+                                  Clean Delete
                                 </Button>
                                 <AlertDialogAction
                                   onClick={() => handleDeleteProduct(product.id, true)}
@@ -1165,8 +1173,9 @@ export const ProductsManagement: React.FC = () => {
                               </div>
                               
                               {!canDeleteProduct(product) && (
-                                <p className="text-xs text-center text-blue-600">
-                                  💡 Try "Clean Delete" to avoid constraint errors
+                                <p className="text-xs text-center text-blue-600 flex items-center justify-center gap-1">
+                                  <Info className="h-3 w-3" />
+                                  Try "Clean Delete" to avoid constraint errors
                                 </p>
                               )}
                             </AlertDialogFooter>
