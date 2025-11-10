@@ -1761,7 +1761,7 @@ export const ProductsManagement: React.FC = () => {
                           {(imagePreview || imageFormData.imagePath) && (
                             <div className="relative h-20 w-20 shrink-0 rounded-lg border-2 border-gray-300 overflow-hidden bg-gray-50">
                               <img
-                                src={imagePreview || imageFormData.imagePath}
+                                src={imagePreview || getProductImageUrl(imageFormData.imagePath)}
                                 alt="Preview"
                                 className="h-full w-full object-cover"
                                 onError={(e) => {

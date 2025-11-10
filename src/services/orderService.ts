@@ -46,12 +46,21 @@ export const orderService = {
     } catch (error: any) {
       console.error('❌ Order creation failed');
       console.error('📋 Request data:', JSON.stringify(order, null, 2));
-      console.error('📋 Error object:', error);
+      console.error('📋 Full error object:', error);
+      console.error('📋 Error type:', typeof error);
+      console.error('📋 Error keys:', Object.keys(error));
+      
+      // Check if this is an AxiosError with response data
+      if (error.response) {
+        console.error('📋 Axios response status:', error.response.status);
+        console.error('📋 Axios response data:', error.response.data);
+        console.error('📋 Axios response headers:', error.response.headers);
+      }
       
       // apiClient interceptor transforms errors to ApiError format
       // Structure: { message: string, statusCode: number, errors?: object }
       if (error.statusCode) {
-        console.error('📋 Status Code:', error.statusCode);
+        console.error('📋 ApiError Status Code:', error.statusCode);
       }
       if (error.errors) {
         console.error('📋 Validation Errors:', JSON.stringify(error.errors, null, 2));
@@ -65,7 +74,7 @@ export const orderService = {
       
       // Use the message from ApiError
       const errorMessage = error.message || 'Unable to create order at this time.';
-      console.error('📋 Error message:', errorMessage);
+      console.error('📋 Final error message:', errorMessage);
       throw new Error(errorMessage);
     }
   },

@@ -14,6 +14,7 @@ import { categoryService } from '../services/categoryService';
 import { fileUploadService } from '../services/fileUploadService';
 import type { Category, CategoryCreateUpdateDto } from '../types/product';
 import { cn } from '../lib/utils';
+import { getCategoryImageUrl } from '../lib/imageUtils';
 
 export const CategoryEditPage: React.FC = () => {
   const { t } = useApp();
@@ -441,7 +442,7 @@ export const CategoryEditPage: React.FC = () => {
                   {(imagePreview || formData.imagePath) && (
                     <div className="relative h-20 w-20 shrink-0 rounded-lg border-2 border-gray-300 overflow-hidden bg-gray-50">
                       <img
-                        src={imagePreview || formData.imagePath}
+                        src={imagePreview || getCategoryImageUrl(formData.imagePath)}
                         alt="Category preview"
                         className="h-full w-full object-cover"
                         onError={(e) => {
