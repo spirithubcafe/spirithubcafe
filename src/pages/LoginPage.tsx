@@ -107,13 +107,44 @@ export const LoginPage: React.FC = () => {
         subtitleAr={heroCopy.ar.subtitle}
       />
 
-      <div className="max-w-6xl mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+          {/* Login Form - First on mobile, Second on desktop */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1, duration: 0.5 }}
+            className="order-1 lg:order-2"
+          >
+            <Card className="shadow-xl border-0">
+              <CardContent className="p-6 sm:p-8">
+                <LoginForm
+                  onSuccess={handleLoginSuccess}
+                  onSwitchToRegister={handleSwitchToRegister}
+                />
+                <p className="text-center text-sm text-gray-500 mt-6">
+                  {language === 'ar'
+                    ? 'لست عضواً بعد؟'
+                    : "Don't have an account yet?"}{' '}
+                  <Button
+                    type="button"
+                    variant="link"
+                    className="p-0 h-auto text-amber-600"
+                    onClick={handleSwitchToRegister}
+                  >
+                    {language === 'ar' ? 'سجل الآن' : 'Register now'}
+                  </Button>
+                </p>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          {/* Benefits - Second on mobile, First on desktop */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="space-y-6"
+            className="space-y-6 order-2 lg:order-1"
           >
             <p className="text-lg text-gray-600 leading-relaxed">
               {activeCopy.subtitle}
@@ -156,34 +187,6 @@ export const LoginPage: React.FC = () => {
                 {language === 'ar' ? 'حساب جديد' : 'Create account'}
               </Button>
             </div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1, duration: 0.5 }}
-          >
-            <Card className="shadow-xl border-0">
-              <CardContent className="p-6 sm:p-8">
-                <LoginForm
-                  onSuccess={handleLoginSuccess}
-                  onSwitchToRegister={handleSwitchToRegister}
-                />
-                <p className="text-center text-sm text-gray-500 mt-6">
-                  {language === 'ar'
-                    ? 'لست عضواً بعد؟'
-                    : "Don't have an account yet?"}{' '}
-                  <Button
-                    type="button"
-                    variant="link"
-                    className="p-0 h-auto text-amber-600"
-                    onClick={handleSwitchToRegister}
-                  >
-                    {language === 'ar' ? 'سجل الآن' : 'Register now'}
-                  </Button>
-                </p>
-              </CardContent>
-            </Card>
           </motion.div>
         </div>
       </div>

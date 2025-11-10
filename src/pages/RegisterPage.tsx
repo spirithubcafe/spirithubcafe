@@ -109,11 +109,42 @@ export const RegisterPage: React.FC = () => {
 
       <div className="max-w-6xl mx-auto px-4 py-12">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
+          {/* Register Form - First on mobile, Second on desktop */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1, duration: 0.5 }}
+            className="order-1 lg:order-2"
+          >
+            <Card className="shadow-xl border-0">
+              <CardContent className="p-6 sm:p-8">
+                <RegisterForm
+                  onSuccess={handleRegisterSuccess}
+                  onSwitchToLogin={handleSwitchToLogin}
+                />
+                <p className="text-center text-sm text-gray-500 mt-6">
+                  {language === 'ar'
+                    ? 'لديك حساب بالفعل؟'
+                    : 'Already a member?'}{' '}
+                  <Button
+                    type="button"
+                    variant="link"
+                    className="p-0 h-auto text-amber-600"
+                    onClick={handleSwitchToLogin}
+                  >
+                    {language === 'ar' ? 'سجّل دخولك' : 'Sign in'}
+                  </Button>
+                </p>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          {/* Benefits - Second on mobile, First on desktop */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="space-y-6"
+            className="space-y-6 order-2 lg:order-1"
           >
             <p className="text-lg text-gray-600 leading-relaxed">
               {activeCopy.subtitle}
@@ -148,34 +179,6 @@ export const RegisterPage: React.FC = () => {
                 {language === 'ar' ? 'لديك حساب؟' : 'Already have an account?'}
               </Button>
             </div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1, duration: 0.5 }}
-          >
-            <Card className="shadow-xl border-0">
-              <CardContent className="p-6 sm:p-8">
-                <RegisterForm
-                  onSuccess={handleRegisterSuccess}
-                  onSwitchToLogin={handleSwitchToLogin}
-                />
-                <p className="text-center text-sm text-gray-500 mt-6">
-                  {language === 'ar'
-                    ? 'لديك حساب بالفعل؟'
-                    : 'Already a member?'}{' '}
-                  <Button
-                    type="button"
-                    variant="link"
-                    className="p-0 h-auto text-amber-600"
-                    onClick={handleSwitchToLogin}
-                  >
-                    {language === 'ar' ? 'سجّل دخولك' : 'Sign in'}
-                  </Button>
-                </p>
-              </CardContent>
-            </Card>
           </motion.div>
         </div>
       </div>
