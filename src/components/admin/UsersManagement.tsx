@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useApp } from '../../hooks/useApp';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -7,20 +6,18 @@ import { Label } from '../ui/label';
 import { Switch } from '../ui/switch';
 import { Badge } from '../ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '../ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../ui/alert-dialog';
-import { Users, Plus, Edit, Trash2, Eye, EyeOff, Search, Loader2, Clock, Key } from 'lucide-react';
+import { Users, Plus, Edit, Trash2, Search, Loader2, Key, UserCheck, UserX } from 'lucide-react';
 import { userService } from '../../services/userService';
-import type { User, UserCreateDto, UserUpdateDto, Role } from '../../services/userService';
+import type { User, UserCreateDto, UserUpdateDto, Role, PasswordUpdateDto } from '../../services/userService';
 
 export const UsersManagement: React.FC = () => {
-  const { t } = useApp();
   const [users, setUsers] = useState<User[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [roleFilter, setRoleFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -28,7 +25,9 @@ export const UsersManagement: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' | 'info' } | null>(null);
   const pageSize = 20;
 
   const [formData, setFormData] = useState<UserCreateDto>({
@@ -36,65 +35,56 @@ export const UsersManagement: React.FC = () => {
     password: '',
     displayName: '',
     isActive: true,
-    roleIds: []
+    roles: []
   });
 
-  const [passwordData, setPasswordData] = useState({
+  const [passwordData, setPasswordData] = useState<PasswordUpdateDto>({
     newPassword: '',
-    confirmPassword: ''
+    forceSignOut: true
   });
+
+  const [confirmPassword, setConfirmPassword] = useState('');
 
   useEffect(() => {
-    const loadDataAsync = async () => {
-      try {
-        setLoading(true);
-        
-        // Load roles
-        const rolesData = await userService.getRoles();
-        setRoles(Array.isArray(rolesData) ? rolesData : []);
+    loadData();
+  }, [currentPage, searchTerm, statusFilter]);
 
-        // Load users with filters
-        const usersData = await userService.getAll({
-          page: currentPage,
-          pageSize,
-          searchTerm: searchTerm || undefined,
-          role: roleFilter !== 'all' ? roleFilter : undefined,
-          isActive: statusFilter === 'active' ? true : statusFilter === 'inactive' ? false : undefined
-        });
+  useEffect(() => {
+    loadRoles();
+  }, []);
 
-        setUsers(usersData.items);
-        setTotalPages(usersData.totalPages);
-      } catch (error) {
-        console.error('Error loading users:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const showMessage = (text: string, type: 'success' | 'error' | 'info' = 'info') => {
+    setMessage({ text, type });
+    setTimeout(() => setMessage(null), 5000);
+  };
 
-    loadDataAsync();
-  }, [currentPage, searchTerm, roleFilter, statusFilter, pageSize]);
+  const loadRoles = async () => {
+    try {
+      const rolesData = await userService.getRoles();
+      setRoles(rolesData);
+    } catch (error) {
+      console.error('Error loading roles:', error);
+      showMessage('Error loading roles list', 'error');
+    }
+  };
 
   const loadData = async () => {
     try {
       setLoading(true);
-      
-      // Load roles
-      const rolesData = await userService.getRoles();
-      setRoles(Array.isArray(rolesData) ? rolesData : []);
 
-      // Load users with filters
       const usersData = await userService.getAll({
         page: currentPage,
         pageSize,
         searchTerm: searchTerm || undefined,
-        role: roleFilter !== 'all' ? roleFilter : undefined,
         isActive: statusFilter === 'active' ? true : statusFilter === 'inactive' ? false : undefined
       });
 
       setUsers(usersData.items);
       setTotalPages(usersData.totalPages);
+      setTotalCount(usersData.totalCount);
     } catch (error) {
       console.error('Error loading users:', error);
+      showMessage('Error loading users list', 'error');
     } finally {
       setLoading(false);
     }
@@ -107,21 +97,27 @@ export const UsersManagement: React.FC = () => {
       password: '',
       displayName: '',
       isActive: true,
-      roleIds: []
+      roles: []
     });
     setIsDialogOpen(true);
   };
 
-  const handleEditUser = (user: User) => {
-    setEditingUser(user);
-    setFormData({
-      username: user.username,
-      password: '', // Don't show existing password
-      displayName: user.displayName || '',
-      isActive: user.isActive,
-      roleIds: user.userRoles?.map(ur => ur.roleId) || []
-    });
-    setIsDialogOpen(true);
+  const handleEditUser = async (userId: number) => {
+    try {
+      const user = await userService.getById(userId);
+      setEditingUser(user);
+      setFormData({
+        username: user.username,
+        password: '',
+        displayName: user.displayName || '',
+        isActive: user.isActive,
+        roles: user.roles || []
+      });
+      setIsDialogOpen(true);
+    } catch (error) {
+      console.error('Error loading user:', error);
+      showMessage('Error loading user data', 'error');
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -130,21 +126,23 @@ export const UsersManagement: React.FC = () => {
     
     try {
       if (editingUser) {
-        // Update user (exclude password from update)
         const updateData: UserUpdateDto = {
+          username: formData.username,
           displayName: formData.displayName,
           isActive: formData.isActive,
-          roleIds: formData.roleIds
+          roles: formData.roles
         };
         await userService.update(editingUser.id, updateData);
+        showMessage('User updated successfully', 'success');
       } else {
-        // Create new user
         await userService.create(formData);
+        showMessage('User created successfully', 'success');
       }
       setIsDialogOpen(false);
-      loadData();
-    } catch (error) {
+      await loadData();
+    } catch (error: any) {
       console.error('Error saving user:', error);
+      showMessage(error.response?.data?.message || 'Error saving user', 'error');
     } finally {
       setSubmitting(false);
     }
@@ -153,420 +151,467 @@ export const UsersManagement: React.FC = () => {
   const handleDeleteUser = async (userId: number) => {
     try {
       await userService.delete(userId);
-      loadData();
-    } catch (error) {
+      showMessage('User deleted successfully', 'success');
+      await loadData();
+    } catch (error: any) {
       console.error('Error deleting user:', error);
+      showMessage(error.response?.data?.message || 'Error deleting user', 'error');
     }
   };
 
-  const handleToggleActive = async (userId: number) => {
+  const handleToggleActive = async (userId: number, currentStatus: boolean) => {
     try {
-      await userService.toggleActive(userId);
-      loadData();
+      await userService.updateStatus(userId, { isActive: !currentStatus });
+      showMessage('User status updated successfully', 'success');
+      await loadData();
     } catch (error) {
       console.error('Error toggling user status:', error);
+      showMessage('Error updating user status', 'error');
     }
   };
 
-  const handleResetPassword = (user: User) => {
+  const handleOpenPasswordDialog = (user: User) => {
     setSelectedUser(user);
     setPasswordData({
       newPassword: '',
-      confirmPassword: ''
+      forceSignOut: true
     });
+    setConfirmPassword('');
     setIsPasswordDialogOpen(true);
   };
 
-  const handlePasswordReset = async (e: React.FormEvent) => {
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedUser || passwordData.newPassword !== passwordData.confirmPassword) {
+    
+    if (passwordData.newPassword !== confirmPassword) {
+      showMessage('Passwords do not match!', 'error');
       return;
     }
 
+    if (passwordData.newPassword.length < 6) {
+      showMessage('Password must be at least 6 characters long!', 'error');
+      return;
+    }
+
+    if (!selectedUser) return;
+
     setSubmitting(true);
     try {
-      await userService.resetPassword(selectedUser.id, passwordData.newPassword);
+      await userService.updatePassword(selectedUser.id, passwordData);
       setIsPasswordDialogOpen(false);
       setSelectedUser(null);
-    } catch (error) {
-      console.error('Error resetting password:', error);
+      showMessage('Password updated successfully!', 'success');
+    } catch (error: any) {
+      console.error('Error updating password:', error);
+      showMessage(error.response?.data?.message || 'Error updating password', 'error');
     } finally {
       setSubmitting(false);
     }
   };
 
+  const toggleRole = (roleName: string) => {
+    setFormData(prev => ({
+      ...prev,
+      roles: prev.roles?.includes(roleName)
+        ? prev.roles.filter(r => r !== roleName)
+        : [...(prev.roles || []), roleName]
+    }));
+  };
 
-
-  const getRoleBadgeVariant = (roleName: string) => {
+  const getRoleBadgeColor = (roleName: string) => {
     switch (roleName.toLowerCase()) {
       case 'admin':
-        return 'destructive';
+        return 'bg-red-100 text-red-800 border-red-300';
       case 'manager':
-        return 'default';
+        return 'bg-blue-100 text-blue-800 border-blue-300';
       case 'editor':
-        return 'secondary';
+        return 'bg-green-100 text-green-800 border-green-300';
       default:
-        return 'outline';
+        return 'bg-gray-100 text-gray-800 border-gray-300';
     }
   };
 
-  const translateRoleName = (roleName?: string) => {
-    if (!roleName) {
-      return '';
-    }
-    const key = `admin.roles.${roleName.trim().toLowerCase()}`;
-    const translated = t(key);
-    return translated === key ? roleName : translated;
-  };
-
-  if (loading) {
+  if (loading && users.length === 0) {
     return (
       <Card>
         <CardContent className="flex items-center justify-center py-8">
           <Loader2 className="h-8 w-8 animate-spin" />
-          <span className="ml-2">{t('common.loading')}</span>
+          <span className="ml-2">Loading...</span>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center space-x-2">
-          <Users className="h-6 w-6" />
-          <span>{t('admin.users.title')}</span>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Filters */}
-        <div className="flex flex-col lg:flex-row gap-4 justify-between">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex items-center space-x-2">
-              <Search className="h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder={t('admin.users.search')}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="max-w-sm"
-              />
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Users className="h-6 w-6" />
+            <span>Users Management</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Message */}
+          {message && (
+            <div className={`p-4 rounded-lg ${
+              message.type === 'error' ? 'bg-red-100 text-red-800 border border-red-300' :
+              message.type === 'success' ? 'bg-green-100 text-green-800 border border-green-300' :
+              'bg-blue-100 text-blue-800 border border-blue-300'
+            }`}>
+              {message.text}
             </div>
-            <Select value={roleFilter} onValueChange={setRoleFilter}>
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder={t('admin.users.selectRole')} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t('admin.users.allRoles')}</SelectItem>
-                {roles.map((role) => (
-                  <SelectItem key={role.id} value={role.name}>
-                    {translateRoleName(role.name)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder={t('admin.users.selectStatus')} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t('admin.users.allStatuses')}</SelectItem>
-                <SelectItem value="active">{t('admin.users.active')}</SelectItem>
-                <SelectItem value="inactive">{t('admin.users.inactive')}</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <Button onClick={handleCreateUser}>
-            <Plus className="h-4 w-4 mr-2" />
-            {t('admin.users.add')}
-          </Button>
-        </div>
+          )}
 
-        {/* Users Table */}
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t('admin.users.username')}</TableHead>
-                <TableHead>{t('admin.users.displayName')}</TableHead>
-                <TableHead>{t('admin.users.roles')}</TableHead>
-                <TableHead className="text-center">{t('admin.users.status')}</TableHead>
-                <TableHead className="text-center">{t('admin.users.lastLogin')}</TableHead>
-                <TableHead className="text-center">{t('admin.users.actions')}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {users.length === 0 ? (
+          {/* Filters */}
+          <div className="flex flex-col lg:flex-row gap-4 justify-between">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex items-center space-x-2">
+                <Search className="h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search users..."
+                  value={searchTerm}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="max-w-sm"
+                />
+              </div>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="inactive">Inactive</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <Button onClick={handleCreateUser}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add User
+            </Button>
+          </div>
+
+          {/* Users Table */}
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                    {t('admin.users.noUsers')}
-                  </TableCell>
+                  <TableHead>ID</TableHead>
+                  <TableHead>Username</TableHead>
+                  <TableHead>Display Name</TableHead>
+                  <TableHead className="text-center">Status</TableHead>
+                  <TableHead>Roles</TableHead>
+                  <TableHead>Last Login</TableHead>
+                  <TableHead className="text-center">Actions</TableHead>
                 </TableRow>
-              ) : (
-                users.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell className="font-medium">{user.username}</TableCell>
-                    <TableCell>{user.displayName || '-'}</TableCell>
-                    <TableCell>
-                      <div className="flex gap-1 flex-wrap">
-                        {user.userRoles?.map((userRole) => (
-                          <Badge
-                            key={userRole.roleId}
-                            variant={getRoleBadgeVariant(userRole.role.name)}
-                            className="text-xs"
-                          >
-                            {translateRoleName(userRole.role.name)}
-                          </Badge>
-                        )) || '-'}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Badge variant={user.isActive ? "default" : "secondary"}>
-                        {user.isActive ? t('admin.users.active') : t('admin.users.inactive')}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <div className="flex items-center justify-center space-x-1">
-                        <Clock className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm text-muted-foreground">
-                          {user.lastLoggedIn ? 
-                            new Date(user.lastLoggedIn).toLocaleDateString() : 
-                            t('admin.users.never')
-                          }
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <div className="flex items-center justify-center space-x-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEditUser(user)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleToggleActive(user.id)}
-                        >
-                          {user.isActive ? (
-                            <EyeOff className="h-4 w-4" />
-                          ) : (
-                            <Eye className="h-4 w-4" />
-                          )}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleResetPassword(user)}
-                        >
-                          <Key className="h-4 w-4" />
-                        </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="sm">
-                              <Trash2 className="h-4 w-4 text-red-500" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>{t('admin.users.deleteConfirm')}</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                {t('admin.users.deleteWarning')} "{user.username}"
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => handleDeleteUser(user.id)}
-                                className="bg-red-600 hover:bg-red-700"
-                              >
-                                {t('common.delete')}
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
+              </TableHeader>
+              <TableBody>
+                {!users || users.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                      No users found
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
-
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex justify-center space-x-2">
-            <Button
-              variant="outline"
-              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-            >
-              {t('common.previous')}
-            </Button>
-            <span className="flex items-center px-4">
-              {t('common.page')} {currentPage} {t('common.of')} {totalPages}
-            </span>
-            <Button
-              variant="outline"
-              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages}
-            >
-              {t('common.next')}
-            </Button>
+                ) : (
+                  users.map((user) => (
+                    <TableRow key={user.id}>
+                      <TableCell>{user.id}</TableCell>
+                      <TableCell className="font-medium">{user.username}</TableCell>
+                      <TableCell>{user.displayName || '-'}</TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant={user.isActive ? "default" : "secondary"}>
+                          {user.isActive ? 'Active' : 'Inactive'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1">
+                          {user.roles && user.roles.length > 0 ? (
+                            user.roles.map((role) => (
+                              <Badge 
+                                key={role} 
+                                variant="outline"
+                                className={getRoleBadgeColor(role)}
+                              >
+                                {role}
+                              </Badge>
+                            ))
+                          ) : (
+                            <span className="text-muted-foreground text-sm">No roles</span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {user.lastLoggedIn ? (
+                          new Date(user.lastLoggedIn).toLocaleDateString()
+                        ) : (
+                          <span className="text-muted-foreground">Never</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <div className="flex items-center justify-center space-x-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEditUser(user.id)}
+                            title="Edit User"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleOpenPasswordDialog(user)}
+                            title="Change Password"
+                          >
+                            <Key className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleToggleActive(user.id, user.isActive)}
+                            title={user.isActive ? 'Deactivate' : 'Activate'}
+                          >
+                            {user.isActive ? (
+                              <UserX className="h-4 w-4 text-orange-500" />
+                            ) : (
+                              <UserCheck className="h-4 w-4 text-green-500" />
+                            )}
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                title="Delete User"
+                              >
+                                <Trash2 className="h-4 w-4 text-red-500" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete User</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Are you sure you want to delete user "{user.username}"? This action cannot be undone.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => handleDeleteUser(user.id)}
+                                  className="bg-red-600 hover:bg-red-700"
+                                >
+                                  Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
           </div>
-        )}
 
-        {/* Create/Edit User Dialog */}
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>
-                {editingUser ? t('admin.users.edit') : t('admin.users.add')}
-              </DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="username">{t('admin.users.username')} *</Label>
-                  <Input
-                    id="username"
-                    value={formData.username}
-                    onChange={(e) => setFormData(prev => ({ ...prev, username: e.target.value }))}
-                    placeholder={t('admin.users.usernamePlaceholder')}
-                    required
-                    disabled={!!editingUser} // Can't change username when editing
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="displayName">{t('admin.users.displayName')}</Label>
-                  <Input
-                    id="displayName"
-                    value={formData.displayName}
-                    onChange={(e) => setFormData(prev => ({ ...prev, displayName: e.target.value }))}
-                    placeholder={t('admin.users.displayNamePlaceholder')}
-                  />
-                </div>
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between">
+              <div className="text-sm text-muted-foreground">
+                Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, totalCount)} of {totalCount} users
               </div>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                >
+                  Previous
+                </Button>
+                <span className="text-sm">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
+      {/* Create/Edit User Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              {editingUser ? 'Edit User' : 'Create New User'}
+            </DialogTitle>
+            <DialogDescription>
+              {editingUser ? 'Update user information' : 'Add a new user to the system'}
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="username">Username *</Label>
+                <Input
+                  id="username"
+                  value={formData.username}
+                  onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                  required
+                  disabled={!!editingUser}
+                />
+              </div>
               {!editingUser && (
                 <div className="space-y-2">
-                  <Label htmlFor="password">{t('admin.users.password')} *</Label>
+                  <Label htmlFor="password">Password *</Label>
                   <Input
                     id="password"
                     type="password"
                     value={formData.password}
-                    onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                    placeholder={t('admin.users.passwordPlaceholder')}
-                    required={!editingUser}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    required
+                    minLength={6}
                   />
                 </div>
               )}
-
               <div className="space-y-2">
-                <Label>{t('admin.users.roles')} *</Label>
-                <div className="flex flex-wrap gap-2">
-                  {roles.map((role) => (
-                    <label key={role.id} className="flex items-center space-x-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={formData.roleIds.includes(role.id)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setFormData(prev => ({
-                              ...prev,
-                              roleIds: [...prev.roleIds, role.id]
-                            }));
-                          } else {
-                            setFormData(prev => ({
-                              ...prev,
-                              roleIds: prev.roleIds.filter(id => id !== role.id)
-                            }));
-                          }
-                        }}
-                        className="rounded border-gray-300"
-                      />
-                      <Badge variant={getRoleBadgeVariant(role.name)}>
-                        {translateRoleName(role.name)}
-                      </Badge>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="isActive"
-                  checked={formData.isActive}
-                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isActive: checked }))}
-                />
-                <Label htmlFor="isActive">{t('admin.users.active')}</Label>
-              </div>
-
-              <div className="flex justify-end space-x-2 pt-4">
-                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                  {t('common.cancel')}
-                </Button>
-                <Button type="submit" disabled={submitting}>
-                  {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  {editingUser ? t('common.update') : t('common.create')}
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
-
-        {/* Reset Password Dialog */}
-        <Dialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>
-                {t('admin.users.resetPassword')} - {selectedUser?.username}
-              </DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handlePasswordReset} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="newPassword">{t('admin.users.newPassword')} *</Label>
+                <Label htmlFor="displayName">Display Name</Label>
                 <Input
-                  id="newPassword"
-                  type="password"
-                  value={passwordData.newPassword}
-                  onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
-                  required
+                  id="displayName"
+                  value={formData.displayName}
+                  onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword">{t('admin.users.confirmPassword')} *</Label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  value={passwordData.confirmPassword}
-                  onChange={(e) => setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                  required
-                />
-                {passwordData.newPassword && passwordData.confirmPassword && 
-                 passwordData.newPassword !== passwordData.confirmPassword && (
-                  <p className="text-sm text-red-600">{t('admin.users.passwordMismatch')}</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Roles</Label>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 border rounded-md p-4">
+                {roles.map((role) => (
+                  <Label
+                    key={role.id}
+                    htmlFor={`role-${role.id}`}
+                    className="flex items-center space-x-2 cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      id={`role-${role.id}`}
+                      checked={formData.roles?.includes(role.name)}
+                      onChange={() => toggleRole(role.name)}
+                      className="rounded border-gray-300"
+                      aria-label={`Role: ${role.name}`}
+                    />
+                    <span className="text-sm font-normal">
+                      {role.name}
+                    </span>
+                  </Label>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="isActive"
+                checked={formData.isActive}
+                onCheckedChange={(checked) => setFormData({ ...formData, isActive: checked })}
+              />
+              <Label htmlFor="isActive">Active</Label>
+            </div>
+
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={submitting}>
+                {submitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  editingUser ? 'Update User' : 'Create User'
                 )}
-              </div>
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
-              <div className="flex justify-end space-x-2 pt-4">
-                <Button type="button" variant="outline" onClick={() => setIsPasswordDialogOpen(false)}>
-                  {t('common.cancel')}
-                </Button>
-                <Button 
-                  type="submit" 
-                  disabled={submitting || passwordData.newPassword !== passwordData.confirmPassword}
-                >
-                  {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  {t('admin.users.resetPassword')}
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
-      </CardContent>
-    </Card>
+      {/* Change Password Dialog */}
+      <Dialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Change Password</DialogTitle>
+            <DialogDescription>
+              Change password for user: <strong>{selectedUser?.username}</strong>
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handlePasswordSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="newPassword">New Password *</Label>
+              <Input
+                id="newPassword"
+                type="password"
+                value={passwordData.newPassword}
+                onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                required
+                minLength={6}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirm Password *</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                minLength={6}
+              />
+            </div>
+            <Label htmlFor="forceSignOut" className="flex items-center space-x-2 cursor-pointer">
+              <input
+                type="checkbox"
+                id="forceSignOut"
+                checked={passwordData.forceSignOut}
+                onChange={(e) => setPasswordData({ ...passwordData, forceSignOut: e.target.checked })}
+                className="rounded border-gray-300"
+                aria-label="Force sign out from all devices"
+              />
+              <span className="text-sm font-normal">
+                Sign out from all devices
+              </span>
+            </Label>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setIsPasswordDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={submitting}>
+                {submitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Updating...
+                  </>
+                ) : (
+                  'Update Password'
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
