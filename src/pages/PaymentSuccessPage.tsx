@@ -1,110 +1,42 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { CheckCircle, PackageCheck } from 'lucide-react';
 import { PageHeader } from '../components/layout/PageHeader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Separator } from '../components/ui/separator';
 import { useApp } from '../hooks/useApp';
-import { useAuth } from '../hooks/useAuth';
 import type { CheckoutOrder } from '../types/checkout';
-import type { CreateOrderDto } from '../types/order';
-import { orderService } from '../services';
 import { Seo } from '../components/seo/Seo';
 import { siteMetadata } from '../config/siteMetadata';
 
 const LAST_SUCCESS_STORAGE_KEY = 'spirithub_last_success_order';
-const ORDER_SUBMITTED_KEY = 'spirithub_order_submitted';
+
+interface PaymentSuccessLocationState {
+  orderId?: string;
+  serverOrderId?: number;
+}
 
 export const PaymentSuccessPage: React.FC = () => {
   const { language } = useApp();
-  const { user } = useAuth();
   const isArabic = language === 'ar';
   const navigate = useNavigate();
-  const [order, setOrder] = useState<CheckoutOrder | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+  const location = useLocation();
+  const [order, setOrder] = useState<CheckoutOrder & { serverOrderId?: number } | null>(null);
 
   useEffect(() => {
+    const state = (location.state as PaymentSuccessLocationState) || {};
     const stored = sessionStorage.getItem(LAST_SUCCESS_STORAGE_KEY);
+    
     if (stored) {
       try {
-        const parsed: CheckoutOrder = JSON.parse(stored);
+        const parsed: CheckoutOrder & { serverOrderId?: number } = JSON.parse(stored);
         setOrder(parsed);
-        
-        // Submit order to server if not already submitted
-        const orderSubmitted = sessionStorage.getItem(ORDER_SUBMITTED_KEY);
-        if (!orderSubmitted && user) {
-          submitOrderToServer(parsed);
-        }
       } catch {
         sessionStorage.removeItem(LAST_SUCCESS_STORAGE_KEY);
       }
     }
-  }, [user]);
-
-  const submitOrderToServer = async (checkoutOrder: CheckoutOrder) => {
-    if (!user || submitting) return;
-    
-    setSubmitting(true);
-    try {
-      // Parse product ID from cart item ID (format: "product-{id}" or "variant-{productId}-{variantId}")
-      const parseItemId = (id: string) => {
-        if (id.startsWith('variant-')) {
-          const parts = id.split('-');
-          return {
-            productId: parseInt(parts[1]),
-            variantId: parseInt(parts[2]),
-          };
-        } else if (id.startsWith('product-')) {
-          return {
-            productId: parseInt(id.replace('product-', '')),
-            variantId: undefined,
-          };
-        }
-        return { productId: parseInt(id), variantId: undefined };
-      };
-
-      const orderDto: CreateOrderDto = {
-        userId: user.id,
-        items: checkoutOrder.items.map((item) => {
-          const { productId, variantId } = parseItemId(item.id);
-          return {
-            productId,
-            variantId,
-            quantity: item.quantity,
-            unitPrice: item.price,
-          };
-        }),
-        shippingAddress: {
-          fullName: checkoutOrder.checkoutDetails.isGift 
-            ? checkoutOrder.checkoutDetails.recipientName || checkoutOrder.checkoutDetails.fullName
-            : checkoutOrder.checkoutDetails.fullName,
-          phone: checkoutOrder.checkoutDetails.phone,
-          email: checkoutOrder.checkoutDetails.email,
-          governorate: checkoutOrder.checkoutDetails.city || '',
-          area: checkoutOrder.checkoutDetails.address || '',
-          additionalDirections: checkoutOrder.checkoutDetails.notes,
-        },
-        subtotal: checkoutOrder.totals.subtotal,
-        shippingCost: checkoutOrder.totals.shipping,
-        tax: 0, // Tax calculation not implemented yet
-        totalAmount: checkoutOrder.totals.total,
-        paymentMethod: 'Online',
-        customerNotes: checkoutOrder.checkoutDetails.notes,
-      };
-
-      const createdOrder = await orderService.create(orderDto);
-      console.log('Order created successfully:', createdOrder);
-      
-      // Mark as submitted
-      sessionStorage.setItem(ORDER_SUBMITTED_KEY, 'true');
-    } catch (error) {
-      console.error('Failed to create order:', error);
-      // Don't show error to user since payment was successful
-    } finally {
-      setSubmitting(false);
-    }
-  };
+  }, [location.state]);
 
   const currencyLabel = isArabic ? 'ر.ع' : 'OMR';
   const formatCurrency = (value: number) => `${value.toFixed(3)} ${currencyLabel}`;

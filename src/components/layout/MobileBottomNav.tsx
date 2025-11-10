@@ -50,7 +50,8 @@ export const MobileBottomNav: React.FC = () => {
     }
   };
 
-  const isActive = (path: string) => {
+  const isActive = (path: string | null | undefined) => {
+    if (!path) return false;
     if (path === '/') return location.pathname === '/';
     return location.pathname.startsWith(path);
   };

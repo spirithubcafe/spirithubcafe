@@ -6,13 +6,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Button } from '../components/ui/button';
 import { Separator } from '../components/ui/separator';
 import { useApp } from '../hooks/useApp';
+import { useAuth } from '../hooks/useAuth';
 import { useCart } from '../hooks/useCart';
 import type { CheckoutOrder } from '../types/checkout';
+import type { CreateOrderDto } from '../types/order';
+import { orderService } from '../services';
 import { Seo } from '../components/seo/Seo';
 import { siteMetadata } from '../config/siteMetadata';
 
 const PENDING_ORDER_STORAGE_KEY = 'spirithub_pending_checkout';
 const LAST_SUCCESS_STORAGE_KEY = 'spirithub_last_success_order';
+const ORDER_ID_KEY = 'spirithub_server_order_id';
 
 interface PaymentLocationState {
   order?: CheckoutOrder;
@@ -63,7 +67,7 @@ export const PaymentPage: React.FC = () => {
     return order.checkoutDetails.fullName;
   }, [order, isArabic]);
 
-  const handlePayment = (simulateFailure = false) => {
+  const handlePayment = async (simulateFailure = false) => {
     if (!order) return;
 
     if (simulateFailure) {
@@ -73,16 +77,90 @@ export const PaymentPage: React.FC = () => {
 
     setIsProcessing(true);
 
-    if (paymentTimer.current) {
-      window.clearTimeout(paymentTimer.current);
-    }
+    try {
+      // Step 1: Create order in server
+      const createOrderDto: CreateOrderDto = {
+        userId: 1, // TODO: Get actual logged in user ID
+        items: order.items.map((item) => {
+          // Parse productId and variantId from item.id (format: "productId" or "productId-variantId")
+          const [productId, variantId] = item.id.split('-');
+          return {
+            productId: parseInt(productId, 10),
+            variantId: variantId ? parseInt(variantId, 10) : undefined,
+            quantity: item.quantity,
+            unitPrice: item.price,
+          };
+        }),
+        shippingAddress: {
+          fullName: order.checkoutDetails.isGift 
+            ? order.checkoutDetails.recipientName || '' 
+            : order.checkoutDetails.fullName,
+          phone: order.checkoutDetails.isGift 
+            ? order.checkoutDetails.recipientPhone || '' 
+            : order.checkoutDetails.phone,
+          email: order.checkoutDetails.email,
+          governorate: order.checkoutDetails.isGift 
+            ? order.checkoutDetails.recipientCity || '' 
+            : order.checkoutDetails.city,
+          area: order.checkoutDetails.isGift 
+            ? order.checkoutDetails.recipientCountry || '' 
+            : order.checkoutDetails.country,
+          street: order.checkoutDetails.isGift 
+            ? order.checkoutDetails.recipientAddress 
+            : order.checkoutDetails.address,
+        },
+        subtotal: order.totals.subtotal,
+        shippingCost: order.totals.shipping,
+        tax: 0,
+        totalAmount: order.totals.total,
+        paymentMethod: 'Card', // Default payment method
+        customerNotes: order.checkoutDetails.notes,
+      };
 
-    paymentTimer.current = window.setTimeout(() => {
-      clearCart();
-      sessionStorage.removeItem(PENDING_ORDER_STORAGE_KEY);
-      sessionStorage.setItem(LAST_SUCCESS_STORAGE_KEY, JSON.stringify(order));
-      navigate('/payment/success', { state: { orderId: order.id } });
-    }, 1200);
+      const createdOrder = await orderService.create(createOrderDto);
+      
+      // Store server order ID
+      sessionStorage.setItem(ORDER_ID_KEY, createdOrder.id.toString());
+
+      // Step 2: Simulate payment initiation (will be replaced with real payment gateway)
+      // TODO: Replace with actual payment gateway integration
+      // const paymentResponse = await paymentService.initiatePayment({
+      //   orderId: createdOrder.id,
+      //   amount: order.totals.total,
+      //   currency: 'OMR',
+      //   returnUrl: `${window.location.origin}/payment/success`,
+      //   cancelUrl: `${window.location.origin}/payment/failure`,
+      // });
+      // window.location.href = paymentResponse.paymentUrl;
+
+      // For now, simulate payment
+      if (paymentTimer.current) {
+        window.clearTimeout(paymentTimer.current);
+      }
+
+      paymentTimer.current = window.setTimeout(() => {
+        clearCart();
+        sessionStorage.removeItem(PENDING_ORDER_STORAGE_KEY);
+        sessionStorage.setItem(LAST_SUCCESS_STORAGE_KEY, JSON.stringify({ 
+          ...order, 
+          serverOrderId: createdOrder.id 
+        }));
+        navigate('/payment/success', { 
+          state: { 
+            orderId: order.id,
+            serverOrderId: createdOrder.id 
+          } 
+        });
+      }, 1200);
+
+    } catch (error) {
+      console.error('Failed to create order:', error);
+      setIsProcessing(false);
+      // Show error message to user
+      alert(isArabic 
+        ? 'فشل إنشاء الطلب. يرجى المحاولة مرة أخرى.' 
+        : 'Failed to create order. Please try again.');
+    }
   };
 
   useEffect(() => {
