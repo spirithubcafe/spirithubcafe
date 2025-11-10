@@ -197,8 +197,6 @@ export const AdminLayout: React.FC = () => {
       icon: FileText,
       path: '/admin/orders',
       roles: ['Admin', 'Manager'],
-      badge: t('common.soon'),
-      disabled: true,
     },
     {
       id: 'reports',
@@ -207,8 +205,6 @@ export const AdminLayout: React.FC = () => {
       icon: TrendingUp,
       path: '/admin/reports',
       roles: ['Admin', 'Manager'],
-      badge: t('common.soon'),
-      disabled: true,
     },
     {
       id: 'system',
@@ -217,8 +213,6 @@ export const AdminLayout: React.FC = () => {
       icon: Settings,
       path: '/admin/settings',
       roles: ['Admin'],
-      badge: t('common.soon'),
-      disabled: true,
     },
   ];
 
