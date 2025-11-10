@@ -861,14 +861,7 @@ export const ProductsManagement: React.FC = () => {
                 products.map((product) => (
                   <TableRow key={product.id}>
                     <TableCell>
-                      <div>
-                        <div className="font-medium">{product.name}</div>
-                        {product.nameAr && (
-                          <div className="text-sm text-muted-foreground" dir="rtl">
-                            {product.nameAr}
-                          </div>
-                        )}
-                      </div>
+                      <div className="font-medium">{product.name}</div>
                     </TableCell>
                     <TableCell className="font-mono text-sm">{product.sku}</TableCell>
                     <TableCell>
