@@ -274,10 +274,10 @@ export const Navigation: React.FC = () => {
               </SheetTrigger>
               <SheetContent
                 side={language === 'ar' ? 'left' : 'right'}
-                className="bg-[#120804] p-0 text-white"
+                className="bg-[#120804] p-0 text-white flex flex-col"
               >
-                <div className="flex h-full flex-col overflow-hidden">
-                  <div className="relative bg-gradient-to-br from-[#3e2010] via-[#2c160b] to-[#170b06] px-6 py-5 shadow-lg">
+                <div className="flex h-full flex-col">
+                  <div className="relative bg-gradient-to-br from-[#3e2010] via-[#2c160b] to-[#170b06] px-6 py-5 shadow-lg flex-shrink-0">
                     <div className="mt-0">
                       {isLoading ? (
                         <div className="rounded-2xl bg-white/[0.04] p-4 backdrop-blur">
@@ -314,9 +314,10 @@ export const Navigation: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="flex-1 px-6 py-6">
+                  <div className="flex-1 min-h-0 overflow-hidden">
                     <ScrollArea className="h-full">
-                      <nav className="space-y-6">
+                      <div className="px-6 py-6">
+                        <nav className="space-y-6 pb-4">
                       <div>
                         <div className="mt-0 space-y-3">
                           {navItems.map((item) => {
@@ -475,11 +476,12 @@ export const Navigation: React.FC = () => {
                           </div>
                         ) : null}
                       </div>
-                      </nav>
+                        </nav>
+                      </div>
                     </ScrollArea>
                   </div>
 
-                  <div className="bg-[#0d0603] px-6 py-5">
+                  <div className="bg-[#0d0603] px-6 py-5 flex-shrink-0">
                     <div className="flex items-center justify-between gap-4">
                       <div className="text-sm text-amber-100/80">
                         <p className="font-medium">
