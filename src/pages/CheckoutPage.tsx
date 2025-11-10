@@ -295,7 +295,7 @@ export const CheckoutPage: React.FC = () => {
           subtitle="Your cart is empty. Add products to continue."
           subtitleAr="سلة التسوق فارغة. أضف منتجات للمتابعة."
         />
-  <div className="max-w-3xl mx-auto px-4 py-16 text-center space-y-6">
+  <div className="container mx-auto py-16 text-center space-y-6">
           <p className="text-lg text-gray-600">
             {isArabic ? 'لا توجد منتجات في السلة حالياً.' : 'There are no products in your cart yet.'}
           </p>
@@ -327,7 +327,7 @@ export const CheckoutPage: React.FC = () => {
         subtitleAr="أكد تفاصيل طلبك واختر طريقة الاستلام أو الشحن المناسبة."
       />
 
-  <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+  <div className="container mx-auto py-12">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)}>
             {/* Back button at the top */}

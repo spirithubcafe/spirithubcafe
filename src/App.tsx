@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AppProvider } from './contexts/AppContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
@@ -42,13 +42,13 @@ import { PaymentFailurePage } from './pages/PaymentFailurePage';
 import './i18n';
 import './App.css';
 
-// Main content wrapper that handles padding for fixed navigation
-function MainContent() {
-  const location = useLocation();
-  const isHomePage = location.pathname === '/';
-  
+function AppContent() {
   return (
-    <main className={`${isHomePage ? 'pb-16 md:pb-0' : 'pt-16 md:pt-20 pb-16 md:pb-0'}`}>
+    <div className="min-h-screen bg-white">
+      <Navigation />
+      <MobileBottomNav />
+      <CartDrawer />
+      <ScrollToTop />
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/profile" element={<ProfilePage />} />
@@ -82,18 +82,7 @@ function MainContent() {
         <Route path="/payment/failure" element={<PaymentFailurePage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
-    </main>
-  );
-}
 
-function AppContent() {
-  return (
-    <div className="min-h-screen bg-white">
-      <Navigation />
-      <CartDrawer />
-      <ScrollToTop />
-      <MainContent />
-      <MobileBottomNav />
       <Footer />
     </div>
   );

@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Home, ShoppingBag, ShoppingCart, User } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../hooks/useAuth';
 import { useCart } from '../../hooks/useCart';
 
@@ -58,85 +59,165 @@ export const MobileBottomNav: React.FC = () => {
   return (
     <>
       {/* Main navigation */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden">
-        {/* Navigation container - matching header glass style */}
-        <div className="mx-2 mb-2 bg-black/30 backdrop-blur-sm border border-white/10 shadow-lg rounded-xl overflow-hidden">
+      <motion.div 
+        initial={{ y: 100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ type: "spring", stiffness: 260, damping: 20 }}
+        className="fixed bottom-0 left-0 right-0 z-40 md:hidden"
+      >
+        {/* Navigation container - Dark matte glass style */}
+        <div className="mx-3 mb-3 bg-black/60 backdrop-blur-xl shadow-lg rounded-2xl overflow-hidden border border-white/10">
+          {/* Subtle inner shadow for depth */}
+          <div className="absolute inset-0 shadow-inner rounded-2xl pointer-events-none" />
+          
           {/* Navigation content */}
-          <div className="relative flex items-center justify-around py-1.5 px-1">
-            {navItems.map((item) => {
+          <div className="relative flex items-center justify-around py-2 px-1">
+            {navItems.map((item, index) => {
               const Icon = item.icon;
               const active = isActive(item.path);
 
               if (item.action) {
                 // Cart button with action
                 return (
-                  <button
+                  <motion.button
                     key={item.key}
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ 
+                      delay: index * 0.1,
+                      type: "spring",
+                      stiffness: 200,
+                      damping: 15
+                    }}
+                    whileTap={{ scale: 0.95 }}
                     onClick={() => handleItemClick(item)}
-                    className={`group relative flex flex-col items-center justify-center p-2 min-w-[50px] rounded-lg transition-all duration-300 ease-out transform ${
-                      active
-                        ? 'text-white scale-105'
-                        : 'text-white/80 hover:text-amber-700 hover:scale-105 active:scale-95'
-                    }`}
+                    className="group relative flex flex-col items-center justify-center p-3 min-w-[68px] rounded-xl"
                   >
-                    {/* Active background indicator */}
-                    {active && (
-                      <div className="absolute inset-0 bg-gradient-to-br from-amber-400/20 to-amber-500/10 rounded-lg border border-amber-400/30 shadow-md" />
-                    )}
+                    {/* Active background - white style */}
+                    <AnimatePresence>
+                      {active && (
+                        <motion.div 
+                          layoutId="activeTab"
+                          initial={{ opacity: 0, scale: 0.9 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.9 }}
+                          transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                          className="absolute inset-0 bg-white rounded-xl shadow-md"
+                        />
+                      )}
+                    </AnimatePresence>
                     
-                    {/* Hover background */}
-                    <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 rounded-lg transition-all duration-300" />
+                    {/* Hover state */}
+                    <motion.div 
+                      className="absolute inset-0 rounded-xl bg-accent/0"
+                      whileHover={{ 
+                        backgroundColor: "rgba(255, 255, 255, 0.1)",
+                        transition: { duration: 0.2 }
+                      }}
+                    />
                     
-                    <div className="relative flex flex-col items-center">
-                      <div className="relative">
-                        <Icon className={`w-5 h-5 transition-all duration-300 ${active ? 'drop-shadow-sm' : ''}`} />
-                        <div className={`absolute -top-1.5 -right-1.5 bg-gradient-to-br from-red-500 to-red-600 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold shadow-lg border border-white ${item.badge && item.badge > 0 ? 'animate-pulse' : ''}`}>
-                          {item.badge && item.badge > 99 ? '9+' : item.badge || 0}
-                        </div>
-                      </div>
-                      <span className={`text-xs font-semibold mt-1 leading-none transition-all duration-300 ${
-                        active ? 'text-white' : 'text-white/70 group-hover:text-amber-700'
-                      }`}>
+                    <div className="relative flex flex-col items-center gap-1.5">
+                      <motion.div 
+                        className="relative"
+                        animate={active ? { scale: [1, 1.05, 1] } : {}}
+                        transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
+                      >
+                        <Icon className={`w-5 h-5 transition-colors duration-200 ${
+                          active ? 'text-gray-900' : 'text-white/70 group-hover:text-white'
+                        }`} />
+                        
+                        {/* Badge with red background */}
+                        <AnimatePresence>
+                          {item.badge && item.badge > 0 && (
+                            <motion.div 
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1 }}
+                              exit={{ scale: 0 }}
+                              className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center font-semibold shadow-sm"
+                            >
+                              {item.badge > 99 ? '9+' : item.badge}
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </motion.div>
+                      
+                      <span 
+                        className={`text-[10px] font-medium leading-none transition-colors duration-200 ${
+                          active ? 'text-gray-900' : 'text-white/70 group-hover:text-white'
+                        }`}
+                      >
                         {item.label}
                       </span>
                     </div>
-                  </button>
+                  </motion.button>
                 );
               }
 
               // Navigation link
               return (
-                <Link
+                <motion.div
                   key={item.key}
-                  to={item.path!}
-                  className={`group relative flex flex-col items-center justify-center p-2 min-w-[50px] rounded-lg transition-all duration-300 ease-out transform ${
-                    active
-                      ? 'text-white scale-105'
-                      : 'text-white/80 hover:text-amber-700 hover:scale-105 active:scale-95'
-                  }`}
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ 
+                    delay: index * 0.1,
+                    type: "spring",
+                    stiffness: 200,
+                    damping: 15
+                  }}
                 >
-                  {/* Active background indicator */}
-                  {active && (
-                    <div className="absolute inset-0 bg-gradient-to-br from-amber-400/20 to-amber-500/10 rounded-lg border border-amber-400/30 shadow-md" />
-                  )}
-                  
-                  {/* Hover background */}
-                  <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 rounded-lg transition-all duration-300" />
-                  
-                  <div className="relative flex flex-col items-center">
-                    <Icon className={`w-5 h-5 transition-all duration-300 ${active ? 'drop-shadow-sm' : ''}`} />
-                    <span className={`text-xs font-semibold mt-1 leading-none transition-all duration-300 ${
-                      active ? 'text-white' : 'text-white/70 group-hover:text-amber-700'
-                    }`}>
-                      {item.label}
-                    </span>
-                  </div>
-                </Link>
+                  <Link
+                    to={item.path!}
+                    className="group relative flex flex-col items-center justify-center p-3 min-w-[68px] rounded-xl"
+                  >
+                    {/* Active background - white style */}
+                    <AnimatePresence>
+                      {active && (
+                        <motion.div 
+                          layoutId="activeTab"
+                          initial={{ opacity: 0, scale: 0.9 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.9 }}
+                          transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                          className="absolute inset-0 bg-white rounded-xl shadow-md"
+                        />
+                      )}
+                    </AnimatePresence>
+                    
+                    {/* Hover state */}
+                    <motion.div 
+                      className="absolute inset-0 rounded-xl bg-accent/0"
+                      whileHover={{ 
+                        backgroundColor: "rgba(255, 255, 255, 0.1)",
+                        transition: { duration: 0.2 }
+                      }}
+                    />
+                    
+                    <div className="relative flex flex-col items-center gap-1.5">
+                      <motion.div
+                        animate={active ? { scale: [1, 1.05, 1] } : {}}
+                        transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
+                      >
+                        <Icon className={`w-5 h-5 transition-colors duration-200 ${
+                          active ? 'text-gray-900' : 'text-white/70 group-hover:text-white'
+                        }`} />
+                      </motion.div>
+                      
+                      <span 
+                        className={`text-[10px] font-medium leading-none transition-colors duration-200 ${
+                          active ? 'text-gray-900' : 'text-white/70 group-hover:text-white'
+                        }`}
+                      >
+                        {item.label}
+                      </span>
+                    </div>
+                  </Link>
+                </motion.div>
               );
             })}
           </div>
         </div>
-      </div>
+      </motion.div>
     </>
   );
 };

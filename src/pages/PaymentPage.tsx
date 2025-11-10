@@ -113,7 +113,7 @@ export const PaymentPage: React.FC = () => {
           subtitle="Fetching your order details..."
           subtitleAr="جاري تحميل تفاصيل الطلب..."
         />
-        <div className="max-w-3xl mx-auto px-4 py-16 text-center space-y-6">
+        <div className="container mx-auto py-16 text-center space-y-6">
           <p className="text-gray-600">
             {isArabic ? 'نقوم بإحضار تفاصيل الطلب، يرجى الانتظار أو العودة إلى صفحة الشراء.' : 'We are preparing your payment details. Please wait or return to checkout.'}
           </p>
@@ -145,7 +145,7 @@ export const PaymentPage: React.FC = () => {
         subtitleAr="قم بإكمال عملية الدفع الآمنة لتأكيد الطلب."
       />
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-8">
+      <div className="container mx-auto py-12 space-y-8">
         <div className="grid gap-8 lg:grid-cols-[1.7fr,1fr]">
           <div className="space-y-6">
             <Card className="shadow-xl border-gray-100">

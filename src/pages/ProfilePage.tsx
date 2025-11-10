@@ -114,7 +114,7 @@ const ProfilePage: React.FC = () => {
           noindex
           robots="noindex, nofollow"
         />
-        <div className="max-w-4xl mx-auto px-4 py-8">
+        <div className="container mx-auto py-12">
           <Card className="w-full max-w-md mx-auto text-center">
             <CardHeader>
               <User className="h-16 w-16 text-stone-400 mx-auto mb-4" />
@@ -233,7 +233,7 @@ const ProfilePage: React.FC = () => {
         noindex
         robots="noindex, nofollow"
       />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="container mx-auto py-12">
         {/* Header Section - Professional & Responsive */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}

@@ -117,7 +117,7 @@ export const OrdersPage: React.FC = () => {
         noindex
         robots="noindex, nofollow"
       />
-      <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className="container mx-auto py-12">
         {/* Page Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}

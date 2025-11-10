@@ -27,7 +27,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.8, ease: "easeOut" }}
-      className="relative bg-gradient-to-br from-stone-50 via-white to-stone-100 py-16 overflow-hidden"
+      className="relative bg-gradient-to-br from-stone-50 via-white to-stone-100 pt-28 md:pt-32 lg:pt-36 pb-16 overflow-hidden"
     >
       {/* Background Image - Brighter and Clearer */}
       <div className="absolute inset-0 opacity-80 page-header-bg brightness-110" />

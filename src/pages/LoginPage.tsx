@@ -107,7 +107,7 @@ export const LoginPage: React.FC = () => {
         subtitleAr={heroCopy.ar.subtitle}
       />
 
-      <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className="container mx-auto py-12">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
           {/* Login Form - First on mobile, Second on desktop */}
           <motion.div

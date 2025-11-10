@@ -118,14 +118,14 @@ export const Navigation: React.FC = () => {
           : 'bg-white shadow-md border-b border-gray-200'
       }`}
     >
-      <div className="container mx-auto px-2 sm:px-4 py-2 sm:py-3">
+      <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-3 md:py-3.5 lg:py-3">
         <div className="flex items-center justify-between">
           {/* Logo */}
           <Link to="/" className="flex items-center hover:opacity-80 transition-opacity flex-shrink-0">
             <img 
               src={isHomePage ? "/images/logo/logo-light.png" : "/images/logo/logo-dark.png"}
               alt="Spirit Hub Cafe"
-              className="h-7 sm:h-8 md:h-10 lg:h-12 w-auto"
+              className="h-9 sm:h-10 md:h-11 lg:h-12 w-auto"
             />
           </Link>
 

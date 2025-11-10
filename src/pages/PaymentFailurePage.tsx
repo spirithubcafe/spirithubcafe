@@ -49,7 +49,7 @@ export const PaymentFailurePage: React.FC = () => {
         subtitleAr="لم نتمكن من تأكيد عملية الدفع. يرجى المحاولة مرة أخرى أو استخدام طريقة أخرى."
       />
 
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-8 text-center">
+      <div className="container mx-auto py-16 text-center space-y-8">
         <AlertOctagon className="mx-auto h-16 w-16 text-red-500" />
         <div>
           <h2 className="text-3xl font-semibold text-red-800">
