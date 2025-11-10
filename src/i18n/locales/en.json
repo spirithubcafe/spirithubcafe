@@ -205,8 +205,12 @@
       "descriptionAr": "Description (Arabic)",
       "descriptionPlaceholder": "Enter category description",
       "descriptionArPlaceholder": "Enter description in Arabic",
-      "image": "Image URL",
-      "imagePlaceholder": "Enter image URL",
+      "image": "Image",
+      "imagePlaceholder": "Or enter image URL manually",
+      "uploadImage": "Upload Image",
+      "uploading": "Uploading...",
+      "imageUploadSuccess": "Image uploaded successfully!",
+      "imageUploadError": "Failed to upload image. Please try again.",
       "displayOrder": "Display Order",
       "taxPercentage": "Tax Percentage",
       "active": "Active",
@@ -359,7 +363,11 @@
     "next": "Next",
     "error": "Something went wrong",
     "noResultsFound": "No results found",
-    "soon": "Soon"
+    "soon": "Soon",
+    "uploadImage": "Upload Image",
+    "uploading": "Uploading...",
+    "imageUploadSuccess": "Image uploaded successfully",
+    "imageUploadError": "Failed to upload image"
   },
   "profile": {
     "title": "Profile",

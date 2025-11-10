@@ -1,46 +1,58 @@
 export interface OrderItem {
   id: number;
-  orderId: number;
+  orderId?: number;
   productId: number;
   productName: string;
   productNameAr?: string;
-  variantId?: number;
-  variantSku?: string;
+  productVariantId?: number;
+  variantInfo?: string;
   quantity: number;
   unitPrice: number;
-  totalPrice: number;
+  taxPercentage?: number;
+  taxAmount: number;
+  totalAmount: number;
   productImage?: string;
 }
 
 export interface ShippingAddress {
-  fullName: string;
-  phone: string;
+  firstName: string;
+  lastName: string;
   email: string;
-  governorate: string;
-  area: string;
-  block?: string;
-  street?: string;
-  building?: string;
-  floor?: string;
-  apartment?: string;
-  additionalDirections?: string;
+  phone: string;
+  addressLine1: string;
+  addressLine2?: string;
+  country: string;
+  city: string;
+  postalCode?: string;
 }
 
 export interface Order {
   id: number;
   orderNumber: string;
-  userId: number;
-  userName?: string;
-  userEmail?: string;
+  
+  // Customer Info
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  customerName?: string;
+  userId?: string;
+  
+  // Address
+  addressLine1: string;
+  addressLine2?: string;
+  country: string;
+  city: string;
+  postalCode?: string;
   
   // Items
   items: OrderItem[];
-  itemsCount: number;
+  itemsCount?: number;
   
   // Pricing
-  subtotal: number;
+  subTotal: number;
+  taxAmount: number;
   shippingCost: number;
-  tax: number;
   totalAmount: number;
   
   // Status
@@ -49,9 +61,20 @@ export interface Order {
   paymentMethod?: string;
   
   // Shipping
-  shippingAddress: ShippingAddress;
+  shippingMethodId?: number;
   shippingMethod?: string;
   trackingNumber?: string;
+  
+  // Gift
+  isGift?: boolean;
+  giftRecipientName?: string;
+  giftRecipientPhone?: string;
+  giftRecipientAddressLine1?: string;
+  giftRecipientAddressLine2?: string;
+  giftRecipientCountry?: string;
+  giftRecipientCity?: string;
+  giftRecipientPostalCode?: string;
+  giftMessage?: string;
   
   // Timestamps
   createdAt: string;
@@ -61,8 +84,20 @@ export interface Order {
   deliveredAt?: string;
   
   // Notes
-  customerNotes?: string;
+  notes?: string;
   adminNotes?: string;
+  
+  // Payments
+  payments?: PaymentRecord[];
+}
+
+export interface PaymentRecord {
+  orderId: string;
+  status: string;
+  gatewayReference?: string;
+  amount: number;
+  currency: string;
+  createdAt: string;
 }
 
 export type OrderStatus = 
@@ -80,36 +115,68 @@ export type PaymentStatus =
   | 'Refunded';
 
 export interface CreateOrderDto {
-  userId: number;
+  // Customer Information
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  
+  // Shipping Address
+  addressLine1: string;
+  addressLine2?: string;
+  country: string;
+  city: string;
+  postalCode?: string;
+  
+  // Shipping Details
+  shippingMethodId: number;
+  shippingCost: number;
+  
+  // Gift Information (optional)
+  isGift?: boolean;
+  giftRecipientName?: string;
+  giftRecipientPhone?: string;
+  giftRecipientAddressLine1?: string;
+  giftRecipientAddressLine2?: string;
+  giftRecipientCountry?: string;
+  giftRecipientCity?: string;
+  giftRecipientPostalCode?: string;
+  giftMessage?: string;
+  
+  // Additional
+  notes?: string;
+  userId?: string;
+  
+  // Order Items (minimum 1 required)
   items: {
     productId: number;
-    variantId?: number;
+    productVariantId?: number;
     quantity: number;
-    unitPrice: number;
   }[];
-  shippingAddress: ShippingAddress;
-  subtotal: number;
-  shippingCost: number;
-  tax: number;
-  totalAmount: number;
-  paymentMethod: string;
-  customerNotes?: string;
 }
 
-export interface UpdateOrderDto {
-  status?: OrderStatus;
-  paymentStatus?: PaymentStatus;
+export interface UpdateOrderStatusDto {
+  status: OrderStatus;
+}
+
+export interface UpdatePaymentStatusDto {
+  paymentStatus: PaymentStatus;
+}
+
+export interface UpdateShippingDto {
+  shippingMethodId: number;
   trackingNumber?: string;
-  adminNotes?: string;
+  shippingCost?: number;
 }
 
-export interface OrderFilters {
+export interface OrderQueryParams {
+  page?: number;
+  pageSize?: number;
   status?: OrderStatus;
   paymentStatus?: PaymentStatus;
-  userId?: number;
-  startDate?: string;
-  endDate?: string;
   searchTerm?: string;
+  fromDate?: string;
+  toDate?: string;
 }
 
 export interface OrdersResponse {

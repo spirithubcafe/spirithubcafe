@@ -4,16 +4,28 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
-import { FileText, RefreshCw, Eye, Package, DollarSign, Calendar } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog';
+import { Label } from '../ui/label';
+import { Input } from '../ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { FileText, RefreshCw, Eye, Package, DollarSign, Calendar, Edit, Truck } from 'lucide-react';
 import { format } from 'date-fns';
 import { orderService } from '../../services';
-import type { Order } from '../../types/order';
+import type { Order, OrderStatus, PaymentStatus } from '../../types/order';
 
 export const OrdersManagement: React.FC = () => {
   const { language } = useApp();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalRevenue, setTotalRevenue] = useState(0);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [editLoading, setEditLoading] = useState(false);
+  
+  // Edit form state
+  const [editStatus, setEditStatus] = useState<OrderStatus>('Pending');
+  const [editPaymentStatus, setEditPaymentStatus] = useState<PaymentStatus>('Pending');
+  const [editTrackingNumber, setEditTrackingNumber] = useState('');
 
   const isArabic = language === 'ar';
 
@@ -45,6 +57,47 @@ export const OrdersManagement: React.FC = () => {
       setOrders([]); // Set empty array on error
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleEditOrder = (order: Order) => {
+    setSelectedOrder(order);
+    setEditStatus(order.status);
+    setEditPaymentStatus(order.paymentStatus);
+    setEditTrackingNumber(order.trackingNumber || '');
+    setShowEditDialog(true);
+  };
+
+  const handleSaveOrder = async () => {
+    if (!selectedOrder) return;
+
+    setEditLoading(true);
+    try {
+      // Update order status
+      await orderService.updateOrderStatus(selectedOrder.id, { status: editStatus });
+      
+      // Update payment status if changed
+      if (editPaymentStatus !== selectedOrder.paymentStatus) {
+        await orderService.updatePaymentStatus(selectedOrder.id, { paymentStatus: editPaymentStatus });
+      }
+      
+      // Update tracking number if changed
+      if (editTrackingNumber && editTrackingNumber !== selectedOrder.trackingNumber) {
+        await orderService.updateShipping(selectedOrder.id, {
+          shippingMethodId: selectedOrder.shippingMethodId || 1,
+          trackingNumber: editTrackingNumber,
+        });
+      }
+
+      // Reload orders
+      await loadOrders();
+      setShowEditDialog(false);
+      setSelectedOrder(null);
+    } catch (error) {
+      console.error('Failed to update order:', error);
+      alert(isArabic ? 'فشل تحديث الطلب' : 'Failed to update order');
+    } finally {
+      setEditLoading(false);
     }
   };
 
@@ -198,7 +251,7 @@ export const OrdersManagement: React.FC = () => {
                   {orders.map((order) => (
                     <TableRow key={order.id}>
                       <TableCell className="font-medium">{order.orderNumber}</TableCell>
-                      <TableCell>{order.userName || order.userEmail || `User ${order.userId}`}</TableCell>
+                      <TableCell>{`${order.firstName} ${order.lastName}`}</TableCell>
                       <TableCell>{order.items?.length || 0}</TableCell>
                       <TableCell>OMR {order.totalAmount.toFixed(2)}</TableCell>
                       <TableCell>
@@ -214,7 +267,14 @@ export const OrdersManagement: React.FC = () => {
                       <TableCell>
                         {format(new Date(order.createdAt), 'MMM dd, yyyy')}
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-right space-x-2">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleEditOrder(order)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
                         <Button variant="ghost" size="sm">
                           <Eye className="h-4 w-4" />
                         </Button>
@@ -227,6 +287,95 @@ export const OrdersManagement: React.FC = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Edit Order Dialog */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>
+              {isArabic ? 'تعديل الطلب' : 'Edit Order'}
+            </DialogTitle>
+            <DialogDescription>
+              {isArabic 
+                ? `تعديل حالة الطلب ${selectedOrder?.orderNumber || ''}`
+                : `Update order ${selectedOrder?.orderNumber || ''} status`
+              }
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid gap-4 py-4">
+            {/* Order Status */}
+            <div className="grid gap-2">
+              <Label htmlFor="status">
+                {isArabic ? 'حالة الطلب' : 'Order Status'}
+              </Label>
+              <Select value={editStatus} onValueChange={(value) => setEditStatus(value as OrderStatus)}>
+                <SelectTrigger id="status">
+                  <SelectValue placeholder={isArabic ? 'اختر الحالة' : 'Select status'} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Pending">{isArabic ? 'قيد الانتظار' : 'Pending'}</SelectItem>
+                  <SelectItem value="Processing">{isArabic ? 'قيد المعالجة' : 'Processing'}</SelectItem>
+                  <SelectItem value="Shipped">{isArabic ? 'تم الشحن' : 'Shipped'}</SelectItem>
+                  <SelectItem value="Delivered">{isArabic ? 'تم التسليم' : 'Delivered'}</SelectItem>
+                  <SelectItem value="Cancelled">{isArabic ? 'ملغي' : 'Cancelled'}</SelectItem>
+                  <SelectItem value="Refunded">{isArabic ? 'مسترد' : 'Refunded'}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Payment Status */}
+            <div className="grid gap-2">
+              <Label htmlFor="paymentStatus">
+                {isArabic ? 'حالة الدفع' : 'Payment Status'}
+              </Label>
+              <Select value={editPaymentStatus} onValueChange={(value) => setEditPaymentStatus(value as PaymentStatus)}>
+                <SelectTrigger id="paymentStatus">
+                  <SelectValue placeholder={isArabic ? 'اختر حالة الدفع' : 'Select payment status'} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Pending">{isArabic ? 'قيد الانتظار' : 'Pending'}</SelectItem>
+                  <SelectItem value="Paid">{isArabic ? 'مدفوع' : 'Paid'}</SelectItem>
+                  <SelectItem value="Failed">{isArabic ? 'فشل' : 'Failed'}</SelectItem>
+                  <SelectItem value="Refunded">{isArabic ? 'مسترد' : 'Refunded'}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Tracking Number */}
+            <div className="grid gap-2">
+              <Label htmlFor="tracking">
+                {isArabic ? 'رقم التتبع' : 'Tracking Number'}
+              </Label>
+              <Input
+                id="tracking"
+                value={editTrackingNumber}
+                onChange={(e) => setEditTrackingNumber(e.target.value)}
+                placeholder={isArabic ? 'أدخل رقم التتبع' : 'Enter tracking number'}
+              />
+            </div>
+          </div>
+
+          <div className="flex gap-3 justify-end">
+            <Button
+              variant="outline"
+              onClick={() => setShowEditDialog(false)}
+              disabled={editLoading}
+            >
+              {isArabic ? 'إلغاء' : 'Cancel'}
+            </Button>
+            <Button
+              onClick={handleSaveOrder}
+              disabled={editLoading}
+            >
+              {editLoading 
+                ? (isArabic ? 'جاري الحفظ...' : 'Saving...') 
+                : (isArabic ? 'حفظ' : 'Save')
+              }
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

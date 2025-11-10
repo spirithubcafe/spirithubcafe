@@ -9,7 +9,9 @@ import { useApp } from '../hooks/useApp';
 import { useCart } from '../hooks/useCart';
 import type { CheckoutOrder } from '../types/checkout';
 import type { CreateOrderDto } from '../types/order';
-import { orderService } from '../services';
+import { orderService, paymentService } from '../services';
+import type { PaymentRequestDto } from '../services/paymentService';
+import { shippingService, type ShippingMethod } from '../services/shippingService';
 import { Seo } from '../components/seo/Seo';
 import { siteMetadata } from '../config/siteMetadata';
 
@@ -30,6 +32,7 @@ export const PaymentPage: React.FC = () => {
   const { clearCart } = useCart();
   const [order, setOrder] = useState<CheckoutOrder | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [shippingMethods, setShippingMethods] = useState<ShippingMethod[]>([]);
   const paymentTimer = useRef<number | null>(null);
 
   useEffect(() => {
@@ -55,6 +58,21 @@ export const PaymentPage: React.FC = () => {
     navigate('/checkout', { replace: true });
   }, [location.state, navigate]);
 
+  // Load shipping methods from API
+  useEffect(() => {
+    const loadShippingMethods = async () => {
+      try {
+        const methods = await shippingService.getShippingMethods();
+        setShippingMethods(methods);
+        console.log('📦 Loaded shipping methods:', methods);
+      } catch (error) {
+        console.error('❌ Failed to load shipping methods:', error);
+      }
+    };
+
+    loadShippingMethods();
+  }, []);
+
   const currencyLabel = isArabic ? 'ر.ع' : 'OMR';
   const formatCurrency = (value: number) => `${value.toFixed(3)} ${currencyLabel}`;
 
@@ -77,88 +95,219 @@ export const PaymentPage: React.FC = () => {
     setIsProcessing(true);
 
     try {
+      // Split full name into first and last name
+      const fullName = order.checkoutDetails.isGift 
+        ? order.checkoutDetails.recipientName || order.checkoutDetails.fullName
+        : order.checkoutDetails.fullName;
+      const nameParts = fullName.split(' ');
+      const firstName = nameParts[0] || 'Customer';
+      const lastName = nameParts.slice(1).join(' ') || 'User';
+
       // Step 1: Create order in server
       const createOrderDto: CreateOrderDto = {
-        userId: 1, // TODO: Get actual logged in user ID
+        // Customer Information
+        firstName,
+        lastName,
+        email: order.checkoutDetails.email,
+        phone: order.checkoutDetails.isGift 
+          ? order.checkoutDetails.recipientPhone || order.checkoutDetails.phone
+          : order.checkoutDetails.phone,
+        
+        // Shipping Address
+        addressLine1: order.checkoutDetails.isGift 
+          ? order.checkoutDetails.recipientAddress || order.checkoutDetails.address
+          : order.checkoutDetails.address,
+        country: order.checkoutDetails.country || 'Oman',
+        city: order.checkoutDetails.city || 'Muscat',
+        
+        // Shipping Details
+        // Map string shipping method IDs to numeric IDs from API
+        shippingMethodId: shippingMethods.length > 0 
+          ? shippingService.mapShippingMethodId(order.shippingMethod.id, shippingMethods)
+          : (() => {
+              // Fallback if API methods not loaded yet
+              console.warn('⚠️ Shipping methods not loaded, using fallback mapping');
+              const methodId = order.shippingMethod.id === 'pickup' ? 1 
+                : order.shippingMethod.id === 'nool' ? 2 
+                : order.shippingMethod.id === 'aramex' ? 3 
+                : 1;
+              console.log(`🚚 Fallback mapping: ${order.shippingMethod.id} -> ${methodId}`);
+              return methodId;
+            })(),
+        shippingCost: order.totals.shipping,
+        
+        // Gift Information (only include if gift)
+        ...(order.checkoutDetails.isGift && {
+          isGift: true,
+          giftRecipientName: order.checkoutDetails.recipientName,
+          giftRecipientPhone: order.checkoutDetails.recipientPhone,
+          giftRecipientAddressLine1: order.checkoutDetails.recipientAddress,
+          giftRecipientCountry: order.checkoutDetails.recipientCountry || 'Oman',
+          giftRecipientCity: order.checkoutDetails.recipientCity || 'Muscat',
+        }),
+        
+        // Additional (only include if not empty)
+        ...(order.checkoutDetails.notes && { notes: order.checkoutDetails.notes }),
+        
+        // Order Items
         items: order.items.map((item) => {
-          // Parse productId and variantId from item.id (format: "productId" or "productId-variantId")
           const [productId, variantId] = item.id.split('-');
-          return {
-            productId: parseInt(productId, 10),
-            variantId: variantId ? parseInt(variantId, 10) : undefined,
+          const parsedProductId = parseInt(productId, 10);
+          const parsedVariantId = variantId ? parseInt(variantId, 10) : undefined;
+          
+          console.log('Processing item:', {
+            id: item.id,
+            productId: parsedProductId,
+            variantId: parsedVariantId,
             quantity: item.quantity,
-            unitPrice: item.price,
+          });
+          
+          if (isNaN(parsedProductId)) {
+            throw new Error(`Invalid product ID: ${item.id}`);
+          }
+          
+          // Build order item - always include productVariantId (can be undefined)
+          return {
+            productId: parsedProductId,
+            productVariantId: parsedVariantId && !isNaN(parsedVariantId) ? parsedVariantId : undefined,
+            quantity: item.quantity,
           };
         }),
-        shippingAddress: {
-          fullName: order.checkoutDetails.isGift 
-            ? order.checkoutDetails.recipientName || '' 
-            : order.checkoutDetails.fullName,
-          phone: order.checkoutDetails.isGift 
-            ? order.checkoutDetails.recipientPhone || '' 
-            : order.checkoutDetails.phone,
-          email: order.checkoutDetails.email,
-          governorate: order.checkoutDetails.isGift 
-            ? order.checkoutDetails.recipientCity || '' 
-            : order.checkoutDetails.city,
-          area: order.checkoutDetails.isGift 
-            ? order.checkoutDetails.recipientCountry || '' 
-            : order.checkoutDetails.country,
-          street: order.checkoutDetails.isGift 
-            ? order.checkoutDetails.recipientAddress 
-            : order.checkoutDetails.address,
-        },
-        subtotal: order.totals.subtotal,
-        shippingCost: order.totals.shipping,
-        tax: 0,
-        totalAmount: order.totals.total,
-        paymentMethod: 'Card', // Default payment method
-        customerNotes: order.checkoutDetails.notes,
       };
 
-      const createdOrder = await orderService.create(createOrderDto);
-      
-      // Store server order ID
-      sessionStorage.setItem(ORDER_ID_KEY, createdOrder.id.toString());
-
-      // Step 2: Simulate payment initiation (will be replaced with real payment gateway)
-      // TODO: Replace with actual payment gateway integration
-      // const paymentResponse = await paymentService.initiatePayment({
-      //   orderId: createdOrder.id,
-      //   amount: order.totals.total,
-      //   currency: 'OMR',
-      //   returnUrl: `${window.location.origin}/payment/success`,
-      //   cancelUrl: `${window.location.origin}/payment/failure`,
-      // });
-      // window.location.href = paymentResponse.paymentUrl;
-
-      // For now, simulate payment
-      if (paymentTimer.current) {
-        window.clearTimeout(paymentTimer.current);
+      // Validate required fields
+      if (!firstName || !lastName) {
+        throw new Error('First name and last name are required');
+      }
+      if (!order.checkoutDetails.email) {
+        throw new Error('Email is required');
+      }
+      if (!order.checkoutDetails.phone && !order.checkoutDetails.recipientPhone) {
+        throw new Error('Phone number is required');
+      }
+      if (!order.checkoutDetails.address && !order.checkoutDetails.recipientAddress) {
+        throw new Error('Address is required');
+      }
+      if (createOrderDto.items.length === 0) {
+        throw new Error('Order must contain at least one item');
       }
 
-      paymentTimer.current = window.setTimeout(() => {
-        clearCart();
-        sessionStorage.removeItem(PENDING_ORDER_STORAGE_KEY);
-        sessionStorage.setItem(LAST_SUCCESS_STORAGE_KEY, JSON.stringify({ 
-          ...order, 
-          serverOrderId: createdOrder.id 
-        }));
-        navigate('/payment/success', { 
-          state: { 
-            orderId: order.id,
-            serverOrderId: createdOrder.id 
-          } 
-        });
-      }, 1200);
+      console.log('📦 Sending order data:', JSON.stringify(createOrderDto, null, 2));
+      const orderResponse = await orderService.create(createOrderDto);
+      console.log('✅ Received order response:', orderResponse);
+      
+      if (!orderResponse || !orderResponse.orderNumber) {
+        throw new Error('Failed to create order - invalid response');
+      }
 
-    } catch (error) {
-      console.error('Failed to create order:', error);
+      const { orderNumber, totalAmount } = orderResponse;
+      
+      // Store server order number
+      sessionStorage.setItem(ORDER_ID_KEY, orderNumber);
+
+      // Step 2: Initiate payment with Bank Muscat Gateway
+      const paymentRequest: PaymentRequestDto = {
+        orderId: orderNumber,
+        amount: totalAmount,
+        currency: 'OMR',
+        
+        // Billing Information
+        billingName: fullName,
+        billingEmail: order.checkoutDetails.email,
+        billingTel: order.checkoutDetails.phone,
+        billingAddress: order.checkoutDetails.address,
+        billingCity: order.checkoutDetails.city,
+        billingState: order.checkoutDetails.city,
+        billingCountry: order.checkoutDetails.country,
+        
+        // Delivery Information
+        deliveryName: order.checkoutDetails.isGift 
+          ? order.checkoutDetails.recipientName || fullName
+          : fullName,
+        deliveryAddress: order.checkoutDetails.isGift 
+          ? order.checkoutDetails.recipientAddress || order.checkoutDetails.address
+          : order.checkoutDetails.address,
+        deliveryCity: order.checkoutDetails.isGift 
+          ? order.checkoutDetails.recipientCity || order.checkoutDetails.city
+          : order.checkoutDetails.city,
+        deliveryCountry: order.checkoutDetails.isGift 
+          ? order.checkoutDetails.recipientCountry || order.checkoutDetails.country
+          : order.checkoutDetails.country,
+        deliveryTel: order.checkoutDetails.isGift 
+          ? order.checkoutDetails.recipientPhone || order.checkoutDetails.phone
+          : order.checkoutDetails.phone,
+        
+        language: isArabic ? 'AR' : 'EN',
+      };
+
+      const paymentResponse = await paymentService.initiatePayment(paymentRequest);
+
+      if (!paymentResponse.success || !paymentResponse.paymentUrl) {
+        throw new Error(paymentResponse.errorMessage || 'Failed to initiate payment');
+      }
+
+      // Step 3: Redirect to Bank Muscat Gateway
+      clearCart();
+      sessionStorage.removeItem(PENDING_ORDER_STORAGE_KEY);
+      sessionStorage.setItem(LAST_SUCCESS_STORAGE_KEY, JSON.stringify({ 
+        ...order, 
+        serverOrderNumber: orderNumber 
+      }));
+
+      // Redirect using form submission
+      paymentService.redirectToGateway(
+        paymentResponse.paymentUrl,
+        paymentResponse.encryptedRequest!,
+        paymentResponse.accessCode!
+      );
+
+    } catch (error: any) {
+      console.error('❌ Payment error:', error);
+      console.error('📋 Error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+      });
+      
+      // Log full error response if available
+      if (error.response?.data) {
+        console.error('📋 Full API Error Response:', JSON.stringify(error.response.data, null, 2));
+      }
+      
       setIsProcessing(false);
-      // Show error message to user
-      alert(isArabic 
-        ? 'فشل إنشاء الطلب. يرجى المحاولة مرة أخرى.' 
-        : 'Failed to create order. Please try again.');
+      
+      const errorMessage = error.response?.data?.message 
+        || error.response?.data?.title
+        || error.response?.data?.errors 
+        || error.message 
+        || (isArabic 
+          ? 'فشل إنشاء الطلب. يرجى المحاولة مرة أخرى.' 
+          : 'Failed to create order. Please try again.');
+      
+      // If errors object exists, format it
+      if (error.response?.data?.errors) {
+        const errors = error.response.data.errors;
+        const errorList = Object.entries(errors)
+          .map(([field, messages]: [string, any]) => `${field}: ${Array.isArray(messages) ? messages.join(', ') : messages}`)
+          .join('\n');
+        alert(isArabic ? `أخطاء في البيانات:\n${errorList}` : `Validation errors:\n${errorList}`);
+      } else if (typeof errorMessage === 'string') {
+        // Show user-friendly message for shipping method error
+        if (errorMessage.includes('shipping method')) {
+          console.error('🚨 SHIPPING METHOD ERROR - Please check backend configuration');
+          console.error('📋 Current shipping methods:', shippingMethods);
+          console.error('📋 Selected method:', order?.shippingMethod);
+          
+          alert(isArabic 
+            ? `طريقة الشحن المحددة غير متاحة.\n\nيرجى الاتصال بالدعم الفني.\n\nالطريقة المحددة: ${order?.shippingMethod.id}` 
+            : `Selected shipping method is not available.\n\nPlease contact technical support.\n\nSelected method: ${order?.shippingMethod.id}`);
+        } else {
+          alert(errorMessage);
+        }
+      } else {
+        alert(isArabic ? 'حدث خطأ غير متوقع' : 'An unexpected error occurred');
+      }
     }
   };
 

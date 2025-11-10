@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 import { useApp } from '../hooks/useApp';
@@ -8,8 +9,9 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Switch } from '../components/ui/switch';
-import { ArrowLeft, Loader2, Save } from 'lucide-react';
+import { ArrowLeft, Loader2, Save, Upload, X } from 'lucide-react';
 import { categoryService } from '../services/categoryService';
+import { fileUploadService } from '../services/fileUploadService';
 import type { CategoryCreateUpdateDto } from '../types/product';
 import { cn } from '../lib/utils';
 
@@ -19,6 +21,7 @@ export const CategoryAddPage: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const quillRef = useRef<ReactQuill>(null);
   const quillRefAr = useRef<ReactQuill>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState<CategoryCreateUpdateDto>({
     name: '',
     nameAr: '',
@@ -34,6 +37,8 @@ export const CategoryAddPage: React.FC = () => {
   const [slugAvailable, setSlugAvailable] = useState<boolean | null>(null);
   const [checkingSlug, setCheckingSlug] = useState(false);
   const [slugMessage, setSlugMessage] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   useEffect(() => {
     if (!formData.slug) {
@@ -88,6 +93,52 @@ export const CategoryAddPage: React.FC = () => {
       name: value,
       slug: generateSlug(value)
     }));
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file
+    const validation = fileUploadService.validateFile(file, 5, ['.jpg', '.jpeg', '.png', '.webp', '.gif']);
+    if (!validation.valid) {
+      toast.error(validation.error);
+      return;
+    }
+
+    setUploadingImage(true);
+    try {
+      // Create preview
+      const preview = await fileUploadService.createPreviewUrl(file);
+      setImagePreview(preview);
+
+      // Upload to server
+      const response = await fileUploadService.uploadFile(
+        file,
+        'categories',
+        'image',
+        `cat-${formData.slug || 'new'}`
+      );
+
+      if (response.success && response.fileUrl) {
+        setFormData(prev => ({ ...prev, imagePath: response.fileUrl }));
+        toast.success(t('common.imageUploadSuccess'));
+      }
+    } catch (error: any) {
+      console.error('Image upload error:', error);
+      toast.error(error.message || t('common.imageUploadError'));
+      setImagePreview(null);
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setFormData(prev => ({ ...prev, imagePath: '' }));
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -259,15 +310,85 @@ export const CategoryAddPage: React.FC = () => {
                 />
               </div>
 
-              {/* Image Path */}
+              {/* Image Upload */}
               <div className="space-y-2">
-                <Label htmlFor="imagePath">{t('admin.categories.image')}</Label>
-                <Input
-                  id="imagePath"
-                  value={formData.imagePath}
-                  onChange={(e) => setFormData(prev => ({ ...prev, imagePath: e.target.value }))}
-                  placeholder={t('admin.categories.imagePlaceholder')}
-                />
+                <Label htmlFor="imageUpload">{t('admin.categories.image')}</Label>
+                
+                <div className="flex items-start gap-3">
+                  {/* Upload Button and Remove */}
+                  <div className="flex-1 space-y-2">
+                    <input
+                      id="imageUpload"
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      title={t('admin.categories.imageUpload')}
+                      aria-label={t('admin.categories.imageUpload')}
+                      className="hidden"
+                    />
+                    
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={uploadingImage}
+                        className="flex-1"
+                      >
+                        {uploadingImage ? (
+                          <>
+                            <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                            {t('common.uploading')}
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="mr-2 h-3 w-3" />
+                            {t('common.uploadImage')}
+                          </>
+                        )}
+                      </Button>
+                      
+                      {formData.imagePath && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={handleRemoveImage}
+                          disabled={uploadingImage}
+                          title={t('common.delete')}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                    
+                    {/* Manual URL Input (Optional) */}
+                    <Input
+                      value={formData.imagePath}
+                      onChange={(e) => setFormData(prev => ({ ...prev, imagePath: e.target.value }))}
+                      placeholder={t('admin.categories.imagePlaceholder')}
+                      disabled={uploadingImage}
+                      className="text-sm"
+                    />
+                  </div>
+                  
+                  {/* Small Square Preview */}
+                  {(imagePreview || formData.imagePath) && (
+                    <div className="relative h-20 w-20 shrink-0 rounded-lg border-2 border-gray-300 overflow-hidden bg-gray-50">
+                      <img
+                        src={imagePreview || formData.imagePath}
+                        alt="Category preview"
+                        className="h-full w-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.src = '/images/categories/default-category.webp';
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Display Order and Tax Percentage */}

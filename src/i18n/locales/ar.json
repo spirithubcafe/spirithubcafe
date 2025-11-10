@@ -279,8 +279,12 @@
       "descriptionAr": "الوصف (بالعربية)",
       "descriptionPlaceholder": "أدخل وصف التصنيف",
       "descriptionArPlaceholder": "أدخل الوصف بالعربية",
-      "image": "رابط الصورة",
-      "imagePlaceholder": "أدخل رابط الصورة",
+      "image": "الصورة",
+      "imagePlaceholder": "أو أدخل رابط الصورة يدوياً",
+      "uploadImage": "رفع صورة",
+      "uploading": "جاري الرفع...",
+      "imageUploadSuccess": "تم رفع الصورة بنجاح!",
+      "imageUploadError": "فشل رفع الصورة. يرجى المحاولة مرة أخرى.",
       "displayOrder": "ترتيب العرض",
       "taxPercentage": "نسبة الضريبة",
       "active": "نشط",
@@ -595,6 +599,10 @@
     "next": "التالي",
     "error": "حدث خطأ ما",
     "noResultsFound": "لا توجد نتائج",
-    "soon": "قريباً"
+    "soon": "قريباً",
+    "uploadImage": "رفع صورة",
+    "uploading": "جاري الرفع...",
+    "imageUploadSuccess": "تم رفع الصورة بنجاح",
+    "imageUploadError": "فشل رفع الصورة"
   }
 }

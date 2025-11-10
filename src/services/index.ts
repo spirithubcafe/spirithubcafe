@@ -12,6 +12,8 @@ export { userService } from './userService';
 export { adminService } from './adminService';
 export { orderService } from './orderService';
 export { paymentService } from './paymentService';
+export { shippingService } from './shippingService';
+export { fileUploadService } from './fileUploadService';
 export {
   calculateAramexRate,
   getAramexCountries,

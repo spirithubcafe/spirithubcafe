@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { useApp } from '../../hooks/useApp';
 import { cn } from '../../lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
@@ -13,8 +14,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../ui/alert-dialog';
-import { Package, Plus, Edit, Trash2, Eye, EyeOff, Search, Loader2, Star, Coffee, Layers, Image as ImageIcon, Crown } from 'lucide-react';
+import { Package, Plus, Edit, Trash2, Eye, EyeOff, Search, Loader2, Star, Coffee, Layers, Image as ImageIcon, Crown, Upload, X } from 'lucide-react';
 import { productService, productVariantService, productImageService } from '../../services/productService';
+import { fileUploadService } from '../../services/fileUploadService';
 import { categoryService } from '../../services/categoryService';
 import { resolveImageFromProductImage, getProductImageUrl } from '../../lib/imageUtils';
 import type {
@@ -112,7 +114,10 @@ export const ProductsManagement: React.FC = () => {
     height: undefined,
   });
 
-
+  // File upload state
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   const [formData, setFormData] = useState<ProductCreateUpdateDto>({
     sku: '',
@@ -634,6 +639,70 @@ export const ProductsManagement: React.FC = () => {
       height: image.height,
     });
     setImageFormVisible(true);
+  };
+
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file
+    try {
+      fileUploadService.validateFile(file, 5 * 1024 * 1024, ['jpg', 'jpeg', 'png', 'gif', 'webp']);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t('common.imageUploadError'));
+      return;
+    }
+
+    setUploadingImage(true);
+    try {
+      // Create preview
+      const preview = await fileUploadService.createPreviewUrl(file);
+      setImagePreview(preview);
+
+      // Upload to server
+      const result = await fileUploadService.uploadFile(file, 'products', 'image', 'product');
+
+      if (!result.success || !result.fileUrl) {
+        throw new Error(result.message || 'Upload failed');
+      }
+
+      // Get image dimensions
+      const img = new Image();
+      img.onload = () => {
+        setImageFormData(prev => ({
+          ...prev,
+          imagePath: result.fileUrl!,
+          fileName: result.fileName || file.name,
+          fileSize: result.fileSize || file.size,
+          width: img.naturalWidth,
+          height: img.naturalHeight,
+        }));
+      };
+      img.src = preview;
+
+      toast.success(t('common.imageUploadSuccess'));
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast.error(t('common.imageUploadError'));
+      setImagePreview(null);
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setImageFormData(prev => ({
+      ...prev,
+      imagePath: '',
+      fileName: '',
+      fileSize: 0,
+      width: undefined,
+      height: undefined,
+    }));
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const handleImageSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -1560,74 +1629,69 @@ export const ProductsManagement: React.FC = () => {
                 {t('admin.products.noImages')}
               </div>
             ) : (
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
                 {images.map((image) => {
                   const previewUrl =
                     resolveImageFromProductImage(image) ?? getProductImageUrl(image?.imagePath);
                   return (
-                  <Card
+                  <div
                     key={image.id}
-                    className={cn(image.isMain && 'border-amber-500')}
+                    className={cn(
+                      "relative group rounded-lg overflow-hidden border-2 transition-all",
+                      image.isMain ? "border-amber-500 ring-2 ring-amber-200" : "border-gray-200 hover:border-gray-300"
+                    )}
                   >
-                    <CardContent className="space-y-3 p-4">
-                      <div className="relative aspect-video w-full overflow-hidden rounded-md bg-muted">
-                        <img
-                          src={previewUrl}
-                          alt={image.altText || image.fileName}
-                          className="h-full w-full object-cover"
-                          onError={(event) => {
-                            event.currentTarget.src = '/images/products/default-product.webp';
-                          }}
-                        />
-                        {image.isMain && (
-                          <Badge className="absolute top-2 left-2 bg-amber-600 text-white">
-                            {t('admin.products.imageMain')}
-                          </Badge>
-                        )}
-                      </div>
-                      <div className="space-y-1 text-sm">
-                        <p className="font-semibold">{image.fileName}</p>
-                        <p className="text-muted-foreground wrap-break-word">{image.imagePath}</p>
-                        {image.altText && (
-                          <p className="text-muted-foreground">{image.altText}</p>
-                        )}
-                        {image.altTextAr && (
-                          <p className="text-muted-foreground" dir="rtl">
-                            {image.altTextAr}
-                          </p>
-                        )}
-                        <p className="text-xs text-muted-foreground">
-                          {t('admin.products.imageDisplayOrder')}: {image.displayOrder ?? 0}
-                        </p>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
+                    {/* Square Image */}
+                    <div className="relative aspect-square w-full bg-muted">
+                      <img
+                        src={previewUrl}
+                        alt={image.altText || image.fileName}
+                        className="h-full w-full object-cover"
+                        onError={(event) => {
+                          event.currentTarget.src = '/images/products/default-product.webp';
+                        }}
+                      />
+                      {image.isMain && (
+                        <Badge className="absolute top-2 left-2 bg-amber-600 text-white text-xs">
+                          <Crown className="h-3 w-3 mr-1" />
+                          {t('admin.products.imageMain')}
+                        </Badge>
+                      )}
+                      
+                      {/* Action Buttons Overlay */}
+                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                         <Button
-                          variant="outline"
-                          size="sm"
+                          variant="secondary"
+                          size="icon"
+                          className="h-8 w-8"
                           onClick={() => handleImageEdit(image)}
+                          title={t('common.edit')}
                         >
-                          {t('common.edit')}
+                          <Edit className="h-4 w-4" />
                         </Button>
+                        {!image.isMain && (
+                          <Button
+                            variant="secondary"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => handleSetMainImage(image.id)}
+                            title={t('admin.products.setAsMain')}
+                          >
+                            <Crown className="h-4 w-4" />
+                          </Button>
+                        )}
                         <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleSetMainImage(image.id)}
-                          disabled={image.isMain}
-                        >
-                          <Crown className="mr-1 h-4 w-4" />
-                          {t('admin.products.setAsMain')}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-red-600 hover:text-red-700"
+                          variant="secondary"
+                          size="icon"
+                          className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-100"
                           onClick={() => handleImageDelete(image.id)}
+                          title={t('common.delete')}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
-                    </CardContent>
-                  </Card>
+                    </div>
+                  </div>
                 );
               })}
               </div>
@@ -1644,9 +1708,74 @@ export const ProductsManagement: React.FC = () => {
 
                 {!editingImage && (
                   <>
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div className="space-y-4">
+                      {/* Image Upload Section */}
                       <div className="space-y-2">
-                        <Label htmlFor="imagePath">{t('admin.products.imagePath')} *</Label>
+                        <Label>{t('common.uploadImage')}</Label>
+                        <div className="flex items-start gap-3">
+                          {/* Upload Button and Remove */}
+                          <div className="flex-1 space-y-2">
+                            <input
+                              ref={fileInputRef}
+                              type="file"
+                              accept="image/*"
+                              onChange={handleImageUpload}
+                              className="hidden"
+                              aria-label="Upload product image"
+                            />
+                            <div className="flex items-center gap-2">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => fileInputRef.current?.click()}
+                                disabled={uploadingImage}
+                                className="flex-1"
+                              >
+                                {uploadingImage ? (
+                                  <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    {t('common.uploading')}
+                                  </>
+                                ) : (
+                                  <>
+                                    <Upload className="mr-2 h-4 w-4" />
+                                    {t('common.uploadImage')}
+                                  </>
+                                )}
+                              </Button>
+                              {imageFormData.imagePath && (
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={handleRemoveImage}
+                                  title={t('common.delete')}
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                          
+                          {/* Small Preview */}
+                          {(imagePreview || imageFormData.imagePath) && (
+                            <div className="relative h-20 w-20 shrink-0 rounded-lg border-2 border-gray-300 overflow-hidden bg-gray-50">
+                              <img
+                                src={imagePreview || imageFormData.imagePath}
+                                alt="Preview"
+                                className="h-full w-full object-cover"
+                                onError={(e) => {
+                                  e.currentTarget.src = '/images/products/default-product.webp';
+                                }}
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Manual URL Input (Alternative) */}
+                      <div className="space-y-2">
+                        <Label htmlFor="imagePath">{t('admin.products.imagePath')}</Label>
                         <Input
                           id="imagePath"
                           value={imageFormData.imagePath}
@@ -1657,9 +1786,10 @@ export const ProductsManagement: React.FC = () => {
                             }))
                           }
                           placeholder={t('admin.products.imageUrlPlaceholder')}
-                          required
                         />
                       </div>
+
+                      {/* File Name (auto-filled on upload, editable) */}
                       <div className="space-y-2">
                         <Label htmlFor="fileName">{t('admin.products.imageFileName')} *</Label>
                         <Input
