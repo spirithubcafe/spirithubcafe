@@ -13,10 +13,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../ui/alert-dialog';
-import { Package, Plus, Edit, Trash2, Eye, EyeOff, Search, Loader2, Star, Coffee, Layers, Image as ImageIcon, Crown } from 'lucide-react';
+import { Package, Plus, Edit, Trash2, Eye, EyeOff, Search, Loader2, Star, Coffee, Layers, Image as ImageIcon, Crown, Settings } from 'lucide-react';
 import { productService, productVariantService, productImageService } from '../../services/productService';
 import { categoryService } from '../../services/categoryService';
 import { resolveImageFromProductImage, getProductImageUrl } from '../../lib/imageUtils';
+import { ProductAttributesDialog } from './ProductAttributesDialog';
 import type {
   Product,
   Category,
@@ -111,6 +112,10 @@ export const ProductsManagement: React.FC = () => {
     width: undefined,
     height: undefined,
   });
+
+  // Attributes Dialog State
+  const [isAttributesDialogOpen, setIsAttributesDialogOpen] = useState(false);
+  const [attributesProduct, setAttributesProduct] = useState<Product | null>(null);
 
   const [formData, setFormData] = useState<ProductCreateUpdateDto>({
     sku: '',
@@ -474,6 +479,56 @@ export const ProductsManagement: React.FC = () => {
     setVariantFormVisible(false);
     setIsVariantsDialogOpen(true);
     await loadVariants(product.id);
+  };
+
+  const handleOpenAttributes = async (product: Product) => {
+    // First set the product and open dialog immediately
+    setAttributesProduct(product);
+    setIsAttributesDialogOpen(true);
+    
+    try {
+      // Then fetch the full product details in the background
+      console.log('Fetching product details for ID:', product.id);
+      const fullProduct = await productService.getById(product.id);
+      console.log('Full product loaded:', fullProduct);
+      // Update with full details once loaded
+      setAttributesProduct(fullProduct);
+    } catch (error) {
+      console.error('Failed to load product details:', error);
+      // Already have the basic product from the list, so dialog will show that
+    }
+  };
+
+  const handleSaveAttributes = async (attributes: Partial<Product>) => {
+    if (!attributesProduct) return;
+    
+    try {
+      await productService.update(attributesProduct.id, {
+        ...attributes,
+        sku: attributesProduct.sku,
+        name: attributesProduct.name,
+        categoryId: attributesProduct.categoryId,
+      } as ProductCreateUpdateDto);
+      
+      // Reload products to show updated data
+      const filters: ProductFilters = {
+        searchTerm: searchTerm || undefined,
+        categoryId: selectedCategory !== 'all' ? parseInt(selectedCategory) : undefined,
+        isActive: statusFilter === 'active' ? true : statusFilter === 'inactive' ? false : undefined
+      };
+      
+      const productsData = await productService.getAll({
+        page: currentPage,
+        pageSize,
+        includeInactive: true,
+        ...filters
+      });
+      
+      setProducts(productsData?.items || []);
+    } catch (error) {
+      console.error('Error saving product attributes:', error);
+      throw error;
+    }
   };
 
   const handleVariantCreate = () => {
@@ -847,6 +902,15 @@ export const ProductsManagement: React.FC = () => {
                     </TableCell>
                     <TableCell className="text-center">
                       <div className="flex items-center justify-center space-x-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleOpenAttributes(product)}
+                          title="Product Attributes"
+                          className="text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+                        >
+                          <Coffee className="h-4 w-4" />
+                        </Button>
                         <Button
                           variant="ghost"
                           size="sm"
@@ -1830,6 +1894,14 @@ export const ProductsManagement: React.FC = () => {
         ) : null}
       </DialogContent>
     </Dialog>
+
+    {/* Product Attributes Dialog */}
+    <ProductAttributesDialog
+      product={attributesProduct}
+      open={isAttributesDialogOpen}
+      onOpenChange={setIsAttributesDialogOpen}
+      onSave={handleSaveAttributes}
+    />
   </>
   );
 };
