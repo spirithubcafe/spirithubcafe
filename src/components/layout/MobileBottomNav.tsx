@@ -50,11 +50,17 @@ export const MobileBottomNav: React.FC = () => {
     }
   };
 
-  const isActive = (path: string | null) => {
-    if (!path) return false;
+  const isActive = (path: string) => {
     if (path === '/') return location.pathname === '/';
     return location.pathname.startsWith(path);
   };
+  
+  // Hide on admin pages
+  const isAdminPage = location.pathname.startsWith('/admin');
+  
+  if (isAdminPage) {
+    return null;
+  }
 
   return (
     <>

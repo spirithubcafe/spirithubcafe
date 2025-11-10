@@ -32,6 +32,13 @@ export const Navigation: React.FC = () => {
   
   // Check if we're on the home page
   const isHomePage = location.pathname === '/';
+  
+  // Hide navigation on admin pages
+  const isAdminPage = location.pathname.startsWith('/admin');
+  
+  if (isAdminPage) {
+    return null;
+  }
 
   const navItems = [
     { key: 'home', label: t('nav.home'), href: '/', isRoute: true, hasDropdown: false },
