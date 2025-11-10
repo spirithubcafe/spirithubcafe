@@ -117,10 +117,14 @@ export const PaymentPage: React.FC = () => {
         addressLine1: order.checkoutDetails.isGift 
           ? order.checkoutDetails.recipientAddress || order.checkoutDetails.address
           : order.checkoutDetails.address,
-        addressLine2: undefined, // Optional
-        country: order.checkoutDetails.country || 'Oman',
-        city: order.checkoutDetails.city || 'Muscat',
-        postalCode: undefined, // Optional
+        addressLine2: order.checkoutDetails.address, // Use full address as addressLine2 as well
+        country: order.checkoutDetails.country || 'OM',
+        city: order.checkoutDetails.city || 'muscat',
+        postalCode: '100', // Default postal code
+        
+        // Backward compatibility - server still requires these
+        countryId: 1, // Default to Oman (ID 1)
+        cityId: 1, // Default to Muscat (ID 1)
         
         // Shipping Details
         // Map string shipping method IDs to numeric IDs from API

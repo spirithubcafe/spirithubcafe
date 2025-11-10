@@ -41,34 +41,32 @@ export const orderService = {
   async createOrder(order: CreateOrderDto): Promise<ApiResponse<OrderCreateResponse>> {
     try {
       const response = await apiClient.post<ApiResponse<OrderCreateResponse>>('/api/orders', order);
-      console.log('Order API Response:', response.data);
+      console.log('✅ Order created successfully:', response.data);
       return response.data;
     } catch (error: any) {
-      console.error('❌ Order creation error:', error);
-      console.error('📋 Error status:', error.response?.status);
-      console.error('📋 Error statusText:', error.response?.statusText);
-      console.error('📋 Error headers:', error.response?.headers);
-      console.error('📋 Error data:', error.response?.data);
-      console.error('📋 Error message:', error.message);
+      console.error('❌ Order creation failed');
       console.error('📋 Request data:', JSON.stringify(order, null, 2));
+      console.error('📋 Error object:', error);
       
-      // Try to extract meaningful error message
-      if (error.response?.data) {
-        console.error('📋 Full error response:', JSON.stringify(error.response.data, null, 2));
+      // apiClient interceptor transforms errors to ApiError format
+      // Structure: { message: string, statusCode: number, errors?: object }
+      if (error.statusCode) {
+        console.error('📋 Status Code:', error.statusCode);
+      }
+      if (error.errors) {
+        console.error('📋 Validation Errors:', JSON.stringify(error.errors, null, 2));
         
-        // If API returns structured error
-        if (error.response.data.message) {
-          throw new Error(error.response.data.message);
-        }
-        if (error.response.data.errors) {
-          const errorMessages = Object.entries(error.response.data.errors)
-            .map(([key, value]) => `${key}: ${value}`)
-            .join(', ');
-          throw new Error(errorMessages);
-        }
+        // Build detailed error message from validation errors
+        const errorMessages = Object.entries(error.errors)
+          .map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(', ') : value}`)
+          .join('; ');
+        throw new Error(`Validation failed: ${errorMessages}`);
       }
       
-      throw new Error(error.response?.data?.message || error.message || 'Unable to create order at this time.');
+      // Use the message from ApiError
+      const errorMessage = error.message || 'Unable to create order at this time.';
+      console.error('📋 Error message:', errorMessage);
+      throw new Error(errorMessage);
     }
   },
 
