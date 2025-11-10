@@ -275,7 +275,7 @@ export const CheckoutPage: React.FC = () => {
 
   if (items.length === 0) {
     return (
-  <div className="min-h-screen bg-linear-to-br from-gray-50 to-white">
+  <div className="min-h-screen bg-linear-to-br from-gray-50 to-white pt-20">
         <Seo
           title={language === 'ar' ? 'الدفع' : 'Checkout'}
           description={
@@ -306,7 +306,7 @@ export const CheckoutPage: React.FC = () => {
   }
 
   return (
-  <div className="min-h-screen bg-linear-to-b from-gray-50 to-white">
+  <div className="min-h-screen bg-linear-to-b from-gray-50 to-white pt-20">
       <Seo
         title={language === 'ar' ? 'الدفع الآمن' : 'Secure checkout'}
         description={

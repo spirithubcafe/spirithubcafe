@@ -95,7 +95,7 @@ export const PaymentPage: React.FC = () => {
 
   if (!order) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white pt-20">
         <Seo
           title={language === 'ar' ? 'الدفع' : 'Payment'}
           description={
@@ -126,7 +126,7 @@ export const PaymentPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white pt-20">
       <Seo
         title={language === 'ar' ? 'الدفع' : 'Payment'}
         description={

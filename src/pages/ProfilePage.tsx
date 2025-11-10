@@ -272,18 +272,18 @@ const ProfilePage: React.FC = () => {
                 </p>
                 
                 {/* Quick Stats - Full Width Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full">
-                  <div className="flex flex-col items-center justify-center p-4 sm:p-6 bg-white rounded-lg border border-gray-200 min-h-[100px] flex-1">
-                    <div className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">{userStats.totalOrders}</div>
-                    <div className="text-xs sm:text-sm text-gray-600 font-medium text-center">{t('profile.totalOrders')}</div>
+                <div className="grid grid-cols-3 gap-2 sm:gap-4 w-full">
+                  <div className="flex flex-col items-center justify-center p-3 sm:p-6 bg-white rounded-lg border border-gray-200 min-h-20 sm:min-h-[100px] flex-1">
+                    <div className="text-xl sm:text-3xl font-bold text-gray-900 mb-0.5 sm:mb-1">{userStats.totalOrders}</div>
+                    <div className="text-[10px] sm:text-sm text-gray-600 font-medium text-center leading-tight">{t('profile.totalOrders')}</div>
                   </div>
-                  <div className="flex flex-col items-center justify-center p-4 sm:p-6 bg-white rounded-lg border border-gray-200 min-h-[100px] flex-1">
-                    <div className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">OMR {userStats.totalSpent}</div>
-                    <div className="text-xs sm:text-sm text-gray-600 font-medium text-center">{t('profile.totalSpent')}</div>
+                  <div className="flex flex-col items-center justify-center p-3 sm:p-6 bg-white rounded-lg border border-gray-200 min-h-20 sm:min-h-[100px] flex-1">
+                    <div className="text-xl sm:text-3xl font-bold text-gray-900 mb-0.5 sm:mb-1">{userStats.totalSpent}</div>
+                    <div className="text-[10px] sm:text-sm text-gray-600 font-medium text-center leading-tight">{t('profile.totalSpent')}</div>
                   </div>
-                  <div className="flex flex-col items-center justify-center p-4 sm:p-6 bg-white rounded-lg border border-gray-200 min-h-[100px] flex-1">
-                    <div className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">{userStats.favoriteProducts}</div>
-                    <div className="text-xs sm:text-sm text-gray-600 font-medium text-center">{t('profile.favorites')}</div>
+                  <div className="flex flex-col items-center justify-center p-3 sm:p-6 bg-white rounded-lg border border-gray-200 min-h-20 sm:min-h-[100px] flex-1">
+                    <div className="text-xl sm:text-3xl font-bold text-gray-900 mb-0.5 sm:mb-1">{userStats.favoriteProducts}</div>
+                    <div className="text-[10px] sm:text-sm text-gray-600 font-medium text-center leading-tight">{t('profile.favorites')}</div>
                   </div>
                 </div>
               </div>
@@ -302,10 +302,10 @@ const ProfilePage: React.FC = () => {
                 <TabsTrigger
                   key={tab.id}
                   value={tab.id}
-                  className="flex flex-col items-center gap-2 p-4 h-auto min-h-[80px]"
+                  className="flex flex-col items-center gap-1 sm:gap-2 p-2 sm:p-4 h-auto min-h-16 sm:min-h-20"
                 >
-                  <Icon className="h-5 w-5" />
-                  <span className="text-sm font-medium">
+                  <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
+                  <span className="text-xs sm:text-sm font-medium text-center leading-tight">
                     {language === 'ar' ? tab.labelAr : tab.label}
                   </span>
                 </TabsTrigger>

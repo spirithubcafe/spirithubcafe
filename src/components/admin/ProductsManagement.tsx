@@ -17,7 +17,6 @@ import { Package, Plus, Edit, Trash2, Eye, EyeOff, Search, Loader2, Star, Coffee
 import { productService, productVariantService, productImageService } from '../../services/productService';
 import { categoryService } from '../../services/categoryService';
 import { resolveImageFromProductImage, getProductImageUrl } from '../../lib/imageUtils';
-import { ProductAttributesDialog } from './ProductAttributesDialog';
 import type {
   Product,
   Category,
@@ -113,9 +112,7 @@ export const ProductsManagement: React.FC = () => {
     height: undefined,
   });
 
-  // Attributes Dialog State
-  const [isAttributesDialogOpen, setIsAttributesDialogOpen] = useState(false);
-  const [attributesProduct, setAttributesProduct] = useState<Product | null>(null);
+
 
   const [formData, setFormData] = useState<ProductCreateUpdateDto>({
     sku: '',
@@ -481,54 +478,9 @@ export const ProductsManagement: React.FC = () => {
     await loadVariants(product.id);
   };
 
-  const handleOpenAttributes = async (product: Product) => {
-    // First set the product and open dialog immediately
-    setAttributesProduct(product);
-    setIsAttributesDialogOpen(true);
-    
-    try {
-      // Then fetch the full product details in the background
-      console.log('Fetching product details for ID:', product.id);
-      const fullProduct = await productService.getById(product.id);
-      console.log('Full product loaded:', fullProduct);
-      // Update with full details once loaded
-      setAttributesProduct(fullProduct);
-    } catch (error) {
-      console.error('Failed to load product details:', error);
-      // Already have the basic product from the list, so dialog will show that
-    }
-  };
-
-  const handleSaveAttributes = async (attributes: Partial<Product>) => {
-    if (!attributesProduct) return;
-    
-    try {
-      await productService.update(attributesProduct.id, {
-        ...attributes,
-        sku: attributesProduct.sku,
-        name: attributesProduct.name,
-        categoryId: attributesProduct.categoryId,
-      } as ProductCreateUpdateDto);
-      
-      // Reload products to show updated data
-      const filters: ProductFilters = {
-        searchTerm: searchTerm || undefined,
-        categoryId: selectedCategory !== 'all' ? parseInt(selectedCategory) : undefined,
-        isActive: statusFilter === 'active' ? true : statusFilter === 'inactive' ? false : undefined
-      };
-      
-      const productsData = await productService.getAll({
-        page: currentPage,
-        pageSize,
-        includeInactive: true,
-        ...filters
-      });
-      
-      setProducts(productsData?.items || []);
-    } catch (error) {
-      console.error('Error saving product attributes:', error);
-      throw error;
-    }
+  const handleOpenAttributes = (product: Product) => {
+    // Navigate to the product attributes page
+    navigate(`/admin/products/${product.id}/attributes`);
   };
 
   const handleVariantCreate = () => {
@@ -1029,7 +981,7 @@ export const ProductsManagement: React.FC = () => {
                         'border-green-500/80 focus-visible:ring-green-500/50'
                     )}
                   />
-                  <div className="flex min-h-[1.25rem] items-center gap-2 text-xs">
+                  <div className="flex min-h-5 items-center gap-2 text-xs">
                     {checkingSku && (
                       <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
                     )}
@@ -1060,7 +1012,7 @@ export const ProductsManagement: React.FC = () => {
                         'border-green-500/80 focus-visible:ring-green-500/50'
                     )}
                   />
-                  <div className="flex min-h-[1.25rem] items-center gap-2 text-xs">
+                  <div className="flex min-h-5 items-center gap-2 text-xs">
                     {checkingSlug && (
                       <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
                     )}
@@ -1635,7 +1587,7 @@ export const ProductsManagement: React.FC = () => {
                       </div>
                       <div className="space-y-1 text-sm">
                         <p className="font-semibold">{image.fileName}</p>
-                        <p className="text-muted-foreground break-words">{image.imagePath}</p>
+                        <p className="text-muted-foreground wrap-break-word">{image.imagePath}</p>
                         {image.altText && (
                           <p className="text-muted-foreground">{image.altText}</p>
                         )}
@@ -1866,14 +1818,6 @@ export const ProductsManagement: React.FC = () => {
         ) : null}
       </DialogContent>
     </Dialog>
-
-    {/* Product Attributes Dialog */}
-    <ProductAttributesDialog
-      product={attributesProduct}
-      open={isAttributesDialogOpen}
-      onOpenChange={setIsAttributesDialogOpen}
-      onSave={handleSaveAttributes}
-    />
   </>
   );
 };

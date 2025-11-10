@@ -5,6 +5,7 @@ import { useApp } from '../hooks/useApp';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { CategoriesManagement, ProductsManagement, UsersManagement } from '../components/admin';
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '../components/ui/sheet';
 import { 
   Shield, 
   Users, 
@@ -15,7 +16,8 @@ import {
   Activity,
   TrendingUp,
   ArrowLeft,
-  Grid3X3
+  Grid3X3,
+  Menu
 } from 'lucide-react';
 
 interface AdminPanelProps {
@@ -27,6 +29,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
   const { user, isAdmin, hasRole } = useAuth();
   const { t } = useApp();
   const [selectedModule, setSelectedModule] = useState<string>('dashboard');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleBack = () => {
     if (onBack) {
@@ -144,48 +147,78 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
     }
   };
 
+  const handleModuleSelect = (moduleId: string) => {
+    setSelectedModule(moduleId);
+    setIsMobileMenuOpen(false);
+  };
+
+  const renderSidebarContent = () => (
+    <>
+      {availableModules.map((module) => {
+        const IconComponent = module.icon;
+        return (
+          <Button
+            key={module.id}
+            variant={selectedModule === module.id ? "default" : "ghost"}
+            className="w-full justify-start h-auto p-4"
+            onClick={() => handleModuleSelect(module.id)}
+          >
+            <div className="flex items-start space-x-3">
+              <IconComponent className="h-5 w-5 mt-0.5 shrink-0" />
+              <div className="text-left">
+                <div className="font-medium">{module.title}</div>
+                <div className="text-xs text-muted-foreground">
+                  {module.description}
+                </div>
+              </div>
+            </div>
+          </Button>
+        );
+      })}
+    </>
+  );
+
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-full mx-auto px-6 py-8">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">
-              {t('admin.adminPanel')}
-            </h1>
-            <p className="text-muted-foreground">
-              {t('admin.welcomeMessage')} {user?.displayName || user?.username}
-            </p>
+    <div className="min-h-screen bg-background pt-20">
+      <div className="max-w-full mx-auto px-4 sm:px-6 py-4 sm:py-8">
+        <div className="flex items-center justify-between mb-6 sm:mb-8">
+          <div className="flex items-center gap-3">
+            {/* Mobile Menu Button */}
+            <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+              <SheetTrigger asChild>
+                <Button variant="outline" size="icon" className="lg:hidden">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-[280px] sm:w-[320px]">
+                <SheetHeader>
+                  <SheetTitle>{t('admin.adminPanel')}</SheetTitle>
+                </SheetHeader>
+                <div className="mt-6 space-y-2">
+                  {renderSidebarContent()}
+                </div>
+              </SheetContent>
+            </Sheet>
+
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
+                {t('admin.adminPanel')}
+              </h1>
+              <p className="text-sm text-muted-foreground hidden sm:block">
+                {t('admin.welcomeMessage')} {user?.displayName || user?.username}
+              </p>
+            </div>
           </div>
-          <Button onClick={handleBack} variant="outline">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            {t('common.back')}
+          <Button onClick={handleBack} variant="outline" size="sm" className="sm:size-default">
+            <ArrowLeft className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">{t('common.back')}</span>
           </Button>
         </div>
 
         <div className="flex flex-col lg:flex-row gap-6">
-          {/* Sidebar Navigation */}
-          <div className="w-full lg:w-80 space-y-2">
-            {availableModules.map((module) => {
-              const IconComponent = module.icon;
-              return (
-                <Button
-                  key={module.id}
-                  variant={selectedModule === module.id ? "default" : "ghost"}
-                  className="w-full justify-start h-auto p-4"
-                  onClick={() => setSelectedModule(module.id)}
-                >
-                  <div className="flex items-start space-x-3">
-                    <IconComponent className="h-5 w-5 mt-0.5 flex-shrink-0" />
-                    <div className="text-left">
-                      <div className="font-medium">{module.title}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {module.description}
-                      </div>
-                    </div>
-                  </div>
-                </Button>
-              );
-            })}
+          {/* Desktop Sidebar Navigation */}
+          <div className="hidden lg:block w-80 space-y-2">
+            {renderSidebarContent()}
           </div>
 
           {/* Main Content Area */}

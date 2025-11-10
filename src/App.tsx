@@ -21,6 +21,7 @@ import { CategoryAddPage } from './pages/CategoryAddPage';
 import { CategoryEditPage } from './pages/CategoryEditPage';
 import { ProductAddPage } from './pages/ProductAddPage';
 import { ProductEditPage } from './pages/ProductEditPage';
+import { ProductAttributesPage } from './pages/ProductAttributesPage';
 import { FavoritesPage } from './pages/FavoritesPage';
 import { OrdersPage } from './pages/OrdersPage';
 import { AboutPage } from './pages/AboutPage';
@@ -62,6 +63,7 @@ function AppContent() {
           <Route path="products" element={<ProductsManagement />} />
           <Route path="products/add" element={<ProductAddPage />} />
           <Route path="products/edit/:productId" element={<ProductEditPage />} />
+          <Route path="products/:id/attributes" element={<ProductAttributesPage />} />
           <Route path="seo" element={<SeoManagement />} />
           <Route path="users" element={<UsersManagement />} />
         </Route>

@@ -34,7 +34,7 @@ export const PaymentSuccessPage: React.FC = () => {
   const formatCurrency = (value: number) => `${value.toFixed(3)} ${currencyLabel}`;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white pt-20">
       <Seo
         title={isArabic ? 'تم الدفع بنجاح' : 'Payment successful'}
         description={

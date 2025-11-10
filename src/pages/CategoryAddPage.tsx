@@ -154,7 +154,7 @@ export const CategoryAddPage: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gray-50 pt-20 pb-8">
       <div className="container mx-auto max-w-4xl">
         <Card>
           <CardHeader>
