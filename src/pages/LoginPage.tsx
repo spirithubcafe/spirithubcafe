@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ShieldCheck, Clock3, Heart, ArrowLeft } from 'lucide-react';
+import { ShieldCheck, Clock3, Heart } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { LoginForm } from '../components/auth/LoginForm';
 import { Card, CardContent } from '../components/ui/card';
