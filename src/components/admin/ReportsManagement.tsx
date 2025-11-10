@@ -1,11 +1,49 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useApp } from '../../hooks/useApp';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { TrendingUp, DollarSign, Package, Users, ShoppingCart, Calendar } from 'lucide-react';
+import { TrendingUp, DollarSign, Package, Users, ShoppingCart, BarChart3 } from 'lucide-react';
+import { orderService } from '../../services';
+import type { Order } from '../../types/order';
 
 export const ReportsManagement: React.FC = () => {
   const { language } = useApp();
   const isArabic = language === 'ar';
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const response = await orderService.getAll({
+        page: 1,
+        pageSize: 1000, // Get all orders for statistics
+      });
+      const ordersList = response?.items || response || [];
+      setOrders(Array.isArray(ordersList) ? ordersList : []);
+    } catch (error) {
+      console.error('Error loading data:', error);
+      setOrders([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Calculate statistics from real data
+  const totalRevenue = orders
+    .filter(o => o.paymentStatus === 'Paid')
+    .reduce((sum, o) => sum + o.totalAmount, 0);
+
+  const totalOrders = orders.length;
+
+  const totalProductsSold = orders
+    .filter(o => o.paymentStatus === 'Paid')
+    .reduce((sum, o) => sum + (o.itemsCount || o.items?.length || 0), 0);
+
+  const uniqueCustomers = new Set(orders.map(o => o.userId)).size;
 
   return (
     <div className="space-y-6">
@@ -33,10 +71,9 @@ export const ReportsManagement: React.FC = () => {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">OMR 12,345</div>
-            <p className="text-xs text-muted-foreground">
-              {isArabic ? '+20.1% من الشهر الماضي' : '+20.1% from last month'}
-            </p>
+            <div className="text-2xl font-bold">
+              {loading ? '...' : `OMR ${totalRevenue.toFixed(3)}`}
+            </div>
           </CardContent>
         </Card>
 
@@ -48,10 +85,9 @@ export const ReportsManagement: React.FC = () => {
             <ShoppingCart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+234</div>
-            <p className="text-xs text-muted-foreground">
-              {isArabic ? '+15% من الشهر الماضي' : '+15% from last month'}
-            </p>
+            <div className="text-2xl font-bold">
+              {loading ? '...' : totalOrders}
+            </div>
           </CardContent>
         </Card>
 
@@ -63,25 +99,23 @@ export const ReportsManagement: React.FC = () => {
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+567</div>
-            <p className="text-xs text-muted-foreground">
-              {isArabic ? '+12% من الشهر الماضي' : '+12% from last month'}
-            </p>
+            <div className="text-2xl font-bold">
+              {loading ? '...' : totalProductsSold}
+            </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              {isArabic ? 'عملاء جدد' : 'New Customers'}
+              {isArabic ? 'عملاء' : 'Customers'}
             </CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+89</div>
-            <p className="text-xs text-muted-foreground">
-              {isArabic ? '+25% من الشهر الماضي' : '+25% from last month'}
-            </p>
+            <div className="text-2xl font-bold">
+              {loading ? '...' : uniqueCustomers}
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -95,7 +129,7 @@ export const ReportsManagement: React.FC = () => {
           <CardContent>
             <div className="h-[300px] flex items-center justify-center border-2 border-dashed rounded-lg">
               <div className="text-center">
-                <Calendar className="h-12 w-12 mx-auto mb-2 text-muted-foreground" />
+                <BarChart3 className="h-12 w-12 mx-auto mb-2 text-muted-foreground" />
                 <p className="text-sm text-muted-foreground">
                   {isArabic ? 'رسم بياني للمبيعات سيظهر هنا' : 'Sales chart will appear here'}
                 </p>
@@ -123,47 +157,47 @@ export const ReportsManagement: React.FC = () => {
         </Card>
       </div>
 
-      {/* Recent Activity */}
+      {/* Recent Orders */}
       <Card>
         <CardHeader>
-          <CardTitle>{isArabic ? 'النشاط الأخير' : 'Recent Activity'}</CardTitle>
+          <CardTitle>{isArabic ? 'الطلبات الأخيرة' : 'Recent Orders'}</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            <div className="flex items-center">
-              <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
-              <div className="flex-1">
-                <p className="text-sm font-medium">
-                  {isArabic ? 'طلب جديد تم استلامه' : 'New order received'}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {isArabic ? 'منذ 5 دقائق' : '5 minutes ago'}
-                </p>
-              </div>
+          {loading ? (
+            <div className="text-center py-4">
+              <p className="text-sm text-muted-foreground">
+                {isArabic ? 'جاري التحميل...' : 'Loading...'}
+              </p>
             </div>
-            <div className="flex items-center">
-              <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
-              <div className="flex-1">
-                <p className="text-sm font-medium">
-                  {isArabic ? 'منتج جديد تمت إضافته' : 'New product added'}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {isArabic ? 'منذ 15 دقيقة' : '15 minutes ago'}
-                </p>
-              </div>
+          ) : orders.length === 0 ? (
+            <div className="text-center py-8">
+              <Package className="h-12 w-12 mx-auto mb-2 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">
+                {isArabic ? 'لا توجد طلبات' : 'No orders yet'}
+              </p>
             </div>
-            <div className="flex items-center">
-              <div className="w-2 h-2 bg-yellow-500 rounded-full mr-3"></div>
-              <div className="flex-1">
-                <p className="text-sm font-medium">
-                  {isArabic ? 'طلب قيد المعالجة' : 'Order in processing'}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {isArabic ? 'منذ 30 دقيقة' : '30 minutes ago'}
-                </p>
-              </div>
+          ) : (
+            <div className="space-y-4">
+              {orders.slice(0, 5).map((order) => (
+                <div key={order.id} className="flex items-center">
+                  <div className={`w-2 h-2 rounded-full mr-3 ${
+                    order.status === 'Delivered' ? 'bg-green-500' :
+                    order.status === 'Processing' ? 'bg-blue-500' :
+                    order.status === 'Pending' ? 'bg-yellow-500' :
+                    'bg-gray-500'
+                  }`}></div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">
+                      {isArabic ? `طلب رقم ${order.orderNumber}` : `Order ${order.orderNumber}`}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {order.status} • OMR {order.totalAmount.toFixed(3)}
+                    </p>
+                  </div>
+                </div>
+              ))}
             </div>
-          </div>
+          )}
         </CardContent>
       </Card>
     </div>

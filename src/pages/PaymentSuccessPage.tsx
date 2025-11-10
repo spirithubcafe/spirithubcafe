@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { CheckCircle, PackageCheck } from 'lucide-react';
 import { PageHeader } from '../components/layout/PageHeader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
@@ -12,20 +12,13 @@ import { siteMetadata } from '../config/siteMetadata';
 
 const LAST_SUCCESS_STORAGE_KEY = 'spirithub_last_success_order';
 
-interface PaymentSuccessLocationState {
-  orderId?: string;
-  serverOrderId?: number;
-}
-
 export const PaymentSuccessPage: React.FC = () => {
   const { language } = useApp();
   const isArabic = language === 'ar';
   const navigate = useNavigate();
-  const location = useLocation();
   const [order, setOrder] = useState<CheckoutOrder & { serverOrderId?: number } | null>(null);
 
   useEffect(() => {
-    const state = (location.state as PaymentSuccessLocationState) || {};
     const stored = sessionStorage.getItem(LAST_SUCCESS_STORAGE_KEY);
     
     if (stored) {
@@ -36,7 +29,7 @@ export const PaymentSuccessPage: React.FC = () => {
         sessionStorage.removeItem(LAST_SUCCESS_STORAGE_KEY);
       }
     }
-  }, [location.state]);
+  }, []);
 
   const currencyLabel = isArabic ? 'ر.ع' : 'OMR';
   const formatCurrency = (value: number) => `${value.toFixed(3)} ${currencyLabel}`;

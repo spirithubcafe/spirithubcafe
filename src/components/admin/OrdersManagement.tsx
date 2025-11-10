@@ -28,15 +28,21 @@ export const OrdersManagement: React.FC = () => {
         page: 1,
         pageSize: 50,
       });
-      setOrders(response.items);
+      
+      // Handle different response structures
+      const ordersList = response?.items || response || [];
+      setOrders(Array.isArray(ordersList) ? ordersList : []);
       
       // Calculate total revenue
-      const revenue = response.items
-        .filter(o => o.paymentStatus === 'Paid')
-        .reduce((sum, o) => sum + o.totalAmount, 0);
-      setTotalRevenue(revenue);
+      if (Array.isArray(ordersList) && ordersList.length > 0) {
+        const revenue = ordersList
+          .filter(o => o.paymentStatus === 'Paid')
+          .reduce((sum, o) => sum + o.totalAmount, 0);
+        setTotalRevenue(revenue);
+      }
     } catch (error) {
       console.error('Error loading orders:', error);
+      setOrders([]); // Set empty array on error
     } finally {
       setLoading(false);
     }

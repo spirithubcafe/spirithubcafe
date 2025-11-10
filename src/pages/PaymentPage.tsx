@@ -6,7 +6,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Button } from '../components/ui/button';
 import { Separator } from '../components/ui/separator';
 import { useApp } from '../hooks/useApp';
-import { useAuth } from '../hooks/useAuth';
 import { useCart } from '../hooks/useCart';
 import type { CheckoutOrder } from '../types/checkout';
 import type { CreateOrderDto } from '../types/order';
