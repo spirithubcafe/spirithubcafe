@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Label } from '../ui/label';
 import { Input } from '../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { FileText, RefreshCw, Eye, Package, DollarSign, Calendar, Edit, Truck } from 'lucide-react';
+import { FileText, RefreshCw, Eye, Package, DollarSign, Calendar, Edit } from 'lucide-react';
 import { format } from 'date-fns';
 import { orderService } from '../../services';
 import type { Order, OrderStatus, PaymentStatus } from '../../types/order';

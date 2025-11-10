@@ -128,6 +128,10 @@ export interface CreateOrderDto {
   city: string;
   postalCode?: string;
   
+  // Backward compatibility (will be removed after server migration)
+  countryId?: number;
+  cityId?: number;
+  
   // Shipping Details
   shippingMethodId: number;
   shippingCost: number;
@@ -142,6 +146,10 @@ export interface CreateOrderDto {
   giftRecipientCity?: string;
   giftRecipientPostalCode?: string;
   giftMessage?: string;
+  
+  // Backward compatibility for gift recipient
+  giftRecipientCountryId?: number;
+  giftRecipientCityId?: number;
   
   // Additional
   notes?: string;

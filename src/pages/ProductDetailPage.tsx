@@ -353,10 +353,13 @@ export const ProductDetailPage = () => {
 
     cart.addToCart({
       id: cartId,
+      productId: product.id,
+      productVariantId: selectedVariant?.id,
       name: cartName,
       price,
       image,
       tastingNotes,
+      variantName: variantLabel || undefined,
     });
 
     if (quantity > 1) {

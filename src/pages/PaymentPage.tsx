@@ -117,8 +117,10 @@ export const PaymentPage: React.FC = () => {
         addressLine1: order.checkoutDetails.isGift 
           ? order.checkoutDetails.recipientAddress || order.checkoutDetails.address
           : order.checkoutDetails.address,
+        addressLine2: undefined, // Optional
         country: order.checkoutDetails.country || 'Oman',
         city: order.checkoutDetails.city || 'Muscat',
+        postalCode: undefined, // Optional
         
         // Shipping Details
         // Map string shipping method IDs to numeric IDs from API
@@ -149,27 +151,28 @@ export const PaymentPage: React.FC = () => {
         // Additional (only include if not empty)
         ...(order.checkoutDetails.notes && { notes: order.checkoutDetails.notes }),
         
+        // User ID (if authenticated - get from auth context, otherwise omit)
+        // userId: user?.id, // Uncomment if you have auth context
+        
         // Order Items
         items: order.items.map((item) => {
-          const [productId, variantId] = item.id.split('-');
-          const parsedProductId = parseInt(productId, 10);
-          const parsedVariantId = variantId ? parseInt(variantId, 10) : undefined;
-          
-          console.log('Processing item:', {
+          console.log('📦 Processing item:', {
             id: item.id,
-            productId: parsedProductId,
-            variantId: parsedVariantId,
+            productId: item.productId,
+            productVariantId: item.productVariantId,
             quantity: item.quantity,
+            name: item.name,
           });
           
-          if (isNaN(parsedProductId)) {
-            throw new Error(`Invalid product ID: ${item.id}`);
+          if (!item.productId || isNaN(item.productId)) {
+            console.error('❌ Invalid product ID:', item);
+            throw new Error(`Invalid product ID for item: ${item.name}`);
           }
           
-          // Build order item - always include productVariantId (can be undefined)
+          // Build order item with actual productId and productVariantId from cart
           return {
-            productId: parsedProductId,
-            productVariantId: parsedVariantId && !isNaN(parsedVariantId) ? parsedVariantId : undefined,
+            productId: item.productId,
+            productVariantId: item.productVariantId, // Can be undefined for products without variants
             quantity: item.quantity,
           };
         }),

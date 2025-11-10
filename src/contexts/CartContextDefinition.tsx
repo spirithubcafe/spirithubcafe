@@ -1,12 +1,15 @@
 import { createContext } from 'react';
 
 export interface CartItem {
-  id: string;
+  id: string; // productId as string for backward compatibility
+  productId: number; // Actual product ID for API
+  productVariantId?: number; // Variant ID if product has variants
   name: string;
   price: number;
   image: string;
   quantity: number;
   tastingNotes?: string;
+  variantName?: string; // Display name for variant (e.g., "250g", "Medium Roast")
 }
 
 export interface CartContextType {

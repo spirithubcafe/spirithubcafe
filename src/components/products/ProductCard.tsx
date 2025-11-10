@@ -50,13 +50,19 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     
     setIsAnimating(true);
     
+    // Parse productId from string ID
+    const productId = parseInt(product.id, 10);
+    
     // Add to cart
     addToCart({
       id: product.id,
+      productId: isNaN(productId) ? 0 : productId,
+      productVariantId: undefined, // ProductCard doesn't support variants
       name: product.name,
       price: product.price,
       image: product.image,
       tastingNotes: product.tastingNotes,
+      variantName: undefined,
     });
 
     // Wait for animation

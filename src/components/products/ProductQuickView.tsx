@@ -103,14 +103,20 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
     const cartId = `${product.id}${variantKey}`;
     const variantLabel = selectedVariant ? resolveVariantLabel(selectedVariant) : '';
     const cartName = variantLabel ? `${product.name} - ${variantLabel}` : product.name;
+    
+    // Parse productId from string ID
+    const productId = parseInt(product.id, 10);
 
     for (let i = 0; i < quantity; i++) {
       addToCart({
         id: cartId,
+        productId: isNaN(productId) ? 0 : productId,
+        productVariantId: selectedVariant?.id,
         name: cartName,
         price: currentPrice,
         image: product.image,
         tastingNotes: product.tastingNotes,
+        variantName: variantLabel || undefined,
       });
     }
 
