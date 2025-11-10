@@ -349,7 +349,7 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
               {/* Price, Size and Quantity - Compact Unified Section */}
               <div className="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 rounded-lg p-1.5 md:p-3 space-y-1 md:space-y-2">
                 {/* Price - More compact on mobile */}
-                <div className="flex items-baseline justify-between py-0.5">
+                <div className="flex items-baseline justify-between py-0.5 border-b border-amber-200/50 pb-1 md:pb-2">
                   <span className="text-[9px] md:text-xs text-gray-600 font-medium">{isArabic ? 'السعر' : 'Price'}</span>
                   <div className="flex items-center gap-1">
                     {selectedVariant?.discountPrice && selectedVariant.discountPrice < selectedVariant.price && (
@@ -357,7 +357,7 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
                         {selectedVariant.price.toFixed(3)}
                       </span>
                     )}
-                    <span className="text-base md:text-xl font-bold text-amber-700">
+                    <span className="text-base md:text-xl font-bold text-amber-900">
                       {currentPrice > 0
                         ? `${currentPrice.toFixed(3)} ${isArabic ? 'ر.ع' : 'OMR'}`
                         : isArabic
@@ -369,7 +369,7 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
 
                 {/* Size/Variant Selection - Optimized */}
                 {fullProduct?.variants && fullProduct.variants.length > 0 && (
-                  <div className="space-y-0.5 md:space-y-1">
+                  <div className="space-y-0.5 md:space-y-1 pt-0.5 md:pt-1">
                     <label className="text-[9px] md:text-[10px] font-bold text-gray-700 flex items-center gap-0.5 md:gap-1">
                       <Coffee className="w-2.5 h-2.5 md:w-3 md:h-3 text-amber-600" />
                       {isArabic ? 'اختر الحجم' : 'Choose Size'}
@@ -388,10 +388,10 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
                             key={variant.id}
                             type="button"
                             onClick={() => setSelectedVariantId(variant.id)}
-                            className={`px-1.5 md:px-4 py-1 md:py-2 rounded-md transition-all flex-1 min-w-0 font-semibold shadow-sm ${
+                            className={`px-1.5 md:px-4 py-1 md:py-2 rounded-md transition-all duration-200 flex-1 min-w-0 font-semibold shadow-sm ${
                               isSelected
-                                ? 'bg-amber-600 hover:bg-amber-700 text-white shadow-md'
-                                : 'bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300'
+                                ? 'bg-[#6B4423] hover:bg-[#5a3a1e] text-white shadow-md scale-105'
+                                : 'bg-white hover:bg-amber-50 text-amber-900 border border-amber-300 hover:border-[#6B4423]'
                             }`}
                           >
                             <div className="flex flex-col items-center">
@@ -402,7 +402,7 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
                                     {variant.price.toFixed(3)}
                                   </span>
                                 )}
-                                <span className={`text-[10px] md:text-[11px] font-semibold ${isSelected ? 'text-white' : 'text-amber-800'}`}>
+                                <span className={`text-[10px] md:text-[11px] font-semibold ${isSelected ? 'text-white' : 'text-[#6B4423]'}`}>
                                   {variantPrice.toFixed(3)}
                                 </span>
                               </div>
@@ -415,26 +415,26 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
                 )}
 
                 {/* Quantity - More compact */}
-                <div className="flex items-center justify-between pt-0.5">
+                <div className="flex items-center justify-between pt-1 md:pt-2">
                   <span className="text-[9px] md:text-[10px] font-bold text-gray-700">
                     {isArabic ? 'الكمية' : 'Quantity'}
                   </span>
-                  <div className="flex items-center border border-amber-300 rounded bg-white overflow-hidden">
+                  <div className="flex items-center border-2 border-amber-300 rounded bg-white overflow-hidden">
                     <button
                       type="button"
                       onClick={decreaseQuantity}
-                      className="px-1.5 md:px-2.5 py-0.5 md:py-1 text-xs md:text-sm text-amber-700 hover:bg-amber-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-1.5 md:px-2.5 py-0.5 md:py-1 text-xs md:text-sm text-amber-900 hover:text-[#6B4423] hover:bg-amber-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-bold"
                       disabled={quantity <= 1}
                     >
                       –
                     </button>
-                    <span className="px-2 md:px-3 py-0.5 md:py-1 text-[10px] md:text-xs font-bold text-gray-900 min-w-[1.5rem] md:min-w-[2rem] text-center">
+                    <span className="px-2 md:px-3 py-0.5 md:py-1 text-[10px] md:text-xs font-bold text-gray-900 min-w-[1.5rem] md:min-w-[2rem] text-center border-x border-amber-200">
                       {quantity}
                     </span>
                     <button
                       type="button"
                       onClick={increaseQuantity}
-                      className="px-1.5 md:px-2.5 py-0.5 md:py-1 text-xs md:text-sm text-amber-700 hover:bg-amber-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-1.5 md:px-2.5 py-0.5 md:py-1 text-xs md:text-sm text-amber-900 hover:text-[#6B4423] hover:bg-amber-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-bold"
                       disabled={quantity >= 10}
                     >
                       +
@@ -449,7 +449,7 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
                 <Button
                   onClick={handleAddToCart}
                   disabled={currentPrice <= 0}
-                  className="flex-1 bg-amber-600 hover:bg-amber-700 text-white h-10 md:h-12 text-[11px] md:text-sm font-semibold flex items-center justify-center"
+                  className="flex-1 bg-[#6B4423] hover:bg-[#5a3a1e] text-white h-10 md:h-12 text-[11px] md:text-sm font-semibold flex items-center justify-center shadow-md hover:shadow-lg transition-all duration-200"
                 >
                   <ShoppingCart className="w-3.5 h-3.5 md:w-4 md:h-4 ltr:mr-1 rtl:ml-1 md:ltr:mr-1.5 md:rtl:ml-1.5" />
                   {isArabic ? 'إضافة للسلة' : 'Add to Cart'}
@@ -457,15 +457,15 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
                 <Button
                   onClick={handleViewFullDetails}
                   variant="outline"
-                  className="flex-1 border-2 border-amber-600 text-amber-600 hover:bg-amber-50 h-10 md:h-12 text-[11px] md:text-sm font-semibold flex items-center justify-center"
+                  className="flex-1 border-2 border-[#6B4423] text-[#6B4423] hover:bg-amber-50 h-10 md:h-12 text-[11px] md:text-sm font-semibold flex items-center justify-center transition-all duration-200"
                 >
                   {isArabic ? 'عرض التفاصيل' : 'Full Details'}
                 </Button>
               </div>
 
               {/* Roasted Fresh in Oman Text */}
-              <div className="text-center">
-                <p className="text-xs text-gray-400">
+              <div className="text-center border-t border-amber-200/50 pt-1 md:pt-2">
+                <p className="text-xs text-gray-400 italic">
                   {isArabic ? 'محمص طازج في عمان' : 'Roasted Fresh in Oman'}
                 </p>
               </div>
