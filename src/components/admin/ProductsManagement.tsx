@@ -847,16 +847,13 @@ export const ProductsManagement: React.FC = () => {
                 <TableHead>{t('admin.products.sku')}</TableHead>
                 <TableHead>{t('admin.products.category')}</TableHead>
                 <TableHead className="text-center">{t('admin.products.status')}</TableHead>
-                <TableHead className="text-center">{t('admin.products.featured')}</TableHead>
-                <TableHead className="text-center">{t('admin.products.organic')}</TableHead>
-                <TableHead className="text-center">{t('admin.products.intensity')}</TableHead>
                 <TableHead className="text-center">{t('admin.products.actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {!products || products.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                     {t('admin.products.noProducts')}
                   </TableCell>
                 </TableRow>
@@ -881,24 +878,6 @@ export const ProductsManagement: React.FC = () => {
                       <Badge variant={product.isActive ? "default" : "secondary"}>
                         {product.isActive ? t('admin.products.active') : t('admin.products.inactive')}
                       </Badge>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      {product.isFeatured && (
-                        <Star className="h-4 w-4 text-yellow-500 mx-auto fill-current" />
-                      )}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      {product.isOrganic && (
-                        <Badge variant="outline" className="text-green-600 border-green-600">
-                          {t('admin.products.organic')}
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <div className="flex items-center justify-center">
-                        <Coffee className="h-4 w-4 mr-1" />
-                        {product.intensity || '-'}
-                      </div>
                     </TableCell>
                     <TableCell className="text-center">
                       <div className="flex items-center justify-center space-x-2">
