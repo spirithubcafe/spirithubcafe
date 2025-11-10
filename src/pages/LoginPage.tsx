@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { ShieldCheck, Clock3, Heart, ArrowLeft, Coffee } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { ShieldCheck, Clock3, Heart, ArrowLeft } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { LoginForm } from '../components/auth/LoginForm';
 import { Card, CardContent } from '../components/ui/card';
@@ -108,7 +108,7 @@ export const LoginPage: React.FC = () => {
       />
 
       <div className="container mx-auto py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
           {/* Login Form - First on mobile, Second on desktop */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -166,26 +166,6 @@ export const LoginPage: React.FC = () => {
                   </div>
                 </div>
               ))}
-            </div>
-
-            <div className="flex flex-wrap gap-3">
-              <Button
-                variant="default"
-                className="bg-amber-600 hover:bg-amber-700 text-white"
-                asChild
-              >
-                <Link to="/products">
-                  <Coffee className="h-4 w-4 mr-2" />
-                  {language === 'ar' ? 'اكتشف منتجاتنا' : 'Explore coffees'}
-                </Link>
-              </Button>
-              <Button variant="ghost" onClick={() => navigate(-1)}>
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                {language === 'ar' ? 'الرجوع' : 'Go back'}
-              </Button>
-              <Button variant="outline" onClick={handleSwitchToRegister}>
-                {language === 'ar' ? 'حساب جديد' : 'Create account'}
-              </Button>
             </div>
           </motion.div>
         </div>
