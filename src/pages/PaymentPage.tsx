@@ -244,21 +244,14 @@ export const PaymentPage: React.FC = () => {
                     {isArabic ? 'سنتواصل معك لإرسال بيانات الحساب عند اختيار هذا الخيار.' : 'We will share our bank details after you confirm this option.'}
                   </p>
                 </div>
-                <div className="flex flex-col gap-3 sm:flex-row">
+                <div className="flex flex-col">
                   <Button
-                    className="flex-1 bg-amber-600 hover:bg-amber-700"
+                    size="lg"
+                    className="w-full bg-green-600 hover:bg-green-700 text-white font-bold text-lg py-6"
                     onClick={() => handlePayment(false)}
                     disabled={isProcessing}
                   >
                     {isArabic ? 'ادفع الآن' : 'Pay Securely'}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="flex-1"
-                    onClick={() => handlePayment(true)}
-                  >
-                    {isArabic ? 'محاكاة فشل الدفع' : 'Simulate Failed Payment'}
                   </Button>
                 </div>
               </CardContent>

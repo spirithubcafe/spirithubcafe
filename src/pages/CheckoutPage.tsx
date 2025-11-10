@@ -161,27 +161,25 @@ export const CheckoutPage: React.FC = () => {
           setAramexRate(result.price);
           setAramexError(null);
         } else {
-          // Fallback to default rate based on destination
-          const defaultRate = effectiveCountry === 'OM' ? 2.5 : 3.5;
-          setAramexRate(defaultRate);
+          // Don't set a default rate, let user select city first
+          setAramexRate(null);
           
           // Set user-friendly error message
           const errorMsg = result.error?.includes('connect') || result.error?.includes('network')
             ? 'Using estimated rate (API unavailable)'
-            : 'Using default rate';
+            : 'Please select a city';
           setAramexError(errorMsg);
         }
       } catch (error: any) {
         console.error('Error calculating Aramex rate:', error);
         
-        // Fallback to default rate based on destination
-        const defaultRate = effectiveCountry === 'OM' ? 2.5 : 3.5;
-        setAramexRate(defaultRate);
+        // Don't set a default rate, let user select city first
+        setAramexRate(null);
         
         // Set user-friendly error message
         const errorMsg = error?.message?.includes('Network') || error?.code === 'ERR_NETWORK'
-          ? 'Using estimated rate (API unavailable)'
-          : 'Using default rate';
+          ? 'API unavailable - Please select a city'
+          : 'Please select a city';
         setAramexError(errorMsg);
       } finally {
         setAramexCalculating(false);
@@ -662,13 +660,17 @@ export const CheckoutPage: React.FC = () => {
                                       <div className="flex items-center gap-1">
                                         {method.isCalculating && method.id === 'aramex' ? (
                                           <Loader2 className="w-4 h-4 animate-spin text-amber-600" />
-                                        ) : (
+                                        ) : method.id === 'aramex' && (!effectiveCity || aramexRate === null) ? (
+                                          <p className="text-xs text-gray-500 italic whitespace-nowrap">
+                                            {isArabic ? 'اختر المدينة' : 'Select city'}
+                                          </p>
+                                        ) : method.id !== 'aramex' || (method.id === 'aramex' && method.price > 0) ? (
                                           <p className="font-bold text-amber-600 text-sm whitespace-nowrap">
                                             {method.price === 0
                                               ? isArabic ? 'مجاني' : 'Free'
                                               : formatCurrency(method.price, currencyLabel)}
                                           </p>
-                                        )}
+                                        ) : null}
                                       </div>
                                     </div>
                                     <p className="text-xs text-gray-600 mb-2">

@@ -82,8 +82,8 @@ export function computeShippingMethods(opts: { countryIso2?: string; citySlug?: 
     },
     eta: { en: '2-4 business days', ar: '٢-٤ أيام عمل' },
     badge: { en: 'Best for gifts', ar: 'مثالي للهدايا' },
-    // Placeholder - will be calculated dynamically in checkout
-    price: 3.5
+    // Price will be calculated dynamically in checkout based on city selection
+    price: 0
   })
 
   return methods
