@@ -10,6 +10,7 @@ export {
 export { productReviewService } from './productReviewService';
 export { userService } from './userService';
 export { adminService } from './adminService';
+export { orderService } from './orderService';
 export {
   calculateAramexRate,
   getAramexCountries,

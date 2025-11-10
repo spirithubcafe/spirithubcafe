@@ -16,6 +16,9 @@ import {
   ProductsManagement,
   UsersManagement,
   SeoManagement,
+  OrdersManagement,
+  ReportsManagement,
+  SystemSettings,
 } from './components/admin';
 import { CategoryAddPage } from './pages/CategoryAddPage';
 import { CategoryEditPage } from './pages/CategoryEditPage';
@@ -66,6 +69,9 @@ function AppContent() {
           <Route path="products/:id/attributes" element={<ProductAttributesPage />} />
           <Route path="seo" element={<SeoManagement />} />
           <Route path="users" element={<UsersManagement />} />
+          <Route path="orders" element={<OrdersManagement />} />
+          <Route path="reports" element={<ReportsManagement />} />
+          <Route path="settings" element={<SystemSettings />} />
         </Route>
         <Route path="/about" element={<AboutPage />} />
         <Route path="/contact" element={<ContactPage />} />

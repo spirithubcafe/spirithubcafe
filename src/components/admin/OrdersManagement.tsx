@@ -6,23 +6,14 @@ import { Badge } from '../ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { FileText, RefreshCw, Eye, Package, DollarSign, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
-
-interface Order {
-  id: number;
-  orderNumber: string;
-  userId: number;
-  userName: string;
-  totalAmount: number;
-  status: string;
-  paymentStatus: string;
-  createdAt: string;
-  itemsCount: number;
-}
+import { orderService } from '../../services';
+import type { Order } from '../../types/order';
 
 export const OrdersManagement: React.FC = () => {
   const { language } = useApp();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [totalRevenue, setTotalRevenue] = useState(0);
 
   const isArabic = language === 'ar';
 
@@ -33,24 +24,17 @@ export const OrdersManagement: React.FC = () => {
   const loadOrders = async () => {
     setLoading(true);
     try {
-      // TODO: Implement API call
-      // const data = await orderService.getAll();
-      // setOrders(data);
+      const response = await orderService.getAll({
+        page: 1,
+        pageSize: 50,
+      });
+      setOrders(response.items);
       
-      // Mock data for now
-      setOrders([
-        {
-          id: 1,
-          orderNumber: 'ORD-2025-001',
-          userId: 1,
-          userName: 'John Doe',
-          totalAmount: 45.50,
-          status: 'Pending',
-          paymentStatus: 'Paid',
-          createdAt: new Date().toISOString(),
-          itemsCount: 3,
-        },
-      ]);
+      // Calculate total revenue
+      const revenue = response.items
+        .filter(o => o.paymentStatus === 'Paid')
+        .reduce((sum, o) => sum + o.totalAmount, 0);
+      setTotalRevenue(revenue);
     } catch (error) {
       console.error('Error loading orders:', error);
     } finally {
@@ -147,7 +131,7 @@ export const OrdersManagement: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {orders.filter((o) => o.status === 'Completed').length}
+              {orders.filter((o) => o.status === 'Delivered').length}
             </div>
           </CardContent>
         </Card>
@@ -161,7 +145,7 @@ export const OrdersManagement: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              OMR {orders.reduce((sum, o) => sum + o.totalAmount, 0).toFixed(2)}
+              OMR {totalRevenue.toFixed(2)}
             </div>
           </CardContent>
         </Card>
@@ -208,8 +192,8 @@ export const OrdersManagement: React.FC = () => {
                   {orders.map((order) => (
                     <TableRow key={order.id}>
                       <TableCell className="font-medium">{order.orderNumber}</TableCell>
-                      <TableCell>{order.userName}</TableCell>
-                      <TableCell>{order.itemsCount}</TableCell>
+                      <TableCell>{order.userName || order.userEmail || `User ${order.userId}`}</TableCell>
+                      <TableCell>{order.items?.length || 0}</TableCell>
                       <TableCell>OMR {order.totalAmount.toFixed(2)}</TableCell>
                       <TableCell>
                         <Badge className={getStatusColor(order.status)}>
