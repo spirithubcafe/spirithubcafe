@@ -1,10 +1,10 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { motion } from 'framer-motion';
-import { Gift, MapPin, Package } from 'lucide-react';
+import { Gift, MapPin, Package, Loader2 } from 'lucide-react';
 import { useApp } from '../hooks/useApp';
 import { useCart } from '../hooks/useCart';
 import { PageHeader } from '../components/layout/PageHeader';
@@ -21,7 +21,7 @@ import type { CheckoutOrder } from '../types/checkout';
 import { Seo } from '../components/seo/Seo';
 import { siteMetadata } from '../config/siteMetadata';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { computeShippingMethods, getCitiesByCountry, getCountries } from '@/lib/shipping';
+import { computeShippingMethods, getCitiesByCountry, getCountries, calculateAramexShippingRate } from '@/lib/shipping';
 
 // Map country ISO2 -> international dialing code for placeholders
 const COUNTRY_CALLING_CODES: Record<string, string> = {
@@ -121,10 +121,97 @@ export const CheckoutPage: React.FC = () => {
   const effectiveCountry = watchIsGift ? watchRecipientCountry : watchCountry;
   const effectiveCity = watchIsGift ? watchRecipientCity : watchCity;
   
-  const shippingMethods = React.useMemo(() => 
-    computeShippingMethods({ countryIso2: effectiveCountry, citySlug: effectiveCity }), 
-    [effectiveCountry, effectiveCity]
-  );
+  // State for dynamic Aramex rate calculation
+  const [aramexRate, setAramexRate] = useState<number | null>(null);
+  const [aramexCalculating, setAramexCalculating] = useState(false);
+  const [aramexError, setAramexError] = useState<string | null>(null);
+  
+  // Calculate Aramex rate when country/city changes
+  useEffect(() => {
+    const calculateAramexRate = async () => {
+      // Only calculate if we have both country and city
+      if (!effectiveCountry || !effectiveCity) {
+        setAramexRate(null);
+        return;
+      }
+      
+      // Get city name for API call
+      const cities = getCitiesByCountry(effectiveCountry);
+      const selectedCity = cities.find(c => c.slug === effectiveCity);
+      
+      if (!selectedCity) {
+        setAramexRate(null);
+        return;
+      }
+      
+      setAramexCalculating(true);
+      setAramexError(null);
+      
+      try {
+        // Calculate total weight (assuming 0.5 KG per item, adjust as needed)
+        const totalWeight = Math.max(1, items.reduce((sum, item) => sum + (item.quantity * 0.5), 0));
+        
+        const result = await calculateAramexShippingRate(
+          effectiveCountry,
+          selectedCity.name_en,
+          totalWeight
+        );
+        
+        if (result.success && result.price) {
+          setAramexRate(result.price);
+          setAramexError(null);
+        } else {
+          // Fallback to default rate based on destination
+          const defaultRate = effectiveCountry === 'OM' ? 2.5 : 3.5;
+          setAramexRate(defaultRate);
+          
+          // Set user-friendly error message
+          const errorMsg = result.error?.includes('connect') || result.error?.includes('network')
+            ? 'Using estimated rate (API unavailable)'
+            : 'Using default rate';
+          setAramexError(errorMsg);
+        }
+      } catch (error: any) {
+        console.error('Error calculating Aramex rate:', error);
+        
+        // Fallback to default rate based on destination
+        const defaultRate = effectiveCountry === 'OM' ? 2.5 : 3.5;
+        setAramexRate(defaultRate);
+        
+        // Set user-friendly error message
+        const errorMsg = error?.message?.includes('Network') || error?.code === 'ERR_NETWORK'
+          ? 'Using estimated rate (API unavailable)'
+          : 'Using default rate';
+        setAramexError(errorMsg);
+      } finally {
+        setAramexCalculating(false);
+      }
+    };
+    
+    // Debounce the calculation
+    const timer = setTimeout(() => {
+      calculateAramexRate();
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }, [effectiveCountry, effectiveCity, items]);
+  
+  const shippingMethods = React.useMemo(() => {
+    const methods = computeShippingMethods({ countryIso2: effectiveCountry, citySlug: effectiveCity });
+    
+    // Update Aramex price with calculated rate
+    return methods.map(method => {
+      if (method.id === 'aramex') {
+        return {
+          ...method,
+          price: aramexRate ?? method.price,
+          isCalculating: aramexCalculating,
+          calculationError: aramexError ?? undefined,
+        };
+      }
+      return method;
+    });
+  }, [effectiveCountry, effectiveCity, aramexRate, aramexCalculating, aramexError]);
   
   const selectedShipping = shippingMethods.find((method) => method.id === watchedShipping) ?? shippingMethods[0];
   
@@ -562,24 +649,43 @@ export const CheckoutPage: React.FC = () => {
                                     'flex gap-3 rounded-xl border bg-white p-3 shadow-sm transition-all cursor-pointer',
                                     field.value === method.id
                                       ? 'border-amber-500 ring-2 ring-amber-100'
-                                      : 'border-gray-200 hover:border-gray-300'
+                                      : 'border-gray-200 hover:border-gray-300',
+                                    method.isCalculating && 'opacity-75'
                                   )}
                                 >
-                                  <RadioGroupItem value={method.id} className="mt-1" />
+                                  <RadioGroupItem value={method.id} className="mt-1" disabled={method.isCalculating} />
                                   <div className="flex-1 min-w-0">
                                     <div className="flex items-start justify-between gap-2 mb-1">
                                       <p className="font-semibold text-sm">
                                         {isArabic ? method.label.ar : method.label.en}
                                       </p>
-                                      <p className="font-bold text-amber-600 text-sm whitespace-nowrap">
-                                        {method.price === 0
-                                          ? isArabic ? 'مجاني' : 'Free'
-                                          : formatCurrency(method.price, currencyLabel)}
-                                      </p>
+                                      <div className="flex items-center gap-1">
+                                        {method.isCalculating && method.id === 'aramex' ? (
+                                          <Loader2 className="w-4 h-4 animate-spin text-amber-600" />
+                                        ) : (
+                                          <p className="font-bold text-amber-600 text-sm whitespace-nowrap">
+                                            {method.price === 0
+                                              ? isArabic ? 'مجاني' : 'Free'
+                                              : formatCurrency(method.price, currencyLabel)}
+                                          </p>
+                                        )}
+                                      </div>
                                     </div>
                                     <p className="text-xs text-gray-600 mb-2">
                                       {isArabic ? method.description.ar : method.description.en}
                                     </p>
+                                    {method.calculationError && method.id === 'aramex' && (
+                                      <p className="text-xs text-orange-600 mb-2 flex items-center gap-1">
+                                        <span>ℹ️</span>
+                                        <span>
+                                          {isArabic 
+                                            ? method.calculationError.includes('API') 
+                                              ? 'استخدام السعر التقديري (API غير متاح)'
+                                              : 'استخدام السعر الافتراضي'
+                                            : method.calculationError}
+                                        </span>
+                                      </p>
+                                    )}
                                     <div className="flex items-center justify-between">
                                       <span className="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
                                         {isArabic ? method.badge.ar : method.badge.en}

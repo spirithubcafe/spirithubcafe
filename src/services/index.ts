@@ -10,7 +10,20 @@ export {
 export { productReviewService } from './productReviewService';
 export { userService } from './userService';
 export { adminService } from './adminService';
+export {
+  calculateAramexRate,
+  getAramexCountries,
+  getAramexCities,
+  createAramexShipment,
+  trackAramexShipment,
+} from './aramexService';
 
 // Export types
 export type * from '../types/auth';
 export type * from '../types/product';
+export type {
+  AramexAddress,
+  AramexShipmentDetails,
+  AramexRateRequest,
+  AramexRateResponse,
+} from './aramexService';

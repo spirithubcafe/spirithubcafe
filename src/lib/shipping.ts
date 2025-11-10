@@ -1,4 +1,5 @@
 import locations from '@/data/gcc-locations.json';
+import { calculateAramexRate, type AramexRateRequest } from '@/services/aramexService';
 
 export type GCCCountry = {
   name_en: string
@@ -19,6 +20,8 @@ export type ShippingMethod = {
   eta: { en: string; ar: string }
   badge: { en: string; ar: string }
   price: number
+  isCalculating?: boolean
+  calculationError?: string
 }
 
 export const GCC_LOCATIONS = (locations as { countries: GCCCountry[] }).countries
@@ -79,9 +82,84 @@ export function computeShippingMethods(opts: { countryIso2?: string; citySlug?: 
     },
     eta: { en: '2-4 business days', ar: '٢-٤ أيام عمل' },
     badge: { en: 'Best for gifts', ar: 'مثالي للهدايا' },
-    // Placeholder until API integration is added
+    // Placeholder - will be calculated dynamically in checkout
     price: 3.5
   })
 
   return methods
+}
+
+/**
+ * Calculate Aramex shipping rate dynamically based on destination
+ * @param countryIso2 - Destination country code (e.g., 'AE', 'SA', 'OM')
+ * @param city - Destination city name
+ * @param weight - Total weight of shipment in KG (default: 1)
+ * @returns Promise with rate calculation result
+ */
+export async function calculateAramexShippingRate(
+  countryIso2: string,
+  city: string,
+  weight: number = 1
+): Promise<{ success: boolean; price?: number; error?: string }> {
+  try {
+    // Determine product type and group based on destination
+    const isOman = countryIso2 === 'OM';
+    const productGroup = isOman ? 'DOM' : 'EXP';
+    const productType = isOman ? 'OND' : 'PPX';
+
+    // Build rate request according to Aramex API specification
+    const request: AramexRateRequest = {
+      OriginAddress: {
+        Line1: 'Al Hail',
+        City: 'Muscat',
+        CountryCode: 'OM',
+        PostalCode: '111',
+      },
+      DestinationAddress: {
+        Line1: 'Customer Address',
+        City: city,
+        CountryCode: countryIso2,
+        PostalCode: '00000',
+      },
+      ShipmentDetails: {
+        ActualWeight: { Unit: 'KG', Value: weight },
+        ChargeableWeight: { Unit: 'KG', Value: weight },
+        NumberOfPieces: 1,
+        ProductGroup: productGroup,
+        ProductType: productType,
+        PaymentType: 'P',
+        DescriptionOfGoods: 'Coffee Products',
+        Dimensions: {
+          Length: 20,
+          Width: 20,
+          Height: 20,
+          Unit: 'CM',
+        },
+      },
+    };
+
+    const response = await calculateAramexRate(request);
+    
+    console.log('calculateAramexShippingRate - Response:', response);
+
+    if (response.success && response.rate) {
+      console.log('calculateAramexShippingRate - Returning price:', response.rate.amount);
+      return {
+        success: true,
+        price: response.rate.amount,
+      };
+    } else {
+      console.log('calculateAramexShippingRate - Failed:', response.errors);
+      return {
+        success: false,
+        error: response.errors?.join(', ') || 'Failed to calculate shipping rate',
+      };
+    }
+  } catch (error: any) {
+    console.error('Error calculating Aramex rate:', error);
+    return {
+      success: false,
+      error: error.message || 'Network error while calculating shipping rate',
+    };
+  }
 }
