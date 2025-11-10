@@ -195,26 +195,26 @@ export const Navigation: React.FC = () => {
                 variant="ghost"
                 size="sm"
                 onClick={toggleLanguage}
-                className={`transition-colors p-2 ${
+                className={`transition-colors p-2.5 ${
                   isHomePage 
                     ? 'text-white hover:text-amber-200 hover:bg-white/10' 
                     : 'text-gray-900 hover:text-amber-600 hover:bg-gray-100'
                 }`}
               >
-                <Globe className="w-4 h-4" />
+                <Globe className="w-5 h-5" />
               </Button>
 
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={openCart}
-                className={`transition-colors p-2 ${
+                className={`transition-colors p-2.5 ${
                   isHomePage 
                     ? 'text-white hover:text-amber-200 hover:bg-white/10' 
                     : 'text-gray-900 hover:text-amber-600 hover:bg-gray-100'
                 }`}
               >
-                <ShoppingCart className="w-4 h-4" />
+                <ShoppingCart className="w-5 h-5" />
               </Button>
 
               {isLoading ? (
@@ -228,19 +228,19 @@ export const Navigation: React.FC = () => {
           </div>
 
           {/* Mobile Navigation */}
-          <div className="flex md:hidden items-center space-x-2">
+          <div className="flex md:hidden items-center space-x-3">
             {/* Language Toggle */}
             <Button
               variant="ghost"
               size="sm"
               onClick={toggleLanguage}
-              className={`transition-colors p-2 ${
+              className={`transition-colors p-2.5 ${
                 isHomePage 
                   ? 'text-white hover:text-amber-200 hover:bg-white/10' 
                   : 'text-gray-900 hover:text-amber-600 hover:bg-gray-100'
               }`}
             >
-              <Globe className="w-4 h-4" />
+              <Globe className="w-5 h-5" />
             </Button>
 
             {/* Cart */}
@@ -248,13 +248,13 @@ export const Navigation: React.FC = () => {
               variant="ghost"
               size="sm"
               onClick={openCart}
-              className={`transition-colors p-2 ${
+              className={`transition-colors p-2.5 ${
                 isHomePage 
                   ? 'text-white hover:text-amber-200 hover:bg-white/10' 
                   : 'text-gray-900 hover:text-amber-600 hover:bg-gray-100'
               }`}
             >
-              <ShoppingCart className="w-4 h-4" />
+              <ShoppingCart className="w-5 h-5" />
             </Button>
 
             {/* Mobile Menu */}
@@ -263,13 +263,13 @@ export const Navigation: React.FC = () => {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className={`transition-colors ${
+                  className={`transition-colors p-2.5 ${
                     isHomePage 
                       ? 'text-white hover:text-amber-200 hover:bg-white/10' 
                       : 'text-gray-900 hover:text-amber-600 hover:bg-gray-100'
                   }`}
                 >
-                  <Menu className="w-5 h-5" />
+                  <Menu className="w-6 h-6" />
                 </Button>
               </SheetTrigger>
               <SheetContent
