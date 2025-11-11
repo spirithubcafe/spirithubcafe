@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Facebook, Instagram, Mail, MessageCircle } from 'lucide-react';
 import { useApp } from '../../hooks/useApp';
 
@@ -78,12 +79,12 @@ export const Footer: React.FC = () => {
                 <ul className="space-y-3">
                   {quickLinks.map((link) => (
                     <li key={link.label}>
-                      <a
-                        href={link.href}
+                      <Link
+                        to={link.href}
                         className="text-gray-300 hover:text-amber-200 transition-colors duration-200 text-sm"
                       >
                         {link.label}
-                      </a>
+                      </Link>
                     </li>
                   ))}
                 </ul>
@@ -97,12 +98,12 @@ export const Footer: React.FC = () => {
                 <ul className="space-y-3">
                   {legalLinks.map((link) => (
                     <li key={link.label}>
-                      <a
-                        href={link.href}
+                      <Link
+                        to={link.href}
                         className="text-gray-300 hover:text-amber-200 transition-colors duration-200 text-sm"
                       >
                         {link.label}
-                      </a>
+                      </Link>
                     </li>
                   ))}
                 </ul>

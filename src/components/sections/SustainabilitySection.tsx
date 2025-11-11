@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { useApp } from '../../hooks/useApp';
 
 export const SustainabilitySection: React.FC = () => {
@@ -29,12 +30,12 @@ export const SustainabilitySection: React.FC = () => {
           </p>
 
           {/* Shop Now Button */}
-          <a
-            href="/products"
+          <Link
+            to="/products"
             className="inline-block bg-red-500 hover:bg-red-600 text-white font-semibold px-6 py-3 rounded-md transition-all duration-300 text-base uppercase tracking-wide"
           >
             {language === 'ar' ? 'تسوق الآن' : 'SHOP NOW'}
-          </a>
+          </Link>
         </div>
       </div>
     </section>
