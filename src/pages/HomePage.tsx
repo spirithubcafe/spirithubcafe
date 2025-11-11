@@ -17,12 +17,12 @@ const HomePage: React.FC = () => {
         ? {
             title: 'قهوة مختصة محمصة في عمان',
             description:
-              'اكتشف سبيريت هب كافيه في مسقط حيث نحمص القهوة المختصة بعناية ونقدم تجارب ضيافة عربية معاصرة وكورسات التذوق واشتراكات القهوة الطازجة.',
+              'قهوة مختصة محمصة في عمان - اكتشف سبيريت هب كافيه في مسقط حيث نحمص القهوة المختصة بعناية ونقدم تجارب ضيافة عربية معاصرة وكورسات التذوق واشتراكات القهوة الطازجة.',
           }
         : {
-            title: 'Specialty coffee roasted in Oman',
+            title: 'Specialty Coffee Roasted in Oman | Spirit Hub Cafe',
             description:
-              'Spirit Hub Cafe curates single-origin beans, slow roasts in Muscat, and serves signature drinks, brew gear, and subscription boxes across Oman.',
+              'Specialty coffee roasted in Oman by Spirit Hub Cafe. We roast premium single-origin beans in Muscat, Oman, and serve signature drinks, brew gear, and coffee subscriptions.',
           },
     [language]
   );
@@ -64,6 +64,7 @@ const HomePage: React.FC = () => {
         ]}
         structuredData={structuredData}
       />
+      <h1 className="sr-only">{seoCopy.title}</h1>
       <ProfessionalHeroSlider />
       <SustainabilitySection />
 
