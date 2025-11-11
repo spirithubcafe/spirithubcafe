@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { useApp } from '../hooks/useApp';
-import { Truck, Clock, MapPin, Package, AlertCircle, CheckCircle, Mail, Phone } from 'lucide-react';
+import { Truck, Clock, MapPin, Package, AlertCircle, CheckCircle, Mail, Phone, FileText, Shield, RotateCcw } from 'lucide-react';
 import { PageHeader } from '../components/layout/PageHeader';
 import { motion } from 'framer-motion';
 import { Seo } from '../components/seo/Seo';
@@ -199,11 +200,67 @@ export const DeliveryPolicyPage: React.FC = () => {
               </div>
             </motion.div>
 
+            {/* Related Policies */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 1.6 }}
+              className="bg-white rounded-2xl shadow-lg p-8"
+            >
+              <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">
+                {language === 'ar' ? 'سياسات ذات صلة' : 'Related Policies'}
+              </h2>
+              <div className="grid md:grid-cols-3 gap-6">
+                <Link
+                  to="/privacy"
+                  className="group p-6 rounded-xl border-2 border-gray-200 hover:border-amber-600 transition-all duration-300"
+                >
+                  <Shield className="w-10 h-10 text-amber-600 mb-4" />
+                  <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-amber-600">
+                    {language === 'ar' ? 'سياسة الخصوصية' : 'Privacy Policy'}
+                  </h3>
+                  <p className="text-gray-600 text-sm">
+                    {language === 'ar'
+                      ? 'تعرف على كيفية حماية معلوماتك الشخصية'
+                      : 'Learn how we protect your personal information'}
+                  </p>
+                </Link>
+                <Link
+                  to="/terms"
+                  className="group p-6 rounded-xl border-2 border-gray-200 hover:border-amber-600 transition-all duration-300"
+                >
+                  <FileText className="w-10 h-10 text-amber-600 mb-4" />
+                  <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-amber-600">
+                    {language === 'ar' ? 'الشروط والأحكام' : 'Terms & Conditions'}
+                  </h3>
+                  <p className="text-gray-600 text-sm">
+                    {language === 'ar'
+                      ? 'مراجعة شروط الاستخدام والخدمة'
+                      : 'Review our terms of use and service'}
+                  </p>
+                </Link>
+                <Link
+                  to="/refund"
+                  className="group p-6 rounded-xl border-2 border-gray-200 hover:border-amber-600 transition-all duration-300"
+                >
+                  <RotateCcw className="w-10 h-10 text-amber-600 mb-4" />
+                  <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-amber-600">
+                    {language === 'ar' ? 'سياسة الاسترداد' : 'Refund Policy'}
+                  </h3>
+                  <p className="text-gray-600 text-sm">
+                    {language === 'ar'
+                      ? 'معرفة كيفية التعامل مع الإرجاع والاستبدال'
+                      : 'Understand our returns and exchanges process'}
+                  </p>
+                </Link>
+              </div>
+            </motion.div>
+
             {/* Last Updated */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ duration: 0.6, delay: 1.2 }}
+              transition={{ duration: 0.6, delay: 1.7 }}
               className="text-center text-gray-600 text-sm"
             >
               <p>
