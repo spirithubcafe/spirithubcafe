@@ -231,15 +231,18 @@ export const ProductDetailPage = () => {
     }
 
     if (product) {
+      const categoryName = product.category?.name || '';
+      const priceText = price > 0 ? ` - ${price.toFixed(3)} OMR` : '';
+      
       return language === 'ar'
-        ? `اكتشف ${displayName} من سبيريت هب كافيه بطعم محمص بعناية في مسقط.`
-        : `Discover ${displayName} from Spirit Hub Cafe, roasted fresh in Muscat.`;
+        ? `اشتري ${displayName} من سبيريت هب كافيه${priceText}. ${categoryName ? categoryName + ' - ' : ''}قهوة مختصة محمصة طازجة في مسقط، عمان. توصيل سريع، جودة مضمونة. ${plainDescription ? plainDescription.substring(0, 100) : ''}`
+        : `Buy ${displayName} from Spirit Hub Cafe${priceText}. ${categoryName ? categoryName + ' - ' : ''}Fresh roasted specialty coffee in Muscat, Oman. Fast delivery, guaranteed quality. ${plainDescription ? plainDescription.substring(0, 100) : ''}`;
     }
 
     return language === 'ar'
-      ? 'منتج القهوة المختصة من سبيريت هب كافيه.'
-      : 'A specialty coffee product from Spirit Hub Cafe.';
-  }, [displayName, language, plainDescription, product]);
+      ? 'قهوة مختصة محمصة طازجة من سبيريت هب كافيه في مسقط، عمان.'
+      : 'Fresh roasted specialty coffee from Spirit Hub Cafe in Muscat, Oman.';
+  }, [displayName, language, plainDescription, product, price]);
 
   const structuredData = useMemo(() => {
     if (!product) {
@@ -491,7 +494,7 @@ export const ProductDetailPage = () => {
                     <div className="grid lg:grid-cols-2 gap-4 md:gap-6 lg:gap-8">
                       {/* Mobile: Product Name & Rating - Show above image */}
                       <div className="lg:hidden mb-3">
-                        <h1 className="text-xl md:text-2xl font-bold text-gray-900 mb-2">{displayName}</h1>
+                        <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-2">{displayName}</h2>
                         
                         <div className="flex items-center gap-2 md:gap-3">
                           {averageRating > 0 ? (

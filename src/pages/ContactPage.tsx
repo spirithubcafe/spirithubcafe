@@ -18,14 +18,14 @@ export const ContactPage: React.FC = () => {
     () =>
       language === 'ar'
         ? {
-            title: 'تواصل معنا',
+            title: 'اتصل بنا - سبيريت هب كافيه مسقط | جملة، طلبات خاصة، تدريب',
             description:
-              'اتصل بسبيريت هب كافيه في مسقط عبر الهاتف أو البريد أو واتساب لتنسيق الطلبات، الحجز، والاستفسارات حول القهوة المختصة.',
+              'تواصل مع سبيريت هب كافيه في مسقط للطلبات بالجملة، جلسات تذوق القهوة الخاصة، تدريب الباريستا، شراكات المقاهي، واستفسارات القهوة المختصة. هاتف، بريد إلكتروني، واتساب، أو زيارة متجرنا في عمان.',
           }
         : {
-            title: 'Contact Spirit Hub Cafe',
+            title: 'Contact Spirit Hub Cafe Muscat | Wholesale, Events & Training',
             description:
-              'Reach Spirit Hub Cafe in Muscat via phone, email, or WhatsApp to plan private tastings, wholesale partnerships, or coffee support.',
+              'Contact Spirit Hub Cafe in Muscat for wholesale coffee orders, private tasting sessions, barista training, cafe partnerships, and specialty coffee inquiries. Reach us by phone, email, WhatsApp, or visit our store in Oman.',
           },
     [language]
   );

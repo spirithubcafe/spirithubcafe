@@ -5,6 +5,7 @@ import { PageHeader } from '../components/layout/PageHeader';
 import { motion } from 'framer-motion';
 import { Seo } from '../components/seo/Seo';
 import { siteMetadata } from '../config/siteMetadata';
+import { Link } from 'react-router-dom';
 
 export const PrivacyPolicyPage: React.FC = () => {
   const { language } = useApp();
@@ -239,6 +240,56 @@ export const PrivacyPolicyPage: React.FC = () => {
                     </p>
                   </div>
                 </div>
+              </div>
+            </motion.div>
+
+            {/* Related Policies Section */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 1.6 }}
+              className="bg-white rounded-2xl shadow-lg p-8"
+            >
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                {language === 'ar' ? 'سياسات ذات صلة' : 'Related Policies'}
+              </h2>
+              <div className="grid md:grid-cols-3 gap-4">
+                <Link 
+                  to="/terms-conditions"
+                  className="p-4 border-2 border-gray-200 rounded-xl hover:border-amber-600 hover:shadow-md transition-all group"
+                >
+                  <FileText className="w-6 h-6 text-amber-600 mb-2" />
+                  <h3 className="font-semibold text-gray-900 group-hover:text-amber-600 transition-colors">
+                    {language === 'ar' ? 'الشروط والأحكام' : 'Terms & Conditions'}
+                  </h3>
+                  <p className="text-sm text-gray-600 mt-1">
+                    {language === 'ar' ? 'اقرأ شروط استخدام خدماتنا' : 'Read our service terms'}
+                  </p>
+                </Link>
+                <Link 
+                  to="/refund-policy"
+                  className="p-4 border-2 border-gray-200 rounded-xl hover:border-amber-600 hover:shadow-md transition-all group"
+                >
+                  <Shield className="w-6 h-6 text-amber-600 mb-2" />
+                  <h3 className="font-semibold text-gray-900 group-hover:text-amber-600 transition-colors">
+                    {language === 'ar' ? 'سياسة الاسترداد' : 'Refund Policy'}
+                  </h3>
+                  <p className="text-sm text-gray-600 mt-1">
+                    {language === 'ar' ? 'تعرف على سياسة الاسترداد الخاصة بنا' : 'Learn about our refund policy'}
+                  </p>
+                </Link>
+                <Link 
+                  to="/delivery-policy"
+                  className="p-4 border-2 border-gray-200 rounded-xl hover:border-amber-600 hover:shadow-md transition-all group"
+                >
+                  <Globe className="w-6 h-6 text-amber-600 mb-2" />
+                  <h3 className="font-semibold text-gray-900 group-hover:text-amber-600 transition-colors">
+                    {language === 'ar' ? 'سياسة التوصيل' : 'Delivery Policy'}
+                  </h3>
+                  <p className="text-sm text-gray-600 mt-1">
+                    {language === 'ar' ? 'معلومات الشحن والتوصيل' : 'Shipping & delivery info'}
+                  </p>
+                </Link>
               </div>
             </motion.div>
 

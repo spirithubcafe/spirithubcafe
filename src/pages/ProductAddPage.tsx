@@ -380,7 +380,7 @@ export const ProductAddPage: React.FC<ProductFormPageProps> = ({
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle>{pageTitle}</CardTitle>
+              <h1 className="leading-none font-semibold text-2xl">{pageTitle}</h1>
               <Button variant="outline" onClick={() => navigate('/admin/products')}>
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 {t('common.back')}

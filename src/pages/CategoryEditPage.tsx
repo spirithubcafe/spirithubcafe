@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 import { useApp } from '../hooks/useApp';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Card, CardContent, CardHeader } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
@@ -273,9 +273,7 @@ export const CategoryEditPage: React.FC = () => {
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center space-x-2">
-                <span>{t('admin.categories.edit')}</span>
-              </CardTitle>
+              <h1 className="leading-none font-semibold text-2xl">{t('admin.categories.edit')}</h1>
               <Button variant="outline" onClick={() => navigate('/admin/categories')}>
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 {t('common.back')}

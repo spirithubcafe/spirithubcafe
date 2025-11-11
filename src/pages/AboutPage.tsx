@@ -5,6 +5,7 @@ import { Award, Coffee, Heart, Shield } from 'lucide-react';
 import { PageHeader } from '../components/layout/PageHeader';
 import { Seo } from '../components/seo/Seo';
 import { siteMetadata } from '../config/siteMetadata';
+import { Link } from 'react-router-dom';
 
 export const AboutPage: React.FC = () => {
   const { language } = useApp();
@@ -12,14 +13,14 @@ export const AboutPage: React.FC = () => {
     () =>
       language === 'ar'
         ? {
-            title: 'عن سبيريت هب كافيه',
+            title: 'عن سبيريت هب - محمصة القهوة المختصة الرائدة في عمان',
             description:
-              'تعرف على فلسفة سبيريت هب كافيه في اختيار وتحميص القهوة المختصة وبناء مجتمع قهوة نابض في عمان.',
+              'تعرف على قصة سبيريت هب كافيه، محمصة القهوة المختصة في مسقط. فريق من خبراء Q Graders المعتمدين، مصادر حبوب قهوة عالية الجودة من المزارع المستدامة، تحميص حرفي يومي، وبناء مجتمع قهوة نابض بالحياة في عمان.',
           }
         : {
-            title: 'About Spirit Hub Cafe',
+            title: 'About Spirit Hub Cafe - Muscat\'s Specialty Coffee Experts',
             description:
-              'Learn how Spirit Hub Cafe sources high-elevation beans, roasts them with Q Graders, and keeps Muscat’s specialty coffee scene vibrant.',
+              'Learn about Spirit Hub Cafe, Muscat\'s premier specialty coffee roastery. Q Grader certified experts, sustainably sourced high-elevation beans, artisan daily roasting, and building Oman\'s vibrant coffee community since our founding.',
           },
     [language]
   );
@@ -43,13 +44,33 @@ export const AboutPage: React.FC = () => {
       titleAr: 'التزامنا بالجودة',
       subtitle: 'OUR MISSION',
       subtitleAr: 'مهمتنا',
-      content: `At SPIRIT HUB Coffee, we take great care in selecting only the finest specialty coffees to be part of our exclusive blend. Our team of experienced Q Graders and Roasters carefully manage each roast to create a unique selection of flavors and aromas designed to delight even the most discerning coffee lovers.
-
-We believe that quality is paramount, which is why we strictly adhere to the highest protocols and quality controls during cupping and testing. This ensures that every cup of SPIRIT HUB Coffee meets our high standards and delivers a truly exceptional taste experience.
-
-Our commitment extends beyond the coffee itself. We are dedicated to providing our customers with the best possible service and experience. Whether you are enjoying a cup at one of our cafés or brewing a fresh pot at home, we want you to be completely satisfied with your SPIRIT HUB Coffee journey.
-
-In short, at SPIRIT HUB Coffee, we are passionate about coffee and devoted to offering only the finest experiences. We invite you to try our exclusive blend and taste the difference for yourself.`,
+      content: (
+        <>
+          At SPIRIT HUB Coffee, we take great care in selecting only the finest specialty coffees to be part of our exclusive blend. Our team of experienced{' '}
+          <a 
+            href="https://sca.coffee/research/protocols-best-practices" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-amber-600 hover:text-amber-700 underline transition-colors"
+          >
+            Q Graders
+          </a>{' '}
+          and Roasters carefully manage each roast to create a unique selection of flavors and aromas designed to delight even the most discerning coffee lovers.
+          {'\n\n'}
+          We believe that quality is paramount, which is why we strictly adhere to the highest protocols and quality controls during cupping and testing. This ensures that every cup of SPIRIT HUB Coffee meets our high standards and delivers a truly exceptional taste experience.
+          {'\n\n'}
+          Our commitment extends beyond the coffee itself. We are dedicated to providing our customers with the best possible service and experience. Whether you are enjoying a cup at one of our cafés or brewing a fresh pot at home, we want you to be completely satisfied with your SPIRIT HUB Coffee journey.
+          {'\n\n'}
+          In short, at SPIRIT HUB Coffee, we are passionate about coffee and devoted to offering only the finest experiences. We invite you to{' '}
+          <Link 
+            to="/products" 
+            className="text-amber-600 hover:text-amber-700 underline transition-colors"
+          >
+            explore our exclusive selection
+          </Link>{' '}
+          and taste the difference for yourself.
+        </>
+      ),
       contentAr: `في سبيريت هب للقهوة، نولي اهتماماً كبيراً باختيار أجود أنواع القهوة المتخصصة فقط لتكون جزءاً من مزيجنا الحصري. يدير فريقنا من المتذوقين والمحمصين ذوي الخبرة كل عملية تحميص بعناية لإنشاء مجموعة فريدة من النكهات والروائح المصممة لإسعاد حتى أكثر محبي القهوة تميزاً.
 
 نؤمن بأن الجودة هي الأهم، ولهذا السبب نلتزم بشدة بأعلى البروتوكولات وضوابط الجودة أثناء التذوق والاختبار. هذا يضمن أن كل فنجان من قهوة سبيريت هب يلبي معاييرنا العالية ويقدم تجربة طعم استثنائية حقاً.
@@ -95,13 +116,24 @@ By following these steps, roasters produce exceptional coffee rich in flavor and
       titleAr: 'المساءلة والشفافية',
       subtitle: 'ACCOUNTABILITY',
       subtitleAr: 'المساءلة',
-      content: `Accountability and transparency are crucial for building trust and maintaining a positive reputation in business. At SPIRIT HUB Coffee, we take pride in sharing information and educating our community, customers, and clients about our unique coffee.
-
-By sharing this information, we aim to create openness and trust, fostering strong and lasting relationships with our audience. Excitingly, we publish details about our coffee on various media platforms, such as our website, social media, and newsletter.
-
-Moreover, our commitment extends beyond information sharing to being accountable for our actions and decisions. This entails taking responsibility for the quality of our coffee, as well as addressing our environmental and social impact.
-
-Transparent and accountable practices enable us to build a positive reputation and nurture long-term relationships with our customers and clients. Proudly presenting SPIRIT HUB Coffee to the world, we eagerly anticipate sharing our unique coffee with the community.`,
+      content: (
+        <>
+          Accountability and transparency are crucial for building trust and maintaining a positive reputation in business. At SPIRIT HUB Coffee, we take pride in sharing information and educating our community, customers, and clients about our unique coffee.
+          {'\n\n'}
+          By sharing this information, we aim to create openness and trust, fostering strong and lasting relationships with our audience. Excitingly, we publish details about our coffee on various media platforms, such as our website, social media, and newsletter.
+          {'\n\n'}
+          Moreover, our commitment extends beyond information sharing to being accountable for our actions and decisions. This entails taking responsibility for the quality of our coffee, as well as addressing our environmental and social impact.
+          {'\n\n'}
+          Transparent and accountable practices enable us to build a positive reputation and nurture long-term relationships with our customers and clients. Proudly presenting SPIRIT HUB Coffee to the world, we eagerly anticipate sharing our unique coffee with the community. Have questions or want to learn more?{' '}
+          <Link 
+            to="/contact" 
+            className="text-amber-600 hover:text-amber-700 underline transition-colors"
+          >
+            Get in touch with us
+          </Link>
+          .
+        </>
+      ),
       contentAr: `المساءلة والشفافية أمران بالغا الأهمية لبناء الثقة والحفاظ على سمعة إيجابية في الأعمال. في سبيريت هب للقهوة، نفخر بمشاركة المعلومات وتثقيف مجتمعنا وعملائنا وعملائنا حول قهوتنا الفريدة.
 
 من خلال مشاركة هذه المعلومات، نهدف إلى خلق الانفتاح والثقة، وتعزيز العلاقات القوية والدائمة مع جمهورنا. بحماس، ننشر تفاصيل حول قهوتنا على منصات إعلامية مختلفة، مثل موقعنا الإلكتروني ووسائل التواصل الاجتماعي والنشرة الإخبارية.
@@ -168,13 +200,19 @@ Transparent and accountable practices enable us to build a positive reputation a
                 </div>
               </div>
               <div className="prose prose-lg max-w-none">
-                {(language === 'ar' ? section.contentAr : section.content)
-                  .split('\n\n')
-                  .map((paragraph, i) => (
-                    <p key={i} className="text-gray-700 leading-relaxed text-justify mb-4">
-                      {paragraph}
-                    </p>
-                  ))}
+                {typeof (language === 'ar' ? section.contentAr : section.content) === 'string' ? (
+                  ((language === 'ar' ? section.contentAr : section.content) as string)
+                    .split('\n\n')
+                    .map((paragraph: string, i: number) => (
+                      <p key={i} className="text-gray-700 leading-relaxed text-justify mb-4">
+                        {paragraph}
+                      </p>
+                    ))
+                ) : (
+                  <div className="text-gray-700 leading-relaxed text-justify space-y-4">
+                    {language === 'ar' ? section.contentAr : section.content}
+                  </div>
+                )}
               </div>
             </div>
 

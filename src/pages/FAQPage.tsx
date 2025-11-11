@@ -5,14 +5,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, HelpCircle, ShoppingCart, Package, RefreshCw, LogIn, Key, CreditCard } from 'lucide-react';
 import { Seo } from '../components/seo/Seo';
 import { siteMetadata } from '../config/siteMetadata';
+import { Link } from 'react-router-dom';
 
 interface FAQItem {
   id: string;
   icon: React.ElementType;
   question: string;
   questionAr: string;
-  answer: string[];
-  answerAr: string[];
+  answer: (string | React.ReactNode)[];
+  answerAr: (string | React.ReactNode)[];
 }
 
 export const FAQPage: React.FC = () => {
@@ -22,14 +23,14 @@ export const FAQPage: React.FC = () => {
     () =>
       language === 'ar'
         ? {
-            title: 'الأسئلة الشائعة',
+            title: 'الأسئلة الشائعة - سبيريت هب كافيه مسقط | طلبات، شحن، دفع',
             description:
-              'أجوبة واضحة حول الطلبات، الشحن، الحسابات، وطرق الدفع في سبيريت هب كافيه.',
+              'أجوبة شاملة عن طلبات القهوة المختصة، الشحن والتوصيل في عمان، إدارة الحساب، طرق الدفع، والإرجاع في سبيريت هب كافيه. دعم العملاء السريع والموثوق.',
           }
         : {
-            title: 'Frequently asked questions',
+            title: 'FAQ - Spirit Hub Cafe Muscat | Orders, Shipping & Payment',
             description:
-              'Clear answers about ordering, shipping, accounts, and payments at Spirit Hub Cafe.',
+              'Comprehensive answers about specialty coffee orders, shipping & delivery in Oman, account management, payment methods, and returns at Spirit Hub Cafe. Fast and reliable customer support.',
           },
     [language]
   );
@@ -49,7 +50,12 @@ export const FAQPage: React.FC = () => {
       question: 'How to Place an Order',
       questionAr: 'كيفية تقديم طلب',
       answer: [
-        'Visit our website and browse through our delightful selection of coffee products.',
+        <>Visit our website and browse through our delightful selection of{' '}
+          <Link to="/products" className="text-amber-600 hover:text-amber-700 underline">
+            coffee products
+          </Link>
+          .
+        </>,
         'Select your desired items and add them to your cart.',
         'Proceed to checkout, where you can review your order and provide necessary details.',
         'Complete the payment process to finalize your order.'
@@ -67,7 +73,12 @@ export const FAQPage: React.FC = () => {
       question: 'How to Check Order Status',
       questionAr: 'كيفية التحقق من حالة الطلب',
       answer: [
-        'Log in to your account on our website.',
+        <>Log in to your{' '}
+          <Link to="/profile" className="text-amber-600 hover:text-amber-700 underline">
+            account
+          </Link>
+          {' '}on our website.
+        </>,
         'Navigate to the "Order History" section to view the status of your recent and past orders.',
         'You will find detailed information, including order processing, shipping, and delivery status.'
       ],
@@ -83,9 +94,19 @@ export const FAQPage: React.FC = () => {
       question: 'How to Claim a Refund',
       questionAr: 'كيفية المطالبة باسترداد المبلغ',
       answer: [
-        'In case of any issues with your order, contact our customer support within 30 days of receiving your order.',
+        <>In case of any issues with your order,{' '}
+          <Link to="/contact" className="text-amber-600 hover:text-amber-700 underline">
+            contact our customer support
+          </Link>
+          {' '}within 30 days of receiving your order.
+        </>,
         'Provide order details and a clear explanation of the issue.',
-        'Our customer support team will guide you through the refund process.'
+        <>Our customer support team will guide you through the refund process according to our{' '}
+          <Link to="/refund-policy" className="text-amber-600 hover:text-amber-700 underline">
+            refund policy
+          </Link>
+          .
+        </>
       ],
       answerAr: [
         'في حالة وجود أي مشاكل في طلبك، اتصل بفريق الدعم خلال 30 يومًا من استلام طلبك.',
