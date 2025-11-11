@@ -26,7 +26,7 @@ interface PaymentLocationState {
 }
 
 export const PaymentPage: React.FC = () => {
-  const { language, t } = useApp();
+  const { language } = useApp();
   const { isAuthenticated, user } = useAuth();
   const isArabic = language === 'ar';
   const navigate = useNavigate();
@@ -58,6 +58,9 @@ export const PaymentPage: React.FC = () => {
   useEffect(() => {
     // Only proceed if authenticated
     if (!isAuthenticated) return;
+
+    // Debug: Log user info
+    console.log('👤 Authenticated user:', user);
 
     const state = (location.state as PaymentLocationState) || {};
 
@@ -171,8 +174,8 @@ export const PaymentPage: React.FC = () => {
         // Additional (only include if not empty)
         ...(order.checkoutDetails.notes && { notes: order.checkoutDetails.notes }),
         
-        // User ID (authenticated user)
-        ...(user?.id && { userId: user.id.toString() }),
+        // Note: userId is omitted - API will extract it from JWT token if needed
+        // The user.id from frontend (number) doesn't match database UserId (string/GUID)
         
         // Order Items
         items: order.items.map((item) => {
