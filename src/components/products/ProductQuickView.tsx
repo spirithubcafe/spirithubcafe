@@ -335,7 +335,7 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
                   {(fullProduct.notes || fullProduct.notesAr || fullProduct.tastingNotes || fullProduct.tastingNotesAr) && (
                     <div className="flex items-start gap-2">
                       <ClipboardList className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-500 min-w-[60px] md:min-w-[70px]">{isArabic ? 'ملاحظات التذوق:' : 'Tasting Notes:'}</span>
+                      <span className="text-gray-500 min-w-[60px] md:min-w-[70px]">{isArabic ? 'ملاحظات التذوق:' : 'Notes:'}</span>
                       <span className="font-semibold text-gray-900 flex-1">
                         {isArabic 
                           ? (fullProduct.tastingNotesAr || fullProduct.notesAr || fullProduct.tastingNotes || fullProduct.notes)
@@ -397,21 +397,21 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
                             key={variant.id}
                             type="button"
                             onClick={() => setSelectedVariantId(variant.id)}
-                            className={`px-1.5 md:px-4 py-1 md:py-2 rounded-md transition-all duration-200 flex-1 min-w-0 font-semibold shadow-sm ${
+                            className={`px-2 md:px-3 py-1.5 md:py-2 rounded-lg transition-all duration-200 flex-1 min-w-0 shadow-sm ${
                               isSelected
-                                ? 'bg-[#6B4423] hover:bg-[#5a3a1e] text-white shadow-md scale-105'
-                                : 'bg-white hover:bg-amber-50 text-amber-900 border border-amber-300 hover:border-[#6B4423]'
+                                ? 'bg-[#6B4423] hover:bg-[#5a3a1e] text-white shadow-md scale-[1.02]'
+                                : 'bg-white hover:bg-amber-50 text-amber-900 border border-amber-200 hover:border-amber-400 hover:shadow'
                             }`}
                           >
                             <div className="flex flex-col items-center">
-                              <span className="text-[11px] md:text-[13px] font-bold leading-tight">{label}</span>
+                              <span className="text-[10px] md:text-xs font-semibold leading-tight">{label}</span>
                               <div className="flex items-center gap-0.5 mt-0.5">
                                 {hasDiscount && (
-                                  <span className={`text-[9px] md:text-[10px] line-through ${isSelected ? 'text-white/70' : 'text-amber-600/60'}`}>
+                                  <span className={`text-[8px] md:text-[9px] line-through ${isSelected ? 'text-white/70' : 'text-amber-600/60'}`}>
                                     {variant.price.toFixed(3)}
                                   </span>
                                 )}
-                                <span className={`text-[10px] md:text-[11px] font-semibold ${isSelected ? 'text-white' : 'text-[#6B4423]'}`}>
+                                <span className={`text-[9px] md:text-[10px] font-semibold ${isSelected ? 'text-white' : 'text-[#6B4423]'}`}>
                                   {variantPrice.toFixed(3)}
                                 </span>
                               </div>
@@ -468,7 +468,7 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
                   variant="outline"
                   className="flex-1 border-2 border-[#6B4423] text-[#6B4423] hover:bg-amber-50 h-10 md:h-12 text-[11px] md:text-sm font-semibold flex items-center justify-center transition-all duration-200"
                 >
-                  {isArabic ? 'عرض التفاصيل' : 'Full Details'}
+                  {isArabic ? 'عرض التفاصيل' : 'Learn More'}
                 </Button>
               </div>
 

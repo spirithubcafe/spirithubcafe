@@ -15,6 +15,11 @@ import {
   MapPin,
   Wheat,
   ClipboardList,
+  Scale,
+  Thermometer,
+  Scissors,
+  Clock,
+  Sparkles,
 } from 'lucide-react';
 import { useApp } from '../hooks/useApp';
 import { productService } from '../services/productService';
@@ -103,6 +108,7 @@ export const ProductDetailPage = () => {
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [isZooming, setIsZooming] = useState(false);
   const [zoomPosition, setZoomPosition] = useState({ x: 0, y: 0 });
+  const [activeTab, setActiveTab] = useState<'description' | 'brewing'>('description');
 
   // Scroll to top when component mounts or productId changes
   useEffect(() => {
@@ -896,44 +902,186 @@ export const ProductDetailPage = () => {
                       <div className="flex">
                         <button
                           type="button"
-                          className="px-4 md:px-6 py-2 md:py-3 text-xs md:text-sm font-semibold text-gray-700 border-b-2 border-amber-600 bg-amber-50"
+                          onClick={() => setActiveTab('description')}
+                          className={`px-4 md:px-6 py-2 md:py-3 text-xs md:text-sm font-semibold transition-colors ${
+                            activeTab === 'description'
+                              ? 'text-gray-700 border-b-2 border-amber-600 bg-amber-50'
+                              : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                          }`}
                         >
                           {language === 'ar' ? 'الوصف' : 'Description'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setActiveTab('brewing')}
+                          className={`px-4 md:px-6 py-2 md:py-3 text-xs md:text-sm font-semibold transition-colors ${
+                            activeTab === 'brewing'
+                              ? 'text-gray-700 border-b-2 border-amber-600 bg-amber-50'
+                              : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                          }`}
+                        >
+                          {language === 'ar' ? 'دليل التحضير' : 'Brewing Guide'}
                         </button>
                       </div>
                     </div>
                   </div>
                   <div className="p-4 md:p-6">
-                    <div className="relative">
-                      <div 
-                        className={`text-xs md:text-sm text-gray-600 leading-relaxed [&_p]:mb-2 md:[&_p]:mb-3 [&_ul]:list-disc [&_ul]:ml-6 [&_ul]:mb-2 md:[&_ul]:mb-3 [&_ol]:list-decimal [&_ol]:ml-6 [&_ol]:mb-2 md:[&_ol]:mb-3 [&_li]:mb-1 md:[&_li]:mb-1.5 [&_h1]:text-lg md:[&_h1]:text-xl [&_h1]:font-bold [&_h1]:mb-2 md:[&_h1]:mb-3 [&_h2]:text-base md:[&_h2]:text-lg [&_h2]:font-bold [&_h2]:mb-1.5 md:[&_h2]:mb-2 [&_h3]:text-sm md:[&_h3]:text-base [&_h3]:font-semibold [&_h3]:mb-1.5 md:[&_h3]:mb-2 [&_strong]:font-bold [&_em]:italic [&_a]:text-amber-600 [&_a]:underline [&_a:hover]:text-amber-700 [&_img]:rounded-lg [&_img]:my-2 md:[&_img]:my-3 transition-all duration-300 ${
-                          !isDescriptionExpanded ? 'line-clamp-3 md:line-clamp-4' : ''
-                        }`}
-                        dangerouslySetInnerHTML={{ __html: displayDescription }}
-                      />
-                      {!isDescriptionExpanded && (
-                        <div className="absolute bottom-0 left-0 right-0 h-10 md:h-12 bg-gradient-to-t from-white to-transparent pointer-events-none"></div>
-                      )}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
-                      className="mt-2 md:mt-3 text-amber-600 hover:text-amber-700 font-semibold text-[10px] md:text-xs flex items-center gap-1 transition-colors"
-                    >
-                      {isDescriptionExpanded
-                        ? (language === 'ar' ? 'عرض أقل' : 'Read Less')
-                        : (language === 'ar' ? 'قراءة المزيد' : 'Read More')}
-                      <svg
-                        className={`w-3 md:w-3.5 h-3 md:h-3.5 transition-transform duration-300 ${
-                          isDescriptionExpanded ? 'rotate-180' : ''
-                        }`}
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </button>
+                    {activeTab === 'description' ? (
+                      <>
+                        <div className="relative">
+                          <div 
+                            className={`text-xs md:text-sm text-gray-600 leading-relaxed [&_p]:mb-2 md:[&_p]:mb-3 [&_ul]:list-disc [&_ul]:ml-6 [&_ul]:mb-2 md:[&_ul]:mb-3 [&_ol]:list-decimal [&_ol]:ml-6 [&_ol]:mb-2 md:[&_ol]:mb-3 [&_li]:mb-1 md:[&_li]:mb-1.5 [&_h1]:text-lg md:[&_h1]:text-xl [&_h1]:font-bold [&_h1]:mb-2 md:[&_h1]:mb-3 [&_h2]:text-base md:[&_h2]:text-lg [&_h2]:font-bold [&_h2]:mb-1.5 md:[&_h2]:mb-2 [&_h3]:text-sm md:[&_h3]:text-base [&_h3]:font-semibold [&_h3]:mb-1.5 md:[&_h3]:mb-2 [&_strong]:font-bold [&_em]:italic [&_a]:text-amber-600 [&_a]:underline [&_a:hover]:text-amber-700 [&_img]:rounded-lg [&_img]:my-2 md:[&_img]:my-3 transition-all duration-300 ${
+                              !isDescriptionExpanded ? 'line-clamp-3 md:line-clamp-4' : ''
+                            }`}
+                            dangerouslySetInnerHTML={{ __html: displayDescription }}
+                          />
+                          {!isDescriptionExpanded && (
+                            <div className="absolute bottom-0 left-0 right-0 h-10 md:h-12 bg-gradient-to-t from-white to-transparent pointer-events-none"></div>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+                          className="mt-2 md:mt-3 text-amber-600 hover:text-amber-700 font-semibold text-[10px] md:text-xs flex items-center gap-1 transition-colors"
+                        >
+                          {isDescriptionExpanded
+                            ? (language === 'ar' ? 'عرض أقل' : 'Read Less')
+                            : (language === 'ar' ? 'قراءة المزيد' : 'Read More')}
+                          <svg
+                            className={`w-3 md:w-3.5 h-3 md:h-3.5 transition-transform duration-300 ${
+                              isDescriptionExpanded ? 'rotate-180' : ''
+                            }`}
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </button>
+                      </>
+                    ) : (
+                      <div className="text-[10px] md:text-xs text-gray-600 leading-relaxed">
+                        {language === 'ar' ? (
+                          <>
+                            <div className="flex items-center gap-1.5 mb-3">
+                              <Coffee className="w-4 h-4 text-amber-600" />
+                              <h3 className="text-sm md:text-base font-bold text-gray-800">دليل تحضير القهوة المثالية</h3>
+                            </div>
+                            <p className="mb-3 text-gray-700">اتبع هذه الخطوات لاستخلاص أفضل نكهة من قهوتك:</p>
+                            
+                            <div className="space-y-2.5">
+                              <div className="bg-amber-50 p-2.5 md:p-3 rounded-lg border border-amber-100">
+                                <h4 className="font-bold text-amber-800 mb-1.5 flex items-center gap-1.5 text-[11px] md:text-xs">
+                                  <Scale className="w-3.5 h-3.5 text-amber-600" />
+                                  نسبة القهوة إلى الماء
+                                </h4>
+                                <p className="text-gray-700">استخدم ١٥-٢٠ جرام من القهوة لكل ٢٢٥-٣٠٠ مل من الماء، حسب القوة المفضلة لديك.</p>
+                              </div>
+
+                              <div className="bg-red-50 p-2.5 md:p-3 rounded-lg border border-red-100">
+                                <h4 className="font-bold text-red-800 mb-1.5 flex items-center gap-1.5 text-[11px] md:text-xs">
+                                  <Thermometer className="w-3.5 h-3.5 text-red-600" />
+                                  درجة حرارة الماء
+                                </h4>
+                                <p className="text-gray-700">سخن الماء إلى ٩٠-٩٦ درجة مئوية (١٩٤-٢٠٥ فهرنهايت) للحصول على استخلاص مثالي.</p>
+                              </div>
+
+                              <div className="bg-blue-50 p-2.5 md:p-3 rounded-lg border border-blue-100">
+                                <h4 className="font-bold text-blue-800 mb-1.5 flex items-center gap-1.5 text-[11px] md:text-xs">
+                                  <Scissors className="w-3.5 h-3.5 text-blue-600" />
+                                  حجم الطحن
+                                </h4>
+                                <p className="text-gray-700 mb-1.5">اطحن القهوة مباشرة قبل التحضير للحفاظ على النضارة.</p>
+                                <ul className="space-y-0.5 mr-3 text-gray-600">
+                                  <li>• <strong>القهوة المقطرة:</strong> طحن متوسط (≈٧٠٠-٨٠٠ ميكرون)</li>
+                                  <li>• <strong>الإسبريسو:</strong> طحن ناعم</li>
+                                  <li>• <strong>الفرنش برس:</strong> طحن خشن</li>
+                                </ul>
+                              </div>
+
+                              <div className="bg-purple-50 p-2.5 md:p-3 rounded-lg border border-purple-100">
+                                <h4 className="font-bold text-purple-800 mb-1.5 flex items-center gap-1.5 text-[11px] md:text-xs">
+                                  <Clock className="w-3.5 h-3.5 text-purple-600" />
+                                  وقت التحضير
+                                </h4>
+                                <ul className="space-y-0.5 mr-3 text-gray-700">
+                                  <li>• <strong>الإسبريسو:</strong> ٢٣-٣٠ ثانية</li>
+                                  <li>• <strong>القهوة المقطرة:</strong> ٢:٣٠-٤:٠٠ دقائق (مع التفتح والصب)</li>
+                                  <li>• <strong>الفرنش برس:</strong> ٤ دقائق</li>
+                                </ul>
+                              </div>
+
+                              <div className="bg-gradient-to-r from-amber-50 to-orange-50 p-2.5 md:p-3 rounded-lg border border-amber-200">
+                                <h4 className="font-bold text-amber-800 mb-1.5 flex items-center gap-1.5 text-[11px] md:text-xs">
+                                  <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                                  اللمسة النهائية
+                                </h4>
+                                <p className="text-gray-700">بعد انتهاء التحضير، قم بالتحريك برفق واستمتع بفنجان قهوتك المتوازن من محمصة سبيريت هب.</p>
+                              </div>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="flex items-center gap-1.5 mb-3">
+                              <Coffee className="w-4 h-4 text-amber-600" />
+                              <h3 className="text-sm md:text-base font-bold text-gray-800">Perfect Coffee Brewing Guide</h3>
+                            </div>
+                            <p className="mb-3 text-gray-700">Follow these steps to extract the best flavor from your coffee:</p>
+                            
+                            <div className="space-y-2.5">
+                              <div className="bg-amber-50 p-2.5 md:p-3 rounded-lg border border-amber-100">
+                                <h4 className="font-bold text-amber-800 mb-1.5 flex items-center gap-1.5 text-[11px] md:text-xs">
+                                  <Scale className="w-3.5 h-3.5 text-amber-600" />
+                                  Coffee to Water Ratio
+                                </h4>
+                                <p className="text-gray-700">Use 15–20g of coffee for every 225–300ml of water, depending on your preferred strength.</p>
+                              </div>
+
+                              <div className="bg-red-50 p-2.5 md:p-3 rounded-lg border border-red-100">
+                                <h4 className="font-bold text-red-800 mb-1.5 flex items-center gap-1.5 text-[11px] md:text-xs">
+                                  <Thermometer className="w-3.5 h-3.5 text-red-600" />
+                                  Water Temperature
+                                </h4>
+                                <p className="text-gray-700">Heat water to 90–96°C (194–205°F) for ideal extraction.</p>
+                              </div>
+
+                              <div className="bg-blue-50 p-2.5 md:p-3 rounded-lg border border-blue-100">
+                                <h4 className="font-bold text-blue-800 mb-1.5 flex items-center gap-1.5 text-[11px] md:text-xs">
+                                  <Scissors className="w-3.5 h-3.5 text-blue-600" />
+                                  Grind Size
+                                </h4>
+                                <p className="text-gray-700 mb-1.5">Grind coffee just before brewing for freshness.</p>
+                                <ul className="space-y-0.5 ml-3 text-gray-600">
+                                  <li>• <strong>Pour Over:</strong> Medium grind (≈700–800 microns)</li>
+                                  <li>• <strong>Espresso:</strong> Fine grind</li>
+                                  <li>• <strong>French Press:</strong> Coarse grind</li>
+                                </ul>
+                              </div>
+
+                              <div className="bg-purple-50 p-2.5 md:p-3 rounded-lg border border-purple-100">
+                                <h4 className="font-bold text-purple-800 mb-1.5 flex items-center gap-1.5 text-[11px] md:text-xs">
+                                  <Clock className="w-3.5 h-3.5 text-purple-600" />
+                                  Brewing Time
+                                </h4>
+                                <ul className="space-y-0.5 ml-3 text-gray-700">
+                                  <li>• <strong>Espresso:</strong> 23–30 seconds</li>
+                                  <li>• <strong>Pour Over:</strong> 2:30–4:00 minutes (bloom + pours)</li>
+                                  <li>• <strong>French Press:</strong> 4 minutes</li>
+                                </ul>
+                              </div>
+
+                              <div className="bg-gradient-to-r from-amber-50 to-orange-50 p-2.5 md:p-3 rounded-lg border border-amber-200">
+                                <h4 className="font-bold text-amber-800 mb-1.5 flex items-center gap-1.5 text-[11px] md:text-xs">
+                                  <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                                  Final Touch
+                                </h4>
+                                <p className="text-gray-700">Once brewing is complete, swirl gently and enjoy your perfectly balanced cup of coffee from SpiritHub Roastery.</p>
+                              </div>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
