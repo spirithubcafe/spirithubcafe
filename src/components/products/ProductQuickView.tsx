@@ -332,14 +332,14 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
                       </span>
                     </div>
                   )}
-                  {(fullProduct.notes || fullProduct.notesAr || fullProduct.tastingNotes) && (
+                  {(fullProduct.notes || fullProduct.notesAr || fullProduct.tastingNotes || fullProduct.tastingNotesAr) && (
                     <div className="flex items-start gap-2">
                       <ClipboardList className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-500 min-w-[60px] md:min-w-[70px]">{isArabic ? 'النكهات:' : 'Notes:'}</span>
+                      <span className="text-gray-500 min-w-[60px] md:min-w-[70px]">{isArabic ? 'ملاحظات:' : 'Notes:'}</span>
                       <span className="font-semibold text-gray-900 flex-1">
-                        {isArabic && fullProduct.notesAr 
-                          ? fullProduct.notesAr 
-                          : fullProduct.notes || fullProduct.tastingNotes}
+                        {isArabic 
+                          ? (fullProduct.notesAr || fullProduct.tastingNotesAr || fullProduct.notes || fullProduct.tastingNotes)
+                          : (fullProduct.notes || fullProduct.tastingNotes || fullProduct.notesAr || fullProduct.tastingNotesAr)}
                       </span>
                     </div>
                   )}
