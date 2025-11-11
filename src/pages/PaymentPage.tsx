@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Button } from '../components/ui/button';
 import { Separator } from '../components/ui/separator';
 import { useApp } from '../hooks/useApp';
+import { useAuth } from '../hooks/useAuth';
 import { useCart } from '../hooks/useCart';
 import type { CheckoutOrder } from '../types/checkout';
 import type { CreateOrderDto } from '../types/order';
@@ -25,7 +26,8 @@ interface PaymentLocationState {
 }
 
 export const PaymentPage: React.FC = () => {
-  const { language } = useApp();
+  const { language, t } = useApp();
+  const { isAuthenticated, user } = useAuth();
   const isArabic = language === 'ar';
   const navigate = useNavigate();
   const location = useLocation();
@@ -35,7 +37,28 @@ export const PaymentPage: React.FC = () => {
   const [shippingMethods, setShippingMethods] = useState<ShippingMethod[]>([]);
   const paymentTimer = useRef<number | null>(null);
 
+  // Check authentication - redirect to login if not authenticated
   useEffect(() => {
+    if (!isAuthenticated) {
+      console.warn('⚠️ User not authenticated, redirecting to login');
+      // Save the current order to return after login
+      const state = (location.state as PaymentLocationState) || {};
+      if (state.order) {
+        sessionStorage.setItem(PENDING_ORDER_STORAGE_KEY, JSON.stringify(state.order));
+      }
+      // Redirect to login with return URL
+      navigate('/login', { 
+        replace: true,
+        state: { from: '/payment', message: isArabic ? 'يرجى تسجيل الدخول لإتمام الطلب' : 'Please login to complete your order' }
+      });
+      return;
+    }
+  }, [isAuthenticated, navigate, location.state, isArabic]);
+
+  useEffect(() => {
+    // Only proceed if authenticated
+    if (!isAuthenticated) return;
+
     const state = (location.state as PaymentLocationState) || {};
 
     if (state.order) {
@@ -56,7 +79,7 @@ export const PaymentPage: React.FC = () => {
     }
 
     navigate('/checkout', { replace: true });
-  }, [location.state, navigate]);
+  }, [location.state, navigate, isAuthenticated]);
 
   // Load shipping methods from API
   useEffect(() => {
@@ -95,59 +118,52 @@ export const PaymentPage: React.FC = () => {
     setIsProcessing(true);
 
     try {
-      // Split full name into first and last name
+      // Get full name (NEW API FORMAT - no need to split)
       const fullName = order.checkoutDetails.isGift 
         ? order.checkoutDetails.recipientName || order.checkoutDetails.fullName
         : order.checkoutDetails.fullName;
-      const nameParts = fullName.split(' ');
-      const firstName = nameParts[0] || 'Customer';
-      const lastName = nameParts.slice(1).join(' ') || 'User';
 
       // Step 1: Create order in server
+      // Map shipping method to numeric ID
+      const shippingMethodId = shippingMethods.length > 0 
+        ? shippingService.mapShippingMethodId(order.shippingMethod.id, shippingMethods)
+        : (() => {
+            // Fallback if API methods not loaded yet
+            console.warn('⚠️ Shipping methods not loaded, using fallback mapping');
+            const methodId = order.shippingMethod.id === 'pickup' ? 1 
+              : order.shippingMethod.id === 'nool' ? 2 
+              : order.shippingMethod.id === 'aramex' ? 3 
+              : 1;
+            console.log(`🚚 Fallback mapping: ${order.shippingMethod.id} -> ${methodId}`);
+            return methodId;
+          })();
+
       const createOrderDto: CreateOrderDto = {
-        // Customer Information
-        firstName,
-        lastName,
+        // Customer Information (NEW API FORMAT)
+        fullName: fullName,
         email: order.checkoutDetails.email,
         phone: order.checkoutDetails.isGift 
           ? order.checkoutDetails.recipientPhone || order.checkoutDetails.phone
           : order.checkoutDetails.phone,
         
-        // Shipping Address
-        addressLine1: order.checkoutDetails.isGift 
+        // Shipping Address (NEW API FORMAT)
+        address: order.checkoutDetails.isGift 
           ? order.checkoutDetails.recipientAddress || order.checkoutDetails.address
           : order.checkoutDetails.address,
-        addressLine2: order.checkoutDetails.address, // Use full address as addressLine2 as well
         country: order.checkoutDetails.country || 'OM',
-        city: order.checkoutDetails.city || 'muscat',
-        postalCode: '100', // Default postal code
+        city: order.checkoutDetails.city || 'Muscat',
+        postalCode: '100', // Default postal code for Oman
         
-        // Backward compatibility - server still requires these
-        countryId: 1, // Default to Oman (ID 1)
-        cityId: 1, // Default to Muscat (ID 1)
-        
-        // Shipping Details
-        // Map string shipping method IDs to numeric IDs from API
-        shippingMethodId: shippingMethods.length > 0 
-          ? shippingService.mapShippingMethodId(order.shippingMethod.id, shippingMethods)
-          : (() => {
-              // Fallback if API methods not loaded yet
-              console.warn('⚠️ Shipping methods not loaded, using fallback mapping');
-              const methodId = order.shippingMethod.id === 'pickup' ? 1 
-                : order.shippingMethod.id === 'nool' ? 2 
-                : order.shippingMethod.id === 'aramex' ? 3 
-                : 1;
-              console.log(`🚚 Fallback mapping: ${order.shippingMethod.id} -> ${methodId}`);
-              return methodId;
-            })(),
+        // Shipping Details (NEW API FORMAT)
+        shippingMethod: shippingMethodId as 1 | 2 | 3,
         shippingCost: order.totals.shipping,
         
-        // Gift Information (only include if gift)
+        // Gift Information (NEW API FORMAT - only include if gift)
+        isGift: order.checkoutDetails.isGift || false,
         ...(order.checkoutDetails.isGift && {
-          isGift: true,
           giftRecipientName: order.checkoutDetails.recipientName,
           giftRecipientPhone: order.checkoutDetails.recipientPhone,
-          giftRecipientAddressLine1: order.checkoutDetails.recipientAddress,
+          giftRecipientAddress: order.checkoutDetails.recipientAddress,
           giftRecipientCountry: order.checkoutDetails.recipientCountry || 'Oman',
           giftRecipientCity: order.checkoutDetails.recipientCity || 'Muscat',
         }),
@@ -155,8 +171,8 @@ export const PaymentPage: React.FC = () => {
         // Additional (only include if not empty)
         ...(order.checkoutDetails.notes && { notes: order.checkoutDetails.notes }),
         
-        // User ID (if authenticated - get from auth context, otherwise omit)
-        // userId: user?.id, // Uncomment if you have auth context
+        // User ID (authenticated user)
+        ...(user?.id && { userId: user.id.toString() }),
         
         // Order Items
         items: order.items.map((item) => {
@@ -174,32 +190,41 @@ export const PaymentPage: React.FC = () => {
           }
           
           // Build order item with actual productId and productVariantId from cart
+          // NEW API requires productVariantId to be a number (not optional)
+          if (!item.productVariantId || item.productVariantId <= 0) {
+            console.error('❌ Missing or invalid productVariantId:', item);
+            throw new Error(`Product variant ID is required for item: ${item.name}`);
+          }
+          
           return {
             productId: item.productId,
-            productVariantId: item.productVariantId, // Can be undefined for products without variants
+            productVariantId: item.productVariantId,
             quantity: item.quantity,
           };
         }),
       };
 
-      // Validate required fields
-      if (!firstName || !lastName) {
-        throw new Error('First name and last name are required');
+      // Validate required fields (NEW API FORMAT)
+      if (!fullName || fullName.trim() === '') {
+        throw new Error('Full name is required');
       }
-      if (!order.checkoutDetails.email) {
+      if (!createOrderDto.email || createOrderDto.email.trim() === '') {
         throw new Error('Email is required');
       }
-      if (!order.checkoutDetails.phone && !order.checkoutDetails.recipientPhone) {
+      if (!createOrderDto.phone || createOrderDto.phone.trim() === '') {
         throw new Error('Phone number is required');
       }
-      if (!order.checkoutDetails.address && !order.checkoutDetails.recipientAddress) {
+      if (!createOrderDto.address || createOrderDto.address.trim() === '') {
         throw new Error('Address is required');
+      }
+      if (!createOrderDto.shippingMethod || ![1, 2, 3].includes(createOrderDto.shippingMethod)) {
+        throw new Error('Valid shipping method is required (1=Pickup, 2=Nool, 3=Aramex)');
       }
       if (createOrderDto.items.length === 0) {
         throw new Error('Order must contain at least one item');
       }
 
-      console.log('📦 Sending order data:', JSON.stringify(createOrderDto, null, 2));
+      console.log('📦 Sending order data to API:', JSON.stringify(createOrderDto, null, 2));
       const orderResponse = await orderService.create(createOrderDto);
       console.log('✅ Received order response:', orderResponse);
       

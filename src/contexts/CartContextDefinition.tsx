@@ -3,7 +3,7 @@ import { createContext } from 'react';
 export interface CartItem {
   id: string; // productId as string for backward compatibility
   productId: number; // Actual product ID for API
-  productVariantId?: number; // Variant ID if product has variants
+  productVariantId: number | null; // Variant ID if product has variants (null when none)
   name: string;
   price: number;
   image: string;

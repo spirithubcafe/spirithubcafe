@@ -17,6 +17,7 @@ export const OrdersManagement: React.FC = () => {
   const { language } = useApp();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -24,7 +25,7 @@ export const OrdersManagement: React.FC = () => {
   
   // Edit form state
   const [editStatus, setEditStatus] = useState<OrderStatus>('Pending');
-  const [editPaymentStatus, setEditPaymentStatus] = useState<PaymentStatus>('Pending');
+  const [editPaymentStatus, setEditPaymentStatus] = useState<PaymentStatus>('Unpaid');
   const [editTrackingNumber, setEditTrackingNumber] = useState('');
 
   const isArabic = language === 'ar';
@@ -35,14 +36,36 @@ export const OrdersManagement: React.FC = () => {
 
   const loadOrders = async () => {
     setLoading(true);
+    setError(null);
     try {
-      const response = await orderService.getAll({
+      console.log('🔄 Loading orders from API...');
+      console.log('📍 API Base URL:', 'https://spirithubapi.sbc.om');
+      
+      const token = localStorage.getItem('accessToken');
+      console.log('🔑 Token exists:', !!token);
+      if (token) {
+        console.log('🔑 Token preview:', token.substring(0, 20) + '...');
+      }
+      
+      // Try with minimal parameters first
+      console.log('📤 Request parameters:', { page: 1, pageSize: 20 });
+      
+      const response = await orderService.getOrders({
         page: 1,
-        pageSize: 50,
+        pageSize: 20, // Start with smaller page size
       });
       
-      // Handle different response structures
-      const ordersList = response?.items || response || [];
+      console.log('✅ Orders API Response:', response);
+      console.log('📊 Response structure:', {
+        hasSuccess: 'success' in response,
+        hasData: 'data' in response,
+        hasPagination: 'pagination' in response,
+        dataType: Array.isArray(response?.data) ? 'array' : typeof response?.data,
+        dataLength: Array.isArray(response?.data) ? response.data.length : 0
+      });
+      
+      // Handle API response structure
+      const ordersList = response?.data || [];
       setOrders(Array.isArray(ordersList) ? ordersList : []);
       
       // Calculate total revenue
@@ -51,9 +74,47 @@ export const OrdersManagement: React.FC = () => {
           .filter(o => o.paymentStatus === 'Paid')
           .reduce((sum, o) => sum + o.totalAmount, 0);
         setTotalRevenue(revenue);
+        console.log(`💰 Total revenue: ${revenue.toFixed(3)} OMR from ${ordersList.length} orders`);
+      } else {
+        console.log('📦 No orders found');
       }
-    } catch (error) {
-      console.error('Error loading orders:', error);
+    } catch (error: any) {
+      console.error('❌ Error loading orders:', error);
+      console.error('📋 Error details:', {
+        message: error.message,
+        statusCode: error.statusCode,
+        errors: error.errors,
+        stack: error.stack
+      });
+      
+      // Set user-friendly error message
+      let errorMessage = isArabic ? 'فشل تحميل الطلبات: ' : 'Failed to load orders: ';
+      
+      if (error.statusCode === 401) {
+        errorMessage += isArabic ? 'يرجى تسجيل الدخول مرة أخرى' : 'Please login again';
+        // Redirect to login after a delay
+        setTimeout(() => {
+          window.location.href = '/login';
+        }, 2000);
+      } else if (error.statusCode === 403) {
+        errorMessage += isArabic ? 'ليس لديك صلاحية الوصول إلى الطلبات' : 'You do not have permission to access orders';
+      } else if (error.statusCode === 404) {
+        errorMessage += isArabic ? 'نقطة النهاية غير موجودة' : 'Orders endpoint not found. The API may not support this feature yet.';
+        console.warn('⚠️ The orders endpoint may not be implemented in the API yet.');
+      } else if (error.statusCode === 500) {
+        errorMessage += isArabic 
+          ? 'خطأ في الخادم. قد لا يكون جدول الطلبات موجوداً في قاعدة البيانات بعد.' 
+          : 'Server error. The orders table may not exist in the database yet.';
+        console.error('⚠️ Server returned 500. Possible causes:');
+        console.error('   1. Orders table does not exist in database');
+        console.error('   2. Database connection issue');
+        console.error('   3. API endpoint not implemented correctly');
+        console.error('   4. Missing permissions in database');
+      } else {
+        errorMessage += error.message || (isArabic ? 'خطأ غير معروف' : 'Unknown error');
+      }
+      
+      setError(errorMessage);
       setOrders([]); // Set empty array on error
     } finally {
       setLoading(false);
@@ -84,7 +145,7 @@ export const OrdersManagement: React.FC = () => {
       // Update tracking number if changed
       if (editTrackingNumber && editTrackingNumber !== selectedOrder.trackingNumber) {
         await orderService.updateShipping(selectedOrder.id, {
-          shippingMethodId: selectedOrder.shippingMethodId || 1,
+          shippingMethodId: selectedOrder.shippingMethod || selectedOrder.shippingMethodId || 1,
           trackingNumber: editTrackingNumber,
         });
       }
@@ -107,7 +168,9 @@ export const OrdersManagement: React.FC = () => {
         return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       case 'processing':
         return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'completed':
+      case 'shipped':
+        return 'bg-purple-100 text-purple-800 border-purple-200';
+      case 'delivered':
         return 'bg-green-100 text-green-800 border-green-200';
       case 'cancelled':
         return 'bg-red-100 text-red-800 border-red-200';
@@ -120,10 +183,14 @@ export const OrdersManagement: React.FC = () => {
     switch (status.toLowerCase()) {
       case 'paid':
         return 'bg-green-100 text-green-800 border-green-200';
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'unpaid':
+        return 'bg-gray-100 text-gray-800 border-gray-200';
       case 'failed':
         return 'bg-red-100 text-red-800 border-red-200';
+      case 'refunded':
+        return 'bg-orange-100 text-orange-800 border-orange-200';
+      case 'partiallyrefunded':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       default:
         return 'bg-gray-100 text-gray-800 border-gray-200';
     }
@@ -210,6 +277,53 @@ export const OrdersManagement: React.FC = () => {
         </Card>
       </div>
 
+      {/* Error Alert */}
+      {error && (
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="pt-6">
+            <div className="flex items-start gap-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-100 shrink-0">
+                <Package className="h-4 w-4 text-red-600" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-red-900 mb-1">
+                  {isArabic ? 'خطأ في تحميل الطلبات' : 'Error Loading Orders'}
+                </h3>
+                <p className="text-sm text-red-700 mb-2">{error}</p>
+                {error.includes('500') && (
+                  <div className="text-xs text-red-600 bg-red-100 p-3 rounded mb-3">
+                    <strong>{isArabic ? 'إجراءات مقترحة:' : 'Suggested Actions:'}</strong>
+                    <ul className="list-disc list-inside mt-1 space-y-1">
+                      <li>{isArabic ? 'تحقق من أن جدول Orders موجود في قاعدة البيانات' : 'Check that Orders table exists in database'}</li>
+                      <li>{isArabic ? 'راجع console للحصول على تفاصيل الخطأ' : 'Check browser console for error details'}</li>
+                      <li>{isArabic ? 'تحقق من أن API endpoint مطبق بشكل صحيح' : 'Verify API endpoint is implemented correctly'}</li>
+                    </ul>
+                  </div>
+                )}
+                <div className="flex gap-2">
+                  <Button 
+                    onClick={loadOrders} 
+                    variant="outline" 
+                    size="sm"
+                    disabled={loading}
+                  >
+                    <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                    {isArabic ? 'حاول مرة أخرى' : 'Try Again'}
+                  </Button>
+                  <Button 
+                    onClick={() => window.open('https://spirithubapi.sbc.om/swagger', '_blank')} 
+                    variant="outline" 
+                    size="sm"
+                  >
+                    {isArabic ? 'افتح Swagger' : 'Open Swagger'}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Orders Table */}
       <Card>
         <CardHeader>
@@ -221,6 +335,13 @@ export const OrdersManagement: React.FC = () => {
               <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-2 text-muted-foreground" />
               <p className="text-sm text-muted-foreground">
                 {isArabic ? 'جاري التحميل...' : 'Loading...'}
+              </p>
+            </div>
+          ) : error ? (
+            <div className="text-center py-8">
+              <Package className="h-12 w-12 mx-auto mb-2 text-red-400" />
+              <p className="text-sm text-muted-foreground">
+                {isArabic ? 'تعذر تحميل الطلبات' : 'Could not load orders'}
               </p>
             </div>
           ) : orders.length === 0 ? (
@@ -251,9 +372,14 @@ export const OrdersManagement: React.FC = () => {
                   {orders.map((order) => (
                     <TableRow key={order.id}>
                       <TableCell className="font-medium">{order.orderNumber}</TableCell>
-                      <TableCell>{`${order.firstName} ${order.lastName}`}</TableCell>
+                      <TableCell>
+                        <div>
+                          <div className="font-medium">{order.fullName}</div>
+                          <div className="text-xs text-muted-foreground">{order.email}</div>
+                        </div>
+                      </TableCell>
                       <TableCell>{order.items?.length || 0}</TableCell>
-                      <TableCell>OMR {order.totalAmount.toFixed(2)}</TableCell>
+                      <TableCell>OMR {order.totalAmount.toFixed(3)}</TableCell>
                       <TableCell>
                         <Badge className={getStatusColor(order.status)}>
                           {order.status}
@@ -319,7 +445,6 @@ export const OrdersManagement: React.FC = () => {
                   <SelectItem value="Shipped">{isArabic ? 'تم الشحن' : 'Shipped'}</SelectItem>
                   <SelectItem value="Delivered">{isArabic ? 'تم التسليم' : 'Delivered'}</SelectItem>
                   <SelectItem value="Cancelled">{isArabic ? 'ملغي' : 'Cancelled'}</SelectItem>
-                  <SelectItem value="Refunded">{isArabic ? 'مسترد' : 'Refunded'}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -334,10 +459,11 @@ export const OrdersManagement: React.FC = () => {
                   <SelectValue placeholder={isArabic ? 'اختر حالة الدفع' : 'Select payment status'} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Pending">{isArabic ? 'قيد الانتظار' : 'Pending'}</SelectItem>
+                  <SelectItem value="Unpaid">{isArabic ? 'غير مدفوع' : 'Unpaid'}</SelectItem>
                   <SelectItem value="Paid">{isArabic ? 'مدفوع' : 'Paid'}</SelectItem>
                   <SelectItem value="Failed">{isArabic ? 'فشل' : 'Failed'}</SelectItem>
                   <SelectItem value="Refunded">{isArabic ? 'مسترد' : 'Refunded'}</SelectItem>
+                  <SelectItem value="PartiallyRefunded">{isArabic ? 'مسترد جزئياً' : 'Partially Refunded'}</SelectItem>
                 </SelectContent>
               </Select>
             </div>

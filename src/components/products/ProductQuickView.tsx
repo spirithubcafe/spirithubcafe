@@ -107,11 +107,14 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
     // Parse productId from string ID
     const productId = parseInt(product.id, 10);
 
+  // Determine variant id to always include: prefer selectedVariant, then selectedVariantId, then first variant, else null
+  const resolvedVariantId: number | null = (selectedVariant && selectedVariant.id) ?? (selectedVariantId ?? (fullProduct?.variants && fullProduct.variants.length > 0 ? fullProduct.variants[0].id : null));
+
     for (let i = 0; i < quantity; i++) {
       addToCart({
         id: cartId,
         productId: isNaN(productId) ? 0 : productId,
-        productVariantId: selectedVariant?.id,
+        productVariantId: resolvedVariantId ?? null,
         name: cartName,
         price: currentPrice,
         image: product.image,

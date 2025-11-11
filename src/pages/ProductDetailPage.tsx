@@ -354,7 +354,8 @@ export const ProductDetailPage = () => {
     cart.addToCart({
       id: cartId,
       productId: product.id,
-      productVariantId: selectedVariant?.id,
+      // Always include a variant id: prefer selected variant, fall back to first variant, otherwise null
+      productVariantId: selectedVariant?.id ?? (product.variants && product.variants.length > 0 ? product.variants[0].id : null),
       name: cartName,
       price,
       image,

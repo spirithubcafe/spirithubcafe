@@ -13,7 +13,13 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     // Load cart from localStorage on initial render
     try {
       const savedCart = localStorage.getItem(CART_STORAGE_KEY);
-      return savedCart ? JSON.parse(savedCart) : [];
+      if (!savedCart) return [];
+      const parsed = JSON.parse(savedCart) as any[];
+      // Ensure productVariantId exists for backward compatibility
+      return parsed.map(item => ({
+        ...item,
+        productVariantId: 'productVariantId' in item ? item.productVariantId : null,
+      })) as CartItem[];
     } catch (error) {
       console.error('Error loading cart from localStorage:', error);
       return [];

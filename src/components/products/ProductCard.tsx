@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { ShoppingCart, Eye, Heart } from 'lucide-react';
@@ -25,6 +25,27 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const [showQuickView, setShowQuickView] = useState(false);
   const [isClosingQuickView, setIsClosingQuickView] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
+  const [defaultVariantId, setDefaultVariantId] = useState<number | null>(null);
+
+  // Try to fetch default variant for this product so we always have a variantId when adding to cart
+  useEffect(() => {
+    let mounted = true;
+    const fetchDefault = async () => {
+      try {
+        const productId = parseInt(product.id, 10);
+        if (isNaN(productId)) return;
+        const variants = await import('../../services/productService').then(m => m.productVariantService.getByProduct(productId));
+        const defaultVariant = variants.find((v: any) => v.isDefault) ?? variants[0] ?? null;
+        if (mounted) setDefaultVariantId(defaultVariant ? defaultVariant.id : null);
+      } catch (err) {
+        // ignore - optional optimization
+        console.debug('No variants loaded for product card', err);
+        if (mounted) setDefaultVariantId(null);
+      }
+    };
+    fetchDefault();
+    return () => { mounted = false; };
+  }, [product.id]);
 
   const isWishlisted = isFavorite(product.id);
 
@@ -53,11 +74,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     // Parse productId from string ID
     const productId = parseInt(product.id, 10);
     
+    // Determine variant id: prefer fetched defaultVariantId, otherwise null
+    const variantId = defaultVariantId ?? null;
+
     // Add to cart
     addToCart({
       id: product.id,
       productId: isNaN(productId) ? 0 : productId,
-      productVariantId: undefined, // ProductCard doesn't support variants
+      productVariantId: variantId,
       name: product.name,
       price: product.price,
       image: product.image,

@@ -19,6 +19,7 @@ import {
   Grid3X3,
   Menu
 } from 'lucide-react';
+import { OrdersManagement } from '../components/admin/OrdersManagement';
 
 interface AdminPanelProps {
   onBack?: () => void;
@@ -287,24 +288,7 @@ const DashboardContent: React.FC = () => {
 
 // Orders Management Content
 const OrdersContent: React.FC = () => {
-  const { t } = useApp();
-  
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center space-x-2">
-          <FileText className="h-5 w-5" />
-          <span>{t('admin.manageOrders')}</span>
-        </CardTitle>
-        <CardDescription>
-          {t('admin.ordersManagement')}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <p className="text-muted-foreground">{t('admin.comingSoon')}</p>
-      </CardContent>
-    </Card>
-  );
+  return <OrdersManagement />;
 };
 
 // Reports Content
