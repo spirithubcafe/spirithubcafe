@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { CreditCard, ShieldCheck, Truck, Clock3, AlertTriangle } from 'lucide-react';
 import { PageHeader } from '../components/layout/PageHeader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
@@ -31,11 +31,100 @@ export const PaymentPage: React.FC = () => {
   const isArabic = language === 'ar';
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const { clearCart } = useCart();
   const [order, setOrder] = useState<CheckoutOrder | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [shippingMethods, setShippingMethods] = useState<ShippingMethod[]>([]);
   const paymentTimer = useRef<number | null>(null);
+
+  // Load order from payment link (orderId + token)
+  const loadOrderFromPaymentLink = async (orderId: number, token: string) => {
+    try {
+      console.log('🔍 Loading order from payment link:', { orderId, token });
+      
+      // Verify token is valid (simple check - in production, this should be server-side)
+      const decodedToken = atob(token);
+      console.log('🔐 Decoded token:', decodedToken);
+      
+      if (!decodedToken.includes(orderId.toString())) {
+        throw new Error('Invalid payment token');
+      }
+      
+      // Load order details from API
+      const response = await orderService.getOrderById(orderId);
+      const orderDetails = response.data!;
+      
+      console.log('✅ Order loaded from payment link:', {
+        orderNumber: orderDetails.orderNumber,
+        status: orderDetails.status,
+        paymentStatus: orderDetails.paymentStatus,
+        items: orderDetails.items?.length || 0
+      });
+      
+      // Check if order is already paid
+      if (orderDetails.paymentStatus === 'Paid') {
+        console.log('⚠️ Order already paid, redirecting to success page');
+        navigate(`/payment-success?orderNumber=${orderDetails.orderNumber}`, { replace: true });
+        return;
+      }
+      
+      // Convert Order to CheckoutOrder format for payment processing
+      const checkoutOrder: CheckoutOrder = {
+        id: `existing-${orderDetails.id}`,
+        createdAt: orderDetails.createdAt,
+        items: orderDetails.items?.map(item => ({
+          id: item.id.toString(),
+          name: item.productName,
+          productId: item.productId,
+          productVariantId: item.productVariantId || 0,
+          price: item.unitPrice,
+          quantity: item.quantity,
+          image: item.productImage || '',
+          attributes: item.variantInfo ? [{ name: 'Variant', value: item.variantInfo }] : []
+        })) || [],
+        checkoutDetails: {
+          fullName: orderDetails.fullName,
+          email: orderDetails.email,
+          phone: orderDetails.phone,
+          address: orderDetails.address,
+          city: orderDetails.city,
+          country: orderDetails.country,
+          isGift: orderDetails.isGift,
+          recipientName: orderDetails.giftRecipientName,
+          recipientPhone: orderDetails.giftRecipientPhone,
+          recipientAddress: orderDetails.giftRecipientAddress,
+          recipientCity: orderDetails.giftRecipientCity,
+          recipientCountry: orderDetails.giftRecipientCountry,
+          notes: orderDetails.notes
+        },
+        shippingMethod: {
+          id: orderDetails.shippingMethod === 1 ? 'pickup' : orderDetails.shippingMethod === 2 ? 'nool' : 'aramex',
+          name: orderDetails.shippingMethod === 1 ? 'Store Pickup' : orderDetails.shippingMethod === 2 ? 'Nool Delivery' : 'Aramex Courier',
+          nameAr: orderDetails.shippingMethod === 1 ? 'استلام من المتجر' : orderDetails.shippingMethod === 2 ? 'توصيل نول' : 'أرامكس',
+          cost: orderDetails.shippingCost || 0,
+          eta: orderDetails.shippingMethod === 1 ? '0 days' : orderDetails.shippingMethod === 2 ? '1-2 days' : '2-3 days',
+          etaAr: orderDetails.shippingMethod === 1 ? 'فوري' : orderDetails.shippingMethod === 2 ? '1-2 أيام' : '2-3 أيام'
+        },
+        totals: {
+          subtotal: orderDetails.totalAmount - (orderDetails.shippingCost || 0),
+          shipping: orderDetails.shippingCost || 0,
+          total: orderDetails.totalAmount
+        }
+      };
+      
+      setOrder(checkoutOrder);
+      console.log('✅ Order converted to checkout format for payment');
+      
+    } catch (error: any) {
+      console.error('❌ Failed to load order from payment link:', error);
+      alert(isArabic 
+        ? 'فشل تحميل الطلب. تحقق من رابط الدفع.'
+        : 'Failed to load order. Please check the payment link.'
+      );
+      navigate('/orders', { replace: true });
+    }
+  };
 
   // Check authentication - redirect to login if not authenticated
   useEffect(() => {
@@ -62,6 +151,16 @@ export const PaymentPage: React.FC = () => {
     // Debug: Log user info
     console.log('👤 Authenticated user:', user);
 
+    // Check for orderId and token in URL parameters (for payment links)
+    const orderId = searchParams.get('orderId');
+    const token = searchParams.get('token');
+
+    if (orderId && token) {
+      console.log('🔗 Payment link detected:', { orderId, token });
+      loadOrderFromPaymentLink(parseInt(orderId), token);
+      return;
+    }
+
     const state = (location.state as PaymentLocationState) || {};
 
     if (state.order) {
@@ -82,7 +181,7 @@ export const PaymentPage: React.FC = () => {
     }
 
     navigate('/checkout', { replace: true });
-  }, [location.state, navigate, isAuthenticated]);
+  }, [location.state, navigate, isAuthenticated, searchParams]);
 
   // Load shipping methods from API
   useEffect(() => {
@@ -121,12 +220,152 @@ export const PaymentPage: React.FC = () => {
     setIsProcessing(true);
 
     try {
-      // Get full name (NEW API FORMAT - no need to split)
+      // Check if this is a payment for an existing order (from payment link)
+      const isExistingOrder = order.id.startsWith('existing-');
+      let orderNumber: string;
+      let totalAmount: number;
+      
+      if (isExistingOrder) {
+        // This is a payment link for an existing order - skip order creation
+        const existingOrderId = parseInt(order.id.replace('existing-', ''));
+        console.log('🔗 Processing payment for existing order ID:', existingOrderId);
+        
+        // Get order details for payment
+        const response = await orderService.getOrderById(existingOrderId);
+        const orderDetails = response.data!;
+        
+        console.log('✅ Existing order loaded for payment:', {
+          orderNumber: orderDetails.orderNumber,
+          totalAmount: orderDetails.totalAmount,
+          paymentStatus: orderDetails.paymentStatus
+        });
+        
+        // Check if already paid
+        if (orderDetails.paymentStatus === 'Paid') {
+          console.log('⚠️ Order already paid');
+          navigate(`/payment-success?orderNumber=${orderDetails.orderNumber}`, { replace: true });
+          return;
+        }
+        
+        orderNumber = orderDetails.orderNumber;
+        totalAmount = orderDetails.totalAmount;
+      } else {
+        // This is a new order - create it first
+        console.log('📦 Creating new order...');
+        
+        // Get full name (NEW API FORMAT - no need to split)
+        const fullName = order.checkoutDetails.isGift 
+          ? order.checkoutDetails.recipientName || order.checkoutDetails.fullName
+          : order.checkoutDetails.fullName;
+
+        // Map shipping method to numeric ID
+        const shippingMethodId = shippingMethods.length > 0 
+          ? shippingService.mapShippingMethodId(order.shippingMethod.id, shippingMethods)
+          : (() => {
+              // Fallback if API methods not loaded yet
+              console.warn('⚠️ Shipping methods not loaded, using fallback mapping');
+              const methodId = order.shippingMethod.id === 'pickup' ? 1 
+                : order.shippingMethod.id === 'nool' ? 2 
+                : order.shippingMethod.id === 'aramex' ? 3 
+                : 1;
+              console.log(`🚚 Fallback mapping: ${order.shippingMethod.id} -> ${methodId}`);
+              return methodId;
+            })();
+
+        const createOrderDto: CreateOrderDto = {
+          // Customer Information (NEW API FORMAT)
+          fullName: fullName,
+          email: order.checkoutDetails.email,
+          phone: order.checkoutDetails.isGift 
+            ? order.checkoutDetails.recipientPhone || order.checkoutDetails.phone
+            : order.checkoutDetails.phone,
+          
+          // Shipping Address (NEW API FORMAT)
+          address: order.checkoutDetails.isGift 
+            ? order.checkoutDetails.recipientAddress || order.checkoutDetails.address
+            : order.checkoutDetails.address,
+          country: order.checkoutDetails.country || 'OM',
+          city: order.checkoutDetails.city || 'Muscat',
+          postalCode: '100', // Default postal code for Oman
+          
+          // Shipping Details (NEW API FORMAT)
+          shippingMethod: shippingMethodId as 1 | 2 | 3,
+          shippingCost: order.totals.shipping,
+          
+          // Gift Information (NEW API FORMAT - only include if gift)
+          isGift: order.checkoutDetails.isGift || false,
+          ...(order.checkoutDetails.isGift && {
+            giftRecipientName: order.checkoutDetails.recipientName,
+            giftRecipientPhone: order.checkoutDetails.recipientPhone,
+            giftRecipientAddress: order.checkoutDetails.recipientAddress,
+            giftRecipientCountry: order.checkoutDetails.recipientCountry || 'Oman',
+            giftRecipientCity: order.checkoutDetails.recipientCity || 'Muscat',
+          }),
+          
+          // Additional (only include if not empty)
+          ...(order.checkoutDetails.notes && { notes: order.checkoutDetails.notes }),
+          
+          // Order Items
+          items: order.items.map((item) => {
+            console.log('📦 Processing item:', {
+              id: item.id,
+              productId: item.productId,
+              productVariantId: item.productVariantId,
+              quantity: item.quantity,
+              name: item.name,
+            });
+            
+            if (!item.productId || isNaN(item.productId)) {
+              console.error('❌ Invalid product ID:', item);
+              throw new Error(`Invalid product ID for item: ${item.name}`);
+            }
+            
+            if (!item.productVariantId || item.productVariantId <= 0) {
+              console.error('❌ Missing or invalid productVariantId:', item);
+              throw new Error(`Product variant ID is required for item: ${item.name}`);
+            }
+            
+            return {
+              productId: item.productId,
+              productVariantId: item.productVariantId,
+              quantity: item.quantity,
+            };
+          }),
+        };
+
+        // Validate required fields
+        if (!fullName || fullName.trim() === '') {
+          throw new Error('Full name is required');
+        }
+        if (!createOrderDto.email || createOrderDto.email.trim() === '') {
+          throw new Error('Email is required');
+        }
+        if (!createOrderDto.phone || createOrderDto.phone.trim() === '') {
+          throw new Error('Phone number is required');
+        }
+        if (!createOrderDto.address || createOrderDto.address.trim() === '') {
+          throw new Error('Address is required');
+        }
+        if (!createOrderDto.shippingMethod || ![1, 2, 3].includes(createOrderDto.shippingMethod)) {
+          throw new Error('Valid shipping method is required (1=Pickup, 2=Nool, 3=Aramex)');
+        }
+        if (createOrderDto.items.length === 0) {
+          throw new Error('Order must contain at least one item');
+        }
+
+        console.log('📦 Sending order data to API:', JSON.stringify(createOrderDto, null, 2));
+        const orderResponse = await orderService.create(createOrderDto);
+        
+        orderNumber = orderResponse.orderNumber;
+        totalAmount = orderResponse.totalAmount || order.totals.total;
+      }
+
+      console.log('🎯 Proceeding to payment with:', { orderNumber, totalAmount });
+
+      // Get full name for payment
       const fullName = order.checkoutDetails.isGift 
         ? order.checkoutDetails.recipientName || order.checkoutDetails.fullName
         : order.checkoutDetails.fullName;
-
-      // Step 1: Create order in server
       // Map shipping method to numeric ID
       const shippingMethodId = shippingMethods.length > 0 
         ? shippingService.mapShippingMethodId(order.shippingMethod.id, shippingMethods)
@@ -234,8 +473,6 @@ export const PaymentPage: React.FC = () => {
       if (!orderResponse || !orderResponse.orderNumber) {
         throw new Error('Failed to create order - invalid response');
       }
-
-      const { orderNumber, totalAmount } = orderResponse;
       
       // Store server order number
       sessionStorage.setItem(ORDER_ID_KEY, orderNumber);

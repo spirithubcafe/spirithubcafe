@@ -8,7 +8,27 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Label } from '../ui/label';
 import { Input } from '../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { FileText, RefreshCw, Eye, Package, DollarSign, Calendar, Edit } from 'lucide-react';
+import { Separator } from '../ui/separator';
+import { ScrollArea } from '../ui/scroll-area';
+import { 
+  FileText, 
+  RefreshCw, 
+  Eye, 
+  Package, 
+  DollarSign, 
+  Calendar, 
+  Edit, 
+  Link,
+  Copy,
+  CheckCircle,
+  Clock,
+  Truck,
+  MapPin,
+  Phone,
+  Mail,
+  Gift,
+  CreditCard
+} from 'lucide-react';
 import { format } from 'date-fns';
 import { orderService } from '../../services';
 import type { Order, OrderStatus, PaymentStatus } from '../../types/order';
@@ -20,13 +40,24 @@ export const OrdersManagement: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  
+  // Dialog states
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showDetailsDialog, setShowDetailsDialog] = useState(false);
+  const [showPaymentLinkDialog, setShowPaymentLinkDialog] = useState(false);
+  
   const [editLoading, setEditLoading] = useState(false);
+  const [invoiceLoading, setInvoiceLoading] = useState(false);
+  const [paymentLinkLoading, setPaymentLinkLoading] = useState(false);
   
   // Edit form state
   const [editStatus, setEditStatus] = useState<OrderStatus>('Pending');
   const [editPaymentStatus, setEditPaymentStatus] = useState<PaymentStatus>('Unpaid');
   const [editTrackingNumber, setEditTrackingNumber] = useState('');
+  
+  // Payment link state
+  const [generatedPaymentLink, setGeneratedPaymentLink] = useState<string>('');
+  const [linkCopied, setLinkCopied] = useState(false);
 
   const isArabic = language === 'ar';
 
@@ -68,8 +99,16 @@ export const OrdersManagement: React.FC = () => {
       const ordersList = response?.data || [];
       setOrders(Array.isArray(ordersList) ? ordersList : []);
       
-      // Calculate total revenue
+      // Debug: Check if orders have items
       if (Array.isArray(ordersList) && ordersList.length > 0) {
+        const firstOrder = ordersList[0];
+        console.log('🔍 First order items check:', {
+          orderNumber: firstOrder.orderNumber,
+          hasItems: !!firstOrder.items,
+          itemsCount: firstOrder.items?.length || 0,
+          itemsData: firstOrder.items
+        });
+        
         const revenue = ordersList
           .filter(o => o.paymentStatus === 'Paid')
           .reduce((sum, o) => sum + o.totalAmount, 0);
@@ -160,6 +199,208 @@ export const OrdersManagement: React.FC = () => {
     } finally {
       setEditLoading(false);
     }
+  };
+
+  const handleViewDetails = async (order: Order) => {
+    try {
+      console.log('🔍 Loading order details for order ID:', order.id);
+      
+      // Get full order details including items
+      const response = await orderService.getOrderById(order.id);
+      
+      // Extract order data from API response
+      const orderDetails: Order = response.data!;
+      
+      console.log('✅ Order details loaded:', {
+        id: orderDetails.id,
+        orderNumber: orderDetails.orderNumber,
+        itemsCount: orderDetails.items?.length || 0,
+        items: orderDetails.items
+      });
+      
+      setSelectedOrder(orderDetails);
+      setShowDetailsDialog(true);
+    } catch (error: any) {
+      console.error('❌ Error loading order details:', error);
+      alert(isArabic ? 'فشل تحميل تفاصيل الطلب' : 'Failed to load order details');
+    }
+  };
+
+  const handleGenerateInvoice = async (order: Order) => {
+    setInvoiceLoading(true);
+    try {
+      console.log('📄 Generating invoice for order ID:', order.id);
+      
+      // Get full order details including items for accurate invoice
+      const response = await orderService.getOrderById(order.id);
+      const orderDetails: Order = response.data!;
+      
+      console.log('✅ Order details for invoice loaded, items count:', orderDetails.items?.length || 0);
+      
+      await generateInvoicePDF(orderDetails);
+      console.log('✅ Invoice generated successfully');
+    } catch (error: any) {
+      console.error('❌ Error generating invoice:', error);
+      alert(isArabic ? 'فشل إنشاء الفاتورة' : 'Failed to generate invoice');
+    } finally {
+      setInvoiceLoading(false);
+    }
+  };
+
+  const handleGeneratePaymentLink = async (order: Order) => {
+    if (order.paymentStatus === 'Paid') {
+      alert(isArabic ? 'هذا الطلب مدفوع بالفعل' : 'This order is already paid');
+      return;
+    }
+
+    setSelectedOrder(order);
+    setPaymentLinkLoading(true);
+    try {
+      const link = `${window.location.origin}/payment?orderId=${order.id}&token=${generatePaymentToken(order)}`;
+      setGeneratedPaymentLink(link);
+      setShowPaymentLinkDialog(true);
+      console.log('✅ Payment link generated successfully');
+    } catch (error: any) {
+      console.error('❌ Error generating payment link:', error);
+      alert(isArabic ? 'فشل إنشاء رابط الدفع' : 'Failed to generate payment link');
+    } finally {
+      setPaymentLinkLoading(false);
+    }
+  };
+
+  const handleCopyPaymentLink = async () => {
+    try {
+      await navigator.clipboard.writeText(generatedPaymentLink);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
+    } catch (error) {
+      console.error('❌ Error copying to clipboard:', error);
+    }
+  };
+
+  const generatePaymentToken = (order: Order) => {
+    return btoa(`${order.id}-${order.orderNumber}-${Date.now()}`);
+  };
+
+  const generateInvoicePDF = async (order: Order) => {
+    const invoiceContent = generateInvoiceHTML(order);
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(invoiceContent);
+      printWindow.document.close();
+      printWindow.focus();
+      setTimeout(() => printWindow.print(), 500);
+    }
+  };
+
+  const generateInvoiceHTML = (order: Order) => {
+    const isRTL = isArabic;
+    return `
+      <!DOCTYPE html>
+      <html dir="${isRTL ? 'rtl' : 'ltr'}" lang="${isRTL ? 'ar' : 'en'}">
+      <head>
+        <meta charset="UTF-8">
+        <title>${isRTL ? 'فاتورة' : 'Invoice'} #${order.orderNumber}</title>
+        <style>
+          body { font-family: ${isRTL ? '"Arial", "Tahoma"' : 'Arial, sans-serif'}; margin: 20px; }
+          .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 30px; }
+          .info { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
+          .items { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+          .items th, .items td { border: 1px solid #ddd; padding: 10px; text-align: ${isRTL ? 'right' : 'left'}; }
+          .items th { background-color: #f5f5f5; }
+          .total { text-align: ${isRTL ? 'left' : 'right'}; font-size: 18px; font-weight: bold; }
+          .status { display: inline-block; padding: 5px 10px; border-radius: 5px; color: white; }
+          .status.paid { background-color: #10b981; }
+          .status.unpaid { background-color: #f59e0b; }
+          .status.failed { background-color: #ef4444; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>${isRTL ? 'فاتورة' : 'Invoice'}</h1>
+          <h2>#${order.orderNumber}</h2>
+          <p>${isRTL ? 'تاريخ الطلب' : 'Order Date'}: ${format(new Date(order.createdAt), 'dd/MM/yyyy HH:mm')}</p>
+        </div>
+        
+        <div class="info">
+          <div>
+            <h3>${isRTL ? 'معلومات العميل' : 'Customer Information'}</h3>
+            <p><strong>${isRTL ? 'الاسم الكامل' : 'Full Name'}:</strong> ${order.fullName}</p>
+            <p><strong>${isRTL ? 'البريد الإلكتروني' : 'Email'}:</strong> ${order.email}</p>
+            <p><strong>${isRTL ? 'الهاتف' : 'Phone'}:</strong> ${order.phone}</p>
+            <p><strong>${isRTL ? 'المدينة' : 'City'}:</strong> ${order.city}</p>
+            <p><strong>${isRTL ? 'البلد' : 'Country'}:</strong> ${order.country}</p>
+            ${order.postalCode ? `<p><strong>${isRTL ? 'الرمز البريدي' : 'Postal Code'}:</strong> ${order.postalCode}</p>` : ''}
+            <p><strong>${isRTL ? 'العنوان الكامل' : 'Full Address'}:</strong><br/>
+               ${order.address}<br/>
+               ${order.city}, ${order.country}${order.postalCode ? ` - ${order.postalCode}` : ''}
+            </p>
+          </div>
+          <div>
+            <h3>${isRTL ? 'معلومات الطلب' : 'Order Information'}</h3>
+            <p><strong>${isRTL ? 'حالة الطلب' : 'Order Status'}:</strong> ${order.status}</p>
+            <p><strong>${isRTL ? 'حالة الدفع' : 'Payment Status'}:</strong> ${order.paymentStatus}</p>
+            <p><strong>${isRTL ? 'طريقة الشحن' : 'Shipping Method'}:</strong> ${order.shippingMethod === 1 ? (isRTL ? 'استلام من المتجر' : 'Store Pickup') : order.shippingMethod === 2 ? 'Nool Delivery' : 'Aramex Courier'}</p>
+            ${order.trackingNumber ? `<p><strong>${isRTL ? 'رقم التتبع' : 'Tracking Number'}:</strong> ${order.trackingNumber}</p>` : ''}
+          </div>
+        </div>
+
+        ${order.isGift ? `
+        <div class="gift-section" style="margin-bottom: 30px; padding: 20px; border: 2px solid #10b981; border-radius: 8px; background-color: #f0fdf4;">
+          <h3 style="color: #10b981; margin-bottom: 15px;">${isRTL ? '🎁 معلومات الهدية' : '🎁 Gift Information'}</h3>
+          ${order.giftRecipientName ? `<p><strong>${isRTL ? 'اسم المستلم' : 'Recipient Name'}:</strong> ${order.giftRecipientName}</p>` : ''}
+          ${order.giftRecipientPhone ? `<p><strong>${isRTL ? 'هاتف المستلم' : 'Recipient Phone'}:</strong> ${order.giftRecipientPhone}</p>` : ''}
+          ${order.giftRecipientEmail ? `<p><strong>${isRTL ? 'بريد المستلم' : 'Recipient Email'}:</strong> ${order.giftRecipientEmail}</p>` : ''}
+          ${order.giftRecipientAddress ? `
+            <p><strong>${isRTL ? 'عنوان التسليم' : 'Delivery Address'}:</strong><br/>
+               ${order.giftRecipientAddress}<br/>
+               ${order.giftRecipientCity || order.city}, ${order.giftRecipientCountry || order.country}${order.giftRecipientPostalCode ? ` - ${order.giftRecipientPostalCode}` : ''}
+            </p>
+          ` : ''}
+          ${order.giftMessage ? `
+            <p><strong>${isRTL ? 'رسالة الهدية' : 'Gift Message'}:</strong></p>
+            <div style="padding: 10px; background-color: white; border-radius: 4px; font-style: italic; margin-top: 5px;">
+              "${order.giftMessage}"
+            </div>
+          ` : ''}
+        </div>
+        ` : ''}
+
+        <table class="items">
+          <thead>
+            <tr>
+              <th>${isRTL ? 'المنتج' : 'Product'}</th>
+              <th>${isRTL ? 'الكمية' : 'Quantity'}</th>
+              <th>${isRTL ? 'السعر' : 'Price'}</th>
+              <th>${isRTL ? 'المجموع' : 'Total'}</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${order.items?.map(item => `
+              <tr>
+                <td>${item.productName || 'Product'}</td>
+                <td>${item.quantity}</td>
+                <td>${item.unitPrice?.toFixed(3) || '0.000'} ${isRTL ? 'ر.ع.' : 'OMR'}</td>
+                <td>${item.totalAmount?.toFixed(3) || '0.000'} ${isRTL ? 'ر.ع.' : 'OMR'}</td>
+              </tr>
+            `).join('') || ''}
+          </tbody>
+        </table>
+
+        <div class="total">
+          <p>${isRTL ? 'الشحن' : 'Shipping'}: ${order.shippingCost?.toFixed(3) || '0.000'} ${isRTL ? 'ر.ع.' : 'OMR'}</p>
+          <p><strong>${isRTL ? 'المجموع الإجمالي' : 'Total Amount'}: ${order.totalAmount.toFixed(3)} ${isRTL ? 'ر.ع.' : 'OMR'}</strong></p>
+        </div>
+
+        ${order.notes ? `
+          <div style="margin-top: 30px;">
+            <h3>${isRTL ? 'ملاحظات' : 'Notes'}</h3>
+            <p>${order.notes}</p>
+          </div>
+        ` : ''}
+      </body>
+      </html>
+    `;
   };
 
   const getStatusColor = (status: string) => {
@@ -378,7 +619,12 @@ export const OrdersManagement: React.FC = () => {
                           <div className="text-xs text-muted-foreground">{order.email}</div>
                         </div>
                       </TableCell>
-                      <TableCell>{order.items?.length || 0}</TableCell>
+                      <TableCell>
+                        {order.items?.length || 0}
+                        {!order.items && (
+                          <span className="text-xs text-muted-foreground ml-1">(loading...)</span>
+                        )}
+                      </TableCell>
                       <TableCell>OMR {order.totalAmount.toFixed(3)}</TableCell>
                       <TableCell>
                         <Badge className={getStatusColor(order.status)}>
@@ -393,17 +639,45 @@ export const OrdersManagement: React.FC = () => {
                       <TableCell>
                         {format(new Date(order.createdAt), 'MMM dd, yyyy')}
                       </TableCell>
-                      <TableCell className="text-right space-x-2">
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => handleEditOrder(order)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm">
-                          <Eye className="h-4 w-4" />
-                        </Button>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => handleViewDetails(order)}
+                            title={isArabic ? 'عرض التفاصيل' : 'View Details'}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => handleEditOrder(order)}
+                            title={isArabic ? 'تعديل الطلب' : 'Edit Order'}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => handleGenerateInvoice(order)}
+                            title={isArabic ? 'طباعة الفاتورة' : 'Print Invoice'}
+                            disabled={invoiceLoading}
+                          >
+                            <FileText className="h-4 w-4" />
+                          </Button>
+                          {order.paymentStatus !== 'Paid' && (
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleGeneratePaymentLink(order)}
+                              title={isArabic ? 'إنشاء رابط دفع' : 'Generate Payment Link'}
+                              disabled={paymentLinkLoading}
+                            >
+                              <CreditCard className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -498,6 +772,458 @@ export const OrdersManagement: React.FC = () => {
                 ? (isArabic ? 'جاري الحفظ...' : 'Saving...') 
                 : (isArabic ? 'حفظ' : 'Save')
               }
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Order Details Dialog */}
+      <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
+        <DialogContent className="max-w-4xl max-h-[90vh]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Package className="h-5 w-5" />
+              {isArabic ? 'تفاصيل الطلب' : 'Order Details'} #{selectedOrder?.orderNumber}
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedOrder && (
+            <ScrollArea className="max-h-[70vh] pr-4">
+              <div className="space-y-6">
+                {/* Order Status Summary */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm font-medium">
+                          {isArabic ? 'حالة الطلب' : 'Order Status'}
+                        </span>
+                      </div>
+                      <Badge className={`${getStatusColor(selectedOrder.status)} mt-2`}>
+                        {selectedOrder.status}
+                      </Badge>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-2">
+                        <CreditCard className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm font-medium">
+                          {isArabic ? 'حالة الدفع' : 'Payment Status'}
+                        </span>
+                      </div>
+                      <Badge className={`${getPaymentStatusColor(selectedOrder.paymentStatus)} mt-2`}>
+                        {selectedOrder.paymentStatus}
+                      </Badge>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-2">
+                        <DollarSign className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm font-medium">
+                          {isArabic ? 'المبلغ الإجمالي' : 'Total Amount'}
+                        </span>
+                      </div>
+                      <div className="text-lg font-bold mt-1">
+                        {selectedOrder.totalAmount.toFixed(3)} {isArabic ? 'ر.ع.' : 'OMR'}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Customer Information */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4" />
+                      {isArabic ? 'معلومات العميل' : 'Customer Information'}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label className="text-sm font-medium">
+                          {isArabic ? 'الاسم الكامل' : 'Full Name'}
+                        </Label>
+                        <p className="mt-1 font-medium">{selectedOrder.fullName}</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium">
+                          {isArabic ? 'البريد الإلكتروني' : 'Email'}
+                        </Label>
+                        <p className="mt-1 flex items-center gap-2">
+                          <Mail className="h-4 w-4 text-muted-foreground" />
+                          {selectedOrder.email}
+                        </p>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium">
+                          {isArabic ? 'رقم الهاتف' : 'Phone Number'}
+                        </Label>
+                        <p className="mt-1 flex items-center gap-2">
+                          <Phone className="h-4 w-4 text-muted-foreground" />
+                          {selectedOrder.phone}
+                        </p>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium">
+                          {isArabic ? 'المنطقة/المدينة' : 'City/Region'}
+                        </Label>
+                        <p className="mt-1">{selectedOrder.city}</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium">
+                          {isArabic ? 'البلد' : 'Country'}
+                        </Label>
+                        <p className="mt-1">{selectedOrder.country}</p>
+                      </div>
+                      {selectedOrder.postalCode && (
+                        <div>
+                          <Label className="text-sm font-medium">
+                            {isArabic ? 'الرمز البريدي' : 'Postal Code'}
+                          </Label>
+                          <p className="mt-1">{selectedOrder.postalCode}</p>
+                        </div>
+                      )}
+                      <div className="md:col-span-2">
+                        <Label className="text-sm font-medium">
+                          {isArabic ? 'العنوان الكامل' : 'Full Address'}
+                        </Label>
+                        <p className="mt-1 p-3 bg-muted rounded-md">
+                          {selectedOrder.address}
+                          <br />
+                          {selectedOrder.city}, {selectedOrder.country}
+                          {selectedOrder.postalCode && ` - ${selectedOrder.postalCode}`}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Shipping Information */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Truck className="h-4 w-4" />
+                      {isArabic ? 'معلومات الشحن' : 'Shipping Information'}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label className="text-sm font-medium">
+                          {isArabic ? 'طريقة الشحن' : 'Shipping Method'}
+                        </Label>
+                        <p className="mt-1">
+                          {selectedOrder.shippingMethod === 1 
+                            ? (isArabic ? 'استلام من المتجر' : 'Store Pickup')
+                            : selectedOrder.shippingMethod === 2 
+                            ? 'Nool Delivery'
+                            : 'Aramex Courier'
+                          }
+                        </p>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium">
+                          {isArabic ? 'تكلفة الشحن' : 'Shipping Cost'}
+                        </Label>
+                        <p className="mt-1">
+                          {selectedOrder.shippingCost?.toFixed(3) || '0.000'} {isArabic ? 'ر.ع.' : 'OMR'}
+                        </p>
+                      </div>
+                      {selectedOrder.trackingNumber && (
+                        <div className="md:col-span-2">
+                          <Label className="text-sm font-medium">
+                            {isArabic ? 'رقم التتبع' : 'Tracking Number'}
+                          </Label>
+                          <p className="mt-1 font-mono text-sm bg-muted px-2 py-1 rounded">
+                            {selectedOrder.trackingNumber}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Order Items */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Package className="h-4 w-4" />
+                      {isArabic ? 'عناصر الطلب' : 'Order Items'}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {selectedOrder.items?.map((item, index) => (
+                        <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
+                          <div className="flex items-center gap-4">
+                            {item.productImage && (
+                              <img 
+                                src={item.productImage} 
+                                alt={item.productName}
+                                className="w-12 h-12 object-cover rounded-md"
+                              />
+                            )}
+                            <div>
+                              <h4 className="font-medium">{item.productName}</h4>
+                              {item.variantInfo && (
+                                <p className="text-sm text-muted-foreground">{item.variantInfo}</p>
+                              )}
+                              <p className="text-sm text-muted-foreground">
+                                {isArabic ? 'الكمية' : 'Qty'}: {item.quantity}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-medium">
+                              {item.totalAmount.toFixed(3)} {isArabic ? 'ر.ع.' : 'OMR'}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              {item.unitPrice.toFixed(3)} × {item.quantity}
+                            </p>
+                          </div>
+                        </div>
+                      )) || (
+                        <p className="text-muted-foreground text-center py-4">
+                          {isArabic ? 'لا توجد عناصر' : 'No items found'}
+                        </p>
+                      )}
+                    </div>
+                    
+                    <Separator className="my-4" />
+                    
+                    {/* Order Total */}
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span>{isArabic ? 'تكلفة الشحن' : 'Shipping Cost'}</span>
+                        <span>{selectedOrder.shippingCost?.toFixed(3) || '0.000'} {isArabic ? 'ر.ع.' : 'OMR'}</span>
+                      </div>
+                      <div className="flex justify-between font-bold text-lg border-t pt-2">
+                        <span>{isArabic ? 'الإجمالي' : 'Total'}</span>
+                        <span>{selectedOrder.totalAmount.toFixed(3)} {isArabic ? 'ر.ع.' : 'OMR'}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Gift Information */}
+                {selectedOrder.isGift && (
+                  <Card className="border-green-200 bg-green-50">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-green-700">
+                        <Gift className="h-4 w-4" />
+                        {isArabic ? '🎁 تفاصيل الهدية' : '🎁 Gift Details'}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {selectedOrder.giftRecipientName && (
+                          <div>
+                            <Label className="text-sm font-medium text-green-800">
+                              {isArabic ? 'اسم المستلم' : 'Recipient Name'}
+                            </Label>
+                            <p className="mt-1 font-medium">{selectedOrder.giftRecipientName}</p>
+                          </div>
+                        )}
+                        {selectedOrder.giftRecipientPhone && (
+                          <div>
+                            <Label className="text-sm font-medium text-green-800">
+                              {isArabic ? 'هاتف المستلم' : 'Recipient Phone'}
+                            </Label>
+                            <p className="mt-1 flex items-center gap-2">
+                              <Phone className="h-4 w-4 text-muted-foreground" />
+                              {selectedOrder.giftRecipientPhone}
+                            </p>
+                          </div>
+                        )}
+                        {selectedOrder.giftRecipientEmail && (
+                          <div>
+                            <Label className="text-sm font-medium text-green-800">
+                              {isArabic ? 'بريد المستلم' : 'Recipient Email'}
+                            </Label>
+                            <p className="mt-1 flex items-center gap-2">
+                              <Mail className="h-4 w-4 text-muted-foreground" />
+                              {selectedOrder.giftRecipientEmail}
+                            </p>
+                          </div>
+                        )}
+                        {selectedOrder.giftRecipientAddress && (
+                          <div>
+                            <Label className="text-sm font-medium text-green-800">
+                              {isArabic ? 'عنوان التسليم' : 'Delivery Address'}
+                            </Label>
+                            <p className="mt-1">{selectedOrder.giftRecipientAddress}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {selectedOrder.giftRecipientCity || selectedOrder.city}, {selectedOrder.giftRecipientCountry || selectedOrder.country}
+                              {selectedOrder.giftRecipientPostalCode && ` - ${selectedOrder.giftRecipientPostalCode}`}
+                            </p>
+                          </div>
+                        )}
+                        {selectedOrder.giftMessage && (
+                          <div className="md:col-span-2">
+                            <Label className="text-sm font-medium text-green-800">
+                              {isArabic ? 'رسالة الهدية' : 'Gift Message'}
+                            </Label>
+                            <div className="mt-1 p-3 bg-white border border-green-200 rounded-md italic">
+                              "{selectedOrder.giftMessage}"
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Notes */}
+                {selectedOrder.notes && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>{isArabic ? 'ملاحظات' : 'Notes'}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="p-3 bg-muted rounded-md">{selectedOrder.notes}</p>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Order Timeline */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4" />
+                      {isArabic ? 'التواريخ المهمة' : 'Important Dates'}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      <div className="flex justify-between">
+                        <span className="text-sm font-medium">
+                          {isArabic ? 'تاريخ الإنشاء' : 'Created Date'}
+                        </span>
+                        <span className="text-sm">
+                          {format(new Date(selectedOrder.createdAt), 'MMM dd, yyyy HH:mm')}
+                        </span>
+                      </div>
+                      {selectedOrder.updatedAt && (
+                        <div className="flex justify-between">
+                          <span className="text-sm font-medium">
+                            {isArabic ? 'آخر تحديث' : 'Last Updated'}
+                          </span>
+                          <span className="text-sm">
+                            {format(new Date(selectedOrder.updatedAt), 'MMM dd, yyyy HH:mm')}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </ScrollArea>
+          )}
+          
+          <div className="flex justify-end gap-3 mt-4">
+            <Button variant="outline" onClick={() => setShowDetailsDialog(false)}>
+              {isArabic ? 'إغلاق' : 'Close'}
+            </Button>
+            <Button onClick={() => {
+              if (selectedOrder) {
+                handleGenerateInvoice(selectedOrder);
+              }
+            }}>
+              <FileText className="h-4 w-4 mr-2" />
+              {isArabic ? 'طباعة الفاتورة' : 'Print Invoice'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Payment Link Dialog */}
+      <Dialog open={showPaymentLinkDialog} onOpenChange={setShowPaymentLinkDialog}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Link className="h-5 w-5" />
+              {isArabic ? 'رابط الدفع' : 'Payment Link'}
+            </DialogTitle>
+            <DialogDescription>
+              {isArabic 
+                ? `رابط الدفع للطلب ${selectedOrder?.orderNumber || ''}`
+                : `Payment link for order ${selectedOrder?.orderNumber || ''}`
+              }
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="paymentLink">
+                {isArabic ? 'رابط الدفع' : 'Payment Link'}
+              </Label>
+              <div className="flex gap-2 mt-2">
+                <Input
+                  id="paymentLink"
+                  value={generatedPaymentLink}
+                  readOnly
+                  className="font-mono text-sm"
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCopyPaymentLink}
+                  className="shrink-0"
+                >
+                  {linkCopied ? (
+                    <CheckCircle className="h-4 w-4 text-green-600" />
+                  ) : (
+                    <Copy className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
+              {linkCopied && (
+                <p className="text-sm text-green-600 mt-1">
+                  {isArabic ? 'تم نسخ الرابط!' : 'Link copied!'}
+                </p>
+              )}
+            </div>
+
+            <div className="p-4 bg-muted rounded-lg">
+              <h4 className="font-medium mb-2">
+                {isArabic ? 'كيفية الاستخدام' : 'How to use'}
+              </h4>
+              <ul className="text-sm space-y-1 text-muted-foreground">
+                <li>
+                  {isArabic 
+                    ? '• انسخ الرابط وأرسله للعميل'
+                    : '• Copy the link and send it to the customer'
+                  }
+                </li>
+                <li>
+                  {isArabic 
+                    ? '• الرابط صالح لمدة 24 ساعة'
+                    : '• Link is valid for 24 hours'
+                  }
+                </li>
+                <li>
+                  {isArabic 
+                    ? '• بعد الدفع سيتم تحديث حالة الطلب تلقائياً'
+                    : '• Order status will be updated automatically after payment'
+                  }
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3">
+            <Button variant="outline" onClick={() => setShowPaymentLinkDialog(false)}>
+              {isArabic ? 'إغلاق' : 'Close'}
+            </Button>
+            <Button onClick={handleCopyPaymentLink}>
+              <Copy className="h-4 w-4 mr-2" />
+              {isArabic ? 'نسخ الرابط' : 'Copy Link'}
             </Button>
           </div>
         </DialogContent>

@@ -2,15 +2,24 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useApp } from '../hooks/useApp';
-import { motion } from 'framer-motion';
+// import { motion } from 'framer-motion';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
+import { Textarea } from '../components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import { Badge } from '../components/ui/badge';
+import { Separator } from '../components/ui/separator';
+import { Alert, AlertDescription } from '../components/ui/alert';
 import { Seo } from '../components/seo/Seo';
-import { siteMetadata } from '../config/siteMetadata';
+import { resolveAbsoluteUrl } from '../config/siteMetadata';
+import { orderService } from '../services';
+import type { Order } from '../types/order';
+import { format } from 'date-fns';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
-import type { LucideIcon } from 'lucide-react';
 import { 
   User, 
   Mail, 
@@ -19,20 +28,20 @@ import {
   Edit2, 
   Save, 
   X, 
-  Heart, 
   ShoppingBag, 
-  Bell, 
-  CreditCard,
-  Settings,
   Shield,
-
   Coffee,
   Star,
   Clock,
   Activity,
   ArrowLeft,
   Camera,
-  ChevronRight
+  Package,
+  DollarSign,
+  Calendar,
+  CheckCircle,
+  Eye,
+  Globe
 } from 'lucide-react';
 
 interface ProfileStats {
@@ -43,70 +52,157 @@ interface ProfileStats {
   loyaltyPoints: number;
 }
 
+interface UserProfile {
+  fullName: string;
+  email: string;
+  phone: string;
+  address: string;
+  city: string;
+  country: string;
+  postalCode: string;
+  bio: string;
+  avatar: string;
+}
+
 const ProfilePage: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
-  const { t, language } = useApp();
+  const { language } = useApp();
   const navigate = useNavigate();
+  const isArabic = language === 'ar';
+  
   const [activeTab, setActiveTab] = useState('overview');
   const [isEditing, setIsEditing] = useState(false);
-  const [editData, setEditData] = useState({
-    displayName: user?.displayName || '',
-    email: user?.username || '',
-    phone: '+968 9876 5432',
-    address: 'Muscat, Oman'
-  });
-
-  const seoTitle = language === 'ar' ? 'ملفي الشخصي' : 'My profile';
-  const seoDescription =
-    language === 'ar'
-      ? 'أدر بياناتك الشخصية وطلباتك المفضلة في سبيريت هب كافيه.'
-      : 'Manage your Spirit Hub Cafe account, favorites, and orders.';
-  const canonicalProfileUrl = `${siteMetadata.baseUrl}/profile`;
-
-  // Get real user statistics from localStorage and context
-  const [userStats, setUserStats] = useState<ProfileStats>({
+  const [isLoading, setIsLoading] = useState(false);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [saveMessage, setSaveMessage] = useState('');
+  
+  const [stats, setStats] = useState<ProfileStats>({
     totalOrders: 0,
     totalSpent: 0,
     favoriteProducts: 0,
-    memberSince: '',
+    memberSince: new Date().toISOString(),
     loyaltyPoints: 0
   });
+  
+  const [profileData, setProfileData] = useState<UserProfile>({
+    fullName: user?.displayName || '',
+    email: user?.username || '',
+    phone: '',
+    address: '',
+    city: '',
+    country: 'عُمان',
+    postalCode: '',
+    bio: '',
+    avatar: ''
+  });
+  
+  const [editData, setEditData] = useState<UserProfile>(profileData);
 
+  // Load user data and orders
   useEffect(() => {
-    // Calculate real stats from localStorage
-    try {
-      // Get order history from localStorage
-      const orderHistory = JSON.parse(localStorage.getItem('spirithub_order_history') || '[]');
-      const totalOrders = orderHistory.length;
-      const totalSpent = orderHistory.reduce((sum: number, order: { total?: number }) => sum + (order.total || 0), 0);
-
-      // Get favorites from localStorage  
-      const favorites = JSON.parse(localStorage.getItem('spirithub_favorites') || '[]');
-      const favoriteProducts = favorites.length;
-
-      setUserStats({
-        totalOrders,
-        totalSpent: parseFloat(totalSpent.toFixed(2)),
-        favoriteProducts,
-        memberSince: '',
-        loyaltyPoints: 0
-      });
-    } catch (error) {
-      console.error('Error loading user stats:', error);
-      // Fallback to default values
-      setUserStats({
-        totalOrders: 0,
-        totalSpent: 0,
-        favoriteProducts: 0,
-        memberSince: '',
-        loyaltyPoints: 0
-      });
+    if (isAuthenticated && user) {
+      loadUserOrders();
+      
+      // Update profile data with user info
+      setProfileData(prev => ({
+        ...prev,
+        fullName: user.displayName || '',
+        email: user.username || ''
+      }));
+      
+      setEditData(prev => ({
+        ...prev,
+        fullName: user.displayName || '',
+        email: user.username || ''
+      }));
     }
-  }, []);
+  }, [isAuthenticated, user]);
+
+  const loadUserOrders = async () => {
+    if (!user) return;
+    
+    try {
+      setIsLoading(true);
+      console.log('Loading orders for user:', user);
+      
+      // Load user's orders
+      const response = await orderService.getOrders({ page: 1, pageSize: 100 });
+      console.log('Orders response:', response);
+      
+      // Filter orders by user - try multiple matching strategies
+      const allOrders = response.data || [];
+      const userOrders = allOrders.filter((order: Order) => {
+        // Try different matching strategies
+        const matchesEmail = order.email === user.username;
+        const matchesUserId = order.userId && order.userId === user.id.toString();
+        const matchesUserIdNumber = order.userId && parseInt(order.userId) === user.id;
+        
+        console.log(`Order ${order.id}: email=${order.email}, userId=${order.userId}, user.username=${user.username}, user.id=${user.id}`);
+        console.log(`Matches: email=${matchesEmail}, userId=${matchesUserId}, userIdNumber=${matchesUserIdNumber}`);
+        
+        return matchesEmail || matchesUserId || matchesUserIdNumber;
+      });
+      
+      console.log('Filtered user orders:', userOrders);
+      setOrders(userOrders);
+      
+      // Calculate stats
+      const totalOrders = userOrders.length;
+      const totalSpent = userOrders
+        .filter((order: Order) => order.paymentStatus === 'Paid')
+        .reduce((sum: number, order: Order) => sum + order.totalAmount, 0);
+      
+      setStats({
+        totalOrders,
+        totalSpent,
+        favoriteProducts: 0, // TODO: Implement favorites
+        memberSince: user.lastLoggedIn || new Date().toISOString(),
+        loyaltyPoints: Math.floor(totalSpent * 10) // 10 points per OMR
+      });
+      
+    } catch (error) {
+      console.error('Failed to load user orders:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSaveProfile = async () => {
+    try {
+      setIsLoading(true);
+      
+      // TODO: Implement API call to update user profile
+      // await userService.updateProfile(editData);
+      
+      setProfileData(editData);
+      setIsEditing(false);
+      setSaveMessage(isArabic ? 'تم حفظ البيانات بنجاح' : 'Profile updated successfully');
+      
+      setTimeout(() => setSaveMessage(''), 3000);
+    } catch (error) {
+      console.error('Failed to update profile:', error);
+      setSaveMessage(isArabic ? 'فشل في حفظ البيانات' : 'Failed to update profile');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditData(profileData);
+    setIsEditing(false);
+    setSaveMessage('');
+  };
+
+  // SEO data
+  const seoTitle = isArabic ? 'الملف الشخصي - سبيريت هب كافيه' : 'Profile - Spirit Hub Cafe';
+  const seoDescription = isArabic 
+    ? 'إدارة الملف الشخصي ومعلومات الحساب في سبيريت هب كافيه'
+    : 'Manage your profile and account information at Spirit Hub Cafe';
+  const canonicalProfileUrl = resolveAbsoluteUrl('/profile');
 
   if (!isAuthenticated || !user) {
     return (
-      <div className={`min-h-screen bg-gray-50 pt-20 ${language === 'ar' ? 'rtl' : 'ltr'}`}>
+      <div className={`min-h-screen bg-gray-50 pt-20 ${isArabic ? 'rtl' : 'ltr'}`}>
         <Seo
           title={seoTitle}
           description={seoDescription}
@@ -119,16 +215,16 @@ const ProfilePage: React.FC = () => {
             <CardHeader>
               <User className="h-16 w-16 text-stone-400 mx-auto mb-4" />
               <CardTitle className="text-2xl">
-                {t('auth.loginRequired')}
+                {isArabic ? 'يرجى تسجيل الدخول' : 'Login Required'}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-gray-600 mb-6">
-                {t('profile.loginPrompt')}
+                {isArabic ? 'يرجى تسجيل الدخول لعرض الملف الشخصي' : 'Please login to view your profile'}
               </p>
-              <Button onClick={() => navigate('/')}>
+              <Button onClick={() => navigate('/login')}>
                 <ArrowLeft className="h-4 w-4 mr-2" />
-                {t('common.backHome')}
+                {isArabic ? 'تسجيل الدخول' : 'Login'}
               </Button>
             </CardContent>
           </Card>
@@ -137,95 +233,8 @@ const ProfilePage: React.FC = () => {
     );
   }
 
-
-
-  type MenuAction = {
-    id: string;
-    title: string;
-    description: string;
-    icon: LucideIcon;
-    onClick: () => void;
-  };
-
-  const tabs = [
-    {
-      id: 'overview',
-      label: t('profile.tabs.overview'),
-      labelAr: 'نظرة عامة',
-      icon: Activity
-    },
-    {
-      id: 'orders',
-      label: t('profile.tabs.orders'),
-      labelAr: 'الطلبات',
-      icon: ShoppingBag
-    },
-    {
-      id: 'favorites',
-      label: t('profile.tabs.favorites'),
-      labelAr: 'المفضلة',
-      icon: Heart
-    }
-  ];
-
-  const handleCancel = () => {
-    setEditData({
-      displayName: user?.displayName || '',
-      email: user?.username || '',
-      phone: '+968 9876 5432',
-      address: 'Muscat, Oman'
-    });
-    setIsEditing(false);
-  };
-
-  const quickActions: MenuAction[] = [
-    {
-      id: 'orders',
-      icon: ShoppingBag,
-      title: t('profile.viewOrders'),
-      description: language === 'ar' ? 'تتبع مشترياتك الأخيرة' : 'Keep track of your recent purchases',
-      onClick: () => navigate('/orders')
-    },
-    {
-      id: 'favorites',
-      icon: Heart,
-      title: t('profile.manageFavorites'),
-      description: language === 'ar' ? 'نظّم مشروباتك المفضلة' : 'Organize the drinks you love most',
-      onClick: () => navigate('/favorites')
-    }
-  ];
-
-  const settingsActions: MenuAction[] = [
-    {
-      id: 'notifications',
-      icon: Bell,
-      title: t('profile.notificationSettings'),
-      description: language === 'ar' ? 'عدّل تنبيهات الطلبات والعروض' : 'Fine-tune order alerts and offers',
-      onClick: () => navigate('/profile/notifications')
-    },
-    {
-      id: 'payment',
-      icon: CreditCard,
-      title: t('profile.paymentMethods'),
-      description: language === 'ar' ? 'أدر طرق الدفع بكل أمان' : 'Manage your payment methods securely',
-      onClick: () => navigate('/profile/payment')
-    },
-    {
-      id: 'support',
-      icon: Shield,
-      title: t('profile.helpSupport'),
-      description: language === 'ar' ? 'اطلب المساعدة أو الدعم' : 'Get assistance or reach support',
-      onClick: () => navigate('/profile/help')
-    }
-  ];
-
-  const chevronDirectionClass =
-    language === 'ar'
-      ? 'rotate-180 group-hover:-translate-x-0.5'
-      : 'group-hover:translate-x-0.5';
-
   return (
-    <div className={`min-h-screen bg-background pt-20 pb-12 ${language === 'ar' ? 'rtl' : 'ltr'}`}>
+    <div className={`min-h-screen bg-gray-50 pt-20 ${isArabic ? 'rtl' : 'ltr'}`}>
       <Seo
         title={seoTitle}
         description={seoDescription}
@@ -233,333 +242,491 @@ const ProfilePage: React.FC = () => {
         noindex
         robots="noindex, nofollow"
       />
-      <div className="container mx-auto py-12">
-        {/* Header Section - Professional & Responsive */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
-          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 p-6 bg-card rounded-lg border shadow-sm">
-            {/* User Info Section */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 flex-1">
-              {/* Avatar */}
-              <div className="relative group">
-                <Avatar className="h-24 w-24 ring-2 ring-border shadow-md">
-                  <AvatarImage src="/placeholder-avatar.jpg" alt={user.displayName || 'User'} />
-                  <AvatarFallback className="text-2xl bg-muted text-muted-foreground">
-                    {user.displayName?.charAt(0) || user.username?.charAt(0) || 'U'}
-                  </AvatarFallback>
-                </Avatar>
-                <button 
-                  className="absolute inset-0 bg-black/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center"
-                  title={t('profile.changePhoto')}
-                  aria-label={t('profile.changePhoto')}
-                >
-                  <Camera className="h-4 w-4 text-white" />
-                </button>
-              </div>
-
-              {/* User Details */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-3 mb-2">
-                  <h1 className="text-3xl font-bold text-foreground truncate">
-                    {user.displayName || user.username}
-                  </h1>
-                </div>
-                <p className="text-muted-foreground mb-4">
-                  {user.username}
-                </p>
-                
-                {/* Quick Stats - Full Width Grid */}
-                <div className="grid grid-cols-3 gap-2 sm:gap-4 w-full">
-                  <div className="flex flex-col items-center justify-center p-3 sm:p-6 bg-white rounded-lg border border-gray-200 min-h-20 sm:min-h-[100px] flex-1">
-                    <div className="text-xl sm:text-3xl font-bold text-gray-900 mb-0.5 sm:mb-1">{userStats.totalOrders}</div>
-                    <div className="text-[10px] sm:text-sm text-gray-600 font-medium text-center leading-tight">{t('profile.totalOrders')}</div>
-                  </div>
-                  <div className="flex flex-col items-center justify-center p-3 sm:p-6 bg-white rounded-lg border border-gray-200 min-h-20 sm:min-h-[100px] flex-1">
-                    <div className="text-xl sm:text-3xl font-bold text-gray-900 mb-0.5 sm:mb-1">{userStats.totalSpent}</div>
-                    <div className="text-[10px] sm:text-sm text-gray-600 font-medium text-center leading-tight">{t('profile.totalSpent')}</div>
-                  </div>
-                  <div className="flex flex-col items-center justify-center p-3 sm:p-6 bg-white rounded-lg border border-gray-200 min-h-20 sm:min-h-[100px] flex-1">
-                    <div className="text-xl sm:text-3xl font-bold text-gray-900 mb-0.5 sm:mb-1">{userStats.favoriteProducts}</div>
-                    <div className="text-[10px] sm:text-sm text-gray-600 font-medium text-center leading-tight">{t('profile.favorites')}</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-
+      
+      <div className="container mx-auto py-8 px-4">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">
+              {isArabic ? 'الملف الشخصي' : 'My Profile'}
+            </h1>
+            <p className="text-gray-600">
+              {isArabic ? 'إدارة معلوماتك الشخصية وطلباتك' : 'Manage your personal information and orders'}
+            </p>
           </div>
-        </motion.div>
+          <Button variant="outline" onClick={() => navigate('/')}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            {isArabic ? 'الرئيسية' : 'Home'}
+          </Button>
+        </div>
 
-        {/* Professional Tab System */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-8 h-auto">
-            {tabs.map((tab) => {
-              const Icon = tab.icon;
-              return (
-                <TabsTrigger
-                  key={tab.id}
-                  value={tab.id}
-                  className="flex flex-col items-center gap-1 sm:gap-2 p-2 sm:p-4 h-auto min-h-16 sm:min-h-20"
-                >
-                  <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
-                  <span className="text-xs sm:text-sm font-medium text-center leading-tight">
-                    {language === 'ar' ? tab.labelAr : tab.label}
-                  </span>
-                </TabsTrigger>
-              );
-            })}
-          </TabsList>
+        {saveMessage && (
+          <Alert className="mb-6">
+            <CheckCircle className="h-4 w-4" />
+            <AlertDescription>{saveMessage}</AlertDescription>
+          </Alert>
+        )}
 
-          <TabsContent value="overview" className="space-y-6">
-            <div className="grid gap-6 lg:grid-cols-2">
-              {/* Profile Information Card */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <User className="h-5 w-5" />
-                    {t('profile.personalInfo')}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-3 p-3 rounded-lg bg-muted">
-                      <Mail className="h-4 w-4 text-muted-foreground" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">{t('profile.email')}</p>
-                        <p className="font-medium">{user.username}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3 p-3 rounded-lg bg-muted">
-                      <Phone className="h-4 w-4 text-muted-foreground" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">{t('profile.phone')}</p>
-                        <p className="font-medium">{editData.phone}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3 p-3 rounded-lg bg-muted">
-                      <MapPin className="h-4 w-4 text-muted-foreground" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">{t('profile.address')}</p>
-                        <p className="font-medium">{editData.address}</p>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Quick Actions Card */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Activity className="h-5 w-5" />
-                    {t('profile.quickActions')}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {quickActions.map((action) => {
-                    const Icon = action.icon;
-                    return (
-                      <button
-                        key={action.id}
-                        type="button"
-                        onClick={action.onClick}
-                        className="group w-full rounded-2xl border bg-card/80 px-5 py-4 flex items-center justify-between transition-all duration-200 hover:border-primary/50 hover:bg-card hover:shadow-sm"
-                      >
-                        <span className="flex items-center gap-4">
-                          <span className="h-12 w-12 rounded-xl bg-muted flex items-center justify-center text-primary shadow-sm">
-                            <Icon className="h-5 w-5" />
-                          </span>
-                          <span className="text-left">
-                            <span className="block text-base font-semibold text-foreground">
-                              {action.title}
-                            </span>
-                            <span className="text-sm text-muted-foreground">
-                              {action.description}
-                            </span>
-                          </span>
-                        </span>
-                        <ChevronRight
-                          className={`h-5 w-5 text-muted-foreground transition-transform ${chevronDirectionClass}`}
-                        />
-                      </button>
-                    );
-                  })}
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="orders">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          {/* Profile Sidebar */}
+          <div className="lg:col-span-1">
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <ShoppingBag className="h-5 w-5" />
-                  {t('profile.orderHistory')}
-                </CardTitle>
-                <CardDescription>
-                  {t('profile.recentOrders')}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {[1, 2, 3].map((order) => (
-                    <div key={order} className="flex items-center gap-4 p-4 rounded-lg bg-muted hover:bg-muted/80 transition-colors">
-                      <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                        <Coffee className="h-6 w-6 text-primary" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-semibold">
-                          {language === 'ar' ? `طلب #${1000 + order}` : `Order #${1000 + order}`}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {language === 'ar' ? 'قهوة إسبريسو مزدوجة + كرواسون' : 'Double Espresso + Croissant'}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-semibold">12.50 OMR</p>
-                        <div className="flex items-center gap-1">
-                          <Clock className="h-3 w-3 text-muted-foreground" />
-                          <span className="text-xs text-muted-foreground font-medium">
-                            {language === 'ar' ? 'تم التسليم' : 'Delivered'}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="favorites">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Heart className="h-5 w-5" />
-                  {t('profile.favoriteProducts')}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  {[1, 2, 3, 4].map((item) => (
-                    <div key={item} className="flex items-center gap-4 p-4 rounded-lg bg-muted hover:bg-muted/80 transition-colors">
-                      <div className="w-16 h-16 bg-primary/10 rounded-lg flex items-center justify-center">
-                        <Coffee className="h-8 w-8 text-primary" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold truncate">
-                          {language === 'ar' ? 'قهوة أرابيكا بريميوم' : 'Premium Arabica Coffee'}
-                        </p>
-                        <p className="text-sm text-muted-foreground">8.50 OMR</p>
-                        <div className="flex items-center gap-1 mt-1">
-                          <Star className="h-4 w-4 text-primary fill-current" />
-                          <span className="text-sm font-medium">4.8</span>
-                        </div>
-                      </div>
-                      <Button size="sm" variant="outline">
-                        <ShoppingBag className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="settings">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Settings className="h-5 w-5" />
-                  {t('profile.accountSettings')}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {settingsActions.map((action) => {
-                  const Icon = action.icon;
-                  return (
-                    <button
-                      key={action.id}
-                      type="button"
-                      onClick={action.onClick}
-                      className="group w-full rounded-2xl border bg-card/80 px-5 py-4 flex items-center justify-between transition-all duration-200 hover:border-primary/50 hover:bg-card hover:shadow-sm"
+              <CardContent className="p-6">
+                <div className="text-center mb-6">
+                  <div className="relative inline-block">
+                    <Avatar className="h-24 w-24 mx-auto">
+                      <AvatarImage src={profileData.avatar} />
+                      <AvatarFallback className="text-lg">
+                        {profileData.fullName.split(' ').map(n => n[0]).join('').toUpperCase() || 'U'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full p-0"
                     >
-                      <span className="flex items-center gap-4">
-                        <span className="h-12 w-12 rounded-xl bg-muted flex items-center justify-center text-primary shadow-sm">
-                          <Icon className="h-5 w-5" />
-                        </span>
-                        <span className="text-left">
-                          <span className="block text-base font-semibold text-foreground">
-                            {action.title}
-                          </span>
-                          <span className="text-sm text-muted-foreground">
-                            {action.description}
-                          </span>
-                        </span>
-                      </span>
-                      <ChevronRight
-                        className={`h-5 w-5 text-muted-foreground transition-transform ${chevronDirectionClass}`}
-                      />
-                    </button>
-                  );
-                })}
+                      <Camera className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <h3 className="text-xl font-semibold mt-4">{profileData.fullName}</h3>
+                  <p className="text-gray-600">{profileData.email}</p>
+                  {user.roles && user.roles.length > 0 && (
+                    <Badge variant="secondary" className="mt-2">
+                      <Shield className="h-3 w-3 mr-1" />
+                      {isArabic ? 'عضو مميز' : 'Premium Member'}
+                    </Badge>
+                  )}
+                </div>
+
+                {/* Quick Stats */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <ShoppingBag className="h-4 w-4 text-blue-600" />
+                      <span className="text-sm">{isArabic ? 'الطلبات' : 'Orders'}</span>
+                    </div>
+                    <span className="font-semibold">{stats.totalOrders}</span>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <DollarSign className="h-4 w-4 text-green-600" />
+                      <span className="text-sm">{isArabic ? 'المجموع' : 'Total Spent'}</span>
+                    </div>
+                    <span className="font-semibold">{stats.totalSpent.toFixed(3)} {isArabic ? 'ر.ع.' : 'OMR'}</span>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Star className="h-4 w-4 text-yellow-600" />
+                      <span className="text-sm">{isArabic ? 'النقاط' : 'Points'}</span>
+                    </div>
+                    <span className="font-semibold">{stats.loyaltyPoints}</span>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-purple-600" />
+                      <span className="text-sm">{isArabic ? 'العضوية' : 'Member Since'}</span>
+                    </div>
+                    <span className="text-sm">{format(new Date(stats.memberSince), 'MMM yyyy')}</span>
+                  </div>
+                </div>
               </CardContent>
             </Card>
-          </TabsContent>
-        </Tabs>
+          </div>
 
-        {/* Edit Profile Section - Moved to bottom */}
-        <Card className="mt-8">
-          <CardContent className="p-6">
-            <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-blue-100 rounded-lg">
-                  <Edit2 className="h-5 w-5 text-blue-600" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-lg text-gray-900">
-                    {t('profile.editProfile')}
-                  </h3>
-                  <p className="text-sm text-gray-500">
-                    {language === 'ar' ? 'قم بتحديث معلومات ملفك الشخصي' : 'Update your profile information and preferences'}
-                  </p>
-                </div>
-              </div>
-              <div className="flex gap-3 w-full sm:w-auto">
-                <Button
-                  variant={isEditing ? "default" : "outline"}
-                  onClick={() => setIsEditing(!isEditing)}
-                  className="flex-1 sm:flex-none min-w-[120px]"
-                >
-                  {isEditing ? (
-                    <>
-                      <Save className="h-4 w-4 mr-2" />
-                      {t('common.save')}
-                    </>
-                  ) : (
-                    <>
-                      <Edit2 className="h-4 w-4 mr-2" />
-                      {t('profile.editProfile')}
-                    </>
-                  )}
-                </Button>
-                {isEditing && (
-                  <Button
-                    variant="outline"
-                    onClick={handleCancel}
-                    className="flex-1 sm:flex-none min-w-[120px]"
-                  >
-                    <X className="h-4 w-4 mr-2" />
-                    {t('common.cancel')}
-                  </Button>
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+          {/* Main Content */}
+          <div className="lg:col-span-3">
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="overview">
+                  {isArabic ? 'نظرة عامة' : 'Overview'}
+                </TabsTrigger>
+                <TabsTrigger value="profile">
+                  {isArabic ? 'المعلومات الشخصية' : 'Personal Info'}
+                </TabsTrigger>
+                <TabsTrigger value="orders">
+                  {isArabic ? 'الطلبات' : 'Orders'}
+                </TabsTrigger>
+              </TabsList>
+
+              {/* Overview Tab */}
+              <TabsContent value="overview" className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Activity className="h-5 w-5" />
+                      {isArabic ? 'نشاط الحساب' : 'Account Activity'}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <div className="text-center p-4 bg-blue-50 rounded-lg">
+                        <Package className="h-8 w-8 text-blue-600 mx-auto mb-2" />
+                        <div className="text-2xl font-bold text-blue-900">{stats.totalOrders}</div>
+                        <div className="text-sm text-blue-700">{isArabic ? 'إجمالي الطلبات' : 'Total Orders'}</div>
+                      </div>
+                      
+                      <div className="text-center p-4 bg-green-50 rounded-lg">
+                        <DollarSign className="h-8 w-8 text-green-600 mx-auto mb-2" />
+                        <div className="text-2xl font-bold text-green-900">
+                          {stats.totalSpent.toFixed(1)} {isArabic ? 'ر.ع.' : 'OMR'}
+                        </div>
+                        <div className="text-sm text-green-700">{isArabic ? 'إجمالي المبلغ' : 'Total Spent'}</div>
+                      </div>
+                      
+                      <div className="text-center p-4 bg-yellow-50 rounded-lg">
+                        <Star className="h-8 w-8 text-yellow-600 mx-auto mb-2" />
+                        <div className="text-2xl font-bold text-yellow-900">{stats.loyaltyPoints}</div>
+                        <div className="text-sm text-yellow-700">{isArabic ? 'نقاط الولاء' : 'Loyalty Points'}</div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Recent Orders */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Clock className="h-5 w-5" />
+                      {isArabic ? 'آخر الطلبات' : 'Recent Orders'}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {orders.length > 0 ? (
+                      <div className="space-y-4">
+                        {orders.slice(0, 3).map((order) => (
+                          <div key={order.id} className="flex items-center justify-between p-4 border rounded-lg">
+                            <div>
+                              <div className="font-semibold">{order.orderNumber}</div>
+                              <div className="text-sm text-gray-600">
+                                {format(new Date(order.createdAt), 'MMM dd, yyyy')}
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="font-semibold">
+                                {order.totalAmount.toFixed(3)} {isArabic ? 'ر.ع.' : 'OMR'}
+                              </div>
+                              <Badge 
+                                variant={order.paymentStatus === 'Paid' ? 'default' : 'secondary'}
+                                className="text-xs"
+                              >
+                                {order.paymentStatus}
+                              </Badge>
+                            </div>
+                          </div>
+                        ))}
+                        <Button 
+                          variant="outline" 
+                          className="w-full"
+                          onClick={() => setActiveTab('orders')}
+                        >
+                          {isArabic ? 'عرض جميع الطلبات' : 'View All Orders'}
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                        <p className="text-gray-600">
+                          {isArabic ? 'لا توجد طلبات حتى الآن' : 'No orders yet'}
+                        </p>
+                        <Button className="mt-4" onClick={() => navigate('/products')}>
+                          {isArabic ? 'تسوق الآن' : 'Shop Now'}
+                        </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Profile Tab */}
+              <TabsContent value="profile">
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="flex items-center gap-2">
+                        <User className="h-5 w-5" />
+                        {isArabic ? 'المعلومات الشخصية' : 'Personal Information'}
+                      </CardTitle>
+                      {!isEditing ? (
+                        <Button variant="outline" onClick={() => setIsEditing(true)}>
+                          <Edit2 className="h-4 w-4 mr-2" />
+                          {isArabic ? 'تعديل' : 'Edit'}
+                        </Button>
+                      ) : (
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            onClick={handleCancelEdit}
+                            disabled={isLoading}
+                          >
+                            <X className="h-4 w-4 mr-2" />
+                            {isArabic ? 'إلغاء' : 'Cancel'}
+                          </Button>
+                          <Button
+                            onClick={handleSaveProfile}
+                            disabled={isLoading}
+                          >
+                            <Save className="h-4 w-4 mr-2" />
+                            {isLoading ? (isArabic ? 'جارٍ الحفظ...' : 'Saving...') : (isArabic ? 'حفظ' : 'Save')}
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <Label htmlFor="fullName">{isArabic ? 'الاسم الكامل' : 'Full Name'}</Label>
+                        {isEditing ? (
+                          <Input
+                            id="fullName"
+                            value={editData.fullName}
+                            onChange={(e) => setEditData({...editData, fullName: e.target.value})}
+                            className="mt-1"
+                          />
+                        ) : (
+                          <div className="mt-1 p-3 bg-gray-50 rounded-md">{profileData.fullName}</div>
+                        )}
+                      </div>
+
+                      <div>
+                        <Label htmlFor="email">{isArabic ? 'البريد الإلكتروني' : 'Email'}</Label>
+                        <div className="mt-1 p-3 bg-gray-50 rounded-md flex items-center gap-2">
+                          <Mail className="h-4 w-4 text-gray-500" />
+                          {profileData.email}
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {isArabic ? 'لا يمكن تغيير البريد الإلكتروني' : 'Email cannot be changed'}
+                        </p>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="phone">{isArabic ? 'رقم الهاتف' : 'Phone Number'}</Label>
+                        {isEditing ? (
+                          <Input
+                            id="phone"
+                            value={editData.phone}
+                            onChange={(e) => setEditData({...editData, phone: e.target.value})}
+                            placeholder="+968 9123 4567"
+                            className="mt-1"
+                          />
+                        ) : (
+                          <div className="mt-1 p-3 bg-gray-50 rounded-md flex items-center gap-2">
+                            <Phone className="h-4 w-4 text-gray-500" />
+                            {profileData.phone || (isArabic ? 'لم يتم تحديده' : 'Not provided')}
+                          </div>
+                        )}
+                      </div>
+
+                      <div>
+                        <Label htmlFor="country">{isArabic ? 'البلد' : 'Country'}</Label>
+                        {isEditing ? (
+                          <Select
+                            value={editData.country}
+                            onValueChange={(value) => setEditData({...editData, country: value})}
+                          >
+                            <SelectTrigger className="mt-1">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="عُمان">🇴🇲 {isArabic ? 'عُمان' : 'Oman'}</SelectItem>
+                              <SelectItem value="الإمارات">🇦🇪 {isArabic ? 'الإمارات' : 'UAE'}</SelectItem>
+                              <SelectItem value="السعودية">🇸🇦 {isArabic ? 'السعودية' : 'Saudi Arabia'}</SelectItem>
+                              <SelectItem value="الكويت">🇰🇼 {isArabic ? 'الكويت' : 'Kuwait'}</SelectItem>
+                              <SelectItem value="البحرين">🇧🇭 {isArabic ? 'البحرين' : 'Bahrain'}</SelectItem>
+                              <SelectItem value="قطر">🇶🇦 {isArabic ? 'قطر' : 'Qatar'}</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <div className="mt-1 p-3 bg-gray-50 rounded-md flex items-center gap-2">
+                            <Globe className="h-4 w-4 text-gray-500" />
+                            {profileData.country}
+                          </div>
+                        )}
+                      </div>
+
+                      <div>
+                        <Label htmlFor="city">{isArabic ? 'المدينة' : 'City'}</Label>
+                        {isEditing ? (
+                          <Input
+                            id="city"
+                            value={editData.city}
+                            onChange={(e) => setEditData({...editData, city: e.target.value})}
+                            placeholder={isArabic ? 'مسقط' : 'Muscat'}
+                            className="mt-1"
+                          />
+                        ) : (
+                          <div className="mt-1 p-3 bg-gray-50 rounded-md flex items-center gap-2">
+                            <MapPin className="h-4 w-4 text-gray-500" />
+                            {profileData.city || (isArabic ? 'لم يتم تحديده' : 'Not provided')}
+                          </div>
+                        )}
+                      </div>
+
+                      <div>
+                        <Label htmlFor="postalCode">{isArabic ? 'الرمز البريدي' : 'Postal Code'}</Label>
+                        {isEditing ? (
+                          <Input
+                            id="postalCode"
+                            value={editData.postalCode}
+                            onChange={(e) => setEditData({...editData, postalCode: e.target.value})}
+                            placeholder="100"
+                            className="mt-1"
+                          />
+                        ) : (
+                          <div className="mt-1 p-3 bg-gray-50 rounded-md">
+                            {profileData.postalCode || (isArabic ? 'لم يتم تحديده' : 'Not provided')}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="md:col-span-2">
+                        <Label htmlFor="address">{isArabic ? 'العنوان الكامل' : 'Full Address'}</Label>
+                        {isEditing ? (
+                          <Textarea
+                            id="address"
+                            value={editData.address}
+                            onChange={(e) => setEditData({...editData, address: e.target.value})}
+                            placeholder={isArabic ? 'العنوان الكامل مع التفاصيل' : 'Full address with details'}
+                            rows={3}
+                            className="mt-1"
+                          />
+                        ) : (
+                          <div className="mt-1 p-3 bg-gray-50 rounded-md min-h-20">
+                            {profileData.address || (isArabic ? 'لم يتم تحديده' : 'Not provided')}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="md:col-span-2">
+                        <Label htmlFor="bio">{isArabic ? 'نبذة شخصية' : 'Bio'}</Label>
+                        {isEditing ? (
+                          <Textarea
+                            id="bio"
+                            value={editData.bio}
+                            onChange={(e) => setEditData({...editData, bio: e.target.value})}
+                            placeholder={isArabic ? 'اكتب نبذة مختصرة عنك...' : 'Tell us about yourself...'}
+                            rows={3}
+                            className="mt-1"
+                          />
+                        ) : (
+                          <div className="mt-1 p-3 bg-gray-50 rounded-md min-h-20">
+                            {profileData.bio || (isArabic ? 'لم يتم تحديده' : 'Not provided')}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Orders Tab */}
+              <TabsContent value="orders">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <ShoppingBag className="h-5 w-5" />
+                      {isArabic ? 'جميع الطلبات' : 'All Orders'}
+                    </CardTitle>
+                    <CardDescription>
+                      {isArabic ? `إجمالي ${stats.totalOrders} طلب` : `Total of ${stats.totalOrders} orders`}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {orders.length > 0 ? (
+                      <div className="space-y-4">
+                        {orders.map((order) => (
+                          <div key={order.id} className="border rounded-lg p-4">
+                            <div className="flex items-center justify-between mb-3">
+                              <div>
+                                <div className="font-semibold text-lg">{order.orderNumber}</div>
+                                <div className="text-sm text-gray-600">
+                                  {format(new Date(order.createdAt), 'MMMM dd, yyyy HH:mm')}
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <div className="font-bold text-lg">
+                                  {order.totalAmount.toFixed(3)} {isArabic ? 'ر.ع.' : 'OMR'}
+                                </div>
+                                <div className="flex gap-2">
+                                  <Badge variant={order.status === 'Delivered' ? 'default' : 'secondary'}>
+                                    {order.status}
+                                  </Badge>
+                                  <Badge variant={order.paymentStatus === 'Paid' ? 'default' : 'destructive'}>
+                                    {order.paymentStatus}
+                                  </Badge>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <Separator className="my-3" />
+                            
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                              <div>
+                                <span className="text-gray-600">{isArabic ? 'العناصر:' : 'Items:'}</span>
+                                <span className="ml-2 font-medium">{order.items?.length || 0}</span>
+                              </div>
+                              <div>
+                                <span className="text-gray-600">{isArabic ? 'الشحن:' : 'Shipping:'}</span>
+                                <span className="ml-2 font-medium">
+                                  {order.shippingMethod === 1 
+                                    ? (isArabic ? 'استلام من المتجر' : 'Store Pickup')
+                                    : order.shippingMethod === 2 
+                                    ? 'Nool Delivery'
+                                    : 'Aramex Courier'
+                                  }
+                                </span>
+                              </div>
+                              <div>
+                                <span className="text-gray-600">{isArabic ? 'العنوان:' : 'Address:'}</span>
+                                <span className="ml-2 font-medium">{order.city}, {order.country}</span>
+                              </div>
+                              {order.trackingNumber && (
+                                <div>
+                                  <span className="text-gray-600">{isArabic ? 'رقم التتبع:' : 'Tracking:'}</span>
+                                  <span className="ml-2 font-mono text-sm">{order.trackingNumber}</span>
+                                </div>
+                              )}
+                            </div>
+                            
+                            <div className="flex gap-2 mt-4">
+                              <Button variant="outline" size="sm">
+                                <Eye className="h-4 w-4 mr-2" />
+                                {isArabic ? 'التفاصيل' : 'View Details'}
+                              </Button>
+                              {order.paymentStatus !== 'Paid' && (
+                                <Button size="sm">
+                                  <DollarSign className="h-4 w-4 mr-2" />
+                                  {isArabic ? 'دفع الآن' : 'Pay Now'}
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-12">
+                        <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                          {isArabic ? 'لا توجد طلبات' : 'No Orders Yet'}
+                        </h3>
+                        <p className="text-gray-600 mb-6">
+                          {isArabic ? 'ابدأ التسوق لإنشاء طلبك الأول' : 'Start shopping to create your first order'}
+                        </p>
+                        <Button onClick={() => navigate('/products')}>
+                          <Coffee className="h-4 w-4 mr-2" />
+                          {isArabic ? 'تسوق الآن' : 'Shop Now'}
+                        </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
+          </div>
+        </div>
       </div>
     </div>
   );
