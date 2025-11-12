@@ -68,7 +68,7 @@ export const PaymentPage: React.FC = () => {
       // Check if order is already paid
       if (orderDetails.paymentStatus === 'Paid') {
         console.log('⚠️ Order already paid, redirecting to success page');
-        navigate(`/payment-success?orderNumber=${orderDetails.orderNumber}`, { replace: true });
+        navigate(`/checkout/payment-success?orderNumber=${orderDetails.orderNumber}`, { replace: true });
         return;
       }
       
@@ -305,7 +305,7 @@ export const PaymentPage: React.FC = () => {
         // Check if already paid
         if (orderDetails.paymentStatus === 'Paid') {
           console.log('⚠️ Order already paid');
-          navigate(`/payment-success?orderNumber=${orderDetails.orderNumber}`, { replace: true });
+          navigate(`/checkout/payment-success?orderNumber=${orderDetails.orderNumber}`, { replace: true });
           return;
         }
         
