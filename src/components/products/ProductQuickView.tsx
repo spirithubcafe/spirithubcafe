@@ -447,6 +447,7 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
                       className="px-2 md:px-3 py-0.5 md:py-1 text-[10px] md:text-xs font-bold text-gray-900 w-10 md:w-12 text-center border-x border-amber-200 focus:outline-none focus:bg-amber-50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       min="1"
                       max="10"
+                      aria-label={isArabic ? 'الكمية' : 'Quantity'}
                     />
                     <button
                       type="button"
