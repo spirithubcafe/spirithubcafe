@@ -128,6 +128,62 @@ export const ProfessionalHeroSlider: React.FC = () => {
         language === 'ar' ? 'أجواء هادئة' : 'Quiet Atmosphere'
       ],
       cta: language === 'ar' ? 'تسوق الآن' : 'SHOP NOW'
+    },
+    {
+      id: '4',
+      image: '/images/slides/rwanda-farm-spirithub-coffee.webp',
+      title: language === 'ar' ? 'مصدر مستدام، محمص أصيل' : 'SUSTAINABLY SOURCED, AUTHENTICALLY ROASTED',
+      subtitle: language === 'ar' ? [
+        'من التلال الخضراء في رواندا إلى محمصة سبيريت هب، كل خطوة تكرم المزارعين والأرض،',
+        'رحلة من التفاني والاستدامة والحرفية',
+        'تحول الكرز المقطوف يدويًا إلى لحظات من الكمال القهوة النقي.'
+      ] : [
+        'From the lush hills of Rwanda to SpiritHub Roastery, each step honors the farmers and the earth,',
+        'a journey of dedication, sustainability, and craftsmanship',
+        'that transforms hand-picked cherries into moments of pure coffee perfection.'
+      ],
+      description: language === 'ar'
+        ? 'قهوة مستدامة من أفضل المزارع حول العالم'
+        : 'Sustainable coffee from the best farms around the world',
+      stats: [
+        { value: '100%', label: language === 'ar' ? 'مستدام' : 'Sustainable' },
+        { value: '20+', label: language === 'ar' ? 'دولة منشأ' : 'Origin Countries' },
+        { value: 'AAA', label: language === 'ar' ? 'درجة الجودة' : 'Quality Grade' }
+      ],
+      features: [
+        language === 'ar' ? 'تجارة عادلة' : 'Fair Trade',
+        language === 'ar' ? 'عضوي معتمد' : 'Certified Organic',
+        language === 'ar' ? 'قابل للتتبع' : 'Traceable'
+      ],
+      cta: language === 'ar' ? 'تسوق الآن' : 'SHOP NOW'
+    },
+    {
+      id: '5',
+      image: '/images/slides/yemen-jabal-nabi-shuaib-spirithub-coffee.webp',
+      title: language === 'ar' ? 'متجذرون في اليمن، محمصون في سبيريت هب' : 'ROOTED IN YEMEN, ROASTED AT SPIRITHUB',
+      subtitle: language === 'ar' ? [
+        'من المرتفعات المقدسة لجبل النبي شعيب إلى محمصتنا في عُمان، كل حبة تروي قصة الأصل والصمود والفن،',
+        'حكاية وُلدت من المدرجات اليمنية القديمة، رعاها أجيال من المزارعين،',
+        'وأُتقنت من خلال شغف سبيريت هب بالحرفية والأصالة.'
+      ] : [
+        'From the sacred highlands of Jabal Nabi Shu\'ayb to our roastery in Oman, each bean tells a story of origin, resilience, and artistry,',
+        'a tale born from Yemen\'s ancient terraces, nurtured by generations of farmers,',
+        'and perfected through SpiritHub\'s passion for craft and authenticity.'
+      ],
+      description: language === 'ar'
+        ? 'قهوة يمنية أصيلة من أعلى القمم'
+        : 'Authentic Yemeni coffee from the highest peaks',
+      stats: [
+        { value: '3000m+', label: language === 'ar' ? 'ارتفاع' : 'Elevation' },
+        { value: '1000+', label: language === 'ar' ? 'سنة تراث' : 'Years Heritage' },
+        { value: 'A+', label: language === 'ar' ? 'تصنيف نادر' : 'Rare Grade' }
+      ],
+      features: [
+        language === 'ar' ? 'تراث عريق' : 'Ancient Heritage',
+        language === 'ar' ? 'قهوة نادرة' : 'Rare Coffee',
+        language === 'ar' ? 'منتج يدوياً' : 'Hand Processed'
+      ],
+      cta: language === 'ar' ? 'تسوق الآن' : 'SHOP NOW'
     }
   ];
 
@@ -162,14 +218,14 @@ export const ProfessionalHeroSlider: React.FC = () => {
     >
       {/* Background Images with Fade Effect */}
       <div className="slider-backgrounds">
-        <AnimatePresence mode="wait">
+        <AnimatePresence initial={false}>
           <motion.div
             key={currentSlide}
             className="slide-background"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 1.2, ease: "easeInOut" }}
+            transition={{ duration: 0.8, ease: "easeInOut" }}
           >
             <img
               src={currentSlideData.image}
