@@ -334,6 +334,11 @@ export const PaymentPage: React.FC = () => {
               return methodId;
             })();
 
+        // Ensure user is authenticated before creating order
+        if (!isAuthenticated || !user?.id) {
+          throw new Error('User must be logged in to create an order');
+        }
+
         const createOrderDto: CreateOrderDto = {
           // Customer Information (NEW API FORMAT)
           fullName: fullName,
@@ -341,6 +346,9 @@ export const PaymentPage: React.FC = () => {
           phone: order.checkoutDetails.isGift 
             ? order.checkoutDetails.recipientPhone || order.checkoutDetails.phone
             : order.checkoutDetails.phone,
+          
+          // User ID (Required - no guest checkout)
+          userId: String(user.id),
           
           // Shipping Address (NEW API FORMAT)
           address: order.checkoutDetails.isGift 
@@ -367,8 +375,14 @@ export const PaymentPage: React.FC = () => {
           // Additional (only include if not empty)
           ...(order.checkoutDetails.notes && { notes: order.checkoutDetails.notes }),
           
-          // Order Items
-          items: order.items.map((item) => {
+          // Order Items - will be populated after fetching variants
+          items: [], // Temporary empty array
+        };
+
+        // Fetch and populate items with variant IDs
+        console.log('🔍 Fetching product variants for items...');
+        const itemsWithVariants = await Promise.all(
+          order.items.map(async (item) => {
             console.log('📦 Processing item:', {
               id: item.id,
               productId: item.productId,
@@ -382,18 +396,42 @@ export const PaymentPage: React.FC = () => {
               throw new Error(`Invalid product ID for item: ${item.name}`);
             }
             
-            if (!item.productVariantId || item.productVariantId <= 0) {
-              console.error('❌ Missing or invalid productVariantId:', item);
-              throw new Error(`Product variant ID is required for item: ${item.name}`);
+            let variantId = item.productVariantId;
+            
+            // If productVariantId is missing or null, fetch the default variant from API
+            if (!variantId || variantId <= 0) {
+              console.log(`⚠️ Missing variant ID for "${item.name}", fetching from API...`);
+              try {
+                const product = await productService.getById(item.productId);
+                
+                if (product?.variants && product.variants.length > 0) {
+                  // Use the first variant as default
+                  variantId = product.variants[0].id;
+                  console.log(`✅ Using default variant ID ${variantId} for "${item.name}"`);
+                } else {
+                  console.error(`❌ No variants found for product ${item.productId}`);
+                  throw new Error(`No variants available for item: ${item.name}`);
+                }
+              } catch (error) {
+                console.error(`❌ Failed to fetch product ${item.productId}:`, error);
+                throw new Error(`Could not fetch variant for item: ${item.name}`);
+              }
+            }
+            
+            if (!variantId) {
+              throw new Error(`Could not determine variant ID for item: ${item.name}`);
             }
             
             return {
               productId: item.productId,
-              productVariantId: item.productVariantId,
+              productVariantId: variantId,
               quantity: item.quantity,
             };
-          }),
-        };
+          })
+        );
+
+        // Update the createOrderDto with fetched items
+        createOrderDto.items = itemsWithVariants;
 
         // Validate required fields
         if (!fullName || fullName.trim() === '') {
@@ -415,7 +453,12 @@ export const PaymentPage: React.FC = () => {
           throw new Error('Order must contain at least one item');
         }
 
-        console.log('📦 Sending order data to API:', JSON.stringify(createOrderDto, null, 2));
+        console.log('� User authentication status:', {
+          isAuthenticated,
+          userId: user?.id,
+          userIdInOrder: createOrderDto.userId
+        });
+        console.log('�📦 Sending order data to API:', JSON.stringify(createOrderDto, null, 2));
         const orderResponse = await orderService.create(createOrderDto);
         
         orderNumber = orderResponse.orderNumber;
@@ -546,7 +589,7 @@ export const PaymentPage: React.FC = () => {
 
   if (!order || isLoadingOrder) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white pt-20">
+      <div className="min-h-screen bg-linear-to-b from-gray-50 to-white pt-20">
         <Seo
           title={language === 'ar' ? 'الدفع' : 'Payment'}
           description={
@@ -582,7 +625,7 @@ export const PaymentPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white pt-20">
+    <div className="min-h-screen bg-linear-to-b from-gray-50 to-white pt-20">
       <Seo
         title={language === 'ar' ? 'الدفع' : 'Payment'}
         description={

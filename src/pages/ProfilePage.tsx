@@ -119,31 +119,26 @@ const ProfilePage: React.FC = () => {
   }, [isAuthenticated, user]);
 
   const loadUserOrders = async () => {
-    if (!user) return;
+    if (!user?.id) return;
     
     try {
       setIsLoading(true);
-      console.log('Loading orders for user:', user);
+      console.log('📦 Loading orders for user:', user.id);
       
-      // Load user's orders
-      const response = await orderService.getOrders({ page: 1, pageSize: 100 });
-      console.log('Orders response:', response);
+      // Use the new user-specific endpoint
+      const response = await orderService.getOrdersByUserId(
+        user.id.toString(), 
+        { 
+          page: 1, 
+          pageSize: 100 
+        }
+      );
       
-      // Filter orders by user - try multiple matching strategies
-      const allOrders = response.data || [];
-      const userOrders = allOrders.filter((order: Order) => {
-        // Try different matching strategies
-        const matchesEmail = order.email === user.username;
-        const matchesUserId = order.userId && order.userId === user.id.toString();
-        const matchesUserIdNumber = order.userId && parseInt(order.userId) === user.id;
-        
-        console.log(`Order ${order.id}: email=${order.email}, userId=${order.userId}, user.username=${user.username}, user.id=${user.id}`);
-        console.log(`Matches: email=${matchesEmail}, userId=${matchesUserId}, userIdNumber=${matchesUserIdNumber}`);
-        
-        return matchesEmail || matchesUserId || matchesUserIdNumber;
-      });
+      console.log('✅ User orders response:', response);
       
-      console.log('Filtered user orders:', userOrders);
+      const userOrders = response.data || [];
+      console.log(`📊 Found ${userOrders.length} orders for user ${user.id}`);
+      
       setOrders(userOrders);
       
       // Calculate stats
@@ -161,7 +156,8 @@ const ProfilePage: React.FC = () => {
       });
       
     } catch (error) {
-      console.error('Failed to load user orders:', error);
+      console.error('❌ Failed to load user orders:', error);
+      setOrders([]);
     } finally {
       setIsLoading(false);
     }
@@ -635,7 +631,14 @@ const ProfilePage: React.FC = () => {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    {orders.length > 0 ? (
+                    {isLoading ? (
+                      <div className="text-center py-12">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600 mx-auto mb-4"></div>
+                        <p className="text-gray-600">
+                          {isArabic ? 'جاري تحميل الطلبات...' : 'Loading orders...'}
+                        </p>
+                      </div>
+                    ) : orders.length > 0 ? (
                       <div className="space-y-4">
                         {orders.map((order) => (
                           <div key={order.id} className="border rounded-lg p-4">
@@ -692,12 +695,23 @@ const ProfilePage: React.FC = () => {
                             </div>
                             
                             <div className="flex gap-2 mt-4">
-                              <Button variant="outline" size="sm">
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => navigate(`/orders`)}
+                              >
                                 <Eye className="h-4 w-4 mr-2" />
                                 {isArabic ? 'التفاصيل' : 'View Details'}
                               </Button>
-                              {order.paymentStatus !== 'Paid' && (
-                                <Button size="sm">
+                              {order.paymentStatus !== 'Paid' && order.status !== 'Cancelled' && (
+                                <Button 
+                                  size="sm"
+                                  onClick={() => {
+                                    // Generate payment link and navigate
+                                    const token = btoa(`${order.id}:${order.orderNumber}:${Date.now()}`);
+                                    navigate(`/payment?orderId=${order.id}&token=${token}`);
+                                  }}
+                                >
                                   <DollarSign className="h-4 w-4 mr-2" />
                                   {isArabic ? 'دفع الآن' : 'Pay Now'}
                                 </Button>

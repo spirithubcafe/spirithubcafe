@@ -4,8 +4,9 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { motion } from 'framer-motion';
-import { Gift, MapPin, Package, Loader2 } from 'lucide-react';
+import { Gift, MapPin, Package, Loader2, LogIn } from 'lucide-react';
 import { useApp } from '../hooks/useApp';
+import { useAuth } from '../hooks/useAuth';
 import { useCart } from '../hooks/useCart';
 import { PageHeader } from '../components/layout/PageHeader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
@@ -15,6 +16,7 @@ import { Textarea } from '../components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '../components/ui/radio-group';
 import { Switch } from '../components/ui/switch';
 import { Separator } from '../components/ui/separator';
+import { Alert, AlertDescription } from '../components/ui/alert';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../components/ui/form';
 import { cn } from '@/lib/utils';
 import type { CheckoutOrder } from '../types/checkout';
@@ -86,6 +88,7 @@ const formatCurrency = (value: number, label: string) => `${value.toFixed(3)} ${
 
 export const CheckoutPage: React.FC = () => {
   const { language } = useApp();
+  const { isAuthenticated, user } = useAuth();
   const isArabic = language === 'ar';
   const navigate = useNavigate();
   const { items, totalPrice } = useCart();
@@ -235,6 +238,15 @@ export const CheckoutPage: React.FC = () => {
       return;
     }
 
+    // Ensure user is authenticated before proceeding
+    if (!isAuthenticated || !user) {
+      // Save checkout data and redirect to login
+      sessionStorage.setItem('spirithub_checkout_redirect', 'true');
+      sessionStorage.setItem('spirithub_pending_checkout_data', JSON.stringify(values));
+      navigate('/login', { state: { from: '/checkout' } });
+      return;
+    }
+
     const order: CheckoutOrder = {
       id: `SPH-${Date.now()}`,
       createdAt: new Date().toISOString(),
@@ -275,7 +287,7 @@ export const CheckoutPage: React.FC = () => {
 
   if (items.length === 0) {
     return (
-  <div className="min-h-screen bg-linear-to-br from-gray-50 to-white pt-20">
+  <div className="min-h-screen bg-linear-to-br from-gray-50 to-white pt-24">
         <Seo
           title={language === 'ar' ? 'الدفع' : 'Checkout'}
           description={
@@ -326,6 +338,18 @@ export const CheckoutPage: React.FC = () => {
       />
 
   <div className="container mx-auto py-12">
+        {/* Login Required Alert */}
+        {!isAuthenticated && (
+          <Alert className="mb-6 border-amber-200 bg-amber-50">
+            <LogIn className="h-4 w-4 text-amber-600" />
+            <AlertDescription className="text-amber-900">
+              {isArabic 
+                ? 'يجب تسجيل الدخول لإتمام الطلب. سيتم توجيهك لتسجيل الدخول عند الضغط على "متابعة للدفع".'
+                : 'You must be logged in to complete your order. You will be redirected to login when you click "Continue to Payment".'}
+            </AlertDescription>
+          </Alert>
+        )}
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)}>
             {/* Back button at the top */}

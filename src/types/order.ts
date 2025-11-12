@@ -148,10 +148,11 @@ export type ShippingMethod = 1 | 2 | 3;
  * Create Order DTO
  * Based on ORDERS_API_GUIDE.md specifications
  * 
- * Used for POST /api/orders (public checkout endpoint)
+ * Used for POST /api/orders (authenticated users only - no guest checkout)
  * 
  * @example
  * {
+ *   userId: "12345",
  *   fullName: "John Doe",
  *   email: "john.doe@example.com",
  *   phone: "+96812345678",
@@ -185,6 +186,9 @@ export interface CreateOrderDto {
   shippingMethod: 1 | 2 | 3; // 1=Pickup, 2=Nool, 3=Aramex
   shippingCost: number;
   
+  // User ID (Required - guest checkout not supported)
+  userId: string;
+  
   // Gift Information (Optional)
   isGift?: boolean;
   giftRecipientName?: string;
@@ -198,7 +202,6 @@ export interface CreateOrderDto {
   
   // Additional Information (Optional)
   notes?: string;
-  userId?: string;
   
   // Order Items (Required - minimum 1 item)
   items: {

@@ -249,6 +249,81 @@ export const orderService = {
   },
 
   /**
+   * Get orders by user ID (Public)
+   * GET /api/orders/user/{userId}
+   * 
+   * @param userId - User ID (ApplicationUser.Id)
+   * @param params - Query parameters for filtering and pagination
+   * @returns Paginated list of user's orders
+   * 
+   * @example
+   * // Get all orders for current user
+   * const orders = await orderService.getOrdersByUserId(userId);
+   * 
+   * // Get pending orders
+   * const pending = await orderService.getOrdersByUserId(userId, { status: 'Pending' });
+   * 
+   * // Search with filters
+   * const filtered = await orderService.getOrdersByUserId(userId, {
+   *   status: 'Shipped',
+   *   paymentStatus: 'Paid',
+   *   page: 1,
+   *   pageSize: 10
+   * });
+   */
+  async getOrdersByUserId(userId: string, params?: OrderQueryParams): Promise<ApiResponse<Order[]> & { pagination?: PaginationInfo }> {
+    try {
+      const queryParams = new URLSearchParams();
+      
+      if (params?.page) {
+        queryParams.append('page', params.page.toString());
+      }
+      if (params?.pageSize) {
+        queryParams.append('pageSize', params.pageSize.toString());
+      }
+      if (params?.status) {
+        queryParams.append('status', params.status);
+      }
+      if (params?.paymentStatus) {
+        queryParams.append('paymentStatus', params.paymentStatus);
+      }
+      if (params?.searchTerm) {
+        queryParams.append('searchTerm', params.searchTerm);
+      }
+      if (params?.fromDate) {
+        queryParams.append('fromDate', params.fromDate);
+      }
+      if (params?.toDate) {
+        queryParams.append('toDate', params.toDate);
+      }
+
+      const url = queryParams.toString() 
+        ? `/api/orders/user/${userId}?${queryParams.toString()}` 
+        : `/api/orders/user/${userId}`;
+      
+      console.log('📡 OrderService: Making GET request to:', url);
+      
+      const response = await apiClient.get<ApiResponse<Order[]> & { pagination?: PaginationInfo }>(url);
+      
+      console.log('📡 OrderService: User orders response received:', {
+        status: response.status,
+        hasData: !!response.data,
+        dataKeys: response.data ? Object.keys(response.data) : []
+      });
+      
+      return response.data;
+    } catch (error: any) {
+      console.error('📡 OrderService: Error in getOrdersByUserId:', {
+        message: error.message,
+        statusCode: error.statusCode,
+        errors: error.errors,
+        response: error.response?.data
+      });
+      throw error;
+    }
+  },
+
+  /**
    * Update order status (Admin/Manager)
    * PUT /api/orders/{id}/status
    * 

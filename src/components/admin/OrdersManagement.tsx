@@ -97,23 +97,33 @@ export const OrdersManagement: React.FC = () => {
       
       // Handle API response structure
       const ordersList = response?.data || [];
-      setOrders(Array.isArray(ordersList) ? ordersList : []);
+      
+      // Ensure all orders have items array (handle null/undefined items)
+      const ordersWithItems = Array.isArray(ordersList) 
+        ? ordersList.map(order => ({
+            ...order,
+            items: Array.isArray(order.items) ? order.items : []
+          }))
+        : [];
+      
+      setOrders(ordersWithItems);
       
       // Debug: Check if orders have items
-      if (Array.isArray(ordersList) && ordersList.length > 0) {
-        const firstOrder = ordersList[0];
-        console.log('🔍 First order items check:', {
+      if (ordersWithItems.length > 0) {
+        const firstOrder = ordersWithItems[0];
+        console.log('🔍 First order check:', {
           orderNumber: firstOrder.orderNumber,
           hasItems: !!firstOrder.items,
           itemsCount: firstOrder.items?.length || 0,
-          itemsData: firstOrder.items
+          userId: firstOrder.userId,
+          allKeys: Object.keys(firstOrder)
         });
         
-        const revenue = ordersList
+        const revenue = ordersWithItems
           .filter(o => o.paymentStatus === 'Paid')
           .reduce((sum, o) => sum + o.totalAmount, 0);
         setTotalRevenue(revenue);
-        console.log(`💰 Total revenue: ${revenue.toFixed(3)} OMR from ${ordersList.length} orders`);
+        console.log(`💰 Total revenue: ${revenue.toFixed(3)} OMR from ${ordersWithItems.length} orders`);
       } else {
         console.log('📦 No orders found');
       }
@@ -599,7 +609,7 @@ export const OrdersManagement: React.FC = () => {
                   <TableRow>
                     <TableHead>{isArabic ? 'رقم الطلب' : 'Order #'}</TableHead>
                     <TableHead>{isArabic ? 'العميل' : 'Customer'}</TableHead>
-                    <TableHead>{isArabic ? 'العناصر' : 'Items'}</TableHead>
+                    <TableHead>{isArabic ? 'معرف المستخدم' : 'User ID'}</TableHead>
                     <TableHead>{isArabic ? 'المبلغ' : 'Amount'}</TableHead>
                     <TableHead>{isArabic ? 'الحالة' : 'Status'}</TableHead>
                     <TableHead>{isArabic ? 'الدفع' : 'Payment'}</TableHead>
@@ -620,10 +630,13 @@ export const OrdersManagement: React.FC = () => {
                         </div>
                       </TableCell>
                       <TableCell>
-                        {order.items?.length || 0}
-                        {!order.items && (
-                          <span className="text-xs text-muted-foreground ml-1">(loading...)</span>
-                        )}
+                        <div className="text-sm">
+                          {order.userId ? (
+                            <span className="font-mono text-blue-600">{order.userId}</span>
+                          ) : (
+                            <span className="text-red-500 italic">{isArabic ? 'مفقود!' : 'Missing!'}</span>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell>OMR {order.totalAmount.toFixed(3)}</TableCell>
                       <TableCell>
