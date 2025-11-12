@@ -132,11 +132,11 @@ export const ProfessionalHeroSlider: React.FC = () => {
     {
       id: '4',
       image: '/images/slides/rwanda-farm-spirithub-coffee.webp',
-      title: language === 'ar' ? 'مصدر مستدام، محمص أصيل' : 'SUSTAINABLY SOURCED, AUTHENTICALLY ROASTED',
+      title: language === 'ar' ? 'من مصدرٍ مستدام وتحميصٍ يعكس الأصالة' : 'SUSTAINABLY SOURCED, AUTHENTICALLY ROASTED',
       subtitle: language === 'ar' ? [
         'من التلال الخضراء في رواندا إلى محمصة سبيريت هب، كل خطوة تكرم المزارعين والأرض،',
         'رحلة من التفاني والاستدامة والحرفية',
-        'تحول الكرز المقطوف يدويًا إلى لحظات من الكمال القهوة النقي.'
+        'تحول الكرز المقطوف يدويًا إلى لحظات من الكمال.'
       ] : [
         'From the lush hills of Rwanda to SpiritHub Roastery, each step honors the farmers and the earth,',
         'a journey of dedication, sustainability, and craftsmanship',
@@ -160,7 +160,7 @@ export const ProfessionalHeroSlider: React.FC = () => {
     {
       id: '5',
       image: '/images/slides/yemen-jabal-nabi-shuaib-spirithub-coffee.webp',
-      title: language === 'ar' ? 'متجذرون في اليمن، محمصون في سبيريت هب' : 'ROOTED IN YEMEN, ROASTED AT SPIRITHUB',
+      title: language === 'ar' ? 'متجذرون في اليمن، محمص في سبيريت هب' : 'ROOTED IN YEMEN, ROASTED AT SPIRITHUB',
       subtitle: language === 'ar' ? [
         'من المرتفعات المقدسة لجبل النبي شعيب إلى محمصتنا في عُمان، كل حبة تروي قصة الأصل والصمود والفن،',
         'حكاية وُلدت من المدرجات اليمنية القديمة، رعاها أجيال من المزارعين،',
