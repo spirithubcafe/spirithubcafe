@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { AlertOctagon, ArrowLeftCircle, XCircle } from 'lucide-react';
+import { AlertOctagon, ArrowLeftCircle } from 'lucide-react';
 import { PageHeader } from '../components/layout/PageHeader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
-import { Alert, AlertDescription } from '../components/ui/alert';
 import { useApp } from '../hooks/useApp';
 import type { CheckoutOrder } from '../types/checkout';
 import { Seo } from '../components/seo/Seo';
@@ -19,6 +18,7 @@ export const PaymentFailurePage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const [order, setOrder] = useState<CheckoutOrder | null>(null);
   
+  // Get parameters from URL - updated to match PaymentController
   const orderId = searchParams.get('orderId');
   const reason = searchParams.get('reason');
   const message = searchParams.get('message');

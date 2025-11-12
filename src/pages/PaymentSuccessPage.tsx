@@ -13,22 +13,27 @@ export const PaymentSuccessPage: React.FC = () => {
   const isArabic = language === 'ar';
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const orderNumber = searchParams.get('orderNumber');
+  
+  // Get parameters from URL - updated to match PaymentController
+  const orderId = searchParams.get('orderId') || searchParams.get('orderNumber');
+  const trackingId = searchParams.get('trackingId');
 
   useEffect(() => {
     // Log all URL parameters for debugging
     console.log('=== PaymentSuccessPage Debug ===');
     console.log('Current URL:', window.location.href);
     console.log('Search params:', Object.fromEntries(searchParams.entries()));
-    console.log('Order Number:', orderNumber);
+    console.log('Order ID:', orderId);
+    console.log('Tracking ID:', trackingId);
     console.log('================================');
 
     // Clear cart after successful payment
-    if (orderNumber) {
+    if (orderId) {
       localStorage.removeItem('spirithub_cart');
       sessionStorage.removeItem('spirithub_checkout_order');
+      sessionStorage.removeItem('spirithub_pending_checkout');
     }
-  }, [orderNumber, searchParams]);
+  }, [orderId, trackingId, searchParams]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white page-padding-top">
@@ -67,7 +72,7 @@ export const PaymentSuccessPage: React.FC = () => {
           </div>
         </div>
 
-        {orderNumber && (
+        {orderId && (
           <Card className="text-left shadow-xl border-gray-100">
             <CardHeader>
               <CardTitle className="flex items-center gap-3 text-2xl font-semibold">
@@ -76,13 +81,23 @@ export const PaymentSuccessPage: React.FC = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="rounded-lg bg-gradient-to-br from-green-50 to-emerald-50 p-6 text-center">
+              <div className="rounded-lg bg-linear-to-br from-green-50 to-emerald-50 p-6 text-center">
                 <p className="text-sm text-gray-600 mb-2">
                   {isArabic ? 'رقم الطلب' : 'Order Number'}
                 </p>
                 <p className="text-2xl font-bold text-green-700 mb-4">
-                  {orderNumber}
+                  {orderId}
                 </p>
+                {trackingId && (
+                  <div className="mb-4 pb-4 border-b border-green-200">
+                    <p className="text-xs text-gray-600 mb-1">
+                      {isArabic ? 'رقم التتبع' : 'Tracking ID'}
+                    </p>
+                    <p className="text-sm font-mono text-green-600">
+                      {trackingId}
+                    </p>
+                  </div>
+                )}
                 <div className="flex items-center justify-center gap-2 text-sm text-gray-700">
                   <CheckCircle className="w-4 h-4 text-green-600" />
                   <span>{isArabic ? 'تم استلام الطلب وجاري المعالجة' : 'Order received and being processed'}</span>
