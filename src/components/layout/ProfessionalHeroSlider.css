@@ -376,6 +376,10 @@
   text-align: center;
   transition: all 0.3s ease;
   cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 .stat-card:hover {
@@ -423,6 +427,10 @@
   color: white;
   cursor: pointer;
   transition: all 0.3s ease;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 .nav-button:hover {
@@ -457,6 +465,10 @@
   color: white;
   cursor: pointer;
   transition: all 0.3s ease;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 .play-pause-button:hover {
@@ -486,6 +498,10 @@
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 .indicator.active {
