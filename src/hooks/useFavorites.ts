@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 
 export interface FavoriteItem {
   id: string;
+  slug?: string;
   name: string;
   price: number;
   image: string;

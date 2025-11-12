@@ -55,6 +55,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     // Convert Product to FavoriteItem format
     const favoriteItem = {
       id: product.id,
+      slug: product.slug,
       name: product.name,
       price: product.price,
       image: product.image,
@@ -103,7 +104,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     }
     // Scroll to top before navigation
     window.scrollTo({ top: 0, behavior: 'instant' });
-    navigate(`/products/${product.id}`);
+    navigate(`/products/${product.slug || product.id}`);
   };
 
   const handleQuickView = (e: React.MouseEvent) => {

@@ -132,7 +132,7 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
     // Small delay to ensure modal closes before navigation
     setTimeout(() => {
       window.scrollTo({ top: 0, behavior: 'instant' });
-      navigate(`/products/${product.id}`);
+      navigate(`/products/${product.slug || product.id}`);
     }, 100);
   };
 

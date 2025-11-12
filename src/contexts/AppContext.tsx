@@ -63,9 +63,18 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     
     if (cachedData) {
       console.log('📦 Using cached products for', language);
-      setProducts(cachedData);
-      setLoading(false);
-      return;
+      console.log('🔍 Cached products (first 3):', cachedData.slice(0, 3).map(p => ({ id: p.id, name: p.name, slug: p.slug })));
+      
+      // Check if cache has slug field, if not, clear cache and refetch
+      if (cachedData.length > 0 && !cachedData[0].slug) {
+        console.log('⚠️ Cache missing slug field, clearing cache and refetching...');
+        cacheUtils.remove(cacheKey);
+        // Continue to fetch fresh data
+      } else {
+        setProducts(cachedData);
+        setLoading(false);
+        return;
+      }
     }
 
     setLoading(true);
@@ -156,6 +165,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 
           return {
             id: fullProduct.id.toString(),
+            slug: fullProduct.slug,
             name: language === 'ar' && fullProduct.nameAr ? fullProduct.nameAr : fullProduct.name,
             nameAr: fullProduct.nameAr,
             description:
@@ -179,6 +189,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       );
       
       setProducts(transformedProducts);
+      
+      // Debug: Check if slugs are present
+      console.log('🔍 Products with slugs:', transformedProducts.slice(0, 3).map(p => ({ id: p.id, name: p.name, slug: p.slug })));
       
       // Cache the data
       cacheUtils.set(cacheKey, transformedProducts);

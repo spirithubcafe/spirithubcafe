@@ -177,7 +177,7 @@ export const FavoritesPage: React.FC = () => {
                         
                         <div className="flex gap-2">
                           <Button
-                            onClick={() => navigate(`/products/${item.id}`)}
+                            onClick={() => navigate(`/products/${item.slug || item.id}`)}
                             className="flex-1 bg-stone-700 hover:bg-stone-800"
                           >
                             <Eye className="h-4 w-4 mr-2" />

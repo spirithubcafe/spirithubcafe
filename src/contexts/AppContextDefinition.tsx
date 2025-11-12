@@ -2,6 +2,7 @@ import { createContext } from 'react';
 
 export interface Product {
   id: string;
+  slug?: string;
   name: string;
   nameAr?: string;
   description: string;
