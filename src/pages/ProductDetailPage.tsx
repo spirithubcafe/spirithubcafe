@@ -396,7 +396,7 @@ export const ProductDetailPage = () => {
 
   return (
     <div
-      className={`min-h-screen bg-gray-50 pt-20 ${
+      className={`min-h-screen bg-gray-50 page-padding-top ${
         language === 'ar' ? 'rtl' : 'ltr'
       }`}
     >
@@ -867,6 +867,7 @@ export const ProductDetailPage = () => {
                                   className="px-2.5 md:px-3 py-1 md:py-1.5 text-xs md:text-sm font-bold text-gray-900 w-12 md:w-14 text-center border-x border-amber-200 focus:outline-none focus:bg-amber-50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                   min="1"
                                   max="10"
+                                  aria-label={language === 'ar' ? 'الكمية' : 'Quantity'}
                                 />
                                 <button
                                   type="button"

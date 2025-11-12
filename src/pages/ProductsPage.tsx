@@ -220,15 +220,19 @@ export const ProductsPage = () => {
         }
       />
 
-      {/* Filters Section - Compact & Professional */}
-      <div className="py-3 bg-gradient-to-r from-stone-900 via-neutral-900 to-stone-900 shadow-xl border-b border-stone-700/50 sticky top-0 z-50 backdrop-blur-lg">
-        <div className="container mx-auto px-4">
-          <div className="max-w-6xl mx-auto">
-            {/* Single Row Compact Layout */}
-            <div className="flex flex-row gap-2.5 items-center">
+      {/* Content Container - Sticky context */}
+      <div className="relative">
+        {/* Filters Section - Compact & Professional */}
+        <div 
+          className="sticky-filter-bar bg-gradient-to-r from-stone-900 via-neutral-900 to-stone-900 shadow-xl border-b border-stone-700/50 backdrop-blur-lg flex items-center"
+        >
+          <div className="container mx-auto px-4 h-full flex items-center">
+            <div className="max-w-6xl mx-auto w-full">
+              {/* Single Row Compact Layout */}
+              <div className="flex flex-row gap-3 items-center">
               {/* Search Box - Compact & Sleek */}
-              <div className="relative flex-1 min-w-0">
-                <div className="absolute top-1/2 -translate-y-1/2 text-stone-400 w-4 h-4 ltr:left-3 rtl:right-3 pointer-events-none z-10">
+              <div className="relative flex-1 min-w-0 max-w-md">
+                <div className="absolute top-1/2 -translate-y-1/2 text-stone-400 w-4 h-4 ltr:left-2.5 rtl:right-2.5 pointer-events-none z-10">
                   <Search className="w-4 h-4" />
                 </div>
                 <input
@@ -236,16 +240,16 @@ export const ProductsPage = () => {
                   placeholder={isArabic ? 'البحث...' : 'Search...'}
                   value={searchTerm}
                   onChange={(event) => setSearchTerm(event.target.value)}
-                  className={`w-full py-2.5 px-3 border-0 rounded-lg focus:ring-2 focus:ring-stone-600 transition-all bg-stone-800/80 backdrop-blur-sm text-sm font-medium text-white placeholder:text-stone-500 shadow-sm hover:bg-stone-800 ${isArabic ? 'pr-10 pl-3' : 'pl-10 pr-3'}`}
+                  className={`w-full h-9 py-2 px-2.5 border-0 rounded-lg focus:ring-2 focus:ring-stone-600 transition-all bg-stone-800/80 backdrop-blur-sm text-sm font-medium text-white placeholder:text-stone-500 shadow-sm hover:bg-stone-800 ${isArabic ? 'pr-9 pl-2.5' : 'pl-9 pr-2.5'}`}
                   aria-label={isArabic ? 'بحث المنتجات' : 'Search products'}
                 />
               </div>
 
               {/* Category Select - Shadcn UI */}
-              <div className="relative flex items-center gap-2">
-                <Filter className="w-5 h-5 text-stone-400" />
+              <div className="relative flex items-center gap-2 shrink-0">
+                <Filter className="w-4 h-4 text-stone-400 shrink-0" />
                 <Select value={selectedCategory} onValueChange={handleCategoryChange}>
-                  <SelectTrigger className="w-[160px] sm:w-[220px] h-10 bg-stone-800/80 border-0 text-stone-100 text-base font-semibold shadow-sm hover:bg-stone-700/80 backdrop-blur-sm">
+                  <SelectTrigger className="w-36 sm:w-48 h-9 bg-stone-800/80 border-0 text-stone-100 text-sm font-semibold shadow-sm hover:bg-stone-700/80 backdrop-blur-sm">
                     <SelectValue placeholder={isArabic ? 'اختر الفئة' : 'Select category'} />
                   </SelectTrigger>
                   <SelectContent className="bg-stone-800 border-stone-700 text-white z-50">
@@ -261,59 +265,59 @@ export const ProductsPage = () => {
                   </SelectContent>
                 </Select>
               </div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Products Grid */}
-      <div className="py-16 bg-gray-50">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          {loading ? (
-            <div className="flex justify-center py-16">
-              <Spinner className="w-10 h-10" />
-            </div>
-          ) : filteredProducts.length === 0 ? (
-            <div className="text-center py-16">
-              <Coffee className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-gray-600 mb-2">
-                {isArabic ? 'لم يتم العثور على منتجات' : 'No products found'}
-              </h3>
-              <p className="text-gray-500">
-                {isArabic
-                  ? 'جرب تغيير فلاتر البحث'
-                  : 'Try changing your search filters'}
-              </p>
-            </div>
-          ) : (
-            <>
-              {/* Results Count */}
-              <div className="mb-8 text-center">
-                <p className="text-gray-600">
-                  {isArabic ? (
-                    <>
-                      <span className="font-semibold text-amber-600">{filteredProducts.length}</span>
-                      {' منتج متاح'}
-                    </>
-                  ) : (
-                    <>
-                      <span className="font-semibold text-amber-600">{filteredProducts.length}</span>
-                      {' products available'}
-                    </>
-                  )}
+        {/* Products Grid */}
+        <div className="py-16 bg-gray-50">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            {loading ? (
+              <div className="flex justify-center py-16">
+                <Spinner className="w-10 h-10" />
+              </div>
+            ) : filteredProducts.length === 0 ? (
+              <div className="text-center py-16">
+                <Coffee className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-gray-600 mb-2">
+                  {isArabic ? 'لم يتم العثور على منتجات' : 'No products found'}
+                </h3>
+                <p className="text-gray-500">
+                  {isArabic
+                    ? 'جرب تغيير فلاتر البحث'
+                    : 'Try changing your search filters'}
                 </p>
               </div>
+            ) : (
+              <>
+                {/* Results Count */}
+                <div className="mb-8 text-center">
+                  <p className="text-gray-600">
+                    {isArabic ? (
+                      <>
+                        <span className="font-semibold text-amber-600">{filteredProducts.length}</span>
+                        {' منتج متاح'}
+                      </>
+                    ) : (
+                      <>
+                        <span className="font-semibold text-amber-600">{filteredProducts.length}</span>
+                        {' products available'}
+                      </>
+                    )}
+                  </p>
+                </div>
 
-              {/* Products Grid - 4 products per row, 2 on mobile */}
-              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-                {filteredProducts.map((product) => (
-                  <ProductCard key={product.id} product={product} />
-                ))}
-              </div>
-            </>
-          )}
+                {/* Products Grid - 4 products per row, 2 on mobile */}
+                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+                  {filteredProducts.map((product) => (
+                    <ProductCard key={product.id} product={product} />
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
         </div>
-      </div>
 
       {/* All Categories Section */}
       <div className="py-8 bg-white">
@@ -379,9 +383,10 @@ export const ProductsPage = () => {
                 </button>
               );
             })}
+            </div>
           </div>
         </div>
-      </div>
+      </div> {/* End Content Container */}
     </div>
   );
 };

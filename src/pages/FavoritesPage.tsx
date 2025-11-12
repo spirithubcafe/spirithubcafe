@@ -23,7 +23,7 @@ export const FavoritesPage: React.FC = () => {
   const { favorites, isLoading, removeFromFavorites } = useFavorites();
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-20">
+    <div className="min-h-screen bg-gray-50 page-padding-top">
       <Seo
         title={language === 'ar' ? 'مفضلتي الخاصة' : 'My favorite coffees'}
         description={

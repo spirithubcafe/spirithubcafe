@@ -124,9 +124,10 @@ export const Navigation: React.FC = () => {
           ? 'bg-black/30 backdrop-blur-sm border-b border-white/10' 
           : 'bg-white shadow-md border-b border-gray-200'
       }`}
+      style={{ height: 'var(--nav-height)' }}
     >
-      <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-3 md:py-3.5 lg:py-3">
-        <div className="flex items-center justify-between">
+      <div className="container mx-auto px-3 sm:px-4 h-full">
+        <div className="flex items-center justify-between h-full">
           {/* Logo */}
           <Link to="/" className="flex items-center hover:opacity-80 transition-opacity flex-shrink-0">
             <img 

@@ -30,7 +30,7 @@ export const PaymentFailurePage: React.FC = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-red-50 to-white pt-20">
+    <div className="min-h-screen bg-gradient-to-b from-red-50 to-white page-padding-top">
       <Seo
         title={isArabic ? 'فشل الدفع' : 'Payment failed'}
         description={

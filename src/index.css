@@ -48,6 +48,12 @@
 }
 
 :root {
+  /* Navigation Heights - Responsive */
+  --nav-height-mobile: 60px;
+  --nav-height-tablet: 64px;
+  --nav-height-desktop: 68px;
+  --nav-height: var(--nav-height-mobile);
+  
   --radius: 0.625rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
@@ -257,6 +263,19 @@ html {
   display: none;  /* Chrome, Safari and Opera */
 }
 
+/* Page Top Padding - Accounts for fixed navigation */
+.page-padding-top {
+  padding-top: var(--nav-height);
+}
+
+/* Sticky Filter Bar - Same height as navigation */
+.sticky-filter-bar {
+  position: sticky;
+  top: var(--nav-height);
+  height: var(--nav-height);
+  z-index: 40;
+}
+
 /* Custom gradient backgrounds */
 .hero-gradient {
   background: linear-gradient(135deg, #92400e 0%, #451a03 100%);
@@ -306,6 +325,10 @@ html {
 }
 
 @media (min-width: 640px) {
+  :root {
+    --nav-height: var(--nav-height-tablet);
+  }
+  
   .container {
     padding-left: 1.5rem;
     padding-right: 1.5rem;
@@ -313,6 +336,10 @@ html {
 }
 
 @media (min-width: 1024px) {
+  :root {
+    --nav-height: var(--nav-height-desktop);
+  }
+  
   .container {
     padding-left: 2rem;
     padding-right: 2rem;

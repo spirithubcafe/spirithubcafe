@@ -136,7 +136,7 @@ export const ProductAttributesPage: React.FC = () => {
 
   if (loadingProduct) {
     return (
-      <div className="min-h-screen bg-background pt-20 flex items-center justify-center">
+      <div className="min-h-screen bg-background page-padding-top flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-amber-600" />
       </div>
     );
@@ -144,7 +144,7 @@ export const ProductAttributesPage: React.FC = () => {
 
   if (!product) {
     return (
-      <div className="min-h-screen bg-background pt-20 flex items-center justify-center">
+      <div className="min-h-screen bg-background page-padding-top flex items-center justify-center">
         <Card className="max-w-md">
           <CardHeader>
             <CardTitle>Product not found</CardTitle>
@@ -161,7 +161,7 @@ export const ProductAttributesPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background pt-20 pb-12">
+    <div className="min-h-screen bg-background page-padding-top pb-12">
       <Seo
         title={`Product Attributes - ${product.name}`}
         description="Manage product attributes"

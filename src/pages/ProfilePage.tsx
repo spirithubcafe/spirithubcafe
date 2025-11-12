@@ -198,7 +198,7 @@ const ProfilePage: React.FC = () => {
 
   if (!isAuthenticated || !user) {
     return (
-      <div className={`min-h-screen bg-gray-50 pt-20 ${isArabic ? 'rtl' : 'ltr'}`}>
+      <div className={`min-h-screen bg-gray-50 page-padding-top ${isArabic ? 'rtl' : 'ltr'}`}>
         <Seo
           title={seoTitle}
           description={seoDescription}
@@ -230,7 +230,7 @@ const ProfilePage: React.FC = () => {
   }
 
   return (
-    <div className={`min-h-screen bg-gray-50 pt-20 ${isArabic ? 'rtl' : 'ltr'}`}>
+    <div className={`min-h-screen bg-gray-50 page-padding-top ${isArabic ? 'rtl' : 'ltr'}`}>
       <Seo
         title={seoTitle}
         description={seoDescription}

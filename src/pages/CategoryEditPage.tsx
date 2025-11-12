@@ -252,7 +252,7 @@ export const CategoryEditPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 pt-20 pb-8 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 page-padding-top pb-8 flex items-center justify-center">
         <Card className="w-full max-w-md">
           <CardContent className="flex items-center justify-center py-8">
             <Loader2 className="h-8 w-8 animate-spin" />
@@ -268,7 +268,7 @@ export const CategoryEditPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-20 pb-8">
+    <div className="min-h-screen bg-gray-50 page-padding-top pb-8">
       <div className="container mx-auto max-w-4xl">
         <Card>
           <CardHeader>

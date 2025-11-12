@@ -42,7 +42,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
 
   if (!user || !isAdmin()) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center pt-20">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center page-padding-top">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <Shield className="h-16 w-16 text-red-500 mx-auto mb-4" />
@@ -180,7 +180,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
   );
 
   return (
-    <div className="min-h-screen bg-background pt-20">
+    <div className="min-h-screen bg-background page-padding-top">
       <div className="max-w-full mx-auto px-4 sm:px-6 py-4 sm:py-8">
         <div className="flex items-center justify-between mb-6 sm:mb-8">
           <div className="flex items-center gap-3">

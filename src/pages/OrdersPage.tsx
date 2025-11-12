@@ -80,7 +80,7 @@ export const OrdersPage: React.FC = () => {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gray-50 pt-20 px-4">
+      <div className="min-h-screen bg-gray-50 page-padding-top px-4">
         <div className="max-w-4xl mx-auto flex items-center justify-center min-h-[60vh]">
           <Card className="w-full max-w-md text-center">
             <CardHeader>
@@ -105,7 +105,7 @@ export const OrdersPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-20">
+    <div className="min-h-screen bg-gray-50 page-padding-top">
       <Seo
         title={language === 'ar' ? 'طلباتي' : 'My orders'}
         description={

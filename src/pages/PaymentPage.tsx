@@ -589,7 +589,7 @@ export const PaymentPage: React.FC = () => {
 
   if (!order || isLoadingOrder) {
     return (
-      <div className="min-h-screen bg-linear-to-b from-gray-50 to-white pt-20">
+      <div className="min-h-screen bg-linear-to-b from-gray-50 to-white page-padding-top">
         <Seo
           title={language === 'ar' ? 'الدفع' : 'Payment'}
           description={
@@ -625,7 +625,7 @@ export const PaymentPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-linear-to-b from-gray-50 to-white pt-20">
+    <div className="min-h-screen bg-linear-to-b from-gray-50 to-white page-padding-top">
       <Seo
         title={language === 'ar' ? 'الدفع' : 'Payment'}
         description={
