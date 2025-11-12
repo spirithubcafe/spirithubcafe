@@ -129,6 +129,33 @@
   body {
     @apply bg-background text-foreground;
   }
+  
+  /* Prevent text cursor on clickable elements */
+  button,
+  a,
+  [role="button"],
+  [onclick],
+  .clickable,
+  svg,
+  img {
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+  }
+  
+  /* Ensure icons don't show text cursor */
+  button *,
+  a *,
+  [role="button"] *,
+  [onclick] * {
+    cursor: inherit;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+  }
 }
 
 /* Arabic Font Classes */
