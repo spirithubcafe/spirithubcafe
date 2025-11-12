@@ -969,7 +969,216 @@ export const ProductDetailPage = () => {
                       </>
                     ) : (
                       <div className="text-[10px] md:text-xs text-gray-600 leading-relaxed">
-                        {language === 'ar' ? (
+                        {/* Check if product is UFO Drip Coffee */}
+                        {product && (product.name?.toLowerCase().includes('ufo') || product.category?.name?.toLowerCase().includes('ufo')) ? (
+                          // UFO Drip Coffee Brewing Guide
+                          language === 'ar' ? (
+                            <>
+                              <div className="flex items-center gap-1.5 mb-3">
+                                <Coffee className="w-4 h-4 text-amber-600" />
+                                <h3 className="text-sm md:text-base font-bold text-gray-800">دليل تحضير قهوة UFO دريب</h3>
+                              </div>
+                              <p className="mb-3 text-gray-700">استمتع بقهوة UFO في خطوات بسيطة:</p>
+                              
+                              <div className="space-y-2.5">
+                                <div className="bg-amber-50 p-2.5 md:p-3 rounded-lg border border-amber-100">
+                                  <h4 className="font-bold text-amber-800 mb-1.5 flex items-center gap-1.5 text-[11px] md:text-xs">
+                                    <ClipboardList className="w-3.5 h-3.5 text-amber-600" />
+                                    جهز معداتك
+                                  </h4>
+                                  <p className="text-gray-700">احصل على كوبك والميزان جاهزين.</p>
+                                </div>
+
+                                <div className="bg-blue-50 p-2.5 md:p-3 rounded-lg border border-blue-100">
+                                  <h4 className="font-bold text-blue-800 mb-1.5 flex items-center gap-1.5 text-[11px] md:text-xs">
+                                    <Sparkles className="w-3.5 h-3.5 text-blue-600" />
+                                    افتح القرص
+                                  </h4>
+                                  <p className="text-gray-700">انزع الغطاء الواقي من قرص قهوة UFO.</p>
+                                </div>
+
+                                <div className="bg-purple-50 p-2.5 md:p-3 rounded-lg border border-purple-100">
+                                  <h4 className="font-bold text-purple-800 mb-1.5 flex items-center gap-1.5 text-[11px] md:text-xs">
+                                    <Scale className="w-3.5 h-3.5 text-purple-600" />
+                                    ضع واسكب
+                                  </h4>
+                                  <p className="text-gray-700">ضع قرص UFO فوق كوبك واسكب 225 مل من الماء الساخن (90-93 درجة مئوية) ببطء وبشكل متساوٍ.</p>
+                                </div>
+
+                                <div className="bg-red-50 p-2.5 md:p-3 rounded-lg border border-red-100">
+                                  <h4 className="font-bold text-red-800 mb-1.5 flex items-center gap-1.5 text-[11px] md:text-xs">
+                                    <Clock className="w-3.5 h-3.5 text-red-600" />
+                                    اترك القهوة تتخمر
+                                  </h4>
+                                  <p className="text-gray-700">دعها تتخمر بشكل طبيعي لمدة 2-3 دقائق.</p>
+                                </div>
+
+                                <div className="bg-gradient-to-r from-amber-50 to-orange-50 p-2.5 md:p-3 rounded-lg border border-amber-200">
+                                  <h4 className="font-bold text-amber-800 mb-1.5 flex items-center gap-1.5 text-[11px] md:text-xs">
+                                    <Coffee className="w-3.5 h-3.5 text-amber-600" />
+                                    استمتع
+                                  </h4>
+                                  <p className="text-gray-700">أزل القرص واستمتع بقهوتك الطازجة.</p>
+                                </div>
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <div className="flex items-center gap-1.5 mb-3">
+                                <Coffee className="w-4 h-4 text-amber-600" />
+                                <h3 className="text-sm md:text-base font-bold text-gray-800">UFO Drip Coffee Brewing Guide</h3>
+                              </div>
+                              <p className="mb-3 text-gray-700">Experience your UFO coffee in just a few easy steps:</p>
+                              
+                              <div className="space-y-2.5">
+                                <div className="bg-amber-50 p-2.5 md:p-3 rounded-lg border border-amber-100">
+                                  <h4 className="font-bold text-amber-800 mb-1.5 flex items-center gap-1.5 text-[11px] md:text-xs">
+                                    <ClipboardList className="w-3.5 h-3.5 text-amber-600" />
+                                    Prepare Your Setup
+                                  </h4>
+                                  <p className="text-gray-700">Get your cup and scale ready.</p>
+                                </div>
+
+                                <div className="bg-blue-50 p-2.5 md:p-3 rounded-lg border border-blue-100">
+                                  <h4 className="font-bold text-blue-800 mb-1.5 flex items-center gap-1.5 text-[11px] md:text-xs">
+                                    <Sparkles className="w-3.5 h-3.5 text-blue-600" />
+                                    Open the Disc
+                                  </h4>
+                                  <p className="text-gray-700">Peel off the protective lid from the UFO coffee disc.</p>
+                                </div>
+
+                                <div className="bg-purple-50 p-2.5 md:p-3 rounded-lg border border-purple-100">
+                                  <h4 className="font-bold text-purple-800 mb-1.5 flex items-center gap-1.5 text-[11px] md:text-xs">
+                                    <Scale className="w-3.5 h-3.5 text-purple-600" />
+                                    Place & Pour
+                                  </h4>
+                                  <p className="text-gray-700">Position the UFO disc on top of your cup and pour 225ml of hot water (90–93°C) slowly and evenly.</p>
+                                </div>
+
+                                <div className="bg-red-50 p-2.5 md:p-3 rounded-lg border border-red-100">
+                                  <h4 className="font-bold text-red-800 mb-1.5 flex items-center gap-1.5 text-[11px] md:text-xs">
+                                    <Clock className="w-3.5 h-3.5 text-red-600" />
+                                    Brew & Wait
+                                  </h4>
+                                  <p className="text-gray-700">Let it brew naturally for 2–3 minutes.</p>
+                                </div>
+
+                                <div className="bg-gradient-to-r from-amber-50 to-orange-50 p-2.5 md:p-3 rounded-lg border border-amber-200">
+                                  <h4 className="font-bold text-amber-800 mb-1.5 flex items-center gap-1.5 text-[11px] md:text-xs">
+                                    <Coffee className="w-3.5 h-3.5 text-amber-600" />
+                                    Enjoy
+                                  </h4>
+                                  <p className="text-gray-700">Remove the disc and savor your freshly brewed coffee.</p>
+                                </div>
+                              </div>
+                            </>
+                          )
+                        ) : product && (product.name?.toLowerCase().includes('capsule') || product.category?.name?.toLowerCase().includes('capsule')) ? (
+                          // Coffee Capsule Brewing Guide
+                          language === 'ar' ? (
+                            <>
+                              <div className="flex items-center gap-1.5 mb-3">
+                                <Coffee className="w-4 h-4 text-amber-600" />
+                                <h3 className="text-sm md:text-base font-bold text-gray-800">دليل تحضير كبسولات القهوة</h3>
+                              </div>
+                              <p className="mb-3 text-gray-700">احصل على أفضل نكهة من كل كبسولة باتباع هذه الخطوات البسيطة:</p>
+                              
+                              <div className="space-y-2.5">
+                                <div className="bg-amber-50 p-2.5 md:p-3 rounded-lg border border-amber-100">
+                                  <h4 className="font-bold text-amber-800 mb-1.5 flex items-center gap-1.5 text-[11px] md:text-xs">
+                                    <ClipboardList className="w-3.5 h-3.5 text-amber-600" />
+                                    التحضير المسبق
+                                  </h4>
+                                  <p className="text-gray-700">جهز أدوات التحضير الخاصة بك وتأكد من نظافة الماكينة.</p>
+                                </div>
+
+                                <div className="bg-blue-50 p-2.5 md:p-3 rounded-lg border border-blue-100">
+                                  <h4 className="font-bold text-blue-800 mb-1.5 flex items-center gap-1.5 text-[11px] md:text-xs">
+                                    <Sparkles className="w-3.5 h-3.5 text-blue-600" />
+                                    حافظ على النظافة
+                                  </h4>
+                                  <p className="text-gray-700">تأكد دائمًا من خلو معدات القهوة والحاويات من البقايا للحصول على طعم نقي.</p>
+                                </div>
+
+                                <div className="bg-purple-50 p-2.5 md:p-3 rounded-lg border border-purple-100">
+                                  <h4 className="font-bold text-purple-800 mb-1.5 flex items-center gap-1.5 text-[11px] md:text-xs">
+                                    <RotateCw className="w-3.5 h-3.5 text-purple-600" />
+                                    اضبط بذكاء
+                                  </h4>
+                                  <p className="text-gray-700">قد تختلف إعدادات التحضير حسب تاريخ التحميص والطريقة — اضبطها وفقًا لذلك.</p>
+                                </div>
+
+                                <div className="bg-red-50 p-2.5 md:p-3 rounded-lg border border-red-100">
+                                  <h4 className="font-bold text-red-800 mb-1.5 flex items-center gap-1.5 text-[11px] md:text-xs">
+                                    <BarChart3 className="w-3.5 h-3.5 text-red-600" />
+                                    كن متسقًا
+                                  </h4>
+                                  <p className="text-gray-700">استخدم ماء عالي الجودة، وحافظ على دقة القياسات والنسب والتوقيت.</p>
+                                </div>
+
+                                <div className="bg-gradient-to-r from-amber-50 to-orange-50 p-2.5 md:p-3 rounded-lg border border-amber-200">
+                                  <h4 className="font-bold text-amber-800 mb-1.5 flex items-center gap-1.5 text-[11px] md:text-xs">
+                                    <Coffee className="w-3.5 h-3.5 text-amber-600" />
+                                    تذكر!
+                                  </h4>
+                                  <p className="text-gray-700">ثق بحاسة التذوق لديك، وحسّن وصفتك، واستمتع بالعملية — القهوة تجربة وليست قاعدة.</p>
+                                </div>
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <div className="flex items-center gap-1.5 mb-3">
+                                <Coffee className="w-4 h-4 text-amber-600" />
+                                <h3 className="text-sm md:text-base font-bold text-gray-800">Coffee Capsule Brewing Guide</h3>
+                              </div>
+                              <p className="mb-3 text-gray-700">Get the best flavor from every capsule with these simple steps:</p>
+                              
+                              <div className="space-y-2.5">
+                                <div className="bg-amber-50 p-2.5 md:p-3 rounded-lg border border-amber-100">
+                                  <h4 className="font-bold text-amber-800 mb-1.5 flex items-center gap-1.5 text-[11px] md:text-xs">
+                                    <ClipboardList className="w-3.5 h-3.5 text-amber-600" />
+                                    Prepare Ahead
+                                  </h4>
+                                  <p className="text-gray-700">Have your brewing tools ready and your machine clean.</p>
+                                </div>
+
+                                <div className="bg-blue-50 p-2.5 md:p-3 rounded-lg border border-blue-100">
+                                  <h4 className="font-bold text-blue-800 mb-1.5 flex items-center gap-1.5 text-[11px] md:text-xs">
+                                    <Sparkles className="w-3.5 h-3.5 text-blue-600" />
+                                    Keep It Clean
+                                  </h4>
+                                  <p className="text-gray-700">Always ensure your coffee gear and containers are free of residue for a pure taste.</p>
+                                </div>
+
+                                <div className="bg-purple-50 p-2.5 md:p-3 rounded-lg border border-purple-100">
+                                  <h4 className="font-bold text-purple-800 mb-1.5 flex items-center gap-1.5 text-[11px] md:text-xs">
+                                    <RotateCw className="w-3.5 h-3.5 text-purple-600" />
+                                    Adjust Smartly
+                                  </h4>
+                                  <p className="text-gray-700">Grind size and brew settings may vary depending on your coffee's roast date and method — adjust accordingly.</p>
+                                </div>
+
+                                <div className="bg-red-50 p-2.5 md:p-3 rounded-lg border border-red-100">
+                                  <h4 className="font-bold text-red-800 mb-1.5 flex items-center gap-1.5 text-[11px] md:text-xs">
+                                    <BarChart3 className="w-3.5 h-3.5 text-red-600" />
+                                    Be Consistent
+                                  </h4>
+                                  <p className="text-gray-700">Use good-quality water, and stay precise with measurements, ratios, and timing.</p>
+                                </div>
+
+                                <div className="bg-gradient-to-r from-amber-50 to-orange-50 p-2.5 md:p-3 rounded-lg border border-amber-200">
+                                  <h4 className="font-bold text-amber-800 mb-1.5 flex items-center gap-1.5 text-[11px] md:text-xs">
+                                    <Coffee className="w-3.5 h-3.5 text-amber-600" />
+                                    Remember!
+                                  </h4>
+                                  <p className="text-gray-700">Trust your palate, refine your recipe, and enjoy the process — coffee is an experience, not a rule.</p>
+                                </div>
+                              </div>
+                            </>
+                          )
+                        ) : (
+                          // Regular Coffee Brewing Guide
+                          language === 'ar' ? (
                           <>
                             <div className="flex items-center gap-1.5 mb-3">
                               <Coffee className="w-4 h-4 text-amber-600" />
@@ -1087,6 +1296,7 @@ export const ProductDetailPage = () => {
                               </div>
                             </div>
                           </>
+                          )
                         )}
                       </div>
                     )}
