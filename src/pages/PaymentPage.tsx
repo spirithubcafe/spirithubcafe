@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { CreditCard, ShieldCheck, Truck, Clock3, AlertTriangle } from 'lucide-react';
 import { PageHeader } from '../components/layout/PageHeader';
@@ -10,11 +10,12 @@ import { useAuth } from '../hooks/useAuth';
 import { useCart } from '../hooks/useCart';
 import type { CheckoutOrder } from '../types/checkout';
 import type { CreateOrderDto } from '../types/order';
-import { orderService, paymentService } from '../services';
+import { orderService, paymentService, productService } from '../services';
 import type { PaymentRequestDto } from '../services/paymentService';
 import { shippingService, type ShippingMethod } from '../services/shippingService';
 import { Seo } from '../components/seo/Seo';
 import { siteMetadata } from '../config/siteMetadata';
+import { getProductImageUrl } from '../lib/imageUtils';
 
 const PENDING_ORDER_STORAGE_KEY = 'spirithub_pending_checkout';
 const LAST_SUCCESS_STORAGE_KEY = 'spirithub_last_success_order';
@@ -35,11 +36,13 @@ export const PaymentPage: React.FC = () => {
   const { clearCart } = useCart();
   const [order, setOrder] = useState<CheckoutOrder | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isLoadingOrder, setIsLoadingOrder] = useState(true);
   const [shippingMethods, setShippingMethods] = useState<ShippingMethod[]>([]);
   const paymentTimer = useRef<number | null>(null);
 
   // Load order from payment link (orderId + token)
-  const loadOrderFromPaymentLink = async (orderId: number, token: string) => {
+  const loadOrderFromPaymentLink = useCallback(async (orderId: number, token: string) => {
+    setIsLoadingOrder(true);
     try {
       console.log('🔍 Loading order from payment link:', { orderId, token });
       
@@ -69,20 +72,49 @@ export const PaymentPage: React.FC = () => {
         return;
       }
       
+      // Load product images from product service (fetch all products in parallel)
+      console.log('🔍 Loading product images for', orderDetails.items?.length || 0, 'items');
+      
+      const itemsWithImages = await Promise.all(
+        (orderDetails.items || []).map(async (item) => {
+          let imageUrl = getProductImageUrl(item.productImage);
+          
+          try {
+            // Try to get the actual product to get its main image
+            const product = await productService.getById(item.productId);
+            
+            // Get main image or first image from product
+            const productImagePath = product.mainImage?.imagePath || product.images?.[0]?.imagePath;
+            if (productImagePath) {
+              imageUrl = getProductImageUrl(productImagePath);
+              console.log('✅ Loaded image for', item.productName, ':', productImagePath);
+            } else {
+              console.warn('⚠️ No image found for product:', item.productName, '- using fallback');
+            }
+          } catch (error) {
+            console.warn('⚠️ Failed to load product details for', item.productName, '- using order image or fallback');
+          }
+          
+          return {
+            id: item.id.toString(),
+            name: item.productName,
+            productId: item.productId,
+            productVariantId: item.productVariantId || 0,
+            price: item.unitPrice,
+            quantity: item.quantity,
+            image: imageUrl,
+            attributes: item.variantInfo ? [{ name: 'Variant', value: item.variantInfo }] : []
+          };
+        })
+      );
+      
+      console.log('✅ All product images loaded successfully');
+      
       // Convert Order to CheckoutOrder format for payment processing
       const checkoutOrder: CheckoutOrder = {
         id: `existing-${orderDetails.id}`,
         createdAt: orderDetails.createdAt,
-        items: orderDetails.items?.map(item => ({
-          id: item.id.toString(),
-          name: item.productName,
-          productId: item.productId,
-          productVariantId: item.productVariantId || 0,
-          price: item.unitPrice,
-          quantity: item.quantity,
-          image: item.productImage || '',
-          attributes: item.variantInfo ? [{ name: 'Variant', value: item.variantInfo }] : []
-        })) || [],
+        items: itemsWithImages,
         checkoutDetails: {
           fullName: orderDetails.fullName,
           email: orderDetails.email,
@@ -123,30 +155,51 @@ export const PaymentPage: React.FC = () => {
         : 'Failed to load order. Please check the payment link.'
       );
       navigate('/orders', { replace: true });
+    } finally {
+      setIsLoadingOrder(false);
     }
-  };
+  }, [isArabic, navigate]);
 
   // Check authentication - redirect to login if not authenticated
   useEffect(() => {
     if (!isAuthenticated) {
       console.warn('⚠️ User not authenticated, redirecting to login');
+      
+      // Save the current URL with params to return after login
+      const orderId = searchParams.get('orderId');
+      const token = searchParams.get('token');
+      
+      // Build return URL with params
+      let returnUrl = '/payment';
+      if (orderId && token) {
+        returnUrl = `/payment?orderId=${orderId}&token=${encodeURIComponent(token)}`;
+        console.log('💾 Saving payment link for after login:', returnUrl);
+      }
+      
       // Save the current order to return after login
       const state = (location.state as PaymentLocationState) || {};
       if (state.order) {
         sessionStorage.setItem(PENDING_ORDER_STORAGE_KEY, JSON.stringify(state.order));
       }
+      
       // Redirect to login with return URL
       navigate('/login', { 
         replace: true,
-        state: { from: '/payment', message: isArabic ? 'يرجى تسجيل الدخول لإتمام الطلب' : 'Please login to complete your order' }
+        state: { 
+          from: returnUrl, 
+          message: isArabic ? 'يرجى تسجيل الدخول لإتمام الطلب' : 'Please login to complete your order' 
+        }
       });
       return;
     }
-  }, [isAuthenticated, navigate, location.state, isArabic]);
+  }, [isAuthenticated, navigate, location.state, isArabic, searchParams]);
 
   useEffect(() => {
     // Only proceed if authenticated
-    if (!isAuthenticated) return;
+    if (!isAuthenticated) {
+      console.log('⚠️ Not authenticated, skipping order load');
+      return;
+    }
 
     // Debug: Log user info
     console.log('👤 Authenticated user:', user);
@@ -154,6 +207,8 @@ export const PaymentPage: React.FC = () => {
     // Check for orderId and token in URL parameters (for payment links)
     const orderId = searchParams.get('orderId');
     const token = searchParams.get('token');
+
+    console.log('🔍 URL Params:', { orderId, token, hasOrder: !!order });
 
     if (orderId && token) {
       console.log('🔗 Payment link detected:', { orderId, token });
@@ -164,8 +219,10 @@ export const PaymentPage: React.FC = () => {
     const state = (location.state as PaymentLocationState) || {};
 
     if (state.order) {
+      console.log('📦 Loading order from navigation state');
       setOrder(state.order);
       sessionStorage.setItem(PENDING_ORDER_STORAGE_KEY, JSON.stringify(state.order));
+      setIsLoadingOrder(false);
       return;
     }
 
@@ -173,15 +230,20 @@ export const PaymentPage: React.FC = () => {
     if (stored) {
       try {
         const parsed: CheckoutOrder = JSON.parse(stored);
+        console.log('📦 Loading order from session storage');
         setOrder(parsed);
+        setIsLoadingOrder(false);
         return;
-      } catch {
+      } catch (error) {
+        console.error('❌ Failed to parse stored order:', error);
         sessionStorage.removeItem(PENDING_ORDER_STORAGE_KEY);
       }
     }
 
+    console.log('⚠️ No order found, redirecting to checkout');
+    setIsLoadingOrder(false);
     navigate('/checkout', { replace: true });
-  }, [location.state, navigate, isAuthenticated, searchParams]);
+  }, [location.state, navigate, isAuthenticated, searchParams, user, isArabic, loadOrderFromPaymentLink]);
 
   // Load shipping methods from API
   useEffect(() => {
@@ -362,122 +424,13 @@ export const PaymentPage: React.FC = () => {
 
       console.log('🎯 Proceeding to payment with:', { orderNumber, totalAmount });
 
-      // Get full name for payment
-      const fullName = order.checkoutDetails.isGift 
-        ? order.checkoutDetails.recipientName || order.checkoutDetails.fullName
-        : order.checkoutDetails.fullName;
-      // Map shipping method to numeric ID
-      const shippingMethodId = shippingMethods.length > 0 
-        ? shippingService.mapShippingMethodId(order.shippingMethod.id, shippingMethods)
-        : (() => {
-            // Fallback if API methods not loaded yet
-            console.warn('⚠️ Shipping methods not loaded, using fallback mapping');
-            const methodId = order.shippingMethod.id === 'pickup' ? 1 
-              : order.shippingMethod.id === 'nool' ? 2 
-              : order.shippingMethod.id === 'aramex' ? 3 
-              : 1;
-            console.log(`🚚 Fallback mapping: ${order.shippingMethod.id} -> ${methodId}`);
-            return methodId;
-          })();
-
-      const createOrderDto: CreateOrderDto = {
-        // Customer Information (NEW API FORMAT)
-        fullName: fullName,
-        email: order.checkoutDetails.email,
-        phone: order.checkoutDetails.isGift 
-          ? order.checkoutDetails.recipientPhone || order.checkoutDetails.phone
-          : order.checkoutDetails.phone,
-        
-        // Shipping Address (NEW API FORMAT)
-        address: order.checkoutDetails.isGift 
-          ? order.checkoutDetails.recipientAddress || order.checkoutDetails.address
-          : order.checkoutDetails.address,
-        country: order.checkoutDetails.country || 'OM',
-        city: order.checkoutDetails.city || 'Muscat',
-        postalCode: '100', // Default postal code for Oman
-        
-        // Shipping Details (NEW API FORMAT)
-        shippingMethod: shippingMethodId as 1 | 2 | 3,
-        shippingCost: order.totals.shipping,
-        
-        // Gift Information (NEW API FORMAT - only include if gift)
-        isGift: order.checkoutDetails.isGift || false,
-        ...(order.checkoutDetails.isGift && {
-          giftRecipientName: order.checkoutDetails.recipientName,
-          giftRecipientPhone: order.checkoutDetails.recipientPhone,
-          giftRecipientAddress: order.checkoutDetails.recipientAddress,
-          giftRecipientCountry: order.checkoutDetails.recipientCountry || 'Oman',
-          giftRecipientCity: order.checkoutDetails.recipientCity || 'Muscat',
-        }),
-        
-        // Additional (only include if not empty)
-        ...(order.checkoutDetails.notes && { notes: order.checkoutDetails.notes }),
-        
-        // Note: userId is omitted - API will extract it from JWT token if needed
-        // The user.id from frontend (number) doesn't match database UserId (string/GUID)
-        
-        // Order Items
-        items: order.items.map((item) => {
-          console.log('📦 Processing item:', {
-            id: item.id,
-            productId: item.productId,
-            productVariantId: item.productVariantId,
-            quantity: item.quantity,
-            name: item.name,
-          });
-          
-          if (!item.productId || isNaN(item.productId)) {
-            console.error('❌ Invalid product ID:', item);
-            throw new Error(`Invalid product ID for item: ${item.name}`);
-          }
-          
-          // Build order item with actual productId and productVariantId from cart
-          // NEW API requires productVariantId to be a number (not optional)
-          if (!item.productVariantId || item.productVariantId <= 0) {
-            console.error('❌ Missing or invalid productVariantId:', item);
-            throw new Error(`Product variant ID is required for item: ${item.name}`);
-          }
-          
-          return {
-            productId: item.productId,
-            productVariantId: item.productVariantId,
-            quantity: item.quantity,
-          };
-        }),
-      };
-
-      // Validate required fields (NEW API FORMAT)
-      if (!fullName || fullName.trim() === '') {
-        throw new Error('Full name is required');
-      }
-      if (!createOrderDto.email || createOrderDto.email.trim() === '') {
-        throw new Error('Email is required');
-      }
-      if (!createOrderDto.phone || createOrderDto.phone.trim() === '') {
-        throw new Error('Phone number is required');
-      }
-      if (!createOrderDto.address || createOrderDto.address.trim() === '') {
-        throw new Error('Address is required');
-      }
-      if (!createOrderDto.shippingMethod || ![1, 2, 3].includes(createOrderDto.shippingMethod)) {
-        throw new Error('Valid shipping method is required (1=Pickup, 2=Nool, 3=Aramex)');
-      }
-      if (createOrderDto.items.length === 0) {
-        throw new Error('Order must contain at least one item');
-      }
-
-      console.log('📦 Sending order data to API:', JSON.stringify(createOrderDto, null, 2));
-      const orderResponse = await orderService.create(createOrderDto);
-      console.log('✅ Received order response:', orderResponse);
-      
-      if (!orderResponse || !orderResponse.orderNumber) {
-        throw new Error('Failed to create order - invalid response');
-      }
-      
       // Store server order number
       sessionStorage.setItem(ORDER_ID_KEY, orderNumber);
 
       // Step 2: Initiate payment with Bank Muscat Gateway
+      const fullName = order.checkoutDetails.isGift 
+        ? order.checkoutDetails.recipientName || order.checkoutDetails.fullName
+        : order.checkoutDetails.fullName;
       const paymentRequest: PaymentRequestDto = {
         orderId: orderNumber,
         amount: totalAmount,
@@ -591,7 +544,7 @@ export const PaymentPage: React.FC = () => {
     };
   }, []);
 
-  if (!order) {
+  if (!order || isLoadingOrder) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white pt-20">
         <Seo
@@ -612,12 +565,17 @@ export const PaymentPage: React.FC = () => {
           subtitleAr="جاري تحميل تفاصيل الطلب..."
         />
         <div className="container mx-auto py-16 text-center space-y-6">
+          <div className="flex justify-center mb-4">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600"></div>
+          </div>
           <p className="text-gray-600">
-            {isArabic ? 'نقوم بإحضار تفاصيل الطلب، يرجى الانتظار أو العودة إلى صفحة الشراء.' : 'We are preparing your payment details. Please wait or return to checkout.'}
+            {isArabic ? 'نقوم بإحضار تفاصيل الطلب، يرجى الانتظار...' : 'Loading order details, please wait...'}
           </p>
-          <Button variant="outline" onClick={() => navigate('/checkout')}>
-            {isArabic ? 'العودة إلى صفحة الشراء' : 'Back to Checkout'}
-          </Button>
+          {!isLoadingOrder && (
+            <Button variant="outline" onClick={() => navigate('/checkout')}>
+              {isArabic ? 'العودة إلى صفحة الشراء' : 'Back to Checkout'}
+            </Button>
+          )}
         </div>
       </div>
     );
@@ -675,7 +633,15 @@ export const PaymentPage: React.FC = () => {
                 <div className="space-y-4">
                   {order.items.map((item) => (
                     <div key={item.id} className="flex items-center gap-4 rounded-2xl border border-gray-100 p-4">
-                      <img src={item.image} alt={item.name} className="h-14 w-14 rounded-lg object-cover" />
+                      <img 
+                        src={item.image} 
+                        alt={item.name} 
+                        className="h-14 w-14 rounded-lg object-cover bg-gray-100"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = '/images/products/default-product.webp';
+                        }}
+                      />
                       <div className="flex-1">
                         <p className="font-medium text-gray-900">{item.name}</p>
                         <p className="text-sm text-gray-500">

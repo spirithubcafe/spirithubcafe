@@ -29,12 +29,24 @@ export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Check for redirect in URL params first, then in location state, default to profile
   const redirectParam = sanitizeRedirect(new URLSearchParams(location.search).get('redirect'));
-  const redirectTarget = redirectParam ?? '/profile';
+  const stateFrom = (location.state as any)?.from;
+  const stateMessage = (location.state as any)?.message;
+  const redirectTarget = redirectParam || stateFrom || '/profile';
   const registerPath = redirectParam ? `/register?redirect=${encodeURIComponent(redirectParam)}` : '/register';
+
+  console.log('🔍 Login redirect info:', { 
+    redirectParam, 
+    stateFrom, 
+    stateMessage,
+    redirectTarget,
+    locationState: location.state 
+  });
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
+      console.log('✅ User authenticated, redirecting to:', redirectTarget);
       navigate(redirectTarget, { replace: true });
     }
   }, [isAuthenticated, isLoading, navigate, redirectTarget]);
@@ -108,6 +120,15 @@ export const LoginPage: React.FC = () => {
       />
 
       <div className="container mx-auto py-12">
+        {stateMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-center"
+          >
+            {stateMessage}
+          </motion.div>
+        )}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
           {/* Login Form - First on mobile, Second on desktop */}
           <motion.div
