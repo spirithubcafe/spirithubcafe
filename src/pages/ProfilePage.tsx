@@ -640,26 +640,68 @@ const ProfilePage: React.FC = () => {
                       </div>
                     ) : orders.length > 0 ? (
                       <div className="space-y-4">
-                        {orders.map((order) => (
-                          <div key={order.id} className="border rounded-lg p-4">
-                            <div className="flex items-center justify-between mb-3">
-                              <div>
-                                <div className="font-semibold text-lg">{order.orderNumber}</div>
-                                <div className="text-sm text-gray-600">
-                                  {format(new Date(order.createdAt), 'MMMM dd, yyyy HH:mm')}
+                        {orders.map((order) => {
+                          // Status badge styling
+                          const getStatusColor = (status: string) => {
+                            switch(status) {
+                              case 'Delivered': return 'text-green-700 bg-green-100';
+                              case 'Processing': return 'text-blue-700 bg-blue-100';
+                              case 'Shipped': return 'text-purple-700 bg-purple-100';
+                              case 'Pending': return 'text-yellow-700 bg-yellow-100';
+                              case 'Cancelled': return 'text-red-700 bg-red-100';
+                              default: return 'text-gray-700 bg-gray-100';
+                            }
+                          };
+
+                          const getPaymentColor = (paymentStatus: string) => {
+                            switch(paymentStatus) {
+                              case 'Paid': return 'text-green-700 bg-green-100';
+                              case 'Unpaid': return 'text-orange-700 bg-orange-100';
+                              case 'Failed': return 'text-red-700 bg-red-100';
+                              case 'Refunded': return 'text-purple-700 bg-purple-100';
+                              case 'PartiallyRefunded': return 'text-yellow-700 bg-yellow-100';
+                              default: return 'text-gray-700 bg-gray-100';
+                            }
+                          };
+
+                          return (
+                          <div key={order.id} className="border rounded-lg p-5 shadow-sm hover:shadow-md transition-shadow">
+                            <div className="flex items-start justify-between mb-4">
+                              <div className="flex-1">
+                                <div className="font-semibold text-lg mb-1">
+                                  {isArabic ? 'طلب رقم' : 'Order'} #{order.orderNumber}
+                                </div>
+                                <div className="text-sm text-gray-500">
+                                  {format(new Date(order.createdAt), 'MMMM dd, yyyy - HH:mm')}
                                 </div>
                               </div>
                               <div className="text-right">
-                                <div className="font-bold text-lg">
+                                <div className="font-bold text-xl mb-2 text-amber-700">
                                   {order.totalAmount.toFixed(3)} {isArabic ? 'ر.ع.' : 'OMR'}
                                 </div>
-                                <div className="flex gap-2">
-                                  <Badge variant={order.status === 'Delivered' ? 'default' : 'secondary'}>
-                                    {order.status}
-                                  </Badge>
-                                  <Badge variant={order.paymentStatus === 'Paid' ? 'default' : 'destructive'}>
-                                    {order.paymentStatus}
-                                  </Badge>
+                                <div className="flex gap-2 flex-wrap justify-end">
+                                  <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(order.status)}`}>
+                                    {isArabic 
+                                      ? order.status === 'Delivered' ? 'تم التوصيل'
+                                        : order.status === 'Processing' ? 'قيد المعالجة'
+                                        : order.status === 'Shipped' ? 'تم الشحن'
+                                        : order.status === 'Pending' ? 'قيد الانتظار'
+                                        : order.status === 'Cancelled' ? 'ملغي'
+                                        : order.status
+                                      : order.status
+                                    }
+                                  </span>
+                                  <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getPaymentColor(order.paymentStatus)}`}>
+                                    {isArabic
+                                      ? order.paymentStatus === 'Paid' ? 'مدفوع'
+                                        : order.paymentStatus === 'Unpaid' ? 'غير مدفوع'
+                                        : order.paymentStatus === 'Failed' ? 'فشل الدفع'
+                                        : order.paymentStatus === 'Refunded' ? 'مسترد'
+                                        : order.paymentStatus === 'PartiallyRefunded' ? 'مسترد جزئياً'
+                                        : order.paymentStatus
+                                      : order.paymentStatus
+                                    }
+                                  </span>
                                 </div>
                               </div>
                             </div>
@@ -718,7 +760,8 @@ const ProfilePage: React.FC = () => {
                               )}
                             </div>
                           </div>
-                        ))}
+                        );
+                        })}
                       </div>
                     ) : (
                       <div className="text-center py-12">

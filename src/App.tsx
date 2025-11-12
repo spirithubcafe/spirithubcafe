@@ -89,9 +89,12 @@ function AppContent() {
         <Route path="/checkout" element={<CheckoutPage />} />
         <Route path="/checkout/payment-success" element={<PaymentSuccessPage />} />
         <Route path="/checkout/payment-cancelled" element={<PaymentFailurePage />} />
+        <Route path="/checkout/payment-failed" element={<PaymentFailurePage />} />
+        <Route path="/checkout/payment-error" element={<PaymentFailurePage />} />
         <Route path="/payment" element={<PaymentPage />} />
         <Route path="/payment/success" element={<PaymentSuccessPage />} />
         <Route path="/payment/failure" element={<PaymentFailurePage />} />
+        <Route path="/payment/cancelled" element={<PaymentFailurePage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
 

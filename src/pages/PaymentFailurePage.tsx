@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { AlertOctagon, ArrowLeftCircle } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { AlertOctagon, ArrowLeftCircle, XCircle } from 'lucide-react';
 import { PageHeader } from '../components/layout/PageHeader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
+import { Alert, AlertDescription } from '../components/ui/alert';
 import { useApp } from '../hooks/useApp';
 import type { CheckoutOrder } from '../types/checkout';
 import { Seo } from '../components/seo/Seo';
@@ -15,19 +16,34 @@ export const PaymentFailurePage: React.FC = () => {
   const { language } = useApp();
   const isArabic = language === 'ar';
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [order, setOrder] = useState<CheckoutOrder | null>(null);
+  
+  const orderId = searchParams.get('orderId');
+  const reason = searchParams.get('reason');
+  const message = searchParams.get('message');
 
   useEffect(() => {
+    // Log all URL parameters for debugging
+    console.log('=== PaymentFailurePage Debug ===');
+    console.log('Current URL:', window.location.href);
+    console.log('Search params:', Object.fromEntries(searchParams.entries()));
+    console.log('Order ID:', orderId);
+    console.log('Reason:', reason);
+    console.log('Message:', message);
+    console.log('================================');
+
     const stored = sessionStorage.getItem(PENDING_ORDER_STORAGE_KEY);
     if (stored) {
       try {
-        const parsed: CheckoutOrder = JSON.parse(stored);
+        const parsed = JSON.parse(stored);
         setOrder(parsed);
-      } catch {
-        sessionStorage.removeItem(PENDING_ORDER_STORAGE_KEY);
+        console.log('Loaded pending order:', parsed);
+      } catch (err) {
+        console.error('Error parsing pending order:', err);
       }
     }
-  }, []);
+  }, [searchParams, orderId, reason, message]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-red-50 to-white page-padding-top">
@@ -61,6 +77,48 @@ export const PaymentFailurePage: React.FC = () => {
               : 'No money was deducted from your card. You can retry the payment or review your order details.'}
           </p>
         </div>
+
+        {/* Debug Information */}
+        {(orderId || reason || message) && (
+          <Card className="text-left border-amber-200 bg-amber-50 max-w-2xl mx-auto">
+            <CardHeader>
+              <CardTitle className="text-sm font-medium text-amber-900">
+                {isArabic ? 'معلومات التصحيح' : 'Debug Information'}
+              </CardTitle>
+              <CardDescription className="text-xs">
+                {isArabic ? 'معلومات فنية للمطورين' : 'Technical information for developers'}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3 text-sm">
+              {orderId && (
+                <div className="flex flex-wrap gap-2">
+                  <span className="font-semibold text-amber-900">{isArabic ? 'رقم الطلب:' : 'Order ID:'}</span>
+                  <span className="font-mono text-amber-700">{orderId}</span>
+                </div>
+              )}
+              {reason && (
+                <div className="flex flex-wrap gap-2">
+                  <span className="font-semibold text-amber-900">{isArabic ? 'السبب:' : 'Reason:'}</span>
+                  <span className="text-amber-700">{reason}</span>
+                </div>
+              )}
+              {message && (
+                <div className="flex flex-wrap gap-2">
+                  <span className="font-semibold text-amber-900">{isArabic ? 'الرسالة:' : 'Message:'}</span>
+                  <span className="text-amber-700">{message}</span>
+                </div>
+              )}
+              <div className="pt-2 border-t border-amber-300">
+                <div className="font-semibold text-amber-900 mb-2">
+                  {isArabic ? 'URL الكامل:' : 'Full URL:'}
+                </div>
+                <div className="font-mono text-xs break-all bg-white p-3 rounded border border-amber-200 text-amber-800">
+                  {window.location.href}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {order && (
           <Card className="text-left shadow-xl border-red-100">
