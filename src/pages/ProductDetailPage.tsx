@@ -221,6 +221,20 @@ export const ProductDetailPage = () => {
     return displayDescription.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
   }, [displayDescription]);
 
+  // Helper function to get image alt text with fallback
+  const getImageAlt = (index: number): string => {
+    const image = product?.images?.[index];
+    if (image) {
+      const customAlt = language === 'ar' ? image.altTextAr : image.altText;
+      if (customAlt) {
+        return customAlt;
+      }
+    }
+    // Fallback: use main imageAlt field or product name
+    const mainAlt = language === 'ar' ? product?.imageAltAr : product?.imageAlt;
+    return mainAlt || `${displayName} - ${language === 'ar' ? 'صورة' : 'Image'} ${index + 1}`;
+  };
+
   const canonicalUrl = useMemo(() => {
     if (!product) {
       return `${siteMetadata.baseUrl}/products`;
@@ -229,13 +243,21 @@ export const ProductDetailPage = () => {
     return `${siteMetadata.baseUrl}/products/${slugOrId}`;
   }, [product]);
 
-  const seoTitle = product ? displayName : language === 'ar' ? 'تفاصيل المنتج' : 'Product details';
+  // Use custom metaTitle if available, otherwise fallback to product name
+  const seoTitle = product?.metaTitle || (product ? displayName : language === 'ar' ? 'تفاصيل المنتج' : 'Product details');
 
   const seoDescription = useMemo(() => {
+    // Priority 1: Use custom metaDescription if available
+    if (product?.metaDescription) {
+      return product.metaDescription;
+    }
+
+    // Priority 2: Use plain description from product
     if (plainDescription) {
       return plainDescription;
     }
 
+    // Priority 3: Auto-generate description
     if (product) {
       const categoryName = product.category?.name || '';
       const priceText = price > 0 ? ` - ${price.toFixed(3)} OMR` : '';
@@ -403,12 +425,16 @@ export const ProductDetailPage = () => {
       <Seo
         title={seoTitle}
         description={seoDescription}
-        keywords={[
-          displayName,
-          product?.category?.name || '',
-          'Spirit Hub Cafe',
-          'specialty coffee Oman',
-        ].filter(Boolean)}
+        keywords={
+          product?.metaKeywords 
+            ? product.metaKeywords.split(',').map(k => k.trim()).filter(Boolean)
+            : [
+                displayName,
+                product?.category?.name || '',
+                'Spirit Hub Cafe',
+                'specialty coffee Oman',
+              ].filter(Boolean)
+        }
         canonical={canonicalUrl}
         structuredData={structuredData ?? undefined}
         type="product"
@@ -551,7 +577,7 @@ export const ProductDetailPage = () => {
                         >
                           <img
                             src={images[currentImageIndex]}
-                            alt={displayName}
+                            alt={getImageAlt(currentImageIndex)}
                             className={`absolute inset-0 h-full w-full object-cover transition-transform duration-200 ${
                               isZooming ? 'scale-150' : 'scale-100'
                             }`}
@@ -618,7 +644,7 @@ export const ProductDetailPage = () => {
                               >
                                 <img
                                   src={image}
-                                  alt={`${displayName} thumbnail ${index + 1}`}
+                                  alt={getImageAlt(index)}
                                   className="h-full w-full object-cover"
                                   onError={(event) =>
                                     handleImageError(event, '/images/products/default-product.webp')
