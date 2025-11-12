@@ -11,11 +11,15 @@ export interface SeoProps {
   keywords?: string[] | string;
   canonical?: string;
   image?: string;
+  imageAlt?: string;
   type?: 'website' | 'article' | 'product';
   noindex?: boolean;
   robots?: string;
   structuredData?: StructuredData;
   locale?: string;
+  productPrice?: string;
+  productCurrency?: string;
+  productAvailability?: 'in stock' | 'out of stock';
 }
 
 const ensureMeta = (selector: string, attributes: Record<string, string>, content: string) => {
@@ -54,11 +58,15 @@ export const Seo: React.FC<SeoProps> = ({
   keywords,
   canonical,
   image,
+  imageAlt,
   type = 'website',
   noindex = false,
   robots,
   structuredData,
   locale,
+  productPrice,
+  productCurrency,
+  productAvailability,
 }) => {
   const { language } = useApp();
   const location = useLocation();
@@ -95,7 +103,20 @@ export const Seo: React.FC<SeoProps> = ({
     ensureMeta('meta[property="og:url"]', { property: 'og:url' }, resolvedCanonical);
     ensureMeta('meta[property="og:site_name"]', { property: 'og:site_name' }, siteMetadata.siteName);
     ensureMeta('meta[property="og:image"]', { property: 'og:image' }, resolvedImage ?? '');
+    if (resolvedImage) {
+      ensureMeta('meta[property="og:image:alt"]', { property: 'og:image:alt' }, imageAlt || resolvedTitle);
+    }
     ensureMeta('meta[property="og:locale"]', { property: 'og:locale' }, resolvedLocale);
+    
+    // Product-specific Open Graph tags
+    if (type === 'product' && productPrice && productCurrency) {
+      ensureMeta('meta[property="product:price:amount"]', { property: 'product:price:amount' }, productPrice);
+      ensureMeta('meta[property="product:price:currency"]', { property: 'product:price:currency' }, productCurrency);
+    }
+    if (type === 'product' && productAvailability) {
+      ensureMeta('meta[property="product:availability"]', { property: 'product:availability' }, productAvailability);
+    }
+    
     ensureMeta('meta[name="twitter:card"]', { name: 'twitter:card' }, 'summary_large_image');
     ensureMeta('meta[name="twitter:title"]', { name: 'twitter:title' }, resolvedTitle);
     ensureMeta('meta[name="twitter:description"]', { name: 'twitter:description' }, resolvedDescription);
@@ -118,10 +139,14 @@ export const Seo: React.FC<SeoProps> = ({
     resolvedCanonical,
     resolvedDescription,
     resolvedImage,
+    imageAlt,
     resolvedLocale,
     resolvedTitle,
     robots,
     type,
+    productPrice,
+    productCurrency,
+    productAvailability,
   ]);
 
   useEffect(() => {

@@ -436,6 +436,8 @@ export const ProductDetailPage = () => {
               ].filter(Boolean)
         }
         canonical={canonicalUrl}
+        image={images[0]}
+        imageAlt={getImageAlt(0)}
         structuredData={structuredData ?? undefined}
         type="product"
       />
