@@ -72,7 +72,16 @@ export const CartDrawer: React.FC = () => {
                             >
                               <Minus className="w-3 h-3" />
                             </Button>
-                            <span className="w-8 text-center font-medium">{item.quantity}</span>
+                            <input
+                              type="number"
+                              value={item.quantity}
+                              onChange={(e) => {
+                                const val = parseInt(e.target.value) || 1;
+                                updateQuantity(item.id, Math.max(val, 1));
+                              }}
+                              className="w-10 text-center font-medium border border-gray-300 rounded px-1 py-0.5 text-sm focus:outline-none focus:border-amber-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                              min="1"
+                            />
                             <Button
                               size="icon-sm"
                               variant="outline"

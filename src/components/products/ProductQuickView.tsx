@@ -437,9 +437,17 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
                     >
                       –
                     </button>
-                    <span className="px-2 md:px-3 py-0.5 md:py-1 text-[10px] md:text-xs font-bold text-gray-900 min-w-[1.5rem] md:min-w-[2rem] text-center border-x border-amber-200">
-                      {quantity}
-                    </span>
+                    <input
+                      type="number"
+                      value={quantity}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value) || 1;
+                        setQuantity(Math.min(Math.max(val, 1), 10));
+                      }}
+                      className="px-2 md:px-3 py-0.5 md:py-1 text-[10px] md:text-xs font-bold text-gray-900 w-10 md:w-12 text-center border-x border-amber-200 focus:outline-none focus:bg-amber-50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      min="1"
+                      max="10"
+                    />
                     <button
                       type="button"
                       onClick={increaseQuantity}

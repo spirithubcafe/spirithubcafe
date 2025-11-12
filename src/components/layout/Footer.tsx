@@ -22,9 +22,9 @@ export const Footer: React.FC = () => {
   ];
 
   const socialLinks = [
-    { icon: Facebook, href: '#', label: 'Facebook' },
-    { icon: Instagram, href: '#', label: 'Instagram' },
-    { icon: MessageCircle, href: '#', label: 'WhatsApp' },
+    { icon: Facebook, href: 'https://www.facebook.com/spirithubcafe', label: 'Facebook' },
+    { icon: Instagram, href: 'https://www.instagram.com/spirithubcafe/', label: 'Instagram' },
+    { icon: MessageCircle, href: 'https://wa.me/96891900005', label: 'WhatsApp' },
     { icon: Mail, href: 'mailto:info@spirithubcafe.com', label: 'Email' }
   ];
 
@@ -148,6 +148,8 @@ export const Footer: React.FC = () => {
                     <a
                       key={social.label}
                       href={social.href}
+                      target={social.label !== 'Email' ? '_blank' : undefined}
+                      rel={social.label !== 'Email' ? 'noopener noreferrer' : undefined}
                       className="w-12 h-12 bg-white/10 hover:bg-amber-600 rounded-full flex items-center justify-center transition-all duration-300 backdrop-blur-sm"
                       aria-label={social.label}
                     >
