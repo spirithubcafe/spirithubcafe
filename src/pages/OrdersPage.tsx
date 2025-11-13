@@ -1,10 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useApp } from '../hooks/useApp';
+import { orderService } from '../services/orderService';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog';
+import { Label } from '../components/ui/label';
+import { Separator } from '../components/ui/separator';
+import { ScrollArea } from '../components/ui/scroll-area';
 import { 
   ShoppingBag, 
   Package, 
@@ -14,11 +19,20 @@ import {
   Eye,
   Calendar,
   DollarSign,
-  ArrowLeft
+  ArrowLeft,
+  Truck,
+  MapPin,
+  Phone,
+  Mail,
+  Gift,
+  CreditCard
 } from 'lucide-react';
+import { format } from 'date-fns';
 import { motion } from 'framer-motion';
+import { getProductImageUrl } from '../lib/imageUtils';
 import { Seo } from '../components/seo/Seo';
 import { siteMetadata } from '../config/siteMetadata';
+import type { Order as BackendOrder } from '../types/order';
 
 interface OrderItem {
   id: string;
@@ -30,6 +44,7 @@ interface OrderItem {
 
 interface Order {
   id: string;
+  orderNumber: string;
   date: string;
   status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
   total: number;
@@ -44,39 +59,150 @@ const statusConfig = {
   cancelled: { label: 'Cancelled', color: 'bg-red-100 text-red-800', icon: XCircle },
 };
 
+// Map backend status to frontend status
+const mapOrderStatus = (backendStatus: string): 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled' => {
+  const status = backendStatus.toLowerCase();
+  if (status.includes('pending') || status.includes('awaiting')) return 'pending';
+  if (status.includes('processing') || status.includes('confirmed')) return 'processing';
+  if (status.includes('shipped') || status.includes('shipping')) return 'shipped';
+  if (status.includes('delivered') || status.includes('completed')) return 'delivered';
+  if (status.includes('cancelled') || status.includes('canceled')) return 'cancelled';
+  return 'pending'; // default
+};
+
 export const OrdersPage: React.FC = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const { t, language } = useApp();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [loadingOrderDetails, setLoadingOrderDetails] = useState(false);
+  const [fullOrderDetails, setFullOrderDetails] = useState<BackendOrder | null>(null);
+  const [showDetailsDialog, setShowDetailsDialog] = useState(false);
+
+  const isArabic = language === 'ar';
+
+  // Get orderId from URL if provided
+  const orderIdFromUrl = searchParams.get('orderId');
 
   // Load orders from API
   useEffect(() => {
     const fetchOrders = async () => {
+      console.log('=== OrdersPage Debug ===');
+      console.log('isAuthenticated:', isAuthenticated);
+      console.log('user:', user);
+      console.log('user.id:', user?.id);
+      console.log('orderIdFromUrl:', orderIdFromUrl);
+      
+      if (!user?.id) {
+        console.log('❌ No user ID available - cannot fetch orders');
+        setIsLoading(false);
+        return;
+      }
+
       try {
         setIsLoading(true);
-        // TODO: Replace with actual API call
-        // const response = await ordersService.getUserOrders();
-        // setOrders(response.data);
+        console.log('🔵 Fetching orders for user ID:', user.id);
         
-        // For now, set empty orders array
-        setOrders([]);
-      } catch (error) {
-        console.error('Error fetching orders:', error);
+        const response = await orderService.getOrdersByUserId(user.id.toString());
+        
+        console.log('📦 Orders API response:', response);
+        console.log('📦 Response data:', response.data);
+        console.log('📦 Response data length:', response.data?.length);
+        console.log('📦 Response pagination:', response.pagination);
+        
+        if (response.success) {
+          if (response.data && response.data.length > 0) {
+            // Map backend order format to frontend format
+            const mappedOrders: Order[] = response.data.map((order: BackendOrder) => ({
+              id: order.id.toString(),
+              orderNumber: order.orderNumber,
+              date: order.createdAt || new Date().toISOString(),
+              status: mapOrderStatus(order.status),
+              total: order.totalAmount || 0,
+              items: order.items?.map((item) => ({
+                id: item.id.toString(),
+                name: item.productName || 'Unknown',
+                price: item.unitPrice || 0,
+                quantity: item.quantity || 1,
+                image: getProductImageUrl(item.productImage)
+              })) || []
+            }));
+            
+            setOrders(mappedOrders);
+            console.log('✅ Loaded orders:', mappedOrders.length, 'orders');
+            console.log('✅ Orders data:', mappedOrders);
+            
+            // If orderId is in URL, auto-open that order's details
+            if (orderIdFromUrl) {
+              const orderToShow = mappedOrders.find(o => o.id === orderIdFromUrl);
+              if (orderToShow) {
+                console.log('🔍 Auto-opening order from URL:', orderIdFromUrl);
+                setSelectedOrder(orderToShow);
+              } else {
+                console.warn('⚠️ Order ID from URL not found in user orders:', orderIdFromUrl);
+              }
+            }
+          } else {
+            console.log('ℹ️ No orders found for this user (empty data array)');
+            setOrders([]);
+          }
+        } else {
+          console.warn('⚠️ No orders found or failed response');
+          console.warn('Response success:', response.success);
+          console.warn('Response data:', response.data);
+          setOrders([]);
+        }
+      } catch (error: any) {
+        console.error('❌ Error fetching orders:', error);
+        console.error('Error message:', error.message);
+        console.error('Error response:', error.response);
         setOrders([]);
       } finally {
         setIsLoading(false);
+        console.log('======================');
       }
     };
 
     if (isAuthenticated) {
       fetchOrders();
     } else {
+      console.log('❌ User not authenticated');
       setIsLoading(false);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, user, orderIdFromUrl]);
+
+  // Load full order details when an order is selected
+  const loadOrderDetails = async (orderId: string) => {
+    try {
+      setLoadingOrderDetails(true);
+      console.log('🔍 Loading full details for order:', orderId);
+      
+      const response = await orderService.getOrderById(parseInt(orderId));
+      
+      if (response.success && response.data) {
+        console.log('✅ Full order details loaded:', response.data);
+        setFullOrderDetails(response.data);
+      } else {
+        console.error('❌ Failed to load order details');
+        setFullOrderDetails(null);
+      }
+    } catch (error) {
+      console.error('❌ Error loading order details:', error);
+      setFullOrderDetails(null);
+    } finally {
+      setLoadingOrderDetails(false);
+    }
+  };
+
+  // Handle order selection
+  const handleSelectOrder = async (order: Order) => {
+    setSelectedOrder(order);
+    await loadOrderDetails(order.id);
+    setShowDetailsDialog(true);
+  };
 
   if (!isAuthenticated) {
     return (
@@ -197,7 +323,7 @@ export const OrdersPage: React.FC = () => {
                 <CardContent className="p-4 text-center">
                   <DollarSign className="h-8 w-8 text-yellow-500 mx-auto mb-2" />
                   <h3 className="text-2xl font-bold text-gray-900">
-                    ${orders.reduce((sum, order) => sum + order.total, 0).toFixed(2)}
+                    {orders.reduce((sum, order) => sum + order.total, 0).toFixed(3)} {isArabic ? 'ر.ع' : 'OMR'}
                   </h3>
                   <p className="text-gray-600">{t('orders.totalSpent')}</p>
                 </CardContent>
@@ -264,7 +390,7 @@ export const OrdersPage: React.FC = () => {
                               </Badge>
                               <div className="text-right">
                                 <p className="text-2xl font-bold text-stone-700">
-                                  ${order.total.toFixed(2)}
+                                  {order.total.toFixed(3)} {isArabic ? 'ر.ع' : 'OMR'}
                                 </p>
                                 <p className="text-sm text-gray-500">
                                   {order.items.length} {t('orders.items')}
@@ -303,7 +429,7 @@ export const OrdersPage: React.FC = () => {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => setSelectedOrder(order)}
+                              onClick={() => handleSelectOrder(order)}
                             >
                               <Eye className="h-4 w-4 mr-2" />
                               {t('orders.viewDetails')}
@@ -320,59 +446,400 @@ export const OrdersPage: React.FC = () => {
         )}
       </div>
       
-      {/* Order Details Modal would go here */}
-      {selectedOrder && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <Card className="w-full max-w-2xl max-h-[80vh] overflow-y-auto">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>
-                  {t('orders.order')} #{selectedOrder.id}
-                </CardTitle>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setSelectedOrder(null)}
-                >
-                  ✕
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {selectedOrder.items.map((item) => (
-                  <div key={item.id} className="flex items-center gap-4 p-4 border rounded-lg">
-                    <img
-                      src={item.image}
-                      alt={item.name}
-                      className="w-16 h-16 rounded-lg object-cover"
-                      onError={(e) => {
-                        e.currentTarget.src = '/images/products/default-coffee.jpg';
-                      }}
-                    />
-                    <div className="flex-1">
-                      <h4 className="font-medium">{item.name}</h4>
-                      <p className="text-sm text-gray-500">
-                        {t('orders.quantity')}: {item.quantity}
+      {/* Order Details Dialog */}
+      <Dialog open={showDetailsDialog} onOpenChange={(open) => {
+        setShowDetailsDialog(open);
+        if (!open) {
+          setSelectedOrder(null);
+          setFullOrderDetails(null);
+        }
+      }}>
+        <DialogContent className="max-w-4xl max-h-[90vh]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Package className="h-5 w-5" />
+              {isArabic ? 'تفاصيل الطلب' : 'Order Details'} #{selectedOrder?.orderNumber || selectedOrder?.id}
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedOrder && (
+            <ScrollArea className="max-h-[70vh] pr-4">
+              {loadingOrderDetails ? (
+                <div className="flex justify-center items-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-stone-700"></div>
+                </div>
+              ) : fullOrderDetails ? (
+                <div className="space-y-6">
+                  {/* Order Status Summary */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <Card>
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-2">
+                          <Clock className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm font-medium">
+                            {isArabic ? 'حالة الطلب' : 'Order Status'}
+                          </span>
+                        </div>
+                        <Badge className="mt-2">
+                          {fullOrderDetails.status}
+                        </Badge>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card>
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-2">
+                          <CreditCard className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm font-medium">
+                            {isArabic ? 'حالة الدفع' : 'Payment Status'}
+                          </span>
+                        </div>
+                        <Badge className="mt-2">
+                          {fullOrderDetails.paymentStatus}
+                        </Badge>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card>
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-2">
+                          <DollarSign className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm font-medium">
+                            {isArabic ? 'المبلغ الإجمالي' : 'Total Amount'}
+                          </span>
+                        </div>
+                        <div className="text-lg font-bold mt-1">
+                          {fullOrderDetails.totalAmount.toFixed(3)} {isArabic ? 'ر.ع.' : 'OMR'}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  {/* Customer Information */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <MapPin className="h-4 w-4" />
+                        {isArabic ? 'معلومات العميل' : 'Customer Information'}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label className="text-sm font-medium">
+                            {isArabic ? 'الاسم الكامل' : 'Full Name'}
+                          </Label>
+                          <p className="mt-1 font-medium">{fullOrderDetails.fullName}</p>
+                        </div>
+                        <div>
+                          <Label className="text-sm font-medium">
+                            {isArabic ? 'البريد الإلكتروني' : 'Email'}
+                          </Label>
+                          <p className="mt-1 flex items-center gap-2">
+                            <Mail className="h-4 w-4 text-muted-foreground" />
+                            {fullOrderDetails.email}
+                          </p>
+                        </div>
+                        <div>
+                          <Label className="text-sm font-medium">
+                            {isArabic ? 'رقم الهاتف' : 'Phone Number'}
+                          </Label>
+                          <p className="mt-1 flex items-center gap-2">
+                            <Phone className="h-4 w-4 text-muted-foreground" />
+                            {fullOrderDetails.phone}
+                          </p>
+                        </div>
+                        <div>
+                          <Label className="text-sm font-medium">
+                            {isArabic ? 'المنطقة/المدينة' : 'City/Region'}
+                          </Label>
+                          <p className="mt-1">{fullOrderDetails.city}</p>
+                        </div>
+                        <div>
+                          <Label className="text-sm font-medium">
+                            {isArabic ? 'البلد' : 'Country'}
+                          </Label>
+                          <p className="mt-1">{fullOrderDetails.country}</p>
+                        </div>
+                        {fullOrderDetails.postalCode && (
+                          <div>
+                            <Label className="text-sm font-medium">
+                              {isArabic ? 'الرمز البريدي' : 'Postal Code'}
+                            </Label>
+                            <p className="mt-1">{fullOrderDetails.postalCode}</p>
+                          </div>
+                        )}
+                        <div className="md:col-span-2">
+                          <Label className="text-sm font-medium">
+                            {isArabic ? 'العنوان الكامل' : 'Full Address'}
+                          </Label>
+                          <p className="mt-1 p-3 bg-muted rounded-md">
+                            {fullOrderDetails.address}
+                            <br />
+                            {fullOrderDetails.city}, {fullOrderDetails.country}
+                            {fullOrderDetails.postalCode && ` - ${fullOrderDetails.postalCode}`}
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Shipping Information */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Truck className="h-4 w-4" />
+                        {isArabic ? 'معلومات الشحن' : 'Shipping Information'}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label className="text-sm font-medium">
+                            {isArabic ? 'طريقة الشحن' : 'Shipping Method'}
+                          </Label>
+                          <p className="mt-1">
+                            {fullOrderDetails.shippingMethod === 1 
+                              ? (isArabic ? 'استلام من المتجر' : 'Store Pickup')
+                              : fullOrderDetails.shippingMethod === 2 
+                              ? 'Nool Delivery'
+                              : 'Aramex Courier'
+                            }
+                          </p>
+                        </div>
+                        <div>
+                          <Label className="text-sm font-medium">
+                            {isArabic ? 'تكلفة الشحن' : 'Shipping Cost'}
+                          </Label>
+                          <p className="mt-1">
+                            {fullOrderDetails.shippingCost?.toFixed(3) || '0.000'} {isArabic ? 'ر.ع.' : 'OMR'}
+                          </p>
+                        </div>
+                        {fullOrderDetails.trackingNumber && (
+                          <div className="md:col-span-2">
+                            <Label className="text-sm font-medium">
+                              {isArabic ? 'رقم التتبع' : 'Tracking Number'}
+                            </Label>
+                            <p className="mt-1 font-mono text-sm bg-muted px-2 py-1 rounded">
+                              {fullOrderDetails.trackingNumber}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Order Items */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Package className="h-4 w-4" />
+                        {isArabic ? 'عناصر الطلب' : 'Order Items'}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        {fullOrderDetails.items?.map((item, index) => (
+                          <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
+                            <div className="flex items-center gap-4">
+                              <img 
+                                src={getProductImageUrl(item.productImage)} 
+                                alt={item.productName}
+                                className="w-12 h-12 object-cover rounded-md"
+                                onError={(e) => {
+                                  e.currentTarget.src = getProductImageUrl(null);
+                                }}
+                              />
+                              <div>
+                                <h4 className="font-medium">{item.productName}</h4>
+                                {item.variantInfo && (
+                                  <p className="text-sm text-muted-foreground">{item.variantInfo}</p>
+                                )}
+                                <p className="text-sm text-muted-foreground">
+                                  {isArabic ? 'الكمية' : 'Qty'}: {item.quantity}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <p className="font-medium">
+                                {item.totalAmount.toFixed(3)} {isArabic ? 'ر.ع.' : 'OMR'}
+                              </p>
+                              <p className="text-sm text-muted-foreground">
+                                {item.unitPrice.toFixed(3)} × {item.quantity}
+                              </p>
+                            </div>
+                          </div>
+                        )) || (
+                          <p className="text-muted-foreground text-center py-4">
+                            {isArabic ? 'لا توجد عناصر' : 'No items found'}
+                          </p>
+                        )}
+                      </div>
+                      
+                      <Separator className="my-4" />
+                      
+                      {/* Order Total */}
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span>{isArabic ? 'تكلفة الشحن' : 'Shipping Cost'}</span>
+                          <span>{fullOrderDetails.shippingCost?.toFixed(3) || '0.000'} {isArabic ? 'ر.ع.' : 'OMR'}</span>
+                        </div>
+                        <div className="flex justify-between font-bold text-lg border-t pt-2">
+                          <span>{isArabic ? 'الإجمالي' : 'Total'}</span>
+                          <span>{fullOrderDetails.totalAmount.toFixed(3)} {isArabic ? 'ر.ع.' : 'OMR'}</span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Gift Information */}
+                  {fullOrderDetails.isGift && (
+                    <Card className="border-green-200 bg-green-50">
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-green-700">
+                          <Gift className="h-4 w-4" />
+                          {isArabic ? '🎁 تفاصيل الهدية' : '🎁 Gift Details'}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {fullOrderDetails.giftRecipientName && (
+                            <div>
+                              <Label className="text-sm font-medium text-green-800">
+                                {isArabic ? 'اسم المستلم' : 'Recipient Name'}
+                              </Label>
+                              <p className="mt-1 font-medium">{fullOrderDetails.giftRecipientName}</p>
+                            </div>
+                          )}
+                          {fullOrderDetails.giftRecipientPhone && (
+                            <div>
+                              <Label className="text-sm font-medium text-green-800">
+                                {isArabic ? 'هاتف المستلم' : 'Recipient Phone'}
+                              </Label>
+                              <p className="mt-1 flex items-center gap-2">
+                                <Phone className="h-4 w-4 text-muted-foreground" />
+                                {fullOrderDetails.giftRecipientPhone}
+                              </p>
+                            </div>
+                          )}
+                          {fullOrderDetails.giftRecipientEmail && (
+                            <div>
+                              <Label className="text-sm font-medium text-green-800">
+                                {isArabic ? 'بريد المستلم' : 'Recipient Email'}
+                              </Label>
+                              <p className="mt-1 flex items-center gap-2">
+                                <Mail className="h-4 w-4 text-muted-foreground" />
+                                {fullOrderDetails.giftRecipientEmail}
+                              </p>
+                            </div>
+                          )}
+                          {fullOrderDetails.giftRecipientAddress && (
+                            <div>
+                              <Label className="text-sm font-medium text-green-800">
+                                {isArabic ? 'عنوان التسليم' : 'Delivery Address'}
+                              </Label>
+                              <p className="mt-1">{fullOrderDetails.giftRecipientAddress}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {fullOrderDetails.giftRecipientCity || fullOrderDetails.city}, {fullOrderDetails.giftRecipientCountry || fullOrderDetails.country}
+                                {fullOrderDetails.giftRecipientPostalCode && ` - ${fullOrderDetails.giftRecipientPostalCode}`}
+                              </p>
+                            </div>
+                          )}
+                          {fullOrderDetails.giftMessage && (
+                            <div className="md:col-span-2">
+                              <Label className="text-sm font-medium text-green-800">
+                                {isArabic ? 'رسالة الهدية' : 'Gift Message'}
+                              </Label>
+                              <div className="mt-1 p-3 bg-white border border-green-200 rounded-md italic">
+                                "{fullOrderDetails.giftMessage}"
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Notes */}
+                  {fullOrderDetails.notes && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>{isArabic ? 'ملاحظات' : 'Notes'}</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="p-3 bg-muted rounded-md">{fullOrderDetails.notes}</p>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Order Timeline */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4" />
+                        {isArabic ? 'التواريخ المهمة' : 'Important Dates'}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        <div className="flex justify-between">
+                          <span className="text-sm font-medium">
+                            {isArabic ? 'تاريخ الإنشاء' : 'Created Date'}
+                          </span>
+                          <span className="text-sm">
+                            {format(new Date(fullOrderDetails.createdAt), 'MMM dd, yyyy HH:mm')}
+                          </span>
+                        </div>
+                        {fullOrderDetails.updatedAt && (
+                          <div className="flex justify-between">
+                            <span className="text-sm font-medium">
+                              {isArabic ? 'آخر تحديث' : 'Last Updated'}
+                            </span>
+                            <span className="text-sm">
+                              {format(new Date(fullOrderDetails.updatedAt), 'MMM dd, yyyy HH:mm')}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {selectedOrder.items.map((item) => (
+                    <div key={item.id} className="flex items-center gap-4 mb-4">
+                      <img
+                        src={getProductImageUrl(item.image)}
+                        alt={item.name}
+                        className="w-16 h-16 rounded-lg object-cover"
+                        onError={(e) => {
+                          e.currentTarget.src = getProductImageUrl(null);
+                        }}
+                      />
+                      <div className="flex-1">
+                        <h4 className="font-medium">{item.name}</h4>
+                        <p className="text-sm text-gray-500">
+                          {t('orders.quantity')}: {item.quantity}
+                        </p>
+                      </div>
+                      <p className="font-semibold">
+                        {(item.price * item.quantity).toFixed(3)} {isArabic ? 'ر.ع' : 'OMR'}
                       </p>
                     </div>
-                    <p className="font-semibold">
-                      ${(item.price * item.quantity).toFixed(2)}
-                    </p>
-                  </div>
-                ))}
-                
-                <div className="border-t pt-4">
-                  <div className="flex justify-between items-center text-lg font-bold">
-                    <span>{t('orders.total')}</span>
-                    <span>${selectedOrder.total.toFixed(2)}</span>
+                  ))}
+                  
+                  <div className="border-t pt-4">
+                    <div className="flex justify-between items-center text-lg font-bold">
+                      <span>{t('orders.total')}</span>
+                      <span>{selectedOrder.total.toFixed(3)} {isArabic ? 'ر.ع' : 'OMR'}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+              )}
+            </ScrollArea>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

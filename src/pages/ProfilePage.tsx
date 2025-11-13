@@ -740,7 +740,7 @@ const ProfilePage: React.FC = () => {
                               <Button 
                                 variant="outline" 
                                 size="sm"
-                                onClick={() => navigate(`/orders`)}
+                                onClick={() => navigate(`/orders?orderId=${order.id}`)}
                               >
                                 <Eye className="h-4 w-4 mr-2" />
                                 {isArabic ? 'التفاصيل' : 'View Details'}
