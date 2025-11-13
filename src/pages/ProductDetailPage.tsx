@@ -322,6 +322,17 @@ export const ProductDetailPage = () => {
   }, [canonicalUrl, displayName, images, price, product, seoDescription]);
 
   const isAvailable = product?.isActive ?? false;
+  // Top badge: consider selected variant stock (if variant exists), otherwise fall back to product availability
+  const topInStock = (() => {
+    if (!product) return false;
+    if (selectedVariant) {
+      return (selectedVariant.stockQuantity ?? 0) > 0 && product.isActive;
+    }
+    if (product.variants && product.variants.length > 0) {
+      return product.variants.some((v) => (v.stockQuantity ?? 0) > 0) && product.isActive;
+    }
+    return product.isActive;
+  })();
   const averageRating = product?.averageRating ?? 0;
   const totalReviews = product?.reviewCount ?? 0;
   const tastingNotes = language === 'ar' 
@@ -564,10 +575,15 @@ export const ProductDetailPage = () => {
                             </div>
                           )}
 
-                          {isAvailable && (
+                          {topInStock ? (
                             <div className="inline-flex items-center gap-1 md:gap-1.5 text-green-600 bg-green-50 px-2 md:px-2.5 py-0.5 md:py-1 rounded-full ml-auto">
                               <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
                               <span className="text-[9px] md:text-[10px] font-semibold">{stockLabel}</span>
+                            </div>
+                          ) : (
+                            <div className="inline-flex items-center gap-1 md:gap-1.5 text-red-700 bg-red-50 px-2 md:px-2.5 py-0.5 md:py-1 rounded-full ml-auto">
+                              <div className="w-1.5 h-1.5 bg-red-500 rounded-full"></div>
+                              <span className="text-[9px] md:text-[10px] font-semibold">{language === 'ar' ? 'غير متوفر' : 'Out of Stock'}</span>
                             </div>
                           )}
                         </div>
@@ -698,10 +714,15 @@ export const ProductDetailPage = () => {
                               </div>
                             )}
 
-                            {isAvailable && (
+                            {topInStock ? (
                               <div className="inline-flex items-center gap-1.5 text-green-600 bg-green-50 px-2.5 py-1 rounded-full ml-auto">
                                 <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
                                 <span className="text-[10px] font-semibold">{stockLabel}</span>
+                              </div>
+                            ) : (
+                              <div className="inline-flex items-center gap-1.5 text-red-700 bg-red-50 px-2.5 py-1 rounded-full ml-auto">
+                                <div className="w-1.5 h-1.5 bg-red-500 rounded-full"></div>
+                                <span className="text-[10px] font-semibold">{language === 'ar' ? 'غير متوفر' : 'Out of Stock'}</span>
                               </div>
                             )}
                           </div>
