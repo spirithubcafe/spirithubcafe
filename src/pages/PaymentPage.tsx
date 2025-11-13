@@ -38,6 +38,8 @@ export const PaymentPage: React.FC = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isLoadingOrder, setIsLoadingOrder] = useState(true);
   const [shippingMethods, setShippingMethods] = useState<ShippingMethod[]>([]);
+  const [paymentStep, setPaymentStep] = useState<'ready' | 'creating' | 'initiating' | 'redirecting'>('ready');
+  const [paymentProgress, setPaymentProgress] = useState('');
   const paymentTimer = useRef<number | null>(null);
 
   // Load order from payment link (orderId + token)
@@ -280,6 +282,8 @@ export const PaymentPage: React.FC = () => {
     }
 
     setIsProcessing(true);
+    setPaymentStep('creating');
+    setPaymentProgress(isArabic ? 'جاري إنشاء الطلب...' : 'Creating order...');
 
     try {
       // Check if this is a payment for an existing order (from payment link)
@@ -289,6 +293,7 @@ export const PaymentPage: React.FC = () => {
       
       if (isExistingOrder) {
         // This is a payment link for an existing order - skip order creation
+        setPaymentProgress(isArabic ? 'جاري تحميل الطلب...' : 'Loading order...');
         const existingOrderId = parseInt(order.id.replace('existing-', ''));
         console.log('🔗 Processing payment for existing order ID:', existingOrderId);
         
@@ -453,13 +458,21 @@ export const PaymentPage: React.FC = () => {
           throw new Error('Order must contain at least one item');
         }
 
-        console.log('� User authentication status:', {
+        console.log('👤 User authentication status:', {
           isAuthenticated,
           userId: user?.id,
           userIdInOrder: createOrderDto.userId
         });
-        console.log('�📦 Sending order data to API:', JSON.stringify(createOrderDto, null, 2));
+        console.log('📦 Sending order data to API:', JSON.stringify(createOrderDto, null, 2));
+        
+        setPaymentProgress(isArabic ? 'جاري حفظ الطلب في النظام...' : 'Saving order to system...');
         const orderResponse = await orderService.create(createOrderDto);
+        
+        console.log('✅ Order created successfully:', {
+          orderNumber: orderResponse.orderNumber,
+          orderId: orderResponse.id,
+          totalAmount: orderResponse.totalAmount
+        });
         
         orderNumber = orderResponse.orderNumber;
         totalAmount = orderResponse.totalAmount || order.totals.total;
@@ -471,6 +484,9 @@ export const PaymentPage: React.FC = () => {
       sessionStorage.setItem(ORDER_ID_KEY, orderNumber);
 
       // Step 2: Initiate payment with Bank Muscat Gateway
+      setPaymentStep('initiating');
+      setPaymentProgress(isArabic ? 'جاري الاتصال ببوابة الدفع...' : 'Connecting to payment gateway...');
+      
       const fullName = order.checkoutDetails.isGift 
         ? order.checkoutDetails.recipientName || order.checkoutDetails.fullName
         : order.checkoutDetails.fullName;
@@ -508,19 +524,40 @@ export const PaymentPage: React.FC = () => {
         language: isArabic ? 'AR' : 'EN',
       };
 
+      console.log('💳 Initiating payment with gateway:', {
+        orderId: orderNumber,
+        amount: totalAmount,
+        currency: 'OMR'
+      });
+
       const paymentResponse = await paymentService.initiatePayment(paymentRequest);
+
+      console.log('✅ Payment gateway response received:', {
+        success: paymentResponse.success,
+        hasPaymentUrl: !!paymentResponse.paymentUrl,
+        hasEncryptedData: !!paymentResponse.encryptedRequest,
+        hasAccessCode: !!paymentResponse.accessCode
+      });
 
       if (!paymentResponse.success || !paymentResponse.paymentUrl) {
         throw new Error(paymentResponse.errorMessage || 'Failed to initiate payment');
       }
 
       // Step 3: Redirect to Bank Muscat Gateway
+      setPaymentStep('redirecting');
+      setPaymentProgress(isArabic ? 'جاري التوجيه إلى بوابة الدفع الآمنة...' : 'Redirecting to secure payment gateway...');
+      
       clearCart();
       sessionStorage.removeItem(PENDING_ORDER_STORAGE_KEY);
       sessionStorage.setItem(LAST_SUCCESS_STORAGE_KEY, JSON.stringify({ 
         ...order, 
         serverOrderNumber: orderNumber 
       }));
+
+      console.log('🔄 Redirecting to payment gateway:', paymentResponse.paymentUrl);
+
+      // Small delay to show progress message
+      await new Promise(resolve => setTimeout(resolve, 500));
 
       // Redirect using form submission
       paymentService.redirectToGateway(
@@ -751,15 +788,49 @@ export const PaymentPage: React.FC = () => {
                     {isArabic ? 'سنتواصل معك لإرسال بيانات الحساب عند اختيار هذا الخيار.' : 'We will share our bank details after you confirm this option.'}
                   </p>
                 </div>
-                <div className="flex flex-col">
+                <div className="flex flex-col gap-3">
+                  {isProcessing && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <div className="flex items-center gap-3">
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-blue-900">
+                            {paymentStep === 'creating' && (isArabic ? '⏳ جاري إنشاء الطلب...' : '⏳ Creating order...')}
+                            {paymentStep === 'initiating' && (isArabic ? '💳 جاري الاتصال ببوابة الدفع...' : '💳 Connecting to payment gateway...')}
+                            {paymentStep === 'redirecting' && (isArabic ? '🔄 جاري التوجيه إلى بوابة الدفع الآمنة...' : '🔄 Redirecting to secure payment gateway...')}
+                          </p>
+                          {paymentProgress && (
+                            <p className="text-xs text-blue-700 mt-1">{paymentProgress}</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                   <Button
                     size="lg"
                     className="w-full bg-green-600 hover:bg-green-700 text-white font-bold text-lg py-6"
                     onClick={() => handlePayment(false)}
                     disabled={isProcessing}
                   >
-                    {isArabic ? 'ادفع الآن' : 'Pay Securely'}
+                    {isProcessing ? (
+                      <span className="flex items-center gap-2">
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                        {isArabic ? 'جاري المعالجة...' : 'Processing...'}
+                      </span>
+                    ) : (
+                      <>
+                        <ShieldCheck className="w-5 h-5 inline mr-2" />
+                        {isArabic ? 'ادفع الآن' : 'Pay Securely'}
+                      </>
+                    )}
                   </Button>
+                  {!isProcessing && (
+                    <p className="text-xs text-center text-gray-500">
+                      {isArabic 
+                        ? '🔒 الدفع آمن ومشفر بواسطة Bank Muscat' 
+                        : '🔒 Secure encrypted payment via Bank Muscat'}
+                    </p>
+                  )}
                 </div>
               </CardContent>
             </Card>
