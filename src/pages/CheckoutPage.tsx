@@ -653,7 +653,9 @@ export const CheckoutPage: React.FC = () => {
                       {isArabic ? 'طريقة التسليم' : 'Delivery Method'}
                     </CardTitle>
                     <CardDescription>
-                      {isArabic ? 'اختر ما إذا كنت تريد الاستلام من المتجر أو استخدام الشحن.' : 'Choose between picking up your order or home delivery.'}
+                      {isArabic
+                        ? 'اختر خيار التوصيل المفضل أدناه.'
+                        : 'Choose your preferred delivery option below.'}
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-3">
@@ -698,7 +700,16 @@ export const CheckoutPage: React.FC = () => {
                                       </div>
                                     </div>
                                     <p className="text-xs text-gray-600 mb-2">
-                                      {isArabic ? method.description.ar : method.description.en}
+                                      {method.id === 'pickup'
+                                        ? (isArabic
+                                          ? <span>يرجى جمع طلبك من فرعنا في مسقط الواقع في <strong>شارع الموج</strong>.</span>
+                                          : <span>Please collect your order from our Muscat branch located on <strong>Al Mouj Street</strong>.</span>)
+                                        : method.id === 'nool'
+                                          ? (isArabic
+                                              ? 'توصيل محلي سريع داخل سلطنة عمان بواسطة فريق التوصيل الخاص بنا.'
+                                              : 'Fast local delivery within Oman area with our own delivery team.')
+                                          : (isArabic ? method.description.ar : method.description.en)
+                                      }
                                     </p>
                                     {method.calculationError && method.id === 'aramex' && (
                                       <p className="text-xs text-orange-600 mb-2 flex items-center gap-1">
@@ -716,9 +727,15 @@ export const CheckoutPage: React.FC = () => {
                                       <span className="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
                                         {isArabic ? method.badge.ar : method.badge.en}
                                       </span>
-                                      <p className="text-xs text-gray-500">
-                                        {isArabic ? method.eta.ar : method.eta.en}
-                                      </p>
+                                      {method.id === 'pickup' ? (
+                                        <span className="text-xs text-gray-500 ml-2 whitespace-nowrap">
+                                          {isArabic ? 'متاح يومياً من 7 صباحاً حتى 12 منتصف الليل.' : 'Available Daily 7am-12am.'}
+                                        </span>
+                                      ) : (
+                                        <p className="text-xs text-gray-500">
+                                          {isArabic ? method.eta.ar : method.eta.en}
+                                        </p>
+                                      )}
                                     </div>
                                   </div>
                                 </label>
