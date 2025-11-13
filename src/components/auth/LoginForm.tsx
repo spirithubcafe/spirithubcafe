@@ -3,7 +3,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
-
+import { GoogleLoginButton } from './GoogleLoginButton';
 import { Alert, AlertDescription } from '../ui/alert';
 import { Spinner } from '../ui/spinner';
 import { Eye, EyeOff, LogIn, AlertCircle } from 'lucide-react';
@@ -164,6 +164,21 @@ export const LoginForm: React.FC<LoginFormProps> = ({
               </>
             )}
           </Button>
+
+          {/* Divider */}
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white text-gray-500">
+                {isRTL ? 'أو' : 'OR'}
+              </span>
+            </div>
+          </div>
+
+          {/* Google Login Button */}
+          <GoogleLoginButton mode="login" />
           
           {onSwitchToRegister && (
             <div className="text-center">

@@ -4,7 +4,7 @@ import { authService } from '../services/authService';
 import type { UserInfo, LoginResponse } from '../types/auth';
 
 // Import Context and type from separate file
-import { AuthContext, type AuthContextType } from './AuthContextDefinition';
+import { AuthContext, type AuthContextType, type GoogleLoginData } from './AuthContextDefinition';
 
 // Auth Provider Props
 interface AuthProviderProps {
@@ -155,6 +155,25 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   /**
+   * Login with Google OAuth
+   */
+  const loginWithGoogle = async (googleData: GoogleLoginData): Promise<void> => {
+    try {
+      const response = await authService.loginWithGoogle(googleData);
+      
+      if (response.success && response.user) {
+        setIsAuthenticated(true);
+        setUser(response.user);
+      } else {
+        throw new Error('Google login failed');
+      }
+    } catch (error) {
+      console.error('Google login failed:', error);
+      throw error;
+    }
+  };
+
+  /**
    * Logout function
    */
   const logout = async (): Promise<void> => {
@@ -220,6 +239,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Actions
     login,
     register,
+    loginWithGoogle,
     logout,
     refreshUser,
     

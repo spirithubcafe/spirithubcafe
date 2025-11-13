@@ -23,4 +23,4 @@ dev-dist
 *.njsproj
 *.sln
 *.sw?
-/API
+.env

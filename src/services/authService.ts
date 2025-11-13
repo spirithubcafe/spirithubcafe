@@ -5,6 +5,7 @@ import type {
   ChangePasswordViewModel,
   RegisterRequest 
 } from '../types/auth';
+import type { GoogleLoginData } from '../contexts/AuthContextDefinition';
 
 // Actual API response interface
 interface ActualLoginResponse {
@@ -81,6 +82,42 @@ export class AuthService {
       return response.data;
     } catch (error) {
       console.error('Registration error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Login with Google OAuth
+   */
+  async loginWithGoogle(googleData: GoogleLoginData): Promise<LoginResponse> {
+    try {
+      console.log('Sending Google ID token to backend');
+      
+      const response = await http.post<ActualLoginResponse>('/api/auth/google/signin', {
+        idToken: googleData.idToken
+      });
+      
+      if (response.data && response.data.access_token && response.data.refresh_token) {
+        tokenManager.setTokens(response.data.access_token, response.data.refresh_token);
+        
+        const userInfo = this.parseUserFromToken(response.data.access_token);
+        if (userInfo) {
+          localStorage.setItem('user', JSON.stringify(userInfo));
+        }
+        
+        window.dispatchEvent(new CustomEvent('auth-login', { detail: userInfo }));
+        
+        return {
+          success: true,
+          accessToken: response.data.access_token,
+          refreshToken: response.data.refresh_token,
+          user: userInfo || undefined
+        };
+      } else {
+        throw new Error('Invalid response format');
+      }
+    } catch (error) {
+      console.error('Google login error:', error);
       throw error;
     }
   }
