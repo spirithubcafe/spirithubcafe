@@ -36,12 +36,16 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({ mode = 'lo
       );
 
       navigate('/');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Google login error:', error);
+      
+      // Show detailed error message
+      const errorMessage = error?.message || error?.errors || 'Failed to login with Google';
+      
       toast.error(
         isArabic
-          ? 'فشل تسجيل الدخول عبر Google'
-          : 'Failed to login with Google'
+          ? `فشل تسجيل الدخول عبر Google: ${errorMessage}`
+          : `Failed to login with Google: ${errorMessage}`
       );
     }
   };

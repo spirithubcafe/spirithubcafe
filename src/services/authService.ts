@@ -13,6 +13,39 @@ interface ActualLoginResponse {
   refresh_token: string;
 }
 
+// Google OAuth API response interface
+interface GoogleLoginResponse {
+  success: boolean;
+  accessToken: string;
+  refreshToken: string;
+  user: {
+    id: number;
+    username: string;
+    displayName: string;
+    fullName: string;
+    email: string;
+    emailVerified: boolean;
+    phoneNumber: string | null;
+    country: string | null;
+    city: string | null;
+    postalCode: string | null;
+    address: string | null;
+    bio: string | null;
+    profilePicture: string | null;
+    totalSpent: number;
+    points: number;
+    membershipType: string;
+    memberSince: string;
+    googleId: string;
+    isGoogleAccount: boolean;
+    isActive: boolean;
+    lastLoggedIn: string;
+    roles: string[];
+  };
+  isNewUser: boolean;
+  errorMessage: string | null;
+}
+
 // Authentication Service
 export class AuthService {
   private static instance: AuthService;
@@ -92,32 +125,57 @@ export class AuthService {
   async loginWithGoogle(googleData: GoogleLoginData): Promise<LoginResponse> {
     try {
       console.log('Sending Google ID token to backend');
+      console.log('ID Token length:', googleData.idToken.length);
+      console.log('API endpoint:', '/api/auth/google/signin');
       
-      const response = await http.post<ActualLoginResponse>('/api/auth/google/signin', {
+      const response = await http.post<GoogleLoginResponse>('/api/auth/google/signin', {
         idToken: googleData.idToken
       });
       
-      if (response.data && response.data.access_token && response.data.refresh_token) {
-        tokenManager.setTokens(response.data.access_token, response.data.refresh_token);
+      console.log('Backend response received:', response.status);
+      console.log('Backend response data:', response.data);
+      
+      if (response.data && response.data.success && response.data.accessToken && response.data.refreshToken) {
+        // Store tokens
+        tokenManager.setTokens(response.data.accessToken, response.data.refreshToken);
         
-        const userInfo = this.parseUserFromToken(response.data.access_token);
-        if (userInfo) {
-          localStorage.setItem('user', JSON.stringify(userInfo));
-        }
+        // Convert backend user format to our UserInfo format
+        const userInfo: UserInfo = {
+          id: response.data.user.id,
+          username: response.data.user.username,
+          displayName: response.data.user.displayName,
+          roles: response.data.user.roles,
+          isActive: response.data.user.isActive,
+          lastLoggedIn: response.data.user.lastLoggedIn,
+        };
+        
+        localStorage.setItem('user', JSON.stringify(userInfo));
         
         window.dispatchEvent(new CustomEvent('auth-login', { detail: userInfo }));
         
+        console.log('✅ Google login successful!', {
+          user: userInfo,
+          isNewUser: response.data.isNewUser
+        });
+        
         return {
           success: true,
-          accessToken: response.data.access_token,
-          refreshToken: response.data.refresh_token,
-          user: userInfo || undefined
+          accessToken: response.data.accessToken,
+          refreshToken: response.data.refreshToken,
+          user: userInfo
         };
       } else {
-        throw new Error('Invalid response format');
+        const errorMsg = response.data?.errorMessage || 'Invalid response format';
+        console.error('Invalid response format:', response.data);
+        throw new Error(errorMsg);
       }
-    } catch (error) {
-      console.error('Google login error:', error);
+    } catch (error: any) {
+      console.error('Google login error details:', {
+        message: error.message,
+        statusCode: error.statusCode,
+        errors: error.errors,
+        response: error.response?.data
+      });
       throw error;
     }
   }

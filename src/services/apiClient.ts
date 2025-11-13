@@ -81,9 +81,9 @@ const createApiClient = (): AxiosInstance => {
 
       // Transform error to standard format
       const apiError: ApiError = {
-        message: error.response?.data?.message || error.message || 'An error occurred',
+        message: error.response?.data?.error || error.response?.data?.message || error.message || 'An error occurred',
         statusCode: error.response?.status || 500,
-        errors: error.response?.data?.errors,
+        errors: error.response?.data?.errors || error.response?.data?.error,
       };
 
       return Promise.reject(apiError);

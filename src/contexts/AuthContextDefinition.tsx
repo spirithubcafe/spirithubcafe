@@ -14,7 +14,7 @@ export interface AuthContextType {
   // Actions
   login: (credentials: { username: string; password: string }) => Promise<LoginResponse>;
   register: (userData: { username: string; email: string; password: string; confirmPassword: string }) => Promise<LoginResponse>;
-  loginWithGoogle: (googleData: GoogleLoginData) => Promise<void>;
+  loginWithGoogle: (googleData: GoogleLoginData) => Promise<LoginResponse>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
   

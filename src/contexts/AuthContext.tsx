@@ -157,7 +157,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   /**
    * Login with Google OAuth
    */
-  const loginWithGoogle = async (googleData: GoogleLoginData): Promise<void> => {
+  const loginWithGoogle = async (googleData: GoogleLoginData): Promise<LoginResponse> => {
     try {
       const response = await authService.loginWithGoogle(googleData);
       
@@ -167,6 +167,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       } else {
         throw new Error('Google login failed');
       }
+      
+      return response;
     } catch (error) {
       console.error('Google login failed:', error);
       throw error;
