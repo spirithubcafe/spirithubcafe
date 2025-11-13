@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { XCircle, ArrowLeftCircle, ShoppingCart } from 'lucide-react';
+import { XCircle, ShoppingCart } from 'lucide-react';
 import { PageHeader } from '../components/layout/PageHeader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -40,19 +40,6 @@ export const PaymentCancelledPage: React.FC = () => {
       }
     }
   }, [searchParams, orderId]);
-
-  const handleRetryPayment = () => {
-    if (order) {
-      sessionStorage.setItem(PENDING_ORDER_STORAGE_KEY, JSON.stringify(order));
-      navigate('/checkout');
-    } else {
-      navigate('/cart');
-    }
-  };
-
-  const handleEditOrder = () => {
-    navigate('/cart');
-  };
 
   return (
     <div className="min-h-screen bg-linear-to-b from-orange-50 to-white page-padding-top">
@@ -147,18 +134,12 @@ export const PaymentCancelledPage: React.FC = () => {
           </Card>
         )}
 
-        <div className="flex flex-col gap-3 sm:flex-row sm:justify-center max-w-md mx-auto">
-          <Button
-            onClick={handleRetryPayment}
-            className="bg-orange-600 hover:bg-orange-700 flex items-center gap-2"
+        <div className="flex justify-center max-w-md mx-auto">
+          <Button 
+            variant="default" 
+            onClick={() => navigate('/products')}
+            className="bg-orange-600 hover:bg-orange-700"
           >
-            <ArrowLeftCircle className="w-4 h-4" />
-            {isArabic ? 'المحاولة مرة أخرى' : 'Try Again'}
-          </Button>
-          <Button variant="outline" onClick={handleEditOrder}>
-            {isArabic ? 'تعديل الطلب' : 'Edit Order'}
-          </Button>
-          <Button variant="ghost" onClick={() => navigate('/products')}>
             {isArabic ? 'مواصلة التسوق' : 'Continue Shopping'}
           </Button>
         </div>
