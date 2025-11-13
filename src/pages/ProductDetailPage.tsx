@@ -181,6 +181,9 @@ export const ProductDetailPage = () => {
       product.variants[0];
   }, [product, selectedVariantId]);
 
+  // Minimal guard: treat variant as out of stock when stockQuantity is 0 or less
+  const isVariantOutOfStock = selectedVariant ? (selectedVariant.stockQuantity ?? 0) <= 0 : false;
+
   const images = useMemo(() => {
     if (!product) {
       return [getProductImageUrl(undefined)];
@@ -371,6 +374,9 @@ export const ProductDetailPage = () => {
   };
 
   const handleAddToCart = () => {
+    // Runtime guard: prevent adding an out-of-stock variant
+    if (isVariantOutOfStock) return;
+
     if (!product || price <= 0) {
       return;
     }
@@ -834,6 +840,7 @@ export const ProductDetailPage = () => {
                                   const label = resolveVariantLabel(variant, language);
                                   const isSelected = selectedVariant?.id === variant.id;
                                   const hasDiscount = variant.discountPrice && variant.discountPrice > 0 && variant.price && variant.discountPrice < variant.price;
+                                  const variantOutOfStock = (variant.stockQuantity ?? 0) <= 0;
                                   
                                   return (
                                     <button
@@ -844,23 +851,30 @@ export const ProductDetailPage = () => {
                                         isSelected
                                           ? 'bg-[#6B4423] hover:bg-[#5a3a1e] text-white shadow-md scale-105'
                                           : 'bg-white text-amber-900 hover:bg-amber-50 border-2 border-amber-300 hover:border-[#6B4423] hover:shadow-sm'
-                                      }`}
+                                      } ${variantOutOfStock ? 'opacity-60' : ''}`}
                                     >
                                       <div className="flex flex-col items-center gap-0.5 md:gap-1">
                                         <span className="text-xs md:text-sm font-bold">{label}</span>
-                                        <div className="flex items-center gap-1.5">
-                                          {hasDiscount && (
-                                            <span className={`text-[10px] line-through ${isSelected ? 'text-white/70' : 'text-amber-600/70'}`}>
-                                              {formatCurrency(variant.price!, language)}
+                                        <div className="flex flex-col items-center">
+                                          <div className="flex items-center gap-1.5">
+                                            {hasDiscount && (
+                                              <span className={`text-[10px] line-through ${isSelected ? 'text-white/70' : 'text-amber-600/70'}`}>
+                                                {formatCurrency(variant.price!, language)}
+                                              </span>
+                                            )}
+                                            <span className={`text-xs font-bold ${isSelected ? 'text-white' : 'text-[#6B4423]'}`}>
+                                              {variantPrice > 0
+                                                ? formatCurrency(variantPrice, language)
+                                                : language === 'ar'
+                                                  ? 'السعر عند الطلب'
+                                                  : 'Price on request'}
+                                            </span>
+                                          </div>
+                                          {variantOutOfStock && (
+                                            <span className="text-[10px] text-red-600 font-semibold mt-1">
+                                              {language === 'ar' ? 'نفد المخزون' : 'Out of Stock'}
                                             </span>
                                           )}
-                                          <span className={`text-xs font-bold ${isSelected ? 'text-white' : 'text-[#6B4423]'}`}>
-                                            {variantPrice > 0
-                                              ? formatCurrency(variantPrice, language)
-                                              : language === 'ar'
-                                                ? 'السعر عند الطلب'
-                                                : 'Price on request'}
-                                          </span>
                                         </div>
                                       </div>
                                     </button>
@@ -909,7 +923,7 @@ export const ProductDetailPage = () => {
                             <Button
                               type="button"
                               onClick={handleAddToCart}
-                              disabled={!isAvailable || price <= 0}
+                              disabled={!isAvailable || price <= 0 || isVariantOutOfStock}
                               className="flex-1 inline-flex items-center justify-center gap-1.5 md:gap-2 bg-[#6B4423] hover:bg-[#5a3a1e] text-white font-semibold text-xs md:text-sm h-9 md:h-10 shadow-md hover:shadow-lg transition-all duration-200"
                             >
                               <ShoppingCart className="w-3.5 md:w-4 h-3.5 md:h-4" />

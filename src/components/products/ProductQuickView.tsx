@@ -61,6 +61,9 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
     (variant) => variant.id === selectedVariantId
   );
 
+  // Minimal guard: treat variant as out of stock when stockQuantity is 0 or less
+  const isVariantOutOfStock = selectedVariant ? (selectedVariant.stockQuantity ?? 0) <= 0 : false;
+
   // Get product images
   const images = useMemo(() => {
     if (!fullProduct) {
@@ -99,6 +102,8 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
   const totalReviews = fullProduct?.reviewCount ?? 0;
 
   const handleAddToCart = () => {
+    // Runtime guard: prevent adding an out-of-stock variant
+    if (isVariantOutOfStock) return;
     const variantKey = selectedVariant ? `-${selectedVariant.id}` : '';
     const cartId = `${product.id}${variantKey}`;
     const variantLabel = selectedVariant ? resolveVariantLabel(selectedVariant) : '';
@@ -391,6 +396,7 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
                         const label = resolveVariantLabel(variant);
                         const isSelected = selectedVariant?.id === variant.id;
                         const hasDiscount = variant.discountPrice && variant.discountPrice > 0 && variant.discountPrice < variant.price;
+                        const variantOutOfStock = (variant.stockQuantity ?? 0) <= 0;
 
                         return (
                           <button
@@ -401,19 +407,26 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
                               isSelected
                                 ? 'bg-[#6B4423] hover:bg-[#5a3a1e] text-white shadow-md scale-[1.02]'
                                 : 'bg-white hover:bg-amber-50 text-amber-900 border border-amber-200 hover:border-amber-400 hover:shadow'
-                            }`}
+                            } ${variantOutOfStock ? 'opacity-60' : ''}`}
                           >
                             <div className="flex flex-col items-center">
                               <span className="text-[10px] md:text-xs font-semibold leading-tight">{label}</span>
-                              <div className="flex items-center gap-0.5 mt-0.5">
-                                {hasDiscount && (
-                                  <span className={`text-[8px] md:text-[9px] line-through ${isSelected ? 'text-white/70' : 'text-amber-600/60'}`}>
-                                    {variant.price.toFixed(3)}
+                              <div className="flex flex-col items-center mt-0.5">
+                                <div className="flex items-center gap-0.5">
+                                  {hasDiscount && (
+                                    <span className={`text-[8px] md:text-[9px] line-through ${isSelected ? 'text-white/70' : 'text-amber-600/60'}`}>
+                                      {variant.price.toFixed(3)}
+                                    </span>
+                                  )}
+                                  <span className={`text-[9px] md:text-[10px] font-semibold ${isSelected ? 'text-white' : 'text-[#6B4423]'}`}>
+                                    {variantPrice.toFixed(3)}
+                                  </span>
+                                </div>
+                                {variantOutOfStock && (
+                                  <span className="text-[9px] text-red-600 font-semibold mt-1">
+                                    {isArabic ? 'نفد المخزون' : 'Out of Stock'}
                                   </span>
                                 )}
-                                <span className={`text-[9px] md:text-[10px] font-semibold ${isSelected ? 'text-white' : 'text-[#6B4423]'}`}>
-                                  {variantPrice.toFixed(3)}
-                                </span>
                               </div>
                             </div>
                           </button>
@@ -466,7 +479,7 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
                 {/* Add to Cart Button */}
                 <Button
                   onClick={handleAddToCart}
-                  disabled={currentPrice <= 0}
+                  disabled={currentPrice <= 0 || isVariantOutOfStock}
                   className="flex-1 bg-[#6B4423] hover:bg-[#5a3a1e] text-white h-10 md:h-12 text-[11px] md:text-sm font-semibold flex items-center justify-center shadow-md hover:shadow-lg transition-all duration-200"
                 >
                   <ShoppingCart className="w-3.5 h-3.5 md:w-4 md:h-4 ltr:mr-1 rtl:ml-1 md:ltr:mr-1.5 md:rtl:ml-1.5" />
