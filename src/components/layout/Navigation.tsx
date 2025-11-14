@@ -70,8 +70,7 @@ export const Navigation: React.FC = () => {
               <DropdownMenuContent 
                 align={language === 'ar' ? 'end' : 'start'} 
                 className="w-56 bg-white border border-gray-200 shadow-lg"
-                dir={language === 'ar' ? 'rtl' : 'ltr'}
-              >
+               >
                 {/* All Products Link */}
                 <DropdownMenuItem asChild>
                   <Link
