@@ -136,7 +136,7 @@ const ProfilePage: React.FC = () => {
       
       console.log('✅ User orders response:', response);
       
-      const userOrders = response.data || [];
+      let userOrders = response.data || [];
       console.log(`📊 Found ${userOrders.length} orders for user ${user.id}`);
       
       // Debug: Check order details
@@ -148,9 +148,32 @@ const ProfilePage: React.FC = () => {
         console.log('🔍 Address:', userOrders[0].address);
         console.log('🔍 City:', userOrders[0].city);
         console.log('🔍 Country:', userOrders[0].country);
+        console.log('🔍 ShippingMethod:', userOrders[0].shippingMethod);
       }
       
-      setOrders(userOrders);
+      // Load full details for each order to get complete information
+      console.log('🔄 Loading full details for all orders...');
+      const ordersWithFullDetails = await Promise.all(
+        userOrders.map(async (order: Order) => {
+          try {
+            // Get full order details
+            const detailResponse = await orderService.getOrderById(order.id);
+            if (detailResponse.success && detailResponse.data) {
+              console.log(`✅ Loaded full details for order ${order.id}`);
+              return detailResponse.data;
+            } else {
+              console.warn(`⚠️ Failed to load details for order ${order.id}, using summary data`);
+              return order;
+            }
+          } catch (error) {
+            console.error(`❌ Error loading details for order ${order.id}:`, error);
+            return order;
+          }
+        })
+      );
+      
+      console.log('✅ All order details loaded');
+      setOrders(ordersWithFullDetails);
       
       // Calculate stats
       const totalOrders = userOrders.length;
@@ -729,7 +752,9 @@ const ProfilePage: React.FC = () => {
                               <div>
                                 <span className="text-gray-600">{isArabic ? 'الشحن:' : 'Shipping:'}</span>
                                 <span className="ml-2 font-medium">
-                                  {order.shippingMethod === 1 
+                                  {!order.shippingMethod || order.shippingMethod === 0
+                                    ? (isArabic ? 'غير محدد' : 'Not specified')
+                                    : order.shippingMethod === 1 
                                     ? (isArabic ? 'استلام من المتجر' : 'Store Pickup')
                                     : order.shippingMethod === 2 
                                     ? 'Nool Delivery'
@@ -744,15 +769,19 @@ const ProfilePage: React.FC = () => {
                                 <span className="ml-2 font-medium">
                                   {(() => {
                                     const parts = [];
-                                    if (order.address && order.address.trim() && order.address !== ',') {
-                                      parts.push(order.address);
+                                    // Check address
+                                    if (order.address && typeof order.address === 'string' && order.address.trim() && order.address !== ',' && order.address !== 'null') {
+                                      parts.push(order.address.trim());
                                     }
-                                    if (order.city && order.city.trim()) {
-                                      parts.push(order.city);
+                                    // Check city
+                                    if (order.city && typeof order.city === 'string' && order.city.trim() && order.city !== 'null') {
+                                      parts.push(order.city.trim());
                                     }
-                                    if (order.country && order.country.trim()) {
-                                      parts.push(order.country);
+                                    // Check country
+                                    if (order.country && typeof order.country === 'string' && order.country.trim() && order.country !== 'null') {
+                                      parts.push(order.country.trim());
                                     }
+                                    
                                     return parts.length > 0 
                                       ? parts.join(', ') 
                                       : (isArabic ? 'غير محدد' : 'Not specified');
