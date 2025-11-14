@@ -4,7 +4,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useApp } from '../hooks/useApp';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
-import { CategoriesManagement, ProductsManagement, UsersManagement } from '../components/admin';
+import { AdminDashboard, CategoriesManagement, ProductsManagement, UsersManagement } from '../components/admin';
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '../components/ui/sheet';
 import { 
   Shield, 
@@ -13,7 +13,6 @@ import {
   BarChart3,
   Settings,
   FileText,
-  Activity,
   TrendingUp,
   ArrowLeft,
   Grid3X3,
@@ -107,7 +106,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
     },
     {
       id: 'reports',
-      title: t('admin.reports'),
+      title: t('admin.reports.title'),
       description: t('admin.reportsDesc'),
       icon: TrendingUp,
       color: 'emerald',
@@ -130,7 +129,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
   const renderModuleContent = () => {
     switch (selectedModule) {
       case 'dashboard':
-        return <DashboardContent />;
+        return <AdminDashboard />;
       case 'categories':
         return <CategoriesManagement />;
       case 'products':
@@ -144,7 +143,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
       case 'system':
         return <SystemContent />;
       default:
-        return <DashboardContent />;
+        return <AdminDashboard />;
     }
   };
 
@@ -232,59 +231,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
   );
 };
 
-// Dashboard Content Component
-const DashboardContent: React.FC = () => {
-  const { t } = useApp();
-  
-  return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Activity className="h-5 w-5" />
-            <span>{t('admin.dashboard')}</span>
-          </CardTitle>
-          <CardDescription>
-            {t('admin.dashboardOverview')}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-blue-50 dark:bg-blue-950/50 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-blue-600 dark:text-blue-400 font-medium">{t('admin.totalUsers')}</p>
-                  <p className="text-2xl font-bold text-blue-800 dark:text-blue-200">1,234</p>
-                </div>
-                <Users className="h-8 w-8 text-blue-500" />
-              </div>
-            </div>
-            
-            <div className="bg-green-50 dark:bg-green-950/50 p-4 rounded-lg border border-green-200 dark:border-green-800">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-green-600 dark:text-green-400 font-medium">{t('admin.totalOrders')}</p>
-                  <p className="text-2xl font-bold text-green-800 dark:text-green-200">5,678</p>
-                </div>
-                <FileText className="h-8 w-8 text-green-500" />
-              </div>
-            </div>
-            
-            <div className="bg-orange-50 dark:bg-orange-950/50 p-4 rounded-lg border border-orange-200 dark:border-orange-800">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-orange-600 dark:text-orange-400 font-medium">{t('admin.totalProducts')}</p>
-                  <p className="text-2xl font-bold text-orange-800 dark:text-orange-200">89</p>
-                </div>
-                <Package className="h-8 w-8 text-orange-500" />
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-};
+
 
 // Orders Management Content
 const OrdersContent: React.FC = () => {
@@ -300,7 +247,7 @@ const ReportsContent: React.FC = () => {
       <CardHeader>
         <CardTitle className="flex items-center space-x-2">
           <TrendingUp className="h-5 w-5" />
-          <span>{t('admin.reports')}</span>
+          <span>{t('admin.reports.title')}</span>
         </CardTitle>
         <CardDescription>
           {t('admin.reportsAnalytics')}
