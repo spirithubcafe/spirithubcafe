@@ -671,6 +671,8 @@ export const CheckoutPage: React.FC = () => {
                                   key={method.id}
                                   className={cn(
                                     'flex gap-3 rounded-xl border bg-white p-3 shadow-sm transition-all cursor-pointer',
+                                    // Move the radio selector to the right in Arabic by reversing the row
+                                    isArabic && 'flex-row-reverse',
                                     field.value === method.id
                                       ? 'border-amber-500 ring-2 ring-amber-100'
                                       : 'border-gray-200 hover:border-gray-300',
@@ -679,7 +681,7 @@ export const CheckoutPage: React.FC = () => {
                                 >
                                   <RadioGroupItem value={method.id} className="mt-1" disabled={method.isCalculating} />
                                   <div className="flex-1 min-w-0">
-                                    <div className="flex items-start justify-between gap-2 mb-1">
+                                    <div className={cn('flex items-start justify-between gap-2 mb-1', isArabic && 'flex-row-reverse')}>
                                       <p className="font-semibold text-sm">
                                         {isArabic ? method.label.ar : method.label.en}
                                       </p>
@@ -723,7 +725,7 @@ export const CheckoutPage: React.FC = () => {
                                         </span>
                                       </p>
                                     )}
-                                    <div className="flex items-center justify-between">
+                                    <div className={cn('flex items-center justify-between', isArabic && 'flex-row-reverse')}>
                                       <span className="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
                                         {isArabic ? method.badge.ar : method.badge.en}
                                       </span>
