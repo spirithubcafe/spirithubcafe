@@ -22,6 +22,17 @@ const createApiClient = (): AxiosInstance => {
       const token = localStorage.getItem('accessToken');
       if (token && config.headers) {
         config.headers.Authorization = `Bearer ${token}`;
+        // Debug: Log token info for ProfilePage endpoints
+        if (config.url?.includes('/UserProfile/') || config.url?.includes('/orders/')) {
+          console.log('🔑 Sending request with token:', {
+            url: config.url,
+            hasToken: !!token,
+            tokenLength: token?.length,
+            tokenPreview: token?.substring(0, 50) + '...'
+          });
+        }
+      } else {
+        console.warn('⚠️ No access token found for request:', config.url);
       }
       return config;
     },
@@ -48,15 +59,21 @@ const createApiClient = (): AxiosInstance => {
       if (error.response?.status === 401 && !originalRequest._retry) {
         originalRequest._retry = true;
 
+        console.log('🔄 Got 401 error, attempting token refresh...');
+
         try {
           const refreshToken = localStorage.getItem('refreshToken');
           if (refreshToken) {
+            console.log('🔄 Attempting to refresh token...');
             // Try to refresh the token
             const refreshResponse = await axios.post(`${API_BASE_URL}/api/Account/RefreshToken`, {
               refreshToken,
             });
 
+            console.log('✅ Token refresh response:', refreshResponse.data);
+
             if (refreshResponse.data?.access_token) {
+              console.log('✅ Token refreshed successfully');
               localStorage.setItem('accessToken', refreshResponse.data.access_token);
               localStorage.setItem('refreshToken', refreshResponse.data.refresh_token);
               
@@ -64,8 +81,11 @@ const createApiClient = (): AxiosInstance => {
               originalRequest.headers.Authorization = `Bearer ${refreshResponse.data.access_token}`;
               return client(originalRequest);
             }
+          } else {
+            console.warn('⚠️ No refresh token found in localStorage');
           }
-        } catch (refreshError) {
+        } catch (refreshError: any) {
+          console.error('❌ Token refresh failed:', refreshError.response?.data || refreshError.message);
           // Refresh failed, redirect to login
           localStorage.removeItem('accessToken');
           localStorage.removeItem('refreshToken');
@@ -73,6 +93,7 @@ const createApiClient = (): AxiosInstance => {
           
           // Only redirect if we're not already on the login page
           if (window.location.pathname !== '/login') {
+            console.log('🚪 Redirecting to login...');
             window.location.href = '/login';
           }
           return Promise.reject(refreshError);

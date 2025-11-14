@@ -6,13 +6,9 @@ import { useApp } from '../hooks/useApp';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
-import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
-import { Textarea } from '../components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Badge } from '../components/ui/badge';
 import { Separator } from '../components/ui/separator';
-import { Alert, AlertDescription } from '../components/ui/alert';
 import { Seo } from '../components/seo/Seo';
 import { resolveAbsoluteUrl } from '../config/siteMetadata';
 import { orderService } from '../services';
@@ -20,14 +16,18 @@ import type { Order } from '../types/order';
 import { format } from 'date-fns';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { ProfileEditForm } from '../components/pages/ProfileEditForm';
+import { ProfilePictureUpload } from '../components/pages/ProfilePictureUpload';
+import { ChangePasswordForm } from '../components/pages/ChangePasswordForm';
+import { profileService } from '../services/profileService';
+import type { UserProfile as UserProfileType } from '../services/profileService';
+import { getProfilePictureUrl } from '../lib/profileUtils';
 import { 
   User, 
   Mail, 
   Phone, 
   MapPin, 
   Edit2, 
-  Save, 
-  X, 
   ShoppingBag, 
   Shield,
   Coffee,
@@ -41,7 +41,9 @@ import {
   Calendar,
   CheckCircle,
   Eye,
-  Globe
+  Globe,
+  Lock,
+  Image as ImageIcon
 } from 'lucide-react';
 
 interface ProfileStats {
@@ -71,10 +73,10 @@ const ProfilePage: React.FC = () => {
   const isArabic = language === 'ar';
   
   const [activeTab, setActiveTab] = useState('overview');
-  const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(false);
   const [orders, setOrders] = useState<Order[]>([]);
-  const [saveMessage, setSaveMessage] = useState('');
+  const [userProfile, setUserProfile] = useState<UserProfileType | null>(null);
   
   const [stats, setStats] = useState<ProfileStats>({
     totalOrders: 0,
@@ -95,28 +97,75 @@ const ProfilePage: React.FC = () => {
     bio: '',
     avatar: ''
   });
-  
-  const [editData, setEditData] = useState<UserProfile>(profileData);
+
+  // Load user profile from API
+  const loadUserProfile = async () => {
+    // Always create a fallback profile first from user data
+    if (user) {
+      const fallbackProfile: UserProfileType = {
+        id: user.id,
+        username: user.username,
+        displayName: user.displayName,
+        email: user.username,
+        emailVerified: false,
+        totalSpent: 0,
+        points: 0,
+        memberSince: user.lastLoggedIn || new Date().toISOString(),
+        isGoogleAccount: false,
+        isActive: user.isActive,
+        roles: user.roles || [],
+      };
+      setUserProfile(fallbackProfile);
+      setProfileData({
+        fullName: user.displayName || '',
+        email: user.username || '',
+        phone: '',
+        address: '',
+        city: '',
+        country: 'عُمان',
+        postalCode: '',
+        bio: '',
+        avatar: ''
+      });
+    }
+
+    // Try to load from API, but don't fail if it doesn't work
+    try {
+      setIsLoadingProfile(true);
+      const profile = await profileService.getMyProfile();
+      setUserProfile(profile);
+      
+      // Update local profile data with API data
+      setProfileData({
+        fullName: profile.fullName || profile.displayName || '',
+        email: profile.email || '',
+        phone: profile.phoneNumber || '',
+        address: profile.address || '',
+        city: profile.city || '',
+        country: profile.country || 'عُمان',
+        postalCode: profile.postalCode || '',
+        bio: profile.bio || '',
+        avatar: getProfilePictureUrl(profile.profilePicture) || ''
+      });
+    } catch (error: any) {
+      console.warn('Could not load profile from API, using fallback data:', error.message);
+      // Silently fail - we already have fallback data set
+    } finally {
+      setIsLoadingProfile(false);
+    }
+  };
 
   // Load user data and orders
   useEffect(() => {
     if (isAuthenticated && user) {
+      console.log('👤 User authenticated, loading profile and orders...', user);
+      loadUserProfile();
       loadUserOrders();
-      
-      // Update profile data with user info
-      setProfileData(prev => ({
-        ...prev,
-        fullName: user.displayName || '',
-        email: user.username || ''
-      }));
-      
-      setEditData(prev => ({
-        ...prev,
-        fullName: user.displayName || '',
-        email: user.username || ''
-      }));
+    } else {
+      console.log('❌ User not authenticated or user data missing');
     }
-  }, [isAuthenticated, user]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, user?.id]);
 
   const loadUserOrders = async () => {
     if (!user?.id) return;
@@ -197,32 +246,6 @@ const ProfilePage: React.FC = () => {
     }
   };
 
-  const handleSaveProfile = async () => {
-    try {
-      setIsLoading(true);
-      
-      // TODO: Implement API call to update user profile
-      // await userService.updateProfile(editData);
-      
-      setProfileData(editData);
-      setIsEditing(false);
-      setSaveMessage(isArabic ? 'تم حفظ البيانات بنجاح' : 'Profile updated successfully');
-      
-      setTimeout(() => setSaveMessage(''), 3000);
-    } catch (error) {
-      console.error('Failed to update profile:', error);
-      setSaveMessage(isArabic ? 'فشل في حفظ البيانات' : 'Failed to update profile');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleCancelEdit = () => {
-    setEditData(profileData);
-    setIsEditing(false);
-    setSaveMessage('');
-  };
-
   // SEO data
   const seoTitle = isArabic ? 'الملف الشخصي - سبيريت هب كافيه' : 'Profile - Spirit Hub Cafe';
   const seoDescription = isArabic 
@@ -290,12 +313,7 @@ const ProfilePage: React.FC = () => {
           </Button>
         </div>
 
-        {saveMessage && (
-          <Alert className="mb-6">
-            <CheckCircle className="h-4 w-4" />
-            <AlertDescription>{saveMessage}</AlertDescription>
-          </Alert>
-        )}
+
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Profile Sidebar */}
@@ -304,27 +322,39 @@ const ProfilePage: React.FC = () => {
               <CardContent className="p-6">
                 <div className="text-center mb-6">
                   <div className="relative inline-block">
-                    <Avatar className="h-24 w-24 mx-auto">
-                      <AvatarImage src={profileData.avatar} />
-                      <AvatarFallback className="text-lg">
-                        {profileData.fullName.split(' ').map(n => n[0]).join('').toUpperCase() || 'U'}
+                    <Avatar className="h-24 w-24 mx-auto ring-2 ring-stone-100">
+                      <AvatarImage src={getProfilePictureUrl(userProfile?.profilePicture) || profileData.avatar} />
+                      <AvatarFallback className="text-lg bg-stone-200 text-stone-700">
+                        {(userProfile?.displayName || profileData.fullName).split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'U'}
                       </AvatarFallback>
                     </Avatar>
                     <Button
                       size="sm"
                       variant="outline"
-                      className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full p-0"
+                      className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full p-0 shadow-md"
+                      onClick={() => setActiveTab('picture')}
+                      title={isArabic ? 'تغيير الصورة' : 'Change picture'}
                     >
                       <Camera className="h-4 w-4" />
                     </Button>
                   </div>
-                  <h3 className="text-xl font-semibold mt-4">{profileData.fullName}</h3>
-                  <p className="text-gray-600">{profileData.email}</p>
-                  {user.roles && user.roles.length > 0 && (
+                  <h3 className="text-xl font-semibold mt-4">
+                    {userProfile?.displayName || profileData.fullName || user?.displayName || 'User'}
+                  </h3>
+                  <p className="text-gray-600">{userProfile?.email || profileData.email}</p>
+                  {userProfile?.membershipType && (
                     <Badge variant="secondary" className="mt-2">
                       <Shield className="h-3 w-3 mr-1" />
-                      {isArabic ? 'عضو مميز' : 'Premium Member'}
+                      {userProfile.membershipType}
                     </Badge>
+                  )}
+                  {userProfile?.points !== undefined && userProfile.points > 0 && (
+                    <div className="mt-2 text-sm">
+                      <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
+                        <Star className="h-3 w-3 mr-1" />
+                        {userProfile.points} {isArabic ? 'نقطة' : 'points'}
+                      </Badge>
+                    </div>
                   )}
                 </div>
 
@@ -343,7 +373,9 @@ const ProfilePage: React.FC = () => {
                       <DollarSign className="h-4 w-4 text-green-600" />
                       <span className="text-sm">{isArabic ? 'المجموع' : 'Total Spent'}</span>
                     </div>
-                    <span className="font-semibold">{stats.totalSpent.toFixed(3)} {isArabic ? 'ر.ع.' : 'OMR'}</span>
+                    <span className="font-semibold">
+                      {(userProfile?.totalSpent || stats.totalSpent).toFixed(3)} {isArabic ? 'ر.ع.' : 'OMR'}
+                    </span>
                   </div>
                   
                   <div className="flex items-center justify-between">
@@ -351,7 +383,7 @@ const ProfilePage: React.FC = () => {
                       <Star className="h-4 w-4 text-yellow-600" />
                       <span className="text-sm">{isArabic ? 'النقاط' : 'Points'}</span>
                     </div>
-                    <span className="font-semibold">{stats.loyaltyPoints}</span>
+                    <span className="font-semibold">{userProfile?.points || stats.loyaltyPoints}</span>
                   </div>
                   
                   <div className="flex items-center justify-between">
@@ -359,7 +391,9 @@ const ProfilePage: React.FC = () => {
                       <Calendar className="h-4 w-4 text-purple-600" />
                       <span className="text-sm">{isArabic ? 'العضوية' : 'Member Since'}</span>
                     </div>
-                    <span className="text-sm">{format(new Date(stats.memberSince), 'MMM yyyy')}</span>
+                    <span className="text-sm">
+                      {format(new Date(userProfile?.memberSince || stats.memberSince), 'MMM yyyy')}
+                    </span>
                   </div>
                 </div>
               </CardContent>
@@ -369,14 +403,29 @@ const ProfilePage: React.FC = () => {
           {/* Main Content */}
           <div className="lg:col-span-3">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
                 <TabsTrigger value="overview">
+                  <Activity className="h-4 w-4 mr-1" />
                   {isArabic ? 'نظرة عامة' : 'Overview'}
                 </TabsTrigger>
                 <TabsTrigger value="profile">
-                  {isArabic ? 'المعلومات الشخصية' : 'Personal Info'}
+                  <User className="h-4 w-4 mr-1" />
+                  {isArabic ? 'المعلومات' : 'Info'}
+                </TabsTrigger>
+                <TabsTrigger value="edit">
+                  <Edit2 className="h-4 w-4 mr-1" />
+                  {isArabic ? 'تعديل' : 'Edit'}
+                </TabsTrigger>
+                <TabsTrigger value="picture">
+                  <ImageIcon className="h-4 w-4 mr-1" />
+                  {isArabic ? 'الصورة' : 'Picture'}
+                </TabsTrigger>
+                <TabsTrigger value="password">
+                  <Lock className="h-4 w-4 mr-1" />
+                  {isArabic ? 'كلمة المرور' : 'Password'}
                 </TabsTrigger>
                 <TabsTrigger value="orders">
+                  <ShoppingBag className="h-4 w-4 mr-1" />
                   {isArabic ? 'الطلبات' : 'Orders'}
                 </TabsTrigger>
               </TabsList>
@@ -470,186 +519,196 @@ const ProfilePage: React.FC = () => {
                 </Card>
               </TabsContent>
 
-              {/* Profile Tab */}
+              {/* Profile Tab - View Only */}
               <TabsContent value="profile">
                 <Card>
                   <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="flex items-center gap-2">
-                        <User className="h-5 w-5" />
-                        {isArabic ? 'المعلومات الشخصية' : 'Personal Information'}
-                      </CardTitle>
-                      {!isEditing ? (
-                        <Button variant="outline" onClick={() => setIsEditing(true)}>
-                          <Edit2 className="h-4 w-4 mr-2" />
-                          {isArabic ? 'تعديل' : 'Edit'}
-                        </Button>
-                      ) : (
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            onClick={handleCancelEdit}
-                            disabled={isLoading}
-                          >
-                            <X className="h-4 w-4 mr-2" />
-                            {isArabic ? 'إلغاء' : 'Cancel'}
-                          </Button>
-                          <Button
-                            onClick={handleSaveProfile}
-                            disabled={isLoading}
-                          >
-                            <Save className="h-4 w-4 mr-2" />
-                            {isLoading ? (isArabic ? 'جارٍ الحفظ...' : 'Saving...') : (isArabic ? 'حفظ' : 'Save')}
-                          </Button>
-                        </div>
-                      )}
-                    </div>
+                    <CardTitle className="flex items-center gap-2">
+                      <User className="h-5 w-5" />
+                      {isArabic ? 'المعلومات الشخصية' : 'Personal Information'}
+                    </CardTitle>
+                    <CardDescription>
+                      {isArabic ? 'عرض معلوماتك الشخصية' : 'View your personal information'}
+                    </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
-                        <Label htmlFor="fullName">{isArabic ? 'الاسم الكامل' : 'Full Name'}</Label>
-                        {isEditing ? (
-                          <Input
-                            id="fullName"
-                            value={editData.fullName}
-                            onChange={(e) => setEditData({...editData, fullName: e.target.value})}
-                            className="mt-1"
-                          />
-                        ) : (
-                          <div className="mt-1 p-3 bg-gray-50 rounded-md">{profileData.fullName}</div>
-                        )}
+                        <Label>{isArabic ? 'الاسم المعروض' : 'Display Name'}</Label>
+                        <div className="mt-1 p-3 bg-gray-50 rounded-md">
+                          {userProfile?.displayName || (isArabic ? 'لم يتم تحديده' : 'Not provided')}
+                        </div>
                       </div>
 
                       <div>
-                        <Label htmlFor="email">{isArabic ? 'البريد الإلكتروني' : 'Email'}</Label>
+                        <Label>{isArabic ? 'الاسم الكامل' : 'Full Name'}</Label>
+                        <div className="mt-1 p-3 bg-gray-50 rounded-md">
+                          {userProfile?.fullName || (isArabic ? 'لم يتم تحديده' : 'Not provided')}
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label>{isArabic ? 'البريد الإلكتروني' : 'Email'}</Label>
                         <div className="mt-1 p-3 bg-gray-50 rounded-md flex items-center gap-2">
                           <Mail className="h-4 w-4 text-gray-500" />
-                          {profileData.email}
+                          {userProfile?.email}
+                          {userProfile?.emailVerified && (
+                            <CheckCircle className="h-4 w-4 text-green-600" />
+                          )}
                         </div>
-                        <p className="text-xs text-gray-500 mt-1">
-                          {isArabic ? 'لا يمكن تغيير البريد الإلكتروني' : 'Email cannot be changed'}
-                        </p>
                       </div>
 
                       <div>
-                        <Label htmlFor="phone">{isArabic ? 'رقم الهاتف' : 'Phone Number'}</Label>
-                        {isEditing ? (
-                          <Input
-                            id="phone"
-                            value={editData.phone}
-                            onChange={(e) => setEditData({...editData, phone: e.target.value})}
-                            placeholder="+968 9123 4567"
-                            className="mt-1"
-                          />
-                        ) : (
-                          <div className="mt-1 p-3 bg-gray-50 rounded-md flex items-center gap-2">
-                            <Phone className="h-4 w-4 text-gray-500" />
-                            {profileData.phone || (isArabic ? 'لم يتم تحديده' : 'Not provided')}
-                          </div>
-                        )}
+                        <Label>{isArabic ? 'رقم الهاتف' : 'Phone Number'}</Label>
+                        <div className="mt-1 p-3 bg-gray-50 rounded-md flex items-center gap-2">
+                          <Phone className="h-4 w-4 text-gray-500" />
+                          {userProfile?.phoneNumber || (isArabic ? 'لم يتم تحديده' : 'Not provided')}
+                        </div>
                       </div>
 
                       <div>
-                        <Label htmlFor="country">{isArabic ? 'البلد' : 'Country'}</Label>
-                        {isEditing ? (
-                          <Select
-                            value={editData.country}
-                            onValueChange={(value) => setEditData({...editData, country: value})}
-                          >
-                            <SelectTrigger className="mt-1">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="عُمان">🇴🇲 {isArabic ? 'عُمان' : 'Oman'}</SelectItem>
-                              <SelectItem value="الإمارات">🇦🇪 {isArabic ? 'الإمارات' : 'UAE'}</SelectItem>
-                              <SelectItem value="السعودية">🇸🇦 {isArabic ? 'السعودية' : 'Saudi Arabia'}</SelectItem>
-                              <SelectItem value="الكويت">🇰🇼 {isArabic ? 'الكويت' : 'Kuwait'}</SelectItem>
-                              <SelectItem value="البحرين">🇧🇭 {isArabic ? 'البحرين' : 'Bahrain'}</SelectItem>
-                              <SelectItem value="قطر">🇶🇦 {isArabic ? 'قطر' : 'Qatar'}</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        ) : (
-                          <div className="mt-1 p-3 bg-gray-50 rounded-md flex items-center gap-2">
-                            <Globe className="h-4 w-4 text-gray-500" />
-                            {profileData.country}
-                          </div>
-                        )}
+                        <Label>{isArabic ? 'البلد' : 'Country'}</Label>
+                        <div className="mt-1 p-3 bg-gray-50 rounded-md flex items-center gap-2">
+                          <Globe className="h-4 w-4 text-gray-500" />
+                          {userProfile?.country || (isArabic ? 'لم يتم تحديده' : 'Not provided')}
+                        </div>
                       </div>
 
                       <div>
-                        <Label htmlFor="city">{isArabic ? 'المدينة' : 'City'}</Label>
-                        {isEditing ? (
-                          <Input
-                            id="city"
-                            value={editData.city}
-                            onChange={(e) => setEditData({...editData, city: e.target.value})}
-                            placeholder={isArabic ? 'مسقط' : 'Muscat'}
-                            className="mt-1"
-                          />
-                        ) : (
-                          <div className="mt-1 p-3 bg-gray-50 rounded-md flex items-center gap-2">
-                            <MapPin className="h-4 w-4 text-gray-500" />
-                            {profileData.city || (isArabic ? 'لم يتم تحديده' : 'Not provided')}
-                          </div>
-                        )}
+                        <Label>{isArabic ? 'المدينة' : 'City'}</Label>
+                        <div className="mt-1 p-3 bg-gray-50 rounded-md flex items-center gap-2">
+                          <MapPin className="h-4 w-4 text-gray-500" />
+                          {userProfile?.city || (isArabic ? 'لم يتم تحديده' : 'Not provided')}
+                        </div>
                       </div>
 
                       <div>
-                        <Label htmlFor="postalCode">{isArabic ? 'الرمز البريدي' : 'Postal Code'}</Label>
-                        {isEditing ? (
-                          <Input
-                            id="postalCode"
-                            value={editData.postalCode}
-                            onChange={(e) => setEditData({...editData, postalCode: e.target.value})}
-                            placeholder="100"
-                            className="mt-1"
-                          />
-                        ) : (
-                          <div className="mt-1 p-3 bg-gray-50 rounded-md">
-                            {profileData.postalCode || (isArabic ? 'لم يتم تحديده' : 'Not provided')}
-                          </div>
-                        )}
+                        <Label>{isArabic ? 'الرمز البريدي' : 'Postal Code'}</Label>
+                        <div className="mt-1 p-3 bg-gray-50 rounded-md">
+                          {userProfile?.postalCode || (isArabic ? 'لم يتم تحديده' : 'Not provided')}
+                        </div>
                       </div>
 
                       <div className="md:col-span-2">
-                        <Label htmlFor="address">{isArabic ? 'العنوان الكامل' : 'Full Address'}</Label>
-                        {isEditing ? (
-                          <Textarea
-                            id="address"
-                            value={editData.address}
-                            onChange={(e) => setEditData({...editData, address: e.target.value})}
-                            placeholder={isArabic ? 'العنوان الكامل مع التفاصيل' : 'Full address with details'}
-                            rows={3}
-                            className="mt-1"
-                          />
-                        ) : (
-                          <div className="mt-1 p-3 bg-gray-50 rounded-md min-h-20">
-                            {profileData.address || (isArabic ? 'لم يتم تحديده' : 'Not provided')}
-                          </div>
-                        )}
+                        <Label>{isArabic ? 'العنوان الكامل' : 'Full Address'}</Label>
+                        <div className="mt-1 p-3 bg-gray-50 rounded-md min-h-20">
+                          {userProfile?.address || (isArabic ? 'لم يتم تحديده' : 'Not provided')}
+                        </div>
                       </div>
 
                       <div className="md:col-span-2">
-                        <Label htmlFor="bio">{isArabic ? 'نبذة شخصية' : 'Bio'}</Label>
-                        {isEditing ? (
-                          <Textarea
-                            id="bio"
-                            value={editData.bio}
-                            onChange={(e) => setEditData({...editData, bio: e.target.value})}
-                            placeholder={isArabic ? 'اكتب نبذة مختصرة عنك...' : 'Tell us about yourself...'}
-                            rows={3}
-                            className="mt-1"
-                          />
-                        ) : (
-                          <div className="mt-1 p-3 bg-gray-50 rounded-md min-h-20">
-                            {profileData.bio || (isArabic ? 'لم يتم تحديده' : 'Not provided')}
-                          </div>
-                        )}
+                        <Label>{isArabic ? 'نبذة شخصية' : 'Bio'}</Label>
+                        <div className="mt-1 p-3 bg-gray-50 rounded-md min-h-20">
+                          {userProfile?.bio || (isArabic ? 'لم يتم تحديده' : 'Not provided')}
+                        </div>
                       </div>
+
+                      <div className="md:col-span-2">
+                        <Label>{isArabic ? 'نوع العضوية' : 'Membership Type'}</Label>
+                        <div className="mt-1 p-3 bg-gray-50 rounded-md">
+                          {userProfile?.membershipType || (isArabic ? 'عادي' : 'Standard')}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-6 flex gap-3">
+                      <Button onClick={() => setActiveTab('edit')}>
+                        <Edit2 className="h-4 w-4 mr-2" />
+                        {isArabic ? 'تعديل المعلومات' : 'Edit Information'}
+                      </Button>
+                      <Button variant="outline" onClick={() => setActiveTab('picture')}>
+                        <ImageIcon className="h-4 w-4 mr-2" />
+                        {isArabic ? 'تغيير الصورة' : 'Change Picture'}
+                      </Button>
+                      <Button variant="outline" onClick={() => setActiveTab('password')}>
+                        <Lock className="h-4 w-4 mr-2" />
+                        {isArabic ? 'تغيير كلمة المرور' : 'Change Password'}
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
+              </TabsContent>
+
+              {/* Edit Profile Tab */}
+              <TabsContent value="edit">
+                {isLoadingProfile ? (
+                  <Card>
+                    <CardContent className="py-12">
+                      <div className="text-center">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600 mx-auto mb-4"></div>
+                        <p className="text-gray-600">
+                          {isArabic ? 'جاري التحميل...' : 'Loading...'}
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ) : userProfile ? (
+                  <ProfileEditForm 
+                    profile={userProfile} 
+                    onUpdate={loadUserProfile}
+                    language={language}
+                  />
+                ) : (
+                  <Card>
+                    <CardContent className="py-12">
+                      <div className="text-center">
+                        <User className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                        <p className="text-gray-600">
+                          {isArabic ? 'فشل في تحميل الملف الشخصي' : 'Failed to load profile'}
+                        </p>
+                        <Button className="mt-4" onClick={loadUserProfile}>
+                          {isArabic ? 'إعادة المحاولة' : 'Retry'}
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </TabsContent>
+
+              {/* Profile Picture Tab */}
+              <TabsContent value="picture">
+                {isLoadingProfile ? (
+                  <Card>
+                    <CardContent className="py-12">
+                      <div className="text-center">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600 mx-auto mb-4"></div>
+                        <p className="text-gray-600">
+                          {isArabic ? 'جاري التحميل...' : 'Loading...'}
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ) : userProfile ? (
+                  <ProfilePictureUpload 
+                    profile={userProfile} 
+                    onUpdate={loadUserProfile}
+                    language={language}
+                  />
+                ) : (
+                  <Card>
+                    <CardContent className="py-12">
+                      <div className="text-center">
+                        <ImageIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                        <p className="text-gray-600">
+                          {isArabic ? 'فشل في تحميل الملف الشخصي' : 'Failed to load profile'}
+                        </p>
+                        <Button className="mt-4" onClick={loadUserProfile}>
+                          {isArabic ? 'إعادة المحاولة' : 'Retry'}
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </TabsContent>
+
+              {/* Change Password Tab */}
+              <TabsContent value="password">
+                <ChangePasswordForm 
+                  language={language}
+                  onSuccess={() => {
+                    setTimeout(() => setActiveTab('overview'), 2000);
+                  }}
+                />
               </TabsContent>
 
               {/* Orders Tab */}

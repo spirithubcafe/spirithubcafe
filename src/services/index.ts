@@ -9,6 +9,7 @@ export {
 } from './productService';
 export { productReviewService } from './productReviewService';
 export { userService } from './userService';
+export { profileService } from './profileService';
 export { adminService } from './adminService';
 export { orderService } from './orderService';
 export { paymentService } from './paymentService';
