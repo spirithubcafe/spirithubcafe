@@ -699,14 +699,14 @@ export const CheckoutPage: React.FC = () => {
                                         ) : null}
                                       </div>
                                     </div>
-                                    <p className="text-xs text-gray-600 mb-2">
+                                    <p className={cn('text-xs text-gray-600 mb-2', isArabic && 'text-right')}>
                                       {method.id === 'pickup'
                                         ? (isArabic
-                                          ? <span>يرجى جمع طلبك من فرعنا في مسقط الواقع في <strong>شارع الموج</strong>.</span>
+                                          ? <span>يرجى جمع طلبك من فرعنا في مسقط الواقع في <strong>شارع الموج</strong>{'.\u200F'}</span>
                                           : <span>Please collect your order from our Muscat branch located on <strong>Al Mouj Street</strong>.</span>)
                                         : method.id === 'nool'
                                           ? (isArabic
-                                              ? 'توصيل محلي سريع داخل سلطنة عمان بواسطة فريق التوصيل الخاص بنا.'
+                                              ? <span>توصيل محلي سريع داخل سلطنة عمان بواسطة فريق التوصيل الخاص بنا{'.\u200F'}</span>
                                               : 'Fast local delivery within Oman area with our own delivery team.')
                                           : (isArabic ? method.description.ar : method.description.en)
                                       }
@@ -729,7 +729,7 @@ export const CheckoutPage: React.FC = () => {
                                       </span>
                                       {method.id === 'pickup' ? (
                                         <span className="text-xs text-gray-500 ml-2 whitespace-nowrap">
-                                          {isArabic ? 'متاح يومياً من 7 صباحاً حتى 12 منتصف الليل.' : 'Available Daily 7am-12am.'}
+                                          {isArabic ? 'متاح يومياً من 7 صباحاً حتى 12 منتصف الليل.\u200F' : 'Available Daily 7am-12am.'}
                                         </span>
                                       ) : (
                                         <p className="text-xs text-gray-500">

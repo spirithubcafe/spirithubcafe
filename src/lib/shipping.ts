@@ -78,7 +78,7 @@ export function computeShippingMethods(opts: { countryIso2?: string; citySlug?: 
     label: { en: 'Aramex Courier', ar: 'أرامكس للشحن' },
     description: {
       en: 'Fast door-to-door delivery across Oman and GCC with live tracking.',
-      ar: 'توصيل سريع إلى الباب في جميع أنحاء عُمان ودول الخليج مع تتبع مباشر.'
+      ar: 'توصيل سريع إلى الباب في جميع أنحاء عُمان ودول الخليج مع تتبع مباشر.\u200F'
     },
     eta: { en: '2-4 business days', ar: '٢-٤ أيام عمل' },
     badge: { en: 'Best for gifts', ar: 'مثالي للهدايا' },
