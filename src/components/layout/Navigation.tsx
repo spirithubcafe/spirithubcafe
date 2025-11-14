@@ -61,7 +61,7 @@ export const Navigation: React.FC = () => {
                     isHomePage 
                       ? 'text-white hover:text-amber-200' 
                       : 'text-gray-900 hover:text-amber-600'
-                  }`}
+                  } ${language === 'ar' ? 'flex-row-reverse' : ''}`}
                 >
                   {item.label}
                   <ChevronDown className="w-4 h-4" />
@@ -75,7 +75,7 @@ export const Navigation: React.FC = () => {
                 <DropdownMenuItem asChild>
                   <Link
                     to="/products"
-                    className="w-full px-4 py-2 text-gray-900 hover:bg-amber-50 hover:text-amber-600 font-medium"
+                    className={`w-full px-4 py-2 ${language === 'ar' ? 'text-right' : 'text-left'} text-gray-900 hover:bg-amber-50 hover:text-amber-600 font-medium`}
                   >
                     {language === 'ar' ? 'جميع المنتجات' : 'All Products'}
                   </Link>
@@ -91,7 +91,7 @@ export const Navigation: React.FC = () => {
                   <DropdownMenuItem key={category.id} asChild>
                     <Link
                       to={`/products?category=${category.id}`}
-                      className="w-full px-4 py-2 text-gray-700 hover:bg-amber-50 hover:text-amber-600"
+                      className={`w-full px-4 py-2 ${language === 'ar' ? 'text-right' : 'text-left'} text-gray-700 hover:bg-amber-50 hover:text-amber-600`}
                     >
                       {category.name}
                     </Link>
