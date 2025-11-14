@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Globe, ShoppingCart, Menu, ChevronDown, ChevronRight, User, Heart, ShoppingBag, Shield } from 'lucide-react';
+import { Globe, ShoppingCart, Menu, ChevronDown, ChevronRight, ChevronLeft, User, Heart, ShoppingBag, Shield } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '../ui/sheet';
 import {
@@ -47,6 +47,8 @@ export const Navigation: React.FC = () => {
     { key: 'contact', label: t('nav.contact'), href: '/contact', isRoute: true, hasDropdown: false }
   ];
 
+  const DirectionChevron = language === 'ar' ? ChevronLeft : ChevronRight;
+
   const NavContent = () => (
     <>
       {navItems.map((item) => {
@@ -66,8 +68,9 @@ export const Navigation: React.FC = () => {
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent 
-                align="start" 
+                align={language === 'ar' ? 'end' : 'start'} 
                 className="w-56 bg-white border border-gray-200 shadow-lg"
+                dir={language === 'ar' ? 'rtl' : 'ltr'}
               >
                 {/* All Products Link */}
                 <DropdownMenuItem asChild>
@@ -125,6 +128,7 @@ export const Navigation: React.FC = () => {
           : 'bg-white shadow-md border-b border-gray-200'
       }`}
       style={{ height: 'var(--nav-height)' }}
+      dir={language === 'ar' ? 'rtl' : 'ltr'}
     >
       <div className="container mx-auto px-3 sm:px-4 h-full">
         <div className="flex items-center justify-between h-full">
@@ -282,6 +286,7 @@ export const Navigation: React.FC = () => {
               </SheetTrigger>
               <SheetContent
                 side={language === 'ar' ? 'left' : 'right'}
+                dir={language === 'ar' ? 'rtl' : 'ltr'}
                 className="bg-[#120804] p-0 text-white flex flex-col"
               >
                 <div className="flex h-full flex-col">
@@ -338,7 +343,7 @@ export const Navigation: React.FC = () => {
                                       className="flex items-center justify-between rounded-2xl bg-white/[0.06] px-4 py-3 text-base font-medium text-white transition duration-200 hover:bg-white/[0.12]"
                                     >
                                       <span>{item.label}</span>
-                                      <ChevronRight className="h-4 w-4" />
+                                      <DirectionChevron className="h-4 w-4" />
                                     </Link>
                                   </SheetClose>
 
@@ -352,7 +357,7 @@ export const Navigation: React.FC = () => {
                                           <span>
                                             {language === 'ar' ? 'جميع المنتجات' : 'All products'}
                                           </span>
-                                          <ChevronRight className="h-3.5 w-3.5" />
+                                          <DirectionChevron className="h-3.5 w-3.5" />
                                         </Link>
                                       </SheetClose>
                                       {categories.map((category) => (
@@ -362,7 +367,7 @@ export const Navigation: React.FC = () => {
                                             className="flex items-center justify-between rounded-xl px-3 py-2 text-amber-100/90 transition hover:bg-white/[0.1] hover:text-white"
                                           >
                                             <span>{category.name}</span>
-                                            <ChevronRight className="h-3.5 w-3.5" />
+                                            <DirectionChevron className="h-3.5 w-3.5" />
                                           </Link>
                                         </SheetClose>
                                       ))}
@@ -379,7 +384,7 @@ export const Navigation: React.FC = () => {
                                   className="flex items-center justify-between rounded-2xl bg-white/[0.06] px-4 py-3 text-base font-medium text-white transition duration-200 hover:bg-white/[0.12]"
                                 >
                                   <span>{item.label}</span>
-                                  <ChevronRight className="h-4 w-4" />
+                                  <DirectionChevron className="h-4 w-4" />
                                 </Link>
                               </SheetClose>
                             );
@@ -404,7 +409,7 @@ export const Navigation: React.FC = () => {
                             </span>
                             <span className="flex items-center gap-2 text-sm text-amber-200/80">
                               {totalItems}
-                              <ChevronRight className="h-3.5 w-3.5" />
+                              <DirectionChevron className="h-3.5 w-3.5" />
                             </span>
                           </Button>
                         </SheetClose>
@@ -435,7 +440,7 @@ export const Navigation: React.FC = () => {
                                   <User className="h-4 w-4" />
                                   {language === 'ar' ? 'الملف الشخصي' : 'Profile'}
                                 </span>
-                                <ChevronRight className="h-4 w-4" />
+                                <DirectionChevron className="h-4 w-4" />
                               </Link>
                             </SheetClose>
                             
@@ -448,7 +453,7 @@ export const Navigation: React.FC = () => {
                                   <Heart className="h-4 w-4" />
                                   {language === 'ar' ? 'المفضلة' : 'Favorites'}
                                 </span>
-                                <ChevronRight className="h-4 w-4" />
+                                <DirectionChevron className="h-4 w-4" />
                               </Link>
                             </SheetClose>
                             
@@ -462,7 +467,7 @@ export const Navigation: React.FC = () => {
                                   <ShoppingBag className="h-4 w-4" />
                                   {language === 'ar' ? 'طلباتي' : 'My Orders'}
                                 </span>
-                                <ChevronRight className="h-4 w-4" />
+                                <DirectionChevron className="h-4 w-4" />
                               </Button>
                             </SheetClose>
                             
@@ -477,7 +482,7 @@ export const Navigation: React.FC = () => {
                                     <Shield className="h-4 w-4" />
                                     {language === 'ar' ? 'لوحة الإدارة' : 'Admin Panel'}
                                   </span>
-                                  <ChevronRight className="h-4 w-4" />
+                                  <DirectionChevron className="h-4 w-4" />
                                 </Link>
                               </SheetClose>
                             )}
