@@ -671,7 +671,7 @@ export const CheckoutPage: React.FC = () => {
                                   key={method.id}
                                   className={cn(
                                     'flex gap-3 rounded-xl border bg-white p-3 shadow-sm transition-all cursor-pointer',
-                                    // For Arabic layout place radio selector on the right
+                                    // Move the radio selector to the right in Arabic by reversing the row
                                     isArabic && 'flex-row-reverse',
                                     field.value === method.id
                                       ? 'border-amber-500 ring-2 ring-amber-100'

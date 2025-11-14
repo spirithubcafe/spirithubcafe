@@ -102,12 +102,27 @@
     "manageOrders": "Manage Orders",
     "ordersDesc": "Customer orders and transactions",
     "ordersManagement": "Process and track customer orders and transactions",
-    "reports": "Reports",
+    "orders": {
+      "view": "View Orders",
+      "viewDesc": "Review and process orders"
+    },
+    "reports": {
+      "title": "Reports",
+      "view": "View Reports",
+      "viewDesc": "Access analytics and insights"
+    },
     "reportsDesc": "Analytics and business insights",
     "reportsAnalytics": "View analytics, sales reports, and business insights",
     "systemSettings": "System Settings",
     "systemDesc": "Application configuration",
     "systemConfiguration": "Configure application settings and preferences",
+    "settings": {
+      "system": "System Settings",
+      "systemDesc": "Configure application settings"
+    },
+    "reviews": {
+      "title": "Reviews"
+    },
     "modulesDesc": "Select a module to manage",
     "active": "Active",
     "featured": "Featured",
@@ -128,6 +143,17 @@
     "totalOrders": "Total Orders",
     "totalProducts": "Total Products",
     "comingSoon": "This feature is coming soon...",
+    "quickActions": "Quick Actions",
+    "viewAnalytics": "View Analytics",
+    "insights": "Business Insights",
+    "insightsDesc": "Key performance indicators and metrics",
+    "revenue": "Total Revenue",
+    "estimatedValue": "Estimated total value",
+    "conversion": "Conversion Rate",
+    "userEngagement": "User engagement rate",
+    "performance": "Performance Score",
+    "avgRating": "Average product rating",
+    "urgent": "Urgent",
     "manage": "System administration",
     "dashboardError": "We couldn't load the latest metrics.",
     "dashboardActiveCount": "{{count}} active",
@@ -191,6 +217,9 @@
     "categories": {
       "title": "Categories Management",
       "add": "Add Category",
+      "addDesc": "Create a new product category",
+      "manage": "Manage Categories",
+      "manageDesc": "Organize and edit categories",
       "edit": "Edit Category",
       "name": "Category Name",
       "nameAr": "Name (Arabic)",
@@ -231,6 +260,7 @@
     "products": {
       "title": "Products Management",
       "add": "Add Product",
+      "addDesc": "Add a new product to inventory",
       "edit": "Edit Product",
       "name": "Product Name",
       "nameAr": "Name (Arabic)",
@@ -318,6 +348,8 @@
     "users": {
       "title": "Users Management",
       "add": "Add User",
+      "manage": "Manage Users",
+      "manageDesc": "View and manage user accounts",
       "edit": "Edit User",
       "username": "Username",
       "displayName": "Display Name",
