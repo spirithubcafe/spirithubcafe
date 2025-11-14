@@ -29,6 +29,7 @@ import { ProductEditPage } from './pages/ProductEditPage';
 import { ProductAttributesPage } from './pages/ProductAttributesPage';
 import { FavoritesPage } from './pages/FavoritesPage';
 import { OrdersPage } from './pages/OrdersPage';
+import { OrderDetailPage } from './pages/OrderDetailPage';
 import { AboutPage } from './pages/AboutPage';
 import { ContactPage } from './pages/ContactPage';
 import { FAQPage } from './pages/FAQPage';
@@ -63,6 +64,7 @@ function AppContent() {
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/favorites" element={<FavoritesPage />} />
         <Route path="/orders" element={<OrdersPage />} />
+        <Route path="/order/:orderId" element={<OrderDetailPage />} />
         <Route path="/admin/*" element={<AdminLayout />}>
           <Route index element={<AdminDashboard />} />
           <Route path="categories" element={<CategoriesManagement />} />

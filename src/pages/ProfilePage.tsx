@@ -139,6 +139,17 @@ const ProfilePage: React.FC = () => {
       const userOrders = response.data || [];
       console.log(`📊 Found ${userOrders.length} orders for user ${user.id}`);
       
+      // Debug: Check order details
+      if (userOrders.length > 0) {
+        console.log('🔍 First order details:', userOrders[0]);
+        console.log('🔍 Items in first order:', userOrders[0].items);
+        console.log('🔍 Items count:', userOrders[0].items?.length);
+        console.log('🔍 ItemsCount field:', userOrders[0].itemsCount);
+        console.log('🔍 Address:', userOrders[0].address);
+        console.log('🔍 City:', userOrders[0].city);
+        console.log('🔍 Country:', userOrders[0].country);
+      }
+      
       setOrders(userOrders);
       
       // Calculate stats
@@ -711,7 +722,9 @@ const ProfilePage: React.FC = () => {
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                               <div>
                                 <span className="text-gray-600">{isArabic ? 'العناصر:' : 'Items:'}</span>
-                                <span className="ml-2 font-medium">{order.items?.length || 0}</span>
+                                <span className="ml-2 font-medium">
+                                  {order.itemsCount || order.items?.length || 0}
+                                </span>
                               </div>
                               <div>
                                 <span className="text-gray-600">{isArabic ? 'الشحن:' : 'Shipping:'}</span>
@@ -720,15 +733,33 @@ const ProfilePage: React.FC = () => {
                                     ? (isArabic ? 'استلام من المتجر' : 'Store Pickup')
                                     : order.shippingMethod === 2 
                                     ? 'Nool Delivery'
-                                    : 'Aramex Courier'
+                                    : order.shippingMethod === 3
+                                    ? 'Aramex Courier'
+                                    : (isArabic ? 'غير محدد' : 'Not specified')
                                   }
                                 </span>
                               </div>
                               <div>
                                 <span className="text-gray-600">{isArabic ? 'العنوان:' : 'Address:'}</span>
-                                <span className="ml-2 font-medium">{order.city}, {order.country}</span>
+                                <span className="ml-2 font-medium">
+                                  {(() => {
+                                    const parts = [];
+                                    if (order.address && order.address.trim() && order.address !== ',') {
+                                      parts.push(order.address);
+                                    }
+                                    if (order.city && order.city.trim()) {
+                                      parts.push(order.city);
+                                    }
+                                    if (order.country && order.country.trim()) {
+                                      parts.push(order.country);
+                                    }
+                                    return parts.length > 0 
+                                      ? parts.join(', ') 
+                                      : (isArabic ? 'غير محدد' : 'Not specified');
+                                  })()}
+                                </span>
                               </div>
-                              {order.trackingNumber && (
+                              {order.trackingNumber && order.trackingNumber.trim() && (
                                 <div>
                                   <span className="text-gray-600">{isArabic ? 'رقم التتبع:' : 'Tracking:'}</span>
                                   <span className="ml-2 font-mono text-sm">{order.trackingNumber}</span>
@@ -740,7 +771,7 @@ const ProfilePage: React.FC = () => {
                               <Button 
                                 variant="outline" 
                                 size="sm"
-                                onClick={() => navigate(`/orders?orderId=${order.id}`)}
+                                onClick={() => navigate(`/order/${order.id}`)}
                               >
                                 <Eye className="h-4 w-4 mr-2" />
                                 {isArabic ? 'التفاصيل' : 'View Details'}
