@@ -29,6 +29,7 @@ import { useCart } from '../hooks/useCart';
 import { Button } from '../components/ui/button';
 import { Seo } from '../components/seo/Seo';
 import { siteMetadata, resolveAbsoluteUrl } from '../config/siteMetadata';
+import { ProductShare } from '../components/products/ProductShare';
 
 type LoadState = 'idle' | 'loading' | 'ready' | 'error';
 
@@ -481,9 +482,9 @@ export const ProductDetailPage = () => {
       <div className="py-4 md:py-8">
         <div className="container mx-auto px-4">
           <div className="mx-auto">
-            {/* Back Button */}
+            {/* Back Button & Share Button */}
             {state === 'ready' && product && (
-              <div className="mb-3 md:mb-4">
+              <div className="mb-3 md:mb-4 flex items-center justify-between gap-3">
                 <Button
                   variant="outline"
                   asChild
@@ -503,6 +504,13 @@ export const ProductDetailPage = () => {
                     )}
                   </Link>
                 </Button>
+
+                <ProductShare
+                  productName={displayName}
+                  productUrl={canonicalUrl}
+                  productDescription={plainDescription}
+                  language={language}
+                />
               </div>
             )}
 
