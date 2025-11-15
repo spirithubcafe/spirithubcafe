@@ -198,7 +198,7 @@ export const CheckoutPage: React.FC = () => {
   }, [effectiveCountry, effectiveCity, items]);
   
   const shippingMethods = React.useMemo(() => {
-    const methods = computeShippingMethods({ countryIso2: effectiveCountry, citySlug: effectiveCity });
+    const methods = computeShippingMethods({ countryIso2: effectiveCountry, citySlug: effectiveCity, orderTotal: totalPrice });
     
     // Update Aramex price with calculated rate
     return methods.map(method => {
@@ -212,7 +212,7 @@ export const CheckoutPage: React.FC = () => {
       }
       return method;
     });
-  }, [effectiveCountry, effectiveCity, aramexRate, aramexCalculating, aramexError]);
+  }, [effectiveCountry, effectiveCity, totalPrice, aramexRate, aramexCalculating, aramexError]);
   
   const selectedShipping = shippingMethods.find((method) => method.id === watchedShipping) ?? shippingMethods[0];
   
