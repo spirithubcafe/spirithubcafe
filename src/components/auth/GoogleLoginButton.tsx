@@ -60,18 +60,20 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({ mode = 'lo
   };
 
   return (
-    <div className="w-full">
-      <GoogleLogin
-        onSuccess={handleGoogleSuccess}
-        onError={handleGoogleError}
-        useOneTap={false}
-        text={mode === 'login' ? 'signin_with' : 'signup_with'}
-        shape="rectangular"
-        theme="outline"
-        size="large"
-        width="100%"
-        locale={isArabic ? 'ar' : 'en'}
-      />
+    <div className="w-full flex justify-center">
+      <div className="w-[110%] font-bold">
+        <GoogleLogin
+          onSuccess={handleGoogleSuccess}
+          onError={handleGoogleError}
+          useOneTap={false}
+          text={mode === 'login' ? 'signin_with' : 'signup_with'}
+          shape="rectangular"
+          theme="outline"
+          size="large"
+          width="100%"
+          locale={isArabic ? 'ar' : 'en'}
+        />
+      </div>
     </div>
   );
 };

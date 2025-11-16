@@ -24,6 +24,7 @@ import {
 import { useApp } from '../hooks/useApp';
 import { productService } from '../services/productService';
 import { getProductImageUrl, handleImageError, resolveProductImageUrls } from '../lib/imageUtils';
+import { generateProductSeoMetadata } from '../lib/productSeoUtils';
 import type { Product as ApiProduct, ProductVariant } from '../types/product';
 import { useCart } from '../hooks/useCart';
 import { Button } from '../components/ui/button';
@@ -434,6 +435,12 @@ export const ProductDetailPage = () => {
   const stockLabel =
     language === 'ar' ? 'متوفر في المخزون' : 'In Stock';
 
+  // Generate optimized SEO metadata for social sharing
+  const seoMetadata = useMemo(() => {
+    if (!product) return null;
+    return generateProductSeoMetadata(product, language as 'en' | 'ar');
+  }, [product, language]);
+
   return (
     <div
       className={`min-h-screen bg-gray-50 page-padding-top ${
@@ -443,6 +450,11 @@ export const ProductDetailPage = () => {
       <Seo
         title={seoTitle}
         description={seoDescription}
+        image={images[0]}
+        ogTitle={seoMetadata?.ogTitle}
+        ogDescription={seoMetadata?.ogDescription}
+        twitterTitle={seoMetadata?.twitterTitle}
+        twitterDescription={seoMetadata?.twitterDescription}
         keywords={
           product?.metaKeywords 
             ? product.metaKeywords.split(',').map(k => k.trim()).filter(Boolean)
@@ -508,7 +520,9 @@ export const ProductDetailPage = () => {
                 <ProductShare
                   productName={displayName}
                   productUrl={canonicalUrl}
-                  productDescription={plainDescription}
+                  productDescription={seoMetadata?.ogDescription || plainDescription}
+                  productImage={images[0]}
+                  tastingNotes={seoMetadata?.simpleTastingNotes}
                   language={language}
                 />
               </div>

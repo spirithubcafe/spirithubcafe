@@ -11,6 +11,10 @@ export interface SeoProps {
   keywords?: string[] | string;
   canonical?: string;
   image?: string;
+  ogTitle?: string;
+  ogDescription?: string;
+  twitterTitle?: string;
+  twitterDescription?: string;
   type?: 'website' | 'article' | 'product';
   noindex?: boolean;
   robots?: string;
@@ -54,6 +58,10 @@ export const Seo: React.FC<SeoProps> = ({
   keywords,
   canonical,
   image,
+  ogTitle,
+  ogDescription,
+  twitterTitle,
+  twitterDescription,
   type = 'website',
   noindex = false,
   robots,
@@ -89,19 +97,24 @@ export const Seo: React.FC<SeoProps> = ({
     document.title = resolvedTitle;
     ensureMeta('meta[name="description"]', { name: 'description' }, resolvedDescription);
     ensureMeta('meta[name="keywords"]', { name: 'keywords' }, keywordsContent);
-    ensureMeta('meta[property="og:title"]', { property: 'og:title' }, resolvedTitle);
-    ensureMeta('meta[property="og:description"]', { property: 'og:description' }, resolvedDescription);
+    ensureMeta('meta[property="og:title"]', { property: 'og:title' }, ogTitle || resolvedTitle);
+    ensureMeta('meta[property="og:description"]', { property: 'og:description' }, ogDescription || resolvedDescription);
     ensureMeta('meta[property="og:type"]', { property: 'og:type' }, type);
     ensureMeta('meta[property="og:url"]', { property: 'og:url' }, resolvedCanonical);
     ensureMeta('meta[property="og:site_name"]', { property: 'og:site_name' }, siteMetadata.siteName);
     ensureMeta('meta[property="og:image"]', { property: 'og:image' }, resolvedImage ?? '');
+    ensureMeta('meta[property="og:image:secure_url"]', { property: 'og:image:secure_url' }, resolvedImage ?? '');
+    ensureMeta('meta[property="og:image:width"]', { property: 'og:image:width' }, '1200');
+    ensureMeta('meta[property="og:image:height"]', { property: 'og:image:height' }, '630');
+    ensureMeta('meta[property="og:image:alt"]', { property: 'og:image:alt' }, ogTitle || resolvedTitle);
     ensureMeta('meta[property="og:locale"]', { property: 'og:locale' }, resolvedLocale);
     ensureMeta('meta[name="twitter:card"]', { name: 'twitter:card' }, 'summary_large_image');
-    ensureMeta('meta[name="twitter:title"]', { name: 'twitter:title' }, resolvedTitle);
-    ensureMeta('meta[name="twitter:description"]', { name: 'twitter:description' }, resolvedDescription);
+    ensureMeta('meta[name="twitter:title"]', { name: 'twitter:title' }, twitterTitle || ogTitle || resolvedTitle);
+    ensureMeta('meta[name="twitter:description"]', { name: 'twitter:description' }, twitterDescription || ogDescription || resolvedDescription);
     ensureMeta('meta[name="twitter:image"]', { name: 'twitter:image' }, resolvedImage ?? '');
+    ensureMeta('meta[name="twitter:image:alt"]', { name: 'twitter:image:alt' }, ogTitle || resolvedTitle);
     ensureMeta('meta[name="twitter:site"]', { name: 'twitter:site' }, siteMetadata.twitterHandle);
-    ensureMeta('meta[name="twitter:image:alt"]', { name: 'twitter:image:alt' }, siteMetadata.siteName);
+    ensureMeta('meta[name="twitter:creator"]', { name: 'twitter:creator' }, siteMetadata.twitterHandle);
 
     if (noindex) {
       ensureMeta('meta[name="robots"]', { name: 'robots' }, robots ?? 'noindex,nofollow');
@@ -115,12 +128,16 @@ export const Seo: React.FC<SeoProps> = ({
   }, [
     keywordsContent,
     noindex,
+    ogDescription,
+    ogTitle,
     resolvedCanonical,
     resolvedDescription,
     resolvedImage,
     resolvedLocale,
     resolvedTitle,
     robots,
+    twitterDescription,
+    twitterTitle,
     type,
   ]);
 

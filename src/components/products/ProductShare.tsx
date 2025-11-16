@@ -22,6 +22,8 @@ interface ProductShareProps {
   productName: string;
   productUrl: string;
   productDescription?: string;
+  productImage?: string;
+  tastingNotes?: string;
   language?: string;
 }
 
@@ -29,6 +31,8 @@ export const ProductShare: React.FC<ProductShareProps> = ({
   productName,
   productUrl,
   productDescription,
+  productImage,
+  tastingNotes,
   language = 'en',
 }) => {
   const [isCopied, setIsCopied] = useState(false);
@@ -36,6 +40,13 @@ export const ProductShare: React.FC<ProductShareProps> = ({
   const shareText = language === 'ar'
     ? `تحقق من ${productName} في سبيريت هب كافيه`
     : `Check out ${productName} at Spirit Hub Cafe`;
+
+  // Enhanced share text with tasting notes
+  const enhancedShareText = tastingNotes
+    ? language === 'ar'
+      ? `☕ ${productName}\n\n${productDescription}\n\n🌟 نكهات: ${tastingNotes}`
+      : `☕ ${productName}\n\n${productDescription}\n\n🌟 Tasting Notes: ${tastingNotes}`
+    : `☕ ${productName}\n\n${productDescription}`;
 
   const copyToClipboard = async () => {
     try {
@@ -53,7 +64,8 @@ export const ProductShare: React.FC<ProductShareProps> = ({
   };
 
   const shareOnTwitter = () => {
-    const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(productUrl)}`;
+    const text = tastingNotes ? enhancedShareText : shareText;
+    const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(productUrl)}`;
     window.open(url, '_blank', 'width=600,height=400');
   };
 
@@ -64,14 +76,15 @@ export const ProductShare: React.FC<ProductShareProps> = ({
 
   const shareViaEmail = () => {
     const subject = encodeURIComponent(shareText);
-    const body = encodeURIComponent(
-      `${shareText}\n\n${productDescription || ''}\n\n${productUrl}`
-    );
+    const body = tastingNotes 
+      ? encodeURIComponent(enhancedShareText + `\n\n${productUrl}`)
+      : encodeURIComponent(`${shareText}\n\n${productDescription || ''}\n\n${productUrl}`);
     window.location.href = `mailto:?subject=${subject}&body=${body}`;
   };
 
   const shareOnWhatsApp = () => {
-    const url = `https://wa.me/?text=${encodeURIComponent(`${shareText} ${productUrl}`)}`;
+    const text = tastingNotes ? enhancedShareText : shareText;
+    const url = `https://wa.me/?text=${encodeURIComponent(`${text}\n\n${productUrl}`)}`;
     window.open(url, '_blank');
   };
 
