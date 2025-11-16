@@ -435,11 +435,10 @@ export const ProductDetailPage = () => {
   const stockLabel =
     language === 'ar' ? 'متوفر في المخزون' : 'In Stock';
 
-  // Generate optimized SEO metadata for social sharing
-  const seoMetadata = useMemo(() => {
-    if (!product) return null;
-    return generateProductSeoMetadata(product, language as 'en' | 'ar');
-  }, [product, language]);
+  const seoMeta = useMemo(() => 
+    product ? generateProductSeoMetadata(product, language as 'en' | 'ar') : null,
+    [product, language]
+  );
 
   return (
     <div
@@ -451,10 +450,7 @@ export const ProductDetailPage = () => {
         title={seoTitle}
         description={seoDescription}
         image={images[0]}
-        ogTitle={seoMetadata?.ogTitle}
-        ogDescription={seoMetadata?.ogDescription}
-        twitterTitle={seoMetadata?.twitterTitle}
-        twitterDescription={seoMetadata?.twitterDescription}
+        ogDescription={seoMeta?.ogDescription}
         keywords={
           product?.metaKeywords 
             ? product.metaKeywords.split(',').map(k => k.trim()).filter(Boolean)
@@ -520,9 +516,9 @@ export const ProductDetailPage = () => {
                 <ProductShare
                   productName={displayName}
                   productUrl={canonicalUrl}
-                  productDescription={seoMetadata?.ogDescription || plainDescription}
+                  productDescription={seoMeta?.ogDescription || plainDescription}
                   productImage={images[0]}
-                  tastingNotes={seoMetadata?.simpleTastingNotes}
+                  tastingNotes={seoMeta?.simpleTastingNotes}
                   language={language}
                 />
               </div>
