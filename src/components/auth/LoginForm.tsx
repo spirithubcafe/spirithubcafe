@@ -74,15 +74,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({
 
   return (
     <div className={`w-full ${isRTL ? 'rtl' : 'ltr'}`} dir={isRTL ? 'rtl' : 'ltr'}>
-      <div className="space-y-1 mb-6">
-        <h2 className={`text-xl font-bold ${isRTL ? 'text-right font-cairo' : 'text-center'}`}>
-          {t('auth.login')}
-        </h2>
-        <p className={`text-sm text-muted-foreground ${isRTL ? 'text-right font-cairo' : 'text-center'}`}>
-          {t('auth.loginDescription')}
-        </p>
-      </div>
-      
       <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
             <Alert variant="destructive">
