@@ -10,6 +10,18 @@ interface PageHeaderProps {
   subtitleAr?: string;
 }
 
+// Helper function to strip HTML tags from text
+const stripHtmlTags = (html: string | undefined): string => {
+  if (!html) return '';
+  
+  // Create a temporary div element to parse HTML
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+  
+  // Get text content and clean up extra whitespace
+  return tmp.textContent || tmp.innerText || '';
+};
+
 export const PageHeader: React.FC<PageHeaderProps> = ({ 
   title, 
   titleAr, 
@@ -19,8 +31,8 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   const { language } = useApp();
   const isArabic = language === 'ar';
 
-  const displayTitle = isArabic && titleAr ? titleAr : title;
-  const displaySubtitle = isArabic && subtitleAr ? subtitleAr : subtitle;
+  const displayTitle = stripHtmlTags(isArabic && titleAr ? titleAr : title);
+  const displaySubtitle = stripHtmlTags(isArabic && subtitleAr ? subtitleAr : subtitle);
 
   return (
     <motion.div 
