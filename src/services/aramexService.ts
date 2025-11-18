@@ -1,32 +1,33 @@
 import { apiClient } from './apiClient';
+import type { ApiError } from '../types/auth';
 
 export interface AramexAddress {
-  Line1: string;
-  City: string;
-  CountryCode: string;
-  PostalCode: string;
+  line1: string;
+  city: string;
+  countryCode: string;
+  postCode: string;
 }
 
 export interface AramexShipmentDetails {
-  ActualWeight: { Unit: string; Value: number };
-  ChargeableWeight: { Unit: string; Value: number };
-  NumberOfPieces: number;
-  ProductGroup: string; // 'DOM' for domestic Oman, 'EXP' for international
-  ProductType: string; // 'PPX', 'EPX', 'GRD', 'OND'
-  PaymentType: string; // 'P' for prepaid
-  DescriptionOfGoods: string;
-  Dimensions: {
-    Length: number;
-    Width: number;
-    Height: number;
-    Unit: string;
+  actualWeight: { unit: string; value: number };
+  chargeableWeight: { unit: string; value: number };
+  numberOfPieces: number;
+  productGroup: string; // 'DOM' for domestic Oman, 'EXP' for international GCC
+  productType: string;  // 'ONP' (Overnight domestic), 'PPX' (Priority Parcel Express), 'EPX', 'GRD'
+  paymentType: string;  // 'P' for prepaid, 'C' for collect
+  descriptionOfGoods: string;
+  dimensions: {
+    length: number;
+    width: number;
+    height: number;
+    unit: string; // 'CM' or 'IN'
   };
 }
 
 export interface AramexRateRequest {
-  OriginAddress: AramexAddress;
-  DestinationAddress: AramexAddress;
-  ShipmentDetails: AramexShipmentDetails;
+  originAddress: AramexAddress;
+  destinationAddress: AramexAddress;
+  shipmentDetails: AramexShipmentDetails;
 }
 
 export interface AramexRateResponse {
@@ -35,11 +36,17 @@ export interface AramexRateResponse {
     amount: number;
     currency: string;
   };
-  // Backend might return this format
+  /**
+   * Backend might return:
+   * 1) totalAmount: 7.245, currency: "OMR"
+   * 2) totalAmount: { value: 7.245, currencyCode: "OMR" }
+   */
   totalAmount?: {
     value: number;
     currencyCode: string;
-  };
+  } | number;
+  currencyCode?: string;
+  currency?: string;
   errors?: string[];
 }
 
@@ -51,14 +58,18 @@ export async function calculateAramexRate(
 ): Promise<AramexRateResponse> {
   try {
     console.log('📤 Sending Aramex API Request:', request);
-    
+
     const response = await apiClient.post<AramexRateResponse>(
       '/api/aramex/calculate-rate',
       request
     );
-    
-    const data = response.data;
-    
+
+    const data = response.data as AramexRateResponse & {
+      totalAmount?: number | { value: number; currencyCode: string };
+      currency?: string;
+      currencyCode?: string;
+    };
+
     // Log the raw response for debugging
     console.log('📥 Aramex API Raw Response:', {
       data,
@@ -67,52 +78,53 @@ export async function calculateAramexRate(
       hasRate: 'rate' in data,
       successValue: data.success,
     });
-    
-    // Normalize response format - handle both formats
+
+    // Normalize response format - handle all known formats
     if (data.success && data.totalAmount && !data.rate) {
-      // Backend returned totalAmount format, convert to rate format
-      const normalizedResponse = {
+      let amount: number;
+      let currency: string;
+
+      if (typeof data.totalAmount === 'number') {
+        // Case 1: totalAmount is a number
+        amount = data.totalAmount;
+        currency = data.currency || data.currencyCode || 'OMR';
+      } else {
+        // Case 2: totalAmount is an object { value, currencyCode }
+        amount = data.totalAmount.value;
+        currency = data.totalAmount.currencyCode;
+      }
+
+      const normalizedResponse: AramexRateResponse = {
         success: true,
         rate: {
-          amount: data.totalAmount.value,
-          currency: data.totalAmount.currencyCode,
+          amount,
+          currency,
         },
       };
+
       console.log('✅ Normalized Aramex Response:', normalizedResponse);
       return normalizedResponse;
     }
-    
+
     if (data.success && data.rate) {
       console.log('✅ Already in correct format:', data);
     }
-    
+
     return data;
   } catch (error: any) {
     console.error('Error calculating Aramex rate:', error);
-    
-    // Handle different types of errors
-    let errorMessage = 'Failed to calculate shipping rate';
-    
-    if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
-      errorMessage = 'Cannot connect to shipping service. Please try again later.';
-    } else if (error.code === 'ECONNABORTED' || error.code === 'ERR_CONNECTION_RESET') {
-      errorMessage = 'Connection timeout. Please check your internet connection.';
-    } else if (error.response) {
-      // Server responded with error
-      if (error.response.status === 404) {
-        errorMessage = 'Shipping service endpoint not found. Please contact support.';
-      } else if (error.response.status >= 500) {
-        errorMessage = 'Shipping service is temporarily unavailable.';
-      } else if (error.response.data?.errors) {
-        errorMessage = error.response.data.errors.join(', ');
-      } else if (error.response.data?.message) {
-        errorMessage = error.response.data.message;
-      }
-    } else if (error.message) {
-      errorMessage = error.message;
-    }
-    
-    // Return error response
+
+    // Here we treat it as ApiError coming from apiClient
+    const apiError = error as ApiError;
+
+    let errorMessage =
+      apiError.message ||
+      (Array.isArray(apiError.errors)
+        ? apiError.errors.join(', ')
+        : typeof apiError.errors === 'string'
+        ? apiError.errors
+        : 'Failed to calculate shipping rate');
+
     return {
       success: false,
       errors: [errorMessage],

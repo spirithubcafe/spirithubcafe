@@ -125,6 +125,8 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
         image: product.image,
         tastingNotes: product.tastingNotes,
         variantName: variantLabel || undefined,
+        weight: selectedVariant?.weight,
+        weightUnit: selectedVariant?.weightUnit,
       });
     }
 

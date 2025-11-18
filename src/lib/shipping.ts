@@ -24,44 +24,50 @@ export type ShippingMethod = {
   calculationError?: string
 }
 
-export const GCC_LOCATIONS = (locations as { countries: GCCCountry[] }).countries
+export const GCC_LOCATIONS = (locations as { countries: GCCCountry[] }).countries;
 
 export function getCountries() {
-  return GCC_LOCATIONS.map(c => ({ iso2: c.iso2, name_en: c.name_en, name_ar: c.name_ar }))
+  return GCC_LOCATIONS.map(c => ({
+    iso2: c.iso2,
+    name_en: c.name_en,
+    name_ar: c.name_ar
+  }));
 }
 
 export function getCountryByIso2(iso2?: string) {
-  if (!iso2) return undefined
-  return GCC_LOCATIONS.find(c => c.iso2 === iso2)
+  if (!iso2) return undefined;
+  return GCC_LOCATIONS.find(c => c.iso2 === iso2);
 }
 
 export function getCitiesByCountry(iso2?: string) {
-  const country = getCountryByIso2(iso2)
-  return country?.cities ?? []
+  return getCountryByIso2(iso2)?.cities ?? [];
 }
 
-export function computeShippingMethods(opts: { countryIso2?: string; citySlug?: string; orderTotal?: number }): ShippingMethod[] {
-  const { countryIso2, citySlug, orderTotal = 0 } = opts
-  const isOman = countryIso2 === 'OM'
-  const isKhasab = isOman && (citySlug === 'khasab')
-  const isFreeNoolDelivery = orderTotal > 20
+export function computeShippingMethods(opts: {
+  countryIso2?: string;
+  citySlug?: string;
+  orderTotal?: number;
+}): ShippingMethod[] {
+  const { countryIso2, citySlug, orderTotal = 0 } = opts;
+  const isOman = countryIso2 === 'OM';
+  const isKhasab = isOman && citySlug === 'khasab';
+  const isFreeNoolDelivery = orderTotal > 20;
 
-  const methods: ShippingMethod[] = []
-
-  methods.push({
-    id: 'pickup',
-    label: { en: 'Pickup from Shop', ar: 'استلام من المتجر' },
-    description: {
-      en: 'Collect your order from our Muscat location. We will notify you when it is ready.',
-      ar: 'استلم طلبك من موقعنا في مسقط. سنخبرك حالما يصبح جاهزاً.'
+  const methods: ShippingMethod[] = [
+    {
+      id: 'pickup',
+      label: { en: 'Pickup from Shop', ar: 'استلام من المتجر' },
+      description: {
+        en: 'Collect your order from our Muscat location. We will notify you when it is ready.',
+        ar: 'استلم طلبك من موقعنا في مسقط. سنخبرك حالما يصبح جاهزاً.'
+      },
+      eta: { en: 'Ready within 24 hours', ar: 'جاهز خلال 24 ساعة' },
+      badge: { en: 'Free', ar: 'مجاني' },
+      price: 0,
     },
-    eta: { en: 'Ready within 24 hours', ar: 'جاهز خلال 24 ساعة' },
-    badge: { en: 'Free', ar: 'مجاني' },
-    price: 0
-  })
+  ];
 
   if (isOman) {
-    const noolPrice = isFreeNoolDelivery ? 0 : (isKhasab ? 3.0 : 2.0)
     methods.push({
       id: 'nool',
       label: { en: 'Nool Delivery', ar: 'توصيل نول' },
@@ -70,9 +76,12 @@ export function computeShippingMethods(opts: { countryIso2?: string; citySlug?: 
         ar: 'توصيل محلي سريع داخل منطقة مسقط مع فريق التوصيل الخاص بنا.'
       },
       eta: { en: '1-2 business days', ar: '١-٢ أيام عمل' },
-      badge: { en: isFreeNoolDelivery ? 'Free over 20 OMR' : 'Fast delivery', ar: isFreeNoolDelivery ? 'مجاني فوق 20 ر.ع' : 'توصيل سريع' },
-      price: noolPrice
-    })
+      badge: {
+        en: isFreeNoolDelivery ? 'Free over 20 OMR' : 'Fast delivery',
+        ar: isFreeNoolDelivery ? 'مجاني فوق 20 ر.ع' : 'توصيل سريع'
+      },
+      price: isFreeNoolDelivery ? 0 : (isKhasab ? 3.0 : 2.0),
+    });
   }
 
   methods.push({
@@ -84,84 +93,72 @@ export function computeShippingMethods(opts: { countryIso2?: string; citySlug?: 
     },
     eta: { en: '2-4 business days', ar: '٢-٤ أيام عمل' },
     badge: { en: 'Best for gifts', ar: 'مثالي للهدايا' },
-    // Price will be calculated dynamically in checkout based on city selection
-    price: 0
-  })
+    price: 0, // Updated dynamically
+  });
 
-  return methods
+  return methods;
 }
 
 /**
  * Calculate Aramex shipping rate dynamically based on destination
- * @param countryIso2 - Destination country code (e.g., 'AE', 'SA', 'OM')
- * @param city - Destination city name
- * @param weight - Total weight of shipment in KG (default: 1)
- * @returns Promise with rate calculation result
  */
 export async function calculateAramexShippingRate(
   countryIso2: string,
   city: string,
-  weight: number = 1
+  weight: number
 ): Promise<{ success: boolean; price?: number; error?: string }> {
   try {
-    // Determine product type and group based on destination
     const isOman = countryIso2 === 'OM';
-    const productGroup = isOman ? 'DOM' : 'EXP';
-    const productType = isOman ? 'OND' : 'PPX';
 
-    // Build rate request according to Aramex API specification
+    const productGroup = isOman ? 'DOM' : 'EXP';
+    const productType = isOman ? 'ONP' : 'PPX'; // ONP for domestic Oman, PPX for international
+
+    const chargeableWeight = Math.max(1, Math.ceil(weight || 0));
+
     const request: AramexRateRequest = {
-      OriginAddress: {
-        Line1: 'Al Hail',
-        City: 'Muscat',
-        CountryCode: 'OM',
-        PostalCode: '111',
+      originAddress: {
+        line1: 'Al Hail',
+        city: 'Muscat',
+        countryCode: 'OM',
+        postCode: '111',
       },
-      DestinationAddress: {
-        Line1: 'Customer Address',
-        City: city,
-        CountryCode: countryIso2,
-        PostalCode: '00000',
+      destinationAddress: {
+        line1: 'Customer Address',
+        city: city,
+        countryCode: countryIso2,
+        postCode: '00000',
       },
-      ShipmentDetails: {
-        ActualWeight: { Unit: 'KG', Value: weight },
-        ChargeableWeight: { Unit: 'KG', Value: weight },
-        NumberOfPieces: 1,
-        ProductGroup: productGroup,
-        ProductType: productType,
-        PaymentType: 'P',
-        DescriptionOfGoods: 'Coffee Products',
-        Dimensions: {
-          Length: 20,
-          Width: 20,
-          Height: 20,
-          Unit: 'CM',
+      shipmentDetails: {
+        actualWeight: { unit: 'KG', value: chargeableWeight },
+        chargeableWeight: { unit: 'KG', value: chargeableWeight },
+        numberOfPieces: 1,
+        productGroup: productGroup,
+        productType: productType,
+        paymentType: 'P',
+        descriptionOfGoods: 'Coffee Products',
+        dimensions: {
+          length: 20,
+          width: 20,
+          height: 20,
+          unit: 'CM',
         },
       },
     };
 
     const response = await calculateAramexRate(request);
-    
-    console.log('calculateAramexShippingRate - Response:', response);
 
-    if (response.success && response.rate) {
-      console.log('calculateAramexShippingRate - Returning price:', response.rate.amount);
-      return {
-        success: true,
-        price: response.rate.amount,
-      };
-    } else {
-      console.log('calculateAramexShippingRate - Failed:', response.errors);
-      return {
-        success: false,
-        error: response.errors?.join(', ') || 'Failed to calculate shipping rate',
-      };
+    if (response.success && response.rate?.amount) {
+      return { success: true, price: response.rate.amount };
     }
-  } catch (error: any) {
-    console.error('Error calculating Aramex rate:', error);
+
     return {
       success: false,
-      error: error.message || 'Network error while calculating shipping rate',
+      error: response.errors?.join(', ') || 'Rate unavailable'
+    };
+  } catch (err: any) {
+    return {
+      success: false,
+      error: err?.message || 'Network error'
     };
   }
 }
