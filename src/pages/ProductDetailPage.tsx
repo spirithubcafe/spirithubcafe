@@ -519,7 +519,6 @@ export const ProductDetailPage = () => {
                   productName={displayName}
                   productUrl={canonicalUrl}
                   productDescription={seoMeta?.ogDescription || plainDescription}
-                  productImage={images[0]}
                   tastingNotes={seoMeta?.simpleTastingNotes}
                   language={language}
                 />
