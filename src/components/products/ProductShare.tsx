@@ -22,7 +22,6 @@ interface ProductShareProps {
   productName: string;
   productUrl: string;
   productDescription?: string;
-  productImage?: string;
   tastingNotes?: string;
   language?: string;
 }
@@ -31,7 +30,6 @@ export const ProductShare: React.FC<ProductShareProps> = ({
   productName,
   productUrl,
   productDescription,
-  productImage,
   tastingNotes,
   language = 'en',
 }) => {
