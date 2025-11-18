@@ -411,6 +411,8 @@ export const ProductDetailPage = () => {
       image,
       tastingNotes,
       variantName: variantLabel || undefined,
+      weight: selectedVariant?.weight,
+      weightUnit: selectedVariant?.weightUnit,
     });
 
     if (quantity > 1) {

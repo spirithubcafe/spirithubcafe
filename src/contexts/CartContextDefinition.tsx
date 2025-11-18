@@ -10,6 +10,8 @@ export interface CartItem {
   quantity: number;
   tastingNotes?: string;
   variantName?: string; // Display name for variant (e.g., "250g", "Medium Roast")
+  weight?: number; // Weight per unit (from product variant)
+  weightUnit?: string; // Weight unit (g, kg, oz, lb)
 }
 
 export interface CartContextType {

@@ -82,8 +82,8 @@ const checkoutSchema = z
   });
 
 type CheckoutFormValues = z.infer<typeof checkoutSchema>;
-// Dynamic shipping methods computed based on selected country/city
 
+// Dynamic shipping methods computed based on selected country/city
 const formatCurrency = (value: number, label: string) => `${value.toFixed(3)} ${label}`;
 
 export const CheckoutPage: React.FC = () => {
@@ -119,89 +119,114 @@ export const CheckoutPage: React.FC = () => {
   const watchRecipientCity = form.watch('recipientCity');
   const watchedShipping = form.watch('shippingMethod');
   const watchIsGift = form.watch('isGift');
-  
+
   // Use recipient's country/city for shipping if it's a gift, otherwise use customer's
   const effectiveCountry = watchIsGift ? watchRecipientCountry : watchCountry;
   const effectiveCity = watchIsGift ? watchRecipientCity : watchCity;
-  
+
   // State for dynamic Aramex rate calculation
   const [aramexRate, setAramexRate] = useState<number | null>(null);
   const [aramexCalculating, setAramexCalculating] = useState(false);
   const [aramexError, setAramexError] = useState<string | null>(null);
-  
-  // Calculate Aramex rate when country/city changes
+
+  // Calculate Aramex rate when country/city or cart items change
   useEffect(() => {
-    const calculateAramexRate = async () => {
+    const runCalculation = async () => {
       // Only calculate if we have both country and city
       if (!effectiveCountry || !effectiveCity) {
         setAramexRate(null);
         return;
       }
-      
+
       // Get city name for API call
       const cities = getCitiesByCountry(effectiveCountry);
-      const selectedCity = cities.find(c => c.slug === effectiveCity);
-      
+      const selectedCity = cities.find((c) => c.slug === effectiveCity);
+
       if (!selectedCity) {
         setAramexRate(null);
         return;
       }
-      
+
       setAramexCalculating(true);
       setAramexError(null);
-      
+
       try {
-        // Calculate total weight (assuming 0.5 KG per item, adjust as needed)
-        const totalWeight = Math.max(1, items.reduce((sum, item) => sum + (item.quantity * 0.5), 0));
-        
+        // Calculate total weight for shipment from cart items
+        // Convert all weights to KG for Aramex API
+        const totalWeight = items.reduce((sum, item) => {
+          let weightInKg = 0.5; // Default fallback weight per item (500g)
+          
+          if (item.weight && item.weightUnit) {
+            const weight = item.weight;
+            const unit = item.weightUnit.toLowerCase();
+            
+            // Convert to KG based on unit
+            if (unit === 'kg') {
+              weightInKg = weight;
+            } else if (unit === 'g') {
+              weightInKg = weight / 1000;
+            } else if (unit === 'lb') {
+              weightInKg = weight * 0.453592;
+            } else if (unit === 'oz') {
+              weightInKg = weight * 0.0283495;
+            }
+          }
+          
+          return sum + (weightInKg * item.quantity);
+        }, 0);
+
+        console.log('📦 Calculated total weight:', totalWeight, 'KG for', items.length, 'items');
+
         const result = await calculateAramexShippingRate(
           effectiveCountry,
           selectedCity.name_en,
           totalWeight
         );
-        
+
         if (result.success && result.price) {
           setAramexRate(result.price);
           setAramexError(null);
         } else {
-          // Don't set a default rate, let user select city first
           setAramexRate(null);
-          
-          // Set user-friendly error message
-          const errorMsg = result.error?.includes('connect') || result.error?.includes('network')
-            ? 'Using estimated rate (API unavailable)'
-            : 'Please select a city';
+          const errorMsg =
+            result.error?.includes('connect') || result.error?.includes('network')
+              ? 'Using estimated rate (API unavailable)'
+              : 'Please select a city';
           setAramexError(errorMsg);
         }
       } catch (error: any) {
         console.error('Error calculating Aramex rate:', error);
-        
-        // Don't set a default rate, let user select city first
         setAramexRate(null);
-        
-        // Set user-friendly error message
-        const errorMsg = error?.message?.includes('Network') || error?.code === 'ERR_NETWORK'
-          ? 'API unavailable - Please select a city'
-          : 'Please select a city';
+        const errorMsg =
+          error?.message?.includes('Network') || error?.code === 'ERR_NETWORK'
+            ? 'API unavailable - Please select a city'
+            : 'Please select a city';
         setAramexError(errorMsg);
       } finally {
         setAramexCalculating(false);
       }
     };
-    
-    // Debounce the calculation
+
     const timer = setTimeout(() => {
-      calculateAramexRate();
+      if (items.length > 0) {
+        runCalculation();
+      } else {
+        setAramexRate(null);
+      }
     }, 500);
-    
+
     return () => clearTimeout(timer);
   }, [effectiveCountry, effectiveCity, items]);
-  
+
   const shippingMethods = React.useMemo(() => {
-    const methods = computeShippingMethods({ countryIso2: effectiveCountry, citySlug: effectiveCity, orderTotal: totalPrice });
-    
+    const methods = computeShippingMethods({
+      countryIso2: effectiveCountry,
+      citySlug: effectiveCity,
+      orderTotal: totalPrice,
+    });
+
     // Update Aramex price with calculated rate
-    return methods.map(method => {
+    return methods.map((method) => {
       if (method.id === 'aramex') {
         return {
           ...method,
@@ -213,12 +238,13 @@ export const CheckoutPage: React.FC = () => {
       return method;
     });
   }, [effectiveCountry, effectiveCity, totalPrice, aramexRate, aramexCalculating, aramexError]);
-  
-  const selectedShipping = shippingMethods.find((method) => method.id === watchedShipping) ?? shippingMethods[0];
-  
-  React.useEffect(() => {
+
+  const selectedShipping =
+    shippingMethods.find((method) => method.id === watchedShipping) ?? shippingMethods[0];
+
+  useEffect(() => {
     // If current method not available after country/gift change, reset to first
-    if (!shippingMethods.some(m => m.id === form.getValues('shippingMethod'))) {
+    if (!shippingMethods.some((m) => m.id === form.getValues('shippingMethod'))) {
       form.setValue('shippingMethod', shippingMethods[0].id);
     }
     // Disallow 'nool' outside Oman
@@ -287,7 +313,7 @@ export const CheckoutPage: React.FC = () => {
 
   if (items.length === 0) {
     return (
-  <div className="min-h-screen bg-linear-to-br from-gray-50 to-white page-padding-top">
+      <div className="min-h-screen bg-linear-to-br from-gray-50 to-white page-padding-top">
         <Seo
           title={language === 'ar' ? 'الدفع' : 'Checkout'}
           description={
@@ -305,11 +331,14 @@ export const CheckoutPage: React.FC = () => {
           subtitle="Your cart is empty. Add products to continue."
           subtitleAr="سلة التسوق فارغة. أضف منتجات للمتابعة."
         />
-  <div className="container mx-auto py-16 text-center space-y-6">
+        <div className="container mx-auto py-16 text-center space-y-6">
           <p className="text-lg text-gray-600">
             {isArabic ? 'لا توجد منتجات في السلة حالياً.' : 'There are no products in your cart yet.'}
           </p>
-          <Button className="bg-amber-600 hover:bg-amber-700" onClick={() => navigate('/products')}>
+          <Button
+            className="bg-amber-600 hover:bg-amber-700"
+            onClick={() => navigate('/products')}
+          >
             {isArabic ? 'تسوق المنتجات' : 'Browse Products'}
           </Button>
         </div>
@@ -318,7 +347,7 @@ export const CheckoutPage: React.FC = () => {
   }
 
   return (
-  <div className="min-h-screen bg-linear-to-b from-gray-50 to-white page-padding-top">
+    <div className="min-h-screen bg-linear-to-b from-gray-50 to-white page-padding-top">
       <Seo
         title={language === 'ar' ? 'الدفع الآمن' : 'Secure checkout'}
         description={
@@ -337,13 +366,13 @@ export const CheckoutPage: React.FC = () => {
         subtitleAr="أكد تفاصيل طلبك واختر طريقة الاستلام أو الشحن المناسبة."
       />
 
-  <div className="container mx-auto py-12">
+      <div className="container mx-auto py-12">
         {/* Login Required Alert */}
         {!isAuthenticated && (
           <Alert className="mb-6 border-amber-200 bg-amber-50">
             <LogIn className="h-4 w-4 text-amber-600" />
             <AlertDescription className="text-amber-900">
-              {isArabic 
+              {isArabic
                 ? 'يجب تسجيل الدخول لإتمام الطلب. سيتم توجيهك لتسجيل الدخول عند الضغط على "متابعة للدفع".'
                 : 'You must be logged in to complete your order. You will be redirected to login when you click "Continue to Payment".'}
             </AlertDescription>
@@ -354,7 +383,12 @@ export const CheckoutPage: React.FC = () => {
           <form onSubmit={form.handleSubmit(handleSubmit)}>
             {/* Back button at the top */}
             <div className="mb-8">
-              <Button type="button" variant="outline" onClick={() => navigate(-1)} className="w-auto">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => navigate(-1)}
+                className="w-auto"
+              >
                 {isArabic ? 'العودة' : 'Back'}
               </Button>
             </div>
@@ -383,7 +417,10 @@ export const CheckoutPage: React.FC = () => {
                           <FormItem>
                             <FormLabel>{isArabic ? 'الاسم الكامل' : 'Full Name'}</FormLabel>
                             <FormControl>
-                              <Input placeholder={isArabic ? 'أدخل اسمك' : 'Enter your full name'} {...field} />
+                              <Input
+                                placeholder={isArabic ? 'أدخل اسمك' : 'Enter your full name'}
+                                {...field}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -405,7 +442,6 @@ export const CheckoutPage: React.FC = () => {
                     </div>
 
                     <div className="grid gap-4 md:grid-cols-2">
-
                       <FormField
                         control={form.control}
                         name="country"
@@ -413,13 +449,23 @@ export const CheckoutPage: React.FC = () => {
                           <FormItem>
                             <FormLabel>{isArabic ? 'الدولة' : 'Country'}</FormLabel>
                             <FormControl>
-                              <Select value={field.value} onValueChange={(val) => { field.onChange(val); form.setValue('city', ''); }}>
+                              <Select
+                                value={field.value}
+                                onValueChange={(val) => {
+                                  field.onChange(val);
+                                  form.setValue('city', '');
+                                }}
+                              >
                                 <SelectTrigger size="default" className="w-full">
-                                  <SelectValue placeholder={isArabic ? 'اختر الدولة' : 'Select country'} />
+                                  <SelectValue
+                                    placeholder={isArabic ? 'اختر الدولة' : 'Select country'}
+                                  />
                                 </SelectTrigger>
                                 <SelectContent className="max-h-64">
-                                  {getCountries().map(c => (
-                                    <SelectItem key={c.iso2} value={c.iso2}>{isArabic ? c.name_ar : c.name_en}</SelectItem>
+                                  {getCountries().map((c) => (
+                                    <SelectItem key={c.iso2} value={c.iso2}>
+                                      {isArabic ? c.name_ar : c.name_en}
+                                    </SelectItem>
                                   ))}
                                 </SelectContent>
                               </Select>
@@ -429,20 +475,28 @@ export const CheckoutPage: React.FC = () => {
                         )}
                       />
 
-                                            <FormField
+                      <FormField
                         control={form.control}
                         name="city"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>{isArabic ? 'المدينة' : 'City'}</FormLabel>
                             <FormControl>
-                              <Select value={field.value} onValueChange={field.onChange} disabled={!watchCountry}>
+                              <Select
+                                value={field.value}
+                                onValueChange={field.onChange}
+                                disabled={!watchCountry}
+                              >
                                 <SelectTrigger size="default" className="w-full">
-                                  <SelectValue placeholder={isArabic ? 'اختر المدينة' : 'Select city'} />
+                                  <SelectValue
+                                    placeholder={isArabic ? 'اختر المدينة' : 'Select city'}
+                                  />
                                 </SelectTrigger>
                                 <SelectContent className="max-h-64">
-                                  {getCitiesByCountry(watchCountry).map(city => (
-                                    <SelectItem key={city.slug} value={city.slug}>{isArabic ? city.name_ar : city.name_en}</SelectItem>
+                                  {getCitiesByCountry(watchCountry).map((city) => (
+                                    <SelectItem key={city.slug} value={city.slug}>
+                                      {isArabic ? city.name_ar : city.name_en}
+                                    </SelectItem>
                                   ))}
                                 </SelectContent>
                               </Select>
@@ -454,32 +508,47 @@ export const CheckoutPage: React.FC = () => {
                     </div>
 
                     <div className="grid gap-4 md:grid-cols-2">
-
-
-                                            <FormField
-                                                control={form.control}
-                                                name="phone"
-                                                render={({ field }) => {
-                                                  const phonePlaceholder = getPhonePlaceholderForCountry(watchCountry);
-                                                  return (
-                                                    <FormItem>
-                                                      <FormLabel>{isArabic ? 'رقم الهاتف' : 'Phone Number'}</FormLabel>
-                                                      <FormControl>
-                                                        <Input type="tel" dir="ltr" placeholder={phonePlaceholder} {...field} />
-                                                      </FormControl>
-                                                      <FormMessage />
-                                                    </FormItem>
-                                                  );
-                                                }}
-                                              />
+                      <FormField
+                        control={form.control}
+                        name="phone"
+                        render={({ field }) => {
+                          const phonePlaceholder =
+                            getPhonePlaceholderForCountry(watchCountry);
+                          return (
+                            <FormItem>
+                              <FormLabel>
+                                {isArabic ? 'رقم الهاتف' : 'Phone Number'}
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="tel"
+                                  dir="ltr"
+                                  placeholder={phonePlaceholder}
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          );
+                        }}
+                      />
                       <FormField
                         control={form.control}
                         name="address"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>{isArabic ? 'العنوان الكامل' : 'Full Address'}</FormLabel>
+                            <FormLabel>
+                              {isArabic ? 'العنوان الكامل' : 'Full Address'}
+                            </FormLabel>
                             <FormControl>
-                              <Input placeholder={isArabic ? 'الشارع، المبنى، الشقة' : 'Street, building, apartment'} {...field} />
+                              <Input
+                                placeholder={
+                                  isArabic
+                                    ? 'الشارع، المبنى، الشقة'
+                                    : 'Street, building, apartment'
+                                }
+                                {...field}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -535,30 +604,48 @@ export const CheckoutPage: React.FC = () => {
                           name="recipientName"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>{isArabic ? 'اسم المستلم' : 'Recipient Name'}</FormLabel>
+                              <FormLabel>
+                                {isArabic ? 'اسم المستلم' : 'Recipient Name'}
+                              </FormLabel>
                               <FormControl>
-                                <Input placeholder={isArabic ? 'اسم المستلم' : "Recipient's full name"} {...field} />
+                                <Input
+                                  placeholder={
+                                    isArabic ? 'اسم المستلم' : "Recipient's full name"
+                                  }
+                                  {...field}
+                                />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
                           )}
                         />
                         <div className="grid gap-4 md:grid-cols-2">
-
                           <FormField
                             control={form.control}
                             name="recipientCountry"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>{isArabic ? 'دولة المستلم' : 'Recipient Country'}</FormLabel>
+                                <FormLabel>
+                                  {isArabic ? 'دولة المستلم' : 'Recipient Country'}
+                                </FormLabel>
                                 <FormControl>
-                                  <Select value={field.value} onValueChange={(val) => { field.onChange(val); form.setValue('recipientCity', ''); }}>
+                                  <Select
+                                    value={field.value}
+                                    onValueChange={(val) => {
+                                      field.onChange(val);
+                                      form.setValue('recipientCity', '');
+                                    }}
+                                  >
                                     <SelectTrigger size="default" className="w-full">
-                                      <SelectValue placeholder={isArabic ? 'اختر الدولة' : 'Select country'} />
+                                      <SelectValue
+                                        placeholder={isArabic ? 'اختر الدولة' : 'Select country'}
+                                      />
                                     </SelectTrigger>
                                     <SelectContent className="max-h-64">
-                                      {getCountries().map(c => (
-                                        <SelectItem key={c.iso2} value={c.iso2}>{isArabic ? c.name_ar : c.name_en}</SelectItem>
+                                      {getCountries().map((c) => (
+                                        <SelectItem key={c.iso2} value={c.iso2}>
+                                          {isArabic ? c.name_ar : c.name_en}
+                                        </SelectItem>
                                       ))}
                                     </SelectContent>
                                   </Select>
@@ -568,21 +655,33 @@ export const CheckoutPage: React.FC = () => {
                             )}
                           />
 
-                                                    <FormField
+                          <FormField
                             control={form.control}
                             name="recipientCity"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>{isArabic ? 'مدينة المستلم' : 'Recipient City'}</FormLabel>
+                                <FormLabel>
+                                  {isArabic ? 'مدينة المستلم' : 'Recipient City'}
+                                </FormLabel>
                                 <FormControl>
-                                  <Select value={field.value} onValueChange={field.onChange} disabled={!watchRecipientCountry}>
+                                  <Select
+                                    value={field.value}
+                                    onValueChange={field.onChange}
+                                    disabled={!watchRecipientCountry}
+                                  >
                                     <SelectTrigger size="default" className="w-full">
-                                      <SelectValue placeholder={isArabic ? 'اختر المدينة' : 'Select city'} />
+                                      <SelectValue
+                                        placeholder={isArabic ? 'اختر المدينة' : 'Select city'}
+                                      />
                                     </SelectTrigger>
                                     <SelectContent className="max-h-64">
-                                      {getCitiesByCountry(watchRecipientCountry).map(city => (
-                                        <SelectItem key={city.slug} value={city.slug}>{isArabic ? city.name_ar : city.name_en}</SelectItem>
-                                      ))}
+                                      {getCitiesByCountry(watchRecipientCountry).map(
+                                        (city) => (
+                                          <SelectItem key={city.slug} value={city.slug}>
+                                            {isArabic ? city.name_ar : city.name_en}
+                                          </SelectItem>
+                                        )
+                                      )}
                                     </SelectContent>
                                   </Select>
                                 </FormControl>
@@ -597,14 +696,23 @@ export const CheckoutPage: React.FC = () => {
                             name="recipientPhone"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>{isArabic ? 'هاتف المستلم' : 'Recipient Phone'}</FormLabel>
-                                  <FormControl>
-                                    {(() => {
-                                      const rc = watchRecipientCountry || watchCountry;
-                                      const recipientPlaceholder = getPhonePlaceholderForCountry(rc);
-                                      return <Input dir="ltr" placeholder={recipientPlaceholder} {...field} />;
-                                    })()}
-                                  </FormControl>
+                                <FormLabel>
+                                  {isArabic ? 'هاتف المستلم' : 'Recipient Phone'}
+                                </FormLabel>
+                                <FormControl>
+                                  {(() => {
+                                    const rc = watchRecipientCountry || watchCountry;
+                                    const recipientPlaceholder =
+                                      getPhonePlaceholderForCountry(rc);
+                                    return (
+                                      <Input
+                                        dir="ltr"
+                                        placeholder={recipientPlaceholder}
+                                        {...field}
+                                      />
+                                    );
+                                  })()}
+                                </FormControl>
                                 <FormMessage />
                               </FormItem>
                             )}
@@ -614,9 +722,16 @@ export const CheckoutPage: React.FC = () => {
                             name="recipientAddress"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>{isArabic ? 'عنوان المستلم' : 'Recipient Address'}</FormLabel>
+                                <FormLabel>
+                                  {isArabic ? 'عنوان المستلم' : 'Recipient Address'}
+                                </FormLabel>
                                 <FormControl>
-                                  <Input placeholder={isArabic ? 'تفاصيل العنوان' : 'Full delivery address'} {...field} />
+                                  <Input
+                                    placeholder={
+                                      isArabic ? 'تفاصيل العنوان' : 'Full delivery address'
+                                    }
+                                    {...field}
+                                  />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -631,9 +746,19 @@ export const CheckoutPage: React.FC = () => {
                       name="notes"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{isArabic ? 'ملاحظات إضافية' : 'Additional Notes'}</FormLabel>
+                          <FormLabel>
+                            {isArabic ? 'ملاحظات إضافية' : 'Additional Notes'}
+                          </FormLabel>
                           <FormControl>
-                            <Textarea rows={4} placeholder={isArabic ? 'أضف تعليمات خاصة للطلب' : 'Add delivery notes or roasting preferences'} {...field} />
+                            <Textarea
+                              rows={4}
+                              placeholder={
+                                isArabic
+                                  ? 'أضف تعليمات خاصة للطلب'
+                                  : 'Add delivery notes or roasting preferences'
+                              }
+                              {...field}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -643,9 +768,8 @@ export const CheckoutPage: React.FC = () => {
                 </Card>
               </div>
 
-              {/* Sidebar for desktop with both delivery method and order summary */}
+              {/* Sidebar: delivery method + order summary */}
               <div className="w-full lg:w-[400px] xl:w-[450px] space-y-6 lg:sticky lg:top-6 order-2">
-                {/* Delivery Method - Responsive positioning */}
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-xl font-semibold flex items-center gap-2">
@@ -665,13 +789,16 @@ export const CheckoutPage: React.FC = () => {
                       render={({ field }) => (
                         <FormItem>
                           <FormControl>
-                            <RadioGroup value={field.value} onValueChange={field.onChange} className="space-y-3">
+                            <RadioGroup
+                              value={field.value}
+                              onValueChange={field.onChange}
+                              className="space-y-3"
+                            >
                               {shippingMethods.map((method) => (
                                 <label
                                   key={method.id}
                                   className={cn(
                                     'flex gap-3 rounded-xl border bg-white p-3 shadow-sm transition-all cursor-pointer',
-                                    // Move the radio selector to the right in Arabic by reversing the row
                                     isArabic && 'flex-row-reverse',
                                     field.value === method.id
                                       ? 'border-amber-500 ring-2 ring-amber-100'
@@ -679,59 +806,111 @@ export const CheckoutPage: React.FC = () => {
                                     method.isCalculating && 'opacity-75'
                                   )}
                                 >
-                                  <RadioGroupItem value={method.id} className="mt-1" disabled={method.isCalculating} />
+                                  <RadioGroupItem
+                                    value={method.id}
+                                    className="mt-1"
+                                    disabled={method.isCalculating}
+                                  />
                                   <div className="flex-1 min-w-0">
-                                    <div className={cn('flex items-start justify-between gap-2 mb-1', isArabic && 'flex-row-reverse')}>
+                                    <div
+                                      className={cn(
+                                        'flex items-start justify-between gap-2 mb-1',
+                                        isArabic && 'flex-row-reverse'
+                                      )}
+                                    >
                                       <p className="font-semibold text-sm">
                                         {isArabic ? method.label.ar : method.label.en}
                                       </p>
                                       <div className="flex items-center gap-1">
                                         {method.isCalculating && method.id === 'aramex' ? (
                                           <Loader2 className="w-4 h-4 animate-spin text-amber-600" />
-                                        ) : method.id === 'aramex' && (!effectiveCity || aramexRate === null) ? (
+                                        ) : method.id === 'aramex' &&
+                                          (!effectiveCity || aramexRate === null) ? (
                                           <p className="text-xs text-gray-500 italic whitespace-nowrap">
                                             {isArabic ? 'اختر المدينة' : 'Select city'}
                                           </p>
-                                        ) : method.id !== 'aramex' || (method.id === 'aramex' && method.price > 0) ? (
+                                        ) : method.id !== 'aramex' ||
+                                          (method.id === 'aramex' && method.price > 0) ? (
                                           <p className="font-bold text-amber-600 text-sm whitespace-nowrap">
                                             {method.price === 0
-                                              ? isArabic ? 'مجاني' : 'Free'
-                                              : formatCurrency(method.price, currencyLabel)}
+                                              ? isArabic
+                                                ? 'مجاني'
+                                                : 'Free'
+                                              : formatCurrency(
+                                                  method.price,
+                                                  currencyLabel
+                                                )}
                                           </p>
                                         ) : null}
                                       </div>
                                     </div>
-                                    <p className={cn('text-xs text-gray-600 mb-2', isArabic && 'text-right')}>
+                                    <p
+                                      className={cn(
+                                        'text-xs text-gray-600 mb-2',
+                                        isArabic && 'text-right'
+                                      )}
+                                    >
                                       {method.id === 'pickup'
-                                        ? (isArabic
-                                          ? <span>يرجى جمع طلبك من فرعنا في مسقط الواقع في <strong>شارع الموج</strong>{'.\u200F'}</span>
-                                          : <span>Please collect your order from our Muscat branch located on <strong>Al Mouj Street</strong>.</span>)
+                                        ? isArabic
+                                          ? (
+                                              <span>
+                                                يرجى جمع طلبك من فرعنا في مسقط الواقع في{' '}
+                                                <strong>شارع الموج</strong>
+                                                {'.\u200F'}
+                                              </span>
+                                            )
+                                          : (
+                                              <span>
+                                                Please collect your order from our Muscat
+                                                branch located on{' '}
+                                                <strong>Al Mouj Street</strong>.
+                                              </span>
+                                            )
                                         : method.id === 'nool'
-                                          ? (isArabic
-                                              ? <span>توصيل محلي سريع داخل سلطنة عمان بواسطة فريق التوصيل الخاص بنا{'.\u200F'}</span>
-                                              : 'Fast local delivery within Oman area with our own delivery team.')
-                                          : (isArabic ? method.description.ar : method.description.en)
-                                      }
+                                        ? isArabic
+                                          ? (
+                                              <span>
+                                                توصيل محلي سريع داخل سلطنة عمان بواسطة فريق
+                                                التوصيل الخاص بنا{'.\u200F'}
+                                              </span>
+                                            )
+                                          : 'Fast local delivery within Oman area with our own delivery team.'
+                                        : isArabic
+                                        ? method.description.ar
+                                        : method.description.en}
                                     </p>
-                                    {method.calculationError && method.id === 'aramex' && (
-                                      <p className="text-xs text-orange-600 mb-2 flex items-center gap-1">
-                                        <span>ℹ️</span>
-                                        <span>
-                                          {isArabic 
-                                            ? method.calculationError.includes('API') 
-                                              ? 'استخدام السعر التقديري (API غير متاح)'
-                                              : 'استخدام السعر الافتراضي'
-                                            : method.calculationError}
-                                        </span>
+                                    {method.calculationError &&
+                                      method.id === 'aramex' && (
+                                        <p className="text-xs text-orange-600 mb-2 flex items-center gap-1">
+                                          <span>ℹ️</span>
+                                          <span>
+                                            {isArabic
+                                              ? method.calculationError.includes('API')
+                                                ? 'استخدام السعر التقديري (API غير متاح)'
+                                                : 'استخدام السعر الافتراضي'
+                                              : method.calculationError}
+                                          </span>
+                                        </p>
+                                      )}
+                                    {method.id === 'aramex' && !method.isCalculating && method.price > 0 && (
+                                      <p className="text-xs text-green-600 flex items-center gap-1 mb-2">
+                                        ✓ {isArabic ? 'تم احتساب التكلفة' : 'Rate confirmed'}
                                       </p>
                                     )}
-                                    <div className={cn('flex items-center justify-between', isArabic && 'flex-row-reverse')}>
+                                    <div
+                                      className={cn(
+                                        'flex items-center justify-between',
+                                        isArabic && 'flex-row-reverse'
+                                      )}
+                                    >
                                       <span className="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
                                         {isArabic ? method.badge.ar : method.badge.en}
                                       </span>
                                       {method.id === 'pickup' ? (
                                         <span className="text-xs text-gray-500 ml-2 whitespace-nowrap">
-                                          {isArabic ? 'متاح يومياً من 7 صباحاً حتى 12 منتصف الليل.\u200F' : 'Available Daily 7am-12am.'}
+                                          {isArabic
+                                            ? 'متاح يومياً من 7 صباحاً حتى 12 منتصف الليل.\u200F'
+                                            : 'Available Daily 7am-12am.'}
                                         </span>
                                       ) : (
                                         <p className="text-xs text-gray-500">
@@ -751,73 +930,87 @@ export const CheckoutPage: React.FC = () => {
                   </CardContent>
                 </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-xl font-semibold">
-                  {isArabic ? 'ملخص الطلب' : 'Order Summary'}
-                </CardTitle>
-                <CardDescription>
-                  {isArabic ? 'راجع المنتجات ومجموع الطلب قبل الدفع.' : 'Review your cart items and total before paying.'}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-4 max-h-80 overflow-y-auto pr-1">
-                  {items.map((item) => (
-                    <div key={item.id} className="flex gap-4 border-b border-dashed border-gray-100 pb-4 last:border-none">
-                      <img src={item.image} alt={item.name} className="h-16 w-16 rounded-lg object-cover" />
-                      <div className="flex-1">
-                        <p className="font-semibold text-sm">{item.name}</p>
-                        {item.tastingNotes && (
-                          <p className="text-xs text-amber-600">{item.tastingNotes}</p>
-                        )}
-                        <p className="text-sm text-gray-500">
-                          {isArabic ? 'الكمية' : 'Qty'}: {item.quantity}
-                        </p>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-xl font-semibold">
+                      {isArabic ? 'ملخص الطلب' : 'Order Summary'}
+                    </CardTitle>
+                    <CardDescription>
+                      {isArabic
+                        ? 'راجع المنتجات ومجموع الطلب قبل الدفع.'
+                        : 'Review your cart items and total before paying.'}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-4 max-h-80 overflow-y-auto pr-1">
+                      {items.map((item) => (
+                        <div
+                          key={item.id}
+                          className="flex gap-4 border-b border-dashed border-gray-100 pb-4 last:border-none"
+                        >
+                          <img
+                            src={item.image}
+                            alt={item.name}
+                            className="h-16 w-16 rounded-lg object-cover"
+                          />
+                          <div className="flex-1">
+                            <p className="font-semibold text-sm">{item.name}</p>
+                            {item.tastingNotes && (
+                              <p className="text-xs text-amber-600">
+                                {item.tastingNotes}
+                              </p>
+                            )}
+                            <p className="text-sm text-gray-500">
+                              {isArabic ? 'الكمية' : 'Qty'}: {item.quantity}
+                            </p>
+                          </div>
+                          <div className="text-right font-semibold text-amber-600">
+                            {formatCurrency(item.price * item.quantity, currencyLabel)}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <Separator />
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between text-gray-600">
+                        <span>{isArabic ? 'المجموع الفرعي' : 'Subtotal'}</span>
+                        <span>{formatCurrency(subtotal, currencyLabel)}</span>
                       </div>
-                      <div className="text-right font-semibold text-amber-600">
-                        {formatCurrency(item.price * item.quantity, currencyLabel)}
+                      <div className="flex justify-between text-gray-600">
+                        <span>
+                          {isArabic ? 'الشحن' : 'Shipping'} (
+                          {isArabic ? selectedShipping.label.ar : selectedShipping.label.en}
+                          )
+                        </span>
+                        <span>
+                          {selectedShipping.price === 0
+                            ? isArabic
+                              ? 'مجاني'
+                              : 'Free'
+                            : formatCurrency(shippingCost, currencyLabel)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between font-semibold text-lg text-amber-700">
+                        <span>{isArabic ? 'الإجمالي' : 'Total'}</span>
+                        <span>{formatCurrency(grandTotal, currencyLabel)}</span>
                       </div>
                     </div>
-                  ))}
-                </div>
-                <Separator />
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between text-gray-600">
-                    <span>{isArabic ? 'المجموع الفرعي' : 'Subtotal'}</span>
-                    <span>{formatCurrency(subtotal, currencyLabel)}</span>
-                  </div>
-                  <div className="flex justify-between text-gray-600">
-                    <span>
-                      {isArabic ? 'الشحن' : 'Shipping'} ({isArabic ? selectedShipping.label.ar : selectedShipping.label.en})
-                    </span>
-                    <span>
-                      {selectedShipping.price === 0
-                        ? isArabic ? 'مجاني' : 'Free'
-                        : formatCurrency(shippingCost, currencyLabel)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between font-semibold text-lg text-amber-700">
-                    <span>{isArabic ? 'الإجمالي' : 'Total'}</span>
-                    <span>{formatCurrency(grandTotal, currencyLabel)}</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                  </CardContent>
+                </Card>
 
-            <Button 
-              type="submit" 
-              size="lg"
-              className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold text-lg py-6"
-            >
-              {isArabic ? 'متابعة إلى الدفع' : 'Proceed to Payment'}
-            </Button>
-
-          </div>
-        </div>
-      </form>
-    </Form>
-  </div>
-</div>
+                <Button
+                  type="submit"
+                  size="lg"
+                  className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold text-lg py-6"
+                >
+                  {isArabic ? 'متابعة إلى الدفع' : 'Proceed to Payment'}
+                </Button>
+              </div>
+            </div>
+          </form>
+        </Form>
+      </div>
+    </div>
   );
 };
 

@@ -88,6 +88,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       image: product.image,
       tastingNotes: product.tastingNotes,
       variantName: undefined,
+      weight: undefined,
+      weightUnit: undefined,
     });
 
     // Wait for animation
