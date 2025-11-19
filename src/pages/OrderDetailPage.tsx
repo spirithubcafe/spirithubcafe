@@ -51,7 +51,7 @@ const paymentStatusConfig = {
 
 export const OrderDetailPage: React.FC = () => {
   const { orderId } = useParams<{ orderId: string }>();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const { language } = useApp();
   const navigate = useNavigate();
   const [order, setOrder] = useState<BackendOrder | null>(null);
@@ -82,8 +82,12 @@ export const OrderDetailPage: React.FC = () => {
       
       console.log('🔍 Loading order details for ID:', orderId);
       
-      // Use the new secure endpoint for authenticated users
-      const response = await orderService.getMyOrderDetails(parseInt(orderId));
+      // Use appropriate endpoint based on user role
+      // Admin can access any order, regular users can only access their own orders
+      const isAdmin = user?.roles?.includes('Admin') || false;
+      const response = isAdmin
+        ? await orderService.getOrderById(parseInt(orderId))
+        : await orderService.getMyOrderDetails(parseInt(orderId));
       
       if (response.success && response.data) {
         console.log('✅ Order details loaded:', response.data);

@@ -57,7 +57,11 @@ export const PaymentPage: React.FC = () => {
       }
       
       // Load order details from API
-      const response = await orderService.getOrderById(orderId);
+      // Admin can access any order, regular users can only access their own orders
+      const isAdmin = user?.roles?.includes('Admin') || false;
+      const response = isAdmin
+        ? await orderService.getOrderById(orderId)
+        : await orderService.getMyOrderDetails(orderId);
       const orderDetails = response.data!;
       
       console.log('✅ Order loaded from payment link:', {
@@ -298,7 +302,11 @@ export const PaymentPage: React.FC = () => {
         console.log('🔗 Processing payment for existing order ID:', existingOrderId);
         
         // Get order details for payment
-        const response = await orderService.getOrderById(existingOrderId);
+        // Admin can access any order, regular users can only access their own orders
+        const isAdmin = user?.roles?.includes('Admin') || false;
+        const response = isAdmin
+          ? await orderService.getOrderById(existingOrderId)
+          : await orderService.getMyOrderDetails(existingOrderId);
         const orderDetails = response.data!;
         
         console.log('✅ Existing order loaded for payment:', {

@@ -202,11 +202,15 @@ const ProfilePage: React.FC = () => {
       
       // Load full details for each order to get complete information
       console.log('🔄 Loading full details for all orders...');
+      const isAdmin = user?.roles?.includes('Admin') || false;
       const ordersWithFullDetails = await Promise.all(
         userOrders.map(async (order: Order) => {
           try {
             // Get full order details
-            const detailResponse = await orderService.getOrderById(order.id);
+            // Admin can access any order, regular users can only access their own orders
+            const detailResponse = isAdmin
+              ? await orderService.getOrderById(order.id)
+              : await orderService.getMyOrderDetails(order.id);
             if (detailResponse.success && detailResponse.data) {
               console.log(`✅ Loaded full details for order ${order.id}`);
               return detailResponse.data;
