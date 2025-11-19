@@ -249,6 +249,45 @@ export const orderService = {
   },
 
   /**
+   * Get user's own order details (Authenticated user)
+   * GET /api/orders/my-order/{id}
+   * 
+   * This endpoint allows authenticated users to view their own orders only.
+   * If the order doesn't belong to the user, it returns 403 Forbidden.
+   * 
+   * @param id - Order database ID
+   * @returns Order details with items and payments
+   * 
+   * @example
+   * const order = await orderService.getMyOrderDetails(42);
+   * 
+   * @throws {Error} 403 - You don't have access to this order
+   * @throws {Error} 404 - Order not found
+   */
+  async getMyOrderDetails(id: number): Promise<ApiResponse<Order>> {
+    try {
+      console.log('📡 OrderService: Fetching my order details for ID:', id);
+      const response = await apiClient.get<ApiResponse<Order>>(`/api/orders/my-order/${id}`);
+      console.log('✅ OrderService: My order details retrieved successfully');
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ OrderService: Error fetching my order details:', {
+        message: error.message,
+        statusCode: error.statusCode
+      });
+      
+      // Handle specific error cases
+      if (error.statusCode === 403) {
+        throw new Error('You do not have access to this order');
+      }
+      if (error.statusCode === 404) {
+        throw new Error('Order not found');
+      }
+      throw new Error(error.message || 'Unable to fetch order details');
+    }
+  },
+
+  /**
    * Get orders by user ID (Public)
    * GET /api/orders/user/{userId}
    * 

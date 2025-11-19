@@ -82,7 +82,8 @@ export const OrderDetailPage: React.FC = () => {
       
       console.log('🔍 Loading order details for ID:', orderId);
       
-      const response = await orderService.getOrderById(parseInt(orderId));
+      // Use the new secure endpoint for authenticated users
+      const response = await orderService.getMyOrderDetails(parseInt(orderId));
       
       if (response.success && response.data) {
         console.log('✅ Order details loaded:', response.data);
@@ -136,7 +137,18 @@ export const OrderDetailPage: React.FC = () => {
       }
     } catch (error: any) {
       console.error('❌ Error loading order details:', error);
-      setError(error.message || (isArabic ? 'حدث خطأ في تحميل الطلب' : 'An error occurred loading the order'));
+      
+      // Handle specific error messages
+      let errorMessage = error.message || (isArabic ? 'An error occurred loading the order' : 'An error occurred loading the order');
+      
+      // Check for specific error conditions
+      if (error.message?.includes('access')) {
+        errorMessage = isArabic ? 'You do not have access to this order' : 'You do not have access to this order';
+      } else if (error.message?.includes('not found')) {
+        errorMessage = isArabic ? 'Order not found' : 'Order not found';
+      }
+      
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
