@@ -296,7 +296,34 @@ export const ProductDetailPage = () => {
           }
         : undefined;
 
-    return {
+    // Breadcrumb structured data
+    const breadcrumbList = {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        {
+          '@type': 'ListItem',
+          position: 1,
+          name: language === 'ar' ? 'الرئيسية' : 'Home',
+          item: `${siteMetadata.baseUrl}/`,
+        },
+        {
+          '@type': 'ListItem',
+          position: 2,
+          name: language === 'ar' ? 'المنتجات' : 'Products',
+          item: `${siteMetadata.baseUrl}/products`,
+        },
+        {
+          '@type': 'ListItem',
+          position: 3,
+          name: displayName,
+          item: canonicalUrl,
+        },
+      ],
+    };
+
+    // Product structured data
+    const productSchema = {
       '@context': 'https://schema.org',
       '@type': 'Product',
       name: displayName,
@@ -316,12 +343,19 @@ export const ProductDetailPage = () => {
               ? 'https://schema.org/InStock'
               : 'https://schema.org/OutOfStock',
             url: canonicalUrl,
+            seller: {
+              '@type': 'Organization',
+              name: siteMetadata.siteName,
+            },
           }
         : undefined,
       aggregateRating: aggregate,
       category: product.category?.name,
     };
-  }, [canonicalUrl, displayName, images, price, product, seoDescription]);
+
+    // Return both schemas as array
+    return [breadcrumbList, productSchema];
+  }, [canonicalUrl, displayName, images, price, product, seoDescription, language]);
 
   const isAvailable = product?.isActive ?? false;
   // Top badge: consider selected variant stock (if variant exists), otherwise fall back to product availability

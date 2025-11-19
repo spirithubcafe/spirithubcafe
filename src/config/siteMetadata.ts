@@ -32,6 +32,12 @@ export const resolveAbsoluteUrl = (relativeOrAbsolute?: string): string | undefi
   }
 
   try {
+    // If already absolute URL (starts with http:// or https://), return as-is
+    if (relativeOrAbsolute.startsWith('http://') || relativeOrAbsolute.startsWith('https://')) {
+      return relativeOrAbsolute;
+    }
+    
+    // Otherwise, resolve relative to site base URL
     const base = siteMetadata.baseUrl || window.location.origin;
     return new URL(relativeOrAbsolute, base).toString();
   } catch {

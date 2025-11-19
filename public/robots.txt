@@ -1,4 +1,26 @@
+# Spirit Hub Cafe - Robots.txt
+# Updated: 2025-11-19
+
 User-agent: *
 Allow: /
+Disallow: /admin/
+Disallow: /checkout/
+Disallow: /payment/
+Disallow: /api/
+Disallow: /*.json$
+Disallow: /profile
+Disallow: /orders
+Disallow: /favorites
 
+# Crawl-delay for specific bots (optional)
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 0
+
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 0
+
+# Sitemaps
 Sitemap: https://spirithubcafe.com/sitemap.xml
+Sitemap: https://spirithubcafe.com/products-feed.xml
