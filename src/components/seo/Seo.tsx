@@ -27,7 +27,13 @@ const ensureMeta = (selector: string, attributes: Record<string, string>, conten
     Object.entries(attributes).forEach(([key, value]) => element!.setAttribute(key, value));
     document.head.appendChild(element);
   }
+  // Always update content, even if it's the same (ensures freshness)
   element.setAttribute('content', content);
+  
+  // For Open Graph tags, also set data-react-helmet attribute to prevent conflicts
+  if (attributes.property && attributes.property.startsWith('og:')) {
+    element.setAttribute('data-react-helmet', 'true');
+  }
 };
 
 const ensureLink = (rel: string, href: string, hreflang?: string) => {
@@ -84,7 +90,17 @@ export const Seo: React.FC<SeoProps> = ({
     description ??
     (language === 'ar' ? siteMetadata.defaultDescriptionAr : siteMetadata.defaultDescription);
   const resolvedTitle = title ? `${title} | ${siteMetadata.siteName}` : siteMetadata.defaultTitle;
-  const resolvedImage = resolveAbsoluteUrl(image) ?? resolveAbsoluteUrl(siteMetadata.defaultImage);
+  
+  // Ensure images are always absolute URLs for social media crawlers
+  const resolvedImage = (() => {
+    const imgUrl = resolveAbsoluteUrl(image) ?? resolveAbsoluteUrl(siteMetadata.defaultImage);
+    // Double-check it's an absolute URL
+    if (imgUrl && !imgUrl.startsWith('http')) {
+      return `${siteMetadata.baseUrl}${imgUrl.startsWith('/') ? imgUrl : '/' + imgUrl}`;
+    }
+    return imgUrl;
+  })();
+  
   const structuredPayload = structuredData 
     ? JSON.stringify(Array.isArray(structuredData) ? structuredData : [structuredData]) 
     : null;
@@ -104,14 +120,27 @@ export const Seo: React.FC<SeoProps> = ({
     ensureMeta('meta[property="og:type"]', { property: 'og:type' }, type);
     ensureMeta('meta[property="og:url"]', { property: 'og:url' }, resolvedCanonical);
     ensureMeta('meta[property="og:site_name"]', { property: 'og:site_name' }, siteMetadata.siteName);
-    ensureMeta('meta[property="og:image"]', { property: 'og:image' }, resolvedImage ?? '');
-    ensureMeta('meta[property="og:image:width"]', { property: 'og:image:width' }, '1200');
-    ensureMeta('meta[property="og:image:height"]', { property: 'og:image:height' }, '630');
+    
+    // Ensure Open Graph image is set, with fallback
+    if (resolvedImage) {
+      ensureMeta('meta[property="og:image"]', { property: 'og:image' }, resolvedImage);
+      ensureMeta('meta[property="og:image:secure_url"]', { property: 'og:image:secure_url' }, resolvedImage);
+      ensureMeta('meta[property="og:image:width"]', { property: 'og:image:width' }, '1200');
+      ensureMeta('meta[property="og:image:height"]', { property: 'og:image:height' }, '630');
+      ensureMeta('meta[property="og:image:alt"]', { property: 'og:image:alt' }, resolvedTitle);
+    }
+    
     ensureMeta('meta[property="og:locale"]', { property: 'og:locale' }, resolvedLocale);
     ensureMeta('meta[name="twitter:card"]', { name: 'twitter:card' }, 'summary_large_image');
     ensureMeta('meta[name="twitter:title"]', { name: 'twitter:title' }, resolvedTitle);
     ensureMeta('meta[name="twitter:description"]', { name: 'twitter:description' }, finalOgDesc);
-    ensureMeta('meta[name="twitter:image"]', { name: 'twitter:image' }, resolvedImage ?? '');
+    
+    // Ensure Twitter image is set, with fallback
+    if (resolvedImage) {
+      ensureMeta('meta[name="twitter:image"]', { name: 'twitter:image' }, resolvedImage);
+      ensureMeta('meta[name="twitter:image:alt"]', { name: 'twitter:image:alt' }, resolvedTitle);
+    }
+    
     ensureMeta('meta[name="twitter:site"]', { name: 'twitter:site' }, siteMetadata.twitterHandle);
     ensureMeta('meta[name="twitter:creator"]', { name: 'twitter:creator' }, siteMetadata.twitterHandle);
 
