@@ -69,7 +69,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           </Button>
         </div>
 
-        {mode === 'login' && <LoginForm onSuccess={handleSuccess} />}
+        {mode === 'login' && <LoginForm onSuccess={handleSuccess} onClose={() => setIsOpen(false)} />}
         {mode === 'register' && <RegisterForm onSuccess={handleSuccess} />}
       </DialogContent>
     </Dialog>

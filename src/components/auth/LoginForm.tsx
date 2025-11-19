@@ -13,11 +13,13 @@ import { useApp } from '../../hooks/useApp';
 interface LoginFormProps {
   onSuccess?: () => void;
   onSwitchToRegister?: () => void;
+  onClose?: () => void;
 }
 
 export const LoginForm: React.FC<LoginFormProps> = ({ 
   onSuccess, 
-  onSwitchToRegister 
+  onSwitchToRegister,
+  onClose
 }) => {
   const { login } = useAuth();
   const { t, language } = useApp();
@@ -114,6 +116,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
               <Link 
                 to="/forgot-password" 
                 className="text-sm text-amber-600 hover:text-amber-700 hover:underline"
+                onClick={onClose}
               >
                 Forgot password?
               </Link>
