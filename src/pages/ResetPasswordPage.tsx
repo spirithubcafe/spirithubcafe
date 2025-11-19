@@ -130,7 +130,7 @@ export const ResetPasswordPage: React.FC = () => {
     setMessage(null);
 
     try {
-      const response = await passwordResetService.resetPassword(token, newPassword);
+      const response = await passwordResetService.resetPassword(token, newPassword, confirmPassword);
 
       setMessage({
         type: 'success',

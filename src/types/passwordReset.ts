@@ -9,6 +9,7 @@ export interface VerifyTokenRequest {
 export interface ResetPasswordRequest {
   token: string;
   newPassword: string;
+  confirmPassword: string;
 }
 
 export interface PasswordResetResponse {
@@ -16,4 +17,10 @@ export interface PasswordResetResponse {
   message: string;
   email?: string;
   expiresAt?: string;
+}
+
+export interface VerifyTokenResponse {
+  valid: boolean;
+  message: string;
+  email?: string;
 }

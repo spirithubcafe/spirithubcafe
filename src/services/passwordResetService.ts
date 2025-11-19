@@ -37,15 +37,17 @@ export const passwordResetService = {
    * Set new password
    * @param token - Reset token
    * @param newPassword - New password
+   * @param confirmPassword - Confirm new password
    * @returns API response
    */
   resetPassword: async (
     token: string,
-    newPassword: string
+    newPassword: string,
+    confirmPassword: string
   ): Promise<PasswordResetResponse> => {
     const response = await axios.post<PasswordResetResponse>(
       `${API_BASE}/reset-password`,
-      { token, newPassword }
+      { token, newPassword, confirmPassword }
     );
     return response.data;
   }
