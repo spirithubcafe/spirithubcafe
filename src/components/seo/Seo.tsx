@@ -30,12 +30,14 @@ const ensureMeta = (selector: string, attributes: Record<string, string>, conten
   element.setAttribute('content', content);
 };
 
-const ensureLink = (rel: string, href: string) => {
+const ensureLink = (rel: string, href: string, hreflang?: string) => {
   if (typeof document === 'undefined') return;
-  let element = document.head.querySelector(`link[rel="${rel}"]`) as HTMLLinkElement | null;
+  const selector = hreflang ? `link[rel="${rel}"][hreflang="${hreflang}"]` : `link[rel="${rel}"]`;
+  let element = document.head.querySelector(selector) as HTMLLinkElement | null;
   if (!element) {
     element = document.createElement('link');
     element.rel = rel;
+    if (hreflang) element.hreflang = hreflang;
     document.head.appendChild(element);
   }
   element.href = href;
@@ -83,12 +85,16 @@ export const Seo: React.FC<SeoProps> = ({
     (language === 'ar' ? siteMetadata.defaultDescriptionAr : siteMetadata.defaultDescription);
   const resolvedTitle = title ? `${title} | ${siteMetadata.siteName}` : siteMetadata.defaultTitle;
   const resolvedImage = resolveAbsoluteUrl(image) ?? resolveAbsoluteUrl(siteMetadata.defaultImage);
-  const structuredPayload = structuredData ? JSON.stringify(structuredData) : null;
+  const structuredPayload = structuredData 
+    ? JSON.stringify(Array.isArray(structuredData) ? structuredData : [structuredData]) 
+    : null;
 
   useEffect(() => {
     if (typeof document === 'undefined') return;
 
     document.title = resolvedTitle;
+    document.documentElement.lang = resolvedLocale.split('-')[0]; // Set html lang attribute
+    
     ensureMeta('meta[name="description"]', { name: 'description' }, resolvedDescription);
     ensureMeta('meta[name="keywords"]', { name: 'keywords' }, keywordsContent);
     
@@ -107,6 +113,7 @@ export const Seo: React.FC<SeoProps> = ({
     ensureMeta('meta[name="twitter:description"]', { name: 'twitter:description' }, finalOgDesc);
     ensureMeta('meta[name="twitter:image"]', { name: 'twitter:image' }, resolvedImage ?? '');
     ensureMeta('meta[name="twitter:site"]', { name: 'twitter:site' }, siteMetadata.twitterHandle);
+    ensureMeta('meta[name="twitter:creator"]', { name: 'twitter:creator' }, siteMetadata.twitterHandle);
 
     if (noindex) {
       ensureMeta('meta[name="robots"]', { name: 'robots' }, robots ?? 'noindex,nofollow');
@@ -117,6 +124,12 @@ export const Seo: React.FC<SeoProps> = ({
     }
 
     ensureLink('canonical', resolvedCanonical);
+    
+    // Language alternates
+    const baseUrl = siteMetadata.baseUrl || window.location.origin;
+    const pathname = location.pathname;
+    ensureLink('alternate', `${baseUrl}${pathname}`, 'en');
+    ensureLink('alternate', `${baseUrl}${pathname}?lang=ar`, 'ar');
   }, [
     keywordsContent,
     noindex,
@@ -135,6 +148,11 @@ export const Seo: React.FC<SeoProps> = ({
       return;
     }
 
+    // Remove all existing SEO-generated scripts
+    const existingScripts = document.head.querySelectorAll('script[data-generated="seo"]');
+    existingScripts.forEach(s => s.remove());
+
+    // Add new script with structured data
     const script = document.createElement('script');
     script.type = 'application/ld+json';
     script.setAttribute('data-generated', 'seo');
