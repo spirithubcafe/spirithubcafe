@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -103,12 +104,20 @@ export const LoginForm: React.FC<LoginFormProps> = ({
           </div>
           
           <div className="space-y-2">
-            <Label 
-              htmlFor="password" 
-              className={`block text-sm font-medium ${isRTL ? 'text-right font-cairo' : 'text-left'}`}
-            >
-              {t('auth.password')}
-            </Label>
+            <div className="flex items-center justify-between">
+              <Label 
+                htmlFor="password" 
+                className={`block text-sm font-medium ${isRTL ? 'text-right font-cairo' : 'text-left'}`}
+              >
+                {t('auth.password')}
+              </Label>
+              <Link 
+                to="/forgot-password" 
+                className="text-sm text-amber-600 hover:text-amber-700 hover:underline"
+              >
+                Forgot password?
+              </Link>
+            </div>
             <div className="relative">
               <Input
                 id="password"
