@@ -144,16 +144,19 @@ export const OrderDetailPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8 max-w-5xl">
-        <div className="mb-6">
-          <Skeleton className="h-8 w-48 mb-2" />
-          <Skeleton className="h-4 w-96" />
-        </div>
-        
-        <div className="space-y-6">
-          <Skeleton className="h-64 w-full" />
-          <Skeleton className="h-96 w-full" />
-          <Skeleton className="h-48 w-full" />
+      <div className="min-h-screen bg-gray-50 pt-24 pb-12">
+        <div className="container mx-auto px-4 py-8 max-w-5xl">
+          <div className="mb-8">
+            <Skeleton className="h-10 w-32 mb-4" />
+            <Skeleton className="h-8 w-64 mb-2" />
+            <Skeleton className="h-4 w-96" />
+          </div>
+          
+          <div className="space-y-6">
+            <Skeleton className="h-64 w-full" />
+            <Skeleton className="h-96 w-full" />
+            <Skeleton className="h-48 w-full" />
+          </div>
         </div>
       </div>
     );
@@ -161,24 +164,33 @@ export const OrderDetailPage: React.FC = () => {
 
   if (error || !order) {
     return (
-      <div className="container mx-auto px-4 py-8 max-w-5xl">
-        <Card>
-          <CardContent className="py-12">
-            <div className="text-center space-y-4">
-              <XCircle className="h-16 w-16 text-red-500 mx-auto" />
-              <h2 className="text-2xl font-bold">
-                {error || (isArabic ? 'الطلب غير موجود' : 'Order Not Found')}
-              </h2>
-              <p className="text-gray-600">
-                {isArabic ? 'لم نتمكن من العثور على هذا الطلب' : 'We could not find this order'}
-              </p>
-              <Button onClick={() => navigate('/orders')}>
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                {isArabic ? 'العودة للطلبات' : 'Back to Orders'}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-gray-50 pt-24 pb-12">
+        <div className="container mx-auto px-4 max-w-2xl">
+          <Card className="shadow-lg">
+            <CardContent className="py-16">
+              <div className="text-center space-y-6">
+                <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-red-100">
+                  <XCircle className="h-10 w-10 text-red-600" />
+                </div>
+                <div className="space-y-2">
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    {error || (isArabic ? 'الطلب غير موجود' : 'Order Not Found')}
+                  </h2>
+                  <p className="text-gray-600 text-lg">
+                    {isArabic ? 'لم نتمكن من العثور على هذا الطلب' : 'We could not find this order'}
+                  </p>
+                </div>
+                <Button 
+                  onClick={() => navigate('/orders')}
+                  className="bg-amber-600 hover:bg-amber-700 text-white px-6 py-3 mt-4"
+                >
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  {isArabic ? 'العودة للطلبات' : 'Back to Orders'}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
@@ -207,7 +219,7 @@ export const OrderDetailPage: React.FC = () => {
         description={`${isArabic ? 'تفاصيل الطلب رقم' : 'Details for order'} ${order.orderNumber}`}
       />
 
-      <div className="min-h-screen bg-linear-to-br from-stone-50 to-amber-50/30">
+      <div className="min-h-screen bg-linear-to-br from-stone-50 to-amber-50/30 pt-24 pb-12">
         <div className="container mx-auto px-4 py-8 max-w-5xl">
           {/* Header */}
           <motion.div 
