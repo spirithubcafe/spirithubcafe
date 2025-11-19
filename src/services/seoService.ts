@@ -205,33 +205,109 @@ const buildSitemapXml = (
   categories: Category[],
   products: Product[]
 ): { xml: string; entries: number } => {
+  const today = new Date().toISOString().split('T')[0];
   const urls: string[] = [];
-  const addUrl = (path: string) => {
-    urls.push(`<url><loc>${baseUrl}${path}</loc></url>`);
+  
+  // Helper to create formatted URL entry
+  const addUrl = (
+    path: string, 
+    priority: string, 
+    changefreq: string, 
+    lastmod: string = today
+  ) => {
+    urls.push(
+      `  <url>\n` +
+      `    <loc>${baseUrl}${path}</loc>\n` +
+      `    <lastmod>${lastmod}</lastmod>\n` +
+      `    <changefreq>${changefreq}</changefreq>\n` +
+      `    <priority>${priority}</priority>\n` +
+      `  </url>`
+    );
   };
 
-  addUrl('/');
-  addUrl('/products');
-  addUrl('/about');
-  addUrl('/contact');
-  addUrl('/faq');
-  addUrl('/privacy');
-  addUrl('/terms');
-  addUrl('/delivery');
-  addUrl('/refund');
+  // Homepage - Highest Priority
+  urls.push(`\n  <!-- ====================================== -->`);
+  urls.push(`  <!-- Homepage - Highest Priority -->`);
+  urls.push(`  <!-- ====================================== -->`);
+  addUrl('/', '1.0', 'daily');
 
-  categories.forEach((category) => {
-    const slug = category.slug || category.id;
-    addUrl(`/products?category=${slug}`);
-  });
+  // Main Pages - High Priority
+  urls.push(`\n  <!-- ====================================== -->`);
+  urls.push(`  <!-- Main Pages - High Priority -->`);
+  urls.push(`  <!-- ====================================== -->`);
+  addUrl('/products', '0.9', 'daily');
+  addUrl('/about', '0.7', 'monthly');
+  addUrl('/contact', '0.6', 'monthly');
+  addUrl('/faq', '0.5', 'monthly');
+
+  // Policy Pages - Medium Priority
+  urls.push(`\n  <!-- ====================================== -->`);
+  urls.push(`  <!-- Policy Pages - Medium Priority -->`);
+  urls.push(`  <!-- ====================================== -->`);
+  addUrl('/privacy', '0.3', 'yearly');
+  addUrl('/terms', '0.3', 'yearly');
+  addUrl('/delivery', '0.4', 'monthly');
+  addUrl('/refund', '0.4', 'monthly');
+
+  // Product Categories - High Priority
+  if (categories.length > 0) {
+    urls.push(`\n  <!-- ====================================== -->`);
+    urls.push(`  <!-- Product Categories - High Priority -->`);
+    urls.push(`  <!-- ====================================== -->`);
+    categories.forEach((category) => {
+      const slug = category.slug || category.id;
+      addUrl(`/products?category=${slug}`, '0.8', 'weekly');
+    });
+  }
+
+  // Group products by origin/type for better organization
+  const productsByOrigin: { [key: string]: Product[] } = {
+    'UFO Drip Coffee': [],
+    'Colombian Coffee': [],
+    'Ethiopian Coffee': [],
+    'Coffee Capsules': [],
+    'Other Products': []
+  };
 
   products.forEach((product) => {
-    const slugOrId = product.slug || product.id;
-    addUrl(`/products/${slugOrId}`);
+    const name = product.name.toLowerCase();
+    if (name.includes('ufo') || name.includes('drip')) {
+      productsByOrigin['UFO Drip Coffee'].push(product);
+    } else if (name.includes('colombia')) {
+      productsByOrigin['Colombian Coffee'].push(product);
+    } else if (name.includes('ethiopia')) {
+      productsByOrigin['Ethiopian Coffee'].push(product);
+    } else if (name.includes('capsule')) {
+      productsByOrigin['Coffee Capsules'].push(product);
+    } else {
+      productsByOrigin['Other Products'].push(product);
+    }
   });
 
-  const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls.join('')}\n</urlset>`;
-  return { xml, entries: urls.length };
+  // Add products by category
+  Object.entries(productsByOrigin).forEach(([category, categoryProducts]) => {
+    if (categoryProducts.length > 0) {
+      urls.push(`\n  <!-- ====================================== -->`);
+      urls.push(`  <!-- ${category} -->`);
+      urls.push(`  <!-- ====================================== -->`);
+      categoryProducts.forEach((product) => {
+        const slugOrId = product.slug || product.id;
+        addUrl(`/products/${slugOrId}`, '0.7', 'weekly');
+      });
+    }
+  });
+
+  // Build final XML with proper formatting
+  const xml = 
+    `<?xml version="1.0" encoding="UTF-8"?>\n` +
+    `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"\n` +
+    `        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"\n` +
+    `        xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9\n` +
+    `        http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">\n` +
+    urls.join('\n') +
+    `\n\n</urlset>`;
+    
+  return { xml, entries: urls.filter(u => u.includes('<url>')).length };
 };
 
 const buildFeedXml = (baseUrl: string, products: Product[]): { xml: string; entries: number } => {
