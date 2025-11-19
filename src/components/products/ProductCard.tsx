@@ -179,11 +179,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       </div>
 
       {/* Product Content - Compact */}
-      <CardContent className="p-3">
+      <CardContent className="p-3 pt-1">
         {/* Category Badge */}
         {product.category && (
-          <div className="mb-2">
-            <span className="inline-block px-2 py-0.5 text-xs font-medium text-amber-700 bg-amber-50 rounded-full border border-amber-200">
+          <div className="mb-1 min-h-[1.5rem] flex items-center">
+            <span className="inline-block px-2 py-0.5 text-xs font-medium text-amber-700 bg-amber-50 rounded-full border border-amber-200 whitespace-nowrap overflow-hidden text-ellipsis max-w-full">
               {product.category}
             </span>
           </div>
