@@ -313,7 +313,11 @@ export const OrdersManagement: React.FC = () => {
         <title>${isRTL ? 'فاتورة' : 'Invoice'} #${order.orderNumber}</title>
         <style>
           body { font-family: ${isRTL ? '"Arial", "Tahoma"' : 'Arial, sans-serif'}; margin: 20px; }
-          .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 30px; }
+          .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 30px; position: relative; min-height: 120px; }
+          .header .logo { position: absolute; ${isRTL ? 'left' : 'right'}: 0; top: 0; width: 120px; height: auto; }
+          .header .company-info { position: absolute; ${isRTL ? 'right' : 'left'}: 0; top: 0; text-align: ${isRTL ? 'right' : 'left'}; font-size: 12px; line-height: 1.5; }
+          .header .company-info p { margin: 3px 0; }
+          .header .company-info strong { font-size: 14px; }
           .info { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
           .items { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
           .items th, .items td { border: 1px solid #ddd; padding: 10px; text-align: ${isRTL ? 'right' : 'left'}; }
@@ -327,6 +331,16 @@ export const OrdersManagement: React.FC = () => {
       </head>
       <body>
         <div class="header">
+          <img src="/images/logo/logo-dark.png" alt="Spirit Hub Cafe Logo" class="logo" />
+          <div class="company-info">
+            <p><strong>AL JALSA AL RAQIA LLC</strong></p>
+            <p>Al Mouj st, Muscat, OM</p>
+            <p>info@spirithubcafe.com</p>
+            <p>${isRTL ? 'سجل تجاري' : 'CR'}: 1346354</p>
+            <p>+968 91900005</p>
+            <p>+968 72726999</p>
+            <p style="margin-top: 8px;">${isRTL ? 'ضريبة' : 'VAT'}: OM110025057X</p>
+          </div>
           <h1>${isRTL ? 'فاتورة' : 'Invoice'}</h1>
           <h2>#${order.orderNumber}</h2>
           <p>${isRTL ? 'تاريخ الطلب' : 'Order Date'}: ${format(new Date(order.createdAt), 'dd/MM/yyyy HH:mm')}</p>
@@ -350,7 +364,7 @@ export const OrdersManagement: React.FC = () => {
             <h3>${isRTL ? 'معلومات الطلب' : 'Order Information'}</h3>
             <p><strong>${isRTL ? 'حالة الطلب' : 'Order Status'}:</strong> ${order.status}</p>
             <p><strong>${isRTL ? 'حالة الدفع' : 'Payment Status'}:</strong> ${order.paymentStatus}</p>
-            <p><strong>${isRTL ? 'طريقة الشحن' : 'Shipping Method'}:</strong> ${order.shippingMethod === 1 ? (isRTL ? 'استلام من المتجر' : 'Store Pickup') : order.shippingMethod === 2 ? 'Nool Delivery' : 'Aramex Courier'}</p>
+            <p><strong>${isRTL ? 'طريقة الشحن' : 'Shipping Method'}:</strong> <span style="background-color: #fef9c3; padding: 2px 6px; border-radius: 3px; color: #854d0e; font-weight: 500;">${order.shippingMethod === 1 ? (isRTL ? 'استلام من المتجر' : 'Store Pickup') : order.shippingMethod === 2 ? 'Nool Delivery' : 'Aramex Courier'}</span></p>
             ${order.trackingNumber ? `<p><strong>${isRTL ? 'رقم التتبع' : 'Tracking Number'}:</strong> ${order.trackingNumber}</p>` : ''}
           </div>
         </div>
@@ -388,7 +402,10 @@ export const OrdersManagement: React.FC = () => {
           <tbody>
             ${order.items?.map(item => `
               <tr>
-                <td>${item.productName || 'Product'}</td>
+                <td>
+                  ${item.productName || 'Product'}
+                  ${item.variantInfo ? `<br/><small style="background-color: #fef9c3; padding: 2px 6px; border-radius: 3px; color: #854d0e; font-weight: 500;">${item.variantInfo}</small>` : ''}
+                </td>
                 <td>${item.quantity}</td>
                 <td>${item.unitPrice?.toFixed(3) || '0.000'} ${isRTL ? 'ر.ع.' : 'OMR'}</td>
                 <td>${item.totalAmount?.toFixed(3) || '0.000'} ${isRTL ? 'ر.ع.' : 'OMR'}</td>
@@ -408,6 +425,11 @@ export const OrdersManagement: React.FC = () => {
             <p>${order.notes}</p>
           </div>
         ` : ''}
+        
+        <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center;">
+          <p style="font-size: 16px; margin-bottom: 5px;">${isRTL ? 'شكراً لطلبك!' : 'Thank you for your Order!'}</p>
+          <p style="margin: 0;"><a href="https://spirithubcafe.com" style="color: #333; text-decoration: none;">https://spirithubcafe.com</a></p>
+        </div>
       </body>
       </html>
     `;
