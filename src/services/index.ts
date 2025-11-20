@@ -22,6 +22,8 @@ export {
   getAramexCities,
   createAramexShipment,
   trackAramexShipment,
+  createShipmentForOrder,
+  printLabel,
 } from './aramexService';
 
 // Export types

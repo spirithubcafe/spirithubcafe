@@ -183,3 +183,68 @@ export async function trackAramexShipment(awbNumber: string) {
     throw error;
   }
 }
+
+/**
+ * Create shipment for an existing order
+ */
+export async function createShipmentForOrder(orderId: number) {
+  try {
+    console.log('📦 Creating Aramex shipment for order:', orderId);
+    console.log('📤 Request payload:', { orderId });
+    console.log('📍 Request URL:', '/api/aramex/create-shipment-for-order');
+    
+    const response = await apiClient.post('/api/aramex/create-shipment-for-order', { orderId });
+    
+    console.log('✅ Shipment created successfully:', response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ Error creating shipment for order:', error);
+    console.error('❌ Error details:', {
+      message: error.message,
+      statusCode: error.statusCode,
+      errors: error.errors,
+      response: error.response,
+      data: error.data
+    });
+    
+    // If errors is an array, log each error separately
+    if (Array.isArray(error.errors)) {
+      console.error('❌ Detailed errors:');
+      error.errors.forEach((err: string, index: number) => {
+        console.error(`  ${index + 1}. ${err}`);
+      });
+    }
+    
+    throw error;
+  }
+}
+
+/**
+ * Print/download shipping label for a shipment
+ */
+export async function printLabel(shipmentNumber: string) {
+  try {
+    console.log('🖨️ Downloading label for shipment:', shipmentNumber);
+    
+    const response = await apiClient.get(`/api/aramex/print-label/${shipmentNumber}/download`, {
+      responseType: 'blob'
+    });
+    
+    // Create a blob URL and trigger download
+    const blob = new Blob([response.data], { type: 'application/pdf' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `aramex-label-${shipmentNumber}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+    
+    console.log('✅ Label downloaded successfully');
+    return { success: true };
+  } catch (error: any) {
+    console.error('❌ Error downloading label:', error);
+    throw error;
+  }
+}

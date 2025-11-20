@@ -27,7 +27,10 @@ import {
   Phone,
   Mail,
   Gift,
-  CreditCard
+  CreditCard,
+  PackagePlus,
+  XCircle,
+  Printer
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { orderService } from '../../services';
@@ -45,10 +48,14 @@ export const OrdersManagement: React.FC = () => {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [showPaymentLinkDialog, setShowPaymentLinkDialog] = useState(false);
+  const [showShipmentConfirmDialog, setShowShipmentConfirmDialog] = useState(false);
+  const [showShipmentResultDialog, setShowShipmentResultDialog] = useState(false);
   
   const [editLoading, setEditLoading] = useState(false);
   const [invoiceLoading, setInvoiceLoading] = useState(false);
   const [paymentLinkLoading, setPaymentLinkLoading] = useState(false);
+  const [shipmentLoading, setShipmentLoading] = useState<number | null>(null);
+  const [printLabelLoading, setPrintLabelLoading] = useState<number | null>(null);
   
   // Edit form state
   const [editStatus, setEditStatus] = useState<OrderStatus>('Pending');
@@ -58,6 +65,10 @@ export const OrdersManagement: React.FC = () => {
   // Payment link state
   const [generatedPaymentLink, setGeneratedPaymentLink] = useState<string>('');
   const [linkCopied, setLinkCopied] = useState(false);
+  
+  // Shipment state
+  const [shipmentResult, setShipmentResult] = useState<any>(null);
+  const [shipmentError, setShipmentError] = useState<string>('');
 
   const isArabic = language === 'ar';
 
@@ -278,6 +289,66 @@ export const OrdersManagement: React.FC = () => {
     }
   };
 
+  const handleCreateShipment = async (order: Order) => {
+    if (order.shippingMethod !== 3) {
+      setShipmentError(isArabic ? 'هذا الطلب ليس من نوع أرامكس' : 'This order is not an Aramex order');
+      setShowShipmentResultDialog(true);
+      return;
+    }
+
+    if (order.trackingNumber) {
+      setShipmentError(isArabic ? 'هذا الطلب لديه رقم تتبع بالفعل' : 'This order already has a tracking number');
+      setShowShipmentResultDialog(true);
+      return;
+    }
+
+    setSelectedOrder(order);
+    setShowShipmentConfirmDialog(true);
+  };
+
+  const confirmCreateShipment = async () => {
+    if (!selectedOrder) return;
+    
+    setShowShipmentConfirmDialog(false);
+    setShipmentLoading(selectedOrder.id);
+    
+    try {
+      const { createShipmentForOrder } = await import('../../services');
+      const response = await createShipmentForOrder(selectedOrder.id);
+      
+      console.log('📥 Response from API:', response);
+      
+      if (response.success) {
+        setShipmentResult(response);
+        setShipmentError('');
+        
+        // Reload orders to get updated tracking number
+        await loadOrders();
+        
+        console.log('✅ Aramex shipment created successfully');
+      } else {
+        const errorMsg = response.error || response.errors?.join('\n') || 'Failed to create shipment';
+        setShipmentError(errorMsg);
+        setShipmentResult(null);
+      }
+    } catch (error: any) {
+      console.error('❌ Error creating Aramex shipment:', error);
+      
+      let errorMessage = error?.message || 'Unknown error';
+      if (error?.errors && Array.isArray(error.errors) && error.errors.length > 0) {
+        errorMessage = error.errors.join('\n');
+      } else if (error?.errors && typeof error.errors === 'string') {
+        errorMessage = error.errors;
+      }
+      
+      setShipmentError(errorMessage);
+      setShipmentResult(null);
+    } finally {
+      setShipmentLoading(null);
+      setShowShipmentResultDialog(true);
+    }
+  };
+
   const handleCopyPaymentLink = async () => {
     try {
       await navigator.clipboard.writeText(generatedPaymentLink);
@@ -285,6 +356,26 @@ export const OrdersManagement: React.FC = () => {
       setTimeout(() => setLinkCopied(false), 2000);
     } catch (error) {
       console.error('❌ Error copying to clipboard:', error);
+    }
+  };
+
+  const handlePrintLabel = async (order: Order) => {
+    if (!order.trackingNumber) {
+      alert(isArabic ? 'لا يوجد رقم تتبع لهذا الطلب' : 'No tracking number for this order');
+      return;
+    }
+
+    setPrintLabelLoading(order.id);
+    
+    try {
+      const { printLabel } = await import('../../services');
+      await printLabel(order.trackingNumber);
+      console.log('✅ Label downloaded successfully');
+    } catch (error: any) {
+      console.error('❌ Error downloading label:', error);
+      alert(isArabic ? 'فشل تحميل الملصق' : 'Failed to download label');
+    } finally {
+      setPrintLabelLoading(null);
     }
   };
 
@@ -658,10 +749,16 @@ export const OrdersManagement: React.FC = () => {
                           <div>
                             <div>{order.orderNumber}</div>
                             {order.trackingNumber && (
-                              <div className="text-xs text-muted-foreground font-mono mt-0.5 flex items-center gap-1">
+                              <a 
+                                href={`https://www.aramex.com/om/en/track/shipments?ShipmentNumber=${order.trackingNumber}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs text-blue-600 hover:text-blue-800 font-mono mt-0.5 flex items-center gap-1 hover:underline"
+                                title={isArabic ? 'تتبع الشحنة على أرامكس' : 'Track on Aramex'}
+                              >
                                 <Truck className="h-3 w-3" />
                                 {order.trackingNumber}
-                              </div>
+                              </a>
                             )}
                           </div>
                         </div>
@@ -722,6 +819,38 @@ export const OrdersManagement: React.FC = () => {
                               disabled={paymentLinkLoading}
                             >
                               <CreditCard className="h-4 w-4" />
+                            </Button>
+                          )}
+                          {order.shippingMethod === 3 && !order.trackingNumber && (
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleCreateShipment(order)}
+                              title={isArabic ? 'إنشاء شحنة أرامكس' : 'Create Aramex Shipment'}
+                              disabled={shipmentLoading === order.id}
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            >
+                              {shipmentLoading === order.id ? (
+                                <RefreshCw className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <PackagePlus className="h-4 w-4" />
+                              )}
+                            </Button>
+                          )}
+                          {order.shippingMethod === 3 && order.trackingNumber && (
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handlePrintLabel(order)}
+                              title={isArabic ? 'طباعة ملصق الشحن' : 'Print Shipping Label'}
+                              disabled={printLabelLoading === order.id}
+                              className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                            >
+                              {printLabelLoading === order.id ? (
+                                <RefreshCw className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Printer className="h-4 w-4" />
+                              )}
                             </Button>
                           )}
                         </div>
@@ -1300,6 +1429,179 @@ export const OrdersManagement: React.FC = () => {
             <Button onClick={handleCopyPaymentLink}>
               <Copy className="h-4 w-4 mr-2" />
               {isArabic ? 'نسخ الرابط' : 'Copy Link'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Shipment Confirmation Dialog */}
+      <Dialog open={showShipmentConfirmDialog} onOpenChange={setShowShipmentConfirmDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <PackagePlus className="h-5 w-5 text-red-600" />
+              {isArabic ? 'تأكيد إنشاء الشحنة' : 'Confirm Shipment Creation'}
+            </DialogTitle>
+            <DialogDescription>
+              {isArabic 
+                ? 'هل أنت متأكد من إنشاء شحنة أرامكس لهذا الطلب؟'
+                : 'Are you sure you want to create an Aramex shipment for this order?'}
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedOrder && (
+            <div className="space-y-3">
+              <div className="p-4 bg-muted rounded-lg space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-sm font-medium">
+                    {isArabic ? 'رقم الطلب:' : 'Order #:'}
+                  </span>
+                  <span className="text-sm">{selectedOrder.orderNumber}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm font-medium">
+                    {isArabic ? 'العميل:' : 'Customer:'}
+                  </span>
+                  <span className="text-sm">{selectedOrder.fullName}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm font-medium">
+                    {isArabic ? 'المبلغ:' : 'Amount:'}
+                  </span>
+                  <span className="text-sm">OMR {selectedOrder.totalAmount.toFixed(3)}</span>
+                </div>
+              </div>
+
+              <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <p className="text-sm text-yellow-800">
+                  {isArabic 
+                    ? '⚠️ سيتم إرسال بيانات الطلب إلى أرامكس وسيتم الحصول على رقم تتبع.'
+                    : '⚠️ Order data will be sent to Aramex and a tracking number will be generated.'}
+                </p>
+              </div>
+            </div>
+          )}
+
+          <div className="flex justify-end gap-3">
+            <Button 
+              variant="outline" 
+              onClick={() => setShowShipmentConfirmDialog(false)}
+              disabled={shipmentLoading !== null}
+            >
+              {isArabic ? 'إلغاء' : 'Cancel'}
+            </Button>
+            <Button 
+              onClick={confirmCreateShipment}
+              disabled={shipmentLoading !== null}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {shipmentLoading !== null ? (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  {isArabic ? 'جاري الإنشاء...' : 'Creating...'}
+                </>
+              ) : (
+                <>
+                  <PackagePlus className="h-4 w-4 mr-2" />
+                  {isArabic ? 'تأكيد الإنشاء' : 'Confirm Create'}
+                </>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Shipment Result Dialog */}
+      <Dialog open={showShipmentResultDialog} onOpenChange={setShowShipmentResultDialog}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {shipmentResult ? (
+                <>
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                  {isArabic ? 'تم إنشاء الشحنة بنجاح' : 'Shipment Created Successfully'}
+                </>
+              ) : (
+                <>
+                  <XCircle className="h-5 w-5 text-red-600" />
+                  {isArabic ? 'فشل إنشاء الشحنة' : 'Shipment Creation Failed'}
+                </>
+              )}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {shipmentResult ? (
+              <>
+                <div className="p-4 bg-green-50 border border-green-200 rounded-lg space-y-3">
+                  <div className="flex justify-between py-2 border-b border-green-200">
+                    <span className="text-sm font-medium text-green-900">
+                      {isArabic ? 'رقم الطلب:' : 'Order Number:'}
+                    </span>
+                    <span className="text-sm text-green-800 font-mono">
+                      {shipmentResult.orderNumber}
+                    </span>
+                  </div>
+                  <div className="flex justify-between py-2 border-b border-green-200">
+                    <span className="text-sm font-medium text-green-900">
+                      {isArabic ? 'رقم الشحنة:' : 'Shipment Number:'}
+                    </span>
+                    <span className="text-sm text-green-800 font-mono">
+                      {shipmentResult.shipmentNumber}
+                    </span>
+                  </div>
+                  <div className="flex justify-between py-2 border-b border-green-200">
+                    <span className="text-sm font-medium text-green-900">
+                      {isArabic ? 'رقم AWB:' : 'AWB Number:'}
+                    </span>
+                    <span className="text-sm text-green-800 font-mono font-bold">
+                      {shipmentResult.awbNumber}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center py-2">
+                    <span className="text-sm font-medium text-green-900">
+                      {isArabic ? 'التحذيرات:' : 'Warnings:'}
+                    </span>
+                    <span className="text-sm text-green-800">
+                      {shipmentResult.hasWarnings 
+                        ? (isArabic ? 'يوجد' : 'Yes') 
+                        : (isArabic ? 'لا يوجد' : 'None')}
+                    </span>
+                  </div>
+                </div>
+
+                {shipmentResult.trackingUrl && (
+                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <a 
+                      href={shipmentResult.trackingUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-center gap-2 text-blue-700 hover:text-blue-800 font-medium"
+                    >
+                      <Truck className="h-4 w-4" />
+                      {isArabic ? 'تتبع الشحنة على موقع أرامكس' : 'Track Shipment on Aramex'}
+                    </a>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-sm text-red-800 whitespace-pre-wrap">
+                  {shipmentError}
+                </p>
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-end">
+            <Button 
+              onClick={() => {
+                setShowShipmentResultDialog(false);
+                setShipmentResult(null);
+                setShipmentError('');
+              }}
+            >
+              {isArabic ? 'إغلاق' : 'Close'}
             </Button>
           </div>
         </DialogContent>
