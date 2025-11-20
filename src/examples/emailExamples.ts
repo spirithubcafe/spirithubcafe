@@ -4,8 +4,8 @@
  * این فایل شامل مثال‌های عملی برای استفاده از Email API در سناریوهای مختلف است.
  */
 
-import { emailService, fileToBase64, prepareAttachments } from '../services/emailService';
-import type { SendEmailDto, SendBulkEmailDto } from '../services/emailService';
+import { emailService, prepareAttachments } from '../services/emailService';
+import type { SendEmailDto } from '../services/emailService';
 
 // ============================================
 // مثال 1: ارسال ایمیل خوش‌آمدگویی
