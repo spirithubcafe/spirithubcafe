@@ -22,6 +22,8 @@ export const ProfessionalHeroSlider: React.FC = () => {
   const [isPlaying] = useState(true);
   const [isHovered, setIsHovered] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [videoLoaded, setVideoLoaded] = useState(false);
+  const videoRef = React.useRef<HTMLVideoElement>(null);
 
   // Check if device is mobile
   useEffect(() => {
@@ -34,6 +36,20 @@ export const ProfessionalHeroSlider: React.FC = () => {
     
     return () => window.removeEventListener('resize', checkIsMobile);
   }, []);
+
+  // Delay video loading until page is fully loaded (only on mobile)
+  useEffect(() => {
+    if (isMobile && videoRef.current) {
+      // Wait for page load before starting video
+      if (document.readyState === 'complete') {
+        videoRef.current.load();
+      } else {
+        window.addEventListener('load', () => {
+          videoRef.current?.load();
+        });
+      }
+    }
+  }, [isMobile]);
 
   // Professional slide data with rich content
   const allSlides: SlideData[] = [
@@ -216,25 +232,59 @@ export const ProfessionalHeroSlider: React.FC = () => {
       onMouseLeave={() => !isMobile && setIsHovered(false)}
       onClick={!isMobile && slides.length > 1 ? nextSlide : undefined}
     >
-      {/* Background Images with Fade Effect */}
+      {/* Background Images/Video with Fade Effect */}
       <div className="slider-backgrounds">
-        <AnimatePresence initial={false}>
-          <motion.div
-            key={currentSlide}
-            className="slide-background"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.8, ease: "easeInOut" }}
-          >
-            <img
-              src={currentSlideData.image}
-              alt={currentSlideData.title}
-              className="background-image"
-            />
+        {isMobile ? (
+          // Mobile: Show video background with optimized loading
+          <div className="slide-background">
+            {/* Fallback image shown until video loads */}
+            {!videoLoaded && (
+              <img
+                src={currentSlideData.image}
+                alt={currentSlideData.title}
+                className="background-image"
+              />
+            )}
+            <video
+              ref={videoRef}
+              className="background-video"
+              autoPlay
+              loop
+              muted
+              playsInline
+              preload="none"
+              poster={currentSlideData.image}
+              onLoadedData={() => setVideoLoaded(true)}
+              onError={() => {
+                console.warn('Video failed to load, using fallback image');
+                setVideoLoaded(false);
+              }}
+              style={{ opacity: videoLoaded ? 1 : 0 }}
+            >
+              <source src="/video/spirithub-specialty-coffee-roastery-mobile-banner.mp4" type="video/mp4" />
+            </video>
             <div className="background-overlay" />
-          </motion.div>
-        </AnimatePresence>
+          </div>
+        ) : (
+          // Desktop: Show image backgrounds with fade effect
+          <AnimatePresence initial={false}>
+            <motion.div
+              key={currentSlide}
+              className="slide-background"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.8, ease: "easeInOut" }}
+            >
+              <img
+                src={currentSlideData.image}
+                alt={currentSlideData.title}
+                className="background-image"
+              />
+              <div className="background-overlay" />
+            </motion.div>
+          </AnimatePresence>
+        )}
       </div>
 
       {/* Main Content Container */}
