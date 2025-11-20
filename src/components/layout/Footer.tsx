@@ -25,7 +25,7 @@ export const Footer: React.FC = () => {
     setErrorMessage('');
 
     try {
-      const result = await newsletterService.subscribe(email);
+      await newsletterService.subscribe(email);
       setSubscribeStatus('success');
       setEmail('');
       setTimeout(() => setSubscribeStatus('idle'), 3000);
