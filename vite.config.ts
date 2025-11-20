@@ -14,12 +14,41 @@ const pwaManifest = JSON.parse(
 const seoWriterPlugin = () => ({
   name: "seo-writer",
   configureServer(server: ViteDevServer) {
-    server.middlewares.use((req: IncomingMessage, res: ServerResponse, next) => {
+    server.middlewares.use(async (req: IncomingMessage, res: ServerResponse, next) => {
       if (!req.url) {
         return next()
       }
 
       const requestUrl = new URL(req.url, "http://localhost")
+      
+      // Serve static SEO files directly
+      const staticFiles = ['/sitemap.xml', '/robots.txt', '/products-feed.xml']
+      if (staticFiles.includes(requestUrl.pathname)) {
+        try {
+          const publicDir = path.resolve(__dirname, "public")
+          const filePath = path.join(publicDir, requestUrl.pathname)
+          const content = await fs.readFile(filePath, "utf8")
+          
+          // Set appropriate content type
+          const contentType = requestUrl.pathname.endsWith('.xml') 
+            ? 'application/xml; charset=utf-8' 
+            : 'text/plain; charset=utf-8'
+          
+          res.statusCode = 200
+          res.setHeader("Content-Type", contentType)
+          res.setHeader("Cache-Control", "public, max-age=3600")
+          res.end(content)
+          return
+        } catch (error) {
+          console.error(`Error serving ${requestUrl.pathname}:`, error)
+          res.statusCode = 404
+          res.setHeader("Content-Type", "text/plain")
+          res.end("File not found")
+          return
+        }
+      }
+
+      // Handle SEO save endpoint
       if (requestUrl.pathname !== "/__seo/save-file" || req.method !== "POST") {
         return next()
       }
@@ -123,6 +152,7 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  publicDir: 'public',
   build: {
     rollupOptions: {
       output: {
@@ -143,6 +173,8 @@ export default defineConfig({
     // Enable source maps for production debugging
     sourcemap: false,
     // Minification settings
-    minify: 'esbuild'
+    minify: 'esbuild',
+    // Copy static files
+    copyPublicDir: true
   }
 })

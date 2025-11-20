@@ -1,0 +1,8 @@
+# Serve static SEO files directly
+/sitemap.xml /sitemap.xml 200
+/robots.txt /robots.txt 200
+/products-feed.xml /products-feed.xml 200
+/manifest.webmanifest /manifest.webmanifest 200
+
+# Serve all other routes through index.html (SPA)
+/* /index.html 200
