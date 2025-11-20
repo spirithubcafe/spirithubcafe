@@ -42,6 +42,7 @@ import {
   ChevronDown,
   User,
   Globe,
+  Mail,
 } from 'lucide-react';
 import {
   Card,
@@ -183,6 +184,14 @@ export const AdminLayout: React.FC = () => {
       roles: ['Admin', 'Manager'],
     },
     {
+      id: 'newsletter',
+      label: t('admin.newsletter.title') || 'Newsletter',
+      description: t('admin.newsletter.description') || 'Manage newsletter subscribers',
+      icon: Mail,
+      path: '/admin/newsletter',
+      roles: ['Admin', 'Manager'],
+    },
+    {
       id: 'users',
       label: t('admin.manageUsers'),
       description: t('admin.usersDesc'),
@@ -237,7 +246,7 @@ export const AdminLayout: React.FC = () => {
       id: 'operations',
       label: t('admin.navGroups.operations'),
       items: availableNavItems.filter((item) =>
-        ['orders', 'reports', 'system', 'seo'].includes(item.id)
+        ['orders', 'newsletter', 'reports', 'system', 'seo'].includes(item.id)
       ),
     },
   ].filter((group) => group.items.length > 0);

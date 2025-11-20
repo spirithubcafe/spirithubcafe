@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Management - Spirit Hub Cafe</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            color: #667eea;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+        }
+
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .btn-secondary {
+            background: #6b7280;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+
+        .btn-warning {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f3f4f6;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .tab.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .settings-list {
+            display: grid;
+            gap: 15px;
+        }
+
+        .setting-item {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 15px;
+            background: #f9fafb;
+        }
+
+        .setting-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 10px;
+        }
+
+        .setting-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #111827;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        .badge-success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge-default {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .badge-disabled {
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+
+        .setting-details {
+            color: #6b7280;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .setting-actions {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+
+        .alert-info {
+            background: #dbeafe;
+            color: #1e40af;
+            border: 1px solid #bfdbfe;
+        }
+
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            color: #6b7280;
+        }
+
+        .spinner {
+            border: 3px solid #f3f4f6;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .login-container {
+            max-width: 400px;
+            margin: 100px auto;
+        }
+
+        .recipients-help {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 5px;
+            line-height: 1.5;
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .header {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .tabs {
+                flex-direction: column;
+            }
+
+            .tab {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Section -->
+    <div id="loginSection" class="login-container">
+        <div class="card">
+            <h2>Login to Email Management</h2>
+            <div id="loginAlert"></div>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" required value="admin">
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Login</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main Application Section -->
+    <div id="mainSection" class="container hidden">
+        <!-- Header -->
+        <div class="header">
+            <h1>📧 Email Management System</h1>
+            <div class="user-info">
+                <span id="userDisplay"></span>
+                <button onclick="logout()" class="btn btn-danger btn-sm">Logout</button>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('settings')">Email Settings</button>
+            <button class="tab" onclick="switchTab('sendSingle')">Send Single Email</button>
+            <button class="tab" onclick="switchTab('sendBulk')">Send Bulk Email</button>
+        </div>
+
+        <!-- Email Settings Tab -->
+        <div id="settingsTab" class="tab-content active">
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2 style="margin: 0;">Email Settings</h2>
+                    <button onclick="showCreateForm()" class="btn btn-primary">+ Add New</button>
+                </div>
+                <div id="settingsAlert"></div>
+                <div id="settingsList" class="loading">
+                    <div class="spinner"></div>
+                    Loading settings...
+                </div>
+            </div>
+
+            <!-- Create/Edit Form -->
+            <div id="settingsFormCard" class="card hidden">
+                <h2 id="formTitle">Create Email Settings</h2>
+                <div id="formAlert"></div>
+                <form id="settingsForm">
+                    <input type="hidden" id="settingId">
+                    
+                    <h3 style="margin-bottom: 15px; color: #374151;">General Information</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="name">Name *</label>
+                            <input type="text" id="name" required placeholder="e.g., Gmail Production">
+                        </div>
+                        <div class="form-group">
+                            <label for="description">Description</label>
+                            <input type="text" id="description" placeholder="Optional description">
+                        </div>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="isEnabled" checked>
+                        <label for="isEnabled">Enabled</label>
+                        <input type="checkbox" id="isDefault" style="margin-left: 20px;">
+                        <label for="isDefault">Set as Default</label>
+                    </div>
+
+                    <h3 style="margin: 25px 0 15px; color: #374151;">SMTP Settings (Outgoing)</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="smtpServer">SMTP Server *</label>
+                            <input type="text" id="smtpServer" required placeholder="smtp.gmail.com">
+                        </div>
+                        <div class="form-group">
+                            <label for="smtpPort">SMTP Port *</label>
+                            <input type="number" id="smtpPort" required placeholder="587" value="587">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="smtpUsername">SMTP Username *</label>
+                            <input type="email" id="smtpUsername" required placeholder="your-email@gmail.com">
+                        </div>
+                        <div class="form-group">
+                            <label for="smtpPassword">SMTP Password *</label>
+                            <input type="password" id="smtpPassword" required placeholder="App Password">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="senderName">Sender Name *</label>
+                            <input type="text" id="senderName" required placeholder="Spirit Hub Cafe">
+                        </div>
+                        <div class="form-group">
+                            <label for="senderEmail">Sender Email *</label>
+                            <input type="email" id="senderEmail" required placeholder="noreply@spirithubcafe.com">
+                        </div>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="smtpUseSsl" checked>
+                        <label for="smtpUseSsl">Use SSL</label>
+                        <input type="checkbox" id="smtpUseStartTls" checked style="margin-left: 20px;">
+                        <label for="smtpUseStartTls">Use StartTLS</label>
+                    </div>
+
+                    <h3 style="margin: 25px 0 15px; color: #374151;">IMAP Settings (Incoming)</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="imapServer">IMAP Server *</label>
+                            <input type="text" id="imapServer" required placeholder="imap.gmail.com">
+                        </div>
+                        <div class="form-group">
+                            <label for="imapPort">IMAP Port *</label>
+                            <input type="number" id="imapPort" required placeholder="993" value="993">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="imapUsername">IMAP Username *</label>
+                            <input type="email" id="imapUsername" required placeholder="your-email@gmail.com">
+                        </div>
+                        <div class="form-group">
+                            <label for="imapPassword">IMAP Password *</label>
+                            <input type="password" id="imapPassword" required placeholder="App Password">
+                        </div>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="imapUseSsl" checked>
+                        <label for="imapUseSsl">Use SSL</label>
+                    </div>
+
+                    <h3 style="margin: 25px 0 15px; color: #374151;">Advanced Settings</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="replyToEmail">Reply-To Email</label>
+                            <input type="email" id="replyToEmail" placeholder="support@spirithubcafe.com">
+                        </div>
+                        <div class="form-group">
+                            <label for="bccEmails">BCC Emails (comma-separated)</label>
+                            <input type="text" id="bccEmails" placeholder="archive@example.com, backup@example.com">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="maxEmailsPerHour">Max Emails Per Hour</label>
+                            <input type="number" id="maxEmailsPerHour" placeholder="100" value="100">
+                        </div>
+                        <div class="form-group">
+                            <label for="timeoutSeconds">Timeout (seconds)</label>
+                            <input type="number" id="timeoutSeconds" placeholder="30" value="30">
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 10px; margin-top: 20px;">
+                        <button type="submit" class="btn btn-success">Save Settings</button>
+                        <button type="button" onclick="cancelForm()" class="btn btn-secondary">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Send Single Email Tab -->
+        <div id="sendSingleTab" class="tab-content">
+            <div class="card">
+                <h2>Send Single Email</h2>
+                <div id="sendSingleAlert"></div>
+                <form id="sendSingleForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="toEmail">Recipient Email *</label>
+                            <input type="email" id="toEmail" required placeholder="recipient@example.com">
+                        </div>
+                        <div class="form-group">
+                            <label for="toName">Recipient Name</label>
+                            <input type="text" id="toName" placeholder="John Doe">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="subject">Subject *</label>
+                        <input type="text" id="subject" required placeholder="Email subject">
+                    </div>
+                    <div class="form-group">
+                        <label for="body">Message *</label>
+                        <textarea id="body" rows="10" required placeholder="Email content (HTML or plain text)"></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="ccEmails">CC (comma-separated)</label>
+                            <input type="text" id="ccEmails" placeholder="cc1@example.com, cc2@example.com">
+                        </div>
+                        <div class="form-group">
+                            <label for="bccEmailsSend">BCC (comma-separated)</label>
+                            <input type="text" id="bccEmailsSend" placeholder="bcc1@example.com, bcc2@example.com">
+                        </div>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="isHtml" checked>
+                        <label for="isHtml">HTML Format</label>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="margin-top: 15px;">Send Email</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Send Bulk Email Tab -->
+        <div id="sendBulkTab" class="tab-content">
+            <div class="card">
+                <h2>Send Bulk Email</h2>
+                <div id="sendBulkAlert"></div>
+                <form id="sendBulkForm">
+                    <div class="form-group">
+                        <label for="recipients">Recipients *</label>
+                        <textarea id="recipients" rows="6" required placeholder="Format: email@example.com, Name (one per line)&#10;Example:&#10;customer1@example.com, John Doe&#10;customer2@example.com, Jane Smith&#10;customer3@example.com"></textarea>
+                        <div class="recipients-help">
+                            Enter one recipient per line. Format: email@example.com, Name (name is optional)
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="bulkSubject">Subject *</label>
+                        <input type="text" id="bulkSubject" required placeholder="Email subject">
+                    </div>
+                    <div class="form-group">
+                        <label for="bulkBody">Message *</label>
+                        <textarea id="bulkBody" rows="12" required placeholder="Email content (HTML or plain text)"></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="isHtmlBulk" checked>
+                            <label for="isHtmlBulk">HTML Format</label>
+                        </div>
+                        <div class="form-group">
+                            <label for="delayBetweenEmailsMs">Delay Between Emails (ms)</label>
+                            <input type="number" id="delayBetweenEmailsMs" placeholder="100" value="100">
+                        </div>
+                    </div>
+                    <div class="alert alert-info">
+                        ⚠️ <strong>Note:</strong> Bulk email sending may take time. Please be patient and don't close this page.
+                    </div>
+                    <button type="submit" class="btn btn-primary">Send Bulk Email</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API Configuration - Production API URL
+        const API_BASE_URL = 'https://spirithubapi.sbc.om/api';
+        let authToken = localStorage.getItem('authToken');
+        let currentUser = null;
+        let editingSettingId = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            if (authToken) {
+                showMainSection();
+                loadSettings();
+            } else {
+                showLoginSection();
+            }
+
+            // Form submissions
+            document.getElementById('loginForm').addEventListener('submit', handleLogin);
+            document.getElementById('settingsForm').addEventListener('submit', handleSaveSettings);
+            document.getElementById('sendSingleForm').addEventListener('submit', handleSendSingleEmail);
+            document.getElementById('sendBulkForm').addEventListener('submit', handleSendBulkEmail);
+        });
+
+        // API Helper Functions
+        async function apiCall(endpoint, method = 'GET', body = null) {
+            const options = {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            };
+
+            if (authToken) {
+                options.headers['Authorization'] = `Bearer ${authToken}`;
+            }
+
+            if (body) {
+                options.body = JSON.stringify(body);
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}${endpoint}`, options);
+                
+                if (response.status === 401) {
+                    logout();
+                    throw new Error('Unauthorized. Please login again.');
+                }
+
+                const data = await response.json().catch(() => null);
+
+                if (!response.ok) {
+                    throw new Error(data?.message || `HTTP Error: ${response.status}`);
+                }
+
+                return data;
+            } catch (error) {
+                console.error('API Error:', error);
+                throw error;
+            }
+        }
+
+        // Authentication
+        async function handleLogin(e) {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                showAlert('loginAlert', 'info', 'Logging in...');
+                const data = await apiCall('/Account/Login', 'POST', { username, password });
+                
+                // API returns access_token and refresh_token
+                authToken = data.access_token;
+                currentUser = { username, displayName: username };
+                localStorage.setItem('authToken', authToken);
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+
+                showMainSection();
+                loadSettings();
+            } catch (error) {
+                showAlert('loginAlert', 'error', 'Login failed: ' + error.message);
+            }
+        }
+
+        function logout() {
+            authToken = null;
+            currentUser = null;
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('currentUser');
+            showLoginSection();
+        }
+
+        function showLoginSection() {
+            document.getElementById('loginSection').classList.remove('hidden');
+            document.getElementById('mainSection').classList.add('hidden');
+        }
+
+        function showMainSection() {
+            document.getElementById('loginSection').classList.add('hidden');
+            document.getElementById('mainSection').classList.remove('hidden');
+            
+            const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            document.getElementById('userDisplay').textContent = `Welcome, ${user.username || 'Admin'}`;
+        }
+
+        // Tab Switching
+        function switchTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.getElementById(tabName + 'Tab').classList.add('active');
+
+            // Load data if needed
+            if (tabName === 'settings') {
+                loadSettings();
+            }
+        }
+
+        // Email Settings Management
+        async function loadSettings() {
+            const listDiv = document.getElementById('settingsList');
+            listDiv.innerHTML = '<div class="loading"><div class="spinner"></div>Loading settings...</div>';
+
+            try {
+                const settings = await apiCall('/EmailSettings');
+                displaySettings(settings);
+            } catch (error) {
+                listDiv.innerHTML = `<div class="alert alert-error">Failed to load settings: ${error.message}</div>`;
+            }
+        }
+
+        function displaySettings(settings) {
+            const listDiv = document.getElementById('settingsList');
+            
+            if (settings.length === 0) {
+                listDiv.innerHTML = '<div class="alert alert-info">No email settings found. Click "Add New" to create one.</div>';
+                return;
+            }
+
+            listDiv.innerHTML = '<div class="settings-list">' + settings.map(setting => `
+                <div class="setting-item">
+                    <div class="setting-header">
+                        <div>
+                            <span class="setting-title">${escapeHtml(setting.name)}</span>
+                            ${setting.isDefault ? '<span class="badge badge-default">DEFAULT</span>' : ''}
+                            ${!setting.isEnabled ? '<span class="badge badge-disabled">DISABLED</span>' : '<span class="badge badge-success">ACTIVE</span>'}
+                        </div>
+                        <div class="setting-actions">
+                            ${!setting.isDefault ? `<button onclick="setAsDefault(${setting.id})" class="btn btn-warning btn-sm">Set Default</button>` : ''}
+                            <button onclick="testSettings(${setting.id})" class="btn btn-primary btn-sm">Test</button>
+                            <button onclick="editSettings(${setting.id})" class="btn btn-primary btn-sm">Edit</button>
+                            <button onclick="deleteSettings(${setting.id})" class="btn btn-danger btn-sm">Delete</button>
+                        </div>
+                    </div>
+                    <div class="setting-details">
+                        ${setting.description ? `<p><strong>Description:</strong> ${escapeHtml(setting.description)}</p>` : ''}
+                        <p><strong>SMTP:</strong> ${escapeHtml(setting.smtpServer)}:${setting.smtpPort}</p>
+                        <p><strong>Sender:</strong> ${escapeHtml(setting.senderName)} &lt;${escapeHtml(setting.senderEmail)}&gt;</p>
+                        ${setting.lastTestedAt ? `<p><strong>Last Tested:</strong> ${new Date(setting.lastTestedAt).toLocaleString()} - ${escapeHtml(setting.lastTestResult || 'N/A')}</p>` : ''}
+                    </div>
+                </div>
+            `).join('') + '</div>';
+        }
+
+        function showCreateForm() {
+            editingSettingId = null;
+            document.getElementById('formTitle').textContent = 'Create Email Settings';
+            document.getElementById('settingsForm').reset();
+            document.getElementById('settingId').value = '';
+            document.getElementById('settingsFormCard').classList.remove('hidden');
+            document.getElementById('formAlert').innerHTML = '';
+            
+            // Set defaults
+            document.getElementById('smtpPort').value = '587';
+            document.getElementById('imapPort').value = '993';
+            document.getElementById('maxEmailsPerHour').value = '100';
+            document.getElementById('timeoutSeconds').value = '30';
+            document.getElementById('isEnabled').checked = true;
+            document.getElementById('smtpUseSsl').checked = true;
+            document.getElementById('smtpUseStartTls').checked = true;
+            document.getElementById('imapUseSsl').checked = true;
+        }
+
+        async function editSettings(id) {
+            editingSettingId = id;
+            document.getElementById('formTitle').textContent = 'Edit Email Settings';
+            document.getElementById('settingsFormCard').classList.remove('hidden');
+            document.getElementById('formAlert').innerHTML = '';
+
+            try {
+                const setting = await apiCall(`/EmailSettings/${id}`);
+                
+                document.getElementById('settingId').value = setting.id;
+                document.getElementById('name').value = setting.name;
+                document.getElementById('description').value = setting.description || '';
+                document.getElementById('isEnabled').checked = setting.isEnabled;
+                document.getElementById('isDefault').checked = setting.isDefault;
+                
+                document.getElementById('smtpServer').value = setting.smtpServer;
+                document.getElementById('smtpPort').value = setting.smtpPort;
+                document.getElementById('smtpUsername').value = setting.smtpUsername;
+                document.getElementById('smtpPassword').value = '';
+                document.getElementById('senderName').value = setting.senderName;
+                document.getElementById('senderEmail').value = setting.senderEmail;
+                document.getElementById('smtpUseSsl').checked = setting.smtpUseSsl;
+                document.getElementById('smtpUseStartTls').checked = setting.smtpUseStartTls;
+                
+                document.getElementById('imapServer').value = setting.imapServer;
+                document.getElementById('imapPort').value = setting.imapPort;
+                document.getElementById('imapUsername').value = setting.imapUsername;
+                document.getElementById('imapPassword').value = '';
+                document.getElementById('imapUseSsl').checked = setting.imapUseSsl;
+                
+                document.getElementById('replyToEmail').value = setting.replyToEmail || '';
+                document.getElementById('bccEmails').value = setting.bccEmails || '';
+                document.getElementById('maxEmailsPerHour').value = setting.maxEmailsPerHour;
+                document.getElementById('timeoutSeconds').value = setting.timeoutSeconds;
+
+                // Make passwords not required for edit
+                document.getElementById('smtpPassword').required = false;
+                document.getElementById('imapPassword').required = false;
+            } catch (error) {
+                showAlert('settingsAlert', 'error', 'Failed to load settings: ' + error.message);
+            }
+        }
+
+        async function handleSaveSettings(e) {
+            e.preventDefault();
+            
+            const data = {
+                name: document.getElementById('name').value,
+                description: document.getElementById('description').value,
+                isEnabled: document.getElementById('isEnabled').checked,
+                isDefault: document.getElementById('isDefault').checked,
+                
+                smtpServer: document.getElementById('smtpServer').value,
+                smtpPort: parseInt(document.getElementById('smtpPort').value),
+                smtpUsername: document.getElementById('smtpUsername').value,
+                smtpPassword: document.getElementById('smtpPassword').value,
+                senderName: document.getElementById('senderName').value,
+                senderEmail: document.getElementById('senderEmail').value,
+                smtpUseSsl: document.getElementById('smtpUseSsl').checked,
+                smtpUseStartTls: document.getElementById('smtpUseStartTls').checked,
+                
+                imapServer: document.getElementById('imapServer').value,
+                imapPort: parseInt(document.getElementById('imapPort').value),
+                imapUsername: document.getElementById('imapUsername').value,
+                imapPassword: document.getElementById('imapPassword').value,
+                imapUseSsl: document.getElementById('imapUseSsl').checked,
+                
+                replyToEmail: document.getElementById('replyToEmail').value,
+                bccEmails: document.getElementById('bccEmails').value,
+                maxEmailsPerHour: parseInt(document.getElementById('maxEmailsPerHour').value),
+                timeoutSeconds: parseInt(document.getElementById('timeoutSeconds').value)
+            };
+
+            try {
+                showAlert('formAlert', 'info', 'Saving...');
+                
+                if (editingSettingId) {
+                    await apiCall(`/EmailSettings/${editingSettingId}`, 'PUT', data);
+                    showAlert('settingsAlert', 'success', 'Settings updated successfully!');
+                } else {
+                    await apiCall('/EmailSettings', 'POST', data);
+                    showAlert('settingsAlert', 'success', 'Settings created successfully!');
+                }
+                
+                cancelForm();
+                loadSettings();
+            } catch (error) {
+                showAlert('formAlert', 'error', 'Failed to save: ' + error.message);
+            }
+        }
+
+        async function deleteSettings(id) {
+            if (!confirm('Are you sure you want to delete this email setting?')) return;
+
+            try {
+                await apiCall(`/EmailSettings/${id}`, 'DELETE');
+                showAlert('settingsAlert', 'success', 'Settings deleted successfully!');
+                loadSettings();
+            } catch (error) {
+                showAlert('settingsAlert', 'error', 'Failed to delete: ' + error.message);
+            }
+        }
+
+        async function setAsDefault(id) {
+            try {
+                await apiCall(`/EmailSettings/${id}/set-default`, 'POST');
+                showAlert('settingsAlert', 'success', 'Set as default successfully!');
+                loadSettings();
+            } catch (error) {
+                showAlert('settingsAlert', 'error', 'Failed to set as default: ' + error.message);
+            }
+        }
+
+        async function testSettings(id) {
+            const email = prompt('Enter test email address:');
+            if (!email) return;
+
+            try {
+                showAlert('settingsAlert', 'info', 'Sending test email...');
+                const result = await apiCall(`/EmailSettings/${id}/test`, 'POST', {
+                    emailSettingsId: id,
+                    testRecipientEmail: email
+                });
+                
+                showAlert('settingsAlert', result.success ? 'success' : 'error', result.message);
+                loadSettings();
+            } catch (error) {
+                showAlert('settingsAlert', 'error', 'Test failed: ' + error.message);
+            }
+        }
+
+        function cancelForm() {
+            document.getElementById('settingsFormCard').classList.add('hidden');
+            document.getElementById('settingsForm').reset();
+            editingSettingId = null;
+            
+            // Reset password requirements
+            document.getElementById('smtpPassword').required = true;
+            document.getElementById('imapPassword').required = true;
+        }
+
+        // Send Single Email
+        async function handleSendSingleEmail(e) {
+            e.preventDefault();
+
+            const ccEmails = document.getElementById('ccEmails').value;
+            const bccEmails = document.getElementById('bccEmailsSend').value;
+
+            const data = {
+                toEmail: document.getElementById('toEmail').value,
+                toName: document.getElementById('toName').value,
+                subject: document.getElementById('subject').value,
+                body: document.getElementById('body').value,
+                isHtml: document.getElementById('isHtml').checked,
+                ccEmails: ccEmails ? ccEmails.split(',').map(e => e.trim()) : [],
+                bccEmails: bccEmails ? bccEmails.split(',').map(e => e.trim()) : []
+            };
+
+            try {
+                showAlert('sendSingleAlert', 'info', 'Sending email...');
+                const result = await apiCall('/Email/send', 'POST', data);
+                
+                if (result.success) {
+                    showAlert('sendSingleAlert', 'success', 'Email sent successfully!');
+                    document.getElementById('sendSingleForm').reset();
+                    document.getElementById('isHtml').checked = true;
+                } else {
+                    showAlert('sendSingleAlert', 'error', 'Failed to send: ' + result.message);
+                }
+            } catch (error) {
+                showAlert('sendSingleAlert', 'error', 'Failed to send email: ' + error.message);
+            }
+        }
+
+        // Send Bulk Email
+        async function handleSendBulkEmail(e) {
+            e.preventDefault();
+
+            const recipientsText = document.getElementById('recipients').value;
+            const recipients = recipientsText.split('\n')
+                .map(line => {
+                    const parts = line.trim().split(',');
+                    return {
+                        email: parts[0].trim(),
+                        name: parts[1] ? parts[1].trim() : null
+                    };
+                })
+                .filter(r => r.email);
+
+            if (recipients.length === 0) {
+                showAlert('sendBulkAlert', 'error', 'Please enter at least one recipient');
+                return;
+            }
+
+            const data = {
+                recipients: recipients,
+                subject: document.getElementById('bulkSubject').value,
+                body: document.getElementById('bulkBody').value,
+                isHtml: document.getElementById('isHtmlBulk').checked,
+                delayBetweenEmailsMs: parseInt(document.getElementById('delayBetweenEmailsMs').value)
+            };
+
+            try {
+                showAlert('sendBulkAlert', 'info', `Sending ${recipients.length} emails... Please wait...`);
+                const result = await apiCall('/Email/send-bulk', 'POST', data);
+                
+                let message = `Bulk email completed! Successful: ${result.successfulCount}, Failed: ${result.failedCount}`;
+                if (result.errors && result.errors.length > 0) {
+                    message += `\n\nErrors:\n${result.errors.join('\n')}`;
+                }
+                
+                showAlert('sendBulkAlert', result.failedCount === 0 ? 'success' : 'error', message);
+                
+                if (result.successfulCount > 0) {
+                    document.getElementById('sendBulkForm').reset();
+                    document.getElementById('isHtmlBulk').checked = true;
+                    document.getElementById('delayBetweenEmailsMs').value = '100';
+                }
+            } catch (error) {
+                showAlert('sendBulkAlert', 'error', 'Failed to send bulk email: ' + error.message);
+            }
+        }
+
+        // Utility Functions
+        function showAlert(elementId, type, message) {
+            const alertDiv = document.getElementById(elementId);
+            const className = type === 'success' ? 'alert-success' : type === 'error' ? 'alert-error' : 'alert-info';
+            alertDiv.innerHTML = `<div class="alert ${className}">${escapeHtml(message)}</div>`;
+            
+            if (type === 'success') {
+                setTimeout(() => {
+                    alertDiv.innerHTML = '';
+                }, 5000);
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>

@@ -20,6 +20,7 @@ import { ProfileEditForm } from '../components/pages/ProfileEditForm';
 import { ProfilePictureUpload } from '../components/pages/ProfilePictureUpload';
 import { ChangePasswordForm } from '../components/pages/ChangePasswordForm';
 import { profileService } from '../services/profileService';
+import { newsletterService } from '../services/newsletterService';
 import type { UserProfile as UserProfileType } from '../services/profileService';
 import { getProfilePictureUrl } from '../lib/profileUtils';
 import { 
@@ -43,7 +44,11 @@ import {
   Eye,
   Globe,
   Lock,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Bell,
+  BellOff,
+  Loader2,
+  AlertCircle
 } from 'lucide-react';
 
 interface ProfileStats {
@@ -77,6 +82,11 @@ const ProfilePage: React.FC = () => {
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
   const [orders, setOrders] = useState<Order[]>([]);
   const [userProfile, setUserProfile] = useState<UserProfileType | null>(null);
+  
+  // Newsletter subscription state
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [isLoadingSubscription, setIsLoadingSubscription] = useState(false);
+  const [subscriptionMessage, setSubscriptionMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   
   const [stats, setStats] = useState<ProfileStats>({
     totalOrders: 0,
@@ -155,12 +165,91 @@ const ProfilePage: React.FC = () => {
     }
   };
 
+  // Load newsletter subscription status
+  const loadNewsletterStatus = async () => {
+    if (!user?.username) return;
+    
+    try {
+      const status = await newsletterService.checkSubscriptionStatus(user.username);
+      setIsSubscribed(status);
+      
+      // Update localStorage to match server status
+      if (status) {
+        localStorage.setItem(`newsletter_subscribed_${user.username}`, 'true');
+      } else {
+        localStorage.removeItem(`newsletter_subscribed_${user.username}`);
+      }
+    } catch (error) {
+      console.error('Failed to load newsletter subscription status:', error);
+      
+      // Fallback to localStorage
+      const localStatus = localStorage.getItem(`newsletter_subscribed_${user.username}`) === 'true';
+      setIsSubscribed(localStatus);
+    }
+  };
+
+  const handleNewsletterToggle = async () => {
+    if (!user?.username) return;
+    
+    setIsLoadingSubscription(true);
+    setSubscriptionMessage(null);
+    
+    try {
+      if (isSubscribed) {
+        // Unsubscribe
+        await newsletterService.unsubscribe({ email: user.username });
+        setIsSubscribed(false);
+        localStorage.removeItem(`newsletter_subscribed_${user.username}`);
+        setSubscriptionMessage({
+          type: 'success',
+          text: isArabic ? 'تم إلغاء الاشتراك بنجاح' : 'Successfully unsubscribed from newsletter'
+        });
+      } else {
+        // Subscribe
+        await newsletterService.subscribe({ 
+          email: user.username,
+          name: user.displayName || undefined
+        });
+        setIsSubscribed(true);
+        localStorage.setItem(`newsletter_subscribed_${user.username}`, 'true');
+        setSubscriptionMessage({
+          type: 'success',
+          text: isArabic ? 'تم الاشتراك بنجاح في النشرة الإخبارية' : 'Successfully subscribed to newsletter'
+        });
+      }
+      
+      // Clear message after 5 seconds
+      setTimeout(() => setSubscriptionMessage(null), 5000);
+    } catch (error: any) {
+      console.error('Failed to toggle newsletter subscription:', error);
+      
+      // Check if already subscribed error
+      const errorMessage = error?.response?.data?.message || error?.message || '';
+      if (errorMessage.toLowerCase().includes('already') || errorMessage.toLowerCase().includes('موجود')) {
+        setIsSubscribed(true);
+        localStorage.setItem(`newsletter_subscribed_${user.username}`, 'true');
+        setSubscriptionMessage({
+          type: 'success',
+          text: isArabic ? 'أنت مشترك بالفعل في النشرة الإخبارية' : 'You are already subscribed to the newsletter'
+        });
+      } else {
+        setSubscriptionMessage({
+          type: 'error',
+          text: errorMessage || (isArabic ? 'حدث خطأ. حاول مرة أخرى' : 'An error occurred. Please try again')
+        });
+      }
+    } finally {
+      setIsLoadingSubscription(false);
+    }
+  };
+
   // Load user data and orders
   useEffect(() => {
     if (isAuthenticated && user) {
       console.log('👤 User authenticated, loading profile and orders...', user);
       loadUserProfile();
       loadUserOrders();
+      loadNewsletterStatus();
     } else {
       console.log('❌ User not authenticated or user data missing');
     }
@@ -407,7 +496,7 @@ const ProfilePage: React.FC = () => {
           {/* Main Content */}
           <div className="lg:col-span-3">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
+              <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-2">
                 <TabsTrigger value="overview">
                   <Activity className="h-4 w-4 mr-1" />
                   {isArabic ? 'نظرة عامة' : 'Overview'}
@@ -427,6 +516,10 @@ const ProfilePage: React.FC = () => {
                 <TabsTrigger value="password">
                   <Lock className="h-4 w-4 mr-1" />
                   {isArabic ? 'كلمة المرور' : 'Password'}
+                </TabsTrigger>
+                <TabsTrigger value="newsletter">
+                  <Bell className="h-4 w-4 mr-1" />
+                  {isArabic ? 'النشرة' : 'Newsletter'}
                 </TabsTrigger>
                 <TabsTrigger value="orders">
                   <ShoppingBag className="h-4 w-4 mr-1" />
@@ -713,6 +806,143 @@ const ProfilePage: React.FC = () => {
                     setTimeout(() => setActiveTab('overview'), 2000);
                   }}
                 />
+              </TabsContent>
+
+              {/* Newsletter Tab */}
+              <TabsContent value="newsletter">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Bell className="h-5 w-5" />
+                      {isArabic ? 'النشرة الإخبارية' : 'Newsletter Subscription'}
+                    </CardTitle>
+                    <CardDescription>
+                      {isArabic 
+                        ? 'إدارة اشتراكك في النشرة الإخبارية'
+                        : 'Manage your newsletter subscription preferences'}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    {/* Newsletter Info */}
+                    <div className="flex items-start gap-4 p-4 bg-blue-50 rounded-lg border border-blue-100">
+                      <Mail className="h-6 w-6 text-blue-600 mt-1 shrink-0" />
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-blue-900 mb-2">
+                          {isArabic 
+                            ? 'ابق على اطلاع بآخر الأخبار'
+                            : 'Stay Updated with Our Newsletter'}
+                        </h3>
+                        <p className="text-sm text-blue-700 mb-3">
+                          {isArabic 
+                            ? 'احصل على آخر الأخبار والعروض الحصرية والمنتجات الجديدة مباشرة في بريدك الإلكتروني.'
+                            : 'Get the latest news, exclusive offers, and new products delivered straight to your inbox.'}
+                        </p>
+                        <ul className="text-sm text-blue-700 space-y-1">
+                          <li className="flex items-center gap-2">
+                            <CheckCircle className="h-4 w-4" />
+                            {isArabic ? 'عروض حصرية للمشتركين' : 'Exclusive subscriber offers'}
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <CheckCircle className="h-4 w-4" />
+                            {isArabic ? 'إشعارات بالمنتجات الجديدة' : 'New product notifications'}
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <CheckCircle className="h-4 w-4" />
+                            {isArabic ? 'نصائح وأخبار عن القهوة' : 'Coffee tips and news'}
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+
+                    {/* Current Status */}
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between p-4 border rounded-lg">
+                        <div className="flex items-center gap-3">
+                          {isSubscribed ? (
+                            <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
+                              <Bell className="h-5 w-5 text-green-600" />
+                            </div>
+                          ) : (
+                            <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center">
+                              <BellOff className="h-5 w-5 text-gray-400" />
+                            </div>
+                          )}
+                          <div>
+                            <div className="font-semibold">
+                              {isArabic ? 'حالة الاشتراك' : 'Subscription Status'}
+                            </div>
+                            <div className="text-sm text-gray-600">
+                              {user?.username || userProfile?.email}
+                            </div>
+                          </div>
+                        </div>
+                        <Badge 
+                          variant={isSubscribed ? 'default' : 'secondary'}
+                          className={isSubscribed ? 'bg-green-500' : ''}
+                        >
+                          {isSubscribed 
+                            ? (isArabic ? 'مشترك' : 'Subscribed')
+                            : (isArabic ? 'غير مشترك' : 'Not Subscribed')}
+                        </Badge>
+                      </div>
+
+                      {/* Success/Error Message */}
+                      {subscriptionMessage && (
+                        <div className={`p-4 rounded-lg border ${
+                          subscriptionMessage.type === 'success'
+                            ? 'bg-green-50 border-green-200 text-green-800'
+                            : 'bg-red-50 border-red-200 text-red-800'
+                        }`}>
+                          <div className="flex items-center gap-2">
+                            {subscriptionMessage.type === 'success' ? (
+                              <CheckCircle className="h-5 w-5" />
+                            ) : (
+                              <AlertCircle className="h-5 w-5" />
+                            )}
+                            <p className="text-sm font-medium">
+                              {subscriptionMessage.text}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Action Button */}
+                      <div className="flex justify-center pt-4">
+                        <Button
+                          onClick={handleNewsletterToggle}
+                          disabled={isLoadingSubscription}
+                          variant={isSubscribed ? 'destructive' : 'default'}
+                          size="lg"
+                          className="min-w-[200px]"
+                        >
+                          {isLoadingSubscription ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              {isArabic ? 'جاري المعالجة...' : 'Processing...'}
+                            </>
+                          ) : isSubscribed ? (
+                            <>
+                              <BellOff className="h-4 w-4 mr-2" />
+                              {isArabic ? 'إلغاء الاشتراك' : 'Unsubscribe'}
+                            </>
+                          ) : (
+                            <>
+                              <Bell className="h-4 w-4 mr-2" />
+                              {isArabic ? 'اشترك الآن' : 'Subscribe Now'}
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Privacy Note */}
+                    <div className="text-xs text-gray-500 text-center pt-4 border-t">
+                      {isArabic 
+                        ? 'نحن نحترم خصوصيتك. يمكنك إلغاء الاشتراك في أي وقت.'
+                        : 'We respect your privacy. You can unsubscribe at any time.'}
+                    </div>
+                  </CardContent>
+                </Card>
               </TabsContent>
 
               {/* Orders Tab */}

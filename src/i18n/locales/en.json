@@ -214,6 +214,10 @@
       "support": "Support",
       "unknown": "Unknown role"
     },
+    "newsletter": {
+      "title": "Newsletter",
+      "description": "Manage newsletter subscribers and send campaigns"
+    },
     "categories": {
       "title": "Categories Management",
       "add": "Add Category",

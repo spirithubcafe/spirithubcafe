@@ -25,13 +25,13 @@ export const Footer: React.FC = () => {
     setErrorMessage('');
 
     try {
-      await newsletterService.subscribe(email);
+      await newsletterService.subscribe({ email });
       setSubscribeStatus('success');
       setEmail('');
       setTimeout(() => setSubscribeStatus('idle'), 3000);
     } catch (error: any) {
       setSubscribeStatus('error');
-      const message = error?.message || (language === 'ar' ? 'حدث خطأ. حاول مرة أخرى.' : 'Unable to subscribe. Please try again later.');
+      const message = error?.response?.data?.message || error?.message || (language === 'ar' ? 'حدث خطأ. حاول مرة أخرى.' : 'Unable to subscribe. Please try again later.');
       setErrorMessage(message);
       setTimeout(() => {
         setSubscribeStatus('idle');

@@ -4,7 +4,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useApp } from '../hooks/useApp';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
-import { AdminDashboard, CategoriesManagement, ProductsManagement, UsersManagement } from '../components/admin';
+import { AdminDashboard, CategoriesManagement, ProductsManagement, UsersManagement, NewsletterManagement } from '../components/admin';
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '../components/ui/sheet';
 import { 
   Shield, 
@@ -16,7 +16,8 @@ import {
   TrendingUp,
   ArrowLeft,
   Grid3X3,
-  Menu
+  Menu,
+  Mail
 } from 'lucide-react';
 import { OrdersManagement } from '../components/admin/OrdersManagement';
 
@@ -105,6 +106,14 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
       roles: ['Admin', 'Manager']
     },
     {
+      id: 'newsletter',
+      title: t('admin.newsletter.title') || 'Newsletter',
+      description: t('admin.newsletter.description') || 'Manage newsletter subscribers',
+      icon: Mail,
+      color: 'cyan',
+      roles: ['Admin', 'Manager']
+    },
+    {
       id: 'reports',
       title: t('admin.reports.title'),
       description: t('admin.reportsDesc'),
@@ -138,6 +147,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
         return <UsersManagement />;
       case 'orders':
         return <OrdersContent />;
+      case 'newsletter':
+        return <NewsletterManagement />;
       case 'reports':
         return <ReportsContent />;
       case 'system':

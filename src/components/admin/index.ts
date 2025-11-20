@@ -7,3 +7,4 @@ export { SeoManagement } from './SeoManagement';
 export { OrdersManagement } from './OrdersManagement';
 export { ReportsManagement } from './ReportsManagement';
 export { SystemSettings } from './SystemSettings';
+export { NewsletterManagement } from './NewsletterManagement';
