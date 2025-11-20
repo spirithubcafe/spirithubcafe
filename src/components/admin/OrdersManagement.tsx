@@ -631,7 +631,6 @@ export const OrdersManagement: React.FC = () => {
                   <TableRow>
                     <TableHead>{isArabic ? 'رقم الطلب' : 'Order #'}</TableHead>
                     <TableHead>{isArabic ? 'العميل' : 'Customer'}</TableHead>
-                    <TableHead>{isArabic ? 'معرف المستخدم' : 'User ID'}</TableHead>
                     <TableHead>{isArabic ? 'المبلغ' : 'Amount'}</TableHead>
                     <TableHead>{isArabic ? 'الحالة' : 'Status'}</TableHead>
                     <TableHead>{isArabic ? 'الدفع' : 'Payment'}</TableHead>
@@ -644,20 +643,33 @@ export const OrdersManagement: React.FC = () => {
                 <TableBody>
                   {orders.map((order) => (
                     <TableRow key={order.id}>
-                      <TableCell className="font-medium">{order.orderNumber}</TableCell>
+                      <TableCell className="font-medium">
+                        <div className="flex items-center gap-2">
+                          {/* Shipping Method Indicator */}
+                          {order.shippingMethod === 1 && (
+                            <div className="h-2 w-2 rounded-full bg-pink-300 shrink-0" title={isArabic ? 'استلام من المتجر' : 'Store Pickup'} />
+                          )}
+                          {order.shippingMethod === 2 && (
+                            <div className="h-2 w-2 rounded-full bg-blue-500 shrink-0" title="Nool Delivery" />
+                          )}
+                          {order.shippingMethod === 3 && (
+                            <div className="h-2 w-2 rounded-full bg-red-500 shrink-0" title={isArabic ? 'شحن أرامكس' : 'Aramex Shipping'} />
+                          )}
+                          <div>
+                            <div>{order.orderNumber}</div>
+                            {order.trackingNumber && (
+                              <div className="text-xs text-muted-foreground font-mono mt-0.5 flex items-center gap-1">
+                                <Truck className="h-3 w-3" />
+                                {order.trackingNumber}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </TableCell>
                       <TableCell>
                         <div>
                           <div className="font-medium">{order.fullName}</div>
                           <div className="text-xs text-muted-foreground">{order.email}</div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm">
-                          {order.userId ? (
-                            <span className="font-mono text-blue-600">{order.userId}</span>
-                          ) : (
-                            <span className="text-red-500 italic">{isArabic ? 'مفقود!' : 'Missing!'}</span>
-                          )}
                         </div>
                       </TableCell>
                       <TableCell>OMR {order.totalAmount.toFixed(3)}</TableCell>
@@ -718,6 +730,35 @@ export const OrdersManagement: React.FC = () => {
                   ))}
                 </TableBody>
               </Table>
+              
+              {/* Shipping Method Legend */}
+              {orders.length > 0 && (
+                <div className="mt-4 p-4 bg-muted/50 rounded-lg border">
+                  <div className="text-sm font-medium mb-2">
+                    {isArabic ? 'دليل طرق الشحن:' : 'Shipping Method Legend:'}
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+                    <div className="flex items-center gap-2">
+                      <div className="h-3 w-3 rounded-full bg-pink-300 shrink-0" />
+                      <span className="text-muted-foreground">
+                        {isArabic ? 'استلام من المتجر' : 'Store Pickup'}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="h-3 w-3 rounded-full bg-blue-500 shrink-0" />
+                      <span className="text-muted-foreground">
+                        Nool Delivery
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="h-3 w-3 rounded-full bg-red-500 shrink-0" />
+                      <span className="text-muted-foreground">
+                        {isArabic ? 'شحن أرامكس' : 'Aramex Courier'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </CardContent>
