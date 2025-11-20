@@ -61,7 +61,7 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({ mode = 'lo
 
   return (
     <div className="w-full flex justify-center">
-      <div className="w-[110%] font-bold">
+      <div className="w-full max-w-sm">
         <GoogleLogin
           onSuccess={handleGoogleSuccess}
           onError={handleGoogleError}

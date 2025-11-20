@@ -1,10 +1,44 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Facebook, Instagram, Mail, MessageCircle } from 'lucide-react';
 import { useApp } from '../../hooks/useApp';
+import { newsletterService } from '../../services';
 
 export const Footer: React.FC = () => {
   const { language } = useApp();
+  const [email, setEmail] = useState('');
+  const [subscribeStatus, setSubscribeStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [errorMessage, setErrorMessage] = useState('');
+
+  const handleNewsletterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRegex.test(email)) {
+      setSubscribeStatus('error');
+      setErrorMessage(language === 'ar' ? 'يرجى إدخال بريد إلكتروني صالح' : 'Please enter a valid email');
+      return;
+    }
+
+    setSubscribeStatus('loading');
+    setErrorMessage('');
+
+    try {
+      const result = await newsletterService.subscribe(email);
+      setSubscribeStatus('success');
+      setEmail('');
+      setTimeout(() => setSubscribeStatus('idle'), 3000);
+    } catch (error: any) {
+      setSubscribeStatus('error');
+      const message = error?.message || (language === 'ar' ? 'حدث خطأ. حاول مرة أخرى.' : 'Unable to subscribe. Please try again later.');
+      setErrorMessage(message);
+      setTimeout(() => {
+        setSubscribeStatus('idle');
+        setErrorMessage('');
+      }, 5000);
+    }
+  };
 
   const quickLinks = [
     { label: language === 'ar' ? 'الرئيسية' : 'Home', href: '/' },
@@ -62,8 +96,8 @@ export const Footer: React.FC = () => {
                 </h3>
                 <p className="text-gray-300 leading-relaxed text-sm">
                   {language === 'ar' 
-                    ? 'تأسست في عُمان، سبيرت هب روستري وقهوة متخصصة مكرسة لتقديم تجربة قهوة استثنائية. من خلال التركيز حصريًا على القهوة المختصة، يسلط فريقنا الضوء على النكهات والعطور الفريدة لكل دفعة محمصة بعناية، احتفالاً بالحرفة والأصل والشخصية وراء كل حبة.'
-                    : 'Established in Oman, SpiritHub Roastery & Specialty Coffee is dedicated to delivering an exceptional coffee experience. By focusing exclusively on specialty coffee, our team highlights the unique flavors and aromas of each carefully roasted batch, celebrating the craft, origin, and character behind every bean.'
+                    ? 'تأسست في عُمان، سبيرت هب روستري تصنع قهوة مختصة استثنائية، لتبرز النكهات والعطور والأصول الفريدة وراء كل حبة محمصة بعناية.'
+                    : 'Founded in Oman, SpiritHub Roastery crafts exceptional specialty coffee, showcasing the unique flavors, aromas, and origins behind every carefully roasted bean.'
                   }
                 </p>
               </div>
@@ -72,11 +106,11 @@ export const Footer: React.FC = () => {
             {/* Other sections in smaller columns */}
             <div className="lg:col-span-7 grid grid-cols-2 md:grid-cols-3 gap-8">
               {/* Quick Links */}
-              <div className="space-y-6">
-                <h3 className="text-xl font-bold text-amber-200">
+              <div className="space-y-3">
+                <h3 className="text-xs md:text-sm font-semibold text-amber-200 uppercase tracking-wider">
                   {language === 'ar' ? 'روابط سريعة' : 'Quick Links'}
                 </h3>
-                <ul className="space-y-3">
+                <ul className="space-y-2">
                   {quickLinks.map((link) => (
                     <li key={link.label}>
                       <Link
@@ -91,11 +125,11 @@ export const Footer: React.FC = () => {
               </div>
 
               {/* Legal Pages */}
-              <div className="space-y-6">
-                <h3 className="text-xl font-bold text-amber-200">
+              <div className="space-y-3">
+                <h3 className="text-xs md:text-sm font-semibold text-amber-200 uppercase tracking-wider">
                   {language === 'ar' ? 'الصفحات القانونية' : 'Legal Pages'}
                 </h3>
-                <ul className="space-y-3">
+                <ul className="space-y-2">
                   {legalLinks.map((link) => (
                     <li key={link.label}>
                       <Link
@@ -110,11 +144,11 @@ export const Footer: React.FC = () => {
               </div>
 
               {/* Contact Us */}
-              <div className="space-y-6">
-                <h3 className="text-xl font-bold text-amber-200">
+              <div className="space-y-3">
+                <h3 className="text-xs md:text-sm font-semibold text-amber-200 uppercase tracking-wider">
                   {language === 'ar' ? 'اتصل بنا' : 'Contact Us'}
                 </h3>
-                <div className="space-y-3 text-sm">
+                <div className="space-y-2 text-sm">
                   <p className="text-gray-300">
                     {language === 'ar' ? 'شارع الموج، مسقط، عُمان' : 'Al Mouj St, Muscat, Oman'}
                   </p>
@@ -136,33 +170,78 @@ export const Footer: React.FC = () => {
             </div>
           </div>
 
-          {/* Social Links */}
+          {/* Social Links and Newsletter */}
           <div className="border-t border-gray-600/50 mt-12 pt-8">
-            <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-              <div className="text-center md:text-start">
-                <h4 className="text-lg font-semibold text-amber-200 mb-4">
+            <div className="grid grid-cols-2 gap-4 md:gap-8 mb-6">
+              {/* Follow Us - Left Side */}
+              <div className="w-full">
+                <h4 className="text-xs md:text-sm font-semibold text-amber-200 mb-2 uppercase tracking-wider">
                   {language === 'ar' ? 'تابعنا' : 'Follow Us'}
                 </h4>
-                <div className="flex gap-4 justify-center md:justify-start">
+                <div className="flex gap-3 md:gap-4 mb-4 md:mb-6 flex-wrap">
                   {socialLinks.map((social) => (
                     <a
                       key={social.label}
                       href={social.href}
                       target={social.label !== 'Email' ? '_blank' : undefined}
                       rel={social.label !== 'Email' ? 'noopener noreferrer' : undefined}
-                      className="w-12 h-12 bg-white/10 hover:bg-amber-600 rounded-full flex items-center justify-center transition-all duration-300 backdrop-blur-sm"
+                      className="w-10 h-10 md:w-12 md:h-12 bg-white/10 hover:bg-amber-600 rounded-full flex items-center justify-center transition-all duration-300 backdrop-blur-sm"
                       aria-label={social.label}
                     >
-                      <social.icon className="w-5 h-5" />
+                      <social.icon className="w-4 h-4 md:w-5 md:h-5" />
                     </a>
                   ))}
                 </div>
+                <p className="text-gray-400 text-xs md:text-sm">
+                  © 2025 SPIRITHUB ROASTERY
+                </p>
               </div>
               
-              <div className="text-center md:text-end">
-                <p className="text-gray-400 text-sm">
-                  © 2025 SPIRITHUB ROASTERY. {language === 'ar' ? 'جميع الحقوق محفوظة' : 'All rights reserved'}.
+              {/* Newsletter - Right Side */}
+              <div className="w-full">
+                <h4 className="text-xs md:text-sm font-semibold text-amber-200 mb-2 uppercase tracking-wider">
+                  {language === 'ar' ? 'النشرة الإخبارية' : 'Newsletter'}
+                </h4>
+                <p className="text-gray-300 text-[10px] md:text-xs mb-3">
+                  {language === 'ar' 
+                    ? 'انضم للحصول على عروض خاصة وهدايا مجانية وصفقات فريدة من نوعها.'
+                    : 'SpiritHub Roastery for exclusive offers'}
                 </p>
+                <form onSubmit={handleNewsletterSubmit} className="relative">
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="your-email@example.com"
+                    disabled={subscribeStatus === 'loading'}
+                    className="w-full bg-transparent border-b border-gray-400 text-white text-xs md:text-sm py-2 pr-8 md:pr-10 focus:outline-none focus:border-amber-200 transition-colors disabled:opacity-50"
+                  />
+                  <button
+                    type="submit"
+                    disabled={subscribeStatus === 'loading'}
+                    className="absolute right-0 top-1/2 -translate-y-1/2 text-gray-400 hover:text-amber-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    aria-label="Subscribe"
+                  >
+                    {subscribeStatus === 'loading' ? (
+                      <svg className="w-4 h-4 md:w-5 md:h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                    ) : (
+                      <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                      </svg>
+                    )}
+                  </button>
+                </form>
+                {subscribeStatus === 'success' && (
+                  <p className="text-green-400 text-[10px] md:text-xs mt-2">
+                    {language === 'ar' ? 'تم الاشتراك بنجاح!' : 'Successfully subscribed!'}
+                  </p>
+                )}
+                {subscribeStatus === 'error' && errorMessage && (
+                  <p className="text-red-400 text-[10px] md:text-xs mt-2">{errorMessage}</p>
+                )}
               </div>
             </div>
           </div>
