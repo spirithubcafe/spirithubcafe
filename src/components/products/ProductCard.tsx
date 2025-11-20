@@ -26,6 +26,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const [isClosingQuickView, setIsClosingQuickView] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const [defaultVariantId, setDefaultVariantId] = useState<number | null>(null);
+  const [hasDiscount, setHasDiscount] = useState(false);
+  const [discountPercent, setDiscountPercent] = useState(0);
 
   // Try to fetch default variant for this product so we always have a variantId when adding to cart
   useEffect(() => {
@@ -36,11 +38,27 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         if (isNaN(productId)) return;
         const variants = await import('../../services/productService').then(m => m.productVariantService.getByProduct(productId));
         const defaultVariant = variants.find((v: any) => v.isDefault) ?? variants[0] ?? null;
-        if (mounted) setDefaultVariantId(defaultVariant ? defaultVariant.id : null);
+        if (mounted) {
+          setDefaultVariantId(defaultVariant ? defaultVariant.id : null);
+          // Check if any variant has a discount and calculate max discount percentage
+          let maxDiscount = 0;
+          variants.forEach((v: any) => {
+            if (v.discountPrice && v.discountPrice > 0 && v.discountPrice < v.price) {
+              const percent = Math.round(((v.price - v.discountPrice) / v.price) * 100);
+              if (percent > maxDiscount) maxDiscount = percent;
+            }
+          });
+          setHasDiscount(maxDiscount > 0);
+          setDiscountPercent(maxDiscount);
+        }
       } catch (err) {
         // ignore - optional optimization
         console.debug('No variants loaded for product card', err);
-        if (mounted) setDefaultVariantId(null);
+        if (mounted) {
+          setDefaultVariantId(null);
+          setHasDiscount(false);
+          setDiscountPercent(0);
+        }
       }
     };
     fetchDefault();
@@ -156,6 +174,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           className="w-full h-full object-cover transition-transform duration-500"
           onError={(event) => handleImageError(event, '/images/products/default-product.webp')}
         />
+        
+        {/* Sale Badge */}
+        {hasDiscount && (
+          <div className={`absolute top-2 bg-gradient-to-r from-red-500 to-red-600 text-white px-2.5 py-1 rounded-full text-xs font-bold shadow-lg z-10 ${isArabic ? 'right-2' : 'left-2'}`}>
+            {isArabic ? `تخفيض ${discountPercent}٪` : `SALE ${discountPercent}%`}
+          </div>
+        )}
         
         {/* Animated clone for cart animation */}
         {isAnimating && (
