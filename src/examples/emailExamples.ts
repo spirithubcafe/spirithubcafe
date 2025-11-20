@@ -1,20 +1,20 @@
 /**
- * نمونه‌های استفاده از Email API
+ * Email API Usage Examples
  * 
- * این فایل شامل مثال‌های عملی برای استفاده از Email API در سناریوهای مختلف است.
+ * This file contains practical examples for using the Email API in various scenarios.
  */
 
 import { emailService, prepareAttachments } from '../services/emailService';
 import type { SendEmailDto } from '../services/emailService';
 
 // ============================================
-// مثال 1: ارسال ایمیل خوش‌آمدگویی
+// Example 1: Send Welcome Email
 // ============================================
 
 export const sendWelcomeEmail = async (userEmail: string, userName: string) => {
   const htmlBody = `
     <!DOCTYPE html>
-    <html dir="rtl" lang="fa">
+    <html dir="rtl" lang="ar">
     <head>
       <meta charset="UTF-8">
       <style>
@@ -35,18 +35,18 @@ export const sendWelcomeEmail = async (userEmail: string, userName: string) => {
     <body>
       <div class="container">
         <div class="header">
-          <h1>خوش آمدید ${userName}!</h1>
+          <h1>مرحباً ${userName}!</h1>
         </div>
         <div class="content">
-          <p>سلام ${userName} عزیز،</p>
-          <p>از اینکه به جمع ما پیوستید بسیار خوشحالیم.</p>
-          <p>حساب کاربری شما با موفقیت ایجاد شد.</p>
+          <p>مرحباً ${userName},</p>
+          <p>نحن سعداء جداً بانضمامك إلينا.</p>
+          <p>تم إنشاء حسابك بنجاح.</p>
           <br>
           <a href="${window.location.origin}/profile" class="button">
-            مشاهده پروفایل
+            عرض الملف الشخصي
           </a>
           <br><br>
-          <p>با تشکر،<br>تیم Spirit Hub Cafe</p>
+          <p>مع الشكر،<br>فريق Spirit Hub Cafe</p>
         </div>
       </div>
     </body>
@@ -57,7 +57,7 @@ export const sendWelcomeEmail = async (userEmail: string, userName: string) => {
     const result = await emailService.sendSingleEmail({
       toEmail: userEmail,
       toName: userName,
-      subject: `خوش آمدید ${userName}!`,
+      subject: `مرحباً ${userName}!`,
       body: htmlBody,
       isHtml: true
     });
@@ -71,7 +71,7 @@ export const sendWelcomeEmail = async (userEmail: string, userName: string) => {
 };
 
 // ============================================
-// مثال 2: ارسال فاکتور سفارش با فایل PDF
+// Example 2: Send Order Invoice with PDF
 // ============================================
 
 interface OrderData {
@@ -86,36 +86,36 @@ interface OrderData {
 export const sendOrderInvoice = async (orderData: OrderData, pdfFile?: File) => {
   const htmlBody = `
     <!DOCTYPE html>
-    <html dir="rtl" lang="fa">
+    <html dir="rtl" lang="ar">
     <body style="font-family: Tahoma; max-width: 600px; margin: 0 auto;">
-      <h2>فاکتور سفارش #${orderData.orderNumber}</h2>
-      <p>مشتری گرامی ${orderData.customerName}،</p>
-      <p>فاکتور سفارش شما ${pdfFile ? 'در فایل پیوست' : 'در ادامه'} ارسال شده است.</p>
+      <h2>فاتورة الطلب #${orderData.orderNumber}</h2>
+      <p>عزيزنا العميل ${orderData.customerName}،</p>
+      <p>فاتورة طلبك ${pdfFile ? 'في الملف المرفق' : 'أدناه'}.</p>
       <hr>
-      <h3>خلاصه سفارش:</h3>
+      <h3>ملخص الطلب:</h3>
       <ul>
-        <li>شماره سفارش: ${orderData.orderNumber}</li>
-        <li>تاریخ: ${orderData.date}</li>
-        <li>مبلغ کل: ${orderData.totalAmount.toLocaleString('fa-IR')} تومان</li>
+        <li>رقم الطلب: ${orderData.orderNumber}</li>
+        <li>التاريخ: ${orderData.date}</li>
+        <li>المبلغ الإجمالي: ${orderData.totalAmount.toFixed(3)} OMR</li>
       </ul>
-      <h4>اقلام:</h4>
+      <h4>المنتجات:</h4>
       <table style="width: 100%; border-collapse: collapse;">
         <tr style="background: #f0f0f0;">
-          <th style="padding: 8px; border: 1px solid #ddd;">نام</th>
-          <th style="padding: 8px; border: 1px solid #ddd;">تعداد</th>
-          <th style="padding: 8px; border: 1px solid #ddd;">قیمت</th>
+          <th style="padding: 8px; border: 1px solid #ddd;">الاسم</th>
+          <th style="padding: 8px; border: 1px solid #ddd;">الكمية</th>
+          <th style="padding: 8px; border: 1px solid #ddd;">السعر</th>
         </tr>
         ${orderData.items.map(item => `
           <tr>
             <td style="padding: 8px; border: 1px solid #ddd;">${item.name}</td>
             <td style="padding: 8px; border: 1px solid #ddd;">${item.quantity}</td>
-            <td style="padding: 8px; border: 1px solid #ddd;">${item.price.toLocaleString('fa-IR')} تومان</td>
+            <td style="padding: 8px; border: 1px solid #ddd;">${item.price.toFixed(3)} OMR</td>
           </tr>
         `).join('')}
       </table>
       <br>
-      <p>با تشکر از خرید شما!</p>
-      <p>تیم Spirit Hub Cafe</p>
+      <p>شكراً لك على الشراء!</p>
+      <p>فريق Spirit Hub Cafe</p>
     </body>
     </html>
   `;
@@ -124,7 +124,7 @@ export const sendOrderInvoice = async (orderData: OrderData, pdfFile?: File) => 
     const emailData: SendEmailDto = {
       toEmail: orderData.customerEmail,
       toName: orderData.customerName,
-      subject: `فاکتور سفارش #${orderData.orderNumber}`,
+      subject: `فاتورة الطلب #${orderData.orderNumber}`,
       body: htmlBody,
       isHtml: true
     };
@@ -144,17 +144,17 @@ export const sendOrderInvoice = async (orderData: OrderData, pdfFile?: File) => 
 };
 
 // ============================================
-// مثال 3: ارسال کد تایید (OTP)
+// Example 3: Send OTP Code
 // ============================================
 
 export const sendOTPEmail = async (email: string, otpCode: string, expiryMinutes: number = 10) => {
   const htmlBody = `
     <!DOCTYPE html>
-    <html dir="rtl" lang="fa">
+    <html dir="rtl" lang="ar">
     <body style="font-family: Tahoma;">
       <div style="max-width: 500px; margin: 0 auto; padding: 20px;">
-        <h2>کد تایید شما</h2>
-        <p>کد تایید برای ورود به حساب کاربری:</p>
+        <h2>رمز التحقق الخاص بك</h2>
+        <p>رمز التحقق لتسجيل الدخول إلى حسابك:</p>
         <div style="
           background: #f0f0f0;
           padding: 20px;
@@ -167,9 +167,9 @@ export const sendOTPEmail = async (email: string, otpCode: string, expiryMinutes
         ">
           ${otpCode}
         </div>
-        <p>این کد تا ${expiryMinutes} دقیقه دیگر معتبر است.</p>
+        <p>هذا الرمز صالح لمدة ${expiryMinutes} دقيقة.</p>
         <p style="color: #999; font-size: 12px;">
-          اگر این درخواست را شما انجام نداده‌اید، لطفاً این ایمیل را نادیده بگیرید.
+          إذا لم تقم بهذا الطلب، يرجى تجاهل هذا البريد الإلكتروني.
         </p>
       </div>
     </body>
@@ -179,7 +179,7 @@ export const sendOTPEmail = async (email: string, otpCode: string, expiryMinutes
   try {
     const result = await emailService.sendSingleEmail({
       toEmail: email,
-      subject: `کد تایید شما: ${otpCode}`,
+      subject: `رمز التحقق الخاص بك: ${otpCode}`,
       body: htmlBody,
       isHtml: true
     });
@@ -193,7 +193,7 @@ export const sendOTPEmail = async (email: string, otpCode: string, expiryMinutes
 };
 
 // ============================================
-// مثال 4: ارسال اعلان تغییر وضعیت سفارش
+// Example 4: Send Order Status Update
 // ============================================
 
 type OrderStatus = 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
@@ -207,28 +207,28 @@ export const sendOrderStatusEmail = async (
 ) => {
   const statusMessages: Record<OrderStatus, { title: string; message: string; color: string }> = {
     'pending': {
-      title: 'در انتظار پردازش',
-      message: 'سفارش شما ثبت شد و در انتظار پردازش است.',
+      title: 'في انتظار المعالجة',
+      message: 'تم تسجيل طلبك وهو في انتظار المعالجة.',
       color: '#FF9800'
     },
     'processing': {
-      title: 'در حال آماده‌سازی',
-      message: 'سفارش شما در حال آماده‌سازی برای ارسال است.',
+      title: 'قيد التحضير',
+      message: 'طلبك قيد التحضير للشحن.',
       color: '#2196F3'
     },
     'shipped': {
-      title: 'ارسال شد',
-      message: 'سفارش شما ارسال شد و به زودی به دستتان می‌رسد.',
+      title: 'تم الشحن',
+      message: 'تم شحن طلبك وسيصل إليك قريباً.',
       color: '#9C27B0'
     },
     'delivered': {
-      title: 'تحویل داده شد',
-      message: 'سفارش شما با موفقیت تحویل داده شد.',
+      title: 'تم التوصيل',
+      message: 'تم توصيل طلبك بنجاح.',
       color: '#4CAF50'
     },
     'cancelled': {
-      title: 'لغو شد',
-      message: 'سفارش شما لغو شد.',
+      title: 'تم الإلغاء',
+      message: 'تم إلغاء طلبك.',
       color: '#F44336'
     }
   };
@@ -237,30 +237,30 @@ export const sendOrderStatusEmail = async (
 
   const htmlBody = `
     <!DOCTYPE html>
-    <html dir="rtl" lang="fa">
+    <html dir="rtl" lang="ar">
     <body style="font-family: Tahoma;">
       <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
         <div style="background: ${status.color}; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0;">
-          <h2 style="margin: 0;">تغییر وضعیت سفارش</h2>
+          <h2 style="margin: 0;">تحديث حالة الطلب</h2>
         </div>
         <div style="padding: 20px; border: 1px solid #ddd; border-radius: 0 0 8px 8px;">
-          ${customerName ? `<p>سلام ${customerName} عزیز،</p>` : '<p>سلام،</p>'}
-          <p>سفارش شماره <strong>#${orderId}</strong> به وضعیت <strong style="color: ${status.color}">${status.title}</strong> تغییر کرد.</p>
+          ${customerName ? `<p>مرحباً ${customerName}،</p>` : '<p>مرحباً،</p>'}
+          <p>الطلب رقم <strong>#${orderId}</strong> تم تحديثه إلى <strong style="color: ${status.color}">${status.title}</strong>.</p>
           <p>${status.message}</p>
           ${trackingNumber ? `
             <div style="background: #f9f9f9; padding: 15px; margin: 15px 0; border-radius: 5px;">
-              <strong>کد رهگیری:</strong> ${trackingNumber}
+              <strong>رقم التتبع:</strong> ${trackingNumber}
             </div>
           ` : ''}
           <p>
             <a href="${window.location.origin}/orders/${orderId}" 
                style="display: inline-block; padding: 10px 20px; background: ${status.color}; 
                       color: white; text-decoration: none; border-radius: 5px; margin-top: 10px;">
-              مشاهده جزئیات سفارش
+              عرض تفاصيل الطلب
             </a>
           </p>
           <br>
-          <p>با تشکر،<br>تیم Spirit Hub Cafe</p>
+          <p>مع الشكر،<br>فريق Spirit Hub Cafe</p>
         </div>
       </div>
     </body>
@@ -271,7 +271,7 @@ export const sendOrderStatusEmail = async (
     const result = await emailService.sendSingleEmail({
       toEmail: customerEmail,
       toName: customerName,
-      subject: `تغییر وضعیت سفارش #${orderId} - ${status.title}`,
+      subject: `تحديث حالة الطلب #${orderId} - ${status.title}`,
       body: htmlBody,
       isHtml: true
     });
@@ -285,7 +285,7 @@ export const sendOrderStatusEmail = async (
 };
 
 // ============================================
-// مثال 5: ارسال خبرنامه به مشترکان
+// Example 5: Send Newsletter to Subscribers
 // ============================================
 
 interface NewsletterData {
@@ -317,7 +317,7 @@ export const sendNewsletter = async (data: NewsletterData) => {
 };
 
 // ============================================
-// مثال 6: ارسال ایمیل با CC و BCC
+// Example 6: Send Email with CC and BCC
 // ============================================
 
 export const sendEmailWithCopy = async (
@@ -346,7 +346,7 @@ export const sendEmailWithCopy = async (
 };
 
 // ============================================
-// مثال 7: ارسال ایمیل با چندین فایل پیوست
+// Example 7: Send Email with Multiple Attachments
 // ============================================
 
 export const sendEmailWithMultipleAttachments = async (
@@ -375,7 +375,7 @@ export const sendEmailWithMultipleAttachments = async (
 };
 
 // ============================================
-// مثال 8: ارسال ایمیل بازیابی رمز عبور
+// Example 8: Send Password Reset Email
 // ============================================
 
 export const sendPasswordResetEmail = async (
@@ -387,29 +387,29 @@ export const sendPasswordResetEmail = async (
   
   const htmlBody = `
     <!DOCTYPE html>
-    <html dir="rtl" lang="fa">
+    <html dir="rtl" lang="ar">
     <body style="font-family: Tahoma;">
       <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-        <h2>بازیابی رمز عبور</h2>
-        ${userName ? `<p>سلام ${userName} عزیز،</p>` : '<p>سلام،</p>'}
-        <p>درخواستی برای بازیابی رمز عبور حساب کاربری شما دریافت شد.</p>
-        <p>برای تنظیم رمز عبور جدید، روی دکمه زیر کلیک کنید:</p>
+        <h2>استعادة كلمة المرور</h2>
+        ${userName ? `<p>مرحباً ${userName}،</p>` : '<p>مرحباً،</p>'}
+        <p>تم استلام طلب لاستعادة كلمة مرور حسابك.</p>
+        <p>لتعيين كلمة مرور جديدة، انقر على الزر أدناه:</p>
         <div style="text-align: center; margin: 30px 0;">
           <a href="${resetLink}" 
              style="display: inline-block; padding: 12px 30px; background: #2196F3; 
                     color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">
-            بازیابی رمز عبور
+            استعادة كلمة المرور
           </a>
         </div>
         <p style="color: #666; font-size: 14px;">
-          این لینک تا 24 ساعت معتبر است.
+          هذا الرابط صالح لمدة 24 ساعة.
         </p>
         <p style="color: #999; font-size: 12px;">
-          اگر این درخواست را شما انجام نداده‌اید، لطفاً این ایمیل را نادیده بگیرید.
+          إذا لم تقم بهذا الطلب، يرجى تجاهل هذا البريد الإلكتروني.
         </p>
         <hr style="margin: 30px 0;">
         <p style="color: #999; font-size: 12px;">
-          اگر دکمه کار نمی‌کند، لینک زیر را کپی کرده و در مرورگر خود باز کنید:<br>
+          إذا لم يعمل الزر، انسخ الرابط أدناه وافتحه في متصفحك:<br>
           ${resetLink}
         </p>
       </div>
@@ -421,7 +421,7 @@ export const sendPasswordResetEmail = async (
     const result = await emailService.sendSingleEmail({
       toEmail: email,
       toName: userName,
-      subject: 'بازیابی رمز عبور',
+      subject: 'استعادة كلمة المرور',
       body: htmlBody,
       isHtml: true
     });
