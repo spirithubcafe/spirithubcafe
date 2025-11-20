@@ -403,21 +403,36 @@ export const OrdersManagement: React.FC = () => {
         <meta charset="UTF-8">
         <title>${isRTL ? 'فاتورة' : 'Invoice'} #${order.orderNumber}</title>
         <style>
-          body { font-family: ${isRTL ? '"Arial", "Tahoma"' : 'Arial, sans-serif'}; margin: 20px; }
-          .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 30px; position: relative; min-height: 120px; }
-          .header .logo { position: absolute; ${isRTL ? 'left' : 'right'}: 0; top: 0; width: 120px; height: auto; }
-          .header .company-info { position: absolute; ${isRTL ? 'right' : 'left'}: 0; top: 0; text-align: ${isRTL ? 'right' : 'left'}; font-size: 12px; line-height: 1.5; }
-          .header .company-info p { margin: 3px 0; }
-          .header .company-info strong { font-size: 14px; }
-          .info { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
-          .items { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
-          .items th, .items td { border: 1px solid #ddd; padding: 10px; text-align: ${isRTL ? 'right' : 'left'}; }
-          .items th { background-color: #f5f5f5; }
-          .total { text-align: ${isRTL ? 'left' : 'right'}; font-size: 18px; font-weight: bold; }
+          @page { size: portrait; margin: 15mm; }
+          @media print {
+            body { margin: 0; }
+            .page-break { page-break-after: always; }
+          }
+          body { font-family: ${isRTL ? '"Arial", "Tahoma"' : 'Arial, sans-serif'}; margin: 20px; max-width: 210mm; }
+          .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 20px; position: relative; min-height: 120px; }
+          .header .logo { position: absolute; ${isRTL ? 'left' : 'right'}: 0; top: 0; width: 100px; height: auto; }
+          .header .company-info { position: absolute; ${isRTL ? 'right' : 'left'}: 0; top: 0; text-align: ${isRTL ? 'right' : 'left'}; font-size: 11px; line-height: 1.4; }
+          .header .company-info p { margin: 2px 0; }
+          .header .company-info strong { font-size: 13px; }
+          .header h1 { margin: 5px 0; font-size: 24px; }
+          .header h2 { margin: 5px 0; font-size: 20px; }
+          .header p { margin: 5px 0; font-size: 13px; }
+          .info { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+          .info h3 { font-size: 14px; margin-bottom: 8px; }
+          .info p { font-size: 12px; margin: 4px 0; }
+          .items { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 12px; }
+          .items th, .items td { border: 1px solid #ddd; padding: 8px; text-align: ${isRTL ? 'right' : 'left'}; }
+          .items th { background-color: #f5f5f5; font-size: 13px; }
+          .total { text-align: ${isRTL ? 'left' : 'right'}; font-size: 14px; font-weight: bold; }
+          .total p { margin: 5px 0; }
           .status { display: inline-block; padding: 5px 10px; border-radius: 5px; color: white; }
           .status.paid { background-color: #10b981; }
           .status.unpaid { background-color: #f59e0b; }
           .status.failed { background-color: #ef4444; }
+          .gift-section { margin-bottom: 20px; padding: 15px; border: 2px solid #10b981; border-radius: 8px; background-color: #f0fdf4; }
+          .gift-section h3 { font-size: 14px; margin-bottom: 10px; }
+          .gift-section p { font-size: 12px; margin: 4px 0; }
+          .footer { margin-top: 30px; padding-top: 15px; border-top: 1px solid #ddd; text-align: center; font-size: 12px; }
         </style>
       </head>
       <body>
@@ -430,7 +445,7 @@ export const OrdersManagement: React.FC = () => {
             <p>${isRTL ? 'سجل تجاري' : 'CR'}: 1346354</p>
             <p>+968 91900005</p>
             <p>+968 72726999</p>
-            <p style="margin-top: 8px;">${isRTL ? 'ضريبة' : 'VAT'}: OM110025057X</p>
+            <p style="margin-top: 6px; margin-bottom: 18px;">${isRTL ? 'ضريبة' : 'VAT'}: OM110025057X</p>
           </div>
           <h1>${isRTL ? 'فاتورة' : 'Invoice'}</h1>
           <h2>#${order.orderNumber}</h2>
@@ -461,8 +476,8 @@ export const OrdersManagement: React.FC = () => {
         </div>
 
         ${order.isGift ? `
-        <div class="gift-section" style="margin-bottom: 30px; padding: 20px; border: 2px solid #10b981; border-radius: 8px; background-color: #f0fdf4;">
-          <h3 style="color: #10b981; margin-bottom: 15px;">${isRTL ? '🎁 معلومات الهدية' : '🎁 Gift Information'}</h3>
+        <div class="gift-section">
+          <h3 style="color: #10b981;">${isRTL ? '🎁 معلومات الهدية' : '🎁 Gift Information'}</h3>
           ${order.giftRecipientName ? `<p><strong>${isRTL ? 'اسم المستلم' : 'Recipient Name'}:</strong> ${order.giftRecipientName}</p>` : ''}
           ${order.giftRecipientPhone ? `<p><strong>${isRTL ? 'هاتف المستلم' : 'Recipient Phone'}:</strong> ${order.giftRecipientPhone}</p>` : ''}
           ${order.giftRecipientEmail ? `<p><strong>${isRTL ? 'بريد المستلم' : 'Recipient Email'}:</strong> ${order.giftRecipientEmail}</p>` : ''}
@@ -474,7 +489,7 @@ export const OrdersManagement: React.FC = () => {
           ` : ''}
           ${order.giftMessage ? `
             <p><strong>${isRTL ? 'رسالة الهدية' : 'Gift Message'}:</strong></p>
-            <div style="padding: 10px; background-color: white; border-radius: 4px; font-style: italic; margin-top: 5px;">
+            <div style="padding: 8px; background-color: white; border-radius: 4px; font-style: italic; margin-top: 5px; font-size: 11px;">
               "${order.giftMessage}"
             </div>
           ` : ''}
@@ -511,14 +526,14 @@ export const OrdersManagement: React.FC = () => {
         </div>
 
         ${order.notes ? `
-          <div style="margin-top: 30px;">
-            <h3>${isRTL ? 'ملاحظات' : 'Notes'}</h3>
-            <p>${order.notes}</p>
+          <div style="margin-top: 20px;">
+            <h3 style="font-size: 14px; margin-bottom: 8px;">${isRTL ? 'ملاحظات' : 'Notes'}</h3>
+            <p style="font-size: 12px; margin: 0;">${order.notes}</p>
           </div>
         ` : ''}
         
-        <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center;">
-          <p style="font-size: 16px; margin-bottom: 5px;">${isRTL ? 'شكراً لطلبك!' : 'Thank you for your Order!'}</p>
+        <div class="footer">
+          <p style="font-size: 14px; margin-bottom: 5px; font-weight: 500;">${isRTL ? 'شكراً لطلبك!' : 'Thank you for your Order!'}</p>
           <p style="margin: 0;"><a href="https://spirithubcafe.com" style="color: #333; text-decoration: none;">https://spirithubcafe.com</a></p>
         </div>
       </body>
