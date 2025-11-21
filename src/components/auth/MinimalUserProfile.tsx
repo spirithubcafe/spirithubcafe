@@ -38,6 +38,7 @@ export const MinimalUserProfile: React.FC = () => {
     setIsLoggingOut(true);
     try {
       await logout();
+      navigate('/');
     } catch (error) {
       console.error('Logout failed:', error);
     } finally {

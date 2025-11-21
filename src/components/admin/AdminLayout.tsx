@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link, Outlet, useLocation } from 'react-router-dom';
+import { Link, Outlet, useLocation, Navigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { useApp } from '../../hooks/useApp';
 import { cn } from '../../lib/utils';
@@ -25,14 +25,12 @@ import { Avatar, AvatarFallback } from '../ui/avatar';
 import { Badge } from '../ui/badge';
 import { Sheet, SheetContent } from '../ui/sheet';
 import {
-  Shield,
   Users,
   Package,
   BarChart3,
   Settings,
   FileText,
   TrendingUp,
-  ArrowLeft,
   Grid3X3,
   Home,
   Menu,
@@ -44,13 +42,6 @@ import {
   Globe,
   Mail,
 } from 'lucide-react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '../ui/card';
 
 interface AdminNavItem {
   id: string;
@@ -125,29 +116,7 @@ export const AdminLayout: React.FC = () => {
   }
 
   if (!isAuthenticated || !user || (user && !isAdmin())) {
-    return (
-      <div className="min-h-screen bg-muted/30 flex items-center justify-center px-6">
-        <Card className="w-full max-w-md shadow-xl">
-          <CardHeader className="text-center space-y-4">
-            <Shield className="h-14 w-14 text-destructive mx-auto" />
-            <CardTitle className="text-2xl font-semibold">
-              {t('admin.accessDenied')}
-            </CardTitle>
-            <CardDescription className="text-sm text-muted-foreground">
-              {t('admin.adminRequired')}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col items-center gap-3">
-            <Link to="/">
-              <Button variant="outline" className="gap-2">
-                <ArrowLeft className="h-4 w-4" />
-                {t('admin.backHome')}
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-      </div>
-    );
+    return <Navigate to="/" replace />;
   }
 
   const navItems: AdminNavItem[] = [

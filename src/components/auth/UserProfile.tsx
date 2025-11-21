@@ -48,6 +48,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({
     setIsLoggingOut(true);
     try {
       await logout();
+      navigate('/');
     } catch (error) {
       console.error('Logout failed:', error);
     } finally {

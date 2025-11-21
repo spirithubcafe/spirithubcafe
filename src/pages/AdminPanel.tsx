@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate} from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useApp } from '../hooks/useApp';
 import { Button } from '../components/ui/button';
@@ -41,27 +41,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
   };
 
   if (!user || !isAdmin()) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center page-padding-top">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <Shield className="h-16 w-16 text-red-500 mx-auto mb-4" />
-            <CardTitle className="text-2xl text-red-600">
-              {t('admin.accessDenied')}
-            </CardTitle>
-            <CardDescription>
-              {t('admin.adminRequired')}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="text-center">
-            <Button onClick={handleBack} variant="outline">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              {t('common.back')}
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
+    return <Navigate to="/" replace />;
   }
 
   const adminModules = [
