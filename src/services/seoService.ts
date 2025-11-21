@@ -315,7 +315,9 @@ const buildFeedXml = (baseUrl: string, products: Product[]): { xml: string; entr
     const slugOrId = product.slug || product.id;
     const link = `${baseUrl}/products/${slugOrId}`;
     const description = product.metaDescription || product.description || '';
-    return `<item><title>${product.name}</title><link>${link}</link><guid>${slugOrId}</guid><description>${description}</description></item>`;
+    // Truncate guid to max 50 chars for Google Merchant Center
+    const guid = slugOrId.length > 50 ? slugOrId.substring(0, 50) : slugOrId;
+    return `<item><title>${product.name}</title><link>${link}</link><guid>${guid}</guid><description>${description}</description></item>`;
   });
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<rss version="2.0"><channel><title>Spirit Hub Cafe Product Feed</title><link>${baseUrl}</link><description>Latest active products from Spirit Hub Cafe</description>${items.join('')}\n</channel></rss>`;
