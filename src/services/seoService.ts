@@ -316,7 +316,8 @@ const buildFeedXml = (baseUrl: string, products: Product[]): { xml: string; entr
     const link = `${baseUrl}/products/${slugOrId}`;
     const description = product.metaDescription || product.description || '';
     // Truncate guid to max 50 chars for Google Merchant Center
-    const guid = slugOrId.length > 50 ? slugOrId.substring(0, 50) : slugOrId;
+    const guidStr = String(slugOrId);
+    const guid = guidStr.length > 50 ? guidStr.substring(0, 50) : guidStr;
     return `<item><title>${product.name}</title><link>${link}</link><guid>${guid}</guid><description>${description}</description></item>`;
   });
 
