@@ -7,7 +7,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { AdminDashboard, CategoriesManagement, ProductsManagement, UsersManagement, NewsletterManagement } from '../components/admin';
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '../components/ui/sheet';
 import { 
-  Shield, 
   Users, 
   Package, 
   BarChart3,
