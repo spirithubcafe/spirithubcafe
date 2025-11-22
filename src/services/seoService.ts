@@ -311,29 +311,27 @@ const buildSitemapXml = (
 };
 
 const buildFeedXml = (baseUrl: string, products: Product[]): { xml: string; entries: number } => {
-  const items = products.map((product) => {
+  const items: string[] = [];
+  
+  products.forEach((product) => {
     const slugOrId = product.slug || product.id;
     const link = `${baseUrl}/products/${slugOrId}`;
     
-    // Generate short, stable ID (max 50 chars)
+    // Generate short, stable base ID (max 50 chars)
     const guidStr = String(slugOrId);
-    const productId = guidStr.length > 50 ? guidStr.substring(0, 50) : guidStr;
+    const baseProductId = guidStr.length > 50 ? guidStr.substring(0, 50) : guidStr;
     
     // Get description
     const description = product.metaDescription || product.description || product.name || '';
     
     // Get main image - prioritize mainImage, fallback to first image in array
     const mainImage = product.mainImage || (product.images && product.images.length > 0 ? product.images[0] : null);
-    const imageUrl = mainImage ? `${baseUrl}${mainImage.imagePath}` : '';
-    
-    // Get price and availability from default variant or first variant
-    const defaultVariant = product.variants?.find(v => v.isDefault) || product.variants?.[0];
-    const price = defaultVariant?.discountPrice || defaultVariant?.price || 0;
-    const stockQuantity = defaultVariant?.stockQuantity || 0;
-    const availability = stockQuantity > 0 ? 'in stock' : 'out of stock';
-    
-    // Format price with OMR currency
-    const formattedPrice = `${price.toFixed(3)} OMR`;
+    let imageUrl = '';
+    if (mainImage && mainImage.imagePath) {
+      // Ensure image path uses WebP format (Google supports it)
+      const imagePath = mainImage.imagePath.replace(/\.(jpg|jpeg|png)$/i, '.webp');
+      imageUrl = `${baseUrl}${imagePath}`;
+    }
     
     // Brand
     const brand = 'Spirit Hub Cafe';
@@ -341,13 +339,64 @@ const buildFeedXml = (baseUrl: string, products: Product[]): { xml: string; entr
     // Google product category for Coffee
     const googleCategory = '499972';
     
-    // MPN (use SKU if available)
-    const mpn = product.sku || productId;
+    // Get active variants, sorted by price (low to high)
+    const activeVariants = (product.variants || [])
+      .filter(v => v.isActive)
+      .sort((a, b) => {
+        const priceA = a.discountPrice || a.price || 0;
+        const priceB = b.discountPrice || b.price || 0;
+        return priceA - priceB;
+      });
     
-    // Build Google Shopping Feed item
-    return `<item>
+    // If no variants, create one default item
+    if (activeVariants.length === 0) {
+      const productId = baseProductId;
+      const mpn = product.sku || productId;
+      
+      items.push(`<item>
       <g:id>${productId}</g:id>
       <g:title>${product.name}</g:title>
+      <g:description>${description}</g:description>
+      <g:link>${link}</g:link>
+      ${imageUrl ? `<g:image_link>${imageUrl}</g:image_link>` : ''}
+      <g:price>0.000 OMR</g:price>
+      <g:availability>out of stock</g:availability>
+      <g:condition>new</g:condition>
+      <g:brand>${brand}</g:brand>
+      <g:google_product_category>${googleCategory}</g:google_product_category>
+      <g:mpn>${mpn}</g:mpn>
+    </item>`);
+      return;
+    }
+    
+    // Create separate item for each variant
+    activeVariants.forEach((variant, index) => {
+      const price = variant.discountPrice || variant.price || 0;
+      const stockQuantity = variant.stockQuantity || 0;
+      const availability = stockQuantity > 0 ? 'in stock' : 'out of stock';
+      const formattedPrice = `${price.toFixed(3)} OMR`;
+      
+      // Create variant-specific ID: base-id + weight + unit (e.g., "yemen-odaini-250g")
+      const weightStr = `${variant.weight}${variant.weightUnit}`.toLowerCase();
+      let variantId = `${baseProductId}-${weightStr}`;
+      
+      // Ensure variant ID is under 50 chars
+      if (variantId.length > 50) {
+        // Try shorter base ID
+        const shorterBase = baseProductId.substring(0, 50 - weightStr.length - 1);
+        variantId = `${shorterBase}-${weightStr}`;
+      }
+      
+      // Create variant title with weight
+      const variantTitle = `${product.name} – ${variant.weight}${variant.weightUnit}`;
+      
+      // MPN uses variant SKU
+      const mpn = variant.variantSku || product.sku || variantId;
+      
+      // Build item with item_group_id for grouping
+      items.push(`<item>
+      <g:id>${variantId}</g:id>
+      <g:title>${variantTitle}</g:title>
       <g:description>${description}</g:description>
       <g:link>${link}</g:link>
       ${imageUrl ? `<g:image_link>${imageUrl}</g:image_link>` : ''}
@@ -357,7 +406,9 @@ const buildFeedXml = (baseUrl: string, products: Product[]): { xml: string; entr
       <g:brand>${brand}</g:brand>
       <g:google_product_category>${googleCategory}</g:google_product_category>
       <g:mpn>${mpn}</g:mpn>
-    </item>`;
+      <g:item_group_id>${baseProductId}</g:item_group_id>
+    </item>`);
+    });
   });
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
