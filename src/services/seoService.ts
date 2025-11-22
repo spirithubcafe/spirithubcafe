@@ -314,14 +314,61 @@ const buildFeedXml = (baseUrl: string, products: Product[]): { xml: string; entr
   const items = products.map((product) => {
     const slugOrId = product.slug || product.id;
     const link = `${baseUrl}/products/${slugOrId}`;
-    const description = product.metaDescription || product.description || '';
-    // Truncate guid to max 50 chars for Google Merchant Center
+    
+    // Generate short, stable ID (max 50 chars)
     const guidStr = String(slugOrId);
-    const guid = guidStr.length > 50 ? guidStr.substring(0, 50) : guidStr;
-    return `<item><title>${product.name}</title><link>${link}</link><guid>${guid}</guid><description>${description}</description></item>`;
+    const productId = guidStr.length > 50 ? guidStr.substring(0, 50) : guidStr;
+    
+    // Get description
+    const description = product.metaDescription || product.description || product.name || '';
+    
+    // Get main image - prioritize mainImage, fallback to first image in array
+    const mainImage = product.mainImage || (product.images && product.images.length > 0 ? product.images[0] : null);
+    const imageUrl = mainImage ? `${baseUrl}${mainImage.imagePath}` : '';
+    
+    // Get price and availability from default variant or first variant
+    const defaultVariant = product.variants?.find(v => v.isDefault) || product.variants?.[0];
+    const price = defaultVariant?.discountPrice || defaultVariant?.price || 0;
+    const stockQuantity = defaultVariant?.stockQuantity || 0;
+    const availability = stockQuantity > 0 ? 'in stock' : 'out of stock';
+    
+    // Format price with OMR currency
+    const formattedPrice = `${price.toFixed(3)} OMR`;
+    
+    // Brand
+    const brand = 'Spirit Hub Cafe';
+    
+    // Google product category for Coffee
+    const googleCategory = '499972';
+    
+    // MPN (use SKU if available)
+    const mpn = product.sku || productId;
+    
+    // Build Google Shopping Feed item
+    return `<item>
+      <g:id>${productId}</g:id>
+      <g:title>${product.name}</g:title>
+      <g:description>${description}</g:description>
+      <g:link>${link}</g:link>
+      ${imageUrl ? `<g:image_link>${imageUrl}</g:image_link>` : ''}
+      <g:price>${formattedPrice}</g:price>
+      <g:availability>${availability}</g:availability>
+      <g:condition>new</g:condition>
+      <g:brand>${brand}</g:brand>
+      <g:google_product_category>${googleCategory}</g:google_product_category>
+      <g:mpn>${mpn}</g:mpn>
+    </item>`;
   });
 
-  const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<rss version="2.0"><channel><title>Spirit Hub Cafe Product Feed</title><link>${baseUrl}</link><description>Latest active products from Spirit Hub Cafe</description>${items.join('')}\n</channel></rss>`;
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">
+  <channel>
+    <title>Spirit Hub Cafe Product Feed</title>
+    <link>${baseUrl}</link>
+    <description>Latest active products from Spirit Hub Cafe</description>
+${items.join('\n')}
+  </channel>
+</rss>`;
   return { xml, entries: items.length };
 };
 
