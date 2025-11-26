@@ -22,37 +22,34 @@ async function fetchProductDetails(identifier) {
   
   try {
     let response;
-    let data = null;
+    let result = null;
     
     // If identifier is a number, try by ID
     if (!isNaN(identifier)) {
-      console.log(`Fetching product by ID: ${API_BASE_URL}/products/${identifier}`);
-      response = await fetch(`${API_BASE_URL}/products/${identifier}`);
+      console.log(`Fetching product by ID: ${API_BASE_URL}/Products/${identifier}`);
+      response = await fetch(`${API_BASE_URL}/Products/${identifier}`);
       if (response.ok) {
-        data = await response.json();
+        result = await response.json();
       }
     }
     
-    // If not found or identifier is a slug, try fetching all products and find by slug
-    if (!data) {
-      console.log(`Fetching product by slug from: ${API_BASE_URL}/products`);
-      response = await fetch(`${API_BASE_URL}/products`);
+    // If not found or identifier is a slug, try by slug endpoint
+    if (!result) {
+      console.log(`Fetching product by slug: ${API_BASE_URL}/Products/slug/${identifier}`);
+      response = await fetch(`${API_BASE_URL}/Products/slug/${identifier}`);
       
       if (response.ok) {
-        const products = await response.json();
-        // Find product by slug
-        if (Array.isArray(products)) {
-          data = products.find(p => p.slug === identifier);
-        }
+        result = await response.json();
       }
     }
     
-    if (!data) {
+    if (!result || !result.success) {
       console.log(`Product not found: ${identifier}`);
       return null;
     }
     
-    console.log(`Product found:`, data.name || data.title);
+    const data = result.data;
+    console.log(`Product found:`, data.name);
     
     // Cache the result
     productCache.set(cacheKey, {
@@ -89,47 +86,45 @@ async function getMetaTagsForRoute(url) {
     const product = await fetchProductDetails(identifier);
     
     if (product) {
-      // Get product name (try different field names)
-      const productName = product.name || product.title || product.productName || 'Product';
+      // Get product name
+      const productName = product.name || 'Product';
       title = `${productName} | Spirit Hub Cafe`;
       
-      // Get product description (try different field names and strip HTML)
-      let productDesc = product.description || product.desc || product.shortDescription || '';
+      // Get product description and strip HTML tags
+      let productDesc = product.description || '';
       if (productDesc) {
-        // Strip HTML tags if present
-        productDesc = productDesc.replace(/<[^>]*>/g, '').trim();
+        // Strip HTML tags
+        productDesc = productDesc.replace(/<[^>]*>/g, '').replace(/&[^;]+;/g, '').trim();
+        // Get first 160 characters
         description = productDesc.length > 160 ? 
           productDesc.substring(0, 157) + '...' : 
           productDesc;
-      } else {
+      }
+      
+      // If no description, use tasting notes
+      if (!description && product.tastingNotes) {
+        description = `${productName} - ${product.tastingNotes}. Premium ${product.origin || 'specialty'} coffee from Spirit Hub Cafe in Oman`;
+      }
+      
+      // Fallback description
+      if (!description) {
         description = `Buy ${productName} from Spirit Hub Cafe - Premium specialty coffee in Oman`;
       }
       
-      // Use product image if available (try different field names)
-      const productImages = product.images || product.image || product.mainImage || product.thumbnail;
-      if (productImages) {
-        let imageUrl = '';
-        
-        if (Array.isArray(productImages) && productImages.length > 0) {
-          imageUrl = productImages[0];
-        } else if (typeof productImages === 'string') {
-          imageUrl = productImages;
-        }
-        
-        if (imageUrl) {
-          // Handle different image URL formats
-          if (imageUrl.startsWith('http')) {
-            image = imageUrl;
-          } else if (imageUrl.startsWith('/')) {
-            image = `${API_BASE_URL.replace('/api', '')}${imageUrl}`;
-          } else {
-            image = `${API_BASE_URL.replace('/api', '')}/uploads/${imageUrl}`;
-          }
+      // Use product main image
+      if (product.images && Array.isArray(product.images) && product.images.length > 0) {
+        // Find main image or use first image
+        const mainImage = product.images.find(img => img.isMain) || product.images[0];
+        if (mainImage && mainImage.imagePath) {
+          // API returns path starting with /uploads
+          image = `${API_BASE_URL.replace('/api', '')}${mainImage.imagePath}`;
         }
       }
       
       ogType = 'product';
-      console.log(`Generated meta for product: ${productName}, image: ${image}`);
+      console.log(`Generated meta for product: ${productName}`);
+      console.log(`Image: ${image}`);
+      console.log(`Description: ${description.substring(0, 50)}...`);
     } else {
       title = `Product Details | Spirit Hub Cafe`;
       description = `View our premium coffee products at Spirit Hub Cafe`;
