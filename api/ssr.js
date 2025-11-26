@@ -71,8 +71,44 @@ export default async function handler(req, res) {
   try {
     const url = req.url || '/';
     
+    // For static assets, try to serve from dist folder
+    if (url.match(/\.(js|css|png|jpg|jpeg|gif|ico|svg|webp|woff|woff2|ttf|eot|json|xml|txt|webmanifest)$/)) {
+      try {
+        const filePath = path.join(process.cwd(), 'dist', url);
+        if (fs.existsSync(filePath)) {
+          const content = fs.readFileSync(filePath);
+          const ext = path.extname(url);
+          const contentTypes = {
+            '.js': 'application/javascript',
+            '.css': 'text/css',
+            '.png': 'image/png',
+            '.jpg': 'image/jpeg',
+            '.jpeg': 'image/jpeg',
+            '.gif': 'image/gif',
+            '.svg': 'image/svg+xml',
+            '.webp': 'image/webp',
+            '.ico': 'image/x-icon',
+            '.json': 'application/json',
+            '.xml': 'application/xml',
+            '.txt': 'text/plain',
+            '.woff': 'font/woff',
+            '.woff2': 'font/woff2',
+            '.ttf': 'font/ttf',
+            '.eot': 'application/vnd.ms-fontobject',
+            '.webmanifest': 'application/manifest+json'
+          };
+          res.setHeader('Content-Type', contentTypes[ext] || 'application/octet-stream');
+          res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+          return res.status(200).send(content);
+        }
+      } catch (err) {
+        console.error('Static file error:', err);
+      }
+      return res.status(404).end();
+    }
+    
     // Read the built index.html
-    const indexPath = path.join(__dirname, '../dist/index.html');
+    const indexPath = path.join(process.cwd(), 'dist/index.html');
     let html = fs.readFileSync(indexPath, 'utf-8');
     
     // Get meta tags based on route
@@ -83,12 +119,14 @@ export default async function handler(req, res) {
     
     // Set headers
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    res.setHeader('Cache-Control', 's-maxage=31536000, stale-while-revalidate');
+    res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
     
     // Send response
     res.status(200).send(html);
   } catch (error) {
     console.error('SSR Error:', error);
-    res.status(500).send('Internal Server Error');
+    console.error('Error details:', error.message);
+    console.error('Working directory:', process.cwd());
+    res.status(500).send('Internal Server Error: ' + error.message);
   }
 }
