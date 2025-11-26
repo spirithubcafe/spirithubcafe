@@ -4,8 +4,51 @@ import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+// API base URL
+const API_BASE_URL = process.env.VITE_API_URL || 'https://spirithubapi.sbc.om/api';
+
+// Cache for product data (valid for 5 minutes)
+const productCache = new Map();
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+// Fetch product details from API (by ID or slug)
+async function fetchProductDetails(identifier) {
+  const cacheKey = `product_${identifier}`;
+  const cached = productCache.get(cacheKey);
+  
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return cached.data;
+  }
+  
+  try {
+    // Try by ID first, then by slug
+    let response = await fetch(`${API_BASE_URL}/products/${identifier}`);
+    
+    // If not found and identifier is not a number, try slug endpoint
+    if (!response.ok && isNaN(identifier)) {
+      response = await fetch(`${API_BASE_URL}/products/slug/${identifier}`);
+    }
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch product: ${response.status}`);
+    }
+    const data = await response.json();
+    
+    // Cache the result
+    productCache.set(cacheKey, {
+      data,
+      timestamp: Date.now()
+    });
+    
+    return data;
+  } catch (error) {
+    console.error('Error fetching product:', error);
+    return null;
+  }
+}
+
 // Helper function to generate meta tags based on route
-function getMetaTagsForRoute(url) {
+async function getMetaTagsForRoute(url) {
   const baseUrl = 'https://spirithubcafe.com';
   
   // Clean URL (remove query params and hash)
@@ -19,10 +62,31 @@ function getMetaTagsForRoute(url) {
 
   // Customize based on route
   if (cleanUrl.startsWith('/products/') && cleanUrl.length > 10) {
-    const productId = cleanUrl.split('/products/')[1];
-    title = `Product Details | Spirit Hub Cafe`;
-    description = `View our premium coffee products at Spirit Hub Cafe`;
-    ogType = 'product';
+    // Extract product identifier (can be ID or slug)
+    const identifier = cleanUrl.split('/products/')[1].split('/')[0];
+    
+    // Fetch product details (works with both ID and slug)
+    const product = await fetchProductDetails(identifier);
+    
+    if (product) {
+      title = `${product.name} | Spirit Hub Cafe`;
+      description = product.description ? 
+        product.description.substring(0, 160) : 
+        `Buy ${product.name} from Spirit Hub Cafe - Premium specialty coffee in Oman`;
+      
+      // Use product image if available
+      if (product.images && product.images.length > 0) {
+        image = product.images[0].startsWith('http') ? 
+          product.images[0] : 
+          `${API_BASE_URL.replace('/api', '')}${product.images[0]}`;
+      }
+      
+      ogType = 'product';
+    } else {
+      title = `Product Details | Spirit Hub Cafe`;
+      description = `View our premium coffee products at Spirit Hub Cafe`;
+      ogType = 'product';
+    }
   } else if (cleanUrl === '/products' || cleanUrl === '/products/') {
     title = 'Our Products | Spirit Hub Cafe | سبيريت هب';
     description = 'Browse our selection of specialty coffee beans, brewing equipment, and premium merchandise from Spirit Hub Cafe';
@@ -111,8 +175,8 @@ export default async function handler(req, res) {
     const indexPath = path.join(process.cwd(), 'dist/index.html');
     let html = fs.readFileSync(indexPath, 'utf-8');
     
-    // Get meta tags based on route
-    const metaTags = getMetaTagsForRoute(url);
+    // Get meta tags based on route (async)
+    const metaTags = await getMetaTagsForRoute(url);
     
     // Replace the meta tags placeholder
     html = html.replace('<!--app-head-->', metaTags);

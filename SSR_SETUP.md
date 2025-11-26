@@ -47,7 +47,7 @@ The Express server in `server.js` for each request:
 ### Supported Routes:
 - `/` - Home page
 - `/products` - Product list
-- `/products/:id` - Product details
+- `/products/:id` - Product details (with dynamic meta tags from API)
 - `/about` - About us
 - `/contact` - Contact us
 - `/favorites` - Favorites
@@ -55,6 +55,14 @@ The Express server in `server.js` for each request:
 - `/checkout` - Checkout
 - `/login` - Login
 - `/register` - Register
+
+### Dynamic Product Meta Tags:
+For product pages (`/products/:id`), the system:
+1. Fetches product data from the API
+2. Uses the product name as the page title
+3. Uses the product description for meta description
+4. Uses the first product image for Open Graph and Twitter Card images
+5. Caches product data for 5 minutes to improve performance
 
 ## Adding New Routes
 
