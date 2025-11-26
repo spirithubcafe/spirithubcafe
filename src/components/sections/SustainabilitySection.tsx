@@ -6,7 +6,7 @@ export const SustainabilitySection: React.FC = () => {
   const { language } = useApp();
 
   return (
-    <section className="relative py-32 overflow-hidden bg-cover bg-center bg-fixed" style={{ backgroundImage: 'url(/images/back.jpg)' }}>
+    <section className="relative py-32 overflow-hidden bg-cover bg-center md:bg-fixed" style={{ backgroundImage: 'url(/images/back.jpg)' }}>
       {/* Dark overlay for better text readability */}
       <div className="absolute inset-0 bg-black/60"></div>
 
