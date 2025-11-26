@@ -1,0 +1,94 @@
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// Helper function to generate meta tags based on route
+function getMetaTagsForRoute(url) {
+  const baseUrl = 'https://spirithubcafe.com';
+  
+  // Clean URL (remove query params and hash)
+  const cleanUrl = url.split('?')[0].split('#')[0];
+  
+  // Default meta tags
+  let title = 'Spirit Hub Cafe | Specialty Coffee in Oman | سبيريت هب';
+  let description = 'Spirit Hub Cafe roasts specialty coffee in Oman. Discover premium beans, artisanal brews, and a vibrant community experience at سبيريت هب.';
+  let image = `${baseUrl}/images/icon-512x512.png`;
+  let ogType = 'website';
+
+  // Customize based on route
+  if (cleanUrl.startsWith('/products/') && cleanUrl.length > 10) {
+    const productId = cleanUrl.split('/products/')[1];
+    title = `Product Details | Spirit Hub Cafe`;
+    description = `View our premium coffee products at Spirit Hub Cafe`;
+    ogType = 'product';
+  } else if (cleanUrl === '/products' || cleanUrl === '/products/') {
+    title = 'Our Products | Spirit Hub Cafe | سبيريت هب';
+    description = 'Browse our selection of specialty coffee beans, brewing equipment, and premium merchandise from Spirit Hub Cafe';
+  } else if (cleanUrl === '/about' || cleanUrl === '/about/') {
+    title = 'About Us | Spirit Hub Cafe | سبيريت هب';
+    description = 'Learn about Spirit Hub Cafe - our story, mission, and passion for roasting the finest specialty coffee in Oman';
+  } else if (cleanUrl === '/contact' || cleanUrl === '/contact/') {
+    title = 'Contact Us | Spirit Hub Cafe | سبيريت هب';
+    description = 'Get in touch with Spirit Hub Cafe in Muscat, Oman - visit us, call us, or send us a message';
+  } else if (cleanUrl === '/favorites' || cleanUrl === '/favorites/') {
+    title = 'My Favorites | Spirit Hub Cafe';
+    description = 'View your favorite products from Spirit Hub Cafe';
+  } else if (cleanUrl === '/orders' || cleanUrl === '/orders/') {
+    title = 'My Orders | Spirit Hub Cafe';
+    description = 'Track and manage your orders from Spirit Hub Cafe';
+  } else if (cleanUrl === '/checkout' || cleanUrl === '/checkout/') {
+    title = 'Checkout | Spirit Hub Cafe';
+    description = 'Complete your order from Spirit Hub Cafe - Oman\'s premier specialty coffee roastery';
+  } else if (cleanUrl === '/login' || cleanUrl === '/login/') {
+    title = 'Login | Spirit Hub Cafe';
+    description = 'Sign in to your Spirit Hub Cafe account';
+  } else if (cleanUrl === '/register' || cleanUrl === '/register/') {
+    title = 'Create Account | Spirit Hub Cafe';
+    description = 'Join Spirit Hub Cafe community and enjoy exclusive benefits';
+  }
+
+  return `
+    <title>${title}</title>
+    <meta name="description" content="${description}" />
+    <meta property="og:type" content="${ogType}" />
+    <meta property="og:title" content="${title}" />
+    <meta property="og:description" content="${description}" />
+    <meta property="og:url" content="${baseUrl}${cleanUrl}" />
+    <meta property="og:image" content="${image}" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:site_name" content="Spirit Hub Cafe" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="${title}" />
+    <meta name="twitter:description" content="${description}" />
+    <meta name="twitter:image" content="${image}" />
+  `;
+}
+
+export default async function handler(req, res) {
+  try {
+    const url = req.url || '/';
+    
+    // Read the built index.html
+    const indexPath = path.join(__dirname, '../dist/index.html');
+    let html = fs.readFileSync(indexPath, 'utf-8');
+    
+    // Get meta tags based on route
+    const metaTags = getMetaTagsForRoute(url);
+    
+    // Replace the meta tags placeholder
+    html = html.replace('<!--app-head-->', metaTags);
+    
+    // Set headers
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Cache-Control', 's-maxage=31536000, stale-while-revalidate');
+    
+    // Send response
+    res.status(200).send(html);
+  } catch (error) {
+    console.error('SSR Error:', error);
+    res.status(500).send('Internal Server Error');
+  }
+}

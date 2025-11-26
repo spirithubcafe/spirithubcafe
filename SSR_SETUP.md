@@ -102,8 +102,34 @@ curl http://localhost:5173/products | grep -E '(<title>|og:)'
 
 For deployment on different services:
 
-### Vercel / Netlify:
-These services typically support SPAs but require Edge Functions for meta injection.
+### Vercel (Recommended):
+
+The project is configured to work with Vercel out of the box:
+
+1. **Install Vercel CLI**:
+```bash
+npm i -g vercel
+```
+
+2. **Login to Vercel**:
+```bash
+vercel login
+```
+
+3. **Deploy**:
+```bash
+vercel --prod
+```
+
+Or simply connect your GitHub repository to Vercel dashboard and it will auto-deploy.
+
+**Files for Vercel:**
+- `vercel.json` - Configuration for routing and builds
+- `api/ssr.js` - Serverless function for meta tag injection
+- `.vercelignore` - Files to ignore during deployment
+
+### Netlify:
+Similar to Vercel, you can use Netlify Functions. Create `netlify.toml` and adapt the serverless function.
 
 ### VPS / Docker:
 ```dockerfile
