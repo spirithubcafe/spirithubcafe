@@ -175,6 +175,18 @@ export default defineConfig({
     // Minification settings
     minify: 'esbuild',
     // Copy static files
-    copyPublicDir: true
+    copyPublicDir: true,
+    // SSR manifest for production
+    ssrManifest: true
+  },
+  ssr: {
+    // Externalize all React-related packages to use Node.js CommonJS versions
+    external: ['react', 'react-dom', 'react-router-dom', 'react-router', 'react/jsx-runtime', 'react/jsx-dev-runtime'],
+    // Don't try to bundle browser-only libraries
+    noExternal: /^(?!quill|react-quill|swiper|overlayscrollbars)/
+  },
+  optimizeDeps: {
+    // Pre-bundle these dependencies
+    include: ['react', 'react-dom', 'react-router-dom', 'react-router']
   }
 })

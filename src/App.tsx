@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { Toaster } from './components/ui/sonner';
 import { AppProvider } from './contexts/AppContext';
@@ -120,16 +120,14 @@ function AppContent() {
 }
 
 function App() {
-  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 
   return (
     <GoogleOAuthProvider clientId={googleClientId}>
       <AuthProvider>
         <AppProvider>
           <CartProvider>
-            <Router>
-              <AppContent />
-            </Router>
+            <AppContent />
           </CartProvider>
         </AppProvider>
       </AuthProvider>

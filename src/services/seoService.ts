@@ -370,7 +370,7 @@ const buildFeedXml = (baseUrl: string, products: Product[]): { xml: string; entr
     }
     
     // Create separate item for each variant
-    activeVariants.forEach((variant, index) => {
+    activeVariants.forEach((variant) => {
       const price = variant.discountPrice || variant.price || 0;
       const stockQuantity = variant.stockQuantity || 0;
       const availability = stockQuantity > 0 ? 'in stock' : 'out of stock';

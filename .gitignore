@@ -13,6 +13,10 @@ dist-ssr
 dev-dist
 *.local
 
+# IIS logs and temp files
+iisnode/
+*.iisnode
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

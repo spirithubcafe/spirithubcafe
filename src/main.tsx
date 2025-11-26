@@ -1,5 +1,6 @@
 import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
+import { createRoot, hydrateRoot } from 'react-dom/client'
+import { BrowserRouter } from 'react-router-dom'
 
 // Import fonts
 import '@fontsource/inter/400.css';
@@ -20,11 +21,29 @@ import 'overlayscrollbars/styles/overlayscrollbars.css'
 import { OverlayScrollbars } from 'overlayscrollbars'
 import { initScrollbars } from './lib/scrollbars'
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-)
+const rootElement = document.getElementById('root')!;
+
+// Check if the app was server-rendered
+if (rootElement.hasChildNodes()) {
+  // Hydrate the server-rendered HTML
+  hydrateRoot(
+    rootElement,
+    <StrictMode>
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
+    </StrictMode>
+  );
+} else {
+  // Client-side render if not server-rendered
+  createRoot(rootElement).render(
+    <StrictMode>
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
+    </StrictMode>,
+  );
+}
 
 // Initialize Overlayscrollbars on the document body so scrollbars across the app are replaced
 // We keep this outside the render so it runs once on load. Use a custom theme class so we can
