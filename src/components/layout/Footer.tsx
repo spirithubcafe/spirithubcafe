@@ -92,7 +92,7 @@ export const Footer: React.FC = () => {
               />
               <div className="space-y-4">
                 <h3 className="text-xl font-bold text-amber-200">
-                  {language === 'ar' ? 'من قلب عُمان إلى فنجانك' : 'From Oman to Your Cup Specialty Coffee'}
+                  {language === 'ar' ? 'من قلب عُمان إلى فنجانك' : 'Where Heart Meets Heat, from Oman to You'}
                 </h3>
                 <p className="text-gray-300 leading-relaxed text-sm">
                   {language === 'ar' 
