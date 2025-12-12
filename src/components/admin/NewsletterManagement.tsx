@@ -302,7 +302,7 @@ export const NewsletterManagement: React.FC = () => {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2">
             <Button
               onClick={() => setShowEmailForm(!showEmailForm)}
               disabled={selectedEmails.length === 0}
@@ -386,69 +386,125 @@ export const NewsletterManagement: React.FC = () => {
                 <p>{language === 'ar' ? 'لا يوجد مشتركون' : 'No subscribers found'}</p>
               </div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-12">
-                      <Checkbox
-                        checked={selectedEmails.length === activeCount && activeCount > 0}
-                        onCheckedChange={handleSelectAll}
-                      />
-                    </TableHead>
-                    <TableHead>{language === 'ar' ? 'البريد الإلكتروني' : 'Email'}</TableHead>
-                    <TableHead>{language === 'ar' ? 'الاسم' : 'Name'}</TableHead>
-                    <TableHead>{language === 'ar' ? 'الحالة' : 'Status'}</TableHead>
-                    <TableHead>{language === 'ar' ? 'تاريخ الاشتراك' : 'Subscribed Date'}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
+              <>
+                {/* Mobile list */}
+                <div className="md:hidden p-3 space-y-3">
+                  <div className="flex items-center gap-2 rounded-md border bg-muted/30 p-3">
+                    <Checkbox
+                      checked={selectedEmails.length === activeCount && activeCount > 0}
+                      onCheckedChange={handleSelectAll}
+                    />
+                    <span className="text-sm text-muted-foreground">
+                      {language === 'ar' ? 'تحديد الكل' : 'Select all'}
+                    </span>
+                  </div>
+
                   {subscriptions.map((subscription) => (
-                    <TableRow key={subscription.id}>
-                      <TableCell>
+                    <div key={subscription.id} className="rounded-lg border bg-card p-4">
+                      <div className="flex items-start gap-3">
                         <Checkbox
                           checked={selectedEmails.includes(subscription.email)}
-                          onCheckedChange={(checked) => 
+                          onCheckedChange={(checked) =>
                             handleSelectEmail(subscription.email, checked as boolean)
                           }
                           disabled={!subscription.isActive}
                         />
-                      </TableCell>
-                      <TableCell className="font-medium">{subscription.email}</TableCell>
-                      <TableCell>{subscription.name || '-'}</TableCell>
-                      <TableCell>
-                        {subscription.isActive ? (
-                          <Badge variant="default" className="bg-green-500">
-                            <UserCheck className="h-3 w-3 mr-1" />
-                            {language === 'ar' ? 'نشط' : 'Active'}
-                          </Badge>
-                        ) : (
-                          <Badge variant="secondary">
-                            <UserX className="h-3 w-3 mr-1" />
-                            {language === 'ar' ? 'غير نشط' : 'Inactive'}
-                          </Badge>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {new Date(subscription.subscribedAt).toLocaleDateString(
-                          language === 'ar' ? 'ar-EG' : 'en-US'
-                        )}
-                      </TableCell>
-                    </TableRow>
+                        <div className="min-w-0 flex-1">
+                          <div className="font-medium truncate">{subscription.email}</div>
+                          <div className="text-xs text-muted-foreground truncate">
+                            {subscription.name || '-'}
+                          </div>
+                          <div className="mt-2 flex flex-wrap items-center gap-2">
+                            {subscription.isActive ? (
+                              <Badge variant="default" className="bg-green-500">
+                                <UserCheck className="h-3 w-3 mr-1" />
+                                {language === 'ar' ? 'نشط' : 'Active'}
+                              </Badge>
+                            ) : (
+                              <Badge variant="secondary">
+                                <UserX className="h-3 w-3 mr-1" />
+                                {language === 'ar' ? 'غير نشط' : 'Inactive'}
+                              </Badge>
+                            )}
+                            <span className="text-xs text-muted-foreground">
+                              {new Date(subscription.subscribedAt).toLocaleDateString(
+                                language === 'ar' ? 'ar-EG' : 'en-US'
+                              )}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   ))}
-                </TableBody>
-              </Table>
+                </div>
+
+                {/* Desktop table */}
+                <div className="hidden md:block w-full min-w-0 max-w-full">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-12">
+                          <Checkbox
+                            checked={selectedEmails.length === activeCount && activeCount > 0}
+                            onCheckedChange={handleSelectAll}
+                          />
+                        </TableHead>
+                        <TableHead>{language === 'ar' ? 'البريد الإلكتروني' : 'Email'}</TableHead>
+                        <TableHead>{language === 'ar' ? 'الاسم' : 'Name'}</TableHead>
+                        <TableHead>{language === 'ar' ? 'الحالة' : 'Status'}</TableHead>
+                        <TableHead>{language === 'ar' ? 'تاريخ الاشتراك' : 'Subscribed Date'}</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {subscriptions.map((subscription) => (
+                        <TableRow key={subscription.id}>
+                          <TableCell>
+                            <Checkbox
+                              checked={selectedEmails.includes(subscription.email)}
+                              onCheckedChange={(checked) => 
+                                handleSelectEmail(subscription.email, checked as boolean)
+                              }
+                              disabled={!subscription.isActive}
+                            />
+                          </TableCell>
+                          <TableCell className="font-medium">{subscription.email}</TableCell>
+                          <TableCell>{subscription.name || '-'}</TableCell>
+                          <TableCell>
+                            {subscription.isActive ? (
+                              <Badge variant="default" className="bg-green-500">
+                                <UserCheck className="h-3 w-3 mr-1" />
+                                {language === 'ar' ? 'نشط' : 'Active'}
+                              </Badge>
+                            ) : (
+                              <Badge variant="secondary">
+                                <UserX className="h-3 w-3 mr-1" />
+                                {language === 'ar' ? 'غير نشط' : 'Inactive'}
+                              </Badge>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {new Date(subscription.subscribedAt).toLocaleDateString(
+                              language === 'ar' ? 'ar-EG' : 'en-US'
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </>
             )}
           </div>
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <p className="text-sm text-muted-foreground">
                 {language === 'ar'
                   ? `عرض ${(page - 1) * pageSize + 1} - ${Math.min(page * pageSize, totalCount)} من ${totalCount}`
                   : `Showing ${(page - 1) * pageSize + 1} - ${Math.min(page * pageSize, totalCount)} of ${totalCount}`}
               </p>
-              <div className="flex gap-2">
+              <div className="flex gap-2 justify-between sm:justify-end">
                 <Button
                   variant="outline"
                   size="sm"

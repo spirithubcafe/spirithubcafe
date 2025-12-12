@@ -1,0 +1,47 @@
+/* Professional Region Switcher Styles */
+
+/* Base button styles - color is controlled by parent component based on page context */
+.region-switcher-button {
+  transition: all 0.2s ease-in-out;
+  font-weight: 500;
+}
+
+/* Smooth dropdown animation */
+.region-dropdown-content {
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Active region highlight */
+.region-item-active {
+  background-color: #fef3c7 !important;
+  color: #78350f !important;
+  font-weight: 600;
+}
+
+/* Region item hover effect */
+.region-item {
+  transition: all 0.15s ease-in-out;
+}
+
+.region-item:hover {
+  background-color: #f9fafb;
+  transform: translateX(2px);
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .region-switcher-button {
+    padding: 0.5rem;
+  }
+}

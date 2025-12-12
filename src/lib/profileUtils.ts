@@ -2,7 +2,18 @@
  * Profile utility functions
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://spirithubapi.sbc.om';
+/**
+ * Get the API base URL based on current region
+ */
+const getApiBaseUrl = (): string => {
+  const savedRegion = localStorage.getItem('spirithub-region') || 'om';
+  
+  if (savedRegion === 'sa') {
+    return import.meta.env.VITE_API_BASE_URL_SA || 'https://spirithubapi-sa.sbc.om';
+  }
+  
+  return import.meta.env.VITE_API_BASE_URL_OM || import.meta.env.VITE_API_BASE_URL || 'https://spirithubapi.sbc.om';
+};
 
 /**
  * Converts a relative profile picture path to an absolute URL
@@ -18,7 +29,8 @@ export const getProfilePictureUrl = (profilePicture?: string): string | undefine
   }
   
   // Construct absolute URL from relative path
-  return `${API_BASE_URL}${profilePicture.startsWith('/') ? '' : '/'}${profilePicture}`;
+  const apiBaseUrl = getApiBaseUrl();
+  return `${apiBaseUrl}${profilePicture.startsWith('/') ? '' : '/'}${profilePicture}`;
 };
 
 /**

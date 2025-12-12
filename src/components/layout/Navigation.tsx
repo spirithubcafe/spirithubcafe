@@ -13,16 +13,19 @@ import {
 import { useApp } from '../../hooks/useApp';
 import { useAuth } from '../../hooks/useAuth';
 import { useCart } from '../../hooks/useCart';
+import { useRegion } from '../../hooks/useRegion';
 import { AuthButtons, LoginButton, RegisterButton } from '../auth/AuthButtons';
 import { UserProfile } from '../auth/UserProfile';
 import { MinimalUserProfile } from '../auth/MinimalUserProfile';
 import { ScrollArea } from '../ui/scroll-area';
+import { RegionSwitcher } from './RegionSwitcher';
 
 export const Navigation: React.FC = () => {
   const { t } = useTranslation();
   const { language, toggleLanguage, categories } = useApp();
   const { isAuthenticated, isLoading, user } = useAuth();
   const { totalItems, openCart } = useCart();
+  const { currentRegion } = useRegion();
   const location = useLocation();
   const handleMobileCartOpen = React.useCallback(() => {
     setTimeout(() => {
@@ -30,21 +33,31 @@ export const Navigation: React.FC = () => {
     }, 0);
   }, [openCart]);
   
+  // Helper to build region-aware URLs
+  const getRegionalUrl = (path: string) => {
+    // If path already has region, return as is
+    if (path.startsWith('/om/') || path.startsWith('/sa/')) {
+      return path;
+    }
+    // Add current region prefix
+    return `/${currentRegion.code}${path}`;
+  };
+  
   // Check if we're on the home page
-  const isHomePage = location.pathname === '/';
+  const isHomePage = location.pathname === '/' || location.pathname === '/om' || location.pathname === '/om/' || location.pathname === '/sa' || location.pathname === '/sa/';
   
   // Hide navigation on admin pages
-  const isAdminPage = location.pathname.startsWith('/admin');
+  const isAdminPage = location.pathname.includes('/admin');
   
   if (isAdminPage) {
     return null;
   }
 
   const navItems = [
-    { key: 'home', label: t('nav.home'), href: '/', isRoute: true, hasDropdown: false },
-    { key: 'products', label: t('nav.products'), href: '/products', isRoute: true, hasDropdown: true },
-    { key: 'about', label: t('nav.about'), href: '/about', isRoute: true, hasDropdown: false },
-    { key: 'contact', label: t('nav.contact'), href: '/contact', isRoute: true, hasDropdown: false }
+    { key: 'home', label: t('nav.home'), href: getRegionalUrl('/'), isRoute: true, hasDropdown: false },
+    { key: 'products', label: t('nav.products'), href: getRegionalUrl('/products'), isRoute: true, hasDropdown: true },
+    { key: 'about', label: t('nav.about'), href: getRegionalUrl('/about'), isRoute: true, hasDropdown: false },
+    { key: 'contact', label: t('nav.contact'), href: getRegionalUrl('/contact'), isRoute: true, hasDropdown: false }
   ];
 
   const DirectionChevron = language === 'ar' ? ChevronLeft : ChevronRight;
@@ -74,7 +87,7 @@ export const Navigation: React.FC = () => {
                 {/* All Products Link */}
                 <DropdownMenuItem asChild>
                   <Link
-                    to="/products"
+                    to={getRegionalUrl('/products')}
                     className={`w-full px-4 py-2 ${language === 'ar' ? 'text-right' : 'text-left'} text-gray-900 hover:bg-amber-50 hover:text-amber-600 font-medium`}
                   >
                     {language === 'ar' ? 'جميع المنتجات' : 'All Products'}
@@ -90,7 +103,7 @@ export const Navigation: React.FC = () => {
                 {categories.map((category) => (
                   <DropdownMenuItem key={category.id} asChild>
                     <Link
-                      to={`/products?category=${category.id}`}
+                      to={getRegionalUrl(`/products?category=${category.id}`)}
                       className={`w-full px-4 py-2 ${language === 'ar' ? 'text-right' : 'text-left'} text-gray-700 hover:bg-amber-50 hover:text-amber-600`}
                     >
                       {category.name}
@@ -132,7 +145,7 @@ export const Navigation: React.FC = () => {
       <div className="container mx-auto px-3 sm:px-4 h-full">
         <div className="flex items-center justify-between h-full">
           {/* Logo */}
-          <Link to="/" className="flex items-center hover:opacity-80 transition-opacity flex-shrink-0">
+          <Link to={getRegionalUrl('/')} className="flex items-center hover:opacity-80 transition-opacity flex-shrink-0">
             <img 
               src={isHomePage ? "/images/logo/logo-light.png" : "/images/logo/logo-dark.png"}
               alt="Spirit Hub Cafe"
@@ -143,6 +156,9 @@ export const Navigation: React.FC = () => {
           {/* Desktop Navigation - Hidden on tablet and below */}
           <div className="hidden lg:flex items-center space-x-6 xl:space-x-8">
             <NavContent />
+            
+            {/* Region Switcher */}
+            <RegionSwitcher isHomePage={isHomePage} />
             
             {/* Language Toggle */}
             <Button
@@ -202,6 +218,9 @@ export const Navigation: React.FC = () => {
             
             {/* Tablet Actions */}
             <div className="flex items-center space-x-2">
+              {/* Region Switcher - Tablet */}
+              <RegionSwitcher isHomePage={isHomePage} />
+              
               <Button
                 variant="ghost"
                 size="sm"
@@ -239,7 +258,10 @@ export const Navigation: React.FC = () => {
           </div>
 
           {/* Mobile Navigation */}
-          <div className="flex md:hidden items-center space-x-3">
+          <div className="flex md:hidden items-center space-x-2">
+            {/* Region Switcher - Mobile */}
+            <RegionSwitcher isHomePage={isHomePage} />
+            
             {/* Language Toggle */}
             <Button
               variant="ghost"

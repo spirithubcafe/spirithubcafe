@@ -2,6 +2,8 @@ import React, { useMemo, useState } from 'react';
 import { Phone, Mail, MapPin, Clock, MessageCircle, Send, Instagram, Facebook } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useApp } from '../hooks/useApp';
+import { useRegion } from '../hooks/useRegion';
+import { REGION_INFO } from '../config/regionInfo';
 import { PageHeader } from '../components/layout/PageHeader';
 import { Input } from '../components/ui/input';
 import { Textarea } from '../components/ui/textarea';
@@ -14,6 +16,9 @@ import { siteMetadata } from '../config/siteMetadata';
 
 export const ContactPage: React.FC = () => {
   const { language } = useApp();
+  const { currentRegion } = useRegion();
+  const regionInfo = REGION_INFO[currentRegion.code];
+  
   const seoCopy = useMemo(
     () =>
       language === 'ar'
@@ -40,14 +45,14 @@ export const ContactPage: React.FC = () => {
       contactPoint: [
         {
           '@type': 'ContactPoint',
-          telephone: '+96891900005',
+          telephone: regionInfo.contact.phone,
           contactType: 'customer service',
-          areaServed: 'OM',
+          areaServed: currentRegion.code.toUpperCase(),
           availableLanguage: ['en', 'ar'],
         },
       ],
     }),
-    [seoCopy.description, seoCopy.title]
+    [seoCopy.description, seoCopy.title, regionInfo.contact.phone, currentRegion.code]
   );
   const [formData, setFormData] = useState({
     name: '',
@@ -86,8 +91,8 @@ export const ContactPage: React.FC = () => {
     
     const whatsappMessage = encodeURIComponent(messageParts.join('\n'));
     
-    // WhatsApp phone number
-    const whatsappNumber = '96891900005';
+    // WhatsApp phone number from region info
+    const whatsappNumber = regionInfo.contact.whatsapp;
     const whatsappUrl = `https://api.whatsapp.com/send?phone=${whatsappNumber}&text=${whatsappMessage}`;
     
     // Open WhatsApp in a new tab
@@ -157,27 +162,27 @@ export const ContactPage: React.FC = () => {
     {
       icon: Phone,
       title: language === 'ar' ? 'الهاتف' : 'Phone',
-      value: '+968 9190 0005',
-      value2: '+968 7272 6999',
-      link: 'tel:+96891900005',
+      value: regionInfo.contact.phone,
+      value2: regionInfo.contact.phone2,
+      link: `tel:${regionInfo.contact.phone.replace(/\s/g, '')}`,
       forceLtr: true
     },
     {
       icon: Mail,
       title: language === 'ar' ? 'البريد الإلكتروني' : 'Email',
-      value: 'info@spirithubcafe.com',
-      link: 'mailto:info@spirithubcafe.com'
+      value: regionInfo.contact.email,
+      link: `mailto:${regionInfo.contact.email}`
     },
     {
       icon: MapPin,
       title: language === 'ar' ? 'العنوان' : 'Location',
-      value: language === 'ar' ? 'شارع الموج، مسقط، عمان' : 'Al Mouj St, Muscat, Oman',
-      link: 'https://maps.google.com/?q=23.618926,58.256566'
+      value: language === 'ar' ? regionInfo.contact.address.ar : regionInfo.contact.address.en,
+      link: regionInfo.contact.googleMapsUrl
     },
     {
       icon: Clock,
       title: language === 'ar' ? 'ساعات العمل' : 'Working Hours',
-      value: language === 'ar' ? 'يومياً: 7 صباحاً - 12 منتصف الليل' : 'Daily: 7 AM - 12 AM',
+      value: language === 'ar' ? regionInfo.contact.workingHours.ar : regionInfo.contact.workingHours.en,
       link: '#'
     }
   ];

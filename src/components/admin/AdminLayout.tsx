@@ -25,6 +25,13 @@ import { Avatar, AvatarFallback } from '../ui/avatar';
 import { Badge } from '../ui/badge';
 import { Sheet, SheetContent } from '../ui/sheet';
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '../ui/dialog';
+import {
   Users,
   Package,
   BarChart3,
@@ -77,6 +84,7 @@ export const AdminLayout: React.FC = () => {
 
   const [moduleSearch, setModuleSearch] = useState('');
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {
     if (typeof window === 'undefined') {
       return false;
@@ -481,7 +489,7 @@ export const AdminLayout: React.FC = () => {
         <div className="flex min-h-screen bg-muted/30 text-sm text-foreground">
           <aside
             className={cn(
-              'relative hidden border-r border-border/60 bg-card/95 text-card-foreground shadow-[0_18px_45px_-15px_rgba(15,23,42,0.4)] backdrop-blur supports-[backdrop-filter]:backdrop-blur-lg transition-all duration-300 ease-in-out md:flex md:flex-col',
+              'relative hidden border-r border-border/60 bg-card/95 text-card-foreground shadow-[0_18px_45px_-15px_rgba(15,23,42,0.4)] backdrop-blur supports-backdrop-filter:backdrop-blur-lg transition-all duration-300 ease-in-out md:flex md:flex-col',
               isSidebarCollapsed ? 'w-20' : 'w-72'
             )}
           >
@@ -498,7 +506,7 @@ export const AdminLayout: React.FC = () => {
           </SheetContent>
 
           <div className="flex flex-1 flex-col">
-            <header className="sticky top-0 z-30 border-b border-border/60 bg-background/85 backdrop-blur supports-[backdrop-filter]:backdrop-blur-md">
+            <header className="sticky top-0 z-30 border-b border-border/60 bg-background/85 backdrop-blur supports-backdrop-filter:backdrop-blur-md">
               <div className="flex h-16 w-full items-center gap-3 px-4 md:px-6">
                 <div className="flex items-center gap-2">
                   <Button
@@ -532,18 +540,10 @@ export const AdminLayout: React.FC = () => {
                       )}
                     />
                   </Button>
-                  <div className="hidden md:flex flex-col leading-tight">
-                    <span className="text-[11px] font-medium uppercase tracking-[0.3em] text-muted-foreground/80">
-                      {t('admin.panel')}
-                    </span>
-                    <span className="text-sm font-semibold text-foreground">
-                      {t('admin.welcome')} {userName}
-                    </span>
-                  </div>
                 </div>
 
                 <form
-                  className="relative ml-auto flex-1 max-w-md"
+                  className="relative ml-auto hidden flex-1 max-w-md sm:flex"
                   onSubmit={handleSearchSubmit}
                 >
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -557,6 +557,28 @@ export const AdminLayout: React.FC = () => {
                 </form>
 
                 <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="sm:hidden"
+                    onClick={() => setIsMobileSearchOpen(true)}
+                    aria-label={t('admin.accessibility.searchModules')}
+                  >
+                    <Search className="h-5 w-5" />
+                  </Button>
+
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="icon"
+                    className="rounded-full border-border/60 md:hidden"
+                    aria-label={t('admin.backHome')}
+                  >
+                    <Link to="/">
+                      <Home className="h-4 w-4" />
+                    </Link>
+                  </Button>
                   <Button
                     asChild
                     variant="outline"
@@ -594,7 +616,7 @@ export const AdminLayout: React.FC = () => {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-56">
                       <DropdownMenuLabel>
-                        {t('admin.welcome')} {userName}
+                        {userName}
                       </DropdownMenuLabel>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem asChild>
@@ -632,8 +654,27 @@ export const AdminLayout: React.FC = () => {
               </div>
             </header>
 
-            <main className="flex-1 overflow-y-auto">
-              <div className="mx-auto flex w-full flex-col gap-6 px-4 py-6 md:px-8 lg:px-10">
+            <Dialog open={isMobileSearchOpen} onOpenChange={setIsMobileSearchOpen}>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>{t('admin.accessibility.searchModules')}</DialogTitle>
+                  <DialogDescription>{t('admin.modulesDesc')}</DialogDescription>
+                </DialogHeader>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    value={moduleSearch}
+                    onChange={(event) => setModuleSearch(event.target.value)}
+                    placeholder={t('admin.modulesDesc')}
+                    className="h-11 pl-10"
+                    autoFocus
+                  />
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            <main className="flex-1 min-w-0 overflow-y-auto">
+              <div className="mx-auto flex w-full min-w-0 flex-col gap-6 px-4 py-6 md:px-8 lg:px-10">
                 <Outlet />
               </div>
             </main>

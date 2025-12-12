@@ -3,8 +3,20 @@ import type {
   PasswordResetResponse
 } from '../types/passwordReset';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://spirithubapi.sbc.om';
-const API_BASE = `${API_BASE_URL}/api/PasswordReset`;
+/**
+ * Get the API base URL based on current region
+ */
+const getApiBaseUrl = (): string => {
+  const savedRegion = localStorage.getItem('spirithub-region') || 'om';
+  
+  if (savedRegion === 'sa') {
+    return import.meta.env.VITE_API_BASE_URL_SA || 'https://spirithubapi-sa.sbc.om';
+  }
+  
+  return import.meta.env.VITE_API_BASE_URL_OM || import.meta.env.VITE_API_BASE_URL || 'https://spirithubapi.sbc.om';
+};
+
+const getApiBase = () => `${getApiBaseUrl()}/api/PasswordReset`;
 
 export const passwordResetService = {
   /**
@@ -14,7 +26,7 @@ export const passwordResetService = {
    */
   forgotPassword: async (email: string): Promise<PasswordResetResponse> => {
     const response = await axios.post<PasswordResetResponse>(
-      `${API_BASE}/forgot-password`,
+      `${getApiBase()}/forgot-password`,
       { email }
     );
     return response.data;
@@ -27,7 +39,7 @@ export const passwordResetService = {
    */
   verifyToken: async (token: string): Promise<PasswordResetResponse> => {
     const response = await axios.post<PasswordResetResponse>(
-      `${API_BASE}/verify-token`,
+      `${getApiBase()}/verify-token`,
       { token }
     );
     return response.data;
@@ -46,7 +58,7 @@ export const passwordResetService = {
     confirmPassword: string
   ): Promise<PasswordResetResponse> => {
     const response = await axios.post<PasswordResetResponse>(
-      `${API_BASE}/reset-password`,
+      `${getApiBase()}/reset-password`,
       { token, newPassword, confirmPassword }
     );
     return response.data;

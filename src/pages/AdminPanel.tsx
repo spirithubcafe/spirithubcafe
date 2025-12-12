@@ -16,7 +16,8 @@ import {
   ArrowLeft,
   Grid3X3,
   Menu,
-  Mail
+  Mail,
+  Home
 } from 'lucide-react';
 import { OrdersManagement } from '../components/admin/OrdersManagement';
 
@@ -114,6 +115,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
     module.roles.some(role => hasRole(role))
   );
 
+  const currentModule = availableModules.find((module) => module.id === selectedModule);
+
   const renderModuleContent = () => {
     switch (selectedModule) {
       case 'dashboard':
@@ -192,17 +195,25 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
 
             <div>
               <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
-                {t('admin.adminPanel')}
+                {currentModule?.title ?? t('admin.dashboard')}
               </h1>
-              <p className="text-sm text-muted-foreground hidden sm:block">
-                {t('admin.welcomeMessage')} {user?.displayName || user?.username}
-              </p>
             </div>
           </div>
-          <Button onClick={handleBack} variant="outline" size="sm" className="sm:size-default">
-            <ArrowLeft className="h-4 w-4 sm:mr-2" />
-            <span className="hidden sm:inline">{t('common.back')}</span>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="icon"
+              className="sm:hidden"
+              onClick={() => navigate('/')}
+              aria-label={t('common.backHome')}
+            >
+              <Home className="h-4 w-4" />
+            </Button>
+            <Button onClick={handleBack} variant="outline" size="sm" className="sm:size-default">
+              <ArrowLeft className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">{t('common.back')}</span>
+            </Button>
+          </div>
         </div>
 
         <div className="flex flex-col lg:flex-row gap-6">

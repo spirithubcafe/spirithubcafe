@@ -145,23 +145,152 @@ export const CategoriesManagement: React.FC = () => {
       <CardContent className="space-y-4">
         {/* Header Actions */}
         <div className="flex flex-col sm:flex-row gap-4 justify-between">
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-2">
             <Search className="h-4 w-4 text-muted-foreground" />
             <Input
               placeholder={t('admin.categories.search')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="max-w-sm"
+              className="w-full sm:max-w-sm"
             />
           </div>
-          <Button onClick={handleCreateCategory}>
+          <Button onClick={handleCreateCategory} className="w-full sm:w-auto">
             <Plus className="h-4 w-4 mr-2" />
             {t('admin.categories.add')}
           </Button>
         </div>
 
-        {/* Categories Table */}
-        <div className="rounded-md border">
+        {/* Mobile list */}
+        <div className="md:hidden space-y-3">
+          {sortedCategories.length === 0 ? (
+            <div className="rounded-lg border p-6 text-center text-sm text-muted-foreground">
+              {t('admin.categories.noCategories')}
+            </div>
+          ) : (
+            sortedCategories.map((category, index) => (
+              <div
+                key={category.id}
+                className="rounded-lg border bg-card p-4"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="font-semibold truncate">{category.name}</div>
+                    <div className="text-xs text-muted-foreground truncate">
+                      {category.nameAr || '-'}
+                    </div>
+                    <div className="mt-1 font-mono text-xs text-muted-foreground truncate">
+                      {category.slug}
+                    </div>
+                  </div>
+                  <div className="shrink-0 flex flex-col items-end gap-2">
+                    <Badge variant={category.isActive ? 'default' : 'secondary'}>
+                      {category.isActive
+                        ? t('admin.categories.active')
+                        : t('admin.categories.inactive')}
+                    </Badge>
+                    {category.isDisplayedOnHomepage ? (
+                      <div className="flex items-center gap-1 text-xs text-green-700">
+                        <Eye className="h-4 w-4" />
+                        <span className="sr-only">Homepage</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <EyeOff className="h-4 w-4" />
+                        <span className="sr-only">Not on homepage</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="mt-3 flex items-center justify-between gap-3 text-sm">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Package className="h-4 w-4" />
+                    <span>{category.productCount || 0}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">#{category.displayOrder}</span>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => handleReorderCategory(category.id, 'up')}
+                      disabled={reordering || index === 0}
+                      aria-label="Move up"
+                    >
+                      <ArrowUp className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => handleReorderCategory(category.id, 'down')}
+                      disabled={reordering || index === sortedCategories.length - 1}
+                      aria-label="Move down"
+                    >
+                      <ArrowDown className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleEditCategory(category.id)}
+                  >
+                    <Edit className="h-4 w-4 mr-2" />
+                    {t('common.edit')}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleToggleActive(category.id)}
+                  >
+                    {category.isActive ? (
+                      <>
+                        <EyeOff className="h-4 w-4 mr-2" />
+                        {t('admin.categories.inactive')}
+                      </>
+                    ) : (
+                      <>
+                        <Eye className="h-4 w-4 mr-2" />
+                        {t('admin.categories.active')}
+                      </>
+                    )}
+                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="outline" size="sm" className="text-destructive">
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        {t('common.delete')}
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>{t('admin.categories.deleteConfirm')}</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          {t('admin.categories.deleteWarning')} "{category.name}"
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => handleDeleteCategory(category.id)}
+                          className="bg-red-600 hover:bg-red-700"
+                        >
+                          {t('common.delete')}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Desktop table */}
+        <div className="hidden md:block w-full min-w-0 max-w-full rounded-md border">
           <Table>
             <TableHeader>
               <TableRow>

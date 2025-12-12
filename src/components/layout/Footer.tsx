@@ -2,10 +2,14 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Facebook, Instagram, Mail, MessageCircle } from 'lucide-react';
 import { useApp } from '../../hooks/useApp';
+import { useRegion } from '../../hooks/useRegion';
 import { newsletterService } from '../../services';
+import { REGION_INFO } from '../../config/regionInfo';
 
 export const Footer: React.FC = () => {
   const { language } = useApp();
+  const { currentRegion } = useRegion();
+  const regionInfo = REGION_INFO[currentRegion.code];
   const [email, setEmail] = useState('');
   const [subscribeStatus, setSubscribeStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
@@ -40,26 +44,34 @@ export const Footer: React.FC = () => {
     }
   };
 
+  // Helper to build region-aware URLs
+  const getRegionalUrl = (path: string) => {
+    if (path.startsWith('/om/') || path.startsWith('/sa/')) {
+      return path;
+    }
+    return `/${currentRegion.code}${path}`;
+  };
+
   const quickLinks = [
-    { label: language === 'ar' ? 'الرئيسية' : 'Home', href: '/' },
-    { label: language === 'ar' ? 'المتجر' : 'Shop', href: '/products' },
-    { label: language === 'ar' ? 'من نحن' : 'About', href: '/about' },
-    { label: language === 'ar' ? 'اتصل بنا' : 'Contact Us', href: '/contact' }
+    { label: language === 'ar' ? 'الرئيسية' : 'Home', href: getRegionalUrl('/') },
+    { label: language === 'ar' ? 'المتجر' : 'Shop', href: getRegionalUrl('/products') },
+    { label: language === 'ar' ? 'من نحن' : 'About', href: getRegionalUrl('/about') },
+    { label: language === 'ar' ? 'اتصل بنا' : 'Contact Us', href: getRegionalUrl('/contact') }
   ];
 
   const legalLinks = [
-    { label: language === 'ar' ? 'سياسة الخصوصية' : 'Privacy Policy', href: '/privacy' },
-    { label: language === 'ar' ? 'الشروط والأحكام' : 'Terms & Conditions', href: '/terms' },
-    { label: language === 'ar' ? 'سياسة التوصيل' : 'Delivery Policy', href: '/delivery' },
-    { label: language === 'ar' ? 'سياسة الاستبدال' : 'Refund Policy', href: '/refund' },
-    { label: language === 'ar' ? 'الأسئلة الشائعة' : 'FAQ', href: '/faq' }
+    { label: language === 'ar' ? 'سياسة الخصوصية' : 'Privacy Policy', href: getRegionalUrl('/privacy') },
+    { label: language === 'ar' ? 'الشروط والأحكام' : 'Terms & Conditions', href: getRegionalUrl('/terms') },
+    { label: language === 'ar' ? 'سياسة التوصيل' : 'Delivery Policy', href: getRegionalUrl('/delivery') },
+    { label: language === 'ar' ? 'سياسة الاستبدال' : 'Refund Policy', href: getRegionalUrl('/refund') },
+    { label: language === 'ar' ? 'الأسئلة الشائعة' : 'FAQ', href: getRegionalUrl('/faq') }
   ];
 
   const socialLinks = [
-    { icon: Facebook, href: 'https://www.facebook.com/spirithubcafe', label: 'Facebook' },
-    { icon: Instagram, href: 'https://www.instagram.com/spirithubcafe/', label: 'Instagram' },
-    { icon: MessageCircle, href: 'https://wa.me/96891900005', label: 'WhatsApp' },
-    { icon: Mail, href: 'mailto:info@spirithubcafe.com', label: 'Email' }
+    ...(regionInfo.social.facebook ? [{ icon: Facebook, href: regionInfo.social.facebook, label: 'Facebook' }] : []),
+    ...(regionInfo.social.instagram ? [{ icon: Instagram, href: regionInfo.social.instagram, label: 'Instagram' }] : []),
+    { icon: MessageCircle, href: regionInfo.social.whatsapp, label: 'WhatsApp' },
+    { icon: Mail, href: regionInfo.social.email, label: 'Email' }
   ];
 
   return (
@@ -92,13 +104,10 @@ export const Footer: React.FC = () => {
               />
               <div className="space-y-4">
                 <h3 className="text-xl font-bold text-amber-200">
-                  {language === 'ar' ? 'من قلب عُمان إلى فنجانك' : 'From Oman to Your Cup Specialty Coffee'}
+                  {language === 'ar' ? regionInfo.aboutContent.companyName.ar : regionInfo.aboutContent.companyName.en}
                 </h3>
                 <p className="text-gray-300 leading-relaxed text-sm">
-                  {language === 'ar' 
-                    ? 'تأسست في عُمان، سبيرت هب روستري تصنع قهوة مختصة استثنائية، لتبرز النكهات والعطور والأصول الفريدة وراء كل حبة محمصة بعناية.'
-                    : 'Founded in Oman, SpiritHub Roastery crafts exceptional specialty coffee, showcasing the unique flavors, aromas, and origins behind every carefully roasted bean.'
-                  }
+                  {language === 'ar' ? regionInfo.aboutContent.description.ar : regionInfo.aboutContent.description.en}
                 </p>
               </div>
             </div>
@@ -150,7 +159,7 @@ export const Footer: React.FC = () => {
                 </h3>
                 <div className="space-y-2 text-sm">
                   <p className="text-gray-300">
-                    {language === 'ar' ? 'شارع الموج، مسقط، عُمان' : 'Al Mouj St, Muscat, Oman'}
+                    {language === 'ar' ? regionInfo.contact.address.ar : regionInfo.contact.address.en}
                   </p>
                   <div
                     className={`space-y-1 ${
@@ -158,12 +167,14 @@ export const Footer: React.FC = () => {
                     }`}
                     dir="ltr"
                   >
-                    <p className="text-gray-300">+968 9190 0005</p>
-                    <p className="text-gray-300">+968 7272 6999</p>
+                    <p className="text-gray-300">{regionInfo.contact.phone}</p>
+                    {regionInfo.contact.phone2 && (
+                      <p className="text-gray-300">{regionInfo.contact.phone2}</p>
+                    )}
                   </div>
-                  <p className="text-gray-300">info@spirithubcafe.com</p>
-                  <p className="text-gray-300 font-medium">
-                    {language === 'ar' ? 'يومياً: 7 صباحاً - 12 منتصف الليل' : 'Daily: 7 AM - 12 AM'}
+                  <p className="text-gray-300">{regionInfo.contact.email}</p>
+                  <p className="text-gray-300 font-medium whitespace-pre-line">
+                    {language === 'ar' ? regionInfo.contact.workingHours.ar : regionInfo.contact.workingHours.en}
                   </p>
                 </div>
               </div>

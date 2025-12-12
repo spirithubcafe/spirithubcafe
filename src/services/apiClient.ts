@@ -2,13 +2,21 @@ import axios from 'axios';
 import type { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import type { ApiError } from '../types/auth';
 
-// API Base Configuration
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://spirithubapi.sbc.om';
+// Get API Base URL based on current region
+const getApiBaseUrl = (): string => {
+  const savedRegion = localStorage.getItem('spirithub-region') || 'om';
+  
+  if (savedRegion === 'sa') {
+    return import.meta.env.VITE_API_BASE_URL_SA || 'https://spirithubapi-sa.sbc.om';
+  }
+  
+  return import.meta.env.VITE_API_BASE_URL_OM || import.meta.env.VITE_API_BASE_URL || 'https://spirithubapi.sbc.om';
+};
 
 // Create axios instance with default configuration
 const createApiClient = (): AxiosInstance => {
   const client = axios.create({
-    baseURL: API_BASE_URL,
+    baseURL: getApiBaseUrl(),
     timeout: 30000,
     headers: {
       'Content-Type': 'application/json',
@@ -16,9 +24,12 @@ const createApiClient = (): AxiosInstance => {
     },
   });
 
-  // Request interceptor to add auth token
+  // Request interceptor to add auth token and update baseURL
   client.interceptors.request.use(
     (config) => {
+      // Dynamically set baseURL based on current region
+      config.baseURL = getApiBaseUrl();
+      
       const token = localStorage.getItem('accessToken');
       if (token && config.headers) {
         config.headers.Authorization = `Bearer ${token}`;
@@ -26,6 +37,7 @@ const createApiClient = (): AxiosInstance => {
         if (config.url?.includes('/UserProfile/') || config.url?.includes('/orders/')) {
           console.log('🔑 Sending request with token:', {
             url: config.url,
+            baseURL: config.baseURL,
             hasToken: !!token,
             tokenLength: token?.length,
             tokenPreview: token?.substring(0, 50) + '...'
@@ -66,7 +78,7 @@ const createApiClient = (): AxiosInstance => {
           if (refreshToken) {
             console.log('🔄 Attempting to refresh token...');
             // Try to refresh the token
-            const refreshResponse = await axios.post(`${API_BASE_URL}/api/Account/RefreshToken`, {
+            const refreshResponse = await axios.post(`${getApiBaseUrl()}/api/Account/RefreshToken`, {
               refreshToken,
             });
 

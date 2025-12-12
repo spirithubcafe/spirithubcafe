@@ -6,10 +6,16 @@ import type { Product, ProductImage } from '../types/product';
  */
 
 /**
- * Get the API base URL
+ * Get the API base URL based on current region
  */
 export const getApiBaseUrl = (): string => {
-  return import.meta.env.VITE_API_BASE_URL || 'https://spirithubapi.sbc.om';
+  const savedRegion = localStorage.getItem('spirithub-region') || 'om';
+  
+  if (savedRegion === 'sa') {
+    return import.meta.env.VITE_API_BASE_URL_SA || 'https://spirithubapi-sa.sbc.om';
+  }
+  
+  return import.meta.env.VITE_API_BASE_URL_OM || import.meta.env.VITE_API_BASE_URL || 'https://spirithubapi.sbc.om';
 };
 
 /**

@@ -820,17 +820,17 @@ export const ProductsManagement: React.FC = () => {
         {/* Filters */}
         <div className="flex flex-col lg:flex-row gap-4 justify-between">
           <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center gap-2">
               <Search className="h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder={t('admin.products.search')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="max-w-sm"
+                className="w-full sm:max-w-sm"
               />
             </div>
             <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger className="w-48">
+              <SelectTrigger className="w-full sm:w-48">
                 <SelectValue placeholder={t('admin.products.selectCategory')} />
               </SelectTrigger>
               <SelectContent>
@@ -843,7 +843,7 @@ export const ProductsManagement: React.FC = () => {
               </SelectContent>
             </Select>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-40">
+              <SelectTrigger className="w-full sm:w-40">
                 <SelectValue placeholder={t('admin.products.selectStatus')} />
               </SelectTrigger>
               <SelectContent>
@@ -853,14 +853,155 @@ export const ProductsManagement: React.FC = () => {
               </SelectContent>
             </Select>
           </div>
-          <Button onClick={handleCreateProduct}>
+          <Button onClick={handleCreateProduct} className="w-full sm:w-auto">
             <Plus className="h-4 w-4 mr-2" />
             {t('admin.products.add')}
           </Button>
         </div>
 
-        {/* Products Table */}
-        <div className="rounded-md border">
+        {/* Mobile list */}
+        <div className="md:hidden space-y-3">
+          {!products || products.length === 0 ? (
+            <div className="rounded-lg border p-6 text-center text-sm text-muted-foreground">
+              {t('admin.products.noProducts')}
+            </div>
+          ) : (
+            products.map((product) => {
+              const categoryName =
+                categories.find((c) => c.id === product.categoryId)?.name || '-';
+
+              return (
+                <div key={product.id} className="rounded-lg border bg-card p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="font-semibold truncate">{product.name}</div>
+                      <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                        <span className="font-mono">{product.sku}</span>
+                        <span>•</span>
+                        <span className="truncate">{categoryName}</span>
+                      </div>
+                    </div>
+                    <div className="shrink-0 flex flex-col items-end gap-2">
+                      <Badge variant={product.isActive ? 'default' : 'secondary'}>
+                        {product.isActive
+                          ? t('admin.products.active')
+                          : t('admin.products.inactive')}
+                      </Badge>
+                      {product.isFeatured ? (
+                        <Badge variant="outline" className="border-yellow-500/40 text-yellow-600">
+                          <Star className="h-3 w-3 mr-1 fill-current" />
+                          {t('featured')}
+                        </Badge>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEditProduct(product)}
+                    >
+                      <Edit className="h-4 w-4 mr-2" />
+                      {t('common.edit')}
+                    </Button>
+
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleOpenAttributes(product)}
+                      className="text-amber-600"
+                    >
+                      <Coffee className="h-4 w-4 mr-2" />
+                      Attributes
+                    </Button>
+
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleOpenVariants(product)}
+                    >
+                      <Layers className="h-4 w-4 mr-2" />
+                      {t('admin.products.manageVariants')}
+                    </Button>
+
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleOpenImages(product)}
+                    >
+                      <ImageIcon className="h-4 w-4 mr-2" />
+                      {t('admin.products.manageImages')}
+                    </Button>
+
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleToggleActive(product.id)}
+                    >
+                      {product.isActive ? (
+                        <>
+                          <EyeOff className="h-4 w-4 mr-2" />
+                          {t('admin.products.inactive')}
+                        </>
+                      ) : (
+                        <>
+                          <Eye className="h-4 w-4 mr-2" />
+                          {t('admin.products.active')}
+                        </>
+                      )}
+                    </Button>
+
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleToggleFeatured(product.id)}
+                    >
+                      <Star
+                        className={cn(
+                          'h-4 w-4 mr-2',
+                          product.isFeatured && 'text-yellow-500 fill-current'
+                        )}
+                      />
+                      {t('featured')}
+                    </Button>
+
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="outline" size="sm" className="text-destructive">
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          {t('common.delete')}
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>
+                            {t('admin.products.deleteConfirm')}
+                          </AlertDialogTitle>
+                          <AlertDialogDescription>
+                            {t('admin.products.deleteWarning')} "{product.name}"
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => handleDeleteProduct(product.id)}
+                            className="bg-red-600 hover:bg-red-700"
+                          >
+                            {t('common.delete')}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* Desktop table */}
+        <div className="hidden md:block w-full min-w-0 max-w-full rounded-md border">
           <Table>
             <TableHeader>
               <TableRow>

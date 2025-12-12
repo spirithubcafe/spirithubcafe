@@ -266,7 +266,7 @@ export const UsersManagement: React.FC = () => {
           {/* Filters */}
           <div className="flex flex-col lg:flex-row gap-4 justify-between">
             <div className="flex flex-col sm:flex-row gap-4">
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center gap-2">
                 <Search className="h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search users..."
@@ -275,11 +275,11 @@ export const UsersManagement: React.FC = () => {
                     setSearchTerm(e.target.value);
                     setCurrentPage(1);
                   }}
-                  className="max-w-sm"
+                  className="w-full sm:max-w-sm"
                 />
               </div>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-40">
+                <SelectTrigger className="w-full sm:w-40">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -289,14 +289,122 @@ export const UsersManagement: React.FC = () => {
                 </SelectContent>
               </Select>
             </div>
-            <Button onClick={handleCreateUser}>
+            <Button onClick={handleCreateUser} className="w-full sm:w-auto">
               <Plus className="h-4 w-4 mr-2" />
               Add User
             </Button>
           </div>
 
-          {/* Users Table */}
-          <div className="rounded-md border">
+          {/* Mobile list */}
+          <div className="md:hidden space-y-3">
+            {!users || users.length === 0 ? (
+              <div className="rounded-lg border p-6 text-center text-sm text-muted-foreground">
+                No users found
+              </div>
+            ) : (
+              users.map((user) => (
+                <div key={user.id} className="rounded-lg border bg-card p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="font-semibold truncate">{user.username}</div>
+                      <div className="text-xs text-muted-foreground truncate">
+                        {user.displayName || '-'}
+                      </div>
+                      <div className="mt-2 flex flex-wrap gap-1">
+                        {user.roles && user.roles.length > 0 ? (
+                          user.roles.map((role) => (
+                            <Badge
+                              key={role}
+                              variant="outline"
+                              className={getRoleBadgeColor(role)}
+                            >
+                              {role}
+                            </Badge>
+                          ))
+                        ) : (
+                          <span className="text-muted-foreground text-xs">No roles</span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="shrink-0 flex flex-col items-end gap-2">
+                      <Badge variant={user.isActive ? 'default' : 'secondary'}>
+                        {user.isActive ? 'Active' : 'Inactive'}
+                      </Badge>
+                      <div className="text-xs text-muted-foreground">
+                        {user.lastLoggedIn
+                          ? new Date(user.lastLoggedIn).toLocaleDateString()
+                          : 'Never'}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEditUser(user.id)}
+                    >
+                      <Edit className="h-4 w-4 mr-2" />
+                      Edit
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleOpenPasswordDialog(user)}
+                    >
+                      <Key className="h-4 w-4 mr-2" />
+                      Password
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleToggleActive(user.id, user.isActive)}
+                    >
+                      {user.isActive ? (
+                        <>
+                          <UserX className="h-4 w-4 mr-2 text-orange-500" />
+                          Deactivate
+                        </>
+                      ) : (
+                        <>
+                          <UserCheck className="h-4 w-4 mr-2 text-green-500" />
+                          Activate
+                        </>
+                      )}
+                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="outline" size="sm" className="text-destructive">
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete User</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to delete user "{user.username}"? This action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => handleDeleteUser(user.id)}
+                            className="bg-red-600 hover:bg-red-700"
+                          >
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Desktop table */}
+          <div className="hidden md:block w-full min-w-0 max-w-full rounded-md border">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -420,11 +528,11 @@ export const UsersManagement: React.FC = () => {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div className="text-sm text-muted-foreground">
                 Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, totalCount)} of {totalCount} users
               </div>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center justify-between sm:justify-end gap-2">
                 <Button
                   variant="outline"
                   size="sm"

@@ -1,12 +1,14 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { Toaster } from './components/ui/sonner';
 import { AppProvider } from './contexts/AppContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
+import { RegionProvider } from './contexts/RegionContext';
 import { Navigation } from './components/layout/Navigation';
 import { MobileBottomNav } from './components/layout/MobileBottomNav';
 import { ScrollToTop } from './components/layout/ScrollToTop';
+import { RegionRedirect } from './components/layout/RegionRedirect';
 import { Footer } from './components/layout/Footer';
 import { CartDrawer } from './components/cart/CartDrawer';
 import HomePage from './pages/HomePage';
@@ -55,15 +57,116 @@ import './i18n';
 import './App.css';
 
 function AppContent() {
+  const location = useLocation();
+  const isAdminPage = location.pathname.includes('/admin');
+
   return (
     <div className="min-h-screen bg-white">
+      <RegionRedirect />
       <Navigation />
       <MobileBottomNav />
       <CartDrawer />
       <ScrollToTop />
       <Toaster position="top-center" duration={2000} richColors />
       <Routes>
+        {/* Root redirect */}
         <Route path="/" element={<HomePage />} />
+        
+        {/* Region-specific routes - /om and /sa */}
+        <Route path="/om" element={<HomePage />} />
+        <Route path="/om/profile" element={<ProfilePage />} />
+        <Route path="/om/favorites" element={<FavoritesPage />} />
+        <Route path="/om/orders" element={<OrdersPage />} />
+        <Route path="/om/order/:orderId" element={<OrderDetailPage />} />
+        <Route path="/om/about" element={<AboutPage />} />
+        <Route path="/om/contact" element={<ContactPage />} />
+        <Route path="/om/faq" element={<FAQPage />} />
+        <Route path="/om/privacy" element={<PrivacyPolicyPage />} />
+        <Route path="/om/terms" element={<TermsConditionsPage />} />
+        <Route path="/om/delivery" element={<DeliveryPolicyPage />} />
+        <Route path="/om/refund" element={<RefundPolicyPage />} />
+        <Route path="/om/products" element={<ProductsPage />} />
+        <Route path="/om/products/:productId" element={<ProductDetailPage />} />
+        <Route path="/om/login" element={<LoginPage />} />
+        <Route path="/om/register" element={<RegisterPage />} />
+        <Route path="/om/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/om/reset-password" element={<ResetPasswordPage />} />
+        <Route path="/om/checkout" element={<CheckoutPage />} />
+        <Route path="/om/checkout/payment-success" element={<PaymentSuccessPage />} />
+        <Route path="/om/checkout/payment-cancelled" element={<PaymentCancelledPage />} />
+        <Route path="/om/checkout/payment-failed" element={<PaymentFailurePage />} />
+        <Route path="/om/checkout/payment-error" element={<PaymentErrorPage />} />
+        <Route path="/om/payment" element={<PaymentPage />} />
+        <Route path="/om/payment/success" element={<PaymentSuccessPage />} />
+        <Route path="/om/payment/failure" element={<PaymentFailurePage />} />
+        <Route path="/om/payment/cancelled" element={<PaymentCancelledPage />} />
+        
+        {/* Saudi Arabia routes */}
+        <Route path="/sa" element={<HomePage />} />
+        <Route path="/sa/profile" element={<ProfilePage />} />
+        <Route path="/sa/favorites" element={<FavoritesPage />} />
+        <Route path="/sa/orders" element={<OrdersPage />} />
+        <Route path="/sa/order/:orderId" element={<OrderDetailPage />} />
+        <Route path="/sa/about" element={<AboutPage />} />
+        <Route path="/sa/contact" element={<ContactPage />} />
+        <Route path="/sa/faq" element={<FAQPage />} />
+        <Route path="/sa/privacy" element={<PrivacyPolicyPage />} />
+        <Route path="/sa/terms" element={<TermsConditionsPage />} />
+        <Route path="/sa/delivery" element={<DeliveryPolicyPage />} />
+        <Route path="/sa/refund" element={<RefundPolicyPage />} />
+        <Route path="/sa/products" element={<ProductsPage />} />
+        <Route path="/sa/products/:productId" element={<ProductDetailPage />} />
+        <Route path="/sa/login" element={<LoginPage />} />
+        <Route path="/sa/register" element={<RegisterPage />} />
+        <Route path="/sa/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/sa/reset-password" element={<ResetPasswordPage />} />
+        <Route path="/sa/checkout" element={<CheckoutPage />} />
+        <Route path="/sa/checkout/payment-success" element={<PaymentSuccessPage />} />
+        <Route path="/sa/checkout/payment-cancelled" element={<PaymentCancelledPage />} />
+        <Route path="/sa/checkout/payment-failed" element={<PaymentFailurePage />} />
+        <Route path="/sa/checkout/payment-error" element={<PaymentErrorPage />} />
+        <Route path="/sa/payment" element={<PaymentPage />} />
+        <Route path="/sa/payment/success" element={<PaymentSuccessPage />} />
+        <Route path="/sa/payment/failure" element={<PaymentFailurePage />} />
+        <Route path="/sa/payment/cancelled" element={<PaymentCancelledPage />} />
+        
+        {/* Admin routes for Oman */}
+        <Route path="/om/admin/*" element={<AdminLayout />}>
+          <Route index element={<AdminDashboard />} />
+          <Route path="categories" element={<CategoriesManagement />} />
+          <Route path="categories/add" element={<CategoryAddPage />} />
+          <Route path="categories/edit/:id" element={<CategoryEditPage />} />
+          <Route path="products" element={<ProductsManagement />} />
+          <Route path="products/add" element={<ProductAddPage />} />
+          <Route path="products/edit/:productId" element={<ProductEditPage />} />
+          <Route path="products/:id/attributes" element={<ProductAttributesPage />} />
+          <Route path="seo" element={<SeoManagement />} />
+          <Route path="users" element={<UsersManagement />} />
+          <Route path="orders" element={<OrdersManagement />} />
+          <Route path="newsletter" element={<NewsletterManagement />} />
+          <Route path="reports" element={<ReportsManagement />} />
+          <Route path="settings" element={<SystemSettings />} />
+        </Route>
+        
+        {/* Admin routes for Saudi Arabia */}
+        <Route path="/sa/admin/*" element={<AdminLayout />}>
+          <Route index element={<AdminDashboard />} />
+          <Route path="categories" element={<CategoriesManagement />} />
+          <Route path="categories/add" element={<CategoryAddPage />} />
+          <Route path="categories/edit/:id" element={<CategoryEditPage />} />
+          <Route path="products" element={<ProductsManagement />} />
+          <Route path="products/add" element={<ProductAddPage />} />
+          <Route path="products/edit/:productId" element={<ProductEditPage />} />
+          <Route path="products/:id/attributes" element={<ProductAttributesPage />} />
+          <Route path="seo" element={<SeoManagement />} />
+          <Route path="users" element={<UsersManagement />} />
+          <Route path="orders" element={<OrdersManagement />} />
+          <Route path="newsletter" element={<NewsletterManagement />} />
+          <Route path="reports" element={<ReportsManagement />} />
+          <Route path="settings" element={<SystemSettings />} />
+        </Route>
+        
+        {/* Legacy routes for backward compatibility */}
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/favorites" element={<FavoritesPage />} />
         <Route path="/orders" element={<OrdersPage />} />
@@ -98,14 +201,10 @@ function AppContent() {
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/checkout" element={<CheckoutPage />} />
-        
-        {/* Payment routes - new structure */}
         <Route path="/checkout/payment-success" element={<PaymentSuccessPage />} />
         <Route path="/checkout/payment-cancelled" element={<PaymentCancelledPage />} />
         <Route path="/checkout/payment-failed" element={<PaymentFailurePage />} />
         <Route path="/checkout/payment-error" element={<PaymentErrorPage />} />
-        
-        {/* Payment routes - legacy support */}
         <Route path="/payment" element={<PaymentPage />} />
         <Route path="/payment/success" element={<PaymentSuccessPage />} />
         <Route path="/payment/failure" element={<PaymentFailurePage />} />
@@ -114,7 +213,7 @@ function AppContent() {
         <Route path="*" element={<NotFound />} />
       </Routes>
 
-      <Footer />
+      {!isAdminPage && <Footer />}
     </div>
   );
 }
@@ -124,13 +223,15 @@ function App() {
 
   return (
     <GoogleOAuthProvider clientId={googleClientId}>
-      <AuthProvider>
-        <AppProvider>
-          <CartProvider>
-            <AppContent />
-          </CartProvider>
-        </AppProvider>
-      </AuthProvider>
+      <RegionProvider>
+        <AuthProvider>
+          <AppProvider>
+            <CartProvider>
+              <AppContent />
+            </CartProvider>
+          </AppProvider>
+        </AuthProvider>
+      </RegionProvider>
     </GoogleOAuthProvider>
   );
 }

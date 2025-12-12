@@ -33,7 +33,7 @@ if (!isProduction) {
 }
 
 // Serve HTML - Catch all routes with meta tag injection
-app.get('*', async (req, res, next) => {
+app.use(async (req, res, next) => {
   try {
     const url = req.originalUrl.replace(base, '');
 
@@ -67,13 +67,29 @@ function getMetaTagsForRoute(url) {
   const baseUrl = 'https://spirithubcafe.com';
   
   // Clean URL (remove query params and hash)
-  const cleanUrl = url.split('?')[0].split('#')[0];
+  let cleanUrl = url.split('?')[0].split('#')[0];
+  
+  // Extract region from URL and normalize path
+  let region = 'om'; // default
+  if (cleanUrl.startsWith('/om/') || cleanUrl === '/om') {
+    region = 'om';
+    cleanUrl = cleanUrl.substring(3) || '/';
+  } else if (cleanUrl.startsWith('/sa/') || cleanUrl === '/sa') {
+    region = 'sa';
+    cleanUrl = cleanUrl.substring(3) || '/';
+  }
   
   // Default meta tags
   let title = 'Spirit Hub Cafe | Specialty Coffee in Oman | سبيريت هب';
   let description = 'Spirit Hub Cafe roasts specialty coffee in Oman. Discover premium beans, artisanal brews, and a vibrant community experience at سبيريت هب.';
   let image = `${baseUrl}/images/icon-512x512.png`;
   let ogType = 'website';
+  
+  // Update titles based on region
+  if (region === 'sa') {
+    title = 'Spirit Hub Cafe | Specialty Coffee in Saudi Arabia | سبيريت هب';
+    description = 'Spirit Hub Cafe roasts specialty coffee in Saudi Arabia. Discover premium beans, artisanal brews, and a vibrant community experience at سبيريت هب.';
+  }
 
   // Customize based on route
   if (cleanUrl.startsWith('/products/') && cleanUrl.length > 10) {

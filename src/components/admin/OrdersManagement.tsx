@@ -577,7 +577,7 @@ export const OrdersManagement: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-100">
             <FileText className="h-6 w-6 text-amber-600" />
@@ -593,7 +593,7 @@ export const OrdersManagement: React.FC = () => {
             </p>
           </div>
         </div>
-        <Button onClick={loadOrders} disabled={loading}>
+        <Button onClick={loadOrders} disabled={loading} className="w-full sm:w-auto">
           <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
           {isArabic ? 'تحديث' : 'Refresh'}
         </Button>
@@ -731,27 +731,14 @@ export const OrdersManagement: React.FC = () => {
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{isArabic ? 'رقم الطلب' : 'Order #'}</TableHead>
-                    <TableHead>{isArabic ? 'العميل' : 'Customer'}</TableHead>
-                    <TableHead>{isArabic ? 'المبلغ' : 'Amount'}</TableHead>
-                    <TableHead>{isArabic ? 'الحالة' : 'Status'}</TableHead>
-                    <TableHead>{isArabic ? 'الدفع' : 'Payment'}</TableHead>
-                    <TableHead>{isArabic ? 'التاريخ' : 'Date'}</TableHead>
-                    <TableHead className="text-right">
-                      {isArabic ? 'الإجراءات' : 'Actions'}
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {orders.map((order) => (
-                    <TableRow key={order.id}>
-                      <TableCell className="font-medium">
-                        <div className="flex items-center gap-2">
-                          {/* Shipping Method Indicator */}
+            <>
+              {/* Mobile list */}
+              <div className="md:hidden space-y-3">
+                {orders.map((order) => (
+                  <div key={order.id} className="rounded-lg border bg-card p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 font-semibold">
                           {order.shippingMethod === 1 && (
                             <div className="h-2 w-2 rounded-full bg-pink-300 shrink-0" title={isArabic ? 'استلام من المتجر' : 'Store Pickup'} />
                           )}
@@ -761,149 +748,286 @@ export const OrdersManagement: React.FC = () => {
                           {order.shippingMethod === 3 && (
                             <div className="h-2 w-2 rounded-full bg-red-500 shrink-0" title={isArabic ? 'شحن أرامكس' : 'Aramex Shipping'} />
                           )}
+                          <span className="truncate">{order.orderNumber}</span>
+                        </div>
+                        <div className="mt-1 text-xs text-muted-foreground truncate">
+                          {order.fullName} • {order.email}
+                        </div>
+                        {order.trackingNumber && (
+                          <a
+                            href={`https://www.aramex.com/om/en/track/shipments?ShipmentNumber=${order.trackingNumber}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-1 inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 font-mono hover:underline"
+                            title={isArabic ? 'تتبع الشحنة على أرامكس' : 'Track on Aramex'}
+                          >
+                            <Truck className="h-3 w-3" />
+                            {order.trackingNumber}
+                          </a>
+                        )}
+                      </div>
+                      <div className="shrink-0 text-right">
+                        <div className="font-semibold">OMR {order.totalAmount.toFixed(3)}</div>
+                        <div className="mt-1 text-xs text-muted-foreground">
+                          {format(new Date(order.createdAt), 'MMM dd, yyyy')}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                      <Badge className={getStatusColor(order.status)}>{order.status}</Badge>
+                      <Badge className={getPaymentStatusColor(order.paymentStatus)}>
+                        {order.paymentStatus}
+                      </Badge>
+                    </div>
+
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleViewDetails(order)}
+                      >
+                        <Eye className="h-4 w-4 mr-2" />
+                        {isArabic ? 'التفاصيل' : 'Details'}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleEditOrder(order)}
+                      >
+                        <Edit className="h-4 w-4 mr-2" />
+                        {isArabic ? 'تعديل' : 'Edit'}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleGenerateInvoice(order)}
+                        disabled={invoiceLoading}
+                      >
+                        <FileText className="h-4 w-4 mr-2" />
+                        {isArabic ? 'فاتورة' : 'Invoice'}
+                      </Button>
+                      {order.paymentStatus !== 'Paid' && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleGeneratePaymentLink(order)}
+                          disabled={paymentLinkLoading}
+                        >
+                          <CreditCard className="h-4 w-4 mr-2" />
+                          {isArabic ? 'رابط دفع' : 'Pay link'}
+                        </Button>
+                      )}
+                      {order.shippingMethod === 3 && !order.trackingNumber && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleCreateShipment(order)}
+                          disabled={shipmentLoading === order.id}
+                          className="border-red-300 text-red-700"
+                        >
+                          {shipmentLoading === order.id ? (
+                            <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                          ) : (
+                            <PackagePlus className="h-4 w-4 mr-2" />
+                          )}
+                          {isArabic ? 'شحنة أرامكس' : 'Aramex'}
+                        </Button>
+                      )}
+                      {order.shippingMethod === 3 && order.trackingNumber && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handlePrintLabel(order)}
+                          disabled={printLabelLoading === order.id}
+                          className="border-green-300 text-green-700"
+                        >
+                          {printLabelLoading === order.id ? (
+                            <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                          ) : (
+                            <Printer className="h-4 w-4 mr-2" />
+                          )}
+                          {isArabic ? 'ملصق' : 'Label'}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop table */}
+              <div className="hidden md:block w-full min-w-0 max-w-full">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{isArabic ? 'رقم الطلب' : 'Order #'}</TableHead>
+                      <TableHead>{isArabic ? 'العميل' : 'Customer'}</TableHead>
+                      <TableHead>{isArabic ? 'المبلغ' : 'Amount'}</TableHead>
+                      <TableHead>{isArabic ? 'الحالة' : 'Status'}</TableHead>
+                      <TableHead>{isArabic ? 'الدفع' : 'Payment'}</TableHead>
+                      <TableHead>{isArabic ? 'التاريخ' : 'Date'}</TableHead>
+                      <TableHead className="text-right">
+                        {isArabic ? 'الإجراءات' : 'Actions'}
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {orders.map((order) => (
+                      <TableRow key={order.id}>
+                        <TableCell className="font-medium">
+                          <div className="flex items-center gap-2">
+                            {/* Shipping Method Indicator */}
+                            {order.shippingMethod === 1 && (
+                              <div className="h-2 w-2 rounded-full bg-pink-300 shrink-0" title={isArabic ? 'استلام من المتجر' : 'Store Pickup'} />
+                            )}
+                            {order.shippingMethod === 2 && (
+                              <div className="h-2 w-2 rounded-full bg-blue-500 shrink-0" title="Nool Delivery" />
+                            )}
+                            {order.shippingMethod === 3 && (
+                              <div className="h-2 w-2 rounded-full bg-red-500 shrink-0" title={isArabic ? 'شحن أرامكس' : 'Aramex Shipping'} />
+                            )}
+                            <div>
+                              <div>{order.orderNumber}</div>
+                              {order.trackingNumber && (
+                                <a 
+                                  href={`https://www.aramex.com/om/en/track/shipments?ShipmentNumber=${order.trackingNumber}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-xs text-blue-600 hover:text-blue-800 font-mono mt-0.5 flex items-center gap-1 hover:underline"
+                                  title={isArabic ? 'تتبع الشحنة على أرامكس' : 'Track on Aramex'}
+                                >
+                                  <Truck className="h-3 w-3" />
+                                  {order.trackingNumber}
+                                </a>
+                              )}
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
                           <div>
-                            <div>{order.orderNumber}</div>
-                            {order.trackingNumber && (
-                              <a 
-                                href={`https://www.aramex.com/om/en/track/shipments?ShipmentNumber=${order.trackingNumber}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-xs text-blue-600 hover:text-blue-800 font-mono mt-0.5 flex items-center gap-1 hover:underline"
-                                title={isArabic ? 'تتبع الشحنة على أرامكس' : 'Track on Aramex'}
+                            <div className="font-medium">{order.fullName}</div>
+                            <div className="text-xs text-muted-foreground">{order.email}</div>
+                          </div>
+                        </TableCell>
+                        <TableCell>OMR {order.totalAmount.toFixed(3)}</TableCell>
+                        <TableCell>
+                          <Badge className={getStatusColor(order.status)}>
+                            {order.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={getPaymentStatusColor(order.paymentStatus)}>
+                            {order.paymentStatus}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {format(new Date(order.createdAt), 'MMM dd, yyyy')}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleViewDetails(order)}
+                              title={isArabic ? 'عرض التفاصيل' : 'View Details'}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleEditOrder(order)}
+                              title={isArabic ? 'تعديل الطلب' : 'Edit Order'}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleGenerateInvoice(order)}
+                              title={isArabic ? 'طباعة الفاتورة' : 'Print Invoice'}
+                              disabled={invoiceLoading}
+                            >
+                              <FileText className="h-4 w-4" />
+                            </Button>
+                            {order.paymentStatus !== 'Paid' && (
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => handleGeneratePaymentLink(order)}
+                                title={isArabic ? 'إنشاء رابط دفع' : 'Generate Payment Link'}
+                                disabled={paymentLinkLoading}
                               >
-                                <Truck className="h-3 w-3" />
-                                {order.trackingNumber}
-                              </a>
+                                <CreditCard className="h-4 w-4" />
+                              </Button>
+                            )}
+                            {order.shippingMethod === 3 && !order.trackingNumber && (
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => handleCreateShipment(order)}
+                                title={isArabic ? 'إنشاء شحنة أرامكس' : 'Create Aramex Shipment'}
+                                disabled={shipmentLoading === order.id}
+                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                              >
+                                {shipmentLoading === order.id ? (
+                                  <RefreshCw className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <PackagePlus className="h-4 w-4" />
+                                )}
+                              </Button>
+                            )}
+                            {order.shippingMethod === 3 && order.trackingNumber && (
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => handlePrintLabel(order)}
+                                title={isArabic ? 'طباعة ملصق الشحن' : 'Print Shipping Label'}
+                                disabled={printLabelLoading === order.id}
+                                className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                              >
+                                {printLabelLoading === order.id ? (
+                                  <RefreshCw className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <Printer className="h-4 w-4" />
+                                )}
+                              </Button>
                             )}
                           </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">{order.fullName}</div>
-                          <div className="text-xs text-muted-foreground">{order.email}</div>
-                        </div>
-                      </TableCell>
-                      <TableCell>OMR {order.totalAmount.toFixed(3)}</TableCell>
-                      <TableCell>
-                        <Badge className={getStatusColor(order.status)}>
-                          {order.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={getPaymentStatusColor(order.paymentStatus)}>
-                          {order.paymentStatus}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {format(new Date(order.createdAt), 'MMM dd, yyyy')}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-1">
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => handleViewDetails(order)}
-                            title={isArabic ? 'عرض التفاصيل' : 'View Details'}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => handleEditOrder(order)}
-                            title={isArabic ? 'تعديل الطلب' : 'Edit Order'}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => handleGenerateInvoice(order)}
-                            title={isArabic ? 'طباعة الفاتورة' : 'Print Invoice'}
-                            disabled={invoiceLoading}
-                          >
-                            <FileText className="h-4 w-4" />
-                          </Button>
-                          {order.paymentStatus !== 'Paid' && (
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => handleGeneratePaymentLink(order)}
-                              title={isArabic ? 'إنشاء رابط دفع' : 'Generate Payment Link'}
-                              disabled={paymentLinkLoading}
-                            >
-                              <CreditCard className="h-4 w-4" />
-                            </Button>
-                          )}
-                          {order.shippingMethod === 3 && !order.trackingNumber && (
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => handleCreateShipment(order)}
-                              title={isArabic ? 'إنشاء شحنة أرامكس' : 'Create Aramex Shipment'}
-                              disabled={shipmentLoading === order.id}
-                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                            >
-                              {shipmentLoading === order.id ? (
-                                <RefreshCw className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <PackagePlus className="h-4 w-4" />
-                              )}
-                            </Button>
-                          )}
-                          {order.shippingMethod === 3 && order.trackingNumber && (
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => handlePrintLabel(order)}
-                              title={isArabic ? 'طباعة ملصق الشحن' : 'Print Shipping Label'}
-                              disabled={printLabelLoading === order.id}
-                              className="text-green-600 hover:text-green-700 hover:bg-green-50"
-                            >
-                              {printLabelLoading === order.id ? (
-                                <RefreshCw className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <Printer className="h-4 w-4" />
-                              )}
-                            </Button>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-              
-              {/* Shipping Method Legend */}
-              {orders.length > 0 && (
-                <div className="mt-4 p-4 bg-muted/50 rounded-lg border">
-                  <div className="text-sm font-medium mb-2">
-                    {isArabic ? 'دليل طرق الشحن:' : 'Shipping Method Legend:'}
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
-                    <div className="flex items-center gap-2">
-                      <div className="h-3 w-3 rounded-full bg-pink-300 shrink-0" />
-                      <span className="text-muted-foreground">
-                        {isArabic ? 'استلام من المتجر' : 'Store Pickup'}
-                      </span>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+
+                {/* Shipping Method Legend */}
+                {orders.length > 0 && (
+                  <div className="mt-4 p-4 bg-muted/50 rounded-lg border">
+                    <div className="text-sm font-medium mb-2">
+                      {isArabic ? 'دليل طرق الشحن:' : 'Shipping Method Legend:'}
                     </div>
-                    <div className="flex items-center gap-2">
-                      <div className="h-3 w-3 rounded-full bg-blue-500 shrink-0" />
-                      <span className="text-muted-foreground">
-                        Nool Delivery
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="h-3 w-3 rounded-full bg-red-500 shrink-0" />
-                      <span className="text-muted-foreground">
-                        {isArabic ? 'شحن أرامكس' : 'Aramex Courier'}
-                      </span>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+                      <div className="flex items-center gap-2">
+                        <div className="h-3 w-3 rounded-full bg-pink-300 shrink-0" />
+                        <span className="text-muted-foreground">
+                          {isArabic ? 'استلام من المتجر' : 'Store Pickup'}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="h-3 w-3 rounded-full bg-blue-500 shrink-0" />
+                        <span className="text-muted-foreground">Nool Delivery</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="h-3 w-3 rounded-full bg-red-500 shrink-0" />
+                        <span className="text-muted-foreground">
+                          {isArabic ? 'شحن أرامكس' : 'Aramex Courier'}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            </>
           )}
         </CardContent>
       </Card>

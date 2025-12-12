@@ -216,6 +216,13 @@ export const ProfessionalHeroSlider: React.FC = () => {
     }
   }, [isPlaying, isHovered, isMobile, slides.length]);
 
+  // Reset currentSlide when slides array changes (mobile/desktop switch)
+  useEffect(() => {
+    if (currentSlide >= slides.length) {
+      setCurrentSlide(0);
+    }
+  }, [slides.length, currentSlide]);
+
   const currentSlideData = slides[currentSlide];
 
   // Function to go to next slide - only on desktop
@@ -224,6 +231,15 @@ export const ProfessionalHeroSlider: React.FC = () => {
       setCurrentSlide((prev) => (prev + 1) % slides.length);
     }
   };
+
+  // Return loading state if no slide data is available
+  if (!currentSlideData) {
+    return (
+      <section className="professional-hero-slider">
+        <div className="slider-backgrounds" style={{ background: '#1a1a1a' }} />
+      </section>
+    );
+  }
 
   return (
     <section 
