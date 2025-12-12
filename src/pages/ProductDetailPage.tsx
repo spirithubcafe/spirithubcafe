@@ -109,7 +109,6 @@ export const ProductDetailPage = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [isZooming, setIsZooming] = useState(false);
-  const [zoomPosition, setZoomPosition] = useState({ x: 0, y: 0 });
   const [activeTab, setActiveTab] = useState<'description' | 'brewing'>('description');
 
   // Scroll to top when component mounts or productId changes
@@ -407,9 +406,9 @@ export const ProductDetailPage = () => {
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
-    setZoomPosition({ x, y });
+    const x = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
+    const y = Math.max(0, Math.min(100, ((e.clientY - rect.top) / rect.height) * 100));
+    e.currentTarget.style.setProperty('--zoom-origin', `${x}% ${y}%`);
   };
 
   const handleMouseEnter = () => {
@@ -645,7 +644,7 @@ export const ProductDetailPage = () => {
                       {/* Image Gallery */}
                       <div className="space-y-2 md:space-y-3">
                         <div 
-                          className="relative bg-gradient-to-br from-amber-50 to-orange-100 rounded-xl overflow-hidden aspect-square w-full cursor-zoom-in"
+                          className="relative bg-linear-to-br from-amber-50 to-orange-100 rounded-xl overflow-hidden aspect-square w-full cursor-zoom-in"
                           onMouseMove={handleMouseMove}
                           onMouseEnter={handleMouseEnter}
                           onMouseLeave={handleMouseLeave}
@@ -655,21 +654,14 @@ export const ProductDetailPage = () => {
                             alt={getImageAlt(currentImageIndex)}
                             className={`absolute inset-0 h-full w-full object-cover transition-transform duration-200 ${
                               isZooming ? 'scale-150' : 'scale-100'
-                            }`}
-                            style={
-                              isZooming
-                                ? {
-                                    transformOrigin: `${zoomPosition.x}% ${zoomPosition.y}%`,
-                                  }
-                                : undefined
-                            }
+                            } zoom-origin-var`}
                             onError={(event) =>
                               handleImageError(event, '/images/products/default-product.webp')
                             }
                           />
 
                           {product.isFeatured ? (
-                            <div className="absolute top-3 ltr:left-3 rtl:right-3 bg-gradient-to-r from-yellow-400 to-orange-400 text-white px-3 py-1.5 rounded-full text-sm font-bold shadow-md">
+                            <div className="absolute top-3 ltr:left-3 rtl:right-3 bg-linear-to-r from-yellow-400 to-orange-400 text-white px-3 py-1.5 rounded-full text-sm font-bold shadow-md">
                               {language === 'ar' ? 'مميز' : 'Featured'}
                             </div>
                           ) : null}
@@ -705,13 +697,13 @@ export const ProductDetailPage = () => {
                         </div>
 
                         {images.length > 1 ? (
-                          <div className="flex gap-2 overflow-x-auto pb-1 justify-start">
+                          <div className="flex flex-wrap gap-2 justify-start">
                             {images.map((image, index) => (
                               <button
                                 key={image}
                                 type="button"
                                 onClick={() => setCurrentImageIndex(index)}
-                                className={`relative h-16 w-16 rounded-lg overflow-hidden border-2 flex-shrink-0 ${
+                                className={`relative h-16 w-16 rounded-lg overflow-hidden border-2 shrink-0 ${
                                   currentImageIndex === index
                                     ? 'border-amber-500 ring-2 ring-amber-300'
                                     : 'border-transparent hover:border-amber-300'
@@ -782,7 +774,7 @@ export const ProductDetailPage = () => {
                         </div>
 
                         {/* Coffee Information - Compact List */}
-                        <div className="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 rounded-lg p-2.5 md:p-3 space-y-1.5 md:space-y-2">
+                        <div className="bg-linear-to-br from-amber-50 to-orange-50 border border-amber-200 rounded-lg p-2.5 md:p-3 space-y-1.5 md:space-y-2">
                           <div className="flex items-center gap-1.5 mb-1">
                             <Coffee className="w-3.5 md:w-4 h-3.5 md:h-4 text-amber-700" />
                             <h3 className="text-[10px] md:text-xs font-bold text-gray-900">
@@ -793,7 +785,7 @@ export const ProductDetailPage = () => {
                           <div className="space-y-1 md:space-y-1.5 text-[10px] md:text-xs">{/* Roast Level */}
                             {(language === 'ar' ? product.roastLevelAr : product.roastLevel) ? (
                               <div className="flex items-center gap-2">
-                                <Flame className="w-3.5 md:w-4 h-3.5 md:h-4 text-amber-600 flex-shrink-0" />
+                                <Flame className="w-3.5 md:w-4 h-3.5 md:h-4 text-amber-600 shrink-0" />
                                 <span className="text-gray-600 min-w-[60px] md:min-w-[70px]">
                                   {language === 'ar' ? 'التحميص:' : 'Roast:'}
                                 </span>
@@ -806,7 +798,7 @@ export const ProductDetailPage = () => {
                             {/* Process */}
                             {(language === 'ar' ? product.processAr : product.process) ? (
                               <div className="flex items-center gap-2">
-                                <RotateCw className="w-3.5 md:w-4 h-3.5 md:h-4 text-amber-600 flex-shrink-0" />
+                                <RotateCw className="w-3.5 md:w-4 h-3.5 md:h-4 text-amber-600 shrink-0" />
                                 <span className="text-gray-600 min-w-[60px] md:min-w-[70px]">
                                   {language === 'ar' ? 'المعالجة:' : 'Process:'}
                                 </span>
@@ -819,7 +811,7 @@ export const ProductDetailPage = () => {
                             {/* Variety */}
                             {(language === 'ar' ? product.varietyAr : product.variety) ? (
                               <div className="flex items-center gap-2">
-                                <BarChart3 className="w-3.5 md:w-4 h-3.5 md:h-4 text-amber-600 flex-shrink-0" />
+                                <BarChart3 className="w-3.5 md:w-4 h-3.5 md:h-4 text-amber-600 shrink-0" />
                                 <span className="text-gray-600 min-w-[60px] md:min-w-[70px]">
                                   {language === 'ar' ? 'الصنف:' : 'Variety:'}
                                 </span>
@@ -832,7 +824,7 @@ export const ProductDetailPage = () => {
                             {/* Altitude */}
                             {product.altitude ? (
                               <div className="flex items-center gap-2">
-                                <MapPin className="w-3.5 md:w-4 h-3.5 md:h-4 text-amber-600 flex-shrink-0" />
+                                <MapPin className="w-3.5 md:w-4 h-3.5 md:h-4 text-amber-600 shrink-0" />
                                 <span className="text-gray-600 min-w-[60px] md:min-w-[70px]">
                                   {language === 'ar' ? 'الارتفاع:' : 'Altitude:'}
                                 </span>
@@ -845,7 +837,7 @@ export const ProductDetailPage = () => {
                             {/* Farm */}
                             {(language === 'ar' ? product.farmAr : product.farm) ? (
                               <div className="flex items-center gap-2">
-                                <Wheat className="w-3.5 md:w-4 h-3.5 md:h-4 text-amber-600 flex-shrink-0" />
+                                <Wheat className="w-3.5 md:w-4 h-3.5 md:h-4 text-amber-600 shrink-0" />
                                 <span className="text-gray-600 min-w-[60px] md:min-w-[70px]">
                                   {language === 'ar' ? 'المزرعة:' : 'Farm:'}
                                 </span>
@@ -858,7 +850,7 @@ export const ProductDetailPage = () => {
                             {/* Notes */}
                             {displayNotes ? (
                               <div className="flex items-start gap-2">
-                                <ClipboardList className="w-3.5 md:w-4 h-3.5 md:h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                                <ClipboardList className="w-3.5 md:w-4 h-3.5 md:h-4 text-amber-600 shrink-0 mt-0.5" />
                                 <span className="text-gray-600 min-w-[60px] md:min-w-[70px]">
                                   {language === 'ar' ? 'النكهات:' : 'Notes:'}
                                 </span>
@@ -873,7 +865,7 @@ export const ProductDetailPage = () => {
                               <div className="mt-1.5 md:mt-2 pt-1.5 md:pt-2 border-t border-amber-200">
                                 <div className="bg-rose-50 border border-rose-200 rounded-md px-2 md:px-2.5 py-1 md:py-1.5">
                                   <div className="flex items-center gap-2">
-                                    <Coffee className="w-3 md:w-3.5 h-3 md:h-3.5 text-rose-600 flex-shrink-0" />
+                                    <Coffee className="w-3 md:w-3.5 h-3 md:h-3.5 text-rose-600 shrink-0" />
                                     <span className="text-rose-700 font-medium text-[9px] md:text-[10px]">
                                       {language === 'ar' ? 'الاستخدامات:' : 'Best For:'}
                                     </span>
@@ -888,7 +880,7 @@ export const ProductDetailPage = () => {
                         </div>
 
                         {/* Price, Variants, and Cart Section */}
-                        <div className="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 rounded-xl p-3 md:p-4 space-y-2 md:space-y-3 mt-3 md:mt-4">
+                        <div className="bg-linear-to-br from-amber-50 to-orange-50 border border-amber-200 rounded-xl p-3 md:p-4 space-y-2 md:space-y-3 mt-3 md:mt-4">
                           {/* Price */}
                           <div className="flex items-baseline justify-between py-0.5 md:py-1 border-b border-amber-200/50 pb-1.5 md:pb-2">
                             <span className="text-[10px] md:text-xs text-gray-600 font-medium">{priceLabel}</span>
@@ -1059,7 +1051,7 @@ export const ProductDetailPage = () => {
                             dangerouslySetInnerHTML={{ __html: displayDescription }}
                           />
                           {!isDescriptionExpanded && (
-                            <div className="absolute bottom-0 left-0 right-0 h-10 md:h-12 bg-gradient-to-t from-white to-transparent pointer-events-none"></div>
+                            <div className="absolute bottom-0 left-0 right-0 h-10 md:h-12 bg-linear-to-t from-white to-transparent pointer-events-none"></div>
                           )}
                         </div>
                         <button
@@ -1128,7 +1120,7 @@ export const ProductDetailPage = () => {
                                   <p className="text-gray-700">دعها تتخمر بشكل طبيعي لمدة 2-3 دقائق.</p>
                                 </div>
 
-                                <div className="bg-gradient-to-r from-amber-50 to-orange-50 p-2.5 md:p-3 rounded-lg border border-amber-200">
+                                <div className="bg-linear-to-r from-amber-50 to-orange-50 p-2.5 md:p-3 rounded-lg border border-amber-200">
                                   <h4 className="font-bold text-amber-800 mb-1.5 flex items-center gap-1.5 text-[11px] md:text-xs">
                                     <Coffee className="w-3.5 h-3.5 text-amber-600" />
                                     استمتع
@@ -1178,7 +1170,7 @@ export const ProductDetailPage = () => {
                                   <p className="text-gray-700">Let it brew naturally for 2–3 minutes.</p>
                                 </div>
 
-                                <div className="bg-gradient-to-r from-amber-50 to-orange-50 p-2.5 md:p-3 rounded-lg border border-amber-200">
+                                <div className="bg-linear-to-r from-amber-50 to-orange-50 p-2.5 md:p-3 rounded-lg border border-amber-200">
                                   <h4 className="font-bold text-amber-800 mb-1.5 flex items-center gap-1.5 text-[11px] md:text-xs">
                                     <Coffee className="w-3.5 h-3.5 text-amber-600" />
                                     Enjoy
@@ -1231,7 +1223,7 @@ export const ProductDetailPage = () => {
                                   <p className="text-gray-700">استخدم ماء عالي الجودة، وحافظ على دقة القياسات والنسب والتوقيت.</p>
                                 </div>
 
-                                <div className="bg-gradient-to-r from-amber-50 to-orange-50 p-2.5 md:p-3 rounded-lg border border-amber-200">
+                                <div className="bg-linear-to-r from-amber-50 to-orange-50 p-2.5 md:p-3 rounded-lg border border-amber-200">
                                   <h4 className="font-bold text-amber-800 mb-1.5 flex items-center gap-1.5 text-[11px] md:text-xs">
                                     <Coffee className="w-3.5 h-3.5 text-amber-600" />
                                     تذكر!
@@ -1281,7 +1273,7 @@ export const ProductDetailPage = () => {
                                   <p className="text-gray-700">Use good-quality water, and stay precise with measurements, ratios, and timing.</p>
                                 </div>
 
-                                <div className="bg-gradient-to-r from-amber-50 to-orange-50 p-2.5 md:p-3 rounded-lg border border-amber-200">
+                                <div className="bg-linear-to-r from-amber-50 to-orange-50 p-2.5 md:p-3 rounded-lg border border-amber-200">
                                   <h4 className="font-bold text-amber-800 mb-1.5 flex items-center gap-1.5 text-[11px] md:text-xs">
                                     <Coffee className="w-3.5 h-3.5 text-amber-600" />
                                     Remember!
@@ -1343,7 +1335,7 @@ export const ProductDetailPage = () => {
                                 </ul>
                               </div>
 
-                              <div className="bg-gradient-to-r from-amber-50 to-orange-50 p-2.5 md:p-3 rounded-lg border border-amber-200">
+                              <div className="bg-linear-to-r from-amber-50 to-orange-50 p-2.5 md:p-3 rounded-lg border border-amber-200">
                                 <h4 className="font-bold text-amber-800 mb-1.5 flex items-center gap-1.5 text-[11px] md:text-xs">
                                   <Sparkles className="w-3.5 h-3.5 text-amber-600" />
                                   اللمسة النهائية
@@ -1402,7 +1394,7 @@ export const ProductDetailPage = () => {
                                 </ul>
                               </div>
 
-                              <div className="bg-gradient-to-r from-amber-50 to-orange-50 p-2.5 md:p-3 rounded-lg border border-amber-200">
+                              <div className="bg-linear-to-r from-amber-50 to-orange-50 p-2.5 md:p-3 rounded-lg border border-amber-200">
                                 <h4 className="font-bold text-amber-800 mb-1.5 flex items-center gap-1.5 text-[11px] md:text-xs">
                                   <Sparkles className="w-3.5 h-3.5 text-amber-600" />
                                   Final Touch

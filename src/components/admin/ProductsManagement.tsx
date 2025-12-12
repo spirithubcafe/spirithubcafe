@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../ui/alert-dialog';
-import { Package, Plus, Edit, Trash2, Eye, EyeOff, Search, Loader2, Star, Coffee, Layers, Image as ImageIcon, Crown, Upload, X } from 'lucide-react';
+import { Package, Plus, Edit, Trash2, Eye, EyeOff, Search, Loader2, Star, Coffee, Layers, Image as ImageIcon, Crown, Upload, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { productService, productVariantService, productImageService } from '../../services/productService';
 import { fileUploadService } from '../../services/fileUploadService';
 import { categoryService } from '../../services/categoryService';
@@ -819,14 +819,14 @@ export const ProductsManagement: React.FC = () => {
       <CardContent className="space-y-4">
         {/* Filters */}
         <div className="flex flex-col lg:flex-row gap-4 justify-between">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row sm:flex-wrap gap-4 min-w-0">
+            <div className="flex items-center gap-2 w-full sm:flex-1 min-w-0">
               <Search className="h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder={t('admin.products.search')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full sm:max-w-sm"
+                className="w-full"
               />
             </div>
             <Select value={selectedCategory} onValueChange={setSelectedCategory}>
@@ -853,9 +853,14 @@ export const ProductsManagement: React.FC = () => {
               </SelectContent>
             </Select>
           </div>
-          <Button onClick={handleCreateProduct} className="w-full sm:w-auto">
-            <Plus className="h-4 w-4 mr-2" />
-            {t('admin.products.add')}
+          <Button
+            onClick={handleCreateProduct}
+            className="w-full sm:w-auto"
+            aria-label={t('admin.products.add')}
+            title={t('admin.products.add')}
+          >
+            <Plus className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">{t('admin.products.add')}</span>
           </Button>
         </div>
 
@@ -874,23 +879,36 @@ export const ProductsManagement: React.FC = () => {
                 <div key={product.id} className="rounded-lg border bg-card p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <div className="font-semibold truncate">{product.name}</div>
-                      <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                        <span className="font-mono">{product.sku}</span>
+                      <div className="font-semibold line-clamp-2 wrap-anywhere">
+                        {product.name}
+                      </div>
+                      <div className="mt-1 flex flex-wrap items-center gap-2 min-w-0 text-xs text-muted-foreground">
+                        <span className="font-mono break-all">{product.sku}</span>
                         <span>•</span>
-                        <span className="truncate">{categoryName}</span>
+                        <span className="min-w-0 max-w-full wrap-anywhere">{categoryName}</span>
                       </div>
                     </div>
                     <div className="shrink-0 flex flex-col items-end gap-2">
-                      <Badge variant={product.isActive ? 'default' : 'secondary'}>
-                        {product.isActive
-                          ? t('admin.products.active')
-                          : t('admin.products.inactive')}
-                      </Badge>
+                      <div
+                        className="flex items-center justify-end"
+                        aria-label={product.isActive ? t('admin.products.active') : t('admin.products.inactive')}
+                        title={product.isActive ? t('admin.products.active') : t('admin.products.inactive')}
+                      >
+                        <span
+                          className={cn(
+                            'inline-block h-2.5 w-2.5 rounded-full',
+                            product.isActive ? 'bg-emerald-500' : 'bg-zinc-400'
+                          )}
+                        />
+                        <span className="sr-only">
+                          {product.isActive ? t('admin.products.active') : t('admin.products.inactive')}
+                        </span>
+                      </div>
                       {product.isFeatured ? (
                         <Badge variant="outline" className="border-yellow-500/40 text-yellow-600">
-                          <Star className="h-3 w-3 mr-1 fill-current" />
-                          {t('featured')}
+                          <Star className="h-3 w-3 sm:mr-1 fill-current" />
+                          <span className="hidden sm:inline">{t('featured')}</span>
+                          <span className="sr-only">{t('featured')}</span>
                         </Badge>
                       ) : null}
                     </div>
@@ -899,78 +917,90 @@ export const ProductsManagement: React.FC = () => {
                   <div className="mt-3 flex flex-wrap items-center gap-2">
                     <Button
                       variant="outline"
-                      size="sm"
+                      size="icon-sm"
                       onClick={() => handleEditProduct(product)}
+                      aria-label={t('common.edit')}
+                      title={t('common.edit')}
                     >
-                      <Edit className="h-4 w-4 mr-2" />
-                      {t('common.edit')}
+                      <Edit className="h-4 w-4" />
+                      <span className="sr-only">{t('common.edit')}</span>
                     </Button>
 
                     <Button
                       variant="outline"
-                      size="sm"
+                      size="icon-sm"
                       onClick={() => handleOpenAttributes(product)}
                       className="text-amber-600"
+                      aria-label="Attributes"
+                      title="Attributes"
                     >
-                      <Coffee className="h-4 w-4 mr-2" />
-                      Attributes
+                      <Coffee className="h-4 w-4" />
+                      <span className="sr-only">Attributes</span>
                     </Button>
 
                     <Button
                       variant="outline"
-                      size="sm"
+                      size="icon-sm"
                       onClick={() => handleOpenVariants(product)}
+                      aria-label={t('admin.products.manageVariants')}
+                      title={t('admin.products.manageVariants')}
                     >
-                      <Layers className="h-4 w-4 mr-2" />
-                      {t('admin.products.manageVariants')}
+                      <Layers className="h-4 w-4" />
+                      <span className="sr-only">{t('admin.products.manageVariants')}</span>
                     </Button>
 
                     <Button
                       variant="outline"
-                      size="sm"
+                      size="icon-sm"
                       onClick={() => handleOpenImages(product)}
+                      aria-label={t('admin.products.manageImages')}
+                      title={t('admin.products.manageImages')}
                     >
-                      <ImageIcon className="h-4 w-4 mr-2" />
-                      {t('admin.products.manageImages')}
+                      <ImageIcon className="h-4 w-4" />
+                      <span className="sr-only">{t('admin.products.manageImages')}</span>
                     </Button>
 
                     <Button
                       variant="outline"
-                      size="sm"
+                      size="icon-sm"
                       onClick={() => handleToggleActive(product.id)}
+                      aria-label={product.isActive ? t('admin.products.inactive') : t('admin.products.active')}
+                      title={product.isActive ? t('admin.products.inactive') : t('admin.products.active')}
                     >
                       {product.isActive ? (
-                        <>
-                          <EyeOff className="h-4 w-4 mr-2" />
-                          {t('admin.products.inactive')}
-                        </>
+                        <EyeOff className="h-4 w-4" />
                       ) : (
-                        <>
-                          <Eye className="h-4 w-4 mr-2" />
-                          {t('admin.products.active')}
-                        </>
+                        <Eye className="h-4 w-4" />
                       )}
+                      <span className="sr-only">
+                        {product.isActive ? t('admin.products.inactive') : t('admin.products.active')}
+                      </span>
                     </Button>
 
                     <Button
                       variant="outline"
-                      size="sm"
+                      size="icon-sm"
                       onClick={() => handleToggleFeatured(product.id)}
+                      aria-label={t('featured')}
+                      title={t('featured')}
                     >
                       <Star
-                        className={cn(
-                          'h-4 w-4 mr-2',
-                          product.isFeatured && 'text-yellow-500 fill-current'
-                        )}
+                        className={cn('h-4 w-4', product.isFeatured && 'text-yellow-500 fill-current')}
                       />
-                      {t('featured')}
+                      <span className="sr-only">{t('featured')}</span>
                     </Button>
 
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button variant="outline" size="sm" className="text-destructive">
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          {t('common.delete')}
+                        <Button
+                          variant="outline"
+                          size="icon-sm"
+                          className="text-destructive"
+                          aria-label={t('common.delete')}
+                          title={t('common.delete')}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          <span className="sr-only">{t('common.delete')}</span>
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
@@ -1023,19 +1053,33 @@ export const ProductsManagement: React.FC = () => {
                 products.map((product) => (
                   <TableRow key={product.id}>
                     <TableCell>
-                      <div className="font-medium">{product.name}</div>
+                      <div className="font-medium line-clamp-2 wrap-anywhere max-w-full">
+                        {product.name}
+                      </div>
                     </TableCell>
                     <TableCell className="font-mono text-sm">{product.sku}</TableCell>
                     <TableCell>
                       {categories.find(c => c.id === product.categoryId)?.name || '-'}
                     </TableCell>
                     <TableCell className="text-center">
-                      <Badge variant={product.isActive ? "default" : "secondary"}>
-                        {product.isActive ? t('admin.products.active') : t('admin.products.inactive')}
-                      </Badge>
+                      <div
+                        className="inline-flex items-center justify-center"
+                        aria-label={product.isActive ? t('admin.products.active') : t('admin.products.inactive')}
+                        title={product.isActive ? t('admin.products.active') : t('admin.products.inactive')}
+                      >
+                        <span
+                          className={cn(
+                            'inline-block h-2.5 w-2.5 rounded-full',
+                            product.isActive ? 'bg-emerald-500' : 'bg-zinc-400'
+                          )}
+                        />
+                        <span className="sr-only">
+                          {product.isActive ? t('admin.products.active') : t('admin.products.inactive')}
+                        </span>
+                      </div>
                     </TableCell>
                     <TableCell className="text-center">
-                      <div className="flex items-center justify-center space-x-2">
+                      <div className="flex flex-wrap items-center justify-center gap-1">
                         <Button
                           variant="ghost"
                           size="sm"
@@ -1121,23 +1165,33 @@ export const ProductsManagement: React.FC = () => {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex justify-center space-x-2">
+          <div className="flex flex-col items-stretch justify-center gap-2 sm:flex-row sm:items-center">
             <Button
               variant="outline"
-              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               disabled={currentPage === 1}
+              className="w-full sm:w-auto"
+              aria-label={t('common.previous')}
+              title={t('common.previous')}
             >
-              {t('common.previous')}
+              <ChevronLeft className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">{t('common.previous')}</span>
             </Button>
-            <span className="flex items-center px-4">
+
+            <span className="flex items-center justify-center px-2 text-xs text-muted-foreground sm:px-4 sm:text-sm">
               {t('common.page')} {currentPage} {t('common.of')} {totalPages}
             </span>
+
             <Button
               variant="outline"
-              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
+              className="w-full sm:w-auto"
+              aria-label={t('common.next')}
+              title={t('common.next')}
             >
-              {t('common.next')}
+              <span className="hidden sm:inline">{t('common.next')}</span>
+              <ChevronRight className="h-4 w-4 sm:ml-2" />
             </Button>
           </div>
         )}
@@ -1397,9 +1451,15 @@ export const ProductsManagement: React.FC = () => {
                   {variants.length} {t('admin.products.variants')}
                 </p>
               </div>
-              <Button onClick={handleVariantCreate} className="self-start sm:self-auto">
-                <Plus className="mr-2 h-4 w-4" />
-                {t('admin.products.addVariant')}
+              <Button
+                onClick={handleVariantCreate}
+                className="self-start sm:self-auto"
+                aria-label={t('admin.products.addVariant')}
+                title={t('admin.products.addVariant')}
+              >
+                <Plus className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">{t('admin.products.addVariant')}</span>
+                <span className="sr-only">{t('admin.products.addVariant')}</span>
               </Button>
             </div>
 
@@ -1466,11 +1526,21 @@ export const ProductsManagement: React.FC = () => {
                             </span>
                           </TableCell>
                           <TableCell className="text-center">
-                            <Badge variant={variant.isActive ? 'default' : 'secondary'}>
-                              {variant.isActive
-                                ? t('admin.products.active')
-                                : t('admin.products.inactive')}
-                            </Badge>
+                            <div
+                              className="inline-flex items-center justify-center"
+                              aria-label={variant.isActive ? t('admin.products.active') : t('admin.products.inactive')}
+                              title={variant.isActive ? t('admin.products.active') : t('admin.products.inactive')}
+                            >
+                              <span
+                                className={cn(
+                                  'inline-block h-2.5 w-2.5 rounded-full',
+                                  variant.isActive ? 'bg-emerald-500' : 'bg-zinc-400'
+                                )}
+                              />
+                              <span className="sr-only">
+                                {variant.isActive ? t('admin.products.active') : t('admin.products.inactive')}
+                              </span>
+                            </div>
                           </TableCell>
                           <TableCell className="text-center">
                             <div className="flex items-center justify-center gap-2">

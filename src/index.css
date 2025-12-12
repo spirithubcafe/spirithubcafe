@@ -145,10 +145,10 @@
   svg,
   img {
     cursor: pointer;
-    user-select: none;
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
+    user-select: none;
   }
   
   /* Ensure icons don't show text cursor */
@@ -157,10 +157,10 @@
   [role="button"] *,
   [onclick] * {
     cursor: inherit;
-    user-select: none;
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
+    user-select: none;
   }
 }
 
@@ -194,8 +194,43 @@ html[lang="en"] {
 /* Smooth scrolling */
 html {
   scroll-behavior: smooth;
-  scrollbar-width: thin;
-  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+@supports (scrollbar-width: thin) {
+  html {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  }
+}
+
+/* Never allow horizontal page scrolling */
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+#root {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* Ensure media never overflows its container */
+img,
+video,
+canvas {
+  max-width: 100%;
+}
+
+/* Avoid horizontal scrolling for preformatted blocks */
+pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* For image zoom components that update a CSS variable on hover/move */
+.zoom-origin-var {
+  transform-origin: var(--zoom-origin, 50% 50%);
 }
 
 /* Custom scrollbars */
@@ -256,7 +291,12 @@ html {
 /* Hide scrollbar but keep functionality */
 .scrollbar-hide {
   -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+}
+
+@supports (scrollbar-width: none) {
+  .scrollbar-hide {
+    scrollbar-width: none;  /* Firefox */
+  }
 }
 
 .scrollbar-hide::-webkit-scrollbar {

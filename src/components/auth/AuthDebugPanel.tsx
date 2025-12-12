@@ -58,7 +58,7 @@ export const AuthDebugPanel: React.FC = () => {
         {user && (
           <div className="space-y-2">
             <h4 className="font-medium">User Info:</h4>
-            <pre className="bg-gray-100 p-3 rounded text-sm overflow-x-auto">
+            <pre className="bg-gray-100 p-3 rounded text-sm whitespace-pre-wrap break-all max-w-full">
               {JSON.stringify(user, null, 2)}
             </pre>
           </div>

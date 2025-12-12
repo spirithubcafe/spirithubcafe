@@ -34,7 +34,6 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
   const [loading, setLoading] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isZooming, setIsZooming] = useState(false);
-  const [zoomPosition, setZoomPosition] = useState({ x: 0, y: 0 });
 
   // Fetch full product details when modal opens
   useEffect(() => {
@@ -167,9 +166,9 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
-    setZoomPosition({ x, y });
+    const x = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
+    const y = Math.max(0, Math.min(100, ((e.clientY - rect.top) / rect.height) * 100));
+    e.currentTarget.style.setProperty('--zoom-origin', `${x}% ${y}%`);
   };
 
   const handleMouseEnter = () => {
@@ -205,7 +204,7 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
             {/* Product Image */}
             <div className="relative overflow-hidden bg-gray-50 p-2 md:p-3">
               <div 
-                className="aspect-[4/3] md:aspect-square relative rounded-lg md:rounded-xl overflow-hidden cursor-zoom-in"
+                className="aspect-4/3 md:aspect-square relative rounded-lg md:rounded-xl overflow-hidden cursor-zoom-in"
                 onMouseMove={handleMouseMove}
                 onMouseEnter={handleMouseEnter}
                 onMouseLeave={handleMouseLeave}
@@ -215,14 +214,7 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
                   alt={product.name}
                   className={`absolute inset-0 w-full h-full object-cover transition-transform duration-200 ${
                     isZooming ? 'scale-150' : 'scale-100'
-                  }`}
-                  style={
-                    isZooming
-                      ? {
-                          transformOrigin: `${zoomPosition.x}% ${zoomPosition.y}%`,
-                        }
-                      : undefined
-                  }
+                  } zoom-origin-var`}
                   onError={(event) => handleImageError(event, '/images/products/default-product.webp')}
                 />
               </div>
@@ -230,13 +222,13 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
               {/* Thumbnail Gallery */}
               {images.length > 1 && (
                 <div className="bg-white/95 p-2 border-t border-gray-200 -mx-2 -mb-2 mt-2 md:p-3 md:-mx-3 md:-mb-3 md:mt-3">
-                  <div className="flex gap-1.5 md:gap-2 overflow-x-auto scrollbar-hide">
+                  <div className="flex flex-wrap gap-1.5 md:gap-2">
                     {images.map((image, index) => (
                       <button
                         key={index}
                         type="button"
                         onClick={handleThumbnailClick(index)}
-                        className={`relative h-12 w-12 md:h-16 md:w-16 rounded-md md:rounded-lg overflow-hidden flex-shrink-0 border-2 transition-all ${
+                        className={`relative h-12 w-12 md:h-16 md:w-16 rounded-md md:rounded-lg overflow-hidden shrink-0 border-2 transition-all ${
                           currentImageIndex === index
                             ? 'border-amber-500 ring-2 ring-amber-300 shadow-md'
                             : 'border-gray-300 hover:border-amber-400'
@@ -296,7 +288,7 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
                 <div className="space-y-1 md:space-y-1.5 text-[11px] md:text-xs">
                   {fullProduct.roastLevel && (
                     <div className="flex items-center gap-2">
-                      <Flame className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                      <Flame className="w-4 h-4 text-amber-600 shrink-0" />
                       <span className="text-gray-500 min-w-[60px] md:min-w-[70px]">{isArabic ? 'التحميص:' : 'Roast:'}</span>
                       <span className="font-semibold text-gray-900">
                         {isArabic && fullProduct.roastLevelAr ? fullProduct.roastLevelAr : fullProduct.roastLevel}
@@ -305,7 +297,7 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
                   )}
                   {fullProduct.process && (
                     <div className="flex items-center gap-2">
-                      <RotateCw className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                      <RotateCw className="w-4 h-4 text-amber-600 shrink-0" />
                       <span className="text-gray-500 min-w-[60px] md:min-w-[70px]">{isArabic ? 'المعالجة:' : 'Process:'}</span>
                       <span className="font-semibold text-gray-900">
                         {isArabic && fullProduct.processAr ? fullProduct.processAr : fullProduct.process}
@@ -314,7 +306,7 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
                   )}
                   {fullProduct.variety && (
                     <div className="flex items-center gap-2">
-                      <BarChart3 className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                      <BarChart3 className="w-4 h-4 text-amber-600 shrink-0" />
                       <span className="text-gray-500 min-w-[60px] md:min-w-[70px]">{isArabic ? 'الصنف:' : 'Variety:'}</span>
                       <span className="font-semibold text-gray-900">
                         {isArabic && fullProduct.varietyAr ? fullProduct.varietyAr : fullProduct.variety}
@@ -323,7 +315,7 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
                   )}
                   {fullProduct.altitude && (
                     <div className="flex items-center gap-2">
-                      <MapPin className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                      <MapPin className="w-4 h-4 text-amber-600 shrink-0" />
                       <span className="text-gray-500 min-w-[60px] md:min-w-[70px]">{isArabic ? 'الارتفاع:' : 'Altitude:'}</span>
                       <span className="font-semibold text-gray-900">
                         {fullProduct.altitude} {isArabic ? 'م' : 'masl'}
@@ -332,7 +324,7 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
                   )}
                   {fullProduct.farm && (
                     <div className="flex items-center gap-2">
-                      <Wheat className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                      <Wheat className="w-4 h-4 text-amber-600 shrink-0" />
                       <span className="text-gray-500 min-w-[60px] md:min-w-[70px]">{isArabic ? 'المزرعة:' : 'Farm:'}</span>
                       <span className="font-semibold text-gray-900">
                         {isArabic && fullProduct.farmAr ? fullProduct.farmAr : fullProduct.farm}
@@ -341,7 +333,7 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
                   )}
                   {(fullProduct.notes || fullProduct.notesAr || fullProduct.tastingNotes || fullProduct.tastingNotesAr) && (
                     <div className="flex items-start gap-2">
-                      <ClipboardList className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                      <ClipboardList className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                       <span className="text-gray-500 min-w-[60px] md:min-w-[70px]">{isArabic ? 'ملاحظات التذوق:' : 'Notes:'}</span>
                       <span className="font-semibold text-gray-900 flex-1">
                         {isArabic 
@@ -352,7 +344,7 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
                   )}
                   {(fullProduct.uses || fullProduct.usesAr) && (
                     <div className="flex items-start gap-2">
-                      <Coffee className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                      <Coffee className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                       <span className="text-gray-500 min-w-[60px] md:min-w-[70px]">{isArabic ? 'الاستخدامات:' : 'Uses:'}</span>
                       <span className="font-semibold text-gray-900 flex-1">
                         {isArabic && fullProduct.usesAr ? fullProduct.usesAr : fullProduct.uses}
@@ -363,7 +355,7 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
               )}
 
               {/* Price, Size and Quantity - Compact Unified Section */}
-              <div className="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 rounded-lg p-1.5 md:p-3 space-y-1 md:space-y-2">
+              <div className="bg-linear-to-br from-amber-50 to-orange-50 border border-amber-200 rounded-lg p-1.5 md:p-3 space-y-1 md:space-y-2">
                 {/* Price - More compact on mobile */}
                 <div className="flex items-baseline justify-between py-0.5 border-b border-amber-200/50 pb-1 md:pb-2">
                   <span className="text-[9px] md:text-xs text-gray-600 font-medium">{isArabic ? 'السعر' : 'Price'}</span>
