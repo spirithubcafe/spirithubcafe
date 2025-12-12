@@ -600,56 +600,56 @@ export const OrdersManagement: React.FC = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-3 grid-cols-2 md:grid-cols-4">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1.5">
+            <CardTitle className="text-xs font-medium">
               {isArabic ? 'إجمالي الطلبات' : 'Total Orders'}
             </CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
+            <Package className="h-3.5 w-3.5 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{orders.length}</div>
+          <CardContent className="pb-3">
+            <div className="text-xl font-bold">{orders.length}</div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1.5">
+            <CardTitle className="text-xs font-medium">
               {isArabic ? 'قيد الانتظار' : 'Pending'}
             </CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
+          <CardContent className="pb-3">
+            <div className="text-xl font-bold">
               {orders.filter((o) => o.status === 'Pending').length}
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1.5">
+            <CardTitle className="text-xs font-medium">
               {isArabic ? 'مكتمل' : 'Completed'}
             </CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
+            <Package className="h-3.5 w-3.5 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
+          <CardContent className="pb-3">
+            <div className="text-xl font-bold">
               {orders.filter((o) => o.status === 'Delivered').length}
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1.5">
+            <CardTitle className="text-xs font-medium">
               {isArabic ? 'إجمالي الإيرادات' : 'Total Revenue'}
             </CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <DollarSign className="h-3.5 w-3.5 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
+          <CardContent className="pb-3">
+            <div className="text-lg font-bold">
               OMR {totalRevenue.toFixed(2)}
             </div>
           </CardContent>
