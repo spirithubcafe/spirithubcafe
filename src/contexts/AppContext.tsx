@@ -213,14 +213,14 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     }
   }, [language]);
 
-  const fetchCategories = useCallback(async () => {
+  const fetchCategories = useCallback(async (forceRefresh = false) => {
     // Check cache first for both categories and allCategories
     const cacheKey = `spirithub_cache_categories_${language}`;
     const allCategoriesCacheKey = `spirithub_cache_all_categories_${language}`;
     const cachedData = cacheUtils.get<Category[]>(cacheKey);
     const cachedAllCategories = cacheUtils.get<Category[]>(allCategoriesCacheKey);
     
-    if (cachedData && cachedAllCategories) {
+    if (!forceRefresh && cachedData && cachedAllCategories) {
       console.log('📦 Using cached categories for', language);
       setCategories(cachedData);
       setAllCategories(cachedAllCategories);
@@ -246,9 +246,17 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
           slug: cat.slug,
           name: language === 'ar' && cat.nameAr ? cat.nameAr : cat.name,
           description: language === 'ar' && cat.descriptionAr ? cat.descriptionAr : cat.description || '',
-          image: imageUrl
+          image: imageUrl,
+          displayOrder: cat.displayOrder
         };
       });
+      
+      // Log the categories with their display order
+      console.log('📋 Categories sorted by displayOrder:', transformedAllCategories.map(c => ({
+        name: c.name,
+        displayOrder: c.displayOrder
+      })));
+      console.log('💡 Tip: Press Ctrl+Shift+C to clear cache and refresh data');
       
       // Filter categories for homepage display
       const homepageCategories = transformedAllCategories.filter((_cat, index) => {
@@ -289,6 +297,23 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     // Set initial document direction
     document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
     document.documentElement.lang = language;
+    
+    // Add keyboard shortcut to clear cache (Ctrl+Shift+C)
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.shiftKey && e.key === 'C') {
+        console.log('🗑️ Clearing all SpiritHub cache...');
+        const keys = Object.keys(localStorage).filter(key => key.startsWith('spirithub_cache'));
+        keys.forEach(key => localStorage.removeItem(key));
+        console.log(`✅ Cleared ${keys.length} cache entries`);
+        console.log('🔄 Refreshing data...');
+        fetchProducts();
+        fetchCategories(true);
+        alert('Cache cleared! Data refreshed.');
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [language]);
 

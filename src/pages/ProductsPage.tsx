@@ -125,6 +125,49 @@ export const ProductsPage = () => {
     });
   }, [products, searchTerm, selectedCategory, currentCategory]);
 
+  // Group products by category when "All" is selected
+  const productsByCategory = useMemo(() => {
+    if (selectedCategory !== 'all') {
+      return null;
+    }
+
+    const grouped = new Map<string, typeof filteredProducts>();
+    
+    filteredProducts.forEach((product) => {
+      const categoryId = product.categoryId || 'uncategorized';
+      if (!grouped.has(categoryId)) {
+        grouped.set(categoryId, []);
+      }
+      grouped.get(categoryId)!.push(product);
+    });
+
+    // Sort categories by their displayOrder
+    const sortedCategories = allCategories
+      .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0))
+      .map(cat => ({
+        category: cat,
+        products: grouped.get(cat.id) || []
+      }))
+      .filter(item => item.products.length > 0);
+
+    // Add uncategorized products if any
+    const uncategorized = grouped.get('uncategorized');
+    if (uncategorized && uncategorized.length > 0) {
+      sortedCategories.push({
+        category: {
+          id: 'uncategorized',
+          name: isArabic ? 'غير مصنف' : 'Uncategorized',
+          slug: 'uncategorized',
+          description: '',
+          image: '',
+        },
+        products: uncategorized
+      });
+    }
+
+    return sortedCategories;
+  }, [selectedCategory, filteredProducts, allCategories, isArabic]);
+
   const seoContent = useMemo(() => {
     if (currentCategory && selectedCategory !== 'all') {
       return language === 'ar'
@@ -308,12 +351,70 @@ export const ProductsPage = () => {
                   </p>
                 </div>
 
-                {/* Products Grid - 4 products per row, 2 on mobile */}
-                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-                  {filteredProducts.map((product) => (
-                    <ProductCard key={product.id} product={product} />
-                  ))}
-                </div>
+                {/* Show grouped by category if "All" is selected */}
+                {selectedCategory === 'all' && productsByCategory ? (
+                  <div className="space-y-16">
+                    {productsByCategory.map(({ category, products: categoryProducts }) => {
+                      // Shorten category names
+                      const getShortName = (name: string) => {
+                        const shortNames: Record<string, string> = {
+                          'Espresso Coffee': 'Espresso',
+                          'Coffee Capsules': 'Capsules',
+                          'Premium Coffee': 'Premium',
+                          'Filter Coffee': 'Filter',
+                          'Drip Coffee': 'Drip',
+                        };
+                        return shortNames[name] || name;
+                      };
+
+                      return (
+                        <div key={category.id} className="space-y-6">
+                          {/* Category Section Header */}
+                          <div className="flex items-center gap-4 pb-4 border-b-2 border-amber-500">
+                            <div className="flex items-center gap-4 flex-1">
+                              {category.image && category.id !== 'uncategorized' && (
+                                <img
+                                  src={category.image}
+                                  alt={category.name}
+                                  className="w-16 h-16 rounded-lg object-cover shadow-md"
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.style.display = 'none';
+                                  }}
+                                />
+                              )}
+                              <div>
+                                <h2 className="text-2xl font-bold text-gray-900">
+                                  {getShortName(category.name)}
+                                </h2>
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => handleCategoryChange(category.id)}
+                              className="px-4 py-2 text-sm font-medium text-amber-600 hover:text-amber-700 hover:bg-amber-50 rounded-lg transition-colors"
+                            >
+                              {isArabic ? 'عرض الكل' : 'View All'}
+                            </button>
+                          </div>
+
+                          {/* Category Products Grid */}
+                          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+                            {categoryProducts.map((product) => (
+                              <ProductCard key={product.id} product={product} />
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  /* Single category view - standard grid */
+                  <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+                    {filteredProducts.map((product) => (
+                      <ProductCard key={product.id} product={product} />
+                    ))}
+                  </div>
+                )}
               </>
             )}
           </div>

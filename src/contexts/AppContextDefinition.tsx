@@ -23,6 +23,7 @@ export interface Category {
   name: string;
   description: string;
   image: string;
+  displayOrder?: number;
 }
 
 export interface AppContextType {
@@ -34,7 +35,7 @@ export interface AppContextType {
   loading: boolean;
   error: string | null;
   fetchProducts: () => Promise<void>;
-  fetchCategories: () => Promise<void>;
+  fetchCategories: (forceRefresh?: boolean) => Promise<void>;
   t: (key: string, options?: Record<string, unknown>) => string;
 }
 

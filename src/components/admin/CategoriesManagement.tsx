@@ -47,6 +47,14 @@ export const CategoriesManagement: React.FC = () => {
     }
   };
 
+  const handleClearCache = () => {
+    const keys = Object.keys(localStorage).filter(key => key.startsWith('spirithub_cache'));
+    keys.forEach(key => localStorage.removeItem(key));
+    console.log(`🗑️ Cleared ${keys.length} cache entries`);
+    alert('Cache cleared successfully! The page will refresh to load fresh data.');
+    window.location.reload();
+  };
+
   const handleCreateCategory = () => {
     navigate('/admin/categories/add');
   };
@@ -154,10 +162,21 @@ export const CategoriesManagement: React.FC = () => {
               className="w-full sm:max-w-sm"
             />
           </div>
-          <Button onClick={handleCreateCategory} className="w-full sm:w-auto">
-            <Plus className="h-4 w-4 mr-2" />
-            {t('admin.categories.add')}
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              onClick={handleClearCache} 
+              variant="outline"
+              className="w-full sm:w-auto"
+              title="Clear cache and refresh data"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Clear Cache
+            </Button>
+            <Button onClick={handleCreateCategory} className="w-full sm:w-auto">
+              <Plus className="h-4 w-4 mr-2" />
+              {t('admin.categories.add')}
+            </Button>
+          </div>
         </div>
 
         {/* Mobile list */}
