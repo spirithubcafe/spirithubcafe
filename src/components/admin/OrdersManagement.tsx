@@ -81,7 +81,7 @@ export const OrdersManagement: React.FC = () => {
     setError(null);
     try {
       console.log('🔄 Loading orders from API...');
-      console.log('📍 API Base URL:', 'https://spirithubapi.sbc.om');
+      console.log('📍 API Base URL:', 'https://api.spirithubcafe.com');
       
       const token = localStorage.getItem('accessToken');
       console.log('🔑 Token exists:', !!token);
@@ -690,7 +690,7 @@ export const OrdersManagement: React.FC = () => {
                     {isArabic ? 'حاول مرة أخرى' : 'Try Again'}
                   </Button>
                   <Button 
-                    onClick={() => window.open('https://spirithubapi.sbc.om/swagger', '_blank')} 
+                    onClick={() => window.open('https://api.spirithubcafe.com/swagger', '_blank')} 
                     variant="outline" 
                     size="sm"
                   >

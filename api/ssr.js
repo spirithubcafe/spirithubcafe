@@ -5,7 +5,7 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // API base URL
-const API_BASE_URL = process.env.VITE_API_URL || 'https://spirithubapi.sbc.om/api';
+const API_BASE_URL = process.env.VITE_API_URL || 'https://api.spirithubcafe.com/api';
 
 // Cache for product data (valid for 5 minutes)
 const productCache = new Map();

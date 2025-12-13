@@ -108,7 +108,7 @@ export default defineConfig({
         navigateFallback: "/index.html",
         runtimeCaching: [
           {
-            urlPattern: /^https:\/\/spirithubapi\.sbc\.om\/?.*/i,
+            urlPattern: /^https:\/\/api\.spirithubcafe\.com\/?.*/i,
             handler: "NetworkFirst",
             options: {
               cacheName: "api-cache",

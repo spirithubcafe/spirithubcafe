@@ -7,10 +7,10 @@ const getApiBaseUrl = (): string => {
   const savedRegion = localStorage.getItem('spirithub-region') || 'om';
   
   if (savedRegion === 'sa') {
-    return import.meta.env.VITE_API_BASE_URL_SA || 'https://spirithubapi-sa.sbc.om';
+    return import.meta.env.VITE_API_BASE_URL_SA || 'https://api.spirithubcafe.com';
   }
   
-  return import.meta.env.VITE_API_BASE_URL_OM || import.meta.env.VITE_API_BASE_URL || 'https://spirithubapi.sbc.om';
+  return import.meta.env.VITE_API_BASE_URL_OM || import.meta.env.VITE_API_BASE_URL || 'https://api.spirithubcafe.com';
 };
 
 // Create axios instance with default configuration
