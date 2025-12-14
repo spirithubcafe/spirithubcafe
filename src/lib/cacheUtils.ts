@@ -7,7 +7,7 @@ export interface CacheItem<T> {
 }
 
 const CACHE_DURATION = 60 * 60 * 1000; // 1 hour in milliseconds
-const CACHE_VERSION = 4; // Increment this when cache structure changes
+const CACHE_VERSION = 5; // Increment this when cache structure changes
 
 export const cacheUtils = {
   set: <T>(key: string, data: T, duration: number = CACHE_DURATION): void => {

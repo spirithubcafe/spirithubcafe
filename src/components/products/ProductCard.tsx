@@ -36,13 +36,17 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       try {
         const productId = parseInt(product.id, 10);
         if (isNaN(productId)) return;
-        const variants = await import('../../services/productService').then(m => m.productVariantService.getByProduct(productId));
-        const defaultVariant = variants.find((v: any) => v.isDefault) ?? variants[0] ?? null;
+        const variants = (await import('../../services/productService').then(m => m.productVariantService.getByProduct(productId))) as any[];
+
+        // Business rule: never use inactive variants
+        const activeVariants = variants.filter((v) => v?.isActive !== false);
+
+        const defaultVariant = activeVariants.find((v: any) => v.isDefault) ?? activeVariants[0] ?? null;
         if (mounted) {
           setDefaultVariantId(defaultVariant ? defaultVariant.id : null);
           // Check if any variant has a discount and calculate max discount percentage
           let maxDiscount = 0;
-          variants.forEach((v: any) => {
+          activeVariants.forEach((v: any) => {
             if (v.discountPrice && v.discountPrice > 0 && v.discountPrice < v.price) {
               const percent = Math.round(((v.price - v.discountPrice) / v.price) * 100);
               if (percent > maxDiscount) maxDiscount = percent;

@@ -60,6 +60,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     // Check cache first
     const cacheKey = `spirithub_cache_products_${language}`;
     const cachedData = cacheUtils.get<Product[]>(cacheKey);
+
+    let usedCache = false;
     
     if (cachedData) {
       console.log('📦 Using cached products for', language);
@@ -71,13 +73,20 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         cacheUtils.remove(cacheKey);
         // Continue to fetch fresh data
       } else {
-        setProducts(cachedData);
+        // If we have isActive persisted, filter defensively.
+        const filteredCached = cachedData.filter(
+          (p) => (p as unknown as { isActive?: boolean }).isActive !== false,
+        );
+        setProducts(filteredCached);
         setLoading(false);
-        return;
+        usedCache = true;
+        // Continue to fetch fresh data in the background to pick up admin changes (activation/deactivation).
       }
     }
 
-    setLoading(true);
+    if (!usedCache) {
+      setLoading(true);
+    }
     setError(null);
     
     try {
@@ -100,7 +109,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         price?: number;
       };
 
-      const transformedProducts: Product[] = await Promise.all(
+      const transformedProductsRaw = await Promise.all(
         activeProducts.map(async (prod) => {
           const baseProduct = prod as ApiProductExtended;
           const basePricing = baseProduct as ProductPricing;
@@ -140,6 +149,11 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
             // Silently fail - use fallback product data
           }
 
+          // Business rule: never show inactive products publicly.
+          if ((fullProduct as unknown as { isActive?: boolean }).isActive === false) {
+            return null;
+          }
+
           const imageUrl = resolveProductImageUrl(fullProduct);
           const fallbackCategoryName =
             (typeof fullProduct.categoryName === 'string' && fullProduct.categoryName) || '';
@@ -171,6 +185,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
           return {
             id: fullProduct.id.toString(),
             slug: fullProduct.slug,
+            isActive: (fullProduct as unknown as { isActive?: boolean }).isActive,
             name: language === 'ar' && fullProduct.nameAr ? fullProduct.nameAr : fullProduct.name,
             nameAr: fullProduct.nameAr,
             description:
@@ -192,6 +207,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
           };
         }),
       );
+
+      const transformedProducts = transformedProductsRaw.filter(Boolean) as Product[];
       
       setProducts(transformedProducts);
       
@@ -212,9 +229,13 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     } catch (err) {
       console.error('❌ Error fetching products:', err);
       setError('Failed to fetch products');
-      setProducts([]);
+      if (!usedCache) {
+        setProducts([]);
+      }
     } finally {
-      setLoading(false);
+      if (!usedCache) {
+        setLoading(false);
+      }
     }
   }, [language]);
 

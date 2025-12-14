@@ -102,6 +102,11 @@ export const ProductsPage = () => {
       : null;
 
     return products.filter((product) => {
+      // Business rule: never show inactive products publicly.
+      if (product.isActive === false) {
+        return false;
+      }
+
       // Filter by category using categoryId when available
       const matchesCategory =
         selectedCategory === 'all' ||

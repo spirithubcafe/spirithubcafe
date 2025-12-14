@@ -1,9 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useApp } from '../../hooks/useApp';
+import { toast } from 'sonner';
+import { cn } from '../../lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
+import { Switch } from '../ui/switch';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '../ui/dropdown-menu';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Label } from '../ui/label';
 import { Input } from '../ui/input';
@@ -14,6 +18,8 @@ import {
   FileText, 
   RefreshCw, 
   Eye, 
+  MoreHorizontal,
+  Bell,
   Package, 
   DollarSign, 
   Calendar, 
@@ -43,6 +49,12 @@ export const OrdersManagement: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+
+  const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(true);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [highlightedOrderIds, setHighlightedOrderIds] = useState<Set<number>>(new Set());
+  const knownOrderIdsRef = useRef<Set<number>>(new Set());
+  const highlightTimeoutsRef = useRef<Map<number, number>>(new Map());
   
   // Dialog states
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -72,12 +84,82 @@ export const OrdersManagement: React.FC = () => {
 
   const isArabic = language === 'ar';
 
+  const getRegionLoginPath = (): string => {
+    const regionFromPath = window.location.pathname.match(/^\/(om|sa)(\/|$)/)?.[1] as
+      | 'om'
+      | 'sa'
+      | undefined;
+    const region = regionFromPath || (localStorage.getItem('spirithub-region') as 'om' | 'sa' | null) || 'om';
+    return `/${region}/login`;
+  };
+
+  const markAllSeen = () => {
+    // Clear any highlights and persist "seen" marker.
+    for (const timeoutId of highlightTimeoutsRef.current.values()) {
+      window.clearTimeout(timeoutId);
+    }
+    highlightTimeoutsRef.current.clear();
+    setHighlightedOrderIds(new Set());
+    localStorage.setItem('spirithub_admin_orders_last_seen', new Date().toISOString());
+  };
+
+  const notifyNewOrders = async (newOrders: Order[]) => {
+    if (!notificationsEnabled || newOrders.length === 0) return;
+
+    const count = newOrders.length;
+    const newest = newOrders
+      .slice()
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
+
+    toast(
+      isArabic
+        ? `طلب جديد (${count}) — ${newest?.orderNumber ?? ''}`
+        : `New order (${count}) — ${newest?.orderNumber ?? ''}`,
+      {
+        description: newest
+          ? isArabic
+            ? `${newest.fullName} • OMR ${newest.totalAmount.toFixed(3)}`
+            : `${newest.fullName} • OMR ${newest.totalAmount.toFixed(3)}`
+          : undefined,
+        duration: 6000,
+      },
+    );
+
+    // Browser notifications (optional, permission-based)
+    try {
+      if (!('Notification' in window)) return;
+      if (Notification.permission === 'default') {
+        await Notification.requestPermission();
+      }
+      if (Notification.permission === 'granted') {
+        const title = isArabic ? 'طلب جديد' : 'New Order';
+        const body = newest
+          ? `${newest.orderNumber} • ${newest.fullName} • OMR ${newest.totalAmount.toFixed(3)}`
+          : isArabic
+            ? 'وصلت طلبات جديدة'
+            : 'New orders arrived';
+        new Notification(title, { body });
+      }
+    } catch {
+      // Ignore notification errors
+    }
+  };
+
   useEffect(() => {
     loadOrders();
   }, []);
 
-  const loadOrders = async () => {
-    setLoading(true);
+  useEffect(() => {
+    if (!autoRefreshEnabled) return;
+    const intervalId = window.setInterval(() => {
+      loadOrders({ silent: true });
+    }, 30_000);
+    return () => window.clearInterval(intervalId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoRefreshEnabled]);
+
+  const loadOrders = async ({ silent = false }: { silent?: boolean } = {}) => {
+    if (!silent) setLoading(true);
     setError(null);
     try {
       console.log('🔄 Loading orders from API...');
@@ -118,6 +200,37 @@ export const OrdersManagement: React.FC = () => {
         : [];
       
       setOrders(ordersWithItems);
+
+      // Detect and highlight new orders
+      const newOrders = ordersWithItems.filter((o) => !knownOrderIdsRef.current.has(o.id));
+      if (newOrders.length > 0) {
+        // Update highlights (auto-expire)
+        setHighlightedOrderIds((prev) => {
+          const next = new Set(prev);
+          for (const o of newOrders) {
+            next.add(o.id);
+
+            const existingTimeout = highlightTimeoutsRef.current.get(o.id);
+            if (existingTimeout) window.clearTimeout(existingTimeout);
+            const timeoutId = window.setTimeout(() => {
+              setHighlightedOrderIds((current) => {
+                const updated = new Set(current);
+                updated.delete(o.id);
+                return updated;
+              });
+              highlightTimeoutsRef.current.delete(o.id);
+            }, 5 * 60_000);
+            highlightTimeoutsRef.current.set(o.id, timeoutId);
+          }
+          return next;
+        });
+
+        // Notify admin
+        await notifyNewOrders(newOrders);
+      }
+
+      // Update known order ids
+      knownOrderIdsRef.current = new Set(ordersWithItems.map((o) => o.id));
       
       // Debug: Check if orders have items
       if (ordersWithItems.length > 0) {
@@ -154,7 +267,7 @@ export const OrdersManagement: React.FC = () => {
         errorMessage += isArabic ? 'يرجى تسجيل الدخول مرة أخرى' : 'Please login again';
         // Redirect to login after a delay
         setTimeout(() => {
-          window.location.href = '/login';
+          window.location.href = getRegionLoginPath();
         }, 2000);
       } else if (error.statusCode === 403) {
         errorMessage += isArabic ? 'ليس لديك صلاحية الوصول إلى الطلبات' : 'You do not have permission to access orders';
@@ -177,8 +290,141 @@ export const OrdersManagement: React.FC = () => {
       setError(errorMessage);
       setOrders([]); // Set empty array on error
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
+  };
+
+  const sortedOrders = useMemo(() => {
+    return [...orders].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }, [orders]);
+
+  const paidOrders = useMemo(() => {
+    return sortedOrders.filter((o) => String(o.paymentStatus).toLowerCase() === 'paid');
+  }, [sortedOrders]);
+
+  const otherOrders = useMemo(() => {
+    return sortedOrders.filter((o) => String(o.paymentStatus).toLowerCase() !== 'paid');
+  }, [sortedOrders]);
+
+  const newOrdersCount = highlightedOrderIds.size;
+
+  const copyToClipboard = async (value: string, label: string) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      toast(isArabic ? 'تم النسخ' : 'Copied', {
+        description: `${label}: ${value}`,
+        duration: 2500,
+      });
+    } catch {
+      toast(isArabic ? 'فشل النسخ' : 'Copy failed', {
+        description: label,
+        duration: 2500,
+      });
+    }
+  };
+
+  const OrderActionsMenu = ({ order, triggerVariant }: { order: Order; triggerVariant: 'icon' | 'button' }) => {
+    const trigger =
+      triggerVariant === 'icon' ? (
+        <Button variant="ghost" size="icon" aria-label={isArabic ? 'الإجراءات' : 'Actions'} title={isArabic ? 'الإجراءات' : 'Actions'}>
+          <MoreHorizontal className="h-4 w-4" />
+        </Button>
+      ) : (
+        <Button variant="outline" size="sm" aria-label={isArabic ? 'الإجراءات' : 'Actions'} title={isArabic ? 'الإجراءات' : 'Actions'}>
+          <MoreHorizontal className="h-4 w-4 mr-2" />
+          {isArabic ? 'الإجراءات' : 'Actions'}
+        </Button>
+      );
+
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>{trigger}</DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="min-w-[220px]">
+          <DropdownMenuItem onSelect={() => handleViewDetails(order)}>
+            <Eye className="h-4 w-4" />
+            {isArabic ? 'التفاصيل' : 'Details'}
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => handleEditOrder(order)}>
+            <Edit className="h-4 w-4" />
+            {isArabic ? 'تعديل' : 'Edit'}
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => handleGenerateInvoice(order)} disabled={invoiceLoading}>
+            <FileText className="h-4 w-4" />
+            {isArabic ? 'فاتورة' : 'Invoice'}
+          </DropdownMenuItem>
+          {String(order.paymentStatus).toLowerCase() !== 'paid' && (
+            <DropdownMenuItem onSelect={() => handleGeneratePaymentLink(order)} disabled={paymentLinkLoading}>
+              <CreditCard className="h-4 w-4" />
+              {isArabic ? 'رابط دفع' : 'Pay link'}
+            </DropdownMenuItem>
+          )}
+
+          {order.shippingMethod === 3 && !order.trackingNumber && (
+            <DropdownMenuItem
+              onSelect={() => handleCreateShipment(order)}
+              disabled={shipmentLoading === order.id}
+              className="text-red-700 focus:text-red-700"
+            >
+              {shipmentLoading === order.id ? (
+                <RefreshCw className="h-4 w-4 animate-spin" />
+              ) : (
+                <PackagePlus className="h-4 w-4" />
+              )}
+              {isArabic ? 'شحنة أرامكس' : 'Create Aramex'}
+            </DropdownMenuItem>
+          )}
+
+          {order.shippingMethod === 3 && order.trackingNumber && (
+            <>
+              <DropdownMenuItem
+                onSelect={() => handlePrintLabel(order)}
+                disabled={printLabelLoading === order.id}
+                className="text-green-700 focus:text-green-700"
+              >
+                {printLabelLoading === order.id ? (
+                  <RefreshCw className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Printer className="h-4 w-4" />
+                )}
+                {isArabic ? 'ملصق الشحن' : 'Print Label'}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={() => window.open(`https://www.aramex.com/om/en/track/shipments?ShipmentNumber=${order.trackingNumber}`, '_blank', 'noopener,noreferrer')}
+              >
+                <Truck className="h-4 w-4" />
+                {isArabic ? 'تتبع أرامكس' : 'Track Aramex'}
+              </DropdownMenuItem>
+            </>
+          )}
+
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onSelect={() => copyToClipboard(order.orderNumber, isArabic ? 'رقم الطلب' : 'Order #')}>
+            <Copy className="h-4 w-4" />
+            {isArabic ? 'نسخ رقم الطلب' : 'Copy order #'}
+          </DropdownMenuItem>
+          {order.email && (
+            <DropdownMenuItem onSelect={() => copyToClipboard(order.email, isArabic ? 'البريد' : 'Email')}>
+              <Mail className="h-4 w-4" />
+              {isArabic ? 'نسخ البريد' : 'Copy email'}
+            </DropdownMenuItem>
+          )}
+          {order.phone && (
+            <DropdownMenuItem onSelect={() => copyToClipboard(order.phone, isArabic ? 'الهاتف' : 'Phone')}>
+              <Phone className="h-4 w-4" />
+              {isArabic ? 'نسخ الهاتف' : 'Copy phone'}
+            </DropdownMenuItem>
+          )}
+          {order.trackingNumber ? (
+            <DropdownMenuItem
+              onSelect={() => copyToClipboard(order.trackingNumber!, isArabic ? 'رقم التتبع' : 'Tracking')}
+            >
+              <Truck className="h-4 w-4" />
+              {isArabic ? 'نسخ رقم التتبع' : 'Copy tracking'}
+            </DropdownMenuItem>
+          ) : null}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
   };
 
   const handleEditOrder = (order: Order) => {
@@ -593,10 +839,22 @@ export const OrdersManagement: React.FC = () => {
             </p>
           </div>
         </div>
-        <Button onClick={loadOrders} disabled={loading} className="w-full sm:w-auto">
-          <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-          {isArabic ? 'تحديث' : 'Refresh'}
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <div className="flex items-center justify-between sm:justify-start gap-3 rounded-md border bg-background px-3 py-2">
+            <div className="flex items-center gap-2">
+              <Switch checked={autoRefreshEnabled} onCheckedChange={setAutoRefreshEnabled} />
+              <span className="text-xs text-muted-foreground">{isArabic ? 'تحديث تلقائي' : 'Auto refresh'}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Switch checked={notificationsEnabled} onCheckedChange={setNotificationsEnabled} />
+              <span className="text-xs text-muted-foreground">{isArabic ? 'تنبيه' : 'Notify'}</span>
+            </div>
+          </div>
+          <Button onClick={() => loadOrders()} disabled={loading} className="w-full sm:w-auto">
+            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            {isArabic ? 'تحديث' : 'Refresh'}
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -616,6 +874,30 @@ export const OrdersManagement: React.FC = () => {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1.5">
             <CardTitle className="text-xs font-medium">
+              {isArabic ? 'طلبات جديدة' : 'New Orders'}
+            </CardTitle>
+            <Bell className="h-3.5 w-3.5 text-muted-foreground" />
+          </CardHeader>
+          <CardContent className="pb-3">
+            <div className="text-xl font-bold">
+              {newOrdersCount}
+            </div>
+            {newOrdersCount > 0 ? (
+              <Button
+                variant="link"
+                size="sm"
+                className="h-auto p-0 text-xs"
+                onClick={markAllSeen}
+              >
+                {isArabic ? 'تمت المراجعة' : 'Mark seen'}
+              </Button>
+            ) : null}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1.5">
+            <CardTitle className="text-xs font-medium">
               {isArabic ? 'قيد الانتظار' : 'Pending'}
             </CardTitle>
             <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
@@ -623,20 +905,6 @@ export const OrdersManagement: React.FC = () => {
           <CardContent className="pb-3">
             <div className="text-xl font-bold">
               {orders.filter((o) => o.status === 'Pending').length}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1.5">
-            <CardTitle className="text-xs font-medium">
-              {isArabic ? 'مكتمل' : 'Completed'}
-            </CardTitle>
-            <Package className="h-3.5 w-3.5 text-muted-foreground" />
-          </CardHeader>
-          <CardContent className="pb-3">
-            <div className="text-xl font-bold">
-              {orders.filter((o) => o.status === 'Delivered').length}
             </div>
           </CardContent>
         </Card>
@@ -681,7 +949,7 @@ export const OrdersManagement: React.FC = () => {
                 )}
                 <div className="flex gap-2">
                   <Button 
-                    onClick={loadOrders} 
+                    onClick={() => loadOrders()} 
                     variant="outline" 
                     size="sm"
                     disabled={loading}
@@ -703,12 +971,22 @@ export const OrdersManagement: React.FC = () => {
         </Card>
       )}
 
-      {/* Orders Table */}
+      {/* Orders Tables */}
       <Card>
-        <CardHeader>
-          <CardTitle>{isArabic ? 'الطلبات الأخيرة' : 'Recent Orders'}</CardTitle>
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <div className="space-y-1">
+            <CardTitle>{isArabic ? 'الطلبات' : 'Orders'}</CardTitle>
+            <div className="text-xs text-muted-foreground">
+              {isArabic ? 'المدفوع في الأعلى، وباقي الطلبات في الأسفل' : 'Paid orders on top, other orders below'}
+            </div>
+          </div>
+          {newOrdersCount > 0 ? (
+            <Badge variant="outline" className="border-amber-400 text-amber-700 w-fit">
+              {isArabic ? `جديد: ${newOrdersCount}` : `New: ${newOrdersCount}`}
+            </Badge>
+          ) : null}
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-8">
           {loading ? (
             <div className="text-center py-8">
               <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-2 text-muted-foreground" />
@@ -732,10 +1010,33 @@ export const OrdersManagement: React.FC = () => {
             </div>
           ) : (
             <>
-              {/* Mobile list */}
-              <div className="md:hidden space-y-3">
-                {orders.map((order) => (
-                  <div key={order.id} className="rounded-lg border bg-card p-4">
+              {/* Paid Orders */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-sm font-semibold">
+                    {isArabic ? 'طلبات مدفوعة' : 'Paid Orders'}
+                  </h2>
+                  <Badge variant="outline" className="border-green-300 text-green-700">
+                    {paidOrders.length}
+                  </Badge>
+                </div>
+
+                {paidOrders.length === 0 ? (
+                  <div className="rounded-lg border bg-muted/30 p-4 text-sm text-muted-foreground">
+                    {isArabic ? 'لا توجد طلبات مدفوعة بعد' : 'No paid orders yet'}
+                  </div>
+                ) : (
+                  <>
+                    {/* Mobile list */}
+                    <div className="md:hidden space-y-3">
+                      {paidOrders.map((order) => (
+                        <div
+                          key={order.id}
+                          className={cn(
+                            'rounded-lg border bg-card p-4',
+                            highlightedOrderIds.has(order.id) && 'border-amber-300 bg-amber-50/60',
+                          )}
+                        >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 font-semibold">
@@ -781,83 +1082,16 @@ export const OrdersManagement: React.FC = () => {
                       </Badge>
                     </div>
 
-                    <div className="mt-3 flex flex-wrap items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleViewDetails(order)}
-                      >
-                        <Eye className="h-4 w-4 mr-2" />
-                        {isArabic ? 'التفاصيل' : 'Details'}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEditOrder(order)}
-                      >
-                        <Edit className="h-4 w-4 mr-2" />
-                        {isArabic ? 'تعديل' : 'Edit'}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleGenerateInvoice(order)}
-                        disabled={invoiceLoading}
-                      >
-                        <FileText className="h-4 w-4 mr-2" />
-                        {isArabic ? 'فاتورة' : 'Invoice'}
-                      </Button>
-                      {order.paymentStatus !== 'Paid' && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleGeneratePaymentLink(order)}
-                          disabled={paymentLinkLoading}
-                        >
-                          <CreditCard className="h-4 w-4 mr-2" />
-                          {isArabic ? 'رابط دفع' : 'Pay link'}
-                        </Button>
-                      )}
-                      {order.shippingMethod === 3 && !order.trackingNumber && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleCreateShipment(order)}
-                          disabled={shipmentLoading === order.id}
-                          className="border-red-300 text-red-700"
-                        >
-                          {shipmentLoading === order.id ? (
-                            <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                          ) : (
-                            <PackagePlus className="h-4 w-4 mr-2" />
-                          )}
-                          {isArabic ? 'شحنة أرامكس' : 'Aramex'}
-                        </Button>
-                      )}
-                      {order.shippingMethod === 3 && order.trackingNumber && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handlePrintLabel(order)}
-                          disabled={printLabelLoading === order.id}
-                          className="border-green-300 text-green-700"
-                        >
-                          {printLabelLoading === order.id ? (
-                            <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                          ) : (
-                            <Printer className="h-4 w-4 mr-2" />
-                          )}
-                          {isArabic ? 'ملصق' : 'Label'}
-                        </Button>
-                      )}
+                          <div className="mt-3 flex items-center justify-end">
+                            <OrderActionsMenu order={order} triggerVariant="button" />
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  </div>
-                ))}
-              </div>
 
-              {/* Desktop table */}
-              <div className="hidden md:block w-full min-w-0 max-w-full">
-                <Table>
+                    {/* Desktop table */}
+                    <div className="hidden md:block w-full min-w-0 max-w-full rounded-md border">
+                      <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>{isArabic ? 'رقم الطلب' : 'Order #'}</TableHead>
@@ -872,8 +1106,11 @@ export const OrdersManagement: React.FC = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {orders.map((order) => (
-                      <TableRow key={order.id}>
+                    {paidOrders.map((order) => (
+                      <TableRow
+                        key={order.id}
+                        className={cn(highlightedOrderIds.has(order.id) && 'bg-amber-50/60')}
+                      >
                         <TableCell className="font-medium">
                           <div className="flex items-center gap-2">
                             {/* Shipping Method Indicator */}
@@ -924,81 +1161,166 @@ export const OrdersManagement: React.FC = () => {
                           {format(new Date(order.createdAt), 'MMM dd, yyyy')}
                         </TableCell>
                         <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-1">
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => handleViewDetails(order)}
-                              title={isArabic ? 'عرض التفاصيل' : 'View Details'}
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => handleEditOrder(order)}
-                              title={isArabic ? 'تعديل الطلب' : 'Edit Order'}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => handleGenerateInvoice(order)}
-                              title={isArabic ? 'طباعة الفاتورة' : 'Print Invoice'}
-                              disabled={invoiceLoading}
-                            >
-                              <FileText className="h-4 w-4" />
-                            </Button>
-                            {order.paymentStatus !== 'Paid' && (
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={() => handleGeneratePaymentLink(order)}
-                                title={isArabic ? 'إنشاء رابط دفع' : 'Generate Payment Link'}
-                                disabled={paymentLinkLoading}
-                              >
-                                <CreditCard className="h-4 w-4" />
-                              </Button>
-                            )}
-                            {order.shippingMethod === 3 && !order.trackingNumber && (
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={() => handleCreateShipment(order)}
-                                title={isArabic ? 'إنشاء شحنة أرامكس' : 'Create Aramex Shipment'}
-                                disabled={shipmentLoading === order.id}
-                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                              >
-                                {shipmentLoading === order.id ? (
-                                  <RefreshCw className="h-4 w-4 animate-spin" />
-                                ) : (
-                                  <PackagePlus className="h-4 w-4" />
-                                )}
-                              </Button>
-                            )}
-                            {order.shippingMethod === 3 && order.trackingNumber && (
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={() => handlePrintLabel(order)}
-                                title={isArabic ? 'طباعة ملصق الشحن' : 'Print Shipping Label'}
-                                disabled={printLabelLoading === order.id}
-                                className="text-green-600 hover:text-green-700 hover:bg-green-50"
-                              >
-                                {printLabelLoading === order.id ? (
-                                  <RefreshCw className="h-4 w-4 animate-spin" />
-                                ) : (
-                                  <Printer className="h-4 w-4" />
-                                )}
-                              </Button>
-                            )}
-                          </div>
+                          <OrderActionsMenu order={order} triggerVariant="icon" />
                         </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
-                </Table>
+                      </Table>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              <Separator />
+
+              {/* Other Orders */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-sm font-semibold">
+                    {isArabic ? 'باقي الطلبات' : 'Other Orders'}
+                  </h2>
+                  <Badge variant="outline" className="border-gray-300 text-gray-700">
+                    {otherOrders.length}
+                  </Badge>
+                </div>
+
+                {otherOrders.length === 0 ? (
+                  <div className="rounded-lg border bg-muted/30 p-4 text-sm text-muted-foreground">
+                    {isArabic ? 'لا توجد طلبات أخرى' : 'No other orders'}
+                  </div>
+                ) : (
+                  <>
+                    <div className="md:hidden space-y-3">
+                      {otherOrders.map((order) => (
+                        <div
+                          key={order.id}
+                          className={cn(
+                            'rounded-lg border bg-card p-4',
+                            highlightedOrderIds.has(order.id) && 'border-amber-300 bg-amber-50/60',
+                          )}
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2 font-semibold">
+                                {order.shippingMethod === 1 && (
+                                  <div className="h-2 w-2 rounded-full bg-pink-300 shrink-0" title={isArabic ? 'استلام من المتجر' : 'Store Pickup'} />
+                                )}
+                                {order.shippingMethod === 2 && (
+                                  <div className="h-2 w-2 rounded-full bg-blue-500 shrink-0" title="Nool Delivery" />
+                                )}
+                                {order.shippingMethod === 3 && (
+                                  <div className="h-2 w-2 rounded-full bg-red-500 shrink-0" title={isArabic ? 'شحن أرامكس' : 'Aramex Shipping'} />
+                                )}
+                                <span className="truncate">{order.orderNumber}</span>
+                              </div>
+                              <div className="mt-1 text-xs text-muted-foreground truncate">
+                                {order.fullName} • {order.email}
+                              </div>
+                              {order.trackingNumber && (
+                                <a
+                                  href={`https://www.aramex.com/om/en/track/shipments?ShipmentNumber=${order.trackingNumber}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="mt-1 inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 font-mono hover:underline"
+                                  title={isArabic ? 'تتبع الشحنة على أرامكس' : 'Track on Aramex'}
+                                >
+                                  <Truck className="h-3 w-3" />
+                                  {order.trackingNumber}
+                                </a>
+                              )}
+                            </div>
+                            <div className="shrink-0 text-right">
+                              <div className="font-semibold">OMR {order.totalAmount.toFixed(3)}</div>
+                              <div className="mt-1 text-xs text-muted-foreground">
+                                {format(new Date(order.createdAt), 'MMM dd, yyyy')}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="mt-3 flex flex-wrap items-center gap-2">
+                            <Badge className={getStatusColor(order.status)}>{order.status}</Badge>
+                            <Badge className={getPaymentStatusColor(order.paymentStatus)}>{order.paymentStatus}</Badge>
+                          </div>
+
+                          <div className="mt-3 flex items-center justify-end">
+                            <OrderActionsMenu order={order} triggerVariant="button" />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="hidden md:block w-full min-w-0 max-w-full rounded-md border">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>{isArabic ? 'رقم الطلب' : 'Order #'}</TableHead>
+                            <TableHead>{isArabic ? 'العميل' : 'Customer'}</TableHead>
+                            <TableHead>{isArabic ? 'المبلغ' : 'Amount'}</TableHead>
+                            <TableHead>{isArabic ? 'الحالة' : 'Status'}</TableHead>
+                            <TableHead>{isArabic ? 'الدفع' : 'Payment'}</TableHead>
+                            <TableHead>{isArabic ? 'التاريخ' : 'Date'}</TableHead>
+                            <TableHead className="text-right">{isArabic ? 'الإجراءات' : 'Actions'}</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {otherOrders.map((order) => (
+                            <TableRow
+                              key={order.id}
+                              className={cn(highlightedOrderIds.has(order.id) && 'bg-amber-50/60')}
+                            >
+                              <TableCell className="font-medium">
+                                <div className="flex items-center gap-2">
+                                  {order.shippingMethod === 1 && (
+                                    <div className="h-2 w-2 rounded-full bg-pink-300 shrink-0" title={isArabic ? 'استلام من المتجر' : 'Store Pickup'} />
+                                  )}
+                                  {order.shippingMethod === 2 && (
+                                    <div className="h-2 w-2 rounded-full bg-blue-500 shrink-0" title="Nool Delivery" />
+                                  )}
+                                  {order.shippingMethod === 3 && (
+                                    <div className="h-2 w-2 rounded-full bg-red-500 shrink-0" title={isArabic ? 'شحن أرامكس' : 'Aramex Shipping'} />
+                                  )}
+                                  <div>
+                                    <div>{order.orderNumber}</div>
+                                    {order.trackingNumber && (
+                                      <a
+                                        href={`https://www.aramex.com/om/en/track/shipments?ShipmentNumber=${order.trackingNumber}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-xs text-blue-600 hover:text-blue-800 font-mono mt-0.5 flex items-center gap-1 hover:underline"
+                                        title={isArabic ? 'تتبع الشحنة على أرامكس' : 'Track on Aramex'}
+                                      >
+                                        <Truck className="h-3 w-3" />
+                                        {order.trackingNumber}
+                                      </a>
+                                    )}
+                                  </div>
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <div>
+                                  <div className="font-medium">{order.fullName}</div>
+                                  <div className="text-xs text-muted-foreground">{order.email}</div>
+                                </div>
+                              </TableCell>
+                              <TableCell>OMR {order.totalAmount.toFixed(3)}</TableCell>
+                              <TableCell>
+                                <Badge className={getStatusColor(order.status)}>{order.status}</Badge>
+                              </TableCell>
+                              <TableCell>
+                                <Badge className={getPaymentStatusColor(order.paymentStatus)}>{order.paymentStatus}</Badge>
+                              </TableCell>
+                              <TableCell>{format(new Date(order.createdAt), 'MMM dd, yyyy')}</TableCell>
+                              <TableCell className="text-right">
+                                <OrderActionsMenu order={order} triggerVariant="icon" />
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </>
+                )}
 
                 {/* Shipping Method Legend */}
                 {orders.length > 0 && (
