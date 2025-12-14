@@ -6,31 +6,24 @@
   width: 100%;
   overflow: hidden;
   background: #000000; /* Changed to pure black for clean transitions */
-  padding-top: 5.5rem; /* Increased padding for fixed navigation */
-  padding-bottom: 2.5rem; /* Increased bottom padding for Arabic text */
+  padding: 0; /* Keep backgrounds flush to edges */
 }
 
 /* Responsive padding adjustments */
 @media (max-width: 640px) {
   .professional-hero-slider {
-    padding-top: 4.5rem; /* Increased */
-    padding-bottom: 2rem; /* Increased */
     min-height: 700px; /* Increased */
   }
 }
 
 @media (min-width: 641px) and (max-width: 768px) {
   .professional-hero-slider {
-    padding-top: 5rem; /* Increased */
-    padding-bottom: 2.25rem; /* Increased */
     min-height: 750px; /* Increased */
   }
 }
 
 @media (min-width: 769px) {
   .professional-hero-slider {
-    padding-top: 5.5rem; /* Increased */
-    padding-bottom: 2.5rem; /* Increased */
     min-height: 800px; /* Increased */
   }
 }
@@ -63,6 +56,8 @@
   object-fit: cover;
   object-position: center;
   transition: opacity 0.3s ease; /* Smooth image loading */
+  transform: scale(1.04);
+  transform-origin: center;
 }
 
 .background-video {
@@ -72,6 +67,8 @@
   object-position: center;
   transition: opacity 0.5s ease-in-out;
   will-change: opacity;
+  transform: scale(1.08);
+  transform-origin: center;
 }
 
 .background-overlay {
@@ -94,26 +91,32 @@
 .slider-content-container {
   position: relative;
   z-index: 10;
-  height: calc(100% - 8rem); /* Account for increased top and bottom padding */
+  height: 100%;
   display: flex;
   align-items: center;
-  padding: 1.25rem 0; /* Increased padding */
+  padding-top: calc(5.5rem + env(safe-area-inset-top, 0px));
+  padding-bottom: calc(2.5rem + env(safe-area-inset-bottom, 0px));
+  padding-left: 0;
+  padding-right: 0;
   min-height: 550px; /* Increased minimum height for Arabic text */
+  box-sizing: border-box;
 }
 
 /* Responsive adjustments for content container */
 @media (max-width: 640px) {
   .slider-content-container {
-    height: calc(100% - 6.5rem); /* Adjusted for new padding */
-    padding: 0.75rem 0; /* Increased */
+    height: 100%;
+    padding-top: calc(4.5rem + env(safe-area-inset-top, 0px));
+    padding-bottom: calc(2rem + env(safe-area-inset-bottom, 0px));
     min-height: 450px; /* Increased */
   }
 }
 
 @media (min-width: 641px) and (max-width: 768px) {
   .slider-content-container {
-    height: calc(100% - 7.25rem); /* Adjusted for new padding */
-    padding: 1rem 0; /* Increased */
+    height: 100%;
+    padding-top: calc(5rem + env(safe-area-inset-top, 0px));
+    padding-bottom: calc(2.25rem + env(safe-area-inset-bottom, 0px));
     min-height: 500px; /* Increased */
   }
 }

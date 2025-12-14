@@ -53,6 +53,7 @@ import { PaymentSuccessPage } from './pages/PaymentSuccessPage';
 import { PaymentFailurePage } from './pages/PaymentFailurePage';
 import { PaymentCancelledPage } from './pages/PaymentCancelledPage';
 import { PaymentErrorPage } from './pages/PaymentErrorPage';
+import { RequireAuth } from './components/auth/RequireAuth';
 import './i18n';
 import './App.css';
 
@@ -91,12 +92,12 @@ function AppContent() {
         <Route path="/om/register" element={<RegisterPage />} />
         <Route path="/om/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/om/reset-password" element={<ResetPasswordPage />} />
-        <Route path="/om/checkout" element={<CheckoutPage />} />
+        <Route path="/om/checkout" element={<RequireAuth><CheckoutPage /></RequireAuth>} />
         <Route path="/om/checkout/payment-success" element={<PaymentSuccessPage />} />
         <Route path="/om/checkout/payment-cancelled" element={<PaymentCancelledPage />} />
         <Route path="/om/checkout/payment-failed" element={<PaymentFailurePage />} />
         <Route path="/om/checkout/payment-error" element={<PaymentErrorPage />} />
-        <Route path="/om/payment" element={<PaymentPage />} />
+        <Route path="/om/payment" element={<RequireAuth><PaymentPage /></RequireAuth>} />
         <Route path="/om/payment/success" element={<PaymentSuccessPage />} />
         <Route path="/om/payment/failure" element={<PaymentFailurePage />} />
         <Route path="/om/payment/cancelled" element={<PaymentCancelledPage />} />
@@ -120,12 +121,12 @@ function AppContent() {
         <Route path="/sa/register" element={<RegisterPage />} />
         <Route path="/sa/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/sa/reset-password" element={<ResetPasswordPage />} />
-        <Route path="/sa/checkout" element={<CheckoutPage />} />
+        <Route path="/sa/checkout" element={<RequireAuth><CheckoutPage /></RequireAuth>} />
         <Route path="/sa/checkout/payment-success" element={<PaymentSuccessPage />} />
         <Route path="/sa/checkout/payment-cancelled" element={<PaymentCancelledPage />} />
         <Route path="/sa/checkout/payment-failed" element={<PaymentFailurePage />} />
         <Route path="/sa/checkout/payment-error" element={<PaymentErrorPage />} />
-        <Route path="/sa/payment" element={<PaymentPage />} />
+        <Route path="/sa/payment" element={<RequireAuth><PaymentPage /></RequireAuth>} />
         <Route path="/sa/payment/success" element={<PaymentSuccessPage />} />
         <Route path="/sa/payment/failure" element={<PaymentFailurePage />} />
         <Route path="/sa/payment/cancelled" element={<PaymentCancelledPage />} />
@@ -200,12 +201,12 @@ function AppContent() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
-        <Route path="/checkout" element={<CheckoutPage />} />
+        <Route path="/checkout" element={<RequireAuth><CheckoutPage /></RequireAuth>} />
         <Route path="/checkout/payment-success" element={<PaymentSuccessPage />} />
         <Route path="/checkout/payment-cancelled" element={<PaymentCancelledPage />} />
         <Route path="/checkout/payment-failed" element={<PaymentFailurePage />} />
         <Route path="/checkout/payment-error" element={<PaymentErrorPage />} />
-        <Route path="/payment" element={<PaymentPage />} />
+        <Route path="/payment" element={<RequireAuth><PaymentPage /></RequireAuth>} />
         <Route path="/payment/success" element={<PaymentSuccessPage />} />
         <Route path="/payment/failure" element={<PaymentFailurePage />} />
         <Route path="/payment/cancelled" element={<PaymentCancelledPage />} />

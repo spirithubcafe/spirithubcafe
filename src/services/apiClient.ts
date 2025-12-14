@@ -2,6 +2,17 @@ import axios from 'axios';
 import type { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import type { ApiError } from '../types/auth';
 
+const getLoginRedirectUrl = (): string => {
+  const savedRegion = localStorage.getItem('spirithub-region') || 'om';
+  const current = window.location.pathname + window.location.search;
+  const loginPath = `/${savedRegion}/login`;
+  return `${loginPath}?redirect=${encodeURIComponent(current)}`;
+};
+
+const isLoginRoute = (pathname: string): boolean => {
+  return /^\/(om|sa)\/login\/?$/.test(pathname) || pathname === '/login';
+};
+
 // Get API Base URL based on current region
 const getApiBaseUrl = (): string => {
   const savedRegion = localStorage.getItem('spirithub-region') || 'om';
@@ -68,6 +79,19 @@ const createApiClient = (): AxiosInstance => {
       const originalRequest = error.config;
 
       // Handle 401 unauthorized errors
+        if (error.response?.status === 401 && originalRequest?._retry) {
+          // Already attempted refresh once; redirect to login.
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+          localStorage.removeItem('user');
+
+          if (!isLoginRoute(window.location.pathname)) {
+            window.location.href = getLoginRedirectUrl();
+          }
+
+          return Promise.reject(error);
+        }
+
       if (error.response?.status === 401 && !originalRequest._retry) {
         originalRequest._retry = true;
 
@@ -95,6 +119,16 @@ const createApiClient = (): AxiosInstance => {
             }
           } else {
             console.warn('⚠️ No refresh token found in localStorage');
+
+            // No refresh token means we cannot recover; redirect to login instead of surfacing 401s.
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+            localStorage.removeItem('user');
+
+            if (!isLoginRoute(window.location.pathname)) {
+              console.log('🚪 Redirecting to login...');
+              window.location.href = getLoginRedirectUrl();
+            }
           }
         } catch (refreshError: any) {
           console.error('❌ Token refresh failed:', refreshError.response?.data || refreshError.message);
@@ -104,9 +138,9 @@ const createApiClient = (): AxiosInstance => {
           localStorage.removeItem('user');
           
           // Only redirect if we're not already on the login page
-          if (window.location.pathname !== '/login') {
+          if (!isLoginRoute(window.location.pathname)) {
             console.log('🚪 Redirecting to login...');
-            window.location.href = '/login';
+            window.location.href = getLoginRedirectUrl();
           }
           return Promise.reject(refreshError);
         }

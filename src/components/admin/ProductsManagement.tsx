@@ -14,7 +14,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../ui/alert-dialog';
-import { Package, Plus, Edit, Trash2, Eye, EyeOff, Search, Loader2, Star, Coffee, Layers, Image as ImageIcon, Crown, Upload, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '../ui/dropdown-menu';
+import { Package, Plus, Edit, Trash2, Eye, EyeOff, Search, Loader2, Star, Coffee, Layers, Image as ImageIcon, Crown, Upload, X, ChevronLeft, ChevronRight, MoreHorizontal } from 'lucide-react';
 import { productService, productVariantService, productImageService } from '../../services/productService';
 import { fileUploadService } from '../../services/fileUploadService';
 import { categoryService } from '../../services/categoryService';
@@ -876,7 +877,13 @@ export const ProductsManagement: React.FC = () => {
                 categories.find((c) => c.id === product.categoryId)?.name || '-';
 
               return (
-                <div key={product.id} className="rounded-lg border bg-card p-4">
+                <div
+                  key={product.id}
+                  className={cn(
+                    'rounded-lg border bg-card p-4',
+                    !product.isActive && 'bg-muted/30 opacity-70'
+                  )}
+                >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <div className="font-semibold line-clamp-2 wrap-anywhere">
@@ -914,115 +921,79 @@ export const ProductsManagement: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="mt-3 flex flex-wrap items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="icon-sm"
-                      onClick={() => handleEditProduct(product)}
-                      aria-label={t('common.edit')}
-                      title={t('common.edit')}
-                    >
-                      <Edit className="h-4 w-4" />
-                      <span className="sr-only">{t('common.edit')}</span>
-                    </Button>
-
-                    <Button
-                      variant="outline"
-                      size="icon-sm"
-                      onClick={() => handleOpenAttributes(product)}
-                      className="text-amber-600"
-                      aria-label="Attributes"
-                      title="Attributes"
-                    >
-                      <Coffee className="h-4 w-4" />
-                      <span className="sr-only">Attributes</span>
-                    </Button>
-
-                    <Button
-                      variant="outline"
-                      size="icon-sm"
-                      onClick={() => handleOpenVariants(product)}
-                      aria-label={t('admin.products.manageVariants')}
-                      title={t('admin.products.manageVariants')}
-                    >
-                      <Layers className="h-4 w-4" />
-                      <span className="sr-only">{t('admin.products.manageVariants')}</span>
-                    </Button>
-
-                    <Button
-                      variant="outline"
-                      size="icon-sm"
-                      onClick={() => handleOpenImages(product)}
-                      aria-label={t('admin.products.manageImages')}
-                      title={t('admin.products.manageImages')}
-                    >
-                      <ImageIcon className="h-4 w-4" />
-                      <span className="sr-only">{t('admin.products.manageImages')}</span>
-                    </Button>
-
-                    <Button
-                      variant="outline"
-                      size="icon-sm"
-                      onClick={() => handleToggleActive(product.id)}
-                      aria-label={product.isActive ? t('admin.products.inactive') : t('admin.products.active')}
-                      title={product.isActive ? t('admin.products.inactive') : t('admin.products.active')}
-                    >
-                      {product.isActive ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                      <span className="sr-only">
-                        {product.isActive ? t('admin.products.inactive') : t('admin.products.active')}
-                      </span>
-                    </Button>
-
-                    <Button
-                      variant="outline"
-                      size="icon-sm"
-                      onClick={() => handleToggleFeatured(product.id)}
-                      aria-label={t('featured')}
-                      title={t('featured')}
-                    >
-                      <Star
-                        className={cn('h-4 w-4', product.isFeatured && 'text-yellow-500 fill-current')}
-                      />
-                      <span className="sr-only">{t('featured')}</span>
-                    </Button>
-
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
+                  <div className="mt-3 flex items-center justify-end">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
                         <Button
                           variant="outline"
                           size="icon-sm"
-                          className="text-destructive"
-                          aria-label={t('common.delete')}
-                          title={t('common.delete')}
+                          aria-label={t('admin.products.actions')}
+                          title={t('admin.products.actions')}
                         >
-                          <Trash2 className="h-4 w-4" />
-                          <span className="sr-only">{t('common.delete')}</span>
+                          <MoreHorizontal className="h-4 w-4" />
                         </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>
-                            {t('admin.products.deleteConfirm')}
-                          </AlertDialogTitle>
-                          <AlertDialogDescription>
-                            {t('admin.products.deleteWarning')} "{product.name}"
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={() => handleDeleteProduct(product.id)}
-                            className="bg-red-600 hover:bg-red-700"
-                          >
-                            {t('common.delete')}
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onSelect={() => handleEditProduct(product)}>
+                          <Edit className="h-4 w-4" />
+                          {t('common.edit')}
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onSelect={() => handleOpenAttributes(product)}>
+                          <Coffee className="h-4 w-4 text-amber-600" />
+                          Attributes
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => handleOpenVariants(product)}>
+                          <Layers className="h-4 w-4" />
+                          {t('admin.products.manageVariants')}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => handleOpenImages(product)}>
+                          <ImageIcon className="h-4 w-4" />
+                          {t('admin.products.manageImages')}
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onSelect={() => handleToggleActive(product.id)}>
+                          {product.isActive ? (
+                            <Eye className="h-4 w-4" />
+                          ) : (
+                            <EyeOff className="h-4 w-4" />
+                          )}
+                          {product.isActive ? t('admin.products.active') : t('admin.products.inactive')}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => handleToggleFeatured(product.id)}>
+                          <Star className={cn('h-4 w-4', product.isFeatured && 'text-yellow-500 fill-current')} />
+                          {t('featured')}
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <DropdownMenuItem className="text-destructive focus:text-destructive">
+                              <Trash2 className="h-4 w-4" />
+                              {t('common.delete')}
+                            </DropdownMenuItem>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>
+                                {t('admin.products.deleteConfirm')}
+                              </AlertDialogTitle>
+                              <AlertDialogDescription>
+                                {t('admin.products.deleteWarning')} "{product.name}"
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleDeleteProduct(product.id)}
+                                className="bg-red-600 hover:bg-red-700"
+                              >
+                                {t('common.delete')}
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </div>
               );
@@ -1051,7 +1022,10 @@ export const ProductsManagement: React.FC = () => {
                 </TableRow>
               ) : (
                 products.map((product) => (
-                  <TableRow key={product.id}>
+                  <TableRow
+                    key={product.id}
+                    className={cn(!product.isActive && 'bg-muted/30 text-muted-foreground')}
+                  >
                     <TableCell>
                       <div className="font-medium line-clamp-2 wrap-anywhere max-w-full">
                         {product.name}
@@ -1079,82 +1053,76 @@ export const ProductsManagement: React.FC = () => {
                       </div>
                     </TableCell>
                     <TableCell className="text-center">
-                      <div className="flex flex-wrap items-center justify-center gap-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleOpenAttributes(product)}
-                          title="Product Attributes"
-                          className="text-amber-600 hover:text-amber-700 hover:bg-amber-50"
-                        >
-                          <Coffee className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleOpenVariants(product)}
-                          aria-label={t('admin.products.manageVariants')}
-                        >
-                          <Layers className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleOpenImages(product)}
-                          aria-label={t('admin.products.manageImages')}
-                        >
-                          <ImageIcon className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEditProduct(product)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleToggleActive(product.id)}
-                        >
-                          {product.isActive ? (
-                            <EyeOff className="h-4 w-4" />
-                          ) : (
-                            <Eye className="h-4 w-4" />
-                          )}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleToggleFeatured(product.id)}
-                        >
-                          <Star className={`h-4 w-4 ${product.isFeatured ? 'text-yellow-500 fill-current' : ''}`} />
-                        </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="sm">
-                              <Trash2 className="h-4 w-4 text-red-500" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>{t('admin.products.deleteConfirm')}</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                {t('admin.products.deleteWarning')} "{product.name}"
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => handleDeleteProduct(product.id)}
-                                className="bg-red-600 hover:bg-red-700"
-                              >
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            aria-label={t('admin.products.actions')}
+                            title={t('admin.products.actions')}
+                          >
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onSelect={() => handleEditProduct(product)}>
+                            <Edit className="h-4 w-4" />
+                            {t('common.edit')}
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onSelect={() => handleOpenAttributes(product)}>
+                            <Coffee className="h-4 w-4 text-amber-600" />
+                            Attributes
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => handleOpenVariants(product)}>
+                            <Layers className="h-4 w-4" />
+                            {t('admin.products.manageVariants')}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => handleOpenImages(product)}>
+                            <ImageIcon className="h-4 w-4" />
+                            {t('admin.products.manageImages')}
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onSelect={() => handleToggleActive(product.id)}>
+                            {product.isActive ? (
+                              <Eye className="h-4 w-4" />
+                            ) : (
+                              <EyeOff className="h-4 w-4" />
+                            )}
+                            {product.isActive ? t('admin.products.active') : t('admin.products.inactive')}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => handleToggleFeatured(product.id)}>
+                            <Star className={cn('h-4 w-4', product.isFeatured && 'text-yellow-500 fill-current')} />
+                            {t('featured')}
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <DropdownMenuItem className="text-destructive focus:text-destructive">
+                                <Trash2 className="h-4 w-4" />
                                 {t('common.delete')}
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
+                              </DropdownMenuItem>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>{t('admin.products.deleteConfirm')}</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  {t('admin.products.deleteWarning')} "{product.name}"
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => handleDeleteProduct(product.id)}
+                                  className="bg-red-600 hover:bg-red-700"
+                                >
+                                  {t('common.delete')}
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 ))

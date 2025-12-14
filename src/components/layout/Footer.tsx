@@ -79,7 +79,7 @@ export const Footer: React.FC = () => {
       {/* Video Background */}
       <div className="absolute inset-0 w-full h-full">
         <video
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover scale-[1.08] transform-gpu"
           autoPlay
           muted
           loop

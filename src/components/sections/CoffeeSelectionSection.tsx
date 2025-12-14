@@ -6,11 +6,11 @@ export const CoffeeSelectionSection: React.FC = () => {
   const { language } = useApp();
 
   return (
-    <section className="relative py-32 overflow-hidden">
+    <section className="relative overflow-hidden">
       {/* Video Background */}
       <div className="absolute inset-0 w-full h-full">
         <video
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover scale-[1.08] transform-gpu"
           autoPlay
           muted
           loop
@@ -23,7 +23,7 @@ export const CoffeeSelectionSection: React.FC = () => {
       </div>
 
       {/* Content */}
-      <div className="relative z-10 container mx-auto px-4">
+      <div className="relative z-10 container mx-auto px-4 py-32">
         <div className="max-w-5xl mx-auto text-center text-white">
           {/* Title */}
           <h2 className="text-4xl md:text-5xl font-bold mb-8 uppercase tracking-wide">

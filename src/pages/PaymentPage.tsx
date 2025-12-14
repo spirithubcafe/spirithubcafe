@@ -417,9 +417,16 @@ export const PaymentPage: React.FC = () => {
               try {
                 const product = await productService.getById(item.productId);
                 
-                if (product?.variants && product.variants.length > 0) {
-                  // Use the first variant as default
-                  variantId = product.variants[0].id;
+                const activeVariants = (product?.variants || []).filter(
+                  (variant) => (variant as unknown as { isActive?: boolean }).isActive !== false,
+                );
+
+                if (activeVariants.length > 0) {
+                  const defaultVariant =
+                    activeVariants.find((variant) => (variant as any).isDefault) ?? activeVariants[0];
+
+                  // Use default active variant
+                  variantId = defaultVariant.id;
                   console.log(`✅ Using default variant ID ${variantId} for "${item.name}"`);
                 } else {
                   console.error(`❌ No variants found for product ${item.productId}`);

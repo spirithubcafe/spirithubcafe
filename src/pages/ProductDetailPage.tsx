@@ -142,9 +142,26 @@ export const ProductDetailPage = () => {
           return;
         }
 
-        setProduct(result);
+        if ((result as unknown as { isActive?: boolean }).isActive === false) {
+          setProduct(null);
+          setState('error');
+          setErrorMessage(
+            language === 'ar' ? 'لم يتم العثور على هذا المنتج.' : 'We could not find that product.',
+          );
+          return;
+        }
+
+        const activeVariants = (result.variants ?? []).filter(
+          (variant) => (variant as unknown as { isActive?: boolean }).isActive !== false,
+        );
+        const sanitized: ApiProduct = {
+          ...result,
+          variants: activeVariants,
+        };
+
+        setProduct(sanitized);
         const defaultVariant =
-          result.variants?.find((variant) => variant.isDefault) ?? result.variants?.[0] ?? null;
+          activeVariants.find((variant) => variant.isDefault) ?? activeVariants[0] ?? null;
         setSelectedVariantId(defaultVariant ? defaultVariant.id : null);
         setQuantity(1);
         setCurrentImageIndex(0);

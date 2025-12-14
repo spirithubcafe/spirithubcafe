@@ -90,6 +90,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 
       // Handle response - it might be array or paginated response
       const products = (Array.isArray(response) ? response : response.items || []) as ApiProduct[];
+      const activeProducts = products.filter(
+        (prod) => (prod as unknown as { isActive?: boolean }).isActive !== false,
+      );
 
       type ApiProductExtended = ApiProduct & Record<string, unknown>;
       type ProductPricing = {
@@ -98,7 +101,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       };
 
       const transformedProducts: Product[] = await Promise.all(
-        products.map(async (prod) => {
+        activeProducts.map(async (prod) => {
           const baseProduct = prod as ApiProductExtended;
           const basePricing = baseProduct as ProductPricing;
           const initialMinPrice =
@@ -114,9 +117,11 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
             fullProduct = (await productService.getById(prod.id)) as ApiProductExtended;
 
             if (Array.isArray(fullProduct.variants) && fullProduct.variants.length > 0) {
+              const activeVariants = fullProduct.variants.filter(
+                (variant) => (variant as unknown as { isActive?: boolean }).isActive !== false,
+              );
               const defaultVariant =
-                fullProduct.variants.find((variant) => variant.isDefault) ??
-                fullProduct.variants[0];
+                activeVariants.find((variant) => variant.isDefault) ?? activeVariants[0];
 
               if (defaultVariant) {
                 const variantPrice =

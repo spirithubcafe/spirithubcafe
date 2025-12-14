@@ -7,6 +7,7 @@ import { Input } from '../ui/input';
 import { Badge } from '../ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../ui/alert-dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '../ui/dropdown-menu';
 import {
   Grid3X3,
   Plus,
@@ -19,6 +20,7 @@ import {
   Package,
   ArrowUp,
   ArrowDown,
+  MoreHorizontal,
 } from 'lucide-react';
 import { categoryService } from '../../services/categoryService';
 import type { Category } from '../../types/product';
@@ -189,7 +191,9 @@ export const CategoriesManagement: React.FC = () => {
             sortedCategories.map((category, index) => (
               <div
                 key={category.id}
-                className="rounded-lg border bg-card p-4"
+                className={`rounded-lg border bg-card p-4 ${
+                  category.isActive ? '' : 'bg-muted/30 opacity-70'
+                }`}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
@@ -251,57 +255,60 @@ export const CategoriesManagement: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="mt-3 flex flex-wrap items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleEditCategory(category.id)}
-                  >
-                    <Edit className="h-4 w-4 mr-2" />
-                    {t('common.edit')}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleToggleActive(category.id)}
-                  >
-                    {category.isActive ? (
-                      <>
-                        <EyeOff className="h-4 w-4 mr-2" />
-                        {t('admin.categories.inactive')}
-                      </>
-                    ) : (
-                      <>
-                        <Eye className="h-4 w-4 mr-2" />
-                        {t('admin.categories.active')}
-                      </>
-                    )}
-                  </Button>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="outline" size="sm" className="text-destructive">
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        {t('common.delete')}
+                <div className="mt-3 flex items-center justify-end">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="icon-sm"
+                        aria-label={t('admin.categories.actions')}
+                        title={t('admin.categories.actions')}
+                      >
+                        <MoreHorizontal className="h-4 w-4" />
                       </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>{t('admin.categories.deleteConfirm')}</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          {t('admin.categories.deleteWarning')} "{category.name}"
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={() => handleDeleteCategory(category.id)}
-                          className="bg-red-600 hover:bg-red-700"
-                        >
-                          {t('common.delete')}
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onSelect={() => handleEditCategory(category.id)}>
+                        <Edit className="h-4 w-4" />
+                        {t('common.edit')}
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onSelect={() => handleToggleActive(category.id)}>
+                        {category.isActive ? (
+                          <Eye className="h-4 w-4" />
+                        ) : (
+                          <EyeOff className="h-4 w-4" />
+                        )}
+                        {category.isActive ? t('admin.categories.active') : t('admin.categories.inactive')}
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <DropdownMenuItem className="text-destructive focus:text-destructive">
+                            <Trash2 className="h-4 w-4" />
+                            {t('common.delete')}
+                          </DropdownMenuItem>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>{t('admin.categories.deleteConfirm')}</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              {t('admin.categories.deleteWarning')} "{category.name}"
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => handleDeleteCategory(category.id)}
+                              className="bg-red-600 hover:bg-red-700"
+                            >
+                              {t('common.delete')}
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </div>
             ))
@@ -332,7 +339,10 @@ export const CategoriesManagement: React.FC = () => {
                 </TableRow>
               ) : (
                 sortedCategories.map((category, index) => (
-                  <TableRow key={category.id}>
+                  <TableRow
+                    key={category.id}
+                    className={category.isActive ? '' : 'bg-muted/30 text-muted-foreground'}
+                  >
                     <TableCell className="font-medium">{category.name}</TableCell>
                     <TableCell className="text-muted-foreground">
                       {category.nameAr || '-'}
@@ -382,50 +392,59 @@ export const CategoriesManagement: React.FC = () => {
                       </div>
                     </TableCell>
                     <TableCell className="text-center">
-                      <div className="flex items-center justify-center space-x-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEditCategory(category.id)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleToggleActive(category.id)}
-                        >
-                          {category.isActive ? (
-                            <EyeOff className="h-4 w-4" />
-                          ) : (
-                            <Eye className="h-4 w-4" />
-                          )}
-                        </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="sm">
-                              <Trash2 className="h-4 w-4 text-red-500" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>{t('admin.categories.deleteConfirm')}</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                {t('admin.categories.deleteWarning')} "{category.name}"
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => handleDeleteCategory(category.id)}
-                                className="bg-red-600 hover:bg-red-700"
-                              >
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            aria-label={t('admin.categories.actions')}
+                            title={t('admin.categories.actions')}
+                          >
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onSelect={() => handleEditCategory(category.id)}>
+                            <Edit className="h-4 w-4" />
+                            {t('common.edit')}
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onSelect={() => handleToggleActive(category.id)}>
+                            {category.isActive ? (
+                              <Eye className="h-4 w-4" />
+                            ) : (
+                              <EyeOff className="h-4 w-4" />
+                            )}
+                            {category.isActive ? t('admin.categories.active') : t('admin.categories.inactive')}
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <DropdownMenuItem className="text-destructive focus:text-destructive">
+                                <Trash2 className="h-4 w-4" />
                                 {t('common.delete')}
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
+                              </DropdownMenuItem>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>{t('admin.categories.deleteConfirm')}</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  {t('admin.categories.deleteWarning')} "{category.name}"
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => handleDeleteCategory(category.id)}
+                                  className="bg-red-600 hover:bg-red-700"
+                                >
+                                  {t('common.delete')}
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 ))

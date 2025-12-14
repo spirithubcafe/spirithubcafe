@@ -42,9 +42,17 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
       const fetchProduct = async () => {
         try {
           const result = await productService.getById(Number(product.id));
-          setFullProduct(result);
+          const activeVariants = (result.variants ?? []).filter(
+            (variant) => (variant as unknown as { isActive?: boolean }).isActive !== false,
+          );
+          const sanitized: ApiProduct = {
+            ...result,
+            variants: activeVariants,
+          };
+
+          setFullProduct(sanitized);
           const defaultVariant =
-            result.variants?.find((variant) => variant.isDefault) ?? result.variants?.[0] ?? null;
+            activeVariants.find((variant) => variant.isDefault) ?? activeVariants[0] ?? null;
           setSelectedVariantId(defaultVariant ? defaultVariant.id : null);
         } catch (error) {
           console.error('Failed to load product details', error);
@@ -59,6 +67,8 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
   const selectedVariant = fullProduct?.variants?.find(
     (variant) => variant.id === selectedVariantId
   );
+
+  const isProductActive = (fullProduct as unknown as { isActive?: boolean } | null)?.isActive !== false;
 
   // Minimal guard: treat variant as out of stock when stockQuantity is 0 or less
   const isVariantOutOfStock = selectedVariant ? (selectedVariant.stockQuantity ?? 0) <= 0 : false;
@@ -102,7 +112,7 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
 
   const handleAddToCart = () => {
     // Runtime guard: prevent adding an out-of-stock variant
-    if (isVariantOutOfStock) return;
+    if (isVariantOutOfStock || !isProductActive) return;
     const variantKey = selectedVariant ? `-${selectedVariant.id}` : '';
     const cartId = `${product.id}${variantKey}`;
     const variantLabel = selectedVariant ? resolveVariantLabel(selectedVariant) : '';
