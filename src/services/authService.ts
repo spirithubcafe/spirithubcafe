@@ -133,7 +133,6 @@ export class AuthService {
       });
       
       console.log('Backend response received:', response.status);
-      console.log('Backend response data:', response.data);
       
       if (response.data && response.data.success && response.data.accessToken && response.data.refreshToken) {
         // Store tokens
@@ -174,7 +173,8 @@ export class AuthService {
         message: error.message,
         statusCode: error.statusCode,
         errors: error.errors,
-        response: error.response?.data
+        // Avoid logging full response bodies here; they may contain sensitive auth data.
+        responseStatus: error.response?.status
       });
       throw error;
     }

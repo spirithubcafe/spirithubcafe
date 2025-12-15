@@ -220,20 +220,47 @@ function AppContent() {
 }
 
 function App() {
-  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
-  return (
-    <GoogleOAuthProvider clientId={googleClientId}>
-      <RegionProvider>
-        <AuthProvider>
-          <AppProvider>
-            <CartProvider>
-              <AppContent />
-            </CartProvider>
-          </AppProvider>
-        </AuthProvider>
-      </RegionProvider>
+  // If this is missing at *build time*, Google Sign-In will not work in production.
+  if (!googleClientId) {
+    console.warn('[auth] VITE_GOOGLE_CLIENT_ID is not set; Google Sign-In is disabled.');
+  } else if (typeof window !== 'undefined') {
+    // Helpful when "works on localhost but not on website": verify the *actual* origin users are visiting.
+    console.info('[auth] Google OAuth enabled', {
+      origin: window.location.origin,
+      clientIdTail: googleClientId.slice(-10),
+    });
+  }
+
+  const app = (
+    <RegionProvider>
+      <AuthProvider>
+        <AppProvider>
+          <CartProvider>
+            <AppContent />
+          </CartProvider>
+        </AppProvider>
+      </AuthProvider>
+    </RegionProvider>
+  );
+
+  return googleClientId ? (
+    <GoogleOAuthProvider
+      clientId={googleClientId}
+      onScriptLoadSuccess={() => {
+        console.info('[auth] Google OAuth script loaded');
+      }}
+      onScriptLoadError={() => {
+        console.error(
+          '[auth] Failed to load Google OAuth script. Check ad-blockers/CSP and Authorized JavaScript origins in Google Cloud Console.'
+        );
+      }}
+    >
+      {app}
     </GoogleOAuthProvider>
+  ) : (
+    app
   );
 }
 

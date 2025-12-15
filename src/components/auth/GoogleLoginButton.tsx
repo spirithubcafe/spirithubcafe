@@ -76,11 +76,6 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({ mode = 'lo
           <Button type="button" variant="outline" className="w-full" disabled>
             {isArabic ? 'تسجيل الدخول عبر Google غير متاح' : 'Google sign-in unavailable'}
           </Button>
-          <p className="mt-2 text-xs text-muted-foreground">
-            {isArabic
-              ? 'يلزم ضبط VITE_GOOGLE_CLIENT_ID وإضافة الدومين ضمن Authorized JavaScript origins في Google Cloud Console.'
-              : 'Set VITE_GOOGLE_CLIENT_ID and add your domain to Authorized JavaScript origins in Google Cloud Console.'}
-          </p>
         </div>
       </div>
     );
