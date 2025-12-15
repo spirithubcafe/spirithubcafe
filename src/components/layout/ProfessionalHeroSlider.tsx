@@ -37,16 +37,39 @@ export const ProfessionalHeroSlider: React.FC = () => {
     return () => window.removeEventListener('resize', checkIsMobile);
   }, []);
 
-  // Delay video loading until page is fully loaded (only on mobile)
+  // Handle video playback for iOS
   useEffect(() => {
     if (isMobile && videoRef.current) {
-      // Wait for page load before starting video
+      const video = videoRef.current;
+      
+      // Force play for iOS - must be done with user interaction or on load
+      const attemptPlay = async () => {
+        try {
+          video.muted = true; // Ensure muted for autoplay
+          await video.play();
+          setVideoLoaded(true);
+        } catch (error) {
+          console.warn('Video autoplay failed:', error);
+          // Fallback: try again on user interaction
+          const playOnInteraction = async () => {
+            try {
+              await video.play();
+              setVideoLoaded(true);
+              document.removeEventListener('touchstart', playOnInteraction);
+              document.removeEventListener('click', playOnInteraction);
+            } catch (e) {
+              console.warn('Video play on interaction failed:', e);
+            }
+          };
+          document.addEventListener('touchstart', playOnInteraction, { once: true });
+          document.addEventListener('click', playOnInteraction, { once: true });
+        }
+      };
+
       if (document.readyState === 'complete') {
-        videoRef.current.load();
+        attemptPlay();
       } else {
-        window.addEventListener('load', () => {
-          videoRef.current?.load();
-        });
+        window.addEventListener('load', attemptPlay);
       }
     }
   }, [isMobile]);
@@ -268,7 +291,7 @@ export const ProfessionalHeroSlider: React.FC = () => {
               loop
               muted
               playsInline
-              preload="none"
+              preload="auto"
               poster={currentSlideData.image}
               onLoadedData={() => setVideoLoaded(true)}
               onError={() => {
@@ -276,6 +299,8 @@ export const ProfessionalHeroSlider: React.FC = () => {
                 setVideoLoaded(false);
               }}
               style={{ opacity: videoLoaded ? 1 : 0 }}
+              webkit-playsinline="true"
+              x-webkit-airplay="allow"
             >
               <source src="/video/spirithub-specialty-coffee-roastery-mobile-banner.mp4" type="video/mp4" />
             </video>
