@@ -181,7 +181,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
           </div>
 
           {/* Google Login Button */}
-          <GoogleLoginButton mode="login" />
+          <GoogleLoginButton mode="login" onSuccess={onSuccess} />
           
           {onSwitchToRegister && (
             <div className="text-center">

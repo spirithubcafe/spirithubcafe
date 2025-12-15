@@ -304,7 +304,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
           </div>
 
           {/* Google Register Button */}
-          <GoogleLoginButton mode="register" />
+          <GoogleLoginButton mode="register" onSuccess={onSuccess} />
           
           {onSwitchToLogin && (
             <div className="text-center">

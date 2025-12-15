@@ -1,24 +1,25 @@
 import React from 'react';
 import { GoogleLogin } from '@react-oauth/google';
 import type { CredentialResponse } from '@react-oauth/google';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { useApp } from '../../hooks/useApp';
 import { toast } from 'sonner';
+import { Button } from '../ui/button';
 
 interface GoogleLoginButtonProps {
   mode?: 'login' | 'register';
+  onSuccess?: () => void;
 }
 
-export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({ mode = 'login' }) => {
+export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({ mode = 'login', onSuccess }) => {
   const { loginWithGoogle } = useAuth();
   const { language } = useApp();
-  const navigate = useNavigate();
   const isArabic = language === 'ar';
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
   const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
     try {
-      console.log('Google credential received:', credentialResponse);
+      console.log('Google credential received');
       
       if (!credentialResponse.credential) {
         throw new Error('No credential received from Google');
@@ -35,12 +36,21 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({ mode = 'lo
           : 'Successfully logged in'
       );
 
-      navigate('/');
+      // Let the parent decide what to do (close modal, redirect, etc.).
+      onSuccess?.();
     } catch (error: any) {
       console.error('Google login error:', error);
       
       // Show detailed error message
-      const errorMessage = error?.message || error?.errors || 'Failed to login with Google';
+      const errorMessage =
+        error?.message ||
+        (typeof error?.errors === 'string'
+          ? error.errors
+          : error?.errors
+            ? JSON.stringify(error.errors)
+            : null) ||
+        (error?.response?.data ? JSON.stringify(error.response.data) : null) ||
+        'Failed to login with Google';
       
       toast.error(
         isArabic
@@ -58,6 +68,23 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({ mode = 'lo
         : 'Failed to login with Google'
     );
   };
+
+  if (!googleClientId) {
+    return (
+      <div className="w-full flex justify-center">
+        <div className="w-full max-w-sm">
+          <Button type="button" variant="outline" className="w-full" disabled>
+            {isArabic ? 'تسجيل الدخول عبر Google غير متاح' : 'Google sign-in unavailable'}
+          </Button>
+          <p className="mt-2 text-xs text-muted-foreground">
+            {isArabic
+              ? 'يلزم ضبط VITE_GOOGLE_CLIENT_ID وإضافة الدومين ضمن Authorized JavaScript origins في Google Cloud Console.'
+              : 'Set VITE_GOOGLE_CLIENT_ID and add your domain to Authorized JavaScript origins in Google Cloud Console.'}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full flex justify-center">
