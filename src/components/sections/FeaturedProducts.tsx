@@ -1,16 +1,12 @@
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
 import { ProductCard } from '../products/ProductCard';
 import { useApp } from '../../hooks/useApp';
-import { useRegion } from '../../hooks/useRegion';
 import { Spinner } from '../ui/spinner';
 
 export const FeaturedProducts: React.FC = () => {
   const { t } = useTranslation();
-  const { products, loading, language } = useApp();
-  const { currentRegion } = useRegion();
-  const isArabic = language === 'ar';
+  const { products, loading } = useApp();
 
   const latestProducts = useMemo(() => {
     const items = (products || []).filter((p) => p.isActive !== false);
@@ -46,15 +42,6 @@ export const FeaturedProducts: React.FC = () => {
           <h2 className="text-4xl font-bold text-gray-900 mb-4 uppercase">
             {t('sections.featuredProducts')}
           </h2>
-        </div>
-
-        <div className="flex items-center justify-end mb-6">
-          <Link
-            to={`/${currentRegion.code}/products`}
-            className="text-sm font-medium text-amber-700 hover:text-amber-800 underline underline-offset-4"
-          >
-            {isArabic ? 'عرض الكل' : 'View All'}
-          </Link>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 sm:gap-6">
