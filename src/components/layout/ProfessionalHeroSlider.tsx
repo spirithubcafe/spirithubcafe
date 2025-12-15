@@ -23,6 +23,7 @@ export const ProfessionalHeroSlider: React.FC = () => {
   const [isHovered, setIsHovered] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [videoLoaded, setVideoLoaded] = useState(false);
+  const [videoProgress, setVideoProgress] = useState(0);
   const videoRef = React.useRef<HTMLVideoElement>(null);
 
   // Check if device is mobile
@@ -37,15 +38,29 @@ export const ProfessionalHeroSlider: React.FC = () => {
     return () => window.removeEventListener('resize', checkIsMobile);
   }, []);
 
-  // Handle video playback for iOS
+  // Handle video playback for iOS - immediate loading with progress tracking
   useEffect(() => {
     if (isMobile && videoRef.current) {
       const video = videoRef.current;
       
-      // Force play for iOS - must be done with user interaction or on load
+      // Track loading progress
+      const handleProgress = () => {
+        if (video.buffered.length > 0) {
+          const bufferedEnd = video.buffered.end(video.buffered.length - 1);
+          const duration = video.duration;
+          if (duration > 0) {
+            setVideoProgress((bufferedEnd / duration) * 100);
+          }
+        }
+      };
+
+      video.addEventListener('progress', handleProgress);
+      
+      // Force play for iOS immediately - no waiting for page load
       const attemptPlay = async () => {
         try {
           video.muted = true; // Ensure muted for autoplay
+          video.load(); // Start loading immediately
           await video.play();
           setVideoLoaded(true);
         } catch (error) {
@@ -66,11 +81,13 @@ export const ProfessionalHeroSlider: React.FC = () => {
         }
       };
 
-      if (document.readyState === 'complete') {
-        attemptPlay();
-      } else {
-        window.addEventListener('load', attemptPlay);
-      }
+      // Start immediately, don't wait for full page load
+      const timer = setTimeout(attemptPlay, 50); // Faster initialization
+      
+      return () => {
+        clearTimeout(timer);
+        video.removeEventListener('progress', handleProgress);
+      };
     }
   }, [isMobile]);
 
@@ -276,14 +293,6 @@ export const ProfessionalHeroSlider: React.FC = () => {
         {isMobile ? (
           // Mobile: Show video background with optimized loading
           <div className="slide-background">
-            {/* Fallback image shown until video loads */}
-            {!videoLoaded && (
-              <img
-                src={currentSlideData.image}
-                alt={currentSlideData.title}
-                className="background-image"
-              />
-            )}
             <video
               ref={videoRef}
               className="background-video"
@@ -293,18 +302,57 @@ export const ProfessionalHeroSlider: React.FC = () => {
               playsInline
               preload="auto"
               poster={currentSlideData.image}
-              onLoadedData={() => setVideoLoaded(true)}
+              onCanPlay={() => setVideoLoaded(true)}
               onError={() => {
                 console.warn('Video failed to load, using fallback image');
                 setVideoLoaded(false);
               }}
-              style={{ opacity: videoLoaded ? 1 : 0 }}
+              style={{ 
+                opacity: videoLoaded ? 1 : 0,
+                transition: 'opacity 0.8s ease-out',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                zIndex: 1
+              }}
               webkit-playsinline="true"
               x-webkit-airplay="allow"
             >
               <source src="/video/spirithub-specialty-coffee-roastery-mobile-banner.mp4" type="video/mp4" />
             </video>
-            <div className="background-overlay" />
+            
+            {/* Fallback image shown until video loads */}
+            {!videoLoaded && (
+              <img
+                src={currentSlideData.image}
+                alt={currentSlideData.title}
+                className="background-image"
+                style={{ 
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  zIndex: 2
+                }}
+              />
+            )}
+            
+            {/* Loading progress indicator */}
+            {!videoLoaded && videoProgress > 0 && (
+              <div 
+                style={{
+                  position: 'absolute',
+                  bottom: 0,
+                  left: 0,
+                  height: '3px',
+                  backgroundColor: 'rgba(239, 68, 68, 0.8)',
+                  width: `${videoProgress}%`,
+                  transition: 'width 0.3s ease',
+                  zIndex: 6
+                }}
+              />
+            )}
+            
+            <div className="background-overlay" style={{ zIndex: 3 }} />
           </div>
         ) : (
           // Desktop: Show image backgrounds with fade effect
