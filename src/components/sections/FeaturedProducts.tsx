@@ -8,44 +8,23 @@ import { Spinner } from '../ui/spinner';
 
 export const FeaturedProducts: React.FC = () => {
   const { t } = useTranslation();
-  const { products, allCategories, loading, language } = useApp();
+  const { products, loading, language } = useApp();
   const { currentRegion } = useRegion();
   const isArabic = language === 'ar';
 
-  const getShortCategoryName = (categoryName: string): string => {
-    // Only apply to English category names; Arabic names are already short.
-    if (isArabic) return categoryName;
-    const shortNames: Record<string, string> = {
-      'Espresso Coffee': 'Espresso',
-      'Coffee Capsules': 'Capsules',
-      'Premium Coffee': 'Premium',
-      'Filter Coffee': 'Filter',
-      'Drip Coffee': 'Drip',
+  const latestProducts = useMemo(() => {
+    const items = (products || []).filter((p) => p.isActive !== false);
+
+    const toNumericId = (value: string | undefined) => {
+      if (!value) return Number.NEGATIVE_INFINITY;
+      const n = Number.parseInt(value, 10);
+      return Number.isFinite(n) ? n : Number.NEGATIVE_INFINITY;
     };
-    return shortNames[categoryName] || categoryName;
-  };
 
-  const productsByCategory = useMemo(() => {
-    const maxProductsPerCategory = 6;
-
-    const orderedCategories = [...allCategories].sort(
-      (a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0)
-    );
-
-    const grouped = new Map<string, typeof products>();
-    for (const product of products) {
-      if (!product.categoryId) continue;
-      if (!grouped.has(product.categoryId)) grouped.set(product.categoryId, []);
-      grouped.get(product.categoryId)!.push(product);
-    }
-
-    return orderedCategories
-      .map((category) => ({
-        category,
-        products: (grouped.get(category.id) || []).slice(0, maxProductsPerCategory),
-      }))
-      .filter((section) => section.products.length > 0);
-  }, [allCategories, products]);
+    return [...items]
+      .sort((a, b) => toNumericId(b.id) - toNumericId(a.id))
+      .slice(0, 6);
+  }, [products]);
 
   if (loading) {
     return (
@@ -69,34 +48,19 @@ export const FeaturedProducts: React.FC = () => {
           </h2>
         </div>
 
-        {/* Products by Category */}
-        <div className="space-y-12">
-          {productsByCategory.map(({ category, products: categoryProducts }) => {
-            const categoryParam = category.slug || category.id;
-            const categoryProductsUrl = `/${currentRegion.code}/products?category=${encodeURIComponent(categoryParam)}`;
+        <div className="flex items-center justify-end mb-6">
+          <Link
+            to={`/${currentRegion.code}/products`}
+            className="text-sm font-medium text-amber-700 hover:text-amber-800 underline underline-offset-4"
+          >
+            {isArabic ? 'عرض الكل' : 'View All'}
+          </Link>
+        </div>
 
-            return (
-              <div key={category.id} className="space-y-5">
-                <div className="flex items-center justify-between gap-4">
-                  <h3 className="text-2xl font-bold text-gray-900">
-                    {getShortCategoryName(category.name)}
-                  </h3>
-                  <Link
-                    to={categoryProductsUrl}
-                    className="text-sm font-medium text-amber-700 hover:text-amber-800 underline underline-offset-4"
-                  >
-                    {isArabic ? 'عرض الكل' : 'View All'}
-                  </Link>
-                </div>
-
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 sm:gap-6">
-                  {categoryProducts.map((product) => (
-                    <ProductCard key={product.id} product={product} />
-                  ))}
-                </div>
-              </div>
-            );
-          })}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 sm:gap-6">
+          {latestProducts.map((product) => (
+            <ProductCard key={product.id} product={product} />
+          ))}
         </div>
       </div>
     </section>
