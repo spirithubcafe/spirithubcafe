@@ -51,7 +51,6 @@ export function computeShippingMethods(opts: {
   const { countryIso2, citySlug, orderTotal = 0 } = opts;
   const isOman = countryIso2 === 'OM';
   const isKhasab = isOman && citySlug === 'khasab';
-  const isFreeNoolDelivery = orderTotal > 20;
 
   const methods: ShippingMethod[] = [
     {
@@ -76,11 +75,8 @@ export function computeShippingMethods(opts: {
         ar: 'توصيل محلي سريع داخل منطقة مسقط مع فريق التوصيل الخاص بنا.'
       },
       eta: { en: '1-2 business days', ar: '١-٢ أيام عمل' },
-      badge: {
-        en: isFreeNoolDelivery ? 'Free over 20 OMR' : 'Fast delivery',
-        ar: isFreeNoolDelivery ? 'مجاني فوق 20 ر.ع' : 'توصيل سريع'
-      },
-      price: isFreeNoolDelivery ? 0 : (isKhasab ? 3.0 : 2.0),
+      badge: { en: 'Fast delivery', ar: 'توصيل سريع' },
+      price: isKhasab ? 3.0 : 2.0,
     });
   }
 
