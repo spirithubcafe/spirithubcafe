@@ -54,6 +54,7 @@ import { PaymentFailurePage } from './pages/PaymentFailurePage';
 import { PaymentCancelledPage } from './pages/PaymentCancelledPage';
 import { PaymentErrorPage } from './pages/PaymentErrorPage';
 import { RequireAuth } from './components/auth/RequireAuth';
+import { AdminRegionRedirect } from './components/admin/AdminRegionRedirect';
 import './i18n';
 import './App.css';
 
@@ -172,22 +173,7 @@ function AppContent() {
         <Route path="/favorites" element={<FavoritesPage />} />
         <Route path="/orders" element={<OrdersPage />} />
         <Route path="/order/:orderId" element={<OrderDetailPage />} />
-        <Route path="/admin/*" element={<AdminLayout />}>
-          <Route index element={<AdminDashboard />} />
-          <Route path="categories" element={<CategoriesManagement />} />
-          <Route path="categories/add" element={<CategoryAddPage />} />
-          <Route path="categories/edit/:id" element={<CategoryEditPage />} />
-          <Route path="products" element={<ProductsManagement />} />
-          <Route path="products/add" element={<ProductAddPage />} />
-          <Route path="products/edit/:productId" element={<ProductEditPage />} />
-          <Route path="products/:id/attributes" element={<ProductAttributesPage />} />
-          <Route path="seo" element={<SeoManagement />} />
-          <Route path="users" element={<UsersManagement />} />
-          <Route path="orders" element={<OrdersManagement />} />
-          <Route path="newsletter" element={<NewsletterManagement />} />
-          <Route path="reports" element={<ReportsManagement />} />
-          <Route path="settings" element={<SystemSettings />} />
-        </Route>
+        <Route path="/admin/*" element={<AdminRegionRedirect />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/faq" element={<FAQPage />} />

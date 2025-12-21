@@ -1,9 +1,11 @@
 import axios from 'axios';
 import type { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import type { ApiError } from '../types/auth';
+import { safeStorage } from '../lib/safeStorage';
+import { getActiveRegionForApi } from '../lib/regionUtils';
 
 const getLoginRedirectUrl = (): string => {
-  const savedRegion = localStorage.getItem('spirithub-region') || 'om';
+  const savedRegion = safeStorage.getItem('spirithub-region') || 'om';
   const current = window.location.pathname + window.location.search;
   const loginPath = `/${savedRegion}/login`;
   return `${loginPath}?redirect=${encodeURIComponent(current)}`;
@@ -15,7 +17,7 @@ const isLoginRoute = (pathname: string): boolean => {
 
 // Get API Base URL based on current region
 const getApiBaseUrl = (): string => {
-  const savedRegion = localStorage.getItem('spirithub-region') || 'om';
+  const savedRegion = getActiveRegionForApi();
   
   if (savedRegion === 'sa') {
     return import.meta.env.VITE_API_BASE_URL_SA || 'https://api.spirithubcafe.com';
@@ -41,7 +43,7 @@ const createApiClient = (): AxiosInstance => {
       // Dynamically set baseURL based on current region
       config.baseURL = getApiBaseUrl();
       
-      const token = localStorage.getItem('accessToken');
+      const token = safeStorage.getItem('accessToken');
       if (token && config.headers) {
         config.headers.Authorization = `Bearer ${token}`;
         // Debug: Log token info for ProfilePage endpoints
@@ -55,7 +57,10 @@ const createApiClient = (): AxiosInstance => {
           });
         }
       } else {
-        console.warn('⚠️ No access token found for request:', config.url);
+        // Public endpoints are allowed without a token; logging this as a warning is noisy.
+        if (import.meta.env.DEV) {
+          console.debug('⚠️ No access token found for request:', config.url);
+        }
       }
       return config;
     },
@@ -81,9 +86,9 @@ const createApiClient = (): AxiosInstance => {
       // Handle 401 unauthorized errors
         if (error.response?.status === 401 && originalRequest?._retry) {
           // Already attempted refresh once; redirect to login.
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('refreshToken');
-          localStorage.removeItem('user');
+          safeStorage.removeItem('accessToken');
+          safeStorage.removeItem('refreshToken');
+          safeStorage.removeItem('user');
 
           if (!isLoginRoute(window.location.pathname)) {
             window.location.href = getLoginRedirectUrl();
@@ -98,7 +103,7 @@ const createApiClient = (): AxiosInstance => {
         console.log('🔄 Got 401 error, attempting token refresh...');
 
         try {
-          const refreshToken = localStorage.getItem('refreshToken');
+          const refreshToken = safeStorage.getItem('refreshToken');
           if (refreshToken) {
             console.log('🔄 Attempting to refresh token...');
             // Try to refresh the token
@@ -110,8 +115,8 @@ const createApiClient = (): AxiosInstance => {
 
             if (refreshResponse.data?.access_token) {
               console.log('✅ Token refreshed successfully');
-              localStorage.setItem('accessToken', refreshResponse.data.access_token);
-              localStorage.setItem('refreshToken', refreshResponse.data.refresh_token);
+              safeStorage.setItem('accessToken', refreshResponse.data.access_token);
+              safeStorage.setItem('refreshToken', refreshResponse.data.refresh_token);
               
               // Retry the original request with new token
               originalRequest.headers.Authorization = `Bearer ${refreshResponse.data.access_token}`;
@@ -121,9 +126,9 @@ const createApiClient = (): AxiosInstance => {
             console.warn('⚠️ No refresh token found in localStorage');
 
             // No refresh token means we cannot recover; redirect to login instead of surfacing 401s.
-            localStorage.removeItem('accessToken');
-            localStorage.removeItem('refreshToken');
-            localStorage.removeItem('user');
+            safeStorage.removeItem('accessToken');
+            safeStorage.removeItem('refreshToken');
+            safeStorage.removeItem('user');
 
             if (!isLoginRoute(window.location.pathname)) {
               console.log('🚪 Redirecting to login...');
@@ -133,9 +138,9 @@ const createApiClient = (): AxiosInstance => {
         } catch (refreshError: any) {
           console.error('❌ Token refresh failed:', refreshError.response?.data || refreshError.message);
           // Refresh failed, redirect to login
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('refreshToken');
-          localStorage.removeItem('user');
+          safeStorage.removeItem('accessToken');
+          safeStorage.removeItem('refreshToken');
+          safeStorage.removeItem('user');
           
           // Only redirect if we're not already on the login page
           if (!isLoginRoute(window.location.pathname)) {
@@ -184,22 +189,22 @@ export const http = {
 // Helper functions for token management
 export const tokenManager = {
   setTokens: (accessToken: string, refreshToken: string) => {
-    localStorage.setItem('accessToken', accessToken);
-    localStorage.setItem('refreshToken', refreshToken);
+    safeStorage.setItem('accessToken', accessToken);
+    safeStorage.setItem('refreshToken', refreshToken);
   },
 
   getAccessToken: (): string | null => {
-    return localStorage.getItem('accessToken');
+    return safeStorage.getItem('accessToken');
   },
 
   getRefreshToken: (): string | null => {
-    return localStorage.getItem('refreshToken');
+    return safeStorage.getItem('refreshToken');
   },
 
   clearTokens: () => {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
-    localStorage.removeItem('user');
+    safeStorage.removeItem('accessToken');
+    safeStorage.removeItem('refreshToken');
+    safeStorage.removeItem('user');
   },
 
   isTokenExpired: (token: string): boolean => {

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { useApp } from '../../hooks/useApp';
+import { getAdminBasePath, getPreferredAdminRegion } from '../../lib/regionUtils';
 import { Button } from '../ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Badge } from '../ui/badge';
@@ -58,6 +59,7 @@ export const MinimalUserProfile: React.FC = () => {
 
   const userName = user.displayName || user.username || 'User';
   const isVIP = user.roles?.includes('Admin') || user.roles?.includes('VIP');
+  const adminEntryPath = getAdminBasePath(getPreferredAdminRegion());
 
   return (
     <DropdownMenu>
@@ -161,7 +163,7 @@ export const MinimalUserProfile: React.FC = () => {
             <>
               <DropdownMenuSeparator className="my-2" />
               <DropdownMenuItem 
-                onClick={() => navigate('/admin')}
+                onClick={() => navigate(adminEntryPath)}
                 className="flex items-center gap-3 p-3 rounded-md cursor-pointer hover:bg-purple-50 transition-colors group"
               >
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-100 group-hover:bg-purple-200 transition-colors">

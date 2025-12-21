@@ -1,4 +1,5 @@
 import type { Product, ProductImage } from '../types/product';
+import { getActiveRegionForApi } from './regionUtils';
 
 /**
  * Image Utilities
@@ -9,7 +10,7 @@ import type { Product, ProductImage } from '../types/product';
  * Get the API base URL based on current region
  */
 export const getApiBaseUrl = (): string => {
-  const savedRegion = localStorage.getItem('spirithub-region') || 'om';
+  const savedRegion = getActiveRegionForApi();
   
   if (savedRegion === 'sa') {
     return import.meta.env.VITE_API_BASE_URL_SA || 'https://api.spirithubcafe.com';

@@ -57,7 +57,7 @@ export const MobileBottomNav: React.FC = () => {
   };
   
   // Hide on admin pages
-  const isAdminPage = location.pathname.startsWith('/admin');
+  const isAdminPage = location.pathname.includes('/admin');
   
   if (isAdminPage) {
     return null;

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import { RegionContext, type RegionCode, type RegionConfig } from './RegionContextDefinition';
+import { safeStorage } from '../lib/safeStorage';
 
 interface RegionProviderProps {
   children: ReactNode;
@@ -79,7 +80,7 @@ export const RegionProvider: React.FC<RegionProviderProps> = ({ children }) => {
     const pathRegion = detectRegionFromPath();
     
     // Then check localStorage
-    const savedRegion = localStorage.getItem('spirithub-region') as RegionCode;
+    const savedRegion = safeStorage.getItem('spirithub-region') as RegionCode;
     
     // Prefer URL path over saved preference
     const initialRegion = pathRegion || savedRegion || 'om';
@@ -93,7 +94,7 @@ export const RegionProvider: React.FC<RegionProviderProps> = ({ children }) => {
     setCurrentRegion(newRegion);
     
     // Save to localStorage
-    localStorage.setItem('spirithub-region', regionCode);
+    safeStorage.setItem('spirithub-region', regionCode);
     
     // Update URL if needed
     const currentPath = window.location.pathname;
@@ -121,7 +122,7 @@ export const RegionProvider: React.FC<RegionProviderProps> = ({ children }) => {
   useEffect(() => {
     const initializeRegion = async () => {
       // Check if user has manually selected a region
-      const savedRegion = localStorage.getItem('spirithub-region') as RegionCode;
+      const savedRegion = safeStorage.getItem('spirithub-region') as RegionCode;
       const pathRegion = detectRegionFromPath();
       
       // If there's no path region and no saved region, detect from geo
@@ -134,7 +135,7 @@ export const RegionProvider: React.FC<RegionProviderProps> = ({ children }) => {
       } else if (pathRegion && pathRegion !== currentRegion.code) {
         // Update current region to match path
         setCurrentRegion(REGIONS[pathRegion]);
-        localStorage.setItem('spirithub-region', pathRegion);
+        safeStorage.setItem('spirithub-region', pathRegion);
       }
     };
 
@@ -147,7 +148,7 @@ export const RegionProvider: React.FC<RegionProviderProps> = ({ children }) => {
       const pathRegion = detectRegionFromPath();
       if (pathRegion !== currentRegion.code) {
         setCurrentRegion(REGIONS[pathRegion]);
-        localStorage.setItem('spirithub-region', pathRegion);
+        safeStorage.setItem('spirithub-region', pathRegion);
       }
     };
 

@@ -6,6 +6,7 @@ import type {
   RegisterRequest 
 } from '../types/auth';
 import type { GoogleLoginData } from '../contexts/AuthContextDefinition';
+import { safeStorage } from '../lib/safeStorage';
 
 // Actual API response interface
 interface ActualLoginResponse {
@@ -72,7 +73,7 @@ export class AuthService {
         // Create user info from JWT token claims (if needed)
         const userInfo = this.parseUserFromToken(response.data.access_token);
         if (userInfo) {
-          localStorage.setItem('user', JSON.stringify(userInfo));
+          safeStorage.setJson('user', userInfo);
         }
         
         // Dispatch login event
@@ -106,7 +107,7 @@ export class AuthService {
         tokenManager.setTokens(response.data.accessToken, response.data.refreshToken);
         
         if (response.data.user) {
-          localStorage.setItem('user', JSON.stringify(response.data.user));
+          safeStorage.setJson('user', response.data.user);
         }
         
         window.dispatchEvent(new CustomEvent('auth-login', { detail: response.data.user }));
@@ -148,7 +149,7 @@ export class AuthService {
           lastLoggedIn: response.data.user.lastLoggedIn,
         };
         
-        localStorage.setItem('user', JSON.stringify(userInfo));
+        safeStorage.setJson('user', userInfo);
         
         window.dispatchEvent(new CustomEvent('auth-login', { detail: userInfo }));
         
@@ -311,7 +312,7 @@ export class AuthService {
 
         
         // Update local storage with enhanced user data
-        localStorage.setItem('user', JSON.stringify(userInfo));
+        safeStorage.setJson('user', userInfo);
         return userInfo as UserInfo;
       }
       
@@ -325,7 +326,7 @@ export class AuthService {
         const userFromToken = this.parseUserFromToken(token);
         if (userFromToken) {
 
-          localStorage.setItem('user', JSON.stringify(userFromToken));
+          safeStorage.setJson('user', userFromToken);
           return userFromToken;
         }
       }
@@ -353,13 +354,7 @@ export class AuthService {
    */
   getStoredUserInfo(): UserInfo | null {
     try {
-      const userStr = localStorage.getItem('user');
-      if (userStr) {
-        const parsedUser = JSON.parse(userStr);
-  
-        return parsedUser;
-      }
-      return null;
+      return safeStorage.getJson<UserInfo>('user');
     } catch (error) {
       console.error('Error parsing stored user info:', error);
       return null;

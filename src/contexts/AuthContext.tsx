@@ -2,6 +2,7 @@ import React, { useContext, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { authService } from '../services/authService';
 import type { UserInfo, LoginResponse } from '../types/auth';
+import { safeStorage } from '../lib/safeStorage';
 
 // Import Context and type from separate file
 import { AuthContext, type AuthContextType, type GoogleLoginData } from './AuthContextDefinition';
@@ -58,8 +59,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         hasUser: !!authState.user,
         hasAccessToken: !!authState.accessToken,
         hasRefreshToken: !!authState.refreshToken,
-        accessTokenInLocalStorage: !!localStorage.getItem('accessToken'),
-        refreshTokenInLocalStorage: !!localStorage.getItem('refreshToken')
+        accessTokenInLocalStorage: !!safeStorage.getItem('accessToken'),
+        refreshTokenInLocalStorage: !!safeStorage.getItem('refreshToken')
       });
       
       if (authState.hasValidToken && authState.user) {
@@ -71,7 +72,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           const tokenUser = authService.parseUserFromTokenPublic(authState.accessToken!);
           if (tokenUser && tokenUser.roles) {
             finalUser = { ...finalUser, roles: tokenUser.roles };
-            localStorage.setItem('user', JSON.stringify(finalUser));
+            safeStorage.setJson('user', finalUser);
           }
         }
         

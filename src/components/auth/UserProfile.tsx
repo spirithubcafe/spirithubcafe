@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { useApp } from '../../hooks/useApp';
+import { getAdminBasePath, getPreferredAdminRegion } from '../../lib/regionUtils';
 import { Button } from '../ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Spinner } from '../ui/spinner';
@@ -72,6 +73,8 @@ export const UserProfile: React.FC<UserProfileProps> = ({
     ? `@${user.username.split('@')[0]}`
     : '@member';
 
+  const adminEntryPath = getAdminBasePath(getPreferredAdminRegion());
+
   type MenuEntry = {
     id: string;
     label: string;
@@ -115,7 +118,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({
       icon: Shield,
       bubble: 'bg-violet-100 text-violet-600',
       hover: 'hover:bg-violet-50/80',
-      to: '/admin',
+      to: adminEntryPath,
     },
   ] as const;
 
@@ -182,7 +185,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate('/admin')}
+              onClick={() => navigate(adminEntryPath)}
               className="flex-1 bg-gradient-to-r from-blue-600/20 to-blue-700/20 text-blue-200 hover:from-blue-600/30 hover:to-blue-700/30 hover:text-blue-100 border-0 backdrop-blur-sm shadow-lg"
             >
               <Shield className="h-4 w-4 mr-2" />

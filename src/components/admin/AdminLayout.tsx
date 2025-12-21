@@ -3,6 +3,13 @@ import { Link, Outlet, useLocation, Navigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { useApp } from '../../hooks/useApp';
 import { cn } from '../../lib/utils';
+import { safeStorage } from '../../lib/safeStorage';
+import {
+  buildAdminPathForRegion,
+  getRegionFromPath,
+  persistAdminRegion,
+  type RegionCode,
+} from '../../lib/regionUtils';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Separator } from '../ui/separator';
@@ -70,6 +77,16 @@ interface AdminNavGroup {
 const SIDEBAR_STORAGE_KEY = 'admin.sidebar.collapsed';
 const THEME_STORAGE_KEY = 'admin.theme.preference';
 
+const getAdminRegionFromPath = (pathname: string): RegionCode => {
+  // Admin routes are always /om/admin/* or /sa/admin/* after our redirect.
+  return getRegionFromPath(pathname) ?? 'om';
+};
+
+const normalizeAdminPath = (pathname: string): string => {
+  // Convert /om/admin/... and /sa/admin/... to /admin/... so existing comparisons work.
+  return pathname.replace(/^\/(om|sa)\//, '/');
+};
+
 export const AdminLayout: React.FC = () => {
   const location = useLocation();
   const {
@@ -89,14 +106,29 @@ export const AdminLayout: React.FC = () => {
     if (typeof window === 'undefined') {
       return false;
     }
-    return localStorage.getItem(SIDEBAR_STORAGE_KEY) === 'true';
+    return safeStorage.getItem(SIDEBAR_STORAGE_KEY) === 'true';
   });
+
+  const adminRegion = getAdminRegionFromPath(location.pathname);
+
+  useEffect(() => {
+    // Remember last used admin region so legacy /admin routes can redirect correctly.
+    persistAdminRegion(adminRegion);
+  }, [adminRegion]);
+
+  const setAdminRegion = (region: RegionCode) => {
+    persistAdminRegion(region);
+    const targetPath = buildAdminPathForRegion(location.pathname, region);
+    // Use full navigation by assigning href, to ensure everything re-initializes cleanly.
+    // This also avoids subtle state issues across two admin branches.
+    window.location.href = `${targetPath}${window.location.search}`;
+  };
 
   useEffect(() => {
     if (typeof window === 'undefined') {
       return;
     }
-    localStorage.setItem(SIDEBAR_STORAGE_KEY, String(isSidebarCollapsed));
+    safeStorage.setItem(SIDEBAR_STORAGE_KEY, String(isSidebarCollapsed));
   }, [isSidebarCollapsed]);
 
   useEffect(() => {
@@ -104,7 +136,7 @@ export const AdminLayout: React.FC = () => {
       document.documentElement.classList.remove('dark');
     }
     if (typeof window !== 'undefined') {
-      window.localStorage.removeItem(THEME_STORAGE_KEY);
+      safeStorage.removeItem(THEME_STORAGE_KEY);
     }
   }, []);
 
@@ -243,12 +275,20 @@ export const AdminLayout: React.FC = () => {
     : navGroups;
 
   const isCurrentPath = (path: string) => {
+    const current = normalizeAdminPath(location.pathname);
     if (path === '/admin') {
       return (
-        location.pathname === '/admin' || location.pathname === '/admin/'
+        current === '/admin' || current === '/admin/'
       );
     }
-    return location.pathname.startsWith(path);
+    return current.startsWith(path);
+  };
+
+  const toAdminUrl = (adminPath: string): string => {
+    // adminPath is normalized like /admin/products
+    const suffix = adminPath.startsWith('/admin') ? adminPath.slice('/admin'.length) : adminPath;
+    const suffixWithLeadingSlash = suffix.startsWith('/') ? suffix : suffix ? `/${suffix}` : '';
+    return `/${adminRegion}/admin${suffixWithLeadingSlash}`;
   };
 
   const userName = user.displayName || user.username;
@@ -371,7 +411,7 @@ export const AdminLayout: React.FC = () => {
                 const link = (
                   <Link
                     key={item.id}
-                    to={item.path}
+                    to={toAdminUrl(item.path)}
                     className="block"
                     aria-current={isActive ? 'page' : undefined}
                     onClick={onNavigate}
@@ -421,7 +461,7 @@ export const AdminLayout: React.FC = () => {
           )}
         >
           <Link
-            to="/admin"
+            to={toAdminUrl('/admin')}
             className={cn(
               'flex items-center gap-3 rounded-lg px-2 py-1 transition-colors hover:bg-muted/60',
               collapsed && 'mx-auto gap-0 hover:bg-transparent'
@@ -557,6 +597,79 @@ export const AdminLayout: React.FC = () => {
                 </form>
 
                 <div className="flex items-center gap-2">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="hidden items-center gap-2 rounded-full border-border/60 px-3 py-2 text-xs font-semibold uppercase tracking-wide md:inline-flex"
+                        aria-label={
+                          adminRegion === 'om'
+                            ? 'Active branch: Oman'
+                            : 'Active branch: Saudi Arabia'
+                        }
+                      >
+                        <Globe className="h-4 w-4" />
+                        <span className="text-muted-foreground">Branch</span>
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            'ml-1 border-transparent font-semibold',
+                            adminRegion === 'om'
+                              ? 'bg-emerald-500/10 text-emerald-700'
+                              : 'bg-sky-500/10 text-sky-700'
+                          )}
+                        >
+                          {adminRegion.toUpperCase()}
+                        </Badge>
+                        <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-64">
+                      <DropdownMenuLabel>Active branch</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onSelect={(e) => {
+                          e.preventDefault();
+                          setAdminRegion('om');
+                        }}
+                        className={cn(
+                          'flex items-center justify-between',
+                          adminRegion === 'om' && 'bg-emerald-500/10'
+                        )}
+                      >
+                        <span className="flex items-center gap-2">
+                          <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                          Oman (OM)
+                        </span>
+                        {adminRegion === 'om' && (
+                          <Badge variant="outline" className="border-transparent bg-emerald-500/10 text-emerald-700">
+                            Selected
+                          </Badge>
+                        )}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onSelect={(e) => {
+                          e.preventDefault();
+                          setAdminRegion('sa');
+                        }}
+                        className={cn(
+                          'flex items-center justify-between',
+                          adminRegion === 'sa' && 'bg-sky-500/10'
+                        )}
+                      >
+                        <span className="flex items-center gap-2">
+                          <span className="h-2 w-2 rounded-full bg-sky-500" />
+                          Saudi Arabia (SA)
+                        </span>
+                        {adminRegion === 'sa' && (
+                          <Badge variant="outline" className="border-transparent bg-sky-500/10 text-sky-700">
+                            Selected
+                          </Badge>
+                        )}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
                   <Button
                     type="button"
                     variant="ghost"
@@ -621,7 +734,7 @@ export const AdminLayout: React.FC = () => {
                       <DropdownMenuSeparator />
                       <DropdownMenuItem asChild>
                         <Link
-                          to="/profile"
+                          to={`/${adminRegion}/profile`}
                           className="flex items-center gap-2"
                         >
                           <User className="h-4 w-4" />
@@ -630,7 +743,7 @@ export const AdminLayout: React.FC = () => {
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
                         <Link
-                          to="/admin"
+                          to={toAdminUrl('/admin')}
                           className="flex items-center gap-2"
                         >
                           <BarChart3 className="h-4 w-4" />

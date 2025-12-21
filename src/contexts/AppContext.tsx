@@ -7,6 +7,7 @@ import { productService } from '../services/productService';
 import type { Category as ApiCategory, Product as ApiProduct } from '../types/product';
 import { getCategoryImageUrl, resolveProductImageUrl } from '../lib/imageUtils';
 import { cacheUtils, imageCacheUtils } from '../lib/cacheUtils';
+import { safeStorage } from '../lib/safeStorage';
 
 export interface User {
   id: string;
@@ -23,7 +24,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   
   // Initialize language from localStorage or default to browser language
   const [language, setLanguage] = useState(() => {
-    const savedLanguage = localStorage.getItem('spirithub-language');
+    const savedLanguage = safeStorage.getItem('spirithub-language');
     return savedLanguage || i18n.language;
   });
   
@@ -40,7 +41,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     setLanguage(newLang);
     
     // Save language preference to localStorage
-    localStorage.setItem('spirithub-language', newLang);
+    safeStorage.setItem('spirithub-language', newLang);
     
     // Update document direction for RTL support
     document.documentElement.dir = newLang === 'ar' ? 'rtl' : 'ltr';

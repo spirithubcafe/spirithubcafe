@@ -19,6 +19,7 @@ import { UserProfile } from '../auth/UserProfile';
 import { MinimalUserProfile } from '../auth/MinimalUserProfile';
 import { ScrollArea } from '../ui/scroll-area';
 import { RegionSwitcher } from './RegionSwitcher';
+import { getAdminBasePath, getPreferredAdminRegion } from '../../lib/regionUtils';
 
 export const Navigation: React.FC = () => {
   const { t } = useTranslation();
@@ -496,7 +497,7 @@ export const Navigation: React.FC = () => {
                             {user && (user.roles?.includes('Admin') || user.roles?.includes('admin') || user.roles?.includes('Administrator')) && (
                               <SheetClose asChild>
                                 <Link
-                                  to="/admin"
+                                  to={getAdminBasePath(getPreferredAdminRegion())}
                                   className="flex items-center justify-between rounded-2xl bg-blue-600/20 px-4 py-3 text-base font-medium text-blue-300 transition duration-200 hover:bg-blue-600/30 hover:text-blue-200 border border-blue-600/30"
                                 >
                                   <span className="flex items-center gap-3">
