@@ -71,8 +71,17 @@ async function getMetaTagsForRoute(url, baseUrl) {
     .replace(/\/+$/, '');
   
   // Clean URL (remove query params and hash)
-  let cleanUrl = url.split('?')[0].split('#')[0];
+  const originalPath = url.split('?')[0].split('#')[0];
+  let cleanUrl = originalPath;
   if (!cleanUrl.startsWith('/')) cleanUrl = `/${cleanUrl}`;
+
+  // Normalize region prefixes for route matching (but keep originalPath for og:url)
+  let normalizedPath = cleanUrl;
+  if (normalizedPath === '/om' || normalizedPath.startsWith('/om/')) {
+    normalizedPath = normalizedPath.slice(3) || '/';
+  } else if (normalizedPath === '/sa' || normalizedPath.startsWith('/sa/')) {
+    normalizedPath = normalizedPath.slice(3) || '/';
+  }
   
   // Default meta tags
   let title = 'Spirit Hub Cafe | Specialty Coffee in Oman | سبيريت هب';
@@ -81,9 +90,9 @@ async function getMetaTagsForRoute(url, baseUrl) {
   let ogType = 'website';
 
   // Customize based on route
-  if (cleanUrl.startsWith('/products/') && cleanUrl.length > 10) {
+  if (normalizedPath.startsWith('/products/') && normalizedPath.length > 10) {
     // Extract product identifier (can be ID or slug)
-    const identifier = cleanUrl.split('/products/')[1].split('/')[0];
+    const identifier = normalizedPath.split('/products/')[1].split('/')[0];
     
     // Fetch product details (works with both ID and slug)
     const product = await fetchProductDetails(identifier);
@@ -134,28 +143,28 @@ async function getMetaTagsForRoute(url, baseUrl) {
       ogType = 'product';
       console.log('Product not found, using default meta tags');
     }
-  } else if (cleanUrl === '/products' || cleanUrl === '/products/') {
+  } else if (normalizedPath === '/products' || normalizedPath === '/products/') {
     title = 'Our Products | Spirit Hub Cafe | سبيريت هب';
     description = 'Browse our selection of specialty coffee beans, brewing equipment, and premium merchandise from Spirit Hub Cafe';
-  } else if (cleanUrl === '/about' || cleanUrl === '/about/') {
+  } else if (normalizedPath === '/about' || normalizedPath === '/about/') {
     title = 'About Us | Spirit Hub Cafe | سبيريت هب';
     description = 'Learn about Spirit Hub Cafe - our story, mission, and passion for roasting the finest specialty coffee in Oman';
-  } else if (cleanUrl === '/contact' || cleanUrl === '/contact/') {
+  } else if (normalizedPath === '/contact' || normalizedPath === '/contact/') {
     title = 'Contact Us | Spirit Hub Cafe | سبيريت هب';
     description = 'Get in touch with Spirit Hub Cafe in Muscat, Oman - visit us, call us, or send us a message';
-  } else if (cleanUrl === '/favorites' || cleanUrl === '/favorites/') {
+  } else if (normalizedPath === '/favorites' || normalizedPath === '/favorites/') {
     title = 'My Favorites | Spirit Hub Cafe';
     description = 'View your favorite products from Spirit Hub Cafe';
-  } else if (cleanUrl === '/orders' || cleanUrl === '/orders/') {
+  } else if (normalizedPath === '/orders' || normalizedPath === '/orders/') {
     title = 'My Orders | Spirit Hub Cafe';
     description = 'Track and manage your orders from Spirit Hub Cafe';
-  } else if (cleanUrl === '/checkout' || cleanUrl === '/checkout/') {
+  } else if (normalizedPath === '/checkout' || normalizedPath === '/checkout/') {
     title = 'Checkout | Spirit Hub Cafe';
     description = 'Complete your order from Spirit Hub Cafe - Oman\'s premier specialty coffee roastery';
-  } else if (cleanUrl === '/login' || cleanUrl === '/login/') {
+  } else if (normalizedPath === '/login' || normalizedPath === '/login/') {
     title = 'Login | Spirit Hub Cafe';
     description = 'Sign in to your Spirit Hub Cafe account';
-  } else if (cleanUrl === '/register' || cleanUrl === '/register/') {
+  } else if (normalizedPath === '/register' || normalizedPath === '/register/') {
     title = 'Create Account | Spirit Hub Cafe';
     description = 'Join Spirit Hub Cafe community and enjoy exclusive benefits';
   }

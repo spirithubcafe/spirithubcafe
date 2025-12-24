@@ -48,7 +48,7 @@ export function computeShippingMethods(opts: {
   citySlug?: string;
   orderTotal?: number;
 }): ShippingMethod[] {
-  const { countryIso2, citySlug, orderTotal = 0 } = opts;
+  const { countryIso2, citySlug } = opts;
   const isOman = countryIso2 === 'OM';
   const isKhasab = isOman && citySlug === 'khasab';
 
