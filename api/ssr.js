@@ -65,16 +65,19 @@ async function fetchProductDetails(identifier) {
 }
 
 // Helper function to generate meta tags based on route
-async function getMetaTagsForRoute(url) {
-  const baseUrl = 'https://spirithubcafe.com';
+async function getMetaTagsForRoute(url, baseUrl) {
+  const resolvedBaseUrl = (baseUrl || process.env.VITE_SITE_URL || process.env.SITE_URL || 'https://www.spirithubcafe.com')
+    .toString()
+    .replace(/\/+$/, '');
   
   // Clean URL (remove query params and hash)
-  const cleanUrl = url.split('?')[0].split('#')[0];
+  let cleanUrl = url.split('?')[0].split('#')[0];
+  if (!cleanUrl.startsWith('/')) cleanUrl = `/${cleanUrl}`;
   
   // Default meta tags
   let title = 'Spirit Hub Cafe | Specialty Coffee in Oman | سبيريت هب';
   let description = 'Spirit Hub Cafe roasts specialty coffee in Oman. Discover premium beans, artisanal brews, and a vibrant community experience at سبيريت هب.';
-  let image = `${baseUrl}/images/icon-512x512.png`;
+  let image = `${resolvedBaseUrl}/images/icon-512x512.png`;
   let ogType = 'website';
 
   // Customize based on route
@@ -163,7 +166,7 @@ async function getMetaTagsForRoute(url) {
     <meta property="og:type" content="${ogType}" />
     <meta property="og:title" content="${title}" />
     <meta property="og:description" content="${description}" />
-    <meta property="og:url" content="${baseUrl}${cleanUrl}" />
+    <meta property="og:url" content="${resolvedBaseUrl}${cleanUrl}" />
     <meta property="og:image" content="${image}" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
@@ -178,14 +181,31 @@ async function getMetaTagsForRoute(url) {
 export default async function handler(req, res) {
   try {
     const url = req.url || '/';
+    const urlPathOnly = url.split('?')[0].split('#')[0];
+
+    const forwardedProto = (req.headers?.['x-forwarded-proto'] || '').toString().split(',')[0].trim();
+    const forwardedHost = (req.headers?.['x-forwarded-host'] || '').toString().split(',')[0].trim();
+    const host = forwardedHost || req.headers?.host;
+    const proto = forwardedProto || 'https';
+    const requestBaseUrl = host ? `${proto}://${host}`.replace(/\/+$/, '') : undefined;
     
     // For static assets, try to serve from dist folder
-    if (url.match(/\.(js|css|png|jpg|jpeg|gif|ico|svg|webp|woff|woff2|ttf|eot|json|xml|txt|webmanifest)$/)) {
+    if (urlPathOnly.match(/\.(js|css|png|jpg|jpeg|gif|ico|svg|webp|woff|woff2|ttf|eot|json|xml|txt|webmanifest)$/)) {
       try {
-        const filePath = path.join(process.cwd(), 'dist', url);
-        if (fs.existsSync(filePath)) {
-          const content = fs.readFileSync(filePath);
-          const ext = path.extname(url);
+        // IMPORTANT: `url` starts with `/` (absolute path). Using `path.join(dist, url)`
+        // would ignore `dist` on Node.js. Normalize to a safe relative path.
+        const distDir = path.resolve(process.cwd(), 'dist');
+        const relativeUrlPath = decodeURIComponent(urlPathOnly).replace(/^\/+/, '');
+        const resolvedPath = path.resolve(distDir, relativeUrlPath);
+
+        // Prevent path traversal outside dist
+        if (!resolvedPath.startsWith(distDir + path.sep) && resolvedPath !== distDir) {
+          return res.status(403).end();
+        }
+
+        if (fs.existsSync(resolvedPath)) {
+          const content = fs.readFileSync(resolvedPath);
+          const ext = path.extname(urlPathOnly);
           const contentTypes = {
             '.js': 'application/javascript',
             '.css': 'text/css',
@@ -220,7 +240,7 @@ export default async function handler(req, res) {
     let html = fs.readFileSync(indexPath, 'utf-8');
     
     // Get meta tags based on route (async)
-    const metaTags = await getMetaTagsForRoute(url);
+    const metaTags = await getMetaTagsForRoute(url, requestBaseUrl);
     
     // Replace the meta tags placeholder (only in head)
     if (html.includes('<!--app-head-->')) {

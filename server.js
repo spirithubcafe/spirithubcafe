@@ -9,13 +9,26 @@ const isProduction = process.env.NODE_ENV === 'production';
 const port = process.env.PORT || 5173;
 const base = process.env.BASE || '/';
 
-// Cached production assets
-const templateHtml = isProduction
-  ? fs.readFileSync(path.resolve(__dirname, 'dist/client/index.html'), 'utf-8')
+// Cached production template
+// Vite's default build output is `dist/index.html`.
+// Some SSR setups use `dist/client/index.html`, so we support both.
+const prodIndexCandidates = [
+  path.resolve(__dirname, 'dist/index.html'),
+  path.resolve(__dirname, 'dist/client/index.html'),
+];
+
+const prodIndexPath = isProduction
+  ? prodIndexCandidates.find(p => fs.existsSync(p))
+  : undefined;
+
+const templateHtml = isProduction && prodIndexPath
+  ? fs.readFileSync(prodIndexPath, 'utf-8')
   : '';
 
 // Create http server
 const app = express();
+// Respect reverse-proxy headers (e.g., Vercel/NGINX) when constructing absolute URLs.
+app.set('trust proxy', true);
 
 // Add Vite or respective production middlewares
 let vite;
@@ -29,13 +42,29 @@ if (!isProduction) {
   app.use(vite.middlewares);
 } else {
   app.use(compression());
-  app.use(base, express.static(path.resolve(__dirname, 'dist/client'), { index: false }));
+  // Serve static assets from Vite build output.
+  const prodStaticRoot = fs.existsSync(path.resolve(__dirname, 'dist'))
+    ? path.resolve(__dirname, 'dist')
+    : path.resolve(__dirname, 'dist/client');
+  app.use(base, express.static(prodStaticRoot, { index: false }));
 }
 
 // Serve HTML - Catch all routes with meta tag injection
 app.use(async (req, res, next) => {
   try {
-    const url = req.originalUrl.replace(base, '');
+    // Normalize URL path for meta generation.
+    // Keep a leading slash because downstream logic expects it.
+    let url = req.originalUrl;
+    if (base !== '/' && url.startsWith(base)) {
+      url = url.slice(base.length) || '/';
+    }
+    if (!url.startsWith('/')) url = `/${url}`;
+
+    const forwardedProto = (req.headers['x-forwarded-proto'] || '').toString().split(',')[0].trim();
+    const forwardedHost = (req.headers['x-forwarded-host'] || '').toString().split(',')[0].trim();
+    const host = forwardedHost || req.headers.host;
+    const proto = forwardedProto || req.protocol || 'https';
+    const requestBaseUrl = host ? `${proto}://${host}`.replace(/\/+$/, '') : undefined;
 
     let template;
     if (!isProduction) {
@@ -43,11 +72,16 @@ app.use(async (req, res, next) => {
       template = fs.readFileSync(path.resolve(__dirname, 'index.html'), 'utf-8');
       template = await vite.transformIndexHtml(url, template);
     } else {
+      if (!templateHtml) {
+        throw new Error(
+          'Production index.html not found. Run the build first (vite build) and ensure dist/index.html exists.'
+        );
+      }
       template = templateHtml;
     }
 
     // Get meta tags based on route
-    const metaTags = getMetaTagsForRoute(url);
+    const metaTags = getMetaTagsForRoute(url, requestBaseUrl);
     
     // Replace the meta tags in the template (no SSR, just meta injection)
     let html = template.replace('<!--app-head-->', metaTags);
@@ -63,11 +97,14 @@ app.use(async (req, res, next) => {
 });
 
 // Helper function to generate meta tags based on route
-function getMetaTagsForRoute(url) {
-  const baseUrl = 'https://spirithubcafe.com';
+function getMetaTagsForRoute(url, requestBaseUrl) {
+  const baseUrl = (requestBaseUrl || process.env.VITE_SITE_URL || process.env.SITE_URL || 'https://www.spirithubcafe.com')
+    .toString()
+    .replace(/\/+$/, '');
   
   // Clean URL (remove query params and hash)
   let cleanUrl = url.split('?')[0].split('#')[0];
+  if (!cleanUrl.startsWith('/')) cleanUrl = `/${cleanUrl}`;
   
   // Extract region from URL and normalize path
   let region = 'om'; // default
