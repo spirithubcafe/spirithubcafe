@@ -129,7 +129,13 @@ async function getMetaTagsForRoute(url, baseUrl) {
         const mainImage = product.images.find(img => img.isMain) || product.images[0];
         if (mainImage && mainImage.imagePath) {
           // API returns path starting with /uploads
-          image = `${API_BASE_URL.replace('/api', '')}${mainImage.imagePath}`;
+          try {
+            const apiOrigin = new URL(API_BASE_URL).origin;
+            image = `${apiOrigin}${mainImage.imagePath}`;
+          } catch {
+            // Fallback: if URL parsing fails, at least avoid breaking the scheme.
+            image = `https://api.spirithubcafe.com${mainImage.imagePath}`;
+          }
         }
       }
       
@@ -169,6 +175,42 @@ async function getMetaTagsForRoute(url, baseUrl) {
     description = 'Join Spirit Hub Cafe community and enjoy exclusive benefits';
   }
 
+  const guessMimeType = (urlStr) => {
+    const u = (urlStr || '').toLowerCase();
+    if (u.endsWith('.png')) return 'image/png';
+    if (u.endsWith('.jpg') || u.endsWith('.jpeg')) return 'image/jpeg';
+    if (u.endsWith('.gif')) return 'image/gif';
+    if (u.endsWith('.webp')) return 'image/webp';
+    if (u.endsWith('.svg')) return 'image/svg+xml';
+    return 'image/jpeg';
+  };
+
+  // Some social crawlers (notably WhatsApp/Telegram variants) can be picky about WebP.
+  // If the product image is WebP, provide a JPEG proxy first, then the original as a fallback.
+  const isWebp = (image || '').toLowerCase().endsWith('.webp');
+  const ogImages = [];
+  let twitterImage = image;
+
+  if (isWebp && image) {
+    const jpgProxy = `https://wsrv.nl/?url=${encodeURIComponent(image)}&output=jpg&w=1200&h=630&fit=cover`;
+    ogImages.push({ url: jpgProxy, type: 'image/jpeg' });
+    ogImages.push({ url: image, type: 'image/webp' });
+    twitterImage = jpgProxy;
+  } else if (image) {
+    ogImages.push({ url: image, type: guessMimeType(image) });
+  }
+
+  const ogImageTags = ogImages
+    .map(
+      ({ url, type }) => `
+    <meta property="og:image" content="${url}" />
+    <meta property="og:image:secure_url" content="${url}" />
+    <meta property="og:image:type" content="${type}" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />`
+    )
+    .join('');
+
   return `
     <title>${title}</title>
     <meta name="description" content="${description}" />
@@ -176,14 +218,12 @@ async function getMetaTagsForRoute(url, baseUrl) {
     <meta property="og:title" content="${title}" />
     <meta property="og:description" content="${description}" />
     <meta property="og:url" content="${resolvedBaseUrl}${cleanUrl}" />
-    <meta property="og:image" content="${image}" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
+    ${ogImageTags}
     <meta property="og:site_name" content="Spirit Hub Cafe" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="${title}" />
     <meta name="twitter:description" content="${description}" />
-    <meta name="twitter:image" content="${image}" />
+    <meta name="twitter:image" content="${twitterImage}" />
   `;
 }
 
