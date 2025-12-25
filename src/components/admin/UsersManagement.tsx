@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../ui/alert-dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '../ui/dropdown-menu';
-import { Users, Plus, Edit, Trash2, Search, Loader2, Key, UserCheck, UserX, MoreHorizontal } from 'lucide-react';
+import { Users, Plus, Edit, Trash2, Search, Loader2, Key, UserCheck, UserX, MoreHorizontal, ChevronLeft, ChevronRight, Download } from 'lucide-react';
 import { userService } from '../../services/userService';
 import type { User, UserCreateDto, UserUpdateDto, Role, PasswordUpdateDto } from '../../services/userService';
 
@@ -27,9 +27,9 @@ export const UsersManagement: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
+  const [pageSize, setPageSize] = useState(20);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' | 'info' } | null>(null);
-  const pageSize = 20;
 
   const [formData, setFormData] = useState<UserCreateDto>({
     username: '',
@@ -48,7 +48,7 @@ export const UsersManagement: React.FC = () => {
 
   useEffect(() => {
     loadData();
-  }, [currentPage, searchTerm, statusFilter]);
+  }, [currentPage, searchTerm, statusFilter, pageSize]);
 
   useEffect(() => {
     loadRoles();
@@ -81,8 +81,10 @@ export const UsersManagement: React.FC = () => {
       });
 
       setUsers(usersData.items);
-      setTotalPages(usersData.totalPages);
       setTotalCount(usersData.totalCount);
+      // Calculate total pages manually to ensure correctness
+      const calculatedTotalPages = Math.ceil(usersData.totalCount / pageSize);
+      setTotalPages(calculatedTotalPages || 1);
     } catch (error) {
       console.error('Error loading users:', error);
       showMessage('Error loading users list', 'error');
@@ -219,6 +221,66 @@ export const UsersManagement: React.FC = () => {
     }));
   };
 
+  const exportToExcel = () => {
+    try {
+      // Create CSV content
+      const headers = [
+        'Username',
+        'Display Name',
+        'Email',
+        'Phone',
+        'Status',
+        'Roles',
+        'Last Login',
+        'User ID'
+      ];
+
+      const rows = users.map(user => [
+        user.username,
+        user.displayName || '',
+        (user as any).email || '',
+        (user as any).phone || '',
+        user.isActive ? 'Active' : 'Inactive',
+        user.roles?.join(', ') || 'No roles',
+        user.lastLoggedIn ? new Date(user.lastLoggedIn).toLocaleString() : 'Never',
+        user.id.toString()
+      ]);
+
+      // Convert to CSV
+      const csvContent = [
+        headers.join(','),
+        ...rows.map(row => 
+          row.map(cell => {
+            // Escape cells containing commas, quotes, or newlines
+            const cellStr = String(cell);
+            if (cellStr.includes(',') || cellStr.includes('"') || cellStr.includes('\n')) {
+              return '"' + cellStr.replace(/"/g, '""') + '"';
+            }
+            return cellStr;
+          }).join(',')
+        )
+      ].join('\n');
+
+      // Create blob and download
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      
+      link.setAttribute('href', url);
+      link.setAttribute('download', `users_export_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      showMessage(`Exported ${users.length} users successfully`, 'success');
+    } catch (error) {
+      console.error('Export error:', error);
+      showMessage('Export failed. Please try again.', 'error');
+    }
+  };
+
   const getRoleBadgeColor = (roleName: string) => {
     switch (roleName.toLowerCase()) {
       case 'admin':
@@ -247,10 +309,22 @@ export const UsersManagement: React.FC = () => {
     <>
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Users className="h-6 w-6" />
-            <span>Users Management</span>
-          </CardTitle>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <CardTitle className="flex items-center space-x-2">
+              <Users className="h-6 w-6" />
+              <span>Users Management</span>
+            </CardTitle>
+            <div className="flex gap-2">
+              <Button onClick={exportToExcel} disabled={loading || users.length === 0} variant="outline" size="sm">
+                <Download className="h-4 w-4 mr-2" />
+                Export to Excel
+              </Button>
+              <Button onClick={handleCreateUser} size="sm">
+                <Plus className="h-4 w-4 mr-2" />
+                Add User
+              </Button>
+            </div>
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Message */}
@@ -290,10 +364,6 @@ export const UsersManagement: React.FC = () => {
                 </SelectContent>
               </Select>
             </div>
-            <Button onClick={handleCreateUser} className="w-full sm:w-auto">
-              <Plus className="h-4 w-4 mr-2" />
-              Add User
-            </Button>
           </div>
 
           {/* Mobile list */}
@@ -516,30 +586,81 @@ export const UsersManagement: React.FC = () => {
           </div>
 
           {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <div className="text-sm text-muted-foreground">
-                Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, totalCount)} of {totalCount} users
+          {totalCount > 0 && (
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t pt-4">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <Label className="text-sm text-muted-foreground whitespace-nowrap">
+                    Records per page:
+                  </Label>
+                  <Select value={String(pageSize)} onValueChange={(value) => {
+                    setPageSize(Number(value));
+                    setCurrentPage(1);
+                  }}>
+                    <SelectTrigger className="w-[100px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="10">10</SelectItem>
+                      <SelectItem value="20">20</SelectItem>
+                      <SelectItem value="50">50</SelectItem>
+                      <SelectItem value="100">100</SelectItem>
+                      <SelectItem value="200">200</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  Showing {((currentPage - 1) * pageSize) + 1}-{Math.min(currentPage * pageSize, totalCount)} of {totalCount}
+                </div>
               </div>
-              <div className="flex items-center justify-between sm:justify-end gap-2">
+              
+              <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
+                  disabled={currentPage === 1 || loading}
                 >
+                  <ChevronLeft className="h-4 w-4" />
                   Previous
                 </Button>
-                <span className="text-sm">
-                  Page {currentPage} of {totalPages}
-                </span>
+                
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNum;
+                    if (totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (currentPage <= 3) {
+                      pageNum = i + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      pageNum = totalPages - 4 + i;
+                    } else {
+                      pageNum = currentPage - 2 + i;
+                    }
+                    
+                    return (
+                      <Button
+                        key={pageNum}
+                        variant={currentPage === pageNum ? 'default' : 'outline'}
+                        size="sm"
+                        className="w-9 h-9 p-0"
+                        onClick={() => setCurrentPage(pageNum)}
+                        disabled={loading}
+                      >
+                        {pageNum}
+                      </Button>
+                    );
+                  })}
+                </div>
+                
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages}
+                  disabled={currentPage === totalPages || loading}
                 >
                   Next
+                  <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
             </div>
