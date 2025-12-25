@@ -155,6 +155,18 @@ export const OrdersManagement: React.FC = () => {
   };
 
   useEffect(() => {
+    // Initialize known order IDs from localStorage
+    try {
+      const savedOrderIds = localStorage.getItem('spirithub_admin_known_order_ids');
+      if (savedOrderIds) {
+        const parsedIds = JSON.parse(savedOrderIds);
+        knownOrderIdsRef.current = new Set(parsedIds);
+        console.log('📋 Restored known order IDs:', parsedIds.length);
+      }
+    } catch (error) {
+      console.error('Failed to restore known order IDs:', error);
+    }
+    
     loadOrders();
   }, []);
 
@@ -221,9 +233,17 @@ export const OrdersManagement: React.FC = () => {
       
       setOrders(ordersWithItems);
 
-      // Detect and highlight new orders
-      const newOrders = ordersWithItems.filter((o) => !knownOrderIdsRef.current.has(o.id));
-      if (newOrders.length > 0) {
+      // Get last seen timestamp
+      const lastSeenStr = localStorage.getItem('spirithub_admin_orders_last_seen');
+      const lastSeenTime = lastSeenStr ? new Date(lastSeenStr).getTime() : 0;
+      
+      // Detect and highlight new orders (orders created after last seen time AND not in known IDs)
+      const newOrders = ordersWithItems.filter((o) => {
+        const orderTime = new Date(o.createdAt).getTime();
+        return orderTime > lastSeenTime && !knownOrderIdsRef.current.has(o.id);
+      });
+      
+      if (newOrders.length > 0 && !silent) {
         // Update highlights (auto-expire)
         setHighlightedOrderIds((prev) => {
           const next = new Set(prev);
@@ -249,8 +269,13 @@ export const OrdersManagement: React.FC = () => {
         await notifyNewOrders(newOrders);
       }
 
-      // Update known order ids
+      // Update known order ids and persist to localStorage
       knownOrderIdsRef.current = new Set(ordersWithItems.map((o) => o.id));
+      try {
+        localStorage.setItem('spirithub_admin_known_order_ids', JSON.stringify(Array.from(knownOrderIdsRef.current)));
+      } catch (error) {
+        console.error('Failed to save known order IDs:', error);
+      }
       
       // Debug: Check if orders have items
       if (ordersWithItems.length > 0) {
@@ -435,8 +460,17 @@ export const OrdersManagement: React.FC = () => {
                 {isArabic ? 'نسخ الهاتف' : 'Copy phone'}
               </DropdownMenuItem>
               <DropdownMenuItem onSelect={() => {
-                const phoneNumber = order.phone.replace(/[^0-9]/g, '');
-                window.open(`https://wa.me/${phoneNumber}`, '_blank', 'noopener,noreferrer');
+                const phoneNumber = order.phone.replace(/[^0-9+]/g, '');
+                const customerName = order.customerName || (isArabic ? 'العميل' : 'Customer');
+                const orderAmount = `${order.totalAmount.toFixed(3)} OMR`;
+                
+                // Create a professional message template with branding
+                const message = isArabic 
+                  ? `*SpiritHub Roastery*\n\nمرحباً ${customerName}،\n\nشكراً لك على تقديم طلبك لدى SpiritHub Roastery.\n\n*تفاصيل الطلب:*\nرقم الطلب: ${order.orderNumber}\nالمبلغ الإجمالي: ${orderAmount}\n\nسيتواصل معك فريقنا قريباً لتأكيد تفاصيل الطلب.\n\nشكراً لاختيارك SpiritHub Roastery، نحن نقدر دعمك حقاً.\n\nمع أطيب التحيات،\nSpiritHub Roastery\n\nhttps://spirithubcafe.com/products/`
+                  : `*SpiritHub Roastery*\n\nHello ${customerName},\n\nThank you for placing your order with SpiritHub Roastery.\n\n*Order Details:*\nOrder Number: ${order.orderNumber}\nTotal Amount: ${orderAmount}\n\nOur team will be in touch shortly to confirm the order details.\n\nThank you for choosing SpiritHub Roastery, we truly appreciate your support.\n\nWarm regards,\nSpiritHub Roastery\n\nhttps://spirithubcafe.com/products/`;
+                
+                const encodedMessage = encodeURIComponent(message);
+                window.open(`https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodedMessage}`, '_blank', 'noopener,noreferrer');
               }}>
                 <Phone className="h-4 w-4 text-green-600" />
                 {isArabic ? 'واتساب العميل' : 'WhatsApp customer'}
