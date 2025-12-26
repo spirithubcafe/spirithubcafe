@@ -36,7 +36,10 @@ import {
   CreditCard,
   PackagePlus,
   XCircle,
-  Printer
+  Printer,
+  Download,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { orderService } from '../../services';
@@ -81,6 +84,12 @@ export const OrdersManagement: React.FC = () => {
   // Shipment state
   const [shipmentResult, setShipmentResult] = useState<any>(null);
   const [shipmentError, setShipmentError] = useState<string>('');
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
 
   const isArabic = language === 'ar';
 
@@ -146,6 +155,18 @@ export const OrdersManagement: React.FC = () => {
   };
 
   useEffect(() => {
+    // Initialize known order IDs from localStorage
+    try {
+      const savedOrderIds = localStorage.getItem('spirithub_admin_known_order_ids');
+      if (savedOrderIds) {
+        const parsedIds = JSON.parse(savedOrderIds);
+        knownOrderIdsRef.current = new Set(parsedIds);
+        console.log('📋 Restored known order IDs:', parsedIds.length);
+      }
+    } catch (error) {
+      console.error('Failed to restore known order IDs:', error);
+    }
+    
     loadOrders();
   }, []);
 
@@ -158,9 +179,13 @@ export const OrdersManagement: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoRefreshEnabled]);
 
-  const loadOrders = async ({ silent = false }: { silent?: boolean } = {}) => {
+  const loadOrders = async ({ silent = false, page, size }: { silent?: boolean; page?: number; size?: number } = {}) => {
     if (!silent) setLoading(true);
     setError(null);
+    
+    const targetPage = page ?? currentPage;
+    const targetSize = size ?? pageSize;
+    
     try {
       console.log('🔄 Loading orders from API...');
       console.log('📍 API Base URL:', 'https://api.spirithubcafe.com');
@@ -171,12 +196,11 @@ export const OrdersManagement: React.FC = () => {
         console.log('🔑 Token preview:', token.substring(0, 20) + '...');
       }
       
-      // Try with minimal parameters first
-      console.log('📤 Request parameters:', { page: 1, pageSize: 20 });
+      console.log('📤 Request parameters:', { page: targetPage, pageSize: targetSize });
       
       const response = await orderService.getOrders({
-        page: 1,
-        pageSize: 20, // Start with smaller page size
+        page: targetPage,
+        pageSize: targetSize,
       });
       
       console.log('✅ Orders API Response:', response);
@@ -187,6 +211,14 @@ export const OrdersManagement: React.FC = () => {
         dataType: Array.isArray(response?.data) ? 'array' : typeof response?.data,
         dataLength: Array.isArray(response?.data) ? response.data.length : 0
       });
+      
+      // Update pagination info
+      if (response.pagination) {
+        setTotalCount(response.pagination.totalCount);
+        setTotalPages(Math.ceil(response.pagination.totalCount / targetSize));
+        setCurrentPage(targetPage);
+        setPageSize(targetSize);
+      }
       
       // Handle API response structure
       const ordersList = response?.data || [];
@@ -201,9 +233,17 @@ export const OrdersManagement: React.FC = () => {
       
       setOrders(ordersWithItems);
 
-      // Detect and highlight new orders
-      const newOrders = ordersWithItems.filter((o) => !knownOrderIdsRef.current.has(o.id));
-      if (newOrders.length > 0) {
+      // Get last seen timestamp
+      const lastSeenStr = localStorage.getItem('spirithub_admin_orders_last_seen');
+      const lastSeenTime = lastSeenStr ? new Date(lastSeenStr).getTime() : 0;
+      
+      // Detect and highlight new orders (orders created after last seen time AND not in known IDs)
+      const newOrders = ordersWithItems.filter((o) => {
+        const orderTime = new Date(o.createdAt).getTime();
+        return orderTime > lastSeenTime && !knownOrderIdsRef.current.has(o.id);
+      });
+      
+      if (newOrders.length > 0 && !silent) {
         // Update highlights (auto-expire)
         setHighlightedOrderIds((prev) => {
           const next = new Set(prev);
@@ -229,8 +269,13 @@ export const OrdersManagement: React.FC = () => {
         await notifyNewOrders(newOrders);
       }
 
-      // Update known order ids
+      // Update known order ids and persist to localStorage
       knownOrderIdsRef.current = new Set(ordersWithItems.map((o) => o.id));
+      try {
+        localStorage.setItem('spirithub_admin_known_order_ids', JSON.stringify(Array.from(knownOrderIdsRef.current)));
+      } catch (error) {
+        console.error('Failed to save known order IDs:', error);
+      }
       
       // Debug: Check if orders have items
       if (ordersWithItems.length > 0) {
@@ -409,10 +454,28 @@ export const OrdersManagement: React.FC = () => {
             </DropdownMenuItem>
           )}
           {order.phone && (
-            <DropdownMenuItem onSelect={() => copyToClipboard(order.phone, isArabic ? 'الهاتف' : 'Phone')}>
-              <Phone className="h-4 w-4" />
-              {isArabic ? 'نسخ الهاتف' : 'Copy phone'}
-            </DropdownMenuItem>
+            <>
+              <DropdownMenuItem onSelect={() => copyToClipboard(order.phone, isArabic ? 'الهاتف' : 'Phone')}>
+                <Phone className="h-4 w-4" />
+                {isArabic ? 'نسخ الهاتف' : 'Copy phone'}
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => {
+                const phoneNumber = order.phone.replace(/[^0-9+]/g, '');
+                const customerName = order.customerName || (isArabic ? 'العميل' : 'Customer');
+                const orderAmount = `${order.totalAmount.toFixed(3)} OMR`;
+                
+                // Create a professional message template with branding
+                const message = isArabic 
+                  ? `*SpiritHub Roastery*\n\nمرحباً ${customerName}،\n\nشكراً لك على تقديم طلبك لدى SpiritHub Roastery.\n\n*تفاصيل الطلب:*\nرقم الطلب: ${order.orderNumber}\nالمبلغ الإجمالي: ${orderAmount}\n\nسيتواصل معك فريقنا قريباً لتأكيد تفاصيل الطلب.\n\nشكراً لاختيارك SpiritHub Roastery، نحن نقدر دعمك حقاً.\n\nمع أطيب التحيات،\nSpiritHub Roastery\n\nhttps://spirithubcafe.com/products/`
+                  : `*SpiritHub Roastery*\n\nHello ${customerName},\n\nThank you for placing your order with SpiritHub Roastery.\n\n*Order Details:*\nOrder Number: ${order.orderNumber}\nTotal Amount: ${orderAmount}\n\nOur team will be in touch shortly to confirm the order details.\n\nThank you for choosing SpiritHub Roastery, we truly appreciate your support.\n\nWarm regards,\nSpiritHub Roastery\n\nhttps://spirithubcafe.com/products/`;
+                
+                const encodedMessage = encodeURIComponent(message);
+                window.open(`https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodedMessage}`, '_blank', 'noopener,noreferrer');
+              }}>
+                <Phone className="h-4 w-4 text-green-600" />
+                {isArabic ? 'واتساب العميل' : 'WhatsApp customer'}
+              </DropdownMenuItem>
+            </>
           )}
           {order.trackingNumber ? (
             <DropdownMenuItem
@@ -821,6 +884,105 @@ export const OrdersManagement: React.FC = () => {
     }
   };
 
+  const exportToExcel = () => {
+    try {
+      // Create CSV content
+      const headers = [
+        'Order #',
+        'Customer Name',
+        'Email',
+        'Phone',
+        'Amount (OMR)',
+        'Status',
+        'Payment Status',
+        'Shipping Method',
+        'Tracking Number',
+        'Address',
+        'City',
+        'Country',
+        'Postal Code',
+        'Date',
+        'Items',
+        'Is Gift',
+        'Gift Recipient',
+        'Gift Message',
+        'Notes'
+      ];
+
+      const rows = sortedOrders.map(order => {
+        const shippingMethod = 
+          order.shippingMethod === 1 ? 'Store Pickup' :
+          order.shippingMethod === 2 ? 'Nool Delivery' :
+          order.shippingMethod === 3 ? 'Aramex Courier' : 'Unknown';
+        
+        const itemsList = order.items?.map(item => 
+          `${item.productName}${item.variantInfo ? ` (${item.variantInfo})` : ''} x${item.quantity}`
+        ).join('; ') || '';
+
+        return [
+          order.orderNumber,
+          order.fullName,
+          order.email,
+          order.phone,
+          order.totalAmount.toFixed(3),
+          order.status,
+          order.paymentStatus,
+          shippingMethod,
+          order.trackingNumber || '',
+          order.address,
+          order.city,
+          order.country,
+          order.postalCode || '',
+          format(new Date(order.createdAt), 'yyyy-MM-dd HH:mm:ss'),
+          itemsList,
+          order.isGift ? 'Yes' : 'No',
+          order.giftRecipientName || '',
+          order.giftMessage || '',
+          order.notes || ''
+        ];
+      });
+
+      // Convert to CSV
+      const csvContent = [
+        headers.join(','),
+        ...rows.map(row => 
+          row.map(cell => {
+            // Escape cells containing commas, quotes, or newlines
+            const cellStr = String(cell);
+            if (cellStr.includes(',') || cellStr.includes('"') || cellStr.includes('\n')) {
+              return '"' + cellStr.replace(/"/g, '""') + '"';
+            }
+            return cellStr;
+          }).join(',')
+        )
+      ].join('\n');
+
+      // Create blob and download
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      
+      link.setAttribute('href', url);
+      link.setAttribute('download', `orders_export_${format(new Date(), 'yyyy-MM-dd_HHmmss')}.csv`);
+      link.style.visibility = 'hidden';
+      
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast(isArabic ? 'تم التصدير بنجاح' : 'Export successful', {
+        description: isArabic ? `تم تصدير ${orders.length} طلب` : `Exported ${orders.length} orders`,
+        duration: 3000,
+      });
+    } catch (error) {
+      console.error('Export error:', error);
+      toast(isArabic ? 'فشل التصدير' : 'Export failed', {
+        description: isArabic ? 'حدث خطأ أثناء التصدير' : 'An error occurred during export',
+        duration: 3000,
+      });
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -850,6 +1012,10 @@ export const OrdersManagement: React.FC = () => {
               <span className="text-xs text-muted-foreground">{isArabic ? 'تنبيه' : 'Notify'}</span>
             </div>
           </div>
+          <Button onClick={exportToExcel} disabled={loading || orders.length === 0} variant="outline" className="w-full sm:w-auto">
+            <Download className="h-4 w-4 mr-2" />
+            {isArabic ? 'تصدير إلى Excel' : 'Export to Excel'}
+          </Button>
           <Button onClick={() => loadOrders()} disabled={loading} className="w-full sm:w-auto">
             <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             {isArabic ? 'تحديث' : 'Refresh'}
@@ -1349,6 +1515,90 @@ export const OrdersManagement: React.FC = () => {
                   </div>
                 )}
               </div>
+
+              {/* Pagination Controls */}
+              {!loading && orders.length > 0 && (
+                <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 border-t pt-4">
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <Label className="text-sm text-muted-foreground whitespace-nowrap">
+                        {isArabic ? 'عدد السجلات:' : 'Records per page:'}
+                      </Label>
+                      <Select value={String(pageSize)} onValueChange={(value) => {
+                        setPageSize(Number(value));
+                        loadOrders({ page: 1, size: Number(value) });
+                      }}>
+                        <SelectTrigger className="w-[100px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="10">10</SelectItem>
+                          <SelectItem value="20">20</SelectItem>
+                          <SelectItem value="50">50</SelectItem>
+                          <SelectItem value="100">100</SelectItem>
+                          <SelectItem value="200">200</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {isArabic 
+                        ? `عرض ${((currentPage - 1) * pageSize) + 1}-${Math.min(currentPage * pageSize, totalCount)} من ${totalCount}`
+                        : `Showing ${((currentPage - 1) * pageSize) + 1}-${Math.min(currentPage * pageSize, totalCount)} of ${totalCount}`
+                      }
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => loadOrders({ page: currentPage - 1 })}
+                      disabled={currentPage === 1 || loading}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                      {isArabic ? 'السابق' : 'Previous'}
+                    </Button>
+                    
+                    <div className="flex items-center gap-1">
+                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                        let pageNum;
+                        if (totalPages <= 5) {
+                          pageNum = i + 1;
+                        } else if (currentPage <= 3) {
+                          pageNum = i + 1;
+                        } else if (currentPage >= totalPages - 2) {
+                          pageNum = totalPages - 4 + i;
+                        } else {
+                          pageNum = currentPage - 2 + i;
+                        }
+                        
+                        return (
+                          <Button
+                            key={pageNum}
+                            variant={currentPage === pageNum ? 'default' : 'outline'}
+                            size="sm"
+                            className="w-9 h-9 p-0"
+                            onClick={() => loadOrders({ page: pageNum })}
+                            disabled={loading}
+                          >
+                            {pageNum}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                    
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => loadOrders({ page: currentPage + 1 })}
+                      disabled={currentPage === totalPages || loading}
+                    >
+                      {isArabic ? 'التالي' : 'Next'}
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
             </>
           )}
         </CardContent>
