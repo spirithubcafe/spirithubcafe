@@ -127,8 +127,8 @@ export const OrdersManagement: React.FC = () => {
       {
         description: newest
           ? isArabic
-            ? `${newest.fullName} • OMR ${newest.totalAmount.toFixed(3)}`
-            : `${newest.fullName} • OMR ${newest.totalAmount.toFixed(3)}`
+            ? `${newest.fullName || newest.customerName || newest.userName || newest.email || 'عميل'} • OMR ${newest.totalAmount.toFixed(3)}`
+            : `${newest.fullName || newest.customerName || newest.userName || newest.email || 'Customer'} • OMR ${newest.totalAmount.toFixed(3)}`
           : undefined,
         duration: 6000,
       },
@@ -142,8 +142,9 @@ export const OrdersManagement: React.FC = () => {
       }
       if (Notification.permission === 'granted') {
         const title = isArabic ? 'طلب جديد' : 'New Order';
+        const customerName = newest?.fullName || newest?.customerName || newest?.userName || newest?.email || (isArabic ? 'عميل' : 'Customer');
         const body = newest
-          ? `${newest.orderNumber} • ${newest.fullName} • OMR ${newest.totalAmount.toFixed(3)}`
+          ? `${newest.orderNumber} • ${customerName} • OMR ${newest.totalAmount.toFixed(3)}`
           : isArabic
             ? 'وصلت طلبات جديدة'
             : 'New orders arrived';

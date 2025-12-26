@@ -1,35 +1,67 @@
 import React, { useEffect, useState } from 'react';
 import { useApp } from '../../hooks/useApp';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { TrendingUp, DollarSign, Package, Users, ShoppingCart, BarChart3 } from 'lucide-react';
+import { TrendingUp, DollarSign, Package, Users, ShoppingCart, Eye } from 'lucide-react';
 import { orderService } from '../../services';
 import type { Order } from '../../types/order';
+import { SalesChart } from './SalesChart';
+import { TopProducts } from './TopProducts';
+import { TrafficSources } from './TrafficSources';
+import { getVisitorCount } from '../../lib/visitorTracking';
 
 export const ReportsManagement: React.FC = () => {
   const { language } = useApp();
   const isArabic = language === 'ar';
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [storeVisits, setStoreVisits] = useState(0);
 
   useEffect(() => {
     loadData();
+    loadStoreVisits();
   }, []);
 
   const loadData = async () => {
     setLoading(true);
     try {
+      // First, get all orders
       const response = await orderService.getAll({
         page: 1,
         pageSize: 1000, // Get all orders for statistics
       });
       const ordersList = response?.items || response || [];
-      setOrders(Array.isArray(ordersList) ? ordersList : []);
+      const ordersArray = Array.isArray(ordersList) ? ordersList : [];
+      
+      // For paid orders, fetch detailed information including items
+      const paidOrders = ordersArray.filter(o => o.paymentStatus === 'Paid');
+      const detailedOrders = await Promise.all(
+        paidOrders.slice(0, 100).map(async (order) => { // Limit to 100 for performance
+          try {
+            const detailResponse = await orderService.getById(order.id);
+            return detailResponse;
+          } catch (error) {
+            console.error(`Error loading details for order ${order.id}:`, error);
+            return order; // Return basic order if detail fetch fails
+          }
+        })
+      );
+      
+      // Combine: detailed paid orders + other orders without items
+      const unpaidOrders = ordersArray.filter(o => o.paymentStatus !== 'Paid');
+      const allOrders = [...detailedOrders, ...unpaidOrders];
+      
+      setOrders(allOrders);
     } catch (error) {
       console.error('Error loading data:', error);
       setOrders([]);
     } finally {
       setLoading(false);
     }
+  };
+
+  const loadStoreVisits = () => {
+    // Get visitor count from tracking utility
+    setStoreVisits(getVisitorCount());
   };
 
   // Calculate statistics from real data
@@ -41,7 +73,10 @@ export const ReportsManagement: React.FC = () => {
 
   const totalProductsSold = orders
     .filter(o => o.paymentStatus === 'Paid')
-    .reduce((sum, o) => sum + (o.itemsCount || o.items?.length || 0), 0);
+    .reduce((sum, o) => {
+      const itemsCount = o.items?.reduce((acc, item) => acc + item.quantity, 0) || 0;
+      return sum + itemsCount;
+    }, 0);
 
   const uniqueCustomers = new Set(orders.map(o => o.userId)).size;
 
@@ -62,7 +97,7 @@ export const ReportsManagement: React.FC = () => {
       </div>
 
       {/* Revenue Stats */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
@@ -118,44 +153,44 @@ export const ReportsManagement: React.FC = () => {
             </div>
           </CardContent>
         </Card>
-      </div>
-
-      {/* Charts Placeholder */}
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>{isArabic ? 'نظرة عامة على المبيعات' : 'Sales Overview'}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[300px] flex items-center justify-center border-2 border-dashed rounded-lg">
-              <div className="text-center">
-                <BarChart3 className="h-12 w-12 mx-auto mb-2 text-muted-foreground" />
-                <p className="text-sm text-muted-foreground">
-                  {isArabic ? 'رسم بياني للمبيعات سيظهر هنا' : 'Sales chart will appear here'}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle>
-              {isArabic ? 'المنتجات الأكثر مبيعاً' : 'Top Selling Products'}
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              {isArabic ? 'زيارات المتجر' : 'Store Visits'}
             </CardTitle>
+            <Eye className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="h-[300px] flex items-center justify-center border-2 border-dashed rounded-lg">
-              <div className="text-center">
-                <Package className="h-12 w-12 mx-auto mb-2 text-muted-foreground" />
-                <p className="text-sm text-muted-foreground">
-                  {isArabic ? 'قائمة المنتجات ستظهر هنا' : 'Products list will appear here'}
-                </p>
-              </div>
+            <div className="text-2xl font-bold">
+              {storeVisits.toLocaleString()}
             </div>
           </CardContent>
         </Card>
       </div>
+
+      {/* Charts */}
+      {loading ? (
+        <div className="text-center py-12">
+          <p className="text-muted-foreground">
+            {isArabic ? 'جاري تحميل البيانات...' : 'Loading data...'}
+          </p>
+        </div>
+      ) : (
+        <>
+          {/* Sales Chart - Full Width */}
+          <SalesChart orders={orders} isArabic={isArabic} />
+
+          {/* Two Column Layout */}
+          <div className="grid gap-4 md:grid-cols-2">
+            {/* Top Products */}
+            <TopProducts orders={orders} isArabic={isArabic} limit={10} />
+            
+            {/* Traffic Sources */}
+            <TrafficSources isArabic={isArabic} />
+          </div>
+        </>
+      )}
 
       {/* Recent Orders */}
       <Card>
