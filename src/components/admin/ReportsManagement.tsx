@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useApp } from '../../hooks/useApp';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { TrendingUp, DollarSign, Package, Users, ShoppingCart, Eye, TrendingDown, Repeat, Calendar, BarChart } from 'lucide-react';
+import { TrendingUp, DollarSign, Package, Users, ShoppingCart, TrendingDown, Repeat, Calendar, BarChart } from 'lucide-react';
 import { orderService } from '../../services';
 import type { Order } from '../../types/order';
 import { SalesChart } from './SalesChart';
