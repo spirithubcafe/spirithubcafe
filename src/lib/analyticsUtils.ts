@@ -18,6 +18,33 @@ export interface TopProduct {
   revenue: number;
   orderCount: number;
   productImage?: string;
+  avgPrice: number;
+  margin?: number;
+  stockQuantity?: number;
+  lowStockThreshold?: number;
+  velocity: number; // units per day
+}
+
+export interface TopCustomer {
+  userId?: string;
+  customerName: string;
+  email: string;
+  orderCount: number;
+  totalSpent: number;
+  avgOrderValue: number;
+  firstOrderDate: string;
+  lastOrderDate: string;
+  daysSinceLastOrder: number;
+}
+
+export interface CustomerAnalytics {
+  totalCustomers: number;
+  newCustomers: number;
+  returningCustomers: number;
+  repeatRate: number;
+  avgOrdersPerCustomer: number;
+  avgRevenuePerCustomer: number;
+  topCustomers: TopCustomer[];
 }
 
 /**
@@ -134,42 +161,74 @@ export function getSalesDataByDateRange(
 }
 
 /**
- * Get top selling products by quantity
+ * Get top selling products by quantity with strategic metrics
  */
 export function getTopProducts(
   orders: Order[],
   limit: number = 10
 ): TopProduct[] {
   const paidOrders = orders.filter(o => o.paymentStatus === 'Paid');
-  const productMap = new Map<number, TopProduct>();
+  const productMap = new Map<number, { product: TopProduct; firstSaleDate: Date; lastSaleDate: Date }>();
+  const now = new Date();
 
   paidOrders.forEach(order => {
     if (!order.items || !Array.isArray(order.items)) {
       return;
     }
 
+    const orderDate = new Date(order.createdAt);
+
     order.items.forEach((item: OrderItem) => {
       if (!productMap.has(item.productId)) {
         productMap.set(item.productId, {
-          productId: item.productId,
-          productName: item.productName,
-          productNameAr: item.productNameAr,
-          quantitySold: 0,
-          revenue: 0,
-          orderCount: 0,
-          productImage: item.productImage,
+          product: {
+            productId: item.productId,
+            productName: item.productName,
+            productNameAr: item.productNameAr,
+            quantitySold: 0,
+            revenue: 0,
+            orderCount: 0,
+            productImage: item.productImage,
+            avgPrice: 0,
+            velocity: 0,
+          },
+          firstSaleDate: orderDate,
+          lastSaleDate: orderDate,
         });
       }
 
-      const product = productMap.get(item.productId)!;
-      product.quantitySold += item.quantity;
-      product.revenue += item.totalAmount;
-      product.orderCount += 1;
+      const data = productMap.get(item.productId)!;
+      data.product.quantitySold += item.quantity;
+      data.product.revenue += item.totalAmount;
+      data.product.orderCount += 1;
+      
+      // Track date range for velocity calculation
+      if (orderDate < data.firstSaleDate) data.firstSaleDate = orderDate;
+      if (orderDate > data.lastSaleDate) data.lastSaleDate = orderDate;
     });
   });
 
-  // Convert to array and sort by quantity sold
-  return Array.from(productMap.values())
+  // Calculate derived metrics
+  const results = Array.from(productMap.values()).map(({ product, firstSaleDate }) => {
+    // Calculate average price
+    product.avgPrice = product.quantitySold > 0 ? product.revenue / product.quantitySold : 0;
+    
+    // Estimate margin (typical coffee margin is 60-70%, we'll estimate 65% as baseline)
+    // In a real system, this would come from product cost data
+    product.margin = 65;
+    
+    // Calculate velocity (units per day)
+    const daysSinceLaunch = Math.max(
+      1,
+      Math.ceil((now.getTime() - firstSaleDate.getTime()) / (1000 * 60 * 60 * 24))
+    );
+    product.velocity = product.quantitySold / daysSinceLaunch;
+    
+    return product;
+  });
+
+  // Sort by quantity sold and limit
+  return results
     .sort((a, b) => b.quantitySold - a.quantitySold)
     .slice(0, limit);
 }
@@ -225,6 +284,110 @@ export function exportTopProductsToCSV(products: TopProduct[]): string {
 
   const csv = [headers, ...rows]
     .map(row => row.join(','))
+    .join('\n');
+
+  return csv;
+}
+
+/**
+ * Get customer analytics with new vs returning breakdown
+ */
+export function getCustomerAnalytics(orders: Order[], topLimit: number = 10): CustomerAnalytics {
+  const paidOrders = orders.filter(o => o.paymentStatus === 'Paid');
+  const now = new Date();
+  
+  // Group orders by customer (using userId or email as fallback)
+  const customerMap = new Map<string, {
+    userId?: string;
+    customerName: string;
+    email: string;
+    orders: Order[];
+    totalSpent: number;
+  }>();
+
+  paidOrders.forEach(order => {
+    const customerId = order.userId || order.email;
+    
+    if (!customerMap.has(customerId)) {
+      customerMap.set(customerId, {
+        userId: order.userId,
+        customerName: order.fullName || order.email,
+        email: order.email,
+        orders: [],
+        totalSpent: 0,
+      });
+    }
+
+    const customer = customerMap.get(customerId)!;
+    customer.orders.push(order);
+    customer.totalSpent += order.totalAmount;
+  });
+
+  // Calculate metrics
+  const totalCustomers = customerMap.size;
+  const returningCustomers = Array.from(customerMap.values()).filter(c => c.orders.length > 1).length;
+  const newCustomers = totalCustomers - returningCustomers;
+  const repeatRate = totalCustomers > 0 ? (returningCustomers / totalCustomers) * 100 : 0;
+  
+  const totalOrders = paidOrders.length;
+  const totalRevenue = paidOrders.reduce((sum, o) => sum + o.totalAmount, 0);
+  const avgOrdersPerCustomer = totalCustomers > 0 ? totalOrders / totalCustomers : 0;
+  const avgRevenuePerCustomer = totalCustomers > 0 ? totalRevenue / totalCustomers : 0;
+
+  // Build top customers list
+  const topCustomers: TopCustomer[] = Array.from(customerMap.values())
+    .map(customer => {
+      const sortedOrders = customer.orders.sort((a, b) => 
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      );
+      const firstOrder = sortedOrders[0];
+      const lastOrder = sortedOrders[sortedOrders.length - 1];
+      const daysSince = Math.floor((now.getTime() - new Date(lastOrder.createdAt).getTime()) / (1000 * 60 * 60 * 24));
+
+      return {
+        userId: customer.userId,
+        customerName: customer.customerName,
+        email: customer.email,
+        orderCount: customer.orders.length,
+        totalSpent: customer.totalSpent,
+        avgOrderValue: customer.totalSpent / customer.orders.length,
+        firstOrderDate: format(new Date(firstOrder.createdAt), 'MMM dd, yyyy'),
+        lastOrderDate: format(new Date(lastOrder.createdAt), 'MMM dd, yyyy'),
+        daysSinceLastOrder: daysSince,
+      };
+    })
+    .sort((a, b) => b.totalSpent - a.totalSpent)
+    .slice(0, topLimit);
+
+  return {
+    totalCustomers,
+    newCustomers,
+    returningCustomers,
+    repeatRate,
+    avgOrdersPerCustomer,
+    avgRevenuePerCustomer,
+    topCustomers,
+  };
+}
+
+/**
+ * Export top customers to CSV format
+ */
+export function exportTopCustomersToCSV(customers: TopCustomer[]): string {
+  const headers = ['Customer Name', 'Email', 'Orders', 'Total Spent (OMR)', 'Avg Order Value (OMR)', 'First Order', 'Last Order', 'Days Since Last Order'];
+  const rows = customers.map(c => [
+    c.customerName,
+    c.email,
+    c.orderCount.toString(),
+    c.totalSpent.toFixed(3),
+    c.avgOrderValue.toFixed(3),
+    c.firstOrderDate,
+    c.lastOrderDate,
+    c.daysSinceLastOrder.toString(),
+  ]);
+
+  const csv = [headers, ...rows]
+    .map(row => row.map(cell => `"${cell}"`).join(','))
     .join('\n');
 
   return csv;
