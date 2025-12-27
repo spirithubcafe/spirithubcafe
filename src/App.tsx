@@ -55,12 +55,19 @@ import { PaymentCancelledPage } from './pages/PaymentCancelledPage';
 import { PaymentErrorPage } from './pages/PaymentErrorPage';
 import { RequireAuth } from './components/auth/RequireAuth';
 import { AdminRegionRedirect } from './components/admin/AdminRegionRedirect';
+import { initVisitorTracking } from './lib/visitorTracking';
+import { useEffect } from 'react';
 import './i18n';
 import './App.css';
 
 function AppContent() {
   const location = useLocation();
   const isAdminPage = location.pathname.includes('/admin');
+
+  // Initialize visitor tracking on app load
+  useEffect(() => {
+    initVisitorTracking();
+  }, []);
 
   return (
     <div className="min-h-screen bg-white">

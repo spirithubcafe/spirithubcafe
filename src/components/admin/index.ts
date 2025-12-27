@@ -6,5 +6,8 @@ export { UsersManagement } from './UsersManagement';
 export { SeoManagement } from './SeoManagement';
 export { OrdersManagement } from './OrdersManagement';
 export { ReportsManagement } from './ReportsManagement';
+export { SalesChart } from './SalesChart';
+export { TopProducts } from './TopProducts';
+export { TrafficSources } from './TrafficSources';
 export { SystemSettings } from './SystemSettings';
 export { NewsletterManagement } from './NewsletterManagement';
