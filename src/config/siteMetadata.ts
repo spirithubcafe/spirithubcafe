@@ -1,9 +1,9 @@
 export const siteMetadata = {
   siteName: 'Spirit Hub Cafe',
   baseUrl: (import.meta.env.VITE_SITE_URL as string | undefined)?.replace(/\/+$/, '') || 'https://spirithubcafe.com',
-  defaultTitle: 'Spirit Hub Cafe | Premium Specialty Coffee Roastery in Muscat, Oman',
+  defaultTitle: 'SpiritHub Roastery | Specialty Coffee & Capsules in Oman & Saudi',
   defaultDescription:
-    'Spirit Hub Cafe - Muscat\'s premier specialty coffee roastery. Fresh roasted single-origin beans, artisan coffee blends, brewing equipment, and coffee subscriptions. Expert Q Graders, Arabic hospitality, and exceptional coffee experiences in Oman.',
+    'Premium specialty coffee, capsules, and filter brews. Roasted with care in Oman • Now serving Khobar, Saudi Arabia. Buy specialty coffee beans, order capsules online, expert roastery.',
   defaultDescriptionAr:
     'سبيريت هب كافيه - أفضل محمصة قهوة مختصة في مسقط. حبوب قهوة طازجة محمصة، خلطات قهوة حرفية، معدات تحضير القهوة، واشتراكات القهوة. خبراء معتمدون وضيافة عربية أصيلة في عمان.',
   defaultKeywords: [
