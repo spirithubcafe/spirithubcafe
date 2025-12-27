@@ -127,8 +127,8 @@ export const OrdersManagement: React.FC = () => {
       {
         description: newest
           ? isArabic
-            ? `${newest.fullName} • OMR ${newest.totalAmount.toFixed(3)}`
-            : `${newest.fullName} • OMR ${newest.totalAmount.toFixed(3)}`
+            ? `${newest.fullName || newest.customerName || newest.email || 'عميل'} • OMR ${newest.totalAmount.toFixed(3)}`
+            : `${newest.fullName || newest.customerName || newest.email || 'Customer'} • OMR ${newest.totalAmount.toFixed(3)}`
           : undefined,
         duration: 6000,
       },
@@ -142,8 +142,9 @@ export const OrdersManagement: React.FC = () => {
       }
       if (Notification.permission === 'granted') {
         const title = isArabic ? 'طلب جديد' : 'New Order';
+        const customerName = newest?.fullName || newest?.customerName || newest?.email || (isArabic ? 'عميل' : 'Customer');
         const body = newest
-          ? `${newest.orderNumber} • ${newest.fullName} • OMR ${newest.totalAmount.toFixed(3)}`
+          ? `${newest.orderNumber} • ${customerName} • OMR ${newest.totalAmount.toFixed(3)}`
           : isArabic
             ? 'وصلت طلبات جديدة'
             : 'New orders arrived';
@@ -368,6 +369,153 @@ export const OrdersManagement: React.FC = () => {
     }
   };
 
+  const generateWhatsAppMessage = (order: Order): string => {
+    const customerName = order.customerName || order.fullName || (isArabic ? 'العميل' : 'Customer');
+    const orderAmount = `${order.totalAmount.toFixed(3)} OMR`;
+    const orderStatus = order.status.toLowerCase();
+    const paymentStatus = order.paymentStatus.toLowerCase();
+    
+    // Get shipping method name
+    const shippingMethod = 
+      order.shippingMethod === 1 
+        ? (isArabic ? 'استلام من المتجر' : 'Store Pickup')
+        : order.shippingMethod === 2 
+          ? (isArabic ? 'توصيل نول' : 'Nool Delivery')
+          : (isArabic ? 'شحن أرامكس' : 'Aramex Courier');
+
+    // Build items list
+    let itemsList = '';
+    if (order.items && order.items.length > 0) {
+      itemsList = isArabic ? '\n\nالمنتجات:\n' : '\n\nItems:\n';
+      order.items.forEach(item => {
+        const itemName = item.productName || (isArabic ? 'منتج' : 'Product');
+        const variant = item.variantInfo ? ` (${item.variantInfo})` : '';
+        itemsList += `• ${itemName}${variant} ×${item.quantity}\n`;
+      });
+    }
+
+    let message = '';
+    
+    if (isArabic) {
+      message = `مرحباً ${customerName}،\n`;
+      
+      // Status-based message body
+      switch (orderStatus) {
+        case 'pending':
+          if (paymentStatus === 'unpaid') {
+            message += `تم استلام طلبك وننتظر التأكيد.\n\nرقم الطلب: ${order.orderNumber}\nالمبلغ: ${orderAmount}\nالشحن: ${shippingMethod}${itemsList}\n⚠️ يرجى إكمال الدفع\n\n💳 ادفع الآن:\n${window.location.origin}/payment?orderId=${order.id}&token=${btoa(`${order.id}-${order.orderNumber}-${Date.now()}`)}\n\nسيتواصل معك فريقنا قريباً.`;
+          } else {
+            message += `تم استلام طلبك وهو قيد المراجعة.\n\nرقم الطلب: ${order.orderNumber}\nالمبلغ: ${orderAmount}\nالشحن: ${shippingMethod}\nالدفع: ✅ مدفوع${itemsList}\n\nسيتواصل معك فريقنا قريباً.`;
+          }
+          break;
+          
+        case 'processing':
+          message += `طلبك قيد التحضير.\n\nرقم الطلب: ${order.orderNumber}\nالمبلغ: ${orderAmount}\nالشحن: ${shippingMethod}${itemsList}`;
+          if (order.shippingMethod === 1) {
+            message += `\n\n📍 الاستلام من:\nAl Mouj st, Muscat\n🗺️ https://maps.app.goo.gl/Ef4okfTUbg1cKdyy6\n\n⏰ يومياً: 7 ص - 12 م\n\nسنخبرك عندما يكون جاهزاً.`;
+          } else {
+            message += `\n\nسنقوم بترتيب التوصيل لك قريباً.`;
+          }
+          break;
+          
+        case 'shipped':
+          message += `تم شحن طلبك.\n\nرقم الطلب: ${order.orderNumber}\nالمبلغ: ${orderAmount}${itemsList}`;
+          if (order.trackingNumber) {
+            message += `\nرقم التتبع: ${order.trackingNumber}`;
+            if (order.shippingMethod === 3) {
+              message += `\n\n🔍 تتبع الشحنة:\nhttps://www.aramex.com/om/en/track/shipments?ShipmentNumber=${order.trackingNumber}\n\n📅 التوصيل المتوقع: 2-3 أيام عمل`;
+            }
+          }
+          message += `\n\nشحنتك في الطريق إليك.`;
+          break;
+          
+        case 'delivered':
+          message += `تم تسليم طلبك بنجاح.\n\nرقم الطلب: ${order.orderNumber}\nالمبلغ: ${orderAmount}${itemsList}\n`;
+          if (order.isGift) {
+            message += `استمتع بهديتك ☕️`;
+          } else {
+            message += `استمتع بقهوتك ☕️`;
+          }
+          message += `\n\n⭐ قيمنا:\nhttps://g.page/r/CUuT3c5moDjkEAE/review\n\n🛍️ تسوق مرة أخرى:\nhttps://spirithubcafe.com/products`;
+          break;
+          
+        case 'cancelled':
+          message += `تم إلغاء طلبك.\n\nرقم الطلب: ${order.orderNumber}\n\nإذا كان لديك أسئلة، لا تتردد في الاتصال بنا.`;
+          break;
+          
+        default:
+          message += `تم استلام طلبك.\n\nرقم الطلب: ${order.orderNumber}\nالمبلغ: ${orderAmount}\nالشحن: ${shippingMethod}${itemsList}\n\nسيتواصل معك فريقنا قريباً.`;
+      }
+      
+      // Gift order note
+      if (order.isGift && orderStatus !== 'cancelled' && order.giftRecipientName) {
+        message += `\n\n🎁 هدية للمستلم: ${order.giftRecipientName}`;
+      }
+      
+      message += `\n\n📞 واتساب: +968 91900005\n\nشكراً لاختيارك SpiritHub Roastery.`;
+      
+    } else {
+      // English messages
+      message = `Hello ${customerName},\n`;
+      
+      switch (orderStatus) {
+        case 'pending':
+          if (paymentStatus === 'unpaid') {
+            message += `Your order has been received and is awaiting confirmation.\n\nOrder: ${order.orderNumber}\nTotal: ${orderAmount}\nShipping: ${shippingMethod}${itemsList}\n⚠️ Please complete payment\n\n💳 Pay now:\n${window.location.origin}/payment?orderId=${order.id}&token=${btoa(`${order.id}-${order.orderNumber}-${Date.now()}`)}\n\nOur team will be in touch shortly.`;
+          } else {
+            message += `Your order has been received and is under review.\n\nOrder: ${order.orderNumber}\nTotal: ${orderAmount}\nShipping: ${shippingMethod}\nPayment: ✅ Paid${itemsList}\n\nOur team will be in touch shortly.`;
+          }
+          break;
+          
+        case 'processing':
+          message += `Your order is being prepared.\n\nOrder: ${order.orderNumber}\nTotal: ${orderAmount}\nShipping: ${shippingMethod}${itemsList}`;
+          if (order.shippingMethod === 1) {
+            message += `\n\n📍 Pickup from:\nAl Mouj st, Muscat\n🗺️ https://maps.app.goo.gl/Ef4okfTUbg1cKdyy6\n\n⏰ Daily: 7:00 AM - 12:00 AM\n\nWe'll notify you when ready.`;
+          } else {
+            message += `\n\nWe'll arrange delivery for you soon.`;
+          }
+          break;
+          
+        case 'shipped':
+          message += `Your order has been shipped.\n\nOrder: ${order.orderNumber}\nTotal: ${orderAmount}${itemsList}`;
+          if (order.trackingNumber) {
+            message += `\nTracking: ${order.trackingNumber}`;
+            if (order.shippingMethod === 3) {
+              message += `\n\n🔍 Track shipment:\nhttps://www.aramex.com/om/en/track/shipments?ShipmentNumber=${order.trackingNumber}\n\n📅 Estimated delivery: 2-3 business days`;
+            }
+          }
+          message += `\n\nYour package is on its way.`;
+          break;
+          
+        case 'delivered':
+          message += `Your order has been delivered successfully.\n\nOrder: ${order.orderNumber}\nTotal: ${orderAmount}${itemsList}\n`;
+          if (order.isGift) {
+            message += `Enjoy your gift ☕️`;
+          } else {
+            message += `Enjoy your coffee ☕️`;
+          }
+          message += `\n\n⭐ Review us:\nhttps://g.page/r/CUuT3c5moDjkEAE/review\n\n🛍️ Shop again:\nhttps://spirithubcafe.com/products`;
+          break;
+          
+        case 'cancelled':
+          message += `Your order has been cancelled.\n\nOrder: ${order.orderNumber}\n\nIf you have any questions, please don't hesitate to contact us.`;
+          break;
+          
+        default:
+          message += `Your order has been received.\n\nOrder: ${order.orderNumber}\nTotal: ${orderAmount}\nShipping: ${shippingMethod}${itemsList}\n\nOur team will be in touch shortly.`;
+      }
+      
+      // Gift order note
+      if (order.isGift && orderStatus !== 'cancelled' && order.giftRecipientName) {
+        message += `\n\n🎁 Gift for: ${order.giftRecipientName}`;
+      }
+      
+      message += `\n\n📞 WhatsApp: +968 91900005\n\nThank you for choosing SpiritHub Roastery.`;
+    }
+    
+    return message;
+  };
+
   const OrderActionsMenu = ({ order, triggerVariant }: { order: Order; triggerVariant: 'icon' | 'button' }) => {
     const trigger =
       triggerVariant === 'icon' ? (
@@ -459,18 +607,24 @@ export const OrdersManagement: React.FC = () => {
                 <Phone className="h-4 w-4" />
                 {isArabic ? 'نسخ الهاتف' : 'Copy phone'}
               </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => {
-                const phoneNumber = order.phone.replace(/[^0-9+]/g, '');
-                const customerName = order.customerName || (isArabic ? 'العميل' : 'Customer');
-                const orderAmount = `${order.totalAmount.toFixed(3)} OMR`;
-                
-                // Create a professional message template with branding
-                const message = isArabic 
-                  ? `*SpiritHub Roastery*\n\nمرحباً ${customerName}،\n\nشكراً لك على تقديم طلبك لدى SpiritHub Roastery.\n\n*تفاصيل الطلب:*\nرقم الطلب: ${order.orderNumber}\nالمبلغ الإجمالي: ${orderAmount}\n\nسيتواصل معك فريقنا قريباً لتأكيد تفاصيل الطلب.\n\nشكراً لاختيارك SpiritHub Roastery، نحن نقدر دعمك حقاً.\n\nمع أطيب التحيات،\nSpiritHub Roastery\n\nhttps://spirithubcafe.com/products/`
-                  : `*SpiritHub Roastery*\n\nHello ${customerName},\n\nThank you for placing your order with SpiritHub Roastery.\n\n*Order Details:*\nOrder Number: ${order.orderNumber}\nTotal Amount: ${orderAmount}\n\nOur team will be in touch shortly to confirm the order details.\n\nThank you for choosing SpiritHub Roastery, we truly appreciate your support.\n\nWarm regards,\nSpiritHub Roastery\n\nhttps://spirithubcafe.com/products/`;
-                
-                const encodedMessage = encodeURIComponent(message);
-                window.open(`https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodedMessage}`, '_blank', 'noopener,noreferrer');
+              <DropdownMenuItem onSelect={async () => {
+                try {
+                  // Load full order details with items
+                  const response = await orderService.getOrderById(order.id);
+                  const orderDetails: Order = response.data!;
+                  
+                  const phoneNumber = orderDetails.phone.replace(/[^0-9+]/g, '');
+                  const message = generateWhatsAppMessage(orderDetails);
+                  const encodedMessage = encodeURIComponent(message);
+                  window.open(`https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodedMessage}`, '_blank', 'noopener,noreferrer');
+                } catch (error) {
+                  console.error('Failed to load order details for WhatsApp:', error);
+                  // Fallback to order without items
+                  const phoneNumber = order.phone.replace(/[^0-9+]/g, '');
+                  const message = generateWhatsAppMessage(order);
+                  const encodedMessage = encodeURIComponent(message);
+                  window.open(`https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodedMessage}`, '_blank', 'noopener,noreferrer');
+                }
               }}>
                 <Phone className="h-4 w-4 text-green-600" />
                 {isArabic ? 'واتساب العميل' : 'WhatsApp customer'}
