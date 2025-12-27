@@ -121,6 +121,19 @@ type CheckoutFormValues = z.infer<typeof checkoutSchema>;
 // Dynamic shipping methods computed based on selected country/city
 const formatCurrency = (value: number, label: string) => `${value.toFixed(3)} ${label}`;
 
+const getAramexNotSupportedMessage = (isArabic: boolean) =>
+  isArabic ? 'غير مدعوم حالياً من أرامكس' : 'Currently not supported by Aramex';
+
+const looksLikeNetworkError = (msg?: string | null) => {
+  const m = (msg || '').toLowerCase();
+  return (
+    m.includes('network') ||
+    m.includes('timeout') ||
+    m.includes('connect') ||
+    m.includes('unavailable')
+  );
+};
+
 export const CheckoutPage: React.FC = () => {
   const { language } = useApp();
   const { isAuthenticated, user } = useAuth();
@@ -275,6 +288,7 @@ export const CheckoutPage: React.FC = () => {
       // Only calculate if we have both country and city
       if (!effectiveCountry || !effectiveCity) {
         setAramexRate(null);
+        setAramexError(null);
         return;
       }
 
@@ -319,20 +333,19 @@ export const CheckoutPage: React.FC = () => {
           setAramexError(null);
         } else {
           setAramexRate(null);
-          const errorMsg =
-            result.error?.includes('connect') || result.error?.includes('network')
-              ? 'Using estimated rate (API unavailable)'
-              : 'Please select a city';
-          setAramexError(errorMsg);
+          // If country+city are selected but Aramex doesn't return a price,
+          // treat it as unsupported (per requirements).
+          const unsupportedMsg = getAramexNotSupportedMessage(isArabic);
+          const fallbackMsg = looksLikeNetworkError(result.error)
+            ? unsupportedMsg
+            : unsupportedMsg;
+          setAramexError(fallbackMsg);
         }
       } catch (error: any) {
         console.error('Error calculating Aramex rate:', error);
         setAramexRate(null);
-        const errorMsg =
-          error?.message?.includes('Network') || error?.code === 'ERR_NETWORK'
-            ? 'API unavailable - Please select a city'
-            : 'Please select a city';
-        setAramexError(errorMsg);
+        // Per requirements: if no price after selecting country+city, show not supported.
+        setAramexError(getAramexNotSupportedMessage(isArabic));
       } finally {
         setAramexCalculating(false);
       }
@@ -390,8 +403,23 @@ export const CheckoutPage: React.FC = () => {
   const shippingCost = selectedShipping.price;
   const grandTotal = subtotal + shippingCost;
 
+  const aramexBlocked =
+    selectedShipping.id === 'aramex' &&
+    Boolean(effectiveCountry) &&
+    Boolean(effectiveCity) &&
+    !aramexCalculating &&
+    (aramexRate === null || aramexRate <= 0);
+
   const handleSubmit = (values: CheckoutFormValues) => {
     if (items.length === 0) {
+      return;
+    }
+
+    // Block proceeding when Aramex is selected but no rate is available.
+    if (selectedShipping.id === 'aramex' && (aramexRate === null || aramexRate <= 0)) {
+      const msg = getAramexNotSupportedMessage(isArabic);
+      setAramexError(msg);
+      form.setError('shippingMethod', { type: 'manual', message: msg });
       return;
     }
 
@@ -987,10 +1015,13 @@ export const CheckoutPage: React.FC = () => {
                                       <div className="flex items-center gap-1">
                                         {method.isCalculating && method.id === 'aramex' ? (
                                           <Loader2 className="w-4 h-4 animate-spin text-amber-600" />
-                                        ) : method.id === 'aramex' &&
-                                          (!effectiveCity || aramexRate === null) ? (
+                                        ) : method.id === 'aramex' && !effectiveCity ? (
                                           <p className="text-xs text-gray-500 italic whitespace-nowrap">
                                             {isArabic ? 'اختر المدينة' : 'Select city'}
+                                          </p>
+                                        ) : method.id === 'aramex' && effectiveCity && (aramexRate === null || aramexRate <= 0) ? (
+                                          <p className="text-xs text-gray-500 italic whitespace-nowrap">
+                                            {isArabic ? 'غير متاح' : 'Unavailable'}
                                           </p>
                                         ) : method.id !== 'aramex' ||
                                           (method.id === 'aramex' && method.price > 0) ? (
@@ -1164,6 +1195,7 @@ export const CheckoutPage: React.FC = () => {
                 <Button
                   type="submit"
                   size="lg"
+                  disabled={aramexBlocked}
                   className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold text-lg py-6"
                 >
                   {isArabic ? 'متابعة إلى الدفع' : 'Proceed to Payment'}
