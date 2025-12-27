@@ -13,14 +13,14 @@ export const AboutPage: React.FC = () => {
     () =>
       language === 'ar'
         ? {
-            title: 'عن سبيريت هب - محمصة القهوة المختصة الرائدة في عمان',
+            title: 'عن محمصة SpiritHub - خبراء قهوة مختصة في عمان والسعودية',
             description:
-              'تعرف على قصة سبيريت هب كافيه، محمصة القهوة المختصة في مسقط. فريق من خبراء Q Graders المعتمدين، مصادر حبوب قهوة عالية الجودة من المزارع المستدامة، تحميص حرفي يومي، وبناء مجتمع قهوة نابض بالحياة في عمان.',
+              'محمصة قهوة مختصة رائدة في مسقط والخبر. خبراء Q Graders معتمدين، حبوب قهوة فاخرة، تحميص يومي. اطلب الآن كبسولات وحبوب قهوة مختصة محمصة طازجة.',
           }
         : {
-            title: 'About Spirit Hub Cafe - Muscat\'s Specialty Coffee Experts',
+            title: 'About SpiritHub Roastery - Specialty Coffee Experts Oman & Saudi',
             description:
-              'Learn about Spirit Hub Cafe, Muscat\'s premier specialty coffee roastery. Q Grader certified experts, sustainably sourced high-elevation beans, artisan daily roasting, and building Oman\'s vibrant coffee community since our founding.',
+              'Leading specialty coffee roastery in Muscat & Khobar. Q Grader certified experts, premium beans, daily roasting. Buy specialty coffee, order capsules online. Serving Oman and Saudi Arabia.',
           },
     [language]
   );

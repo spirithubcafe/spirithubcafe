@@ -15,14 +15,14 @@ const HomePage: React.FC = () => {
     () =>
       language === 'ar'
         ? {
-            title: 'أفضل محمصة قهوة مختصة في مسقط، عمان',
+            title: 'SpiritHub Roastery | قهوة مختصة وكبسولات في عمان والسعودية',
             description:
-              'سبيريت هب كافيه - محمصة القهوة المختصة الرائدة في مسقط. قهوة طازجة محمصة يومياً، حبوب أحادية المصدر، خلطات حرفية فاخرة، معدات تحضير القهوة، اشتراكات شهرية، وتدريب باريستا محترف. اكتشف تجربة القهوة الأصيلة مع الضيافة العربية في عمان.',
+              'اطلب قهوة مختصة فاخرة، كبسولات، وقهوة فلتر. محمصة بعناية في مسقط عمان • الآن نخدم الخبر، السعودية. اشتري حبوب قهوة مختصة محمصة طازجة يومياً.',
           }
         : {
-            title: 'Premium Coffee Roastery in Muscat',
+            title: 'SpiritHub Roastery | Specialty Coffee & Capsules in Oman & Saudi',
             description:
-              'Spirit Hub Cafe - Muscat\'s leading specialty coffee roastery. Daily fresh roasted beans, single-origin coffee, artisan blends, brewing equipment, monthly subscriptions & professional barista training. Experience authentic coffee culture with Arabic hospitality in Oman.',
+              'Premium specialty coffee, capsules, and filter brews. Roasted with care in Oman • Now serving Khobar, Saudi Arabia. Buy specialty coffee beans, order capsules online, expert roastery.',
           },
     [language]
   );

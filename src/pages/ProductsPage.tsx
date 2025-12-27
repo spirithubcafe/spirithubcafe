@@ -177,22 +177,22 @@ export const ProductsPage = () => {
     if (currentCategory && selectedCategory !== 'all') {
       return language === 'ar'
         ? {
-            title: `${currentCategory.name} - قهوة مختصة من سبيريت هب`,
-            description: `تسوق ${currentCategory.name} من سبيريت هب كافيه في مسقط. قهوة مختصة محمصة طازجة، حبوب عالية الجودة، أسعار منافسة، توصيل سريع في عمان. اكتشف مجموعتنا الحرفية المميزة.`,
+            title: `اشتري ${currentCategory.name} | قهوة مختصة SpiritHub عمان والسعودية`,
+            description: `اطلب ${currentCategory.name} من محمصة SpiritHub. قهوة مختصة محمصة طازجة، كبسولات، توصيل سريع في مسقط والخبر. اشتري الآن حبوب قهوة فاخرة.`,
           }
         : {
-            title: `${currentCategory.name} - Premium Coffee from Spirit Hub Muscat`,
-            description: `Shop ${currentCategory.name} at Spirit Hub Cafe Muscat. Fresh roasted specialty coffee, high-quality beans, competitive prices, fast delivery across Oman. Discover our artisan collection.`,
+            title: `Buy ${currentCategory.name} | Specialty Coffee SpiritHub Oman & Saudi`,
+            description: `Order ${currentCategory.name} from SpiritHub Roastery. Fresh roasted specialty coffee, capsules, fast delivery in Muscat & Khobar. Buy premium coffee beans online now.`,
           };
     }
     return language === 'ar'
       ? {
-          title: 'متجر القهوة المختصة - حبوب، كبسولات، معدات | سبيريت هب مسقط',
-          description: 'تسوق قهوة سبيريت هب كافيه المختصة: حبوب محمصة طازجة، كبسولات متوافقة مع نسبريسو، معدات تحضير احترافية، اكسسوارات القهوة. توصيل سريع في مسقط وجميع أنحاء عمان. جودة مضمونة من محمصة محلية.',
+          title: 'اشتري قهوة مختصة وكبسولات | محمصة SpiritHub عمان والسعودية',
+          description: 'اطلب الآن: حبوب قهوة مختصة محمصة طازجة، كبسولات متوافقة، معدات تحضير احترافية. توصيل سريع في مسقط عمان والخبر السعودية. محمصة متخصصة.',
         }
       : {
-          title: 'Specialty Coffee Shop - Beans, Capsules & Equipment | Spirit Hub Muscat',
-          description: 'Shop Spirit Hub Cafe specialty coffee: fresh roasted beans, Nespresso-compatible capsules, professional brewing equipment, coffee accessories. Fast delivery in Muscat & all of Oman. Quality guaranteed from local roastery.',
+          title: 'Buy Specialty Coffee & Capsules | SpiritHub Roastery Oman & Saudi',
+          description: 'Order now: fresh roasted specialty coffee beans, compatible capsules, professional brewing equipment. Fast delivery in Muscat Oman and Khobar Saudi Arabia. Expert roastery.',
         };
   }, [currentCategory, language, selectedCategory]);
 

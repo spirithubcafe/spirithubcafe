@@ -96,27 +96,27 @@ export const ProfessionalHeroSlider: React.FC = () => {
     {
       id: '1',
       image: '/images/slides/slide1.webp',
-      title: language === 'ar' ? 'مرحباً بكم في محمصة سبيريت هب للقهوة المختصة' : 'WELCOME TO SPIRITHUB ROASTERY AND SPECIALTY COFFEE',
+      title: language === 'ar' ? 'مرحباً بكم في محمصة سبيريت هب للقهوة المختصة' : 'WELCOME TO SPIRITHUB SPECIALTY COFFEE ROASTERY',
       subtitle: language === 'ar' ? (isMobile ? [
-        'حبوب قهوة مختارة بعناية ومحمصة بخبرة',
+        'اشتري حبوب قهوة مختصة محمصة بعناية',
         'لتكريم عمل المنتجين وإبراز النكهات المميزة',
-        'أفضل حبوب القهوة في عُمان'
+        'اطلب الآن أفضل حبوب القهوة في عُمان والسعودية'
       ] : [
-        'يتم اختيار حبوب القهوة لدينا بعناية وتحميصها بدقة لتكريم العمل الشاق للمنتجين.',
+        'اشتري حبوب قهوة مختصة محمصة بدقة لتكريم العمل الشاق للمنتجين.',
         'من خلال إبراز النكهات والروائح والحموضة المميزة لكل قهوة، ندع قصصهم تتألق',
-        'ونقدم لعملائنا أفضل حبوب القهوة في عُمان.'
+        'اطلب الآن أفضل حبوب القهوة في عُمان والسعودية.'
       ]) : (isMobile ? [
-        'Thoughtfully sourced and expertly roasted',
+        'Buy specialty coffee beans expertly roasted',
         'to honor producers and reveal distinctive flavors',
-        'The best coffee beans in Oman'
+        'Order now - Best coffee beans in Oman & Saudi'
       ] : [
-        'Our coffee beans are thoughtfully sourced and carefully roasted to honor producers\' hard work.',
+        'Buy specialty coffee beans carefully roasted to honor producers\' hard work.',
         'By revealing each coffee\'s distinctive flavors, aromatics, and acidities, we let their stories shine through',
-        'and provide to customers the best coffee beans in Oman.'
+        'and provide customers the best coffee beans in Oman and Saudi Arabia.'
       ]),
       description: language === 'ar' 
-        ? 'نقدم لك أجود أنواع القهوة المحمصة بعناية فائقة من أفضل مزارع القهوة حول العالم'
-        : 'We bring you the finest carefully roasted coffee from the best coffee farms around the world',
+        ? 'اطلب الآن أجود أنواع القهوة المحمصة بعناية فائقة من أفضل مزارع القهوة حول العالم'
+        : 'Order now the finest carefully roasted specialty coffee from the best coffee farms around the world',
       stats: [
         { value: '500+', label: language === 'ar' ? 'عميل سعيد' : 'Happy Customers' },
         { value: '15+', label: language === 'ar' ? 'نوع قهوة' : 'Coffee Types' },
@@ -160,15 +160,15 @@ export const ProfessionalHeroSlider: React.FC = () => {
     {
       id: '3',
       image: '/images/slides/slide3.webp',
-      title: language === 'ar' ? 'أجواء مثالية للاسترخاء' : 'COFFEE CAPSULES SELECTIONS',
+      title: language === 'ar' ? 'اشتري كبسولات قهوة مختصة فاخرة' : 'BUY SPECIALTY COFFEE CAPSULES',
       subtitle: language === 'ar' ? [
-        'اليوم، يسعدنا أن نُقدّم لكم إنجازًا جديدًا في رحلتنا: تشكيلة حصرية من كبسولات القهوة!',
-        'هذه الأنواع الخمسة الاستثنائية من القهوة، المُختارة بعناية،',
-        'تُضفي جوهرًا أصيلًا على فنجانكم.'
+        'اليوم، يسعدنا أن نُقدّم لكم إنجازًا جديدًا في رحلتنا: تشكيلة حصرية من كبسولات القهوة المختصة!',
+        'اطلب الآن من هذه الأنواع الخمسة الاستثنائية من القهوة، المُختارة بعناية،',
+        'تُضفي جوهرًا أصيلًا على فنجانكم. توصيل سريع في عُمان والسعودية.'
       ] : [
-        'Today, we are thrilled to introduce a new milestone in our journey: exclusive coffee capsules selections!',
-        'Carefully curated, these 5 exceptional coffee varieties',
-        'bring the authentic essence of their origins right to your cup.'
+        'Today, we are thrilled to introduce a new milestone in our journey: exclusive specialty coffee capsules selections!',
+        'Order now from these 5 carefully curated exceptional coffee varieties',
+        'that bring the authentic essence of their origins right to your cup. Fast delivery in Oman & Saudi Arabia.'
       ],
       description: language === 'ar'
         ? 'تصميم داخلي أنيق وموسيقى هادئة وإضاءة مثالية لتجربة لا تُنسى'

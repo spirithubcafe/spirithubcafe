@@ -125,9 +125,9 @@ export const ReportsManagement: React.FC = () => {
     ? (returningCustomers / uniqueCustomers) * 100 
     : 0;
 
-  // Conversion rate (orders / store visits)
+  // Conversion rate (paid orders / store visits)
   const conversionRate = storeVisits > 0 
-    ? (totalOrders / storeVisits) * 100 
+    ? (paidOrders.length / storeVisits) * 100 
     : 0;
 
   return (

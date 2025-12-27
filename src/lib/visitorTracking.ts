@@ -63,6 +63,14 @@ function detectVisitSource(): string {
     return 'Telegram';
   }
   
+  // Link in Bio / URL Shorteners
+  if (referrer.includes('linktr.ee') || referrer.includes('linktree.com')) {
+    return 'Linktree (Instagram Bio)';
+  }
+  if (referrer.includes('bio.link') || referrer.includes('link.bio')) {
+    return 'Bio Link';
+  }
+  
   // Search Engines
   if (referrer.includes('google.com') || referrer.includes('google.')) {
     return 'Google Search';
@@ -80,7 +88,14 @@ function detectVisitSource(): string {
   // Other referrers - extract domain
   try {
     const url = new URL(referrer);
-    return url.hostname.replace('www.', '');
+    const hostname = url.hostname.replace('www.', '');
+    
+    // Filter out localhost and development sources
+    if (hostname === 'localhost' || hostname.startsWith('127.0.0.1') || hostname.endsWith('.local')) {
+      return 'Direct'; // Treat localhost as direct traffic
+    }
+    
+    return hostname;
   } catch {
     return 'Other';
   }
@@ -90,6 +105,14 @@ function detectVisitSource(): string {
  * Initialize visitor tracking
  */
 export function initVisitorTracking(): void {
+  // Don't track visits on localhost/development
+  if (typeof window !== 'undefined' && 
+      (window.location.hostname === 'localhost' || 
+       window.location.hostname.startsWith('127.0.0.1') ||
+       window.location.hostname.endsWith('.local'))) {
+    return; // Skip tracking in development
+  }
+  
   // Check if this is a new session
   const currentSession = sessionStorage.getItem(SESSION_KEY);
   
