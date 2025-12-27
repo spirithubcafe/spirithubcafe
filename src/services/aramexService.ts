@@ -1,5 +1,78 @@
 import { apiClient } from './apiClient';
+import { safeStorage } from '../lib/safeStorage';
 import type { ApiError } from '../types/auth';
+
+export type AramexCountry = {
+  code: string;
+  name: string;
+};
+
+export type AramexCountriesResponse = {
+  success: boolean;
+  total?: number;
+  countries: AramexCountry[];
+};
+
+export type AramexCitiesResponse = {
+  success: boolean;
+  countryCode: string;
+  total?: number;
+  cities: string[];
+};
+
+const ARAMEX_COUNTRIES_CACHE_KEY = 'spirithub_aramex_countries_v1';
+const aramexCitiesCacheKey = (countryCode: string) =>
+  `spirithub_aramex_cities_${countryCode.toUpperCase()}_v1`;
+
+const normalizeCountryCode = (code: string, name?: string): string => {
+  const raw = (code || '').trim().toUpperCase();
+
+  // Backend sometimes returns Oman as code "O"; normalize to ISO2.
+  if (raw === 'O' && (name || '').toLowerCase().includes('oman')) return 'OM';
+
+  return raw;
+};
+
+const normalizeCountriesResponse = (data: AramexCountriesResponse): AramexCountriesResponse => {
+  const countries = Array.isArray(data.countries) ? data.countries : [];
+
+  const normalizedCountries: AramexCountry[] = countries
+    .map((c) => ({
+      code: normalizeCountryCode(c?.code ?? '', c?.name),
+      name: String(c?.name ?? '').trim(),
+    }))
+    .filter((c) => c.code.length > 0 && c.name.length > 0);
+
+  return {
+    ...data,
+    success: Boolean(data.success),
+    countries: normalizedCountries,
+  };
+};
+
+const normalizeCitiesResponse = (data: AramexCitiesResponse): AramexCitiesResponse => {
+  const cc = String(data?.countryCode ?? '').trim().toUpperCase();
+  const rawCities = Array.isArray(data?.cities) ? data.cities : [];
+
+  const unique = new Map<string, string>();
+  for (const c of rawCities) {
+    const city = String(c ?? '').trim();
+    if (!city) continue;
+    const key = city.toLowerCase();
+    if (!unique.has(key)) unique.set(key, city);
+  }
+
+  const cities = Array.from(unique.values()).sort((a, b) =>
+    a.localeCompare(b, undefined, { sensitivity: 'base' })
+  );
+
+  return {
+    ...data,
+    success: Boolean(data?.success),
+    countryCode: cc,
+    cities,
+  };
+};
 
 export interface AramexAddress {
   line1: string;
@@ -117,7 +190,7 @@ export async function calculateAramexRate(
     // Here we treat it as ApiError coming from apiClient
     const apiError = error as ApiError;
 
-    let errorMessage =
+    const errorMessage =
       apiError.message ||
       (Array.isArray(apiError.errors)
         ? apiError.errors.join(', ')
@@ -137,8 +210,25 @@ export async function calculateAramexRate(
  */
 export async function getAramexCountries() {
   try {
-    const response = await apiClient.get('/api/aramex/countries');
-    return response.data;
+    // 1) Try cache first (avoid hitting server on repeat visits)
+    const cached = safeStorage.getJson<AramexCountriesResponse>(ARAMEX_COUNTRIES_CACHE_KEY);
+    if (cached?.success && Array.isArray(cached.countries) && cached.countries.length > 0) {
+      const normalized = normalizeCountriesResponse(cached);
+      // If cache was in old/buggy format, rewrite it.
+      safeStorage.setJson(ARAMEX_COUNTRIES_CACHE_KEY, normalized);
+      return normalized;
+    }
+
+    // 2) Fetch
+    const response = await apiClient.get<AramexCountriesResponse>('/api/aramex/countries');
+    const data = normalizeCountriesResponse(response.data);
+
+    // 3) Cache only if shape looks right
+    if (data?.success && Array.isArray(data.countries)) {
+      safeStorage.setJson(ARAMEX_COUNTRIES_CACHE_KEY, data);
+    }
+
+    return data;
   } catch (error: any) {
     console.error('Error fetching Aramex countries:', error);
     throw error;
@@ -150,8 +240,28 @@ export async function getAramexCountries() {
  */
 export async function getAramexCities(countryCode: string) {
   try {
-    const response = await apiClient.get(`/api/aramex/cities/${countryCode}`);
-    return response.data;
+    const cc = (countryCode || '').toUpperCase();
+    if (!cc) throw new Error('countryCode is required');
+
+    // 1) Try cache first
+    const cached = safeStorage.getJson<AramexCitiesResponse>(aramexCitiesCacheKey(cc));
+    if (cached?.success && Array.isArray(cached.cities) && cached.cities.length > 0) {
+      const normalized = normalizeCitiesResponse(cached);
+      // If cache was in old/unsorted format, rewrite it.
+      safeStorage.setJson(aramexCitiesCacheKey(cc), normalized);
+      return normalized;
+    }
+
+    // 2) Fetch
+    const response = await apiClient.get<AramexCitiesResponse>(`/api/aramex/cities/${cc}`);
+    const data = normalizeCitiesResponse(response.data);
+
+    // 3) Cache only if shape looks right
+    if (data?.success && Array.isArray(data.cities)) {
+      safeStorage.setJson(aramexCitiesCacheKey(cc), data);
+    }
+
+    return data;
   } catch (error: any) {
     console.error('Error fetching Aramex cities:', error);
     throw error;

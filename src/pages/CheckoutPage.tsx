@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -23,7 +23,13 @@ import type { CheckoutOrder } from '../types/checkout';
 import { Seo } from '../components/seo/Seo';
 import { siteMetadata } from '../config/siteMetadata';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { computeShippingMethods, getCitiesByCountry, getCountries, calculateAramexShippingRate } from '@/lib/shipping';
+import { computeShippingMethods, calculateAramexShippingRate, GCC_LOCATIONS } from '@/lib/shipping';
+import {
+  getAramexCountries,
+  getAramexCities,
+  type AramexCountriesResponse,
+  type AramexCitiesResponse,
+} from '@/services/aramexService';
 
 // Map country ISO2 -> international dialing code for placeholders
 const COUNTRY_CALLING_CODES: Record<string, string> = {
@@ -40,6 +46,35 @@ function getPhonePlaceholderForCountry(iso2?: string) {
   // Simple common placeholder pattern; callers may replace with more accurate formats later
   return `${code} 0000 0000`;
 }
+
+const GCC_PRIORITY_COUNTRY_CODES = ['OM', 'SA', 'AE', 'QA', 'KW', 'BH'] as const;
+const GCC_COUNTRY_SET = new Set<string>(GCC_PRIORITY_COUNTRY_CODES);
+
+type CheckoutCountryOption = {
+  iso2: string;
+  name_en: string;
+  name_ar: string;
+};
+
+const gccCountryNameMap = new Map(
+  GCC_LOCATIONS.map((c) => [c.iso2, { name_en: c.name_en, name_ar: c.name_ar }])
+);
+
+const buildGccCityArabicMap = () => {
+  const map = new Map<string, Map<string, string>>();
+  for (const c of GCC_LOCATIONS) {
+    const cityMap = new Map<string, string>();
+    for (const city of c.cities) {
+      if (city?.name_en && city?.name_ar) {
+        cityMap.set(city.name_en.trim().toLowerCase(), city.name_ar);
+      }
+    }
+    map.set(c.iso2, cityMap);
+  }
+  return map;
+};
+
+const gccCityArabicMapByCountry = buildGccCityArabicMap();
 
 const checkoutSchema = z
   .object({
@@ -100,7 +135,7 @@ export const CheckoutPage: React.FC = () => {
       email: '',
       phone: '',
       country: 'OM', // store ISO2 code
-      city: '', // store city slug
+      city: '', // store city name (from Aramex cities API)
       address: '',
       notes: '',
       shippingMethod: 'pickup',
@@ -108,7 +143,7 @@ export const CheckoutPage: React.FC = () => {
       recipientName: '',
       recipientPhone: '',
       recipientCountry: 'OM',
-      recipientCity: '',
+      recipientCity: '', // store city name (from Aramex cities API)
       recipientAddress: '',
     },
   });
@@ -120,6 +155,9 @@ export const CheckoutPage: React.FC = () => {
   const watchedShipping = form.watch('shippingMethod');
   const watchIsGift = form.watch('isGift');
 
+  const watchCountryCode = watchCountry || '';
+  const watchRecipientCountryCode = watchRecipientCountry || '';
+
   // Use recipient's country/city for shipping if it's a gift, otherwise use customer's
   const effectiveCountry = watchIsGift ? watchRecipientCountry : watchCountry;
   const effectiveCity = watchIsGift ? watchRecipientCity : watchCity;
@@ -129,20 +167,113 @@ export const CheckoutPage: React.FC = () => {
   const [aramexCalculating, setAramexCalculating] = useState(false);
   const [aramexError, setAramexError] = useState<string | null>(null);
 
+  // Countries/cities are loaded from backend and cached in localStorage.
+  const [countries, setCountries] = useState<CheckoutCountryOption[]>([]);
+  const [countriesLoading, setCountriesLoading] = useState(false);
+  const [countriesError, setCountriesError] = useState<string | null>(null);
+
+  const [citiesByCountry, setCitiesByCountry] = useState<Record<string, string[]>>({});
+  const [citiesLoadingByCountry, setCitiesLoadingByCountry] = useState<Record<string, boolean>>({});
+
+  const getCityLabel = (countryIso2: string, cityName: string) => {
+    if (!isArabic) return cityName;
+    const cityMap = gccCityArabicMapByCountry.get(countryIso2);
+    const ar = cityMap?.get(cityName.trim().toLowerCase());
+    return ar || cityName;
+  };
+
+  const loadCountries = async () => {
+    setCountriesLoading(true);
+    setCountriesError(null);
+    try {
+      const data = (await getAramexCountries()) as AramexCountriesResponse;
+      const byIso2 = new Map<string, CheckoutCountryOption>();
+
+      for (const c of data?.countries ?? []) {
+        const iso2 = (c?.code ?? '').toUpperCase();
+        const name_en = String(c?.name ?? '').trim();
+        if (!iso2 || !name_en) continue;
+        if (byIso2.has(iso2)) continue;
+
+        const gccNames = gccCountryNameMap.get(iso2);
+        byIso2.set(iso2, {
+          iso2,
+          name_en: gccNames?.name_en || name_en,
+          name_ar: gccNames?.name_ar || name_en,
+        });
+      }
+
+      const list = Array.from(byIso2.values());
+      list.sort((a, b) => {
+        const aPriorityIdx = GCC_PRIORITY_COUNTRY_CODES.indexOf(a.iso2 as any);
+        const bPriorityIdx = GCC_PRIORITY_COUNTRY_CODES.indexOf(b.iso2 as any);
+
+        const aIsPriority = aPriorityIdx !== -1;
+        const bIsPriority = bPriorityIdx !== -1;
+        if (aIsPriority && bIsPriority) return aPriorityIdx - bPriorityIdx;
+        if (aIsPriority) return -1;
+        if (bIsPriority) return 1;
+
+        const aIsGcc = GCC_COUNTRY_SET.has(a.iso2);
+        const bIsGcc = GCC_COUNTRY_SET.has(b.iso2);
+        if (aIsGcc && !bIsGcc) return -1;
+        if (!aIsGcc && bIsGcc) return 1;
+
+        return a.name_en.localeCompare(b.name_en);
+      });
+
+      setCountries(list);
+    } catch (_e: any) {
+      setCountriesError(_e?.message || 'Failed to load countries');
+    } finally {
+      setCountriesLoading(false);
+    }
+  };
+
+  const loadCitiesForCountry = useCallback(async (countryIso2?: string) => {
+    const cc = (countryIso2 || '').toUpperCase();
+    if (!cc) return;
+
+    // If we already have them in memory, don't do any more work.
+    if (Array.isArray(citiesByCountry[cc]) && citiesByCountry[cc].length > 0) return;
+
+    setCitiesLoadingByCountry((prev) => ({ ...prev, [cc]: true }));
+    try {
+      const data = (await getAramexCities(cc)) as AramexCitiesResponse;
+      const cities = (data?.cities ?? [])
+        .map((x) => String(x).trim())
+        .filter(Boolean)
+        .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+      setCitiesByCountry((prev) => ({ ...prev, [cc]: cities }));
+    } catch (_e) {
+      // Keep silent; user can still type address and proceed with pickup.
+      setCitiesByCountry((prev) => ({ ...prev, [cc]: [] }));
+    } finally {
+      setCitiesLoadingByCountry((prev) => ({ ...prev, [cc]: false }));
+    }
+  }, [citiesByCountry]);
+
+  // Load countries once (cached in localStorage for next visits)
+  useEffect(() => {
+    loadCountries();
+  }, []);
+
+  // Prefetch cities for selected countries (cached per-country)
+  useEffect(() => {
+    if (watchCountryCode) loadCitiesForCountry(watchCountryCode);
+  }, [watchCountryCode, loadCitiesForCountry]);
+
+  useEffect(() => {
+    if (watchIsGift && watchRecipientCountryCode) {
+      loadCitiesForCountry(watchRecipientCountryCode);
+    }
+  }, [watchIsGift, watchRecipientCountryCode, loadCitiesForCountry]);
+
   // Calculate Aramex rate when country/city or cart items change
   useEffect(() => {
     const runCalculation = async () => {
       // Only calculate if we have both country and city
       if (!effectiveCountry || !effectiveCity) {
-        setAramexRate(null);
-        return;
-      }
-
-      // Get city name for API call
-      const cities = getCitiesByCountry(effectiveCountry);
-      const selectedCity = cities.find((c) => c.slug === effectiveCity);
-
-      if (!selectedCity) {
         setAramexRate(null);
         return;
       }
@@ -179,7 +310,7 @@ export const CheckoutPage: React.FC = () => {
 
         const result = await calculateAramexShippingRate(
           effectiveCountry,
-          selectedCity.name_en,
+          effectiveCity,
           totalWeight
         );
 
@@ -221,7 +352,7 @@ export const CheckoutPage: React.FC = () => {
   const shippingMethods = React.useMemo(() => {
     const methods = computeShippingMethods({
       countryIso2: effectiveCountry,
-      citySlug: effectiveCity,
+      city: effectiveCity,
       orderTotal: totalPrice,
     });
 
@@ -462,11 +593,21 @@ export const CheckoutPage: React.FC = () => {
                                   />
                                 </SelectTrigger>
                                 <SelectContent className="max-h-64">
-                                  {getCountries().map((c) => (
-                                    <SelectItem key={c.iso2} value={c.iso2}>
-                                      {isArabic ? c.name_ar : c.name_en}
+                                  {countriesLoading ? (
+                                    <SelectItem value="__loading_countries__" disabled>
+                                      {isArabic ? 'جاري تحميل الدول…' : 'Loading countries…'}
                                     </SelectItem>
-                                  ))}
+                                  ) : countriesError ? (
+                                    <SelectItem value="__countries_error__" disabled>
+                                      {countriesError}
+                                    </SelectItem>
+                                  ) : (
+                                    countries.map((c) => (
+                                      <SelectItem key={c.iso2} value={c.iso2}>
+                                        {isArabic ? c.name_ar : c.name_en}
+                                      </SelectItem>
+                                    ))
+                                  )}
                                 </SelectContent>
                               </Select>
                             </FormControl>
@@ -485,7 +626,7 @@ export const CheckoutPage: React.FC = () => {
                               <Select
                                 value={field.value}
                                 onValueChange={field.onChange}
-                                disabled={!watchCountry}
+                                disabled={!watchCountryCode || Boolean(citiesLoadingByCountry[watchCountryCode])}
                               >
                                 <SelectTrigger size="default" className="w-full">
                                   <SelectValue
@@ -493,11 +634,17 @@ export const CheckoutPage: React.FC = () => {
                                   />
                                 </SelectTrigger>
                                 <SelectContent className="max-h-64">
-                                  {getCitiesByCountry(watchCountry).map((city) => (
-                                    <SelectItem key={city.slug} value={city.slug}>
-                                      {isArabic ? city.name_ar : city.name_en}
+                                  {citiesLoadingByCountry[watchCountryCode] ? (
+                                    <SelectItem value="__loading_cities__" disabled>
+                                      {isArabic ? 'جاري تحميل المدن…' : 'Loading cities…'}
                                     </SelectItem>
-                                  ))}
+                                  ) : (
+                                    (citiesByCountry[watchCountryCode] ?? []).map((cityName: string) => (
+                                      <SelectItem key={cityName} value={cityName}>
+                                        {getCityLabel(watchCountryCode, cityName)}
+                                      </SelectItem>
+                                    ))
+                                  )}
                                 </SelectContent>
                               </Select>
                             </FormControl>
@@ -642,11 +789,21 @@ export const CheckoutPage: React.FC = () => {
                                       />
                                     </SelectTrigger>
                                     <SelectContent className="max-h-64">
-                                      {getCountries().map((c) => (
-                                        <SelectItem key={c.iso2} value={c.iso2}>
-                                          {isArabic ? c.name_ar : c.name_en}
+                                      {countriesLoading ? (
+                                        <SelectItem value="__loading_countries__" disabled>
+                                          {isArabic ? 'جاري تحميل الدول…' : 'Loading countries…'}
                                         </SelectItem>
-                                      ))}
+                                      ) : countriesError ? (
+                                        <SelectItem value="__countries_error__" disabled>
+                                          {countriesError}
+                                        </SelectItem>
+                                      ) : (
+                                        countries.map((c) => (
+                                          <SelectItem key={c.iso2} value={c.iso2}>
+                                            {isArabic ? c.name_ar : c.name_en}
+                                          </SelectItem>
+                                        ))
+                                      )}
                                     </SelectContent>
                                   </Select>
                                 </FormControl>
@@ -667,7 +824,7 @@ export const CheckoutPage: React.FC = () => {
                                   <Select
                                     value={field.value}
                                     onValueChange={field.onChange}
-                                    disabled={!watchRecipientCountry}
+                                    disabled={!watchRecipientCountryCode || Boolean(citiesLoadingByCountry[watchRecipientCountryCode])}
                                   >
                                     <SelectTrigger size="default" className="w-full">
                                       <SelectValue
@@ -675,11 +832,17 @@ export const CheckoutPage: React.FC = () => {
                                       />
                                     </SelectTrigger>
                                     <SelectContent className="max-h-64">
-                                      {getCitiesByCountry(watchRecipientCountry).map(
-                                        (city) => (
-                                          <SelectItem key={city.slug} value={city.slug}>
-                                            {isArabic ? city.name_ar : city.name_en}
-                                          </SelectItem>
+                                      {citiesLoadingByCountry[watchRecipientCountryCode] ? (
+                                        <SelectItem value="__loading_cities__" disabled>
+                                          {isArabic ? 'جاري تحميل المدن…' : 'Loading cities…'}
+                                        </SelectItem>
+                                      ) : (
+                                        (citiesByCountry[watchRecipientCountryCode] ?? []).map(
+                                          (cityName: string) => (
+                                            <SelectItem key={cityName} value={cityName}>
+                                              {getCityLabel(watchRecipientCountryCode, cityName)}
+                                            </SelectItem>
+                                          )
                                         )
                                       )}
                                     </SelectContent>

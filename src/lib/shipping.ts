@@ -45,12 +45,15 @@ export function getCitiesByCountry(iso2?: string) {
 
 export function computeShippingMethods(opts: {
   countryIso2?: string;
-  citySlug?: string;
+  city?: string;
   orderTotal?: number;
 }): ShippingMethod[] {
-  const { countryIso2, citySlug } = opts;
+  const { countryIso2, city } = opts;
   const isOman = countryIso2 === 'OM';
-  const isKhasab = isOman && citySlug === 'khasab';
+  const isKhasab =
+    isOman &&
+    typeof city === 'string' &&
+    city.trim().toLowerCase() === 'khasab';
 
   const methods: ShippingMethod[] = [
     {

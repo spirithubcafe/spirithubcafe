@@ -84,27 +84,27 @@ export const REGION_INFO: Record<RegionCode, RegionInfo> = {
   },
   sa: {
     contact: {
-      phone: '+966 XX XXX XXXX', // يجب تحديث شماره تلفن واقعی
-      whatsapp: '966XXXXXXXXX', // يجب تحديث شماره واتساپ واقعی
+      phone: '+966 53 983 9201',
+      whatsapp: '966539839201',
       email: 'info.sa@spirithubcafe.com',
       address: {
-        en: 'Riyadh, Kingdom of Saudi Arabia',
-        ar: 'الرياض، المملكة العربية السعودية'
+        en: 'Al Khobar Al Shamalia',
+        ar: 'الخبر الشمالية'
       },
       workingHours: {
         en: 'Daily: 7 AM - 12 AM',
         ar: 'يومياً: 7 صباحاً - 12 منتصف الليل'
       },
       location: {
-        lat: 24.7136,
-        lng: 46.6753
+        lat: 26.2794,
+        lng: 50.2083
       },
-      googleMapsUrl: 'https://maps.google.com/?q=24.7136,46.6753'
+      googleMapsUrl: 'https://share.google/HHVf9h6noqtGLaqhE'
     },
     social: {
       facebook: 'https://www.facebook.com/spirithubcafe.sa',
       instagram: 'https://www.instagram.com/spirithubcafe.sa/',
-      whatsapp: 'https://wa.me/966XXXXXXXXX',
+      whatsapp: 'https://wa.me/966539839201',
       email: 'mailto:info.sa@spirithubcafe.com'
     },
     aboutContent: {
