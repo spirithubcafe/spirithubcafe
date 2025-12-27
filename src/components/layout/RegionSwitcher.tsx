@@ -1,4 +1,3 @@
-import { Globe } from 'lucide-react';
 import { useRegion } from '../../hooks/useRegion';
 import { Button } from '../ui/button';
 import {
@@ -7,6 +6,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
+import { RegionFlagIcon } from '../ui/RegionFlagIcon';
 import './RegionSwitcher.css';
 
 interface RegionSwitcherProps {
@@ -32,9 +32,13 @@ export const RegionSwitcher: React.FC<RegionSwitcherProps> = ({ isHomePage = fal
               : 'text-gray-900 hover:text-gray-900 hover:bg-gray-100 border-gray-300 hover:border-gray-400'
           }`}
         >
-          <Globe className="h-4 w-4 shrink-0" />
-          <span className="hidden sm:inline font-medium">{currentRegion.flag} {currentRegion.name}</span>
-          <span className="sm:hidden text-lg">{currentRegion.flag}</span>
+          <span className="hidden sm:inline-flex items-center gap-2 font-medium">
+            <RegionFlagIcon region={currentRegion.code} className="h-4 w-4" />
+            <span>{currentRegion.name}</span>
+          </span>
+          <span className="sm:hidden inline-flex items-center">
+            <RegionFlagIcon region={currentRegion.code} className="h-5 w-5" />
+          </span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent 
@@ -52,7 +56,7 @@ export const RegionSwitcher: React.FC<RegionSwitcherProps> = ({ isHomePage = fal
             }`}
           >
             <span className="flex items-center gap-3 w-full">
-              <span className="text-xl">{region.flag}</span>
+              <RegionFlagIcon region={region.code} className="h-5 w-5" />
               <span className="flex-1 font-medium">{region.name}</span>
               <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
                 {region.currency}

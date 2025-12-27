@@ -18,22 +18,30 @@ export const ContactPage: React.FC = () => {
   const { language } = useApp();
   const { currentRegion } = useRegion();
   const regionInfo = REGION_INFO[currentRegion.code];
+
+  const mapLat = regionInfo.contact.location.lat;
+  const mapLng = regionInfo.contact.location.lng;
+  // Google Maps embed without an API key; avoids short-link issues inside iframes.
+  const googleMapEmbedSrc = `https://www.google.com/maps?q=${mapLat},${mapLng}&z=16&output=embed`;
   
-  const seoCopy = useMemo(
-    () =>
-      language === 'ar'
-        ? {
-            title: 'اتصل بنا - سبيريت هب كافيه مسقط | جملة، طلبات خاصة، تدريب',
-            description:
-              'تواصل مع سبيريت هب كافيه في مسقط للطلبات بالجملة، جلسات تذوق القهوة الخاصة، تدريب الباريستا، شراكات المقاهي، واستفسارات القهوة المختصة. هاتف، بريد إلكتروني، واتساب، أو زيارة متجرنا في عمان.',
-          }
-        : {
-            title: 'Contact Spirit Hub Cafe Muscat | Wholesale, Events & Training',
-            description:
-              'Contact Spirit Hub Cafe in Muscat for wholesale coffee orders, private tasting sessions, barista training, cafe partnerships, and specialty coffee inquiries. Reach us by phone, email, WhatsApp, or visit our store in Oman.',
-          },
-    [language]
-  );
+  const seoCopy = useMemo(() => {
+    const cityEn = regionInfo.contact.address.en;
+    const cityAr = regionInfo.contact.address.ar;
+
+    if (language === 'ar') {
+      return {
+        title: `اتصل بنا - ${regionInfo.aboutContent.companyName.ar} | ${cityAr}`,
+        description:
+          `تواصل معنا للطلبات بالجملة، الطلبات الخاصة، التدريب، والشراكات. هاتف، بريد إلكتروني، واتساب، أو زيارة موقعنا في ${cityAr}.`,
+      };
+    }
+
+    return {
+      title: `Contact ${regionInfo.aboutContent.companyName.en} | ${cityEn}`,
+      description:
+        `Reach us for wholesale orders, special requests, training, and partnerships. Call, email, WhatsApp, or visit us in ${cityEn}.`,
+    };
+  }, [language, regionInfo.aboutContent.companyName.ar, regionInfo.aboutContent.companyName.en, regionInfo.contact.address.ar, regionInfo.contact.address.en]);
 
   const structuredData = useMemo(
     () => ({
@@ -188,7 +196,7 @@ export const ContactPage: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100">
       <Seo
         title={seoCopy.title}
         description={seoCopy.description}
@@ -241,14 +249,14 @@ export const ContactPage: React.FC = () => {
                   </div>
                   <div className="text-base font-medium text-foreground space-y-1">
                     <p
-                      className="break-words font-medium tracking-wide"
+                      className="wrap-break-word font-medium tracking-wide"
                       dir={info.forceLtr ? 'ltr' : undefined}
                     >
                       {info.value}
                     </p>
                     {info.value2 && (
                       <p
-                        className="break-words font-medium tracking-wide"
+                        className="wrap-break-word font-medium tracking-wide"
                         dir={info.forceLtr ? 'ltr' : undefined}
                       >
                         {info.value2}
@@ -286,13 +294,13 @@ export const ContactPage: React.FC = () => {
                   transition={{ delay: 0.8 }}
                   className="rounded-lg border bg-muted/40 p-4 mb-6 flex items-start gap-3 text-sm text-muted-foreground"
                 >
-                  <MessageCircle className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                  <MessageCircle className="w-5 h-5 text-primary mt-0.5 shrink-0" />
                   <div>
                     <p className="font-medium text-foreground">
                       {language === 'ar' ? 'للرد السريع، تواصل معنا عبر واتساب!' : 'For faster response, contact us via WhatsApp!'}
                     </p>
                     <a 
-                      href="https://api.whatsapp.com/send?phone=96891900005"
+                      href={regionInfo.social.whatsapp}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-primary hover:text-primary/80 font-semibold underline"
@@ -391,7 +399,7 @@ export const ContactPage: React.FC = () => {
                     <Button
                       type="submit"
                       disabled={isSubmitting}
-                      className="w-full bg-gradient-to-r from-stone-700 to-stone-900 hover:from-stone-800 hover:to-stone-950 text-white font-bold py-6 text-base"
+                      className="w-full bg-linear-to-r from-stone-700 to-stone-900 hover:from-stone-800 hover:to-stone-950 text-white font-bold py-6 text-base"
                     >
                       {isSubmitting ? (
                         <motion.div 
@@ -439,12 +447,18 @@ export const ContactPage: React.FC = () => {
                     className="rounded-lg overflow-hidden h-96 border-2 border-gray-200"
                   >
                     <iframe
-                      src="https://www.openstreetmap.org/export/embed.html?bbox=58.250566,23.613926,58.262566,23.623926&layer=mapnik&marker=23.618926,58.256566"
+                      src={googleMapEmbedSrc}
                       width="100%"
                       height="100%"
                       className="map-iframe"
                       loading="lazy"
-                      title={language === 'ar' ? 'موقع Spirit Hub Cafe' : 'Spirit Hub Cafe Location'}
+                      referrerPolicy="no-referrer-when-downgrade"
+                      allowFullScreen
+                      title={
+                        language === 'ar'
+                          ? `موقع ${regionInfo.aboutContent.companyName.ar}`
+                          : `${regionInfo.aboutContent.companyName.en} Location`
+                      }
                     ></iframe>
                   </motion.div>
                   <motion.div 
@@ -454,13 +468,13 @@ export const ContactPage: React.FC = () => {
                     className="mt-4"
                   >
                     <a
-                      href="https://www.openstreetmap.org/?mlat=23.618926&mlon=58.256566&zoom=16#map=16/23.61893/58.25657"
+                      href={regionInfo.contact.googleMapsUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-2 text-stone-700 hover:text-stone-900 font-semibold transition-colors"
                     >
                       <MapPin className="w-5 h-5" />
-                      {language === 'ar' ? 'عرض خريطة أكبر' : 'View Larger Map'}
+                      {language === 'ar' ? 'عرض على خرائط Google' : 'View on Google Maps'}
                     </a>
                   </motion.div>
                 </CardContent>
@@ -482,7 +496,7 @@ export const ContactPage: React.FC = () => {
                 <CardContent>
                   <div className="grid grid-cols-3 gap-4">
                     <motion.a
-                      href="https://api.whatsapp.com/send?phone=96891900005"
+                      href={regionInfo.social.whatsapp}
                       target="_blank"
                       rel="noopener noreferrer"
                       whileHover={{ scale: 1.05, y: -5 }}
@@ -493,7 +507,7 @@ export const ContactPage: React.FC = () => {
                       <span className="text-sm font-semibold text-center">WhatsApp</span>
                     </motion.a>
                     <motion.a
-                      href="https://instagram.com/spirithubcafe"
+                      href={regionInfo.social.instagram || 'https://instagram.com/spirithubcafe'}
                       target="_blank"
                       rel="noopener noreferrer"
                       whileHover={{ scale: 1.05, y: -5 }}
@@ -501,10 +515,12 @@ export const ContactPage: React.FC = () => {
                       className="border rounded-xl bg-card text-card-foreground p-4 flex flex-col items-center transition-colors shadow-sm hover:border-primary/60 hover:text-primary"
                     >
                       <Instagram className="w-8 h-8 mb-2 text-primary" />
-                      <span className="text-sm font-semibold text-center">@spirithubcafe</span>
+                      <span className="text-sm font-semibold text-center">
+                        {regionInfo.social.instagram?.includes('spirithubcafe.sa') ? '@spirithubcafe.sa' : '@spirithubcafe'}
+                      </span>
                     </motion.a>
                     <motion.a
-                      href="https://facebook.com/spirithubcafe"
+                      href={regionInfo.social.facebook || 'https://facebook.com/spirithubcafe'}
                       target="_blank"
                       rel="noopener noreferrer"
                       whileHover={{ scale: 1.05, y: -5 }}

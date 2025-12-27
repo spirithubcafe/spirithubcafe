@@ -92,14 +92,15 @@ export const REGION_INFO: Record<RegionCode, RegionInfo> = {
         ar: 'الخبر الشمالية'
       },
       workingHours: {
-        en: 'Daily: 7 AM - 12 AM',
+        en: 'Daily: 7am - 12am',
         ar: 'يومياً: 7 صباحاً - 12 منتصف الليل'
       },
       location: {
-        lat: 26.2794,
-        lng: 50.2083
+        lat: 26.2910625,
+        lng: 50.2170625
       },
-      googleMapsUrl: 'https://share.google/HHVf9h6noqtGLaqhE'
+      googleMapsUrl:
+        'https://www.google.com/maps/place/SpiritHub+Roastery+%E2%80%93+%D9%85%D8%AD%D9%85%D8%B5%D8%A9+%D8%B3%D8%A8%D9%8A%D8%B1%D9%8A%D8%AA+%D9%87%D8%A8+%7C+%D8%A7%D9%84%D8%AE%D8%A8%D8%B1/@26.2911111,50.2168019,17z/data=!4m6!3m5!1s0x3e49e9646063cea3:0xea9aae657d1793f5!8m2!3d26.2910625!4d50.2170625!16s%2Fg%2F11ynx_bngw'
     },
     social: {
       facebook: 'https://www.facebook.com/spirithubcafe.sa',
