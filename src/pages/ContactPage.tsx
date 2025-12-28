@@ -30,18 +30,18 @@ export const ContactPage: React.FC = () => {
 
     if (language === 'ar') {
       return {
-        title: `اتصل بنا - ${regionInfo.aboutContent.companyName.ar} | ${cityAr}`,
+        title: `اتصل بنا - اطلب قهوة مختصة | محمصة SpiritHub ${cityAr}`,
         description:
-          `تواصل معنا للطلبات بالجملة، الطلبات الخاصة، التدريب، والشراكات. هاتف، بريد إلكتروني، واتساب، أو زيارة موقعنا في ${cityAr}.`,
+          `تواصل معنا للطلبات، شراء كبسولات وحبوب قهوة مختصة. هاتف، واتساب، زيارة محمصتنا في ${cityAr}. خدمة عملاء مميزة.`,
       };
     }
 
     return {
-      title: `Contact ${regionInfo.aboutContent.companyName.en} | ${cityEn}`,
+      title: `Contact Us - Order Specialty Coffee | SpiritHub Roastery ${cityEn}`,
       description:
-        `Reach us for wholesale orders, special requests, training, and partnerships. Call, email, WhatsApp, or visit us in ${cityEn}.`,
+        `Reach us for orders, buy capsules and specialty coffee beans. Call, WhatsApp, or visit our roastery in ${cityEn}. Expert customer service.`,
     };
-  }, [language, regionInfo.aboutContent.companyName.ar, regionInfo.aboutContent.companyName.en, regionInfo.contact.address.ar, regionInfo.contact.address.en]);
+  }, [language, regionInfo.contact.address.ar, regionInfo.contact.address.en]);
 
   const structuredData = useMemo(
     () => ({
