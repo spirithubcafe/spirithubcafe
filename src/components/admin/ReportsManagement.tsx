@@ -148,7 +148,7 @@ export const ReportsManagement: React.FC = () => {
 
       {/* Hero Metrics - Most Important KPIs */}
       <div className="grid gap-4 md:grid-cols-3">
-        <Card className="border-l-4 border-l-purple-500">
+        <Card className="hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               {isArabic ? 'إجمالي الإيرادات' : 'Total Revenue'}
@@ -165,7 +165,7 @@ export const ReportsManagement: React.FC = () => {
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-blue-500">
+        <Card className="hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               {isArabic ? 'إجمالي الطلبات' : 'Total Orders'}
@@ -182,7 +182,7 @@ export const ReportsManagement: React.FC = () => {
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-green-500">
+        <Card className="hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               {isArabic ? 'المنتجات المباعة' : 'Products Sold'}

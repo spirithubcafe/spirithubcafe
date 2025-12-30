@@ -128,7 +128,7 @@ export const CustomerAnalytics: React.FC<CustomerAnalyticsProps> = ({
               <p className="text-sm">{isArabic ? 'لا توجد بيانات' : 'No data available'}</p>
             </div>
           ) : (
-            <div className="max-h-[350px] overflow-y-auto space-y-2 pr-2">
+            <div className="max-h-[350px] overflow-y-auto space-y-3 pr-2 py-2">
               {analytics.topCustomers.map((customer, index) => (
                 <div
                   key={customer.email}
@@ -136,7 +136,7 @@ export const CustomerAnalytics: React.FC<CustomerAnalyticsProps> = ({
                 >
                   <div className="flex items-start gap-3">
                     {/* Rank Badge */}
-                    <div className="flex-shrink-0">
+                    <div className="shrink-0">
                       <div
                         className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${
                           index === 0
