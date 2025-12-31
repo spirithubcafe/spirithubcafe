@@ -506,7 +506,7 @@ export const CheckoutPage: React.FC = () => {
 
     // Check if user has already used this coupon
     if (user) {
-      const usedCoupons = getUsedCoupons(user.id);
+      const usedCoupons = getUsedCoupons(String(user.id));
       if (usedCoupons.includes(code)) {
         setCouponError(
           isArabic
@@ -576,7 +576,7 @@ export const CheckoutPage: React.FC = () => {
 
     // Mark coupon as used before navigating
     if (appliedCoupon && user) {
-      markCouponAsUsed(user.id, appliedCoupon.code);
+      markCouponAsUsed(String(user.id), appliedCoupon.code);
     }
 
     const order: CheckoutOrder = {
