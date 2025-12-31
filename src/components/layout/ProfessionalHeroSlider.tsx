@@ -95,6 +95,30 @@ export const ProfessionalHeroSlider: React.FC = () => {
   const allSlides: SlideData[] = [
     {
       id: '1',
+      image: '/images/slides/premium-specialty-coffee-roasted-in-oman.webp',
+      title: language === 'ar' ? 'قهوة مختصة فاخرة محمصة في عُمان' : 'PREMIUM SPECIALTY COFFEE ROASTED IN OMAN',
+      subtitle: language === 'ar' ? [
+        'محاصيل محدودة مختارة • مصادر مستدامة • شحن خلال 24 ساعة'
+      ] : [
+        'LIMITED MICRO-LOTS • ETHICALLY SOURCED • SHIPPED WITHIN 24 HOURS'
+      ],
+      description: language === 'ar'
+        ? 'قهوة مختصة فاخرة محمصة بعناية في عُمان'
+        : 'Premium specialty coffee carefully roasted in Oman',
+      stats: [
+        { value: '24H', label: language === 'ar' ? 'شحن سريع' : 'Fast Shipping' },
+        { value: '100%', label: language === 'ar' ? 'أخلاقي' : 'Ethical' },
+        { value: 'AAA', label: language === 'ar' ? 'جودة فاخرة' : 'Premium Quality' }
+      ],
+      features: [
+        language === 'ar' ? 'دفعات محدودة' : 'Limited Micro-Lots',
+        language === 'ar' ? 'مصادر أخلاقية' : 'Ethically Sourced',
+        language === 'ar' ? 'شحن خلال 24 ساعة' : 'Ships in 24 Hours'
+      ],
+      cta: language === 'ar' ? 'تسوّق الأكثر مبيعًا' : 'SHOP BEST SELLERS'
+    },
+    {
+      id: '2',
       image: '/images/slides/slide1.webp',
       title: language === 'ar' ? 'مرحباً بكم في محمصة سبيريت هب للقهوة المختصة' : 'WELCOME TO SPIRITHUB SPECIALTY COFFEE ROASTERY',
       subtitle: language === 'ar' ? (isMobile ? [
@@ -130,7 +154,7 @@ export const ProfessionalHeroSlider: React.FC = () => {
       cta: language === 'ar' ? 'تسوق الآن' : 'SHOP NOW'
     },
     {
-      id: '2',
+      id: '3',
       image: '/images/slides/slide2.webp',
       title: language === 'ar' ? 'فلتر ورقي لتنقيط القهوة على شكل قرص UFO صديق للبيئة' : 'ECO-FRIENDLY UFO DISK DRIP COFFEE PAPER FILTER',
       subtitle: language === 'ar' ? [
@@ -158,7 +182,7 @@ export const ProfessionalHeroSlider: React.FC = () => {
       cta: language === 'ar' ? 'تسوق الآن' : 'SHOP NOW'
     },
     {
-      id: '3',
+      id: '4',
       image: '/images/slides/slide3.webp',
       title: language === 'ar' ? 'اشتري كبسولات قهوة مختصة فاخرة' : 'BUY SPECIALTY COFFEE CAPSULES',
       subtitle: language === 'ar' ? [
@@ -186,7 +210,7 @@ export const ProfessionalHeroSlider: React.FC = () => {
       cta: language === 'ar' ? 'تسوق الآن' : 'SHOP NOW'
     },
     {
-      id: '4',
+      id: '5',
       image: '/images/slides/rwanda-farm-spirithub-coffee.webp',
       title: language === 'ar' ? 'من مصدرٍ مستدام وتحميصٍ يعكس الأصالة' : 'SUSTAINABLY SOURCED, AUTHENTICALLY ROASTED',
       subtitle: language === 'ar' ? [
@@ -214,7 +238,7 @@ export const ProfessionalHeroSlider: React.FC = () => {
       cta: language === 'ar' ? 'تسوق الآن' : 'SHOP NOW'
     },
     {
-      id: '5',
+      id: '6',
       image: '/images/slides/yemen-jabal-nabi-shuaib-spirithub-coffee.webp',
       title: language === 'ar' ? 'متجذرون في اليمن، محمص في سبيريت هب' : 'ROOTED IN YEMEN, ROASTED AT SPIRITHUB',
       subtitle: language === 'ar' ? [
@@ -433,6 +457,24 @@ export const ProfessionalHeroSlider: React.FC = () => {
                   {currentSlideData.cta}
                 </Link>
               </motion.div>
+
+              {/* Additional text below button - only for slide 1 */}
+              {currentSlide === 0 && (
+                <motion.div
+                  className="text-center mt-4"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.8, delay: 0.6 }}
+                  style={{
+                    fontSize: '0.95rem',
+                    color: 'rgba(255, 255, 255, 0.85)',
+                    letterSpacing: '0.1em',
+                    fontWeight: 500
+                  }}
+                >
+                  {language === 'ar' ? 'محمص طازجًا • توصيل سريع في جميع أنحاء عُمان' : 'ROASTED FRESH • FAST DELIVERY ACROSS OMAN'}
+                </motion.div>
+              )}
             </motion.div>
           </div>
         </div>
