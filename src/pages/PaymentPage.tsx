@@ -375,6 +375,10 @@ export const PaymentPage: React.FC = () => {
           shippingMethod: shippingMethodId as 1 | 2 | 3,
           shippingCost: order.totals.shipping,
           
+          // Coupon/Discount Information
+          ...(order.totals.couponCode && { couponCode: order.totals.couponCode }),
+          ...(order.totals.discount && { discountAmount: order.totals.discount }),
+          
           // Gift Information (NEW API FORMAT - only include if gift)
           isGift: order.checkoutDetails.isGift || false,
           ...(order.checkoutDetails.isGift && {
@@ -765,6 +769,16 @@ export const PaymentPage: React.FC = () => {
                         : formatCurrency(order.totals.shipping)}
                     </span>
                   </div>
+                  {order.totals.discount && order.totals.discount > 0 && (
+                    <div className="flex justify-between text-green-600 font-medium">
+                      <span>
+                        {isArabic ? 'الخصم' : 'Discount'}
+                        {order.totals.couponCode && ` (${order.totals.couponCode})`}
+                      </span>
+                      <span>-{formatCurrency(order.totals.discount)}</span>
+                    </div>
+                  )}
+                  <Separator className="my-2" />
                   <div className="flex justify-between text-lg font-semibold text-gray-900">
                     <span>{isArabic ? 'المجموع الكلي' : 'Total'}</span>
                     <span>{formatCurrency(order.totals.total)}</span>

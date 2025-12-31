@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { motion } from 'framer-motion';
-import { Gift, MapPin, Package, Loader2, LogIn } from 'lucide-react';
+import { Gift, MapPin, Package, Loader2, LogIn, Tag } from 'lucide-react';
 import { useApp } from '../hooks/useApp';
 import { useAuth } from '../hooks/useAuth';
 import { useCart } from '../hooks/useCart';
@@ -30,6 +30,58 @@ import {
   type AramexCountriesResponse,
   type AramexCitiesResponse,
 } from '@/services/aramexService';
+
+// Coupon definitions
+interface Coupon {
+  code: string;
+  discountType: 'percentage' | 'fixed';
+  discountValue: number;
+  minOrderAmount?: number;
+  expiryDate?: string; // ISO date string
+  description: { en: string; ar: string };
+}
+
+const AVAILABLE_COUPONS: Coupon[] = [
+  {
+    code: 'THANKS10',
+    discountType: 'percentage',
+    discountValue: 10,
+    description: {
+      en: '10% off your order',
+      ar: 'خصم 10٪ على طلبك',
+    },
+  },
+];
+
+const USED_COUPONS_STORAGE_KEY = 'spirithub_used_coupons';
+
+// Helper functions for coupon tracking
+const getUsedCoupons = (userId: string): string[] => {
+  try {
+    const stored = localStorage.getItem(USED_COUPONS_STORAGE_KEY);
+    if (!stored) return [];
+    const data = JSON.parse(stored);
+    return data[userId] || [];
+  } catch {
+    return [];
+  }
+};
+
+const markCouponAsUsed = (userId: string, couponCode: string) => {
+  try {
+    const stored = localStorage.getItem(USED_COUPONS_STORAGE_KEY);
+    const data = stored ? JSON.parse(stored) : {};
+    if (!data[userId]) {
+      data[userId] = [];
+    }
+    if (!data[userId].includes(couponCode)) {
+      data[userId].push(couponCode);
+    }
+    localStorage.setItem(USED_COUPONS_STORAGE_KEY, JSON.stringify(data));
+  } catch (error) {
+    console.error('Failed to mark coupon as used:', error);
+  }
+};
 
 // Map country ISO2 -> international dialing code for placeholders
 const COUNTRY_CALLING_CODES: Record<string, string> = {
@@ -179,6 +231,12 @@ export const CheckoutPage: React.FC = () => {
   const [aramexRate, setAramexRate] = useState<number | null>(null);
   const [aramexCalculating, setAramexCalculating] = useState(false);
   const [aramexError, setAramexError] = useState<string | null>(null);
+
+  // Coupon state
+  const [couponCode, setCouponCode] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
+  const [couponError, setCouponError] = useState<string | null>(null);
+  const [couponSuccess, setCouponSuccess] = useState<string | null>(null);
 
   // Countries/cities are loaded from backend and cached in localStorage.
   const [countries, setCountries] = useState<CheckoutCountryOption[]>([]);
@@ -401,7 +459,19 @@ export const CheckoutPage: React.FC = () => {
 
   const subtotal = useMemo(() => totalPrice, [totalPrice]);
   const shippingCost = selectedShipping.price;
-  const grandTotal = subtotal + shippingCost;
+  
+  // Calculate discount amount
+  const discountAmount = useMemo(() => {
+    if (!appliedCoupon) return 0;
+    
+    if (appliedCoupon.discountType === 'percentage') {
+      return (subtotal * appliedCoupon.discountValue) / 100;
+    } else {
+      return appliedCoupon.discountValue;
+    }
+  }, [appliedCoupon, subtotal]);
+  
+  const grandTotal = Math.max(0, subtotal - discountAmount + shippingCost);
 
   const aramexBlocked =
     selectedShipping.id === 'aramex' &&
@@ -409,6 +479,78 @@ export const CheckoutPage: React.FC = () => {
     Boolean(effectiveCity) &&
     !aramexCalculating &&
     (aramexRate === null || aramexRate <= 0);
+
+  // Handle coupon application
+  const handleApplyCoupon = () => {
+    setCouponError(null);
+    setCouponSuccess(null);
+
+    const code = couponCode.trim().toUpperCase();
+    if (!code) {
+      setCouponError(isArabic ? 'الرجاء إدخال رمز القسيمة' : 'Please enter a coupon code');
+      return;
+    }
+
+    // Check if already applied
+    if (appliedCoupon?.code === code) {
+      setCouponError(isArabic ? 'القسيمة مطبقة بالفعل' : 'Coupon already applied');
+      return;
+    }
+
+    // Find the coupon
+    const coupon = AVAILABLE_COUPONS.find((c) => c.code === code);
+    if (!coupon) {
+      setCouponError(isArabic ? 'رمز القسيمة غير صالح' : 'Invalid coupon code');
+      return;
+    }
+
+    // Check if user has already used this coupon
+    if (user) {
+      const usedCoupons = getUsedCoupons(user.id);
+      if (usedCoupons.includes(code)) {
+        setCouponError(
+          isArabic
+            ? 'لقد استخدمت هذه القسيمة من قبل'
+            : 'You have already used this coupon'
+        );
+        return;
+      }
+    }
+
+    // Check expiry date
+    if (coupon.expiryDate) {
+      const expiry = new Date(coupon.expiryDate);
+      if (new Date() > expiry) {
+        setCouponError(isArabic ? 'انتهت صلاحية القسيمة' : 'Coupon has expired');
+        return;
+      }
+    }
+
+    // Check minimum order amount
+    if (coupon.minOrderAmount && subtotal < coupon.minOrderAmount) {
+      setCouponError(
+        isArabic
+          ? `الحد الأدنى للطلب ${coupon.minOrderAmount} ريال`
+          : `Minimum order amount is ${coupon.minOrderAmount} OMR`
+      );
+      return;
+    }
+
+    // Apply coupon
+    setAppliedCoupon(coupon);
+    setCouponSuccess(
+      isArabic
+        ? `تم تطبيق القسيمة! ${coupon.description.ar}`
+        : `Coupon applied! ${coupon.description.en}`
+    );
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponCode('');
+    setCouponError(null);
+    setCouponSuccess(null);
+  };
 
   const handleSubmit = (values: CheckoutFormValues) => {
     if (items.length === 0) {
@@ -432,6 +574,11 @@ export const CheckoutPage: React.FC = () => {
       return;
     }
 
+    // Mark coupon as used before navigating
+    if (appliedCoupon && user) {
+      markCouponAsUsed(user.id, appliedCoupon.code);
+    }
+
     const order: CheckoutOrder = {
       id: `SPH-${Date.now()}`,
       createdAt: new Date().toISOString(),
@@ -447,7 +594,9 @@ export const CheckoutPage: React.FC = () => {
       totals: {
         subtotal,
         shipping: shippingCost,
+        discount: discountAmount,
         total: grandTotal,
+        couponCode: appliedCoupon?.code,
       },
       checkoutDetails: {
         fullName: values.fullName,
@@ -1124,6 +1273,86 @@ export const CheckoutPage: React.FC = () => {
                   </CardContent>
                 </Card>
 
+                {/* Coupon Code Card */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-xl font-semibold flex items-center gap-2">
+                      <Tag className="w-5 h-5 text-amber-600" />
+                      {isArabic ? 'رمز الخصم' : 'Discount Coupon'}
+                    </CardTitle>
+                    <CardDescription>
+                      {isArabic
+                        ? 'أدخل رمز القسيمة للحصول على خصم.'
+                        : 'Enter your coupon code to get a discount.'}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {appliedCoupon ? (
+                      <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1">
+                            <p className="font-semibold text-green-800 text-sm mb-1">
+                              {appliedCoupon.code}
+                            </p>
+                            <p className="text-xs text-green-700">
+                              {isArabic
+                                ? appliedCoupon.description.ar
+                                : appliedCoupon.description.en}
+                            </p>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleRemoveCoupon}
+                            className="text-green-800 hover:text-green-900 hover:bg-green-100 h-auto py-1 px-2"
+                          >
+                            {isArabic ? 'إزالة' : 'Remove'}
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex gap-2">
+                          <Input
+                            type="text"
+                            placeholder={isArabic ? 'أدخل رمز القسيمة' : 'Enter coupon code'}
+                            value={couponCode}
+                            onChange={(e) => {
+                              setCouponCode(e.target.value.toUpperCase());
+                              setCouponError(null);
+                              setCouponSuccess(null);
+                            }}
+                            className="flex-1"
+                          />
+                          <Button
+                            type="button"
+                            onClick={handleApplyCoupon}
+                            variant="outline"
+                            className="border-amber-600 text-amber-600 hover:bg-amber-50"
+                          >
+                            {isArabic ? 'تطبيق' : 'Apply'}
+                          </Button>
+                        </div>
+                        {couponError && (
+                          <Alert className="bg-red-50 border-red-200">
+                            <AlertDescription className="text-red-800 text-sm">
+                              {couponError}
+                            </AlertDescription>
+                          </Alert>
+                        )}
+                        {couponSuccess && (
+                          <Alert className="bg-green-50 border-green-200">
+                            <AlertDescription className="text-green-800 text-sm">
+                              {couponSuccess}
+                            </AlertDescription>
+                          </Alert>
+                        )}
+                      </>
+                    )}
+                  </CardContent>
+                </Card>
+
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-xl font-semibold">
@@ -1184,6 +1413,15 @@ export const CheckoutPage: React.FC = () => {
                             : formatCurrency(shippingCost, currencyLabel)}
                         </span>
                       </div>
+                      {appliedCoupon && discountAmount > 0 && (
+                        <div className="flex justify-between text-green-600 font-medium">
+                          <span>
+                            {isArabic ? 'الخصم' : 'Discount'} ({appliedCoupon.code})
+                          </span>
+                          <span>-{formatCurrency(discountAmount, currencyLabel)}</span>
+                        </div>
+                      )}
+                      <Separator className="my-2" />
                       <div className="flex justify-between font-semibold text-lg text-amber-700">
                         <span>{isArabic ? 'الإجمالي' : 'Total'}</span>
                         <span>{formatCurrency(grandTotal, currencyLabel)}</span>

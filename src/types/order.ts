@@ -58,6 +58,10 @@ export interface Order {
   shippingCost: number;
   totalAmount: number;
   
+  // Coupon/Discount (Optional)
+  couponCode?: string;
+  discountAmount?: number;
+  
   // Status
   status: OrderStatus;
   paymentStatus: PaymentStatus;
@@ -209,6 +213,10 @@ export interface CreateOrderDto {
     productVariantId: number;
     quantity: number;
   }[];
+  
+  // Coupon/Discount Information (Optional)
+  couponCode?: string;
+  discountAmount?: number;
   
   // ============================================================================
   // Backward Compatibility (Deprecated - will be removed)
