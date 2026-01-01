@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import { ProductCard } from '../products/ProductCard';
 import { useApp } from '../../hooks/useApp';
 import { Spinner } from '../ui/spinner';
-import { TrendingUp } from 'lucide-react';
 
 export const BestSellers: React.FC = () => {
   const { t } = useTranslation();
@@ -50,7 +49,7 @@ export const BestSellers: React.FC = () => {
       const hasBadge = badgeProducts.some(bp => bp.id === product.id);
       if (hasBadge) return;
 
-      const catId = product.categoryId;
+      const catId = product.categoryId ?? 0;
       if (!categoryMap.has(catId)) {
         categoryMap.set(catId, []);
       }
