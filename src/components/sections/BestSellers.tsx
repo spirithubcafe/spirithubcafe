@@ -49,7 +49,7 @@ export const BestSellers: React.FC = () => {
       const hasBadge = badgeProducts.some(bp => bp.id === product.id);
       if (hasBadge) return;
 
-      const catId = product.categoryId ?? 0;
+      const catId = typeof product.categoryId === 'number' ? product.categoryId : Number(product.categoryId) || 0;
       if (!categoryMap.has(catId)) {
         categoryMap.set(catId, []);
       }
