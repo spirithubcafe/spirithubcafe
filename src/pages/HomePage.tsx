@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { ProfessionalHeroSlider } from '../components/layout/ProfessionalHeroSlider';
 import { SustainabilitySection } from '../components/sections/SustainabilitySection';
 import { FeaturedProducts } from '../components/sections/FeaturedProducts';
+import { BestSellers } from '../components/sections/BestSellers';
 import { CategoriesSection } from '../components/sections/CategoriesSection';
 import { CoffeeSelectionSection } from '../components/sections/CoffeeSelectionSection';
 import { Seo } from '../components/seo/Seo';
@@ -143,6 +144,7 @@ const HomePage: React.FC = () => {
       />
       <h1 className="sr-only">{seoCopy.title}</h1>
       <ProfessionalHeroSlider />
+      <BestSellers />
       <SustainabilitySection />
 
       <FeaturedProducts /> 

@@ -18,6 +18,13 @@
   },
   "sections": {
     "featuredProducts": "المنتجات المميزة",
+    "bestSellers": "الأكثر مبيعاً",
+    "trending": "الأكثر رواجاً",
+    "bestSellersDescription": "أكثر أنواع القهوة المحبوبة، اختيار عشاق القهوة",
+    "viewAllProducts": "اكتشف جميع أنواع القهوة",
+    "bestSellerBadge": "بريميوم",
+    "limitedBadge": "إصدار محدود",
+    "baristasChoiceBadge": "اختيار الباريستا",
     "categories": "الفئات",
     "aboutUs": "من نحن",
     "testimonials": "آراء العملاء"

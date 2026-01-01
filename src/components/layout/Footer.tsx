@@ -204,7 +204,7 @@ export const Footer: React.FC = () => {
                   ))}
                 </div>
                 <p className="text-gray-400 text-xs md:text-sm">
-                  © 2025 SPIRITHUB ROASTERY
+                  © 2026 SPIRITHUB ROASTERY
                 </p>
               </div>
               
