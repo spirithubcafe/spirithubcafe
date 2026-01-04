@@ -436,7 +436,7 @@ export const OrdersManagement: React.FC = () => {
           } else {
             message += `استمتع بقهوتك ☕️`;
           }
-          message += `\n\n⭐ قيمنا:\nhttps://g.page/r/CUuT3c5moDjkEAE/review\n\n🛍️ تسوق مرة أخرى:\nhttps://spirithubcafe.com/products`;
+          message += `\n\n🎁 عرض خاص لك!\nاحصل على خصم 10% على طلبك القادم\nالكود: THANKS10\n\n⭐ قيمنا:\nhttps://g.page/r/CUuT3c5moDjkEAE/review\n\n🛍️ تسوق مرة أخرى:\nhttps://spirithubcafe.com/products`;
           break;
           
         case 'cancelled':
@@ -494,7 +494,7 @@ export const OrdersManagement: React.FC = () => {
           } else {
             message += `Enjoy your coffee ☕️`;
           }
-          message += `\n\n⭐ Review us:\nhttps://g.page/r/CUuT3c5moDjkEAE/review\n\n🛍️ Shop again:\nhttps://spirithubcafe.com/products`;
+          message += `\n\n🎁 Special Offer for You!\nGet 10% off your next order\nCode: THANKS10\n\n⭐ Review us:\nhttps://g.page/r/CUuT3c5moDjkEAE/review\n\n🛍️ Shop again:\nhttps://spirithubcafe.com/products`;
           break;
           
         case 'cancelled':
