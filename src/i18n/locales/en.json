@@ -18,6 +18,13 @@
   },
   "sections": {
     "featuredProducts": "Featured Products",
+    "bestSellers": "BEST SELLERS",
+    "trending": "Trending Now",
+    "bestSellersDescription": "Our most loved coffees, chosen by coffee lovers",
+    "viewAllProducts": "Discover All Coffees",
+    "bestSellerBadge": "Premium",
+    "limitedBadge": "Limited",
+    "baristasChoiceBadge": "Barista's Choice",
     "categories": "Categories",
     "aboutUs": "About Us",
     "testimonials": "Customer Reviews"
