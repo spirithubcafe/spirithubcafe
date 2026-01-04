@@ -323,6 +323,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 
   // Initialize data and language settings - refetch when region changes
   useEffect(() => {
+    // Set loading state when region changes
+    setLoading(true);
     fetchProducts();
     fetchCategories();
     
