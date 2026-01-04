@@ -56,6 +56,7 @@ import { PaymentErrorPage } from './pages/PaymentErrorPage';
 import { RequireAuth } from './components/auth/RequireAuth';
 import { AdminRegionRedirect } from './components/admin/AdminRegionRedirect';
 import { initVisitorTracking } from './lib/visitorTracking';
+import { migrateCartToRegionBased } from './lib/migrateCart';
 import { useEffect } from 'react';
 import './i18n';
 import './App.css';
@@ -67,6 +68,11 @@ function AppContent() {
   // Initialize visitor tracking on app load
   useEffect(() => {
     initVisitorTracking();
+  }, []);
+
+  // Migrate old cart to region-based storage on first load
+  useEffect(() => {
+    migrateCartToRegionBased();
   }, []);
 
   return (
