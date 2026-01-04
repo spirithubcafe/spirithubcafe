@@ -4,6 +4,7 @@ import type { ApiResponse } from '../types/product';
 export interface User {
   id: number;
   username: string;
+  email?: string;
   displayName?: string;
   isActive: boolean;
   lastLoggedIn?: string;

@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../ui/alert-dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '../ui/dropdown-menu';
-import { Users, Plus, Edit, Trash2, Search, Loader2, Key, UserCheck, UserX, MoreHorizontal, ChevronLeft, ChevronRight, Download } from 'lucide-react';
+import { Users, Plus, Edit, Trash2, Search, Loader2, Key, UserCheck, UserX, MoreHorizontal, ChevronLeft, ChevronRight, Download, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { userService } from '../../services/userService';
 import type { User, UserCreateDto, UserUpdateDto, Role, PasswordUpdateDto } from '../../services/userService';
 
@@ -30,6 +30,9 @@ export const UsersManagement: React.FC = () => {
   const [pageSize, setPageSize] = useState(20);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' | 'info' } | null>(null);
+  const [sortColumn, setSortColumn] = useState<'id' | 'username' | 'email' | 'displayName' | 'status' | 'roles' | 'lastLogin' | null>(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [roleFilter, setRoleFilter] = useState<string>('all');
 
   const [formData, setFormData] = useState<UserCreateDto>({
     username: '',
@@ -221,6 +224,84 @@ export const UsersManagement: React.FC = () => {
     }));
   };
 
+  const handleColumnClick = (column: 'id' | 'username' | 'email' | 'displayName' | 'status' | 'roles' | 'lastLogin') => {
+    if (sortColumn === column) {
+      // Toggle sort direction
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      // New column, default to ascending
+      setSortColumn(column);
+      setSortDirection('asc');
+    }
+  };
+
+  const getSortedAndFilteredUsers = () => {
+    let filtered = [...users];
+
+    // Apply role filter
+    if (roleFilter !== 'all') {
+      filtered = filtered.filter(user => 
+        user.roles?.includes(roleFilter)
+      );
+    }
+
+    // Apply sorting
+    if (sortColumn) {
+      filtered.sort((a, b) => {
+        let aValue: any;
+        let bValue: any;
+
+        switch (sortColumn) {
+          case 'id':
+            aValue = a.id;
+            bValue = b.id;
+            break;
+          case 'username':
+            aValue = a.username.toLowerCase();
+            bValue = b.username.toLowerCase();
+            break;
+          case 'email':
+            aValue = (a.email || '').toLowerCase();
+            bValue = (b.email || '').toLowerCase();
+            break;
+          case 'displayName':
+            aValue = (a.displayName || '').toLowerCase();
+            bValue = (b.displayName || '').toLowerCase();
+            break;
+          case 'status':
+            aValue = a.isActive ? 1 : 0;
+            bValue = b.isActive ? 1 : 0;
+            break;
+          case 'roles':
+            aValue = (a.roles || []).join(',').toLowerCase();
+            bValue = (b.roles || []).join(',').toLowerCase();
+            break;
+          case 'lastLogin':
+            aValue = a.lastLoggedIn ? new Date(a.lastLoggedIn).getTime() : 0;
+            bValue = b.lastLoggedIn ? new Date(b.lastLoggedIn).getTime() : 0;
+            break;
+          default:
+            return 0;
+        }
+
+        if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
+        if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+
+    return filtered;
+  };
+
+  const getSortIcon = (column: 'id' | 'username' | 'email' | 'displayName' | 'status' | 'roles' | 'lastLogin') => {
+    if (sortColumn !== column) {
+      return <ArrowUpDown className="h-4 w-4 ml-1 inline" />;
+    }
+    return sortDirection === 'asc' ? 
+      <ArrowUp className="h-4 w-4 ml-1 inline" /> : 
+      <ArrowDown className="h-4 w-4 ml-1 inline" />;
+  };
+
   const exportToExcel = () => {
     try {
       // Create CSV content
@@ -238,7 +319,7 @@ export const UsersManagement: React.FC = () => {
       const rows = users.map(user => [
         user.username,
         user.displayName || '',
-        (user as any).email || '',
+        user.email || '',
         (user as any).phone || '',
         user.isActive ? 'Active' : 'Inactive',
         user.roles?.join(', ') || 'No roles',
@@ -363,6 +444,19 @@ export const UsersManagement: React.FC = () => {
                   <SelectItem value="inactive">Inactive</SelectItem>
                 </SelectContent>
               </Select>
+              <Select value={roleFilter} onValueChange={setRoleFilter}>
+                <SelectTrigger className="w-full sm:w-40">
+                  <SelectValue placeholder="Role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Roles</SelectItem>
+                  {roles.map((role) => (
+                    <SelectItem key={role.id} value={role.name}>
+                      {role.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
@@ -373,7 +467,7 @@ export const UsersManagement: React.FC = () => {
                 No users found
               </div>
             ) : (
-              users.map((user) => (
+              getSortedAndFilteredUsers().map((user) => (
                 <div key={user.id} className="rounded-lg border bg-card p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
@@ -381,6 +475,11 @@ export const UsersManagement: React.FC = () => {
                       <div className="text-xs text-muted-foreground truncate">
                         {user.displayName || '-'}
                       </div>
+                      {user.email && (
+                        <div className="text-xs text-muted-foreground truncate">
+                          {user.email}
+                        </div>
+                      )}
                       <div className="mt-2 flex flex-wrap gap-1">
                         {user.roles && user.roles.length > 0 ? (
                           user.roles.map((role) => (
@@ -473,27 +572,64 @@ export const UsersManagement: React.FC = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>ID</TableHead>
-                  <TableHead>Username</TableHead>
-                  <TableHead>Display Name</TableHead>
-                  <TableHead className="text-center">Status</TableHead>
-                  <TableHead>Roles</TableHead>
-                  <TableHead>Last Login</TableHead>
+                  <TableHead 
+                    className="cursor-pointer hover:bg-muted/50 select-none"
+                    onClick={() => handleColumnClick('id')}
+                  >
+                    ID {getSortIcon('id')}
+                  </TableHead>
+                  <TableHead 
+                    className="cursor-pointer hover:bg-muted/50 select-none"
+                    onClick={() => handleColumnClick('username')}
+                  >
+                    Username {getSortIcon('username')}
+                  </TableHead>
+                  <TableHead 
+                    className="cursor-pointer hover:bg-muted/50 select-none"
+                    onClick={() => handleColumnClick('email')}
+                  >
+                    Email {getSortIcon('email')}
+                  </TableHead>
+                  <TableHead 
+                    className="cursor-pointer hover:bg-muted/50 select-none"
+                    onClick={() => handleColumnClick('displayName')}
+                  >
+                    Display Name {getSortIcon('displayName')}
+                  </TableHead>
+                  <TableHead 
+                    className="text-center cursor-pointer hover:bg-muted/50 select-none"
+                    onClick={() => handleColumnClick('status')}
+                  >
+                    Status {getSortIcon('status')}
+                  </TableHead>
+                  <TableHead 
+                    className="cursor-pointer hover:bg-muted/50 select-none"
+                    onClick={() => handleColumnClick('roles')}
+                  >
+                    Roles {getSortIcon('roles')}
+                  </TableHead>
+                  <TableHead 
+                    className="cursor-pointer hover:bg-muted/50 select-none"
+                    onClick={() => handleColumnClick('lastLogin')}
+                  >
+                    Last Login {getSortIcon('lastLogin')}
+                  </TableHead>
                   <TableHead className="text-center">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {!users || users.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                       No users found
                     </TableCell>
                   </TableRow>
                 ) : (
-                  users.map((user) => (
+                  getSortedAndFilteredUsers().map((user) => (
                     <TableRow key={user.id}>
                       <TableCell>{user.id}</TableCell>
                       <TableCell className="font-medium">{user.username}</TableCell>
+                      <TableCell>{user.email || '-'}</TableCell>
                       <TableCell>{user.displayName || '-'}</TableCell>
                       <TableCell className="text-center">
                         <Badge variant={user.isActive ? "default" : "secondary"}>

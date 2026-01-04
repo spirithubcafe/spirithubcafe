@@ -1,7 +1,7 @@
 {
   "nav": {
     "home": "Home",
-    "products": "Products",
+    "products": "Our Coffee",
     "about": "About",
     "contact": "Contact",
     "cart": "Cart",
@@ -17,7 +17,7 @@
     "cta": "Discover Our Products"
   },
   "sections": {
-    "featuredProducts": "Featured Products",
+    "featuredProducts": "Curated Selection",
     "bestSellers": "BEST SELLERS",
     "trending": "Trending Now",
     "bestSellersDescription": "Our most loved coffees, chosen by coffee lovers",
@@ -140,7 +140,7 @@
     "activeCategories": "Active categories",
     "totalCategories": "Total categories",
     "outOf": "out of",
-    "featuredProducts": "Featured products",
+    "featuredProducts": "Curated Selection",
     "activeProducts": "Active products",
     "activeUsers": "Active users",
     "productsLowStock": "products low on stock",
