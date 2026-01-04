@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useApp } from '../hooks/useApp';
+import { useRegion } from '../hooks/useRegion';
 // import { motion } from 'framer-motion';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -74,6 +75,7 @@ interface UserProfile {
 const ProfilePage: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
   const { language } = useApp();
+  const { currentRegion } = useRegion();
   const navigate = useNavigate();
   const isArabic = language === 'ar';
   
@@ -254,7 +256,7 @@ const ProfilePage: React.FC = () => {
       console.log('❌ User not authenticated or user data missing');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated, user?.id]);
+  }, [isAuthenticated, user?.id, currentRegion.code]);
 
   const loadUserOrders = async () => {
     if (!user?.id) return;

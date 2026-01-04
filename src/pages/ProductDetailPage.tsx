@@ -22,6 +22,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { useApp } from '../hooks/useApp';
+import { useRegion } from '../hooks/useRegion';
 import { productService } from '../services/productService';
 import { getProductImageUrl, handleImageError, resolveProductImageUrls } from '../lib/imageUtils';
 import { generateProductSeoMetadata } from '../lib/productSeoUtils';
@@ -99,6 +100,7 @@ const formatCurrency = (value: number, language: string): string => {
 export const ProductDetailPage = () => {
   const { productId } = useParams<{ productId: string }>();
   const { language } = useApp();
+  const { currentRegion } = useRegion();
   const cart = useCart();
 
   const [state, setState] = useState<LoadState>('idle');
@@ -187,7 +189,7 @@ export const ProductDetailPage = () => {
     return () => {
       isMounted = false;
     };
-  }, [language, productId]);
+  }, [language, productId, currentRegion.code]);
 
   const selectedVariant = useMemo(() => {
     if (!product || !product.variants) {

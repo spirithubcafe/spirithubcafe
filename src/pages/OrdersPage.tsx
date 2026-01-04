@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useApp } from '../hooks/useApp';
+import { useRegion } from '../hooks/useRegion';
 import { orderService } from '../services/orderService';
 import { productService } from '../services/productService';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
@@ -63,6 +64,7 @@ const mapOrderStatus = (backendStatus: string): 'pending' | 'processing' | 'ship
 export const OrdersPage: React.FC = () => {
   const { isAuthenticated, user } = useAuth();
   const { t, language } = useApp();
+  const { currentRegion } = useRegion();
   const navigate = useNavigate();
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -184,7 +186,7 @@ export const OrdersPage: React.FC = () => {
       console.log('❌ User not authenticated');
       setIsLoading(false);
     }
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, user, currentRegion.code]);
 
   if (!isAuthenticated) {
     return (

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useApp } from '../hooks/useApp';
+import { useRegion } from '../hooks/useRegion';
 import { orderService } from '../services/orderService';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -53,6 +54,7 @@ export const OrderDetailPage: React.FC = () => {
   const { orderId } = useParams<{ orderId: string }>();
   const { isAuthenticated, user } = useAuth();
   const { language } = useApp();
+  const { currentRegion } = useRegion();
   const navigate = useNavigate();
   const [order, setOrder] = useState<BackendOrder | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -67,7 +69,7 @@ export const OrderDetailPage: React.FC = () => {
     }
 
     loadOrderDetails();
-  }, [orderId, isAuthenticated]);
+  }, [orderId, isAuthenticated, currentRegion.code]);
 
   const loadOrderDetails = async () => {
     if (!orderId) {
