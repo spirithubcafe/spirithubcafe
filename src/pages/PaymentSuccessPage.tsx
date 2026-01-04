@@ -161,12 +161,12 @@ export const PaymentSuccessPage: React.FC = () => {
                   </div>
                 </motion.div>
 
-                <div className="space-y-2 sm:space-y-3">
+                <div className="space-y-4 sm:space-y-6">
                   <motion.h1
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.3 }}
-                    className="text-3xl sm:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 bg-clip-text text-transparent"
+                    className="text-3xl sm:text-5xl lg:text-6xl font-bold text-green-800"
                   >
                     {isArabic ? 'تم الدفع بنجاح!' : 'Payment Successful!'}
                   </motion.h1>
