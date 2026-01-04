@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
-import { CheckCircle, PackageCheck, Mail, Clock, MapPin, Sparkles, ArrowRight, Package } from 'lucide-react';
+import { CheckCircle, PackageCheck, Mail, Clock, Sparkles, ArrowRight, Package } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { useApp } from '../hooks/useApp';

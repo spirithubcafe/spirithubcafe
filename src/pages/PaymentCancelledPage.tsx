@@ -5,6 +5,8 @@ import { XCircle, ShoppingCart, RefreshCw, ArrowLeft, Package, CreditCard, Info 
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { useApp } from '../hooks/useApp';
+import { useRegion } from '../hooks/useRegion';
+import { getCurrencySymbolByRegion } from '../lib/regionUtils';
 import type { CheckoutOrder } from '../types/checkout';
 import { Seo } from '../components/seo/Seo';
 import { siteMetadata } from '../config/siteMetadata';
@@ -13,7 +15,10 @@ const PENDING_ORDER_STORAGE_KEY = 'spirithub_pending_checkout';
 
 export const PaymentCancelledPage: React.FC = () => {
   const { language } = useApp();
+  const { currentRegion } = useRegion();
   const isArabic = language === 'ar';
+  const currencySymbol = getCurrencySymbolByRegion(currentRegion.code);
+  const currencyCode = currentRegion.currency;
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [order, setOrder] = useState<CheckoutOrder | null>(null);
@@ -215,7 +220,7 @@ export const PaymentCancelledPage: React.FC = () => {
                                 <p className="text-xs text-gray-600">{isArabic ? 'الكمية:' : 'Qty:'} {item.quantity}</p>
                               </div>
                               <p className="font-semibold text-gray-900 ml-4">
-                                {item.price.toFixed(3)} {isArabic ? 'ر.ع.' : 'OMR'}
+                                {item.price.toFixed(3)} {isArabic ? currencySymbol : currencyCode}
                               </p>
                             </div>
                           ))}
@@ -228,7 +233,7 @@ export const PaymentCancelledPage: React.FC = () => {
                             <div className="flex justify-between items-center">
                               <span className="font-bold text-gray-900">{isArabic ? 'الإجمالي:' : 'Total:'}</span>
                               <span className="text-lg font-bold text-orange-600">
-                                {order.totals.total.toFixed(3)} {isArabic ? 'ر.ع.' : 'OMR'}
+                                {order.totals.total.toFixed(3)} {isArabic ? currencySymbol : currencyCode}
                               </span>
                             </div>
                           </div>

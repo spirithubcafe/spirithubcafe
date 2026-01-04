@@ -67,3 +67,36 @@ export const buildAdminPathForRegion = (currentPathname: string, targetRegion: R
 export const persistAdminRegion = (region: RegionCode): void => {
   safeStorage.setItem('spirithub-admin-region', region);
 };
+
+/**
+ * Get currency code based on region
+ * @param region Region code (om or sa)
+ * @returns Currency code (OMR or SAR)
+ */
+export const getCurrencyByRegion = (region: RegionCode): string => {
+  return region === 'sa' ? 'SAR' : 'OMR';
+};
+
+/**
+ * Get currency symbol based on region
+ * @param region Region code (om or sa)
+ * @returns Currency symbol (ر.ع. or ر.س)
+ */
+export const getCurrencySymbolByRegion = (region: RegionCode): string => {
+  return region === 'sa' ? 'ر.س' : 'ر.ع.';
+};
+
+/**
+ * Format price with currency based on region
+ * @param price Price amount
+ * @param region Region code
+ * @param isArabic Display in Arabic format
+ * @returns Formatted price string
+ */
+export const formatPrice = (price: number, region: RegionCode, isArabic: boolean = true): string => {
+  const currency = getCurrencyByRegion(region);
+  const symbol = getCurrencySymbolByRegion(region);
+  return isArabic 
+    ? `${price.toFixed(3)} ${symbol}`
+    : `${price.toFixed(3)} ${currency}`;
+};

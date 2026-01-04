@@ -8,6 +8,7 @@ import { Gift, MapPin, Package, Loader2, LogIn, Tag } from 'lucide-react';
 import { useApp } from '../hooks/useApp';
 import { useAuth } from '../hooks/useAuth';
 import { useCart } from '../hooks/useCart';
+import { useRegion } from '../hooks/useRegion';
 import { PageHeader } from '../components/layout/PageHeader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -24,6 +25,7 @@ import { Seo } from '../components/seo/Seo';
 import { siteMetadata } from '../config/siteMetadata';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { computeShippingMethods, calculateAramexShippingRate, GCC_LOCATIONS } from '@/lib/shipping';
+import { getCurrencySymbolByRegion } from '@/lib/regionUtils';
 import {
   getAramexCountries,
   getAramexCities,
@@ -189,6 +191,7 @@ const looksLikeNetworkError = (msg?: string | null) => {
 export const CheckoutPage: React.FC = () => {
   const { language } = useApp();
   const { isAuthenticated, user } = useAuth();
+  const { currentRegion } = useRegion();
   const isArabic = language === 'ar';
   const navigate = useNavigate();
   const { items, totalPrice } = useCart();
@@ -455,7 +458,9 @@ export const CheckoutPage: React.FC = () => {
     }
   }, [shippingMethods, effectiveCountry, form]);
 
-  const currencyLabel = isArabic ? 'ر.ع' : 'OMR';
+  // Get currency based on current region
+  const currencySymbol = getCurrencySymbolByRegion(currentRegion.code);
+  const currencyLabel = isArabic ? currencySymbol : currentRegion.currency;
 
   const subtotal = useMemo(() => totalPrice, [totalPrice]);
   const shippingCost = selectedShipping.price;

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AppContext, type Product, type Category, type AppContextType } from './AppContextDefinition';
+import { RegionContext } from './RegionContextDefinition';
 import { categoryService } from '../services/categoryService';
 import { productService } from '../services/productService';
 import type { Category as ApiCategory, Product as ApiProduct } from '../types/product';
@@ -21,6 +22,10 @@ interface AppProviderProps {
 
 export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const { i18n, t } = useTranslation();
+  const regionContext = React.useContext(RegionContext);
+  
+  // Get current region code from context (om or sa)
+  const currentRegionCode = regionContext?.currentRegion?.code || 'om';
   
   // Initialize language from localStorage or default to browser language
   const [language, setLanguage] = useState(() => {
@@ -58,8 +63,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 
   // Fetch products from API
   const fetchProducts = useCallback(async () => {
-    // Check cache first
-    const cacheKey = `spirithub_cache_products_${language}`;
+    // Check cache first - include region in cache key
+    const cacheKey = `spirithub_cache_products_${currentRegionCode}_${language}`;
     const cachedData = cacheUtils.get<Product[]>(cacheKey);
 
     let usedCache = false;
@@ -238,12 +243,12 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         setLoading(false);
       }
     }
-  }, [language]);
+  }, [language, currentRegionCode]);
 
   const fetchCategories = useCallback(async (forceRefresh = false) => {
-    // Check cache first for both categories and allCategories
-    const cacheKey = `spirithub_cache_categories_${language}`;
-    const allCategoriesCacheKey = `spirithub_cache_all_categories_${language}`;
+    // Check cache first for both categories and allCategories - include region in cache key
+    const cacheKey = `spirithub_cache_categories_${currentRegionCode}_${language}`;
+    const allCategoriesCacheKey = `spirithub_cache_all_categories_${currentRegionCode}_${language}`;
     const cachedData = cacheUtils.get<Category[]>(cacheKey);
     const cachedAllCategories = cacheUtils.get<Category[]>(allCategoriesCacheKey);
     
@@ -314,9 +319,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  }, [language]);
+  }, [language, currentRegionCode]);
 
-  // Initialize data and language settings
+  // Initialize data and language settings - refetch when region changes
   useEffect(() => {
     fetchProducts();
     fetchCategories();
@@ -342,24 +347,24 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [language]);
+  }, [language, currentRegionCode]); // Add currentRegionCode to dependencies
 
   // Background refresh every hour
   useEffect(() => {
     const REFRESH_INTERVAL = 60 * 60 * 1000; // 1 hour
     
     const refreshData = () => {
-      const productsCacheKey = `spirithub_cache_products_${language}`;
-      const categoriesCacheKey = `spirithub_cache_categories_${language}`;
+      const productsCacheKey = `spirithub_cache_products_${currentRegionCode}_${language}`;
+      const categoriesCacheKey = `spirithub_cache_categories_${currentRegionCode}_${language}`;
       
       // Check if cache is expired and refresh in background
       if (cacheUtils.isExpired(productsCacheKey)) {
-        console.log('🔄 Background refresh: Products');
+        console.log('🔄 Background refresh: Products for', currentRegionCode);
         fetchProducts();
       }
       
       if (cacheUtils.isExpired(categoriesCacheKey)) {
-        console.log('🔄 Background refresh: Categories');
+        console.log('🔄 Background refresh: Categories for', currentRegionCode);
         fetchCategories();
       }
     };
@@ -369,7 +374,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     
     // Cleanup on unmount
     return () => clearInterval(intervalId);
-  }, [language, fetchProducts, fetchCategories]);
+  }, [language, currentRegionCode, fetchProducts, fetchCategories]);
 
   const value: AppContextType = {
     language,

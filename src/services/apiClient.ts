@@ -37,11 +37,17 @@ const createApiClient = (): AxiosInstance => {
     },
   });
 
-  // Request interceptor to add auth token and update baseURL
+  // Request interceptor to add auth token, branch header, and update baseURL
   client.interceptors.request.use(
     (config) => {
       // Dynamically set baseURL based on current region
       config.baseURL = getApiBaseUrl();
+      
+      // Add X-Branch header based on current region
+      const currentRegion = getActiveRegionForApi();
+      if (config.headers) {
+        config.headers['X-Branch'] = currentRegion;
+      }
       
       const token = safeStorage.getItem('accessToken');
       if (token && config.headers) {
@@ -51,6 +57,7 @@ const createApiClient = (): AxiosInstance => {
           console.log('🔑 Sending request with token:', {
             url: config.url,
             baseURL: config.baseURL,
+            branch: currentRegion,
             hasToken: !!token,
             tokenLength: token?.length,
             tokenPreview: token?.substring(0, 50) + '...'
@@ -59,7 +66,7 @@ const createApiClient = (): AxiosInstance => {
       } else {
         // Public endpoints are allowed without a token; logging this as a warning is noisy.
         if (import.meta.env.DEV) {
-          console.debug('⚠️ No access token found for request:', config.url);
+          console.debug('⚠️ No access token found for request:', config.url, '| Branch:', currentRegion);
         }
       }
       return config;
