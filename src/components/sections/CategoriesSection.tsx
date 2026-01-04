@@ -2,13 +2,17 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../hooks/useApp';
+import { useRegion } from '../../hooks/useRegion';
 import { Spinner } from '../ui/spinner';
 import { handleImageError } from '../../lib/imageUtils';
+import { Package } from 'lucide-react';
 
 export const CategoriesSection: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { categories, loading } = useApp();
+  const { currentRegion } = useRegion();
   const navigate = useNavigate();
+  const isArabic = i18n.language === 'ar';
 
   const handleCategoryClick = (categoryId: string) => {
     navigate(`/products?category=${categoryId}`);
@@ -30,8 +34,20 @@ export const CategoriesSection: React.FC = () => {
     return (
       <section className="py-16 bg-white">
         <div className="container mx-auto px-4">
-          <div className="text-center text-gray-500">
-            {t('sections.noCategories') || 'No categories available'}
+          <div className="flex flex-col items-center justify-center min-h-[300px] text-center">
+            <Package className="w-16 h-16 text-gray-300 mb-4" />
+            <h3 className="text-xl font-semibold text-gray-700 mb-2">
+              {isArabic 
+                ? `لا توجد فئات متاحة في ${currentRegion.nameAr}`
+                : `No Categories Available in ${currentRegion.name}`
+              }
+            </h3>
+            <p className="text-gray-500 max-w-md">
+              {isArabic
+                ? 'نعمل على إضافة فئات جديدة قريباً. يرجى التحقق مرة أخرى لاحقاً.'
+                : 'We are working on adding new categories soon. Please check back later.'
+              }
+            </p>
           </div>
         </div>
       </section>
