@@ -103,8 +103,8 @@ export const ProfessionalHeroSlider: React.FC = () => {
         'LIMITED MICRO-LOTS • ETHICALLY SOURCED • SHIPPED WITHIN 24 HOURS'
       ],
       description: language === 'ar'
-        ? 'قهوة مختصة فاخرة محمصة بعناية في عُمان'
-        : 'Premium specialty coffee carefully roasted in Oman',
+        ? 'قهوة مختصة فاخرة محمصة بعناية في عُمان - محمصة سبيريت هب 2026'
+        : 'Premium specialty coffee carefully roasted in Oman - SpiritHub Roastery 2026',
       stats: [
         { value: '24H', label: language === 'ar' ? 'شحن سريع' : 'Fast Shipping' },
         { value: '100%', label: language === 'ar' ? 'أخلاقي' : 'Ethical' },
@@ -139,8 +139,8 @@ export const ProfessionalHeroSlider: React.FC = () => {
         'and provide customers the best coffee beans in Oman and Saudi Arabia.'
       ]),
       description: language === 'ar' 
-        ? 'اطلب الآن أجود أنواع القهوة المحمصة بعناية فائقة من أفضل مزارع القهوة حول العالم'
-        : 'Order now the finest carefully roasted specialty coffee from the best coffee farms around the world',
+        ? 'سبيريت هب محمصة قهوة مختصة في مسقط والخبر - حبوب قهوة محمصة طازجة من أفضل مزارع القهوة حول العالم 2026'
+        : 'SpiritHub specialty coffee roastery in Muscat & Khobar - Fresh roasted coffee beans from best coffee farms worldwide 2026',
       stats: [
         { value: '500+', label: language === 'ar' ? 'عميل سعيد' : 'Happy Customers' },
         { value: '15+', label: language === 'ar' ? 'نوع قهوة' : 'Coffee Types' },

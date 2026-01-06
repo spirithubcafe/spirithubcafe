@@ -258,39 +258,9 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
             </div>
             {/* Product Details */}
             <div className="flex flex-col p-2 md:p-5 space-y-1.5 md:space-y-4">
-              {/* Product Name and Reviews */}
+              {/* Product Name */}
               <div>
-                <h2 className="text-base md:text-2xl font-bold text-gray-900 mb-1 md:mb-2 leading-tight">{product.name}</h2>
-                
-                {/* Reviews */}
-                {averageRating > 0 ? (
-                  <div className="flex items-center gap-2">
-                    <div className="flex gap-0.5">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <Star
-                          key={star}
-                          className={`w-3 h-3 md:w-3.5 md:h-3.5 ${
-                            star <= averageRating
-                              ? 'text-yellow-400 fill-current'
-                              : 'text-gray-300'
-                          }`}
-                        />
-                      ))}
-                    </div>
-                    <span className="text-[10px] md:text-xs text-gray-600">
-                      ({averageRating.toFixed(1)}) · {totalReviews} {isArabic ? 'مراجعة' : 'reviews'}
-                    </span>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <div className="flex gap-0.5">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <Star key={star} className="w-3 h-3 md:w-3.5 md:h-3.5 text-gray-300" />
-                      ))}
-                    </div>
-                    <span className="text-[10px] md:text-xs text-gray-400">(0.0) · 0 {isArabic ? 'مراجعة' : 'reviews'}</span>
-                  </div>
-                )}
+                <h2 className="text-base md:text-2xl font-bold text-gray-900 leading-tight">{product.name}</h2>
               </div>
 
               {/* Coffee Information - Compact Grid on Mobile */}

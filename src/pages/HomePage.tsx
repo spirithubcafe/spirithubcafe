@@ -18,12 +18,12 @@ const HomePage: React.FC = () => {
         ? {
             title: 'SpiritHub Roastery | قهوة مختصة وكبسولات في عمان والسعودية',
             description:
-              'اطلب قهوة مختصة فاخرة، كبسولات، وقهوة فلتر. محمصة بعناية في مسقط عمان • الآن نخدم الخبر، السعودية. اشتري حبوب قهوة مختصة محمصة طازجة يومياً.',
+              '🔥 قهوة مختصة فاخرة، كبسولات، وقهوة فلتر محمصة طازجة 2026 • شحن سريع خلال 24 ساعة في مسقط والخبر • أفضل محمصة قهوة في عُمان والسعودية - اطلب الآن!',
           }
         : {
             title: 'SpiritHub Roastery | Specialty Coffee & Capsules in Oman & Saudi',
             description:
-              'Premium specialty coffee, capsules, and filter brews. Roasted with care in Oman • Now serving Khobar, Saudi Arabia. Buy specialty coffee beans, order capsules online, expert roastery.',
+              '🔥 Premium specialty coffee beans & capsules 2026 • Fresh roasted daily, fast shipping within 24hrs in Muscat & Khobar • Best coffee roastery in Oman & Saudi - Order now!',
           },
     [language]
   );

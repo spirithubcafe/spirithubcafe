@@ -612,40 +612,11 @@ export const ProductDetailPage = () => {
                 <div className="bg-white rounded-xl shadow-lg overflow-hidden">
                   <div className="p-3 md:p-4 lg:p-6">
                     <div className="grid lg:grid-cols-2 gap-4 md:gap-6 lg:gap-8">
-                      {/* Mobile: Product Name & Rating - Show above image */}
+                      {/* Mobile: Product Name & Stock - Show above image */}
                       <div className="lg:hidden mb-3">
                         <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-2">{displayName}</h2>
                         
                         <div className="flex items-center gap-2 md:gap-3">
-                          {averageRating > 0 ? (
-                            <div className="flex items-center gap-1.5 md:gap-2">
-                              <div className="flex gap-0.5">
-                                {[1, 2, 3, 4, 5].map((star) => (
-                                  <Star
-                                    key={star}
-                                    className={`w-3 md:w-3.5 h-3 md:h-3.5 ${
-                                      star <= averageRating
-                                        ? 'text-yellow-400 fill-current'
-                                        : 'text-gray-300'
-                                    }`}
-                                  />
-                                ))}
-                              </div>
-                              <span className="text-[10px] md:text-xs text-gray-600">
-                                ({averageRating.toFixed(1)}) · {totalReviews} {reviewsLabel}
-                              </span>
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-1.5 md:gap-2">
-                              <div className="flex gap-0.5">
-                                {[1, 2, 3, 4, 5].map((star) => (
-                                  <Star key={star} className="w-3 md:w-3.5 h-3 md:h-3.5 text-gray-300" />
-                                ))}
-                              </div>
-                              <span className="text-[10px] md:text-xs text-gray-400">(0.0) · 0 {reviewsLabel}</span>
-                            </div>
-                          )}
-
                           {topInStock ? (
                             <div className="inline-flex items-center gap-1 md:gap-1.5 text-green-600 bg-green-50 px-2 md:px-2.5 py-0.5 md:py-1 rounded-full ml-auto">
                               <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
@@ -744,52 +715,21 @@ export const ProductDetailPage = () => {
 
                       {/* Product Information */}
                       <div className="space-y-3 md:space-y-4">
-                        {/* Product Name & Rating - Desktop only */}
+                        {/* Product Name - Desktop only */}
                         <div className="hidden lg:block">
                           <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">{displayName}</h1>
                           
-                          <div className="flex items-center gap-3">
-                            {averageRating > 0 ? (
-                              <div className="flex items-center gap-2">
-                                <div className="flex gap-0.5">
-                                  {[1, 2, 3, 4, 5].map((star) => (
-                                    <Star
-                                      key={star}
-                                      className={`w-3.5 h-3.5 ${
-                                        star <= averageRating
-                                          ? 'text-yellow-400 fill-current'
-                                          : 'text-gray-300'
-                                      }`}
-                                    />
-                                  ))}
-                                </div>
-                                <span className="text-xs text-gray-600">
-                                  ({averageRating.toFixed(1)}) · {totalReviews} {reviewsLabel}
-                                </span>
-                              </div>
-                            ) : (
-                              <div className="flex items-center gap-2">
-                                <div className="flex gap-0.5">
-                                  {[1, 2, 3, 4, 5].map((star) => (
-                                    <Star key={star} className="w-3.5 h-3.5 text-gray-300" />
-                                  ))}
-                                </div>
-                                <span className="text-xs text-gray-400">(0.0) · 0 {reviewsLabel}</span>
-                              </div>
-                            )}
-
-                            {topInStock ? (
-                              <div className="inline-flex items-center gap-1.5 text-green-600 bg-green-50 px-2.5 py-1 rounded-full ml-auto">
-                                <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
-                                <span className="text-[10px] font-semibold">{stockLabel}</span>
-                              </div>
-                            ) : (
-                              <div className="inline-flex items-center gap-1.5 text-red-700 bg-red-50 px-2.5 py-1 rounded-full ml-auto">
-                                <div className="w-1.5 h-1.5 bg-red-500 rounded-full"></div>
-                                <span className="text-[10px] font-semibold">{language === 'ar' ? 'غير متوفر' : 'Out of Stock'}</span>
-                              </div>
-                            )}
-                          </div>
+                          {topInStock ? (
+                            <div className="inline-flex items-center gap-1.5 text-green-600 bg-green-50 px-2.5 py-1 rounded-full">
+                              <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+                              <span className="text-[10px] font-semibold">{stockLabel}</span>
+                            </div>
+                          ) : (
+                            <div className="inline-flex items-center gap-1.5 text-red-700 bg-red-50 px-2.5 py-1 rounded-full">
+                              <div className="w-1.5 h-1.5 bg-red-500 rounded-full"></div>
+                              <span className="text-[10px] font-semibold">{language === 'ar' ? 'غير متوفر' : 'Out of Stock'}</span>
+                            </div>
+                          )}
                         </div>
 
                         {/* Coffee Information - Compact List */}

@@ -187,6 +187,10 @@ function AppContent() {
         <Route path="/orders" element={<OrdersPage />} />
         <Route path="/order/:orderId" element={<OrderDetailPage />} />
         <Route path="/admin/*" element={<AdminRegionRedirect />} />
+        
+        {/* Redirect old singular /product/ URLs to plural /products/ */}
+        <Route path="/product/:productId" element={<ProductDetailPage />} />
+        
         <Route path="/about" element={<AboutPage />} />
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/faq" element={<FAQPage />} />

@@ -32,14 +32,14 @@ export const ContactPage: React.FC = () => {
       return {
         title: `اتصل بنا - اطلب قهوة مختصة | محمصة SpiritHub ${cityAr}`,
         description:
-          `تواصل معنا للطلبات، شراء كبسولات وحبوب قهوة مختصة. هاتف، واتساب، زيارة محمصتنا في ${cityAr}. خدمة عملاء مميزة.`,
+          `📞 اطلب الآن عبر واتساب! رد فوري على استفساراتك في ${cityAr} 2026. شراء كبسولات وحبوب قهوة مختصة - خدمة عملاء 24/7 - زر محمصتنا اليوم!`,
       };
     }
 
     return {
       title: `Contact Us - Order Specialty Coffee | SpiritHub Roastery ${cityEn}`,
       description:
-        `Reach us for orders, buy capsules and specialty coffee beans. Call, WhatsApp, or visit our roastery in ${cityEn}. Expert customer service.`,
+        `📞 Order via WhatsApp now! Instant replies in ${cityEn} 2026. Buy capsules & specialty coffee beans - 24/7 customer service - Visit our roastery today!`,
     };
   }, [language, regionInfo.contact.address.ar, regionInfo.contact.address.en]);
 

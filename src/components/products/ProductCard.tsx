@@ -174,7 +174,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       <div className="relative overflow-hidden aspect-square">
         <img
           src={product.image}
-          alt={product.name}
+          alt={`${product.name} - ${product.category || 'Specialty Coffee'} | Fresh roasted coffee beans from SpiritHub Roastery Oman`}
           className="w-full h-full object-cover transition-transform duration-500"
           onError={(event) => handleImageError(event, '/images/products/default-product.webp')}
         />
@@ -190,7 +190,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         {isAnimating && (
           <motion.img
             src={product.image}
-            alt={product.name}
+            alt={`Adding ${product.name} to cart`}
             className="absolute inset-0 w-full h-full object-cover pointer-events-none"
             initial={{ scale: 1, opacity: 1, y: 0, x: 0 }}
             animate={{

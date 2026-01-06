@@ -15,12 +15,12 @@ export const AboutPage: React.FC = () => {
         ? {
             title: 'عن محمصة SpiritHub - خبراء قهوة مختصة في عمان والسعودية',
             description:
-              'محمصة قهوة مختصة رائدة في مسقط والخبر. خبراء Q Graders معتمدين، حبوب قهوة فاخرة، تحميص يومي. اطلب الآن كبسولات وحبوب قهوة مختصة محمصة طازجة.',
+              'محمصة قهوة مختصة رائدة منذ 2020 🏆 خبراء Q Graders معتمدين، تحميص يومي، شحن سريع في مسقط والخبر 2026. جودة فاخرة 100% - اكتشف قصة قهوتنا الآن!',
           }
         : {
             title: 'About SpiritHub Roastery - Specialty Coffee Experts Oman & Saudi',
             description:
-              'Leading specialty coffee roastery in Muscat & Khobar. Q Grader certified experts, premium beans, daily roasting. Buy specialty coffee, order capsules online. Serving Oman and Saudi Arabia.',
+              '🏆 Award-winning roastery since 2020 | Q Grader certified experts | Fresh roasted daily in Muscat & Khobar 2026. Premium quality 100% guaranteed - Discover our coffee story now!',
           },
     [language]
   );
