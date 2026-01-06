@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ShoppingCart, X, Coffee, Star, Loader2, Flame, RotateCw, BarChart3, MapPin, Wheat, ClipboardList } from 'lucide-react';
+import { ShoppingCart, X, Coffee, Loader2, Flame, RotateCw, BarChart3, MapPin, Wheat, ClipboardList } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Dialog,
@@ -107,8 +107,6 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
   };
 
   const currentPrice = resolvePrice();
-  const averageRating = fullProduct?.averageRating ?? 0;
-  const totalReviews = fullProduct?.reviewCount ?? 0;
 
   const handleAddToCart = () => {
     // Runtime guard: prevent adding an out-of-stock variant

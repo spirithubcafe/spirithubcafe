@@ -8,7 +8,6 @@ import {
   Coffee,
   Loader2,
   ShoppingCart,
-  Star,
   Flame,
   RotateCw,
   BarChart3,
@@ -387,8 +386,6 @@ export const ProductDetailPage = () => {
     }
     return product.isActive;
   })();
-  const averageRating = product?.averageRating ?? 0;
-  const totalReviews = product?.reviewCount ?? 0;
   const tastingNotes = language === 'ar' 
     ? (product?.tastingNotesAr ?? product?.notesAr ?? '') 
     : (product?.tastingNotes ?? product?.notes ?? '');
@@ -484,8 +481,6 @@ export const ProductDetailPage = () => {
     language === 'ar' ? 'الكمية' : 'Quantity';
   const chooseOptionLabel =
     language === 'ar' ? 'اختر الخيار' : 'Choose an option';
-  const reviewsLabel =
-    language === 'ar' ? 'مراجعات' : 'reviews';
   const stockLabel =
     language === 'ar' ? 'متوفر في المخزون' : 'In Stock';
 
