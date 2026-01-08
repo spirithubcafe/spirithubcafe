@@ -168,13 +168,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 
       const workers = Array.from({ length: Math.min(limit, candidates.length) }, () => runWorker());
       Promise.all(workers).then(() => {
-        // After enrichment, preload a few of the resolved images to avoid flicker.
-        // (This is intentionally small to stay safe on memory/network.)
-        if (!isMountedRef.current || requestId !== latestProductsRequestRef.current) return;
-        preloadImagesBestEffort(
-          candidates.map((p) => p.image),
-          12,
-        );
+        // After enrichment, we *could* preload updated images, but the `candidates`
+        // array contains the pre-enrichment (default) URLs. Preloading defaults is
+        // pointless and can waste bandwidth.
       }).catch(() => {
         // ignore
       });
@@ -219,6 +215,10 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     const cacheKey = `spirithub_cache_products_${currentRegionCode}_${language}`;
     const cachedData = cacheUtils.get<Product[]>(cacheKey);
 
+    // If we loaded from cache, keep a reference so we can preserve non-default images
+    // when the fresh list payload doesn't include image paths.
+    let cachedProductsToMerge: Product[] | null = null;
+
     let usedCache = false;
     
     if (cachedData) {
@@ -236,6 +236,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
           (p) => (p as unknown as { isActive?: boolean }).isActive !== false,
         );
         setProducts(filteredCached);
+        cachedProductsToMerge = filteredCached;
         usedCache = true;
         // Continue to fetch fresh data in the background to pick up admin changes (activation/deactivation).
       }
@@ -346,22 +347,34 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       if (!isMountedRef.current || requestId !== latestProductsRequestRef.current) {
         return;
       }
-      
-      setProducts(transformedProducts);
+
+      // IMPORTANT: The list endpoint may not include image paths. If we already have
+      // a non-default image from cache, do not replace it with the default placeholder.
+      const preserveImageFromCache = (incoming: Product): Product => {
+        if (!cachedProductsToMerge) return incoming;
+        if (!isDefaultProductImageUrl(incoming.image)) return incoming;
+        const prev = cachedProductsToMerge.find((p) => p.id === incoming.id);
+        if (!prev) return incoming;
+        if (isDefaultProductImageUrl(prev.image)) return incoming;
+        return { ...incoming, image: prev.image };
+      };
+
+      const mergedProducts = transformedProducts.map(preserveImageFromCache);
+      setProducts(mergedProducts);
       
       // Debug: Check if slugs are present
       console.log('🔍 Products with slugs:', transformedProducts.slice(0, 3).map(p => ({ id: p.id, name: p.name, slug: p.slug })));
       
       // Cache the data
-      cacheUtils.set(cacheKey, transformedProducts);
+      cacheUtils.set(cacheKey, mergedProducts);
 
       // If the list payload doesn't include images, enrich them in background (concurrency-limited).
       // This restores “main image in list” without going back to N+1 heavy detail fetches upfront.
-      enrichProductImagesInBackground(transformedProducts, cacheKey, requestId);
+      enrichProductImagesInBackground(mergedProducts, cacheKey, requestId);
       
       // Preload a small, safe subset of images in background.
       preloadImagesBestEffort(
-        transformedProducts.map((p) => p.image),
+        mergedProducts.map((p) => p.image),
         24,
       );
       
