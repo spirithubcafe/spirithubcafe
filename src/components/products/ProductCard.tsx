@@ -16,7 +16,7 @@ interface ProductCardProps {
 }
 
 export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation();
   const navigate = useNavigate();
   const isArabic = i18n.language === 'ar';
   const { addToCart, openCart } = useCart();
@@ -181,8 +181,24 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         
         {/* Sale Badge */}
         {hasDiscount && (
-          <div className={`absolute top-2 bg-gradient-to-r from-red-500 to-red-600 text-white px-2.5 py-1 rounded-full text-xs font-bold shadow-lg z-10 ${isArabic ? 'right-2' : 'left-2'}`}>
+          <div className={`absolute top-2 bg-linear-to-r from-red-500 to-red-600 text-white px-2.5 py-1 rounded-full text-xs font-bold shadow-lg z-10 ${isArabic ? 'right-2' : 'left-2'}`}>
             {isArabic ? `تخفيض ${discountPercent}٪` : `SALE ${discountPercent}%`}
+          </div>
+        )}
+
+        {/* Premium / Limited badges */}
+        {(product.isPremium || product.isLimited) && (
+          <div className={`absolute bottom-2 z-10 flex flex-col gap-1 ${isArabic ? 'right-2 items-end' : 'left-2 items-start'}`}>
+            {product.isPremium ? (
+              <div className="bg-linear-to-r from-orange-500 to-red-500 text-white px-2.5 py-1 rounded-full text-xs font-bold shadow-lg">
+                {t('sections.bestSellerBadge')}
+              </div>
+            ) : null}
+            {product.isLimited ? (
+              <div className="bg-linear-to-r from-purple-500 to-pink-500 text-white px-2.5 py-1 rounded-full text-xs font-bold shadow-lg">
+                {t('sections.limitedBadge')}
+              </div>
+            ) : null}
           </div>
         )}
         
@@ -204,21 +220,21 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         )}
         
         {/* Gradient Overlay on hover */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
       </div>
 
       {/* Product Content - Compact */}
       <CardContent className="p-3 pt-1">
         {/* Category Badge */}
         {product.category && (
-          <div className="mb-1 min-h-[1.5rem] flex items-center">
+          <div className="mb-1 min-h-6 flex items-center">
             <span className="inline-block px-2 py-0.5 text-xs font-medium text-amber-700 bg-amber-50 rounded-full border border-amber-200 whitespace-nowrap overflow-hidden text-ellipsis max-w-full">
               {product.category}
             </span>
           </div>
         )}
         
-        <h3 className="font-bold text-sm text-gray-900 line-clamp-2 mb-1 group-hover:text-amber-600 transition-colors min-h-[2.5rem]">
+        <h3 className="font-bold text-sm text-gray-900 line-clamp-2 mb-1 group-hover:text-amber-600 transition-colors min-h-10">
           {product.name}
         </h3>
         <p className="text-xs text-amber-600 mb-2 line-clamp-1">

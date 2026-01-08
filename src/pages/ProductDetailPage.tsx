@@ -99,7 +99,7 @@ const formatCurrency = (value: number, language: string): string => {
 
 export const ProductDetailPage = () => {
   const { productId } = useParams<{ productId: string }>();
-  const { language } = useApp();
+  const { language, t } = useApp();
   const { currentRegion } = useRegion();
   const cart = useCart();
 
@@ -679,9 +679,23 @@ export const ProductDetailPage = () => {
                             }
                           />
 
-                          {product.isFeatured ? (
-                            <div className="absolute top-3 ltr:left-3 rtl:right-3 bg-linear-to-r from-yellow-400 to-orange-400 text-white px-3 py-1.5 rounded-full text-sm font-bold shadow-md">
-                              {language === 'ar' ? 'مميز' : 'Featured'}
+                          {(product.isFeatured || product.isPremium || product.isLimited) ? (
+                            <div className="absolute top-3 ltr:left-3 rtl:right-3 flex flex-col gap-2">
+                              {product.isFeatured ? (
+                                <div className="bg-linear-to-r from-yellow-400 to-orange-400 text-white px-3 py-1.5 rounded-full text-sm font-bold shadow-md w-fit">
+                                  {language === 'ar' ? 'مميز' : 'Featured'}
+                                </div>
+                              ) : null}
+                              {product.isPremium ? (
+                                <div className="bg-linear-to-r from-orange-500 to-red-500 text-white px-3 py-1.5 rounded-full text-sm font-bold shadow-md w-fit">
+                                  {t('sections.bestSellerBadge')}
+                                </div>
+                              ) : null}
+                              {product.isLimited ? (
+                                <div className="bg-linear-to-r from-purple-500 to-pink-500 text-white px-3 py-1.5 rounded-full text-sm font-bold shadow-md w-fit">
+                                  {t('sections.limitedBadge')}
+                                </div>
+                              ) : null}
                             </div>
                           ) : null}
 

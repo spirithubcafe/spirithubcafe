@@ -18,6 +18,8 @@ export interface Product {
   isActive: boolean;
   isDigital: boolean;
   isFeatured: boolean;
+  isLimited?: boolean;
+  isPremium?: boolean;
   isOrganic: boolean;
   isFairTrade: boolean;
   imageAlt?: string;
@@ -75,6 +77,8 @@ export interface ProductCreateUpdateDto {
   isActive: boolean;
   isDigital: boolean;
   isFeatured: boolean;
+  isLimited: boolean;
+  isPremium: boolean;
   isOrganic: boolean;
   isFairTrade: boolean;
   imageAlt?: string;

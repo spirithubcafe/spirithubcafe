@@ -4,6 +4,8 @@ export interface Product {
   id: string;
   slug?: string;
   isActive?: boolean;
+  isLimited?: boolean;
+  isPremium?: boolean;
   name: string;
   nameAr?: string;
   description: string;

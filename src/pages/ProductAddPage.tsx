@@ -38,6 +38,8 @@ const mapProductToFormData = (product: Product): ProductCreateUpdateDto => ({
   isActive: product.isActive,
   isDigital: product.isDigital,
   isFeatured: product.isFeatured,
+  isLimited: product.isLimited ?? false,
+  isPremium: product.isPremium ?? false,
   isOrganic: product.isOrganic,
   isFairTrade: product.isFairTrade,
   imageAlt: product.imageAlt || '',
@@ -108,6 +110,8 @@ export const ProductAddPage: React.FC<ProductFormPageProps> = ({
     isActive: true,
     isDigital: false,
     isFeatured: false,
+    isLimited: false,
+    isPremium: false,
     isOrganic: false,
     isFairTrade: false,
     imageAlt: '',
@@ -407,7 +411,7 @@ export const ProductAddPage: React.FC<ProductFormPageProps> = ({
                         skuAvailable && 'border-green-500'
                       )}
                     />
-                    <div className="flex min-h-[1.25rem] items-center gap-2 text-xs">
+                    <div className="flex min-h-5 items-center gap-2 text-xs">
                       {checkingSku && <Loader2 className="h-3 w-3 animate-spin" />}
                       {skuMessage && (
                         <span className={cn(
@@ -476,7 +480,7 @@ export const ProductAddPage: React.FC<ProductFormPageProps> = ({
                       slugAvailable && 'border-green-500'
                     )}
                   />
-                  <div className="flex min-h-[1.25rem] items-center gap-2 text-xs">
+                  <div className="flex min-h-5 items-center gap-2 text-xs">
                     {checkingSlug && <Loader2 className="h-3 w-3 animate-spin" />}
                     {slugMessage && (
                       <span className={cn(
@@ -563,6 +567,22 @@ export const ProductAddPage: React.FC<ProductFormPageProps> = ({
                       onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isFeatured: checked }))}
                     />
                     <Label htmlFor="isFeatured">{t('admin.products.featured')}</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="isPremium"
+                      checked={formData.isPremium}
+                      onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isPremium: checked }))}
+                    />
+                    <Label htmlFor="isPremium">{t('admin.products.premium')}</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="isLimited"
+                      checked={formData.isLimited}
+                      onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isLimited: checked }))}
+                    />
+                    <Label htmlFor="isLimited">{t('admin.products.limited')}</Label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Switch

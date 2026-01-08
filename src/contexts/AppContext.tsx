@@ -321,10 +321,26 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
                 (p.category as unknown as { nameAr?: string } | undefined)?.nameAr ||
                 fallbackCategoryNameAr;
 
+          const isLimited =
+            typeof (p as unknown as { isLimited?: unknown }).isLimited === 'boolean'
+              ? ((p as unknown as { isLimited: boolean }).isLimited as boolean)
+              : typeof (p as unknown as { IsLimited?: unknown }).IsLimited === 'boolean'
+                ? ((p as unknown as { IsLimited: boolean }).IsLimited as boolean)
+                : undefined;
+
+          const isPremium =
+            typeof (p as unknown as { isPremium?: unknown }).isPremium === 'boolean'
+              ? ((p as unknown as { isPremium: boolean }).isPremium as boolean)
+              : typeof (p as unknown as { IsPremium?: unknown }).IsPremium === 'boolean'
+                ? ((p as unknown as { IsPremium: boolean }).IsPremium as boolean)
+                : undefined;
+
           return {
             id: p.id.toString(),
             slug: p.slug,
             isActive: (p as unknown as { isActive?: boolean }).isActive,
+            isLimited,
+            isPremium,
             name: language === 'ar' && p.nameAr ? p.nameAr : p.name,
             nameAr: p.nameAr,
             description:
@@ -352,11 +368,25 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       // a non-default image from cache, do not replace it with the default placeholder.
       const preserveImageFromCache = (incoming: Product): Product => {
         if (!cachedProductsToMerge) return incoming;
-        if (!isDefaultProductImageUrl(incoming.image)) return incoming;
         const prev = cachedProductsToMerge.find((p) => p.id === incoming.id);
         if (!prev) return incoming;
-        if (isDefaultProductImageUrl(prev.image)) return incoming;
-        return { ...incoming, image: prev.image };
+
+        const next: Product = { ...incoming };
+
+        // Preserve image when list payload doesn't include image paths.
+        if (isDefaultProductImageUrl(next.image) && !isDefaultProductImageUrl(prev.image)) {
+          next.image = prev.image;
+        }
+
+        // Preserve flags when list payload omits them.
+        if (next.isLimited === undefined && prev.isLimited !== undefined) {
+          next.isLimited = prev.isLimited;
+        }
+        if (next.isPremium === undefined && prev.isPremium !== undefined) {
+          next.isPremium = prev.isPremium;
+        }
+
+        return next;
       };
 
       const mergedProducts = transformedProducts.map(preserveImageFromCache);

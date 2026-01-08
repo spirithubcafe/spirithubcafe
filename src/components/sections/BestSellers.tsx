@@ -8,26 +8,33 @@ export const BestSellers: React.FC = () => {
   const { t } = useTranslation();
   const { products, loading } = useApp();
 
+  // Prefer real flags from API. If flags are missing (older payload/cache), fall back
+  // to the previous heuristic so we don't regress the UI.
+  const heuristicHasPremium = (product: any) =>
+    product.name?.toLowerCase().includes('floral symphony') ||
+    product.name?.toLowerCase().includes('ombligon') ||
+    product.nameAr?.includes('سيمفونية') ||
+    product.nameAr?.includes('أومبليجون');
+
+  const heuristicHasLimited = (product: any) =>
+    product.name?.toLowerCase().includes('aroma nativo') ||
+    product.name?.toLowerCase().includes('aji') ||
+    product.name?.toLowerCase().includes('lorena') ||
+    product.nameAr?.includes('أروما ناتيفو') ||
+    product.nameAr?.includes('آجي') ||
+    product.nameAr?.includes('ياسي') ||
+    product.nameAr?.includes('لورينا');
+
+  const hasPremiumBadge = (product: any) =>
+    product.isPremium === true ? true : product.isPremium === false ? false : heuristicHasPremium(product);
+
+  const hasLimitedBadge = (product: any) =>
+    product.isLimited === true ? true : product.isLimited === false ? false : heuristicHasLimited(product);
+
   const bestSellerProducts = useMemo(() => {
     const items = (products || []).filter((p) => p.isActive !== false);
 
     if (items.length === 0) return [];
-
-    // Helper to check if product has a badge (language-agnostic)
-    const hasPremiumBadge = (product: any) => 
-      product.name?.toLowerCase().includes('floral symphony') ||
-      product.name?.toLowerCase().includes('ombligon') ||
-      product.nameAr?.includes('سيمفونية') ||
-      product.nameAr?.includes('أومبليجون');
-
-    const hasLimitedBadge = (product: any) =>
-      product.name?.toLowerCase().includes('aroma nativo') ||
-      product.name?.toLowerCase().includes('aji') ||
-      product.name?.toLowerCase().includes('lorena') ||
-      product.nameAr?.includes('أروما ناتيفو') ||
-      product.nameAr?.includes('آجي') ||
-      product.nameAr?.includes('ياسي') ||
-      product.nameAr?.includes('لورينا');
 
     // Define which products should have badges
     const badgeProducts = items.filter(product => 
@@ -126,18 +133,8 @@ export const BestSellers: React.FC = () => {
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 sm:gap-6">
           {bestSellerProducts.map((product, index) => {
             // Determine badge type for this product
-            const hasPremium = product.name?.toLowerCase().includes('floral symphony') ||
-              product.name?.toLowerCase().includes('ombligon') ||
-              product.nameAr?.includes('سيمفونية') ||
-              product.nameAr?.includes('أومبليجون');
-
-            const hasLimited = product.name?.toLowerCase().includes('aroma nativo') ||
-              product.name?.toLowerCase().includes('aji') ||
-              product.name?.toLowerCase().includes('lorena') ||
-              product.nameAr?.includes('أروما ناتيفو') ||
-              product.nameAr?.includes('آجي') ||
-              product.nameAr?.includes('ياسي') ||
-              product.nameAr?.includes('لورينا');
+            const hasPremium = hasPremiumBadge(product);
+            const hasLimited = hasLimitedBadge(product);
 
             return (
               <div
@@ -148,17 +145,17 @@ export const BestSellers: React.FC = () => {
                 <div className="relative">
                   {/* Badge */}
                   {hasPremium && (
-                    <div className="absolute bottom-54 left-0 z-20 bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs font-bold px-2 py-1 rounded-tr-lg">
+                    <div className="absolute bottom-54 left-0 z-20 bg-linear-to-r from-orange-500 to-red-500 text-white text-xs font-bold px-2 py-1 rounded-tr-lg">
                       {t('sections.bestSellerBadge')}
                     </div>
                   )}
                   {hasLimited && (
-                    <div className="absolute bottom-54 left-0 z-20 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-bold px-2 py-1 rounded-tr-lg">
+                    <div className="absolute bottom-54 left-0 z-20 bg-linear-to-r from-purple-500 to-pink-500 text-white text-xs font-bold px-2 py-1 rounded-tr-lg">
                       {t('sections.limitedBadge')}
                     </div>
                   )}
                   {index === 2 && !hasPremium && !hasLimited && (
-                    <div className="absolute bottom-54 left-0 z-20 bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-xs font-bold px-2 py-1 rounded-tr-lg">
+                    <div className="absolute bottom-54 left-0 z-20 bg-linear-to-r from-blue-500 to-indigo-500 text-white text-xs font-bold px-2 py-1 rounded-tr-lg">
                       {t('sections.baristasChoiceBadge')}
                     </div>
                   )}

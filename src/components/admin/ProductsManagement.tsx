@@ -15,7 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../ui/alert-dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '../ui/dropdown-menu';
-import { Package, Plus, Edit, Trash2, Eye, EyeOff, Search, Loader2, Star, Coffee, Layers, Image as ImageIcon, Crown, Upload, X, ChevronLeft, ChevronRight, MoreHorizontal } from 'lucide-react';
+import { Package, Plus, Edit, Trash2, Eye, EyeOff, Search, Loader2, Star, Coffee, Layers, Image as ImageIcon, Crown, Sparkles, Upload, X, ChevronLeft, ChevronRight, MoreHorizontal } from 'lucide-react';
 import { productService, productVariantService, productImageService } from '../../services/productService';
 import { fileUploadService } from '../../services/fileUploadService';
 import { categoryService } from '../../services/categoryService';
@@ -138,6 +138,8 @@ export const ProductsManagement: React.FC = () => {
     isActive: true,
     isDigital: false,
     isFeatured: false,
+    isLimited: false,
+    isPremium: false,
     isOrganic: false,
     isFairTrade: false,
     imageAlt: '',
@@ -393,6 +395,8 @@ export const ProductsManagement: React.FC = () => {
         isActive: !product.isActive,
         isDigital: product.isDigital,
         isFeatured: product.isFeatured,
+        isLimited: product.isLimited ?? false,
+        isPremium: product.isPremium ?? false,
         isOrganic: product.isOrganic,
         isFairTrade: product.isFairTrade,
         displayOrder: product.displayOrder,
@@ -424,6 +428,8 @@ export const ProductsManagement: React.FC = () => {
         isActive: product.isActive,
         isDigital: product.isDigital,
         isFeatured: !product.isFeatured,
+        isLimited: product.isLimited ?? false,
+        isPremium: product.isPremium ?? false,
         isOrganic: product.isOrganic,
         isFairTrade: product.isFairTrade,
         displayOrder: product.displayOrder,
@@ -438,6 +444,24 @@ export const ProductsManagement: React.FC = () => {
       loadData();
     } catch (error) {
       console.error('Error toggling product featured status:', error);
+    }
+  };
+
+  const handleTogglePremium = async (productId: number) => {
+    try {
+      await productService.togglePremium(productId);
+      loadData();
+    } catch (error) {
+      console.error('Error toggling product premium status:', error);
+    }
+  };
+
+  const handleToggleLimited = async (productId: number) => {
+    try {
+      await productService.toggleLimited(productId);
+      loadData();
+    } catch (error) {
+      console.error('Error toggling product limited status:', error);
     }
   };
 
@@ -918,6 +942,20 @@ export const ProductsManagement: React.FC = () => {
                           <span className="sr-only">{t('featured')}</span>
                         </Badge>
                       ) : null}
+                      {product.isPremium ? (
+                        <Badge variant="outline" className="border-orange-500/40 text-orange-600">
+                          <Crown className="h-3 w-3 sm:mr-1" />
+                          <span className="hidden sm:inline">{t('admin.products.premium')}</span>
+                          <span className="sr-only">{t('admin.products.premium')}</span>
+                        </Badge>
+                      ) : null}
+                      {product.isLimited ? (
+                        <Badge variant="outline" className="border-purple-500/40 text-purple-600">
+                          <Sparkles className="h-3 w-3 sm:mr-1" />
+                          <span className="hidden sm:inline">{t('admin.products.limited')}</span>
+                          <span className="sr-only">{t('admin.products.limited')}</span>
+                        </Badge>
+                      ) : null}
                     </div>
                   </div>
 
@@ -963,6 +1001,14 @@ export const ProductsManagement: React.FC = () => {
                         <DropdownMenuItem onSelect={() => handleToggleFeatured(product.id)}>
                           <Star className={cn('h-4 w-4', product.isFeatured && 'text-yellow-500 fill-current')} />
                           {t('featured')}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => handleTogglePremium(product.id)}>
+                          <Crown className={cn('h-4 w-4', product.isPremium && 'text-orange-500')} />
+                          {t('admin.products.premium')}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => handleToggleLimited(product.id)}>
+                          <Sparkles className={cn('h-4 w-4', product.isLimited && 'text-purple-500')} />
+                          {t('admin.products.limited')}
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <AlertDialog>
@@ -1094,6 +1140,14 @@ export const ProductsManagement: React.FC = () => {
                           <DropdownMenuItem onSelect={() => handleToggleFeatured(product.id)}>
                             <Star className={cn('h-4 w-4', product.isFeatured && 'text-yellow-500 fill-current')} />
                             {t('featured')}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => handleTogglePremium(product.id)}>
+                            <Crown className={cn('h-4 w-4', product.isPremium && 'text-orange-500')} />
+                            {t('admin.products.premium')}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => handleToggleLimited(product.id)}>
+                            <Sparkles className={cn('h-4 w-4', product.isLimited && 'text-purple-500')} />
+                            {t('admin.products.limited')}
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <AlertDialog>
@@ -1298,6 +1352,22 @@ export const ProductsManagement: React.FC = () => {
                     onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isFeatured: checked }))}
                   />
                   <Label htmlFor="isFeatured">{t('admin.products.featured')}</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="isPremium"
+                    checked={formData.isPremium}
+                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isPremium: checked }))}
+                  />
+                  <Label htmlFor="isPremium">{t('admin.products.premium')}</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="isLimited"
+                    checked={formData.isLimited}
+                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isLimited: checked }))}
+                  />
+                  <Label htmlFor="isLimited">{t('admin.products.limited')}</Label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Switch

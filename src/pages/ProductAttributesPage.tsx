@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Switch } from '../components/ui/switch';
 import { Badge } from '../components/ui/badge';
-import { Loader2, Save, ArrowLeft, Coffee, Mountain, Leaf, Award, Info, Globe2 } from 'lucide-react';
+import { Loader2, Save, ArrowLeft, Coffee, Mountain, Leaf, Award, Info, Globe2, Crown, Sparkles } from 'lucide-react';
 import { useApp } from '../hooks/useApp';
 import { productService } from '../services/productService';
 import type { Product } from '../types/product';
@@ -57,6 +57,8 @@ export const ProductAttributesPage: React.FC = () => {
     // Certifications
     isOrganic: false,
     isFairTrade: false,
+    isPremium: false,
+    isLimited: false,
     
     // Notes
     notes: '',
@@ -98,6 +100,8 @@ export const ProductAttributesPage: React.FC = () => {
           brewingInstructionsAr: productData.brewingInstructionsAr || '',
           isOrganic: productData.isOrganic || false,
           isFairTrade: productData.isFairTrade || false,
+          isPremium: productData.isPremium || false,
+          isLimited: productData.isLimited || false,
           notes: productData.notes || '',
           notesAr: productData.notesAr || '',
         });
@@ -120,6 +124,8 @@ export const ProductAttributesPage: React.FC = () => {
       const updateData = {
         ...product,
         ...formData,
+        isLimited: formData.isLimited ?? product.isLimited ?? false,
+        isPremium: formData.isPremium ?? product.isPremium ?? false,
       };
       await productService.update(parseInt(id), updateData);
       navigate('/admin/products');
@@ -659,6 +665,44 @@ export const ProductAttributesPage: React.FC = () => {
                         id="isFairTrade"
                         checked={formData.isFairTrade}
                         onCheckedChange={(checked) => updateField('isFairTrade', checked)}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between p-4 border rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <Crown className="w-5 h-5 text-orange-600" />
+                        <div>
+                          <Label htmlFor="isPremium" className="text-base font-semibold">
+                            {isArabic ? 'بريميوم' : 'Premium'}
+                          </Label>
+                          <p className="text-sm text-gray-500">
+                            {isArabic ? 'منتج بريميوم' : 'Premium product'}
+                          </p>
+                        </div>
+                      </div>
+                      <Switch
+                        id="isPremium"
+                        checked={formData.isPremium}
+                        onCheckedChange={(checked) => updateField('isPremium', checked)}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between p-4 border rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <Sparkles className="w-5 h-5 text-purple-600" />
+                        <div>
+                          <Label htmlFor="isLimited" className="text-base font-semibold">
+                            {isArabic ? 'إصدار محدود' : 'Limited'}
+                          </Label>
+                          <p className="text-sm text-gray-500">
+                            {isArabic ? 'منتج إصدار محدود' : 'Limited edition product'}
+                          </p>
+                        </div>
+                      </div>
+                      <Switch
+                        id="isLimited"
+                        checked={formData.isLimited}
+                        onCheckedChange={(checked) => updateField('isLimited', checked)}
                       />
                     </div>
                   </CardContent>

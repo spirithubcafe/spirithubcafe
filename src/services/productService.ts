@@ -241,6 +241,26 @@ export const productService = {
   },
 
   /**
+   * Toggle product premium status (Admin only)
+   * @param id Product ID
+   * @returns Promise with updated product
+   */
+  togglePremium: async (id: number): Promise<Product> => {
+    const response = await http.patch<Product>(`/api/Products/${id}/toggle-premium`);
+    return response.data;
+  },
+
+  /**
+   * Toggle product limited status (Admin only)
+   * @param id Product ID
+   * @returns Promise with updated product
+   */
+  toggleLimited: async (id: number): Promise<Product> => {
+    const response = await http.patch<Product>(`/api/Products/${id}/toggle-limited`);
+    return response.data;
+  },
+
+  /**
    * Update product display order (Admin only)
    * @param id Product ID
    * @param displayOrder New display order
