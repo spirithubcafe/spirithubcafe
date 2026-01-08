@@ -4,9 +4,9 @@ import { useTranslation } from 'react-i18next';
 import { AppContext, type Product, type Category, type AppContextType } from './AppContextDefinition';
 import { RegionContext } from './RegionContextDefinition';
 import { categoryService } from '../services/categoryService';
-import { productService } from '../services/productService';
+import { productService, productImageService } from '../services/productService';
 import type { Category as ApiCategory, Product as ApiProduct } from '../types/product';
-import { getCategoryImageUrl, resolveProductImageUrl } from '../lib/imageUtils';
+import { getCategoryImageUrl, getProductImageUrl, resolveProductImageUrl } from '../lib/imageUtils';
 import { cacheUtils, imageCacheUtils } from '../lib/cacheUtils';
 import { safeStorage } from '../lib/safeStorage';
 
@@ -39,6 +39,149 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Prevent state updates after unmount + guard against stale async responses.
+  const isMountedRef = React.useRef(true);
+  const latestProductsRequestRef = React.useRef(0);
+  const latestCategoriesRequestRef = React.useRef(0);
+  const pendingRequestsRef = React.useRef(0);
+  const productsCacheSaveTimerRef = React.useRef<number | null>(null);
+
+  const beginLoading = useCallback(() => {
+    pendingRequestsRef.current += 1;
+    setLoading(true);
+  }, []);
+
+  const endLoading = useCallback(() => {
+    pendingRequestsRef.current = Math.max(0, pendingRequestsRef.current - 1);
+    if (pendingRequestsRef.current === 0) {
+      setLoading(false);
+    }
+  }, []);
+
+  const shouldSkipImagePreload = useCallback((): boolean => {
+    if (typeof window === 'undefined') return true;
+    const nav = window.navigator as unknown as { connection?: { saveData?: boolean; effectiveType?: string } };
+    const effectiveType = nav.connection?.effectiveType || '';
+    if (nav.connection?.saveData) return true;
+    // Avoid aggressive preloading on slow networks.
+    return /(^|\b)(slow-2g|2g)(\b|$)/.test(effectiveType);
+  }, []);
+
+  const preloadImagesBestEffort = useCallback((urls: string[], maxToPreload: number) => {
+    if (shouldSkipImagePreload()) return;
+
+    const unique = Array.from(new Set(urls.filter(Boolean)));
+    const candidates = unique
+      .filter((url) => !imageCacheUtils.isImageCached(url))
+      .slice(0, maxToPreload);
+
+    if (candidates.length === 0) return;
+
+    // Stagger preloads to avoid network/memory spikes.
+    const chunkSize = 8;
+    const chunks: string[][] = [];
+    for (let i = 0; i < candidates.length; i += chunkSize) {
+      chunks.push(candidates.slice(i, i + chunkSize));
+    }
+
+    const run = async () => {
+      for (const chunk of chunks) {
+        // Sequential chunks: reduces peak connections and memory.
+        await imageCacheUtils.preloadImages(chunk);
+        imageCacheUtils.markImagesCached(chunk);
+      }
+    };
+
+    // Use idle time if possible.
+    const w = window as unknown as { requestIdleCallback?: (cb: () => void) => void };
+    if (typeof w.requestIdleCallback === 'function') {
+      w.requestIdleCallback(() => {
+        run().catch(() => {
+          // best-effort
+        });
+      });
+    } else {
+      window.setTimeout(() => {
+        run().catch(() => {
+          // best-effort
+        });
+      }, 0);
+    }
+  }, [shouldSkipImagePreload]);
+
+  const scheduleProductsCacheSave = useCallback((cacheKey: string, data: Product[]) => {
+    if (typeof window === 'undefined') return;
+    if (productsCacheSaveTimerRef.current) {
+      window.clearTimeout(productsCacheSaveTimerRef.current);
+    }
+    productsCacheSaveTimerRef.current = window.setTimeout(() => {
+      cacheUtils.set(cacheKey, data);
+      productsCacheSaveTimerRef.current = null;
+    }, 800);
+  }, []);
+
+  const isDefaultProductImageUrl = (url: string | undefined): boolean => {
+    if (!url) return true;
+    return url.includes('default-product.webp');
+  };
+
+  const enrichProductImagesInBackground = useCallback(
+    (items: Product[], cacheKey: string, requestId: number) => {
+      // Only enrich when we likely have placeholder images.
+      const candidates = items
+        .filter((p) => isDefaultProductImageUrl(p.image))
+        .slice(0, 80); // safety cap
+
+      if (candidates.length === 0) return;
+
+      const limit = 4;
+      let index = 0;
+
+      const runWorker = async () => {
+        while (index < candidates.length) {
+          const current = candidates[index++];
+          const numericId = Number(current.id);
+          if (!Number.isFinite(numericId)) continue;
+
+          try {
+            const images = await productImageService.getByProduct(numericId);
+            const main = images.find((img) => img.isMain) ?? images[0];
+            const imagePath = main?.imagePath;
+            if (!imagePath) continue;
+
+            const resolved = getProductImageUrl(imagePath);
+
+            if (!isMountedRef.current || requestId !== latestProductsRequestRef.current) {
+              return;
+            }
+
+            setProducts((prev) => {
+              const next = prev.map((p) => (p.id === current.id ? { ...p, image: resolved } : p));
+              scheduleProductsCacheSave(cacheKey, next);
+              return next;
+            });
+          } catch {
+            // best-effort
+          }
+        }
+      };
+
+      const workers = Array.from({ length: Math.min(limit, candidates.length) }, () => runWorker());
+      Promise.all(workers).then(() => {
+        // After enrichment, preload a few of the resolved images to avoid flicker.
+        // (This is intentionally small to stay safe on memory/network.)
+        if (!isMountedRef.current || requestId !== latestProductsRequestRef.current) return;
+        preloadImagesBestEffort(
+          candidates.map((p) => p.image),
+          12,
+        );
+      }).catch(() => {
+        // ignore
+      });
+    },
+    [preloadImagesBestEffort, scheduleProductsCacheSave],
+  );
+
   // Toggle language between Arabic and English
   const toggleLanguage = () => {
     const newLang = language === 'ar' ? 'en' : 'ar';
@@ -61,8 +204,17 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     document.documentElement.lang = language;
   }, [i18n, language]); // Include dependencies
 
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
   // Fetch products from API
   const fetchProducts = useCallback(async () => {
+    const requestId = ++latestProductsRequestRef.current;
+
     // Check cache first - include region in cache key
     const cacheKey = `spirithub_cache_products_${currentRegionCode}_${language}`;
     const cachedData = cacheUtils.get<Product[]>(cacheKey);
@@ -84,14 +236,13 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
           (p) => (p as unknown as { isActive?: boolean }).isActive !== false,
         );
         setProducts(filteredCached);
-        setLoading(false);
         usedCache = true;
         // Continue to fetch fresh data in the background to pick up admin changes (activation/deactivation).
       }
     }
 
     if (!usedCache) {
-      setLoading(true);
+      beginLoading();
     }
     setError(null);
     
@@ -109,112 +260,92 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         (prod) => (prod as unknown as { isActive?: boolean }).isActive !== false,
       );
 
+      // IMPORTANT: Avoid N+1 calls (getById per product). Use list payload for initial rendering.
       type ApiProductExtended = ApiProduct & Record<string, unknown>;
-      type ProductPricing = {
-        minPrice?: number;
-        price?: number;
-      };
+      type ProductPricing = { minPrice?: number; price?: number };
 
-      const transformedProductsRaw = await Promise.all(
-        activeProducts.map(async (prod) => {
-          const baseProduct = prod as ApiProductExtended;
-          const basePricing = baseProduct as ProductPricing;
-          const initialMinPrice =
-            typeof basePricing.minPrice === 'number' ? basePricing.minPrice : undefined;
-          const initialPrice =
-            typeof basePricing.price === 'number' ? basePricing.price : undefined;
+      const transformedProducts: Product[] = activeProducts
+        .map((prod) => {
+          const p = prod as ApiProductExtended;
+          const pricing = p as ProductPricing;
+          let price = (typeof pricing.minPrice === 'number' ? pricing.minPrice : undefined) ??
+            (typeof pricing.price === 'number' ? pricing.price : undefined) ??
+            0;
 
-          let price = initialMinPrice ?? initialPrice ?? 0;
-          let fullProduct: ApiProductExtended = baseProduct;
-
-          try {
-            // Fetch detailed product to access images, variants, etc.
-            fullProduct = (await productService.getById(prod.id)) as ApiProductExtended;
-
-            if (Array.isArray(fullProduct.variants) && fullProduct.variants.length > 0) {
-              const activeVariants = fullProduct.variants.filter(
-                (variant) => (variant as unknown as { isActive?: boolean }).isActive !== false,
-              );
-              const defaultVariant =
-                activeVariants.find((variant) => variant.isDefault) ?? activeVariants[0];
-
-              if (defaultVariant) {
-                const variantPrice =
-                  defaultVariant.discountPrice ?? defaultVariant.price ?? price;
-                price = variantPrice;
-              }
-            } else {
-              const fullPricing = fullProduct as ProductPricing;
-              const fullMinPrice =
-                typeof fullPricing.minPrice === 'number' ? fullPricing.minPrice : undefined;
-              const fullBasePrice =
-                typeof fullPricing.price === 'number' ? fullPricing.price : undefined;
-              price = fullMinPrice ?? fullBasePrice ?? price;
+          // If variants are already present in the list payload, prefer default variant price.
+          if (Array.isArray(p.variants) && p.variants.length > 0) {
+            const activeVariants = p.variants.filter(
+              (variant) => (variant as unknown as { isActive?: boolean }).isActive !== false,
+            );
+            const defaultVariant =
+              activeVariants.find((variant) => (variant as unknown as { isDefault?: boolean }).isDefault) ??
+              activeVariants[0];
+            if (defaultVariant) {
+              const variantPrice =
+                (defaultVariant as unknown as { discountPrice?: number; price?: number }).discountPrice ??
+                (defaultVariant as unknown as { price?: number }).price ??
+                price;
+              price = typeof variantPrice === 'number' ? variantPrice : price;
             }
-          } catch {
-            // Silently fail - use fallback product data
           }
 
-          // Business rule: never show inactive products publicly.
-          if ((fullProduct as unknown as { isActive?: boolean }).isActive === false) {
-            return null;
-          }
-
-          const imageUrl = resolveProductImageUrl(fullProduct);
+          const imageUrl = resolveProductImageUrl(p);
           const fallbackCategoryName =
-            (typeof fullProduct.categoryName === 'string' && fullProduct.categoryName) || '';
+            (typeof p.categoryName === 'string' && p.categoryName) || '';
           const fallbackCategoryNameAr =
-            (typeof fullProduct.categoryNameAr === 'string' && fullProduct.categoryNameAr) || '';
+            (typeof p.categoryNameAr === 'string' && p.categoryNameAr) || '';
+
           const numericCategoryId =
-            (typeof fullProduct.categoryId === 'number' ? fullProduct.categoryId : undefined) ??
-            (fullProduct.category && typeof fullProduct.category.id === 'number'
-              ? fullProduct.category.id
+            (typeof p.categoryId === 'number' ? p.categoryId : undefined) ??
+            (p.category && typeof (p.category as unknown as { id?: number }).id === 'number'
+              ? (p.category as unknown as { id: number }).id
               : undefined);
           const categoryIdString =
             numericCategoryId !== undefined ? String(numericCategoryId) : undefined;
+
           const categorySlug =
-            (fullProduct.category && typeof fullProduct.category.slug === 'string'
-              ? fullProduct.category.slug
+            (p.category && typeof (p.category as unknown as { slug?: string }).slug === 'string'
+              ? (p.category as unknown as { slug: string }).slug
               : undefined) ??
-            (typeof fullProduct.categorySlug === 'string' ? fullProduct.categorySlug : undefined);
+            (typeof p.categorySlug === 'string' ? p.categorySlug : undefined);
+
           const categoryName =
             language === 'ar'
-              ? fullProduct.category?.nameAr ||
+              ? (p.category as unknown as { nameAr?: string; name?: string } | undefined)?.nameAr ||
                 fallbackCategoryNameAr ||
-                fullProduct.category?.name ||
+                (p.category as unknown as { name?: string } | undefined)?.name ||
                 fallbackCategoryName
-              : fullProduct.category?.name ||
+              : (p.category as unknown as { name?: string; nameAr?: string } | undefined)?.name ||
                 fallbackCategoryName ||
-                fullProduct.category?.nameAr ||
+                (p.category as unknown as { nameAr?: string } | undefined)?.nameAr ||
                 fallbackCategoryNameAr;
 
           return {
-            id: fullProduct.id.toString(),
-            slug: fullProduct.slug,
-            isActive: (fullProduct as unknown as { isActive?: boolean }).isActive,
-            name: language === 'ar' && fullProduct.nameAr ? fullProduct.nameAr : fullProduct.name,
-            nameAr: fullProduct.nameAr,
+            id: p.id.toString(),
+            slug: p.slug,
+            isActive: (p as unknown as { isActive?: boolean }).isActive,
+            name: language === 'ar' && p.nameAr ? p.nameAr : p.name,
+            nameAr: p.nameAr,
             description:
-              language === 'ar' && fullProduct.descriptionAr
-                ? fullProduct.descriptionAr
-                : fullProduct.description || '',
-            descriptionAr: fullProduct.descriptionAr,
+              language === 'ar' && p.descriptionAr ? p.descriptionAr : p.description || '',
+            descriptionAr: p.descriptionAr,
             price,
             image: imageUrl,
             categoryId: categoryIdString,
             categorySlug,
             category: categoryName,
             tastingNotes:
-              language === 'ar' && fullProduct.tastingNotesAr
-                ? fullProduct.tastingNotesAr
-                : fullProduct.tastingNotes,
-            tastingNotesAr: fullProduct.tastingNotesAr,
-            featured: fullProduct.isFeatured,
+              language === 'ar' && p.tastingNotesAr ? p.tastingNotesAr : p.tastingNotes,
+            tastingNotesAr: p.tastingNotesAr,
+            featured: p.isFeatured,
           };
-        }),
-      );
+        })
+        .filter((p) => (p as unknown as { isActive?: boolean }).isActive !== false);
 
-      const transformedProducts = transformedProductsRaw.filter(Boolean) as Product[];
+      // Ignore stale responses (region/language switched while request in flight).
+      if (!isMountedRef.current || requestId !== latestProductsRequestRef.current) {
+        return;
+      }
       
       setProducts(transformedProducts);
       
@@ -223,13 +354,16 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       
       // Cache the data
       cacheUtils.set(cacheKey, transformedProducts);
+
+      // If the list payload doesn't include images, enrich them in background (concurrency-limited).
+      // This restores “main image in list” without going back to N+1 heavy detail fetches upfront.
+      enrichProductImagesInBackground(transformedProducts, cacheKey, requestId);
       
-      // Preload and cache images in background
-      const imageUrls = transformedProducts.map(p => p.image);
-      imageCacheUtils.preloadImages(imageUrls).then(() => {
-        imageCacheUtils.markImagesCached(imageUrls);
-        console.log('✅ Product images cached');
-      });
+      // Preload a small, safe subset of images in background.
+      preloadImagesBestEffort(
+        transformedProducts.map((p) => p.image),
+        24,
+      );
       
       console.log('✅ Products fetched and cached for', language);
     } catch (err) {
@@ -240,12 +374,14 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       }
     } finally {
       if (!usedCache) {
-        setLoading(false);
+        endLoading();
       }
     }
-  }, [language, currentRegionCode]);
+  }, [language, currentRegionCode, beginLoading, endLoading, preloadImagesBestEffort]);
 
   const fetchCategories = useCallback(async (forceRefresh = false) => {
+    const requestId = ++latestCategoriesRequestRef.current;
+
     // Check cache first for both categories and allCategories - include region in cache key
     const cacheKey = `spirithub_cache_categories_${currentRegionCode}_${language}`;
     const allCategoriesCacheKey = `spirithub_cache_all_categories_${currentRegionCode}_${language}`;
@@ -256,11 +392,10 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       console.log('📦 Using cached categories for', language);
       setCategories(cachedData);
       setAllCategories(cachedAllCategories);
-      setLoading(false);
       return;
     }
 
-    setLoading(true);
+    beginLoading();
     setError(null);
     
     try {
@@ -295,6 +430,11 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         const apiCat = sortedCategories[index];
         return apiCat.isDisplayedOnHomepage;
       });
+
+      // Ignore stale responses (region/language switched while request in flight).
+      if (!isMountedRef.current || requestId !== latestCategoriesRequestRef.current) {
+        return;
+      }
       
       setCategories(homepageCategories);
       setAllCategories(transformedAllCategories);
@@ -303,12 +443,11 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       cacheUtils.set(cacheKey, homepageCategories);
       cacheUtils.set(allCategoriesCacheKey, transformedAllCategories);
       
-      // Preload and cache images in background
-      const imageUrls = transformedAllCategories.map(c => c.image);
-      imageCacheUtils.preloadImages(imageUrls).then(() => {
-        imageCacheUtils.markImagesCached(imageUrls);
-        console.log('✅ Category images cached');
-      });
+      // Preload a small, safe subset of images in background.
+      preloadImagesBestEffort(
+        transformedAllCategories.map((c) => c.image),
+        24,
+      );
       
       console.log('✅ Categories fetched and cached for', language);
     } catch (err) {
@@ -317,14 +456,12 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       setCategories([]);
       setAllCategories([]);
     } finally {
-      setLoading(false);
+      endLoading();
     }
-  }, [language, currentRegionCode]);
+  }, [language, currentRegionCode, beginLoading, endLoading, preloadImagesBestEffort]);
 
   // Initialize data and language settings - refetch when region changes
   useEffect(() => {
-    // Set loading state when region changes
-    setLoading(true);
     fetchProducts();
     fetchCategories();
     
@@ -336,9 +473,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     const handleKeyPress = (e: KeyboardEvent) => {
       if (e.ctrlKey && e.shiftKey && e.key === 'C') {
         console.log('🗑️ Clearing all SpiritHub cache...');
-        const keys = Object.keys(localStorage).filter(key => key.startsWith('spirithub_cache'));
-        keys.forEach(key => localStorage.removeItem(key));
-        console.log(`✅ Cleared ${keys.length} cache entries`);
+        cacheUtils.clear();
+        console.log('✅ Cleared cache entries');
         console.log('🔄 Refreshing data...');
         fetchProducts();
         fetchCategories(true);

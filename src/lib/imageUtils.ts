@@ -19,6 +19,19 @@ export const getApiBaseUrl = (): string => {
   return import.meta.env.VITE_API_BASE_URL_OM || import.meta.env.VITE_API_BASE_URL || 'https://api.spirithubcafe.com';
 };
 
+const resolvePublicAssetUrl = (assetPath: string): string => {
+  // Ensure public assets work even when the app is served from a non-root base (e.g., /om/).
+  const baseUrl = (import.meta.env.BASE_URL || '/').toString();
+  const normalisedBase = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
+
+  if (!assetPath.startsWith('/')) {
+    return `${normalisedBase}${assetPath}`;
+  }
+
+  // Turn "/images/x" into "<BASE_URL>images/x"
+  return `${normalisedBase}${assetPath.slice(1)}`;
+};
+
 /**
  * Build full image URL from API path
  * @param imagePath - Image path from API (e.g., "/images/categories/coffee.webp")
@@ -29,7 +42,14 @@ export const getImageUrl = (
   imagePath?: string | null,
   fallbackImage: string = '/images/slides/slide1.webp',
 ): string => {
-  const pathToUse = imagePath && imagePath.trim() !== '' ? imagePath.trim() : fallbackImage;
+  const hasExplicitPath = typeof imagePath === 'string' && imagePath.trim() !== '';
+  const pathToUse = hasExplicitPath ? imagePath.trim() : fallbackImage;
+
+  // If we're using a fallback asset, keep it as a local (frontend) path.
+  // Many fallbacks live in Vite public/ and should NOT be fetched from the API domain.
+  if (!hasExplicitPath) {
+    return resolvePublicAssetUrl(pathToUse);
+  }
 
   // If image path is already a full URL, return it as is
   if (pathToUse.startsWith('http://') || pathToUse.startsWith('https://')) {
@@ -58,7 +78,9 @@ export const getProductImageUrl = (imagePath?: string | null): string => {
  * @returns Full image URL with fallback
  */
 export const getCategoryImageUrl = (imagePath?: string | null): string => {
-  return getImageUrl(imagePath, '/images/categories/default-category.webp');
+  // Note: `public/images/categories/` might be empty in some deployments.
+  // Use a known existing fallback asset.
+  return getImageUrl(imagePath, '/images/header.webp');
 };
 
 /**
@@ -70,9 +92,18 @@ export const handleImageError = (
   fallbackUrl: string = '/images/slides/slide1.webp',
 ) => {
   const target = event.currentTarget;
-  if (target.src !== fallbackUrl) {
-    target.src = fallbackUrl;
+
+  // Prevent infinite error loops (target.src becomes an absolute URL, while fallbackUrl is often relative).
+  if (target.dataset.fallbackApplied === 'true') {
+    return;
   }
+
+  target.dataset.fallbackApplied = 'true';
+  const resolvedFallback = fallbackUrl.startsWith('http://') || fallbackUrl.startsWith('https://')
+    ? fallbackUrl
+    : resolvePublicAssetUrl(fallbackUrl);
+
+  target.src = resolvedFallback;
 };
 
 const IMAGE_KEYS = [
