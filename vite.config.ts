@@ -96,6 +96,9 @@ export default defineConfig({
     react(),
     tailwindcss(),
     VitePWA({
+      // We register the Service Worker explicitly in `src/main.tsx`.
+      // Disabling auto injection avoids accidental double-registration.
+      injectRegister: null,
       registerType: "autoUpdate",
       includeAssets: [
         "images/logo/logo-light.png",
@@ -104,7 +107,8 @@ export default defineConfig({
       ],
       manifest: pwaManifest,
       workbox: {
-        globPatterns: ["**/*.{js,css,html,ico,png,svg,webp}"],
+        // Precache common build assets. Runtime caching (below) handles API images.
+        globPatterns: ["**/*.{js,css,html,ico,png,jpg,jpeg,gif,svg,webp,woff,woff2,ttf,eot,json,webmanifest}"],
         navigateFallback: "/index.html",
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024, // 3 MB
         runtimeCaching: [
@@ -124,12 +128,29 @@ export default defineConfig({
             }
           },
           {
+            // Product images from our API domain: keep a bigger cache with longer retention.
+            urlPattern: ({ url, request }) =>
+              request.destination === "image" && url.origin === "https://api.spirithubcafe.com",
+            handler: "CacheFirst",
+            options: {
+              cacheName: "api-image-cache",
+              expiration: {
+                maxEntries: 400,
+                maxAgeSeconds: 60 * 60 * 24 * 90 // 90 days
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
+          },
+          {
+            // All other images (site assets, CDN images, etc.)
             urlPattern: ({ request }) => request.destination === "image",
             handler: "CacheFirst",
             options: {
               cacheName: "image-cache",
               expiration: {
-                maxEntries: 60,
+                maxEntries: 200,
                 maxAgeSeconds: 60 * 60 * 24 * 30
               },
               cacheableResponse: {

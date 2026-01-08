@@ -16,6 +16,9 @@ import './index.css'
 import './styles/color-overrides.css'
 import App from './App.tsx'
 
+// PWA / Service Worker registration (Workbox runtime caching includes images)
+import { registerSW } from 'virtual:pwa-register'
+
 // Overlayscrollbars: import styles and init globally so all scrollable areas get styled
 import 'overlayscrollbars/styles/overlayscrollbars.css'
 import { OverlayScrollbars } from 'overlayscrollbars'
@@ -67,3 +70,19 @@ if (typeof window !== 'undefined') {
 
 // Also attach Overlayscrollbars to all modals, drawers and overflow containers dynamically
 initScrollbars()
+
+// Register Service Worker as early as possible so image requests can be served from cache.
+// Note: The SW will start controlling the page after the first load + refresh.
+if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+  try {
+    registerSW({
+      immediate: true,
+      onRegisterError(error: unknown) {
+        // Keep this quiet in production—just a breadcrumb for debugging.
+        console.warn('[PWA] Service Worker registration failed:', error)
+      }
+    })
+  } catch (error) {
+    console.warn('[PWA] Service Worker registration threw:', error)
+  }
+}

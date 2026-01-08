@@ -151,7 +151,38 @@ if (!isProduction) {
   const prodStaticRoot = fs.existsSync(path.resolve(__dirname, 'dist'))
     ? path.resolve(__dirname, 'dist')
     : path.resolve(__dirname, 'dist/client');
-  app.use(base, express.static(prodStaticRoot, { index: false }));
+
+  // NOTE: Express' default static caching is conservative. For a SPA/PWA we want:
+  // - long-lived caching for fingerprinted assets + images
+  // - no-cache for the service worker file so updates can ship immediately
+  const ONE_YEAR_MS = 1000 * 60 * 60 * 24 * 365;
+  app.use(
+    base,
+    express.static(prodStaticRoot, {
+      index: false,
+      maxAge: ONE_YEAR_MS,
+      immutable: true,
+      setHeaders(res, filePath) {
+        const fp = (filePath || '').replace(/\\/g, '/');
+
+        // Service worker should not be cached, otherwise updates can get stuck.
+        if (fp.endsWith('/sw.js') || fp.endsWith('/service-worker.js')) {
+          res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+          return;
+        }
+
+        // Keep the manifest reasonably fresh (so installs update). If you'd like, we can
+        // make this even shorter, but 1 hour is a good balance.
+        if (fp.endsWith('/manifest.webmanifest')) {
+          res.setHeader('Cache-Control', 'public, max-age=3600');
+          return;
+        }
+
+        // Everything else: cache hard.
+        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      }
+    })
+  );
 }
 
 // Serve HTML - Catch all routes with meta tag injection
