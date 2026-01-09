@@ -55,6 +55,75 @@ export const OrdersManagement: React.FC = () => {
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
+  // Cache pickup values client-side because some API payloads can be stale / omit pickup fields.
+  // This prevents the UI from briefly showing pickup then reverting to "not registered".
+  type PickupCacheEntry = { pickupReference?: string; pickupGUID?: string; updatedAt: number };
+  const pickupCacheRef = useRef<Map<number, PickupCacheEntry>>(new Map());
+  const PICKUP_CACHE_KEY = 'spirithub_admin_pickup_cache_v1';
+
+  const normalizeGuid = (guid?: string | null): string | undefined => {
+    const g = String(guid ?? '').trim();
+    if (!g) return undefined;
+    const lower = g.toLowerCase();
+    if (lower === '00000000-0000-0000-0000-000000000000') return undefined;
+    return g;
+  };
+
+  const readPickupCacheFromStorage = (): Map<number, PickupCacheEntry> => {
+    try {
+      const raw = localStorage.getItem(PICKUP_CACHE_KEY);
+      if (!raw) return new Map();
+      const parsed = JSON.parse(raw) as Record<string, PickupCacheEntry>;
+      const map = new Map<number, PickupCacheEntry>();
+      for (const [k, v] of Object.entries(parsed || {})) {
+        const id = Number(k);
+        if (!Number.isFinite(id)) continue;
+        map.set(id, v);
+      }
+      return map;
+    } catch {
+      return new Map();
+    }
+  };
+
+  const writePickupCacheToStorage = (map: Map<number, PickupCacheEntry>) => {
+    try {
+      const obj: Record<string, PickupCacheEntry> = {};
+      for (const [id, entry] of map.entries()) {
+        obj[String(id)] = entry;
+      }
+      localStorage.setItem(PICKUP_CACHE_KEY, JSON.stringify(obj));
+    } catch {
+      // ignore quota / serialization errors
+    }
+  };
+
+  const upsertPickupCache = (orderId: number, pickupReference?: string, pickupGUID?: string) => {
+    const ref = String(pickupReference ?? '').trim();
+    const guid = normalizeGuid(pickupGUID);
+    if (!ref && !guid) return;
+
+    const next: PickupCacheEntry = {
+      pickupReference: ref || undefined,
+      pickupGUID: guid,
+      updatedAt: Date.now(),
+    };
+    pickupCacheRef.current.set(orderId, next);
+    writePickupCacheToStorage(pickupCacheRef.current);
+  };
+
+  const mergePickupFromCache = <T extends Partial<Order> & { id?: number }>(order: T): T => {
+    const id = order.id;
+    if (!id) return order;
+    const cached = pickupCacheRef.current.get(id);
+    if (!cached) return order;
+    return {
+      ...order,
+      pickupReference: (order as any).pickupReference ?? cached.pickupReference,
+      pickupGUID: normalizeGuid((order as any).pickupGUID) ?? cached.pickupGUID,
+    };
+  };
+
   const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(true);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [highlightedOrderIds, setHighlightedOrderIds] = useState<Set<number>>(new Set());
@@ -118,6 +187,12 @@ export const OrdersManagement: React.FC = () => {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
+
+  // Initialize pickup cache from storage once
+  useEffect(() => {
+    pickupCacheRef.current = readPickupCacheFromStorage();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [totalCount, setTotalCount] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
 
@@ -405,19 +480,64 @@ export const OrdersManagement: React.FC = () => {
       const pickupReference = String(processed!.id);
       const pickupGUID = String(processed!.guid);
 
-      await orderService.updateShipping(selectedOrder.id, {
+      // Cache pickup locally to avoid UI reverting due to stale/missing API fields
+      upsertPickupCache(selectedOrder.id, pickupReference, pickupGUID);
+
+      // Optimistic UI update (helps when GET /api/orders/{id} is cached/stale or doesn't include pickup fields)
+      setSelectedOrder((prev) =>
+        prev
+          ? {
+              ...prev,
+              pickupReference,
+              pickupGUID,
+            }
+          : prev
+      );
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.id === selectedOrder.id
+            ? {
+                ...o,
+                pickupReference,
+                pickupGUID,
+              }
+            : o
+        )
+      );
+
+      const updateRes = await orderService.updateShipping(selectedOrder.id, {
         shippingMethodId: selectedOrder.shippingMethod,
         trackingNumber: selectedOrder.trackingNumber,
         pickupReference,
         pickupGUID,
       });
 
+      if (updateRes && typeof updateRes === 'object' && 'success' in updateRes && !updateRes.success) {
+        const msg =
+          (updateRes as any).message ||
+          (isArabic ? 'تم إنشاء الاستلام ولكن فشل حفظه على الطلب' : 'Pickup created, but failed to save it on the order');
+        setRegisterPickupError(msg);
+        toast.error(msg);
+        // Keep optimistic UI values so user can copy/see them.
+      }
+
       // Refresh local state
       const fresh = await orderService.getOrderById(selectedOrder.id);
       if (fresh?.data) {
-        setSelectedOrder({
-          ...fresh.data,
-          items: Array.isArray(fresh.data.items) ? fresh.data.items : [],
+        const freshOrder = fresh.data as Order;
+        setSelectedOrder((prev) => {
+          const mergedPickupReference = freshOrder.pickupReference ?? prev?.pickupReference ?? pickupReference;
+          const mergedPickupGUID = freshOrder.pickupGUID ?? prev?.pickupGUID ?? pickupGUID;
+
+          // Keep cache consistent with whatever we show
+          upsertPickupCache(selectedOrder.id, mergedPickupReference, mergedPickupGUID);
+
+          return {
+            ...freshOrder,
+            pickupReference: mergedPickupReference,
+            pickupGUID: mergedPickupGUID,
+            items: Array.isArray(freshOrder.items) ? freshOrder.items : [],
+          } as Order;
         });
       } else {
         setSelectedOrder((prev) =>
@@ -575,11 +695,16 @@ export const OrdersManagement: React.FC = () => {
       const ordersList = response?.data || [];
       
       // Ensure all orders have items array (handle null/undefined items)
-      const ordersWithItems = Array.isArray(ordersList) 
-        ? ordersList.map(order => ({
-            ...order,
-            items: Array.isArray(order.items) ? order.items : []
-          }))
+      const ordersWithItems = Array.isArray(ordersList)
+        ? ordersList.map((order) => {
+            const normalized = {
+              ...order,
+              items: Array.isArray(order.items) ? order.items : [],
+            };
+
+            // Fill pickup fields from cache if API omitted them
+            return mergePickupFromCache(normalized as any) as any;
+          })
         : [];
       
       setOrders(ordersWithItems);
@@ -1043,7 +1168,8 @@ export const OrdersManagement: React.FC = () => {
       const response = await orderService.getOrderById(order.id);
       
       // Extract order data from API response
-      const orderDetails: Order = response.data!;
+      const orderDetailsRaw: Order = response.data!;
+      const orderDetails = mergePickupFromCache(orderDetailsRaw) as Order;
       
       console.log('✅ Order details loaded:', {
         id: orderDetails.id,
