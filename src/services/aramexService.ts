@@ -358,3 +358,122 @@ export async function printLabel(shipmentNumber: string) {
     throw error;
   }
 }
+
+/**
+ * Cancel an Aramex pickup request
+ */
+export async function cancelAramexPickup(pickupGUID: string) {
+  try {
+    console.log('🚫 Cancelling Aramex pickup:', pickupGUID);
+    
+    const response = await apiClient.post('/api/aramex/cancel-pickup', {
+      pickupGUID
+    });
+    
+    console.log('✅ Pickup cancelled successfully:', response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ Error cancelling pickup:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get pickup details by GUID
+ */
+export async function getPickupDetails(pickupGUID: string) {
+  try {
+    console.log('📋 Getting pickup details:', pickupGUID);
+    
+    const response = await apiClient.get(`/api/aramex/pickup/${pickupGUID}`);
+    
+    console.log('✅ Pickup details retrieved:', response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ Error getting pickup details:', error);
+    throw error;
+  }
+}
+
+// =============================================================================
+// Pickup registration (Admin)
+// =============================================================================
+
+export interface CreateAramexPickupRequest {
+  pickupAddress: {
+    line1: string;
+    line2?: string;
+    line3?: string;
+    city: string;
+    countryCode: string;
+    postCode?: string;
+    stateOrProvinceCode?: string;
+  };
+  pickupContact: {
+    personName: string;
+    companyName?: string;
+    phoneNumber1: string;
+    phoneNumber2?: string;
+    cellPhone?: string;
+    emailAddress?: string;
+  };
+
+  pickupDate: Date | string;
+  readyTime: Date | string;
+  lastPickupTime: Date | string;
+  closingTime?: Date | string;
+
+  pickupLocation: string;
+  vehicle: string;
+
+  status?: string;
+  comments?: string;
+  reference1?: string;
+  reference2?: string;
+  transactionReference?: string;
+
+  pickupItems: Array<{
+    productGroup: string;
+    productType: string;
+    numberOfShipments: number;
+    packageType: string;
+    payment: string;
+    numberOfPieces: number;
+    shipmentWeight: { unit: string; value: number };
+    shipmentVolume: { unit: string; value: number };
+    cashAmount: { currencyCode: string; value: number };
+    extraCharges: { currencyCode: string; value: number };
+    shipmentDimensions: { length: number; width: number; height: number; unit: string };
+    comments: string;
+  }>;
+}
+
+export interface CreateAramexPickupResponse {
+  success: boolean;
+  hasWarnings?: boolean;
+  processedPickup?: {
+    id: string;
+    guid: string;
+    reference1?: string;
+    reference2?: string;
+  };
+  notifications?: Array<{ code: string; message: string }>;
+  errors?: string[];
+  error?: string;
+}
+
+/**
+ * Create/register a pickup request in Aramex (Admin only)
+ * POST /api/aramex/create-pickup
+ */
+export async function createAramexPickup(request: CreateAramexPickupRequest) {
+  try {
+    console.log('📦 Creating Aramex pickup:', request);
+    const response = await apiClient.post<CreateAramexPickupResponse>('/api/aramex/create-pickup', request);
+    console.log('✅ Pickup created:', response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ Error creating pickup:', error);
+    throw error;
+  }
+}

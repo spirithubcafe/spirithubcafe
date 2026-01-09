@@ -25,6 +25,9 @@ export {
   trackAramexShipment,
   createShipmentForOrder,
   printLabel,
+  cancelAramexPickup,
+  getPickupDetails,
+  createAramexPickup,
 } from './aramexService';
 
 // Export types

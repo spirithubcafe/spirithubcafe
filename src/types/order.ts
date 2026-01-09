@@ -71,6 +71,10 @@ export interface Order {
   shippingMethod: number; // 1=Pickup, 2=Nool, 3=Aramex
   trackingNumber?: string;
   
+  // Aramex Pickup Information (when shippingMethod = 3)
+  pickupReference?: string; // Pickup ID/Reference number from Aramex
+  pickupGUID?: string;      // Pickup GUID from Aramex
+  
   // Gift Information (Optional)
   isGift: boolean;
   giftRecipientName?: string;
@@ -268,6 +272,13 @@ export interface UpdateShippingDto {
   shippingMethodId: number;
   trackingNumber?: string;
   shippingCost?: number;
+
+  /**
+   * Aramex pickup info (when shippingMethodId = 3)
+   * Backend supports these fields via OrderShippingUpdateDto.
+   */
+  pickupGUID?: string;
+  pickupReference?: string;
 }
 
 /**

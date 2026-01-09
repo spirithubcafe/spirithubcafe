@@ -33,6 +33,7 @@ import { Seo } from '../components/seo/Seo';
 import { siteMetadata } from '../config/siteMetadata';
 import type { Order as BackendOrder } from '../types/order';
 import { productService } from '../services/productService';
+import { AramexPickupInfo } from '../components/admin/AramexPickupInfo';
 
 const statusConfig = {
   Pending: { label: 'Pending', color: 'bg-yellow-100 text-yellow-800 border-yellow-200', icon: Clock },
@@ -503,13 +504,34 @@ export const OrderDetailPage: React.FC = () => {
                   </div>
 
                   {order.trackingNumber && (
-                    <div>
-                      <Label className="text-xs text-gray-500">{isArabic ? 'رقم التتبع' : 'Tracking Number'}</Label>
-                      <p className="font-mono text-sm bg-gray-50 px-2 py-1 rounded">{order.trackingNumber}</p>
-                    </div>
+                    <>
+                      <div>
+                        <Label className="text-xs text-gray-500">{isArabic ? 'رقم التتبع' : 'Tracking Number'}</Label>
+                        <p className="font-mono text-sm bg-gray-50 px-2 py-1 rounded mb-2">{order.trackingNumber}</p>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full"
+                          onClick={() => window.open(`https://www.aramex.com/track/shipments?ShipmentNumber=${order.trackingNumber}`, '_blank')}
+                        >
+                          <Truck className="h-4 w-4 mr-2" />
+                          {isArabic ? 'تتبع الشحنة' : 'Track Shipment'}
+                        </Button>
+                      </div>
+                    </>
                   )}
                 </CardContent>
               </Card>
+
+              {/* Aramex Pickup Information */}
+              <AramexPickupInfo 
+                order={order}
+                isArabic={isArabic}
+                onPickupCancelled={() => {
+                  // Reload order details after pickup cancellation
+                  loadOrderDetails();
+                }}
+              />
 
               {/* Order Timeline */}
               <Card>

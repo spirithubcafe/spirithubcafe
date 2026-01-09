@@ -39,10 +39,12 @@ import {
   Printer,
   Download,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  AlertTriangle
 } from 'lucide-react';
 import { format } from 'date-fns';
-import { orderService } from '../../services';
+import { createAramexPickup, orderService, productVariantService } from '../../services';
+import { REGION_INFO } from '../../config/regionInfo';
 import type { Order, OrderStatus, PaymentStatus } from '../../types/order';
 
 export const OrdersManagement: React.FC = () => {
@@ -85,6 +87,34 @@ export const OrdersManagement: React.FC = () => {
   const [shipmentResult, setShipmentResult] = useState<any>(null);
   const [shipmentError, setShipmentError] = useState<string>('');
 
+  // Pickup registration state (when shipment exists but pickup missing)
+  const [registerPickupLoading, setRegisterPickupLoading] = useState(false);
+  const [registerPickupError, setRegisterPickupError] = useState<string | null>(null);
+  const [showRegisterPickupDialog, setShowRegisterPickupDialog] = useState(false);
+
+  type PickupDraft = {
+    pickupDate: string; // yyyy-mm-dd
+    readyTime: string; // HH:mm
+    lastPickupTime: string; // HH:mm
+    closingTime: string; // HH:mm
+    pickupLocation: string;
+    vehicle: string;
+    status: string;
+    comments: string;
+
+    productGroup: string;
+    productType: string;
+    payment: string;
+    packageType: string;
+    numberOfPieces: number;
+    weightKg: number;
+    lengthCm: number;
+    widthCm: number;
+    heightCm: number;
+  };
+
+  const [pickupDraft, setPickupDraft] = useState<PickupDraft | null>(null);
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
@@ -92,6 +122,326 @@ export const OrdersManagement: React.FC = () => {
   const [totalPages, setTotalPages] = useState(0);
 
   const isArabic = language === 'ar';
+
+  const resolveRegionFromStorage = (): 'om' | 'sa' => {
+    const regionFromPath = window.location.pathname.match(/^\/(om|sa)(\/|$)/)?.[1] as
+      | 'om'
+      | 'sa'
+      | undefined;
+    const region =
+      regionFromPath ||
+      (localStorage.getItem('spirithub-region') as 'om' | 'sa' | null) ||
+      'om';
+    return region === 'sa' ? 'sa' : 'om';
+  };
+
+  const normalizeWeightToKg = (value: number, unit: string | undefined): number => {
+    const u = String(unit ?? '').trim().toLowerCase();
+    if (!Number.isFinite(value)) return 0;
+    if (u === 'kg') return value;
+    if (u === 'g') return value / 1000;
+    if (u === 'lb' || u === 'lbs') return value * 0.45359237;
+    if (u === 'oz') return value * 0.0283495231;
+    // Unknown unit: treat as KG to avoid zeroing out
+    return value;
+  };
+
+  const buildDefaultPickupTimes = () => {
+    const now = new Date();
+
+    const readyHour = 9;
+    const lastPickupHour = 17;
+    const closingHour = 18;
+
+    const pickupDate = new Date(now);
+    pickupDate.setHours(0, 0, 0, 0);
+    if (now.getHours() >= lastPickupHour) {
+      pickupDate.setDate(pickupDate.getDate() + 1);
+    }
+
+    const readyTime = new Date(pickupDate);
+    readyTime.setHours(readyHour, 0, 0, 0);
+
+    const lastPickupTime = new Date(pickupDate);
+    lastPickupTime.setHours(lastPickupHour, 0, 0, 0);
+
+    const closingTime = new Date(pickupDate);
+    closingTime.setHours(closingHour, 0, 0, 0);
+
+    return { pickupDate, readyTime, lastPickupTime, closingTime };
+  };
+
+  const toYmd = (d: Date): string => {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const toHm = (d: Date): string => {
+    const h = String(d.getHours()).padStart(2, '0');
+    const m = String(d.getMinutes()).padStart(2, '0');
+    return `${h}:${m}`;
+  };
+
+  const combineDateTimeLocal = (ymd: string, hm: string): Date => {
+    // Treat user input as local time.
+    const [y, mo, da] = ymd.split('-').map((x) => Number(x));
+    const [hh, mm] = hm.split(':').map((x) => Number(x));
+    const dt = new Date();
+    dt.setFullYear(y, (mo || 1) - 1, da || 1);
+    dt.setHours(hh || 0, mm || 0, 0, 0);
+    return dt;
+  };
+
+  const isZeroGuid = (guid: string) => {
+    const normalized = String(guid || '').trim().toLowerCase();
+    return normalized === '00000000-0000-0000-0000-000000000000';
+  };
+
+  const openRegisterPickupDialog = async () => {
+    if (!selectedOrder) return;
+    if (selectedOrder.shippingMethod !== 3) return;
+    if (!selectedOrder.trackingNumber) return;
+
+    setRegisterPickupError(null);
+
+    const region = resolveRegionFromStorage();
+    const regionInfo = REGION_INFO[region];
+
+    const totalPieces = (selectedOrder.items || []).reduce((sum, item) => sum + (item.quantity || 0), 0) ||
+      (selectedOrder.items?.length ?? 1);
+
+    const variantIds = Array.from(
+      new Set(
+        (selectedOrder.items || [])
+          .map((i) => i.productVariantId)
+          .filter((v): v is number => typeof v === 'number' && Number.isFinite(v))
+      )
+    );
+
+    const variantsById = new Map<number, { weight: number; weightUnit: string; length?: number; width?: number; height?: number }>();
+    if (variantIds.length > 0) {
+      const results = await Promise.allSettled(variantIds.map((id) => productVariantService.getById(id)));
+      results.forEach((r, idx) => {
+        if (r.status !== 'fulfilled') return;
+        const v = r.value;
+        const id = variantIds[idx];
+        variantsById.set(id, {
+          weight: Number(v.weight ?? 0),
+          weightUnit: String(v.weightUnit ?? 'kg'),
+          length: v.length ?? undefined,
+          width: v.width ?? undefined,
+          height: v.height ?? undefined,
+        });
+      });
+    }
+
+    const totalWeightKgRaw = (selectedOrder.items || []).reduce((sum, item) => {
+      const variantId = item.productVariantId;
+      if (typeof variantId !== 'number') return sum;
+      const v = variantsById.get(variantId);
+      if (!v) return sum;
+      const itemWeightKg = normalizeWeightToKg(v.weight, v.weightUnit);
+      return sum + itemWeightKg * (item.quantity || 1);
+    }, 0);
+
+    const weightKg = totalWeightKgRaw > 0 ? Number(totalWeightKgRaw.toFixed(3)) : 2.5;
+
+    const dims = (selectedOrder.items || []).flatMap((item) => {
+      const variantId = item.productVariantId;
+      if (typeof variantId !== 'number') return [];
+      const v = variantsById.get(variantId);
+      if (!v) return [];
+      return [
+        {
+          length: v.length,
+          width: v.width,
+          height: v.height,
+        },
+      ];
+    });
+
+    const lengthCm = Math.max(10, ...dims.map((d) => Number(d.length ?? 0)).filter((n) => Number.isFinite(n) && n > 0));
+    const widthCm = Math.max(10, ...dims.map((d) => Number(d.width ?? 0)).filter((n) => Number.isFinite(n) && n > 0));
+    const heightCm = Math.max(10, ...dims.map((d) => Number(d.height ?? 0)).filter((n) => Number.isFinite(n) && n > 0));
+
+    const { pickupDate, readyTime, lastPickupTime, closingTime } = buildDefaultPickupTimes();
+
+    setPickupDraft({
+      pickupDate: toYmd(pickupDate),
+      readyTime: toHm(readyTime),
+      lastPickupTime: toHm(lastPickupTime),
+      closingTime: toHm(closingTime),
+      pickupLocation: 'Reception',
+      vehicle: 'Car',
+      // Aramex returned REQ27 when Status empty; default to a non-empty value.
+      status: 'Ready',
+      comments: `Order ${selectedOrder.orderNumber} (manual pickup registration)`,
+
+      productGroup: 'EXP',
+      productType: 'PPX',
+      payment: 'P',
+      packageType: 'Box',
+      numberOfPieces: totalPieces,
+      weightKg,
+      lengthCm,
+      widthCm,
+      heightCm,
+    });
+
+    // Pre-fill address/contact from region (not editable here yet, but can be extended later).
+    toast(
+      isArabic ? 'قم بتحديد تفاصيل الاستلام ثم اضغط تسجيل' : 'Set pickup details then click Register',
+      {
+        description: isArabic ? regionInfo.contact.address.ar : regionInfo.contact.address.en,
+        duration: 3500,
+      }
+    );
+
+    setShowRegisterPickupDialog(true);
+  };
+
+  const handleRegisterPickup = async () => {
+    if (!selectedOrder) return;
+    if (selectedOrder.shippingMethod !== 3) return;
+    if (!selectedOrder.trackingNumber) return;
+
+    // If user hasn't opened the dialog yet, open it instead of firing a request.
+    if (!showRegisterPickupDialog) {
+      await openRegisterPickupDialog();
+      return;
+    }
+
+    if (!pickupDraft) {
+      toast.error(isArabic ? 'بيانات الاستلام غير مكتملة' : 'Pickup details are missing');
+      return;
+    }
+
+    setRegisterPickupLoading(true);
+    setRegisterPickupError(null);
+
+    try {
+      const region = resolveRegionFromStorage();
+      const regionInfo = REGION_INFO[region];
+
+      const pickupDate = combineDateTimeLocal(pickupDraft.pickupDate, '00:00');
+      const readyTime = combineDateTimeLocal(pickupDraft.pickupDate, pickupDraft.readyTime);
+      const lastPickupTime = combineDateTimeLocal(pickupDraft.pickupDate, pickupDraft.lastPickupTime);
+      const closingTime = combineDateTimeLocal(pickupDraft.pickupDate, pickupDraft.closingTime);
+
+      const volumeCm3 = Math.max(1000, pickupDraft.lengthCm * pickupDraft.widthCm * pickupDraft.heightCm);
+
+      const pickupRequest = {
+        pickupAddress: {
+          line1: regionInfo.contact.address.en,
+          city: region === 'sa' ? 'Khobar' : 'Muscat',
+          countryCode: region === 'sa' ? 'SA' : 'OM',
+          postCode: region === 'sa' ? '' : '111',
+        },
+        pickupContact: {
+          personName: regionInfo.aboutContent.companyName.en,
+          companyName: regionInfo.aboutContent.companyName.en,
+          phoneNumber1: regionInfo.contact.phone,
+          phoneNumber2: regionInfo.contact.phone2,
+          cellPhone: regionInfo.contact.phone,
+          emailAddress: regionInfo.contact.email,
+        },
+        pickupDate,
+        readyTime,
+        lastPickupTime,
+        closingTime,
+        pickupLocation: pickupDraft.pickupLocation,
+        vehicle: pickupDraft.vehicle,
+        status: pickupDraft.status,
+        comments: pickupDraft.comments,
+        reference1: selectedOrder.orderNumber,
+        reference2: selectedOrder.trackingNumber,
+        transactionReference: selectedOrder.orderNumber,
+        pickupItems: [
+          {
+            productGroup: pickupDraft.productGroup,
+            productType: pickupDraft.productType,
+            numberOfShipments: 1,
+            packageType: pickupDraft.packageType,
+            payment: pickupDraft.payment,
+            numberOfPieces: Math.max(1, Number(pickupDraft.numberOfPieces || 1)),
+            shipmentWeight: { unit: 'KG', value: Number(Number(pickupDraft.weightKg || 0).toFixed(3)) || 2.5 },
+            shipmentVolume: { unit: 'CM3', value: Number(volumeCm3.toFixed(0)) },
+            cashAmount: { currencyCode: 'OMR', value: 0 },
+            extraCharges: { currencyCode: 'OMR', value: 0 },
+            shipmentDimensions: {
+              length: Math.max(1, Number(pickupDraft.lengthCm || 10)),
+              width: Math.max(1, Number(pickupDraft.widthCm || 10)),
+              height: Math.max(1, Number(pickupDraft.heightCm || 10)),
+              unit: 'CM',
+            },
+            comments: `Order ${selectedOrder.orderNumber}`,
+          },
+        ],
+      };
+
+      const createResponse = await createAramexPickup(pickupRequest);
+
+      const processed = createResponse?.processedPickup;
+      const hasValidId = Boolean(processed?.id && String(processed.id).trim().length > 0);
+      const hasValidGuid = Boolean(processed?.guid && String(processed.guid).trim().length > 0 && !isZeroGuid(processed.guid));
+
+      if (!createResponse?.success || !hasValidId || !hasValidGuid) {
+        const notif = Array.isArray(createResponse?.notifications)
+          ? createResponse.notifications.map((n) => `[${n.code}] ${n.message}`).join('\n')
+          : '';
+        const msg =
+          createResponse?.errors?.join('\n') ||
+          notif ||
+          createResponse?.error ||
+          (isArabic ? 'فشل تسجيل الاستلام' : 'Failed to register pickup');
+        setRegisterPickupError(msg);
+        toast.error(msg);
+        return;
+      }
+
+      // Persist pickup info onto the order
+      const pickupReference = String(processed!.id);
+      const pickupGUID = String(processed!.guid);
+
+      await orderService.updateShipping(selectedOrder.id, {
+        shippingMethodId: selectedOrder.shippingMethod,
+        trackingNumber: selectedOrder.trackingNumber,
+        pickupReference,
+        pickupGUID,
+      });
+
+      // Refresh local state
+      const fresh = await orderService.getOrderById(selectedOrder.id);
+      if (fresh?.data) {
+        setSelectedOrder({
+          ...fresh.data,
+          items: Array.isArray(fresh.data.items) ? fresh.data.items : [],
+        });
+      } else {
+        setSelectedOrder((prev) =>
+          prev
+            ? {
+                ...prev,
+                pickupReference,
+                pickupGUID,
+              }
+            : prev
+        );
+      }
+
+      await loadOrders({ silent: true });
+      setShowRegisterPickupDialog(false);
+      toast.success(isArabic ? 'تم تسجيل الاستلام بنجاح' : 'Pickup registered successfully');
+    } catch (err: any) {
+      const msg = err?.message || (isArabic ? 'حدث خطأ أثناء تسجيل الاستلام' : 'Error registering pickup');
+      setRegisterPickupError(msg);
+      toast.error(msg);
+    } finally {
+      setRegisterPickupLoading(false);
+    }
+  };
 
   const getRegionLoginPath = (): string => {
     const regionFromPath = window.location.pathname.match(/^\/(om|sa)(\/|$)/)?.[1] as
@@ -2010,14 +2360,403 @@ export const OrdersManagement: React.FC = () => {
                           <Label className="text-sm font-medium">
                             {isArabic ? 'رقم التتبع' : 'Tracking Number'}
                           </Label>
-                          <p className="mt-1 font-mono text-sm bg-muted px-2 py-1 rounded">
-                            {selectedOrder.trackingNumber}
-                          </p>
+                          <div className="mt-1 flex items-center gap-2">
+                            <p className="font-mono text-sm bg-muted px-2 py-1 rounded flex-1">
+                              {selectedOrder.trackingNumber}
+                            </p>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => window.open(`https://www.aramex.com/track/shipments?ShipmentNumber=${selectedOrder.trackingNumber}`, '_blank')}
+                            >
+                              <Truck className="h-4 w-4 mr-2" />
+                              {isArabic ? 'تتبع' : 'Track'}
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                      {selectedOrder.pickupReference && (
+                        <div className="md:col-span-2">
+                          <Label className="text-sm font-medium flex items-center gap-2">
+                            <Package className="h-4 w-4 text-green-600" />
+                            {isArabic ? 'رقم الاستلام (Pickup Reference)' : 'Pickup Reference'}
+                          </Label>
+                          <div className="mt-1 flex items-center gap-2">
+                            <p className="font-mono text-sm bg-green-50 px-3 py-2 rounded border border-green-200 flex-1 font-bold text-green-700">
+                              {selectedOrder.pickupReference}
+                            </p>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                navigator.clipboard.writeText(selectedOrder.pickupReference!);
+                                // Show toast or feedback
+                              }}
+                            >
+                              <Copy className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                      {selectedOrder.pickupGUID && (
+                        <div className="md:col-span-2">
+                          <Label className="text-sm font-medium text-muted-foreground">
+                            {isArabic ? 'معرف الاستلام (Pickup GUID)' : 'Pickup GUID'}
+                          </Label>
+                          <div className="mt-1 flex items-center gap-2">
+                            <p className="font-mono text-xs bg-muted px-2 py-1 rounded flex-1 break-all text-muted-foreground">
+                              {selectedOrder.pickupGUID}
+                            </p>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                navigator.clipboard.writeText(selectedOrder.pickupGUID!);
+                              }}
+                            >
+                              <Copy className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                      {selectedOrder.shippingMethod === 3 && selectedOrder.trackingNumber && !selectedOrder.pickupReference && (
+                        <div className="md:col-span-2 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                          <div className="flex items-start gap-2">
+                            <AlertTriangle className="h-5 w-5 text-orange-600 mt-0.5 shrink-0" />
+                            <div>
+                              <p className="font-semibold text-orange-800 text-sm">
+                                {isArabic ? 'تحذير: الاستلام غير مسجل' : 'Warning: Pickup Not Registered'}
+                              </p>
+                              <p className="text-xs text-orange-700 mt-1">
+                                {isArabic 
+                                  ? 'تم إنشاء الشحنة ولكن لم يتم تسجيل طلب الاستلام من أرامكس.'
+                                  : 'Shipment created but pickup request was not registered with Aramex.'}
+                              </p>
+
+                              <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={openRegisterPickupDialog}
+                                  disabled={registerPickupLoading}
+                                  className="border-orange-300 bg-white hover:bg-orange-50"
+                                >
+                                  {registerPickupLoading ? (
+                                    <>
+                                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                                      {isArabic ? 'جاري التسجيل...' : 'Registering...'}
+                                    </>
+                                  ) : (
+                                    <>
+                                      <PackagePlus className="h-4 w-4 mr-2" />
+                                      {isArabic ? 'تسجيل الاستلام الآن' : 'Register Pickup Now'}
+                                    </>
+                                  )}
+                                </Button>
+
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    setRegisterPickupError(null);
+                                  }}
+                                  disabled={!registerPickupError || registerPickupLoading}
+                                  className="text-orange-700"
+                                >
+                                  {isArabic ? 'مسح الخطأ' : 'Clear error'}
+                                </Button>
+                              </div>
+
+                              {registerPickupError && (
+                                <p className="mt-2 text-xs text-red-700">
+                                  {registerPickupError}
+                                </p>
+                              )}
+                            </div>
+                          </div>
                         </div>
                       )}
                     </div>
                   </CardContent>
                 </Card>
+
+                {/* Register Pickup Dialog */}
+                <Dialog open={showRegisterPickupDialog} onOpenChange={setShowRegisterPickupDialog}>
+                  <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                      <DialogTitle>
+                        {isArabic ? 'تسجيل الاستلام (Pickup) لدى أرامكس' : 'Register Aramex Pickup'}
+                      </DialogTitle>
+                      <DialogDescription>
+                        {isArabic
+                          ? 'حدد تاريخ/وقت الاستلام وبقية التفاصيل، ثم اضغط تسجيل.'
+                          : 'Set pickup date/time and details, then click Register.'}
+                      </DialogDescription>
+                    </DialogHeader>
+
+                    {pickupDraft ? (
+                      <div className="space-y-4">
+                        {registerPickupError && (
+                          <div className="p-3 rounded-md border border-red-200 bg-red-50 text-red-800 text-sm">
+                            {registerPickupError}
+                          </div>
+                        )}
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <Label className="text-sm font-medium">
+                              {isArabic ? 'تاريخ الاستلام' : 'Pickup Date'}
+                            </Label>
+                            <Input
+                              type="date"
+                              value={pickupDraft.pickupDate}
+                              onChange={(e) =>
+                                setPickupDraft((p) => (p ? { ...p, pickupDate: e.target.value } : p))
+                              }
+                            />
+                          </div>
+
+                          <div>
+                            <Label className="text-sm font-medium">
+                              {isArabic ? 'الحالة' : 'Status'}
+                            </Label>
+                            <Input
+                              value={pickupDraft.status}
+                              onChange={(e) =>
+                                setPickupDraft((p) => (p ? { ...p, status: e.target.value } : p))
+                              }
+                              placeholder={isArabic ? 'مثال: Ready' : 'e.g., Ready'}
+                            />
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {isArabic
+                                ? 'ملاحظة: أرامكس قد ترفض الطلب إذا كانت الحالة فارغة.'
+                                : 'Note: Aramex may reject if Status is empty.'}
+                            </p>
+                          </div>
+
+                          <div>
+                            <Label className="text-sm font-medium">
+                              {isArabic ? 'وقت الجاهزية' : 'Ready Time'}
+                            </Label>
+                            <Input
+                              type="time"
+                              value={pickupDraft.readyTime}
+                              onChange={(e) =>
+                                setPickupDraft((p) => (p ? { ...p, readyTime: e.target.value } : p))
+                              }
+                            />
+                          </div>
+
+                          <div>
+                            <Label className="text-sm font-medium">
+                              {isArabic ? 'آخر وقت للاستلام' : 'Last Pickup Time'}
+                            </Label>
+                            <Input
+                              type="time"
+                              value={pickupDraft.lastPickupTime}
+                              onChange={(e) =>
+                                setPickupDraft((p) => (p ? { ...p, lastPickupTime: e.target.value } : p))
+                              }
+                            />
+                          </div>
+
+                          <div>
+                            <Label className="text-sm font-medium">
+                              {isArabic ? 'وقت الإغلاق' : 'Closing Time'}
+                            </Label>
+                            <Input
+                              type="time"
+                              value={pickupDraft.closingTime}
+                              onChange={(e) =>
+                                setPickupDraft((p) => (p ? { ...p, closingTime: e.target.value } : p))
+                              }
+                            />
+                          </div>
+
+                          <div>
+                            <Label className="text-sm font-medium">
+                              {isArabic ? 'الموقع' : 'Pickup Location'}
+                            </Label>
+                            <Input
+                              value={pickupDraft.pickupLocation}
+                              onChange={(e) =>
+                                setPickupDraft((p) => (p ? { ...p, pickupLocation: e.target.value } : p))
+                              }
+                              placeholder={isArabic ? 'Reception' : 'Reception'}
+                            />
+                          </div>
+
+                          <div>
+                            <Label className="text-sm font-medium">
+                              {isArabic ? 'المركبة' : 'Vehicle'}
+                            </Label>
+                            <Input
+                              value={pickupDraft.vehicle}
+                              onChange={(e) =>
+                                setPickupDraft((p) => (p ? { ...p, vehicle: e.target.value } : p))
+                              }
+                              placeholder={isArabic ? 'Car' : 'Car'}
+                            />
+                          </div>
+
+                          <div className="md:col-span-2">
+                            <Label className="text-sm font-medium">
+                              {isArabic ? 'ملاحظات' : 'Comments'}
+                            </Label>
+                            <Input
+                              value={pickupDraft.comments}
+                              onChange={(e) =>
+                                setPickupDraft((p) => (p ? { ...p, comments: e.target.value } : p))
+                              }
+                            />
+                          </div>
+                        </div>
+
+                        <Separator />
+
+                        <div>
+                          <p className="text-sm font-semibold mb-2">
+                            {isArabic ? 'تفاصيل الشحنة (Pickup Items)' : 'Pickup Item Details'}
+                          </p>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <Label className="text-sm font-medium">{isArabic ? 'Product Group' : 'Product Group'}</Label>
+                              <Input
+                                value={pickupDraft.productGroup}
+                                onChange={(e) =>
+                                  setPickupDraft((p) => (p ? { ...p, productGroup: e.target.value } : p))
+                                }
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-sm font-medium">{isArabic ? 'Product Type' : 'Product Type'}</Label>
+                              <Input
+                                value={pickupDraft.productType}
+                                onChange={(e) =>
+                                  setPickupDraft((p) => (p ? { ...p, productType: e.target.value } : p))
+                                }
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-sm font-medium">{isArabic ? 'Payment' : 'Payment'}</Label>
+                              <Input
+                                value={pickupDraft.payment}
+                                onChange={(e) =>
+                                  setPickupDraft((p) => (p ? { ...p, payment: e.target.value } : p))
+                                }
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-sm font-medium">{isArabic ? 'Package Type' : 'Package Type'}</Label>
+                              <Input
+                                value={pickupDraft.packageType}
+                                onChange={(e) =>
+                                  setPickupDraft((p) => (p ? { ...p, packageType: e.target.value } : p))
+                                }
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-sm font-medium">{isArabic ? 'Pieces' : 'Pieces'}</Label>
+                              <Input
+                                type="number"
+                                min={1}
+                                value={pickupDraft.numberOfPieces}
+                                onChange={(e) =>
+                                  setPickupDraft((p) =>
+                                    p ? { ...p, numberOfPieces: Math.max(1, Number(e.target.value || 1)) } : p
+                                  )
+                                }
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-sm font-medium">{isArabic ? 'Weight (KG)' : 'Weight (KG)'}</Label>
+                              <Input
+                                type="number"
+                                step="0.001"
+                                min={0}
+                                value={pickupDraft.weightKg}
+                                onChange={(e) =>
+                                  setPickupDraft((p) =>
+                                    p ? { ...p, weightKg: Math.max(0, Number(e.target.value || 0)) } : p
+                                  )
+                                }
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-sm font-medium">{isArabic ? 'Length (CM)' : 'Length (CM)'}</Label>
+                              <Input
+                                type="number"
+                                min={1}
+                                value={pickupDraft.lengthCm}
+                                onChange={(e) =>
+                                  setPickupDraft((p) =>
+                                    p ? { ...p, lengthCm: Math.max(1, Number(e.target.value || 1)) } : p
+                                  )
+                                }
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-sm font-medium">{isArabic ? 'Width (CM)' : 'Width (CM)'}</Label>
+                              <Input
+                                type="number"
+                                min={1}
+                                value={pickupDraft.widthCm}
+                                onChange={(e) =>
+                                  setPickupDraft((p) =>
+                                    p ? { ...p, widthCm: Math.max(1, Number(e.target.value || 1)) } : p
+                                  )
+                                }
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-sm font-medium">{isArabic ? 'Height (CM)' : 'Height (CM)'}</Label>
+                              <Input
+                                type="number"
+                                min={1}
+                                value={pickupDraft.heightCm}
+                                onChange={(e) =>
+                                  setPickupDraft((p) =>
+                                    p ? { ...p, heightCm: Math.max(1, Number(e.target.value || 1)) } : p
+                                  )
+                                }
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex justify-end gap-2 pt-2">
+                          <Button
+                            variant="outline"
+                            onClick={() => setShowRegisterPickupDialog(false)}
+                            disabled={registerPickupLoading}
+                          >
+                            {isArabic ? 'إغلاق' : 'Close'}
+                          </Button>
+                          <Button
+                            onClick={handleRegisterPickup}
+                            disabled={registerPickupLoading}
+                          >
+                            {registerPickupLoading ? (
+                              <>
+                                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                                {isArabic ? 'جاري التسجيل...' : 'Registering...'}
+                              </>
+                            ) : (
+                              <>
+                                <PackagePlus className="h-4 w-4 mr-2" />
+                                {isArabic ? 'تسجيل' : 'Register'}
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="py-6 text-sm text-muted-foreground">
+                        {isArabic ? 'جارٍ تجهيز بيانات الاستلام…' : 'Preparing pickup details…'}
+                      </div>
+                    )}
+                  </DialogContent>
+                </Dialog>
 
                 {/* Order Items */}
                 <Card>
