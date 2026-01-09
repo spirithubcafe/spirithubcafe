@@ -8,38 +8,10 @@ export const BestSellers: React.FC = () => {
   const { t } = useTranslation();
   const { products, loading } = useApp();
 
-  // Prefer real flags from API. If flags are missing (older payload/cache), fall back
-  // to the previous heuristic so we don't regress the UI.
-  const heuristicHasPremium = (product: any) =>
-    product.name?.toLowerCase().includes('floral symphony') ||
-    product.name?.toLowerCase().includes('ombligon') ||
-    product.nameAr?.includes('سيمفونية') ||
-    product.nameAr?.includes('أومبليجون');
-
-  const heuristicHasLimited = (product: any) =>
-    product.name?.toLowerCase().includes('aroma nativo') ||
-    product.name?.toLowerCase().includes('aji') ||
-    product.name?.toLowerCase().includes('lorena') ||
-    product.nameAr?.includes('أروما ناتيفو') ||
-    product.nameAr?.includes('آجي') ||
-    product.nameAr?.includes('ياسي') ||
-    product.nameAr?.includes('لورينا');
-
-  const hasPremiumBadge = (product: any) =>
-    product.isPremium === true ? true : product.isPremium === false ? false : heuristicHasPremium(product);
-
-  const hasLimitedBadge = (product: any) =>
-    product.isLimited === true ? true : product.isLimited === false ? false : heuristicHasLimited(product);
-
   const bestSellerProducts = useMemo(() => {
     const items = (products || []).filter((p) => p.isActive !== false);
 
     if (items.length === 0) return [];
-
-    // Define which products should have badges
-    const badgeProducts = items.filter(product => 
-      hasPremiumBadge(product) || hasLimitedBadge(product)
-    );
 
     // Sort helper - stable sort by ID
     const toNumericId = (value: string | undefined | number) => {
@@ -48,14 +20,10 @@ export const BestSellers: React.FC = () => {
       return Number.isFinite(n) ? n : Number.NEGATIVE_INFINITY;
     };
 
-    // Group non-badge products by category
+    // Group products by category
     const categoryMap = new Map<number, typeof items>();
     
     items.forEach((product) => {
-      // Skip products that already have badges
-      const hasBadge = badgeProducts.some(bp => bp.id === product.id);
-      if (hasBadge) return;
-
       const catId = typeof product.categoryId === 'number' ? product.categoryId : Number(product.categoryId) || 0;
       if (!categoryMap.has(catId)) {
         categoryMap.set(catId, []);
@@ -63,15 +31,13 @@ export const BestSellers: React.FC = () => {
       categoryMap.get(catId)!.push(product);
     });
 
-    // Sort products within each category by ID (newest first) - stable sort
+    // Sort products within each category by ID (newest first)
     categoryMap.forEach((products) => {
       products.sort((a, b) => toNumericId(b.id) - toNumericId(a.id));
     });
 
-    // Start with badge products sorted by ID for consistency
-    const result: typeof items = [...badgeProducts].sort((a, b) => 
-      toNumericId(a.id) - toNumericId(b.id)
-    );
+    // Pick products rotating through categories for variety
+    const result: typeof items = [];
 
     // Fill remaining slots with products rotating through categories
     // Sort category IDs for consistent order
@@ -131,39 +97,18 @@ export const BestSellers: React.FC = () => {
 
         {/* Products Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 sm:gap-6">
-          {bestSellerProducts.map((product, index) => {
-            // Determine badge type for this product
-            const hasPremium = hasPremiumBadge(product);
-            const hasLimited = hasLimitedBadge(product);
-
-            return (
-              <div
-                key={product.id}
-                className="transform transition-all duration-300 hover:scale-105 animate-fade-in"
-                style={{ animationDelay: `${index * 100}ms` }}
-              >
-                <div className="relative">
-                  {/* Badge */}
-                  {hasPremium && (
-                    <div className="absolute bottom-54 left-0 z-20 bg-linear-to-r from-orange-500 to-red-500 text-white text-xs font-bold px-2 py-1 rounded-tr-lg">
-                      {t('sections.bestSellerBadge')}
-                    </div>
-                  )}
-                  {hasLimited && (
-                    <div className="absolute bottom-54 left-0 z-20 bg-linear-to-r from-purple-500 to-pink-500 text-white text-xs font-bold px-2 py-1 rounded-tr-lg">
-                      {t('sections.limitedBadge')}
-                    </div>
-                  )}
-                  {index === 2 && !hasPremium && !hasLimited && (
-                    <div className="absolute bottom-54 left-0 z-20 bg-linear-to-r from-blue-500 to-indigo-500 text-white text-xs font-bold px-2 py-1 rounded-tr-lg">
-                      {t('sections.baristasChoiceBadge')}
-                    </div>
-                  )}
-                  <ProductCard product={product} />
-                </div>
+          {bestSellerProducts.map((product, index) => (
+            <div
+              key={product.id}
+              className="transform transition-all duration-300 hover:scale-105 animate-fade-in"
+              style={{ animationDelay: `${index * 100}ms` }}
+            >
+              <div className="relative">
+                {/* Badges are now handled by ProductCard component */}
+                <ProductCard product={product} />
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
 
         {/* Call to Action */}
