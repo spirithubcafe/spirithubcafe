@@ -225,6 +225,11 @@
       "title": "Newsletter",
       "description": "Manage newsletter subscribers and send campaigns"
     },
+    "emailSettings": {
+      "title": "Email Settings",
+      "description": "Manage sender details and SMTP/IMAP configuration",
+      "quickDesc": "Update sender configuration"
+    },
     "categories": {
       "title": "Categories Management",
       "add": "Add Category",

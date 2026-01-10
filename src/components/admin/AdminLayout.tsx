@@ -97,7 +97,8 @@ export const AdminLayout: React.FC = () => {
     isAuthenticated,
     logout,
   } = useAuth();
-  const { t } = useApp();
+  const { t, language } = useApp();
+  const isArabic = language === 'ar';
 
   const [moduleSearch, setModuleSearch] = useState('');
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
@@ -201,6 +202,18 @@ export const AdminLayout: React.FC = () => {
       roles: ['Admin', 'Manager'],
     },
     {
+      id: 'emailSettings',
+      label: t('admin.emailSettings.title') || (isArabic ? 'إعدادات البريد الإلكتروني' : 'Email Settings'),
+      description:
+        t('admin.emailSettings.description') ||
+        (isArabic
+          ? 'تحديث إعدادات المرسل وSMTP/IMAP'
+          : 'Update sender and SMTP/IMAP settings'),
+      icon: Mail,
+      path: '/admin/email-settings',
+      roles: ['Admin'],
+    },
+    {
       id: 'users',
       label: t('admin.manageUsers'),
       description: t('admin.usersDesc'),
@@ -255,7 +268,7 @@ export const AdminLayout: React.FC = () => {
       id: 'operations',
       label: t('admin.navGroups.operations'),
       items: availableNavItems.filter((item) =>
-        ['orders', 'newsletter', 'reports', 'system', 'seo'].includes(item.id)
+        ['orders', 'newsletter', 'emailSettings', 'reports', 'system', 'seo'].includes(item.id)
       ),
     },
   ].filter((group) => group.items.length > 0);

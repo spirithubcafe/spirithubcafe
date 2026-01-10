@@ -22,6 +22,7 @@ import {
   BarChart3,
   Star,
   MessageSquare,
+  Mail,
 } from 'lucide-react';
 
 interface QuickAction {
@@ -35,7 +36,8 @@ interface QuickAction {
 }
 
 export const AdminDashboard: React.FC = () => {
-  const { t } = useApp();
+  const { t, language } = useApp();
+  const isArabic = language === 'ar';
   const navigate = useNavigate();
   const [stats, setStats] = useState<AdminDashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -114,6 +116,17 @@ export const AdminDashboard: React.FC = () => {
       bgColor: 'bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950 dark:hover:bg-indigo-900',
       href: '/admin/reports',
       onClick: () => navigate('/admin/reports'),
+    },
+    {
+      title: t('admin.emailSettings.title') || (isArabic ? 'إعدادات البريد' : 'Email Settings'),
+      description:
+        t('admin.emailSettings.quickDesc') ||
+        (isArabic ? 'تحديث بيانات المرسل' : 'Update sender configuration'),
+      icon: Mail,
+      color: 'text-teal-600',
+      bgColor: 'bg-teal-50 hover:bg-teal-100 dark:bg-teal-950 dark:hover:bg-teal-900',
+      href: '/admin/email-settings',
+      onClick: () => navigate('/admin/email-settings'),
     },
     {
       title: t('admin.settings.system'),

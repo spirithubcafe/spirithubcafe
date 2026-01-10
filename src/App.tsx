@@ -24,6 +24,7 @@ import {
   ReportsManagement,
   SystemSettings,
   NewsletterManagement,
+  EmailSettingsManagement,
 } from './components/admin';
 import { CategoryAddPage } from './pages/CategoryAddPage';
 import { CategoryEditPage } from './pages/CategoryEditPage';
@@ -159,6 +160,7 @@ function AppContent() {
           <Route path="users" element={<UsersManagement />} />
           <Route path="orders" element={<OrdersManagement />} />
           <Route path="newsletter" element={<NewsletterManagement />} />
+          <Route path="email-settings" element={<EmailSettingsManagement />} />
           <Route path="reports" element={<ReportsManagement />} />
           <Route path="settings" element={<SystemSettings />} />
         </Route>
@@ -177,6 +179,7 @@ function AppContent() {
           <Route path="users" element={<UsersManagement />} />
           <Route path="orders" element={<OrdersManagement />} />
           <Route path="newsletter" element={<NewsletterManagement />} />
+          <Route path="email-settings" element={<EmailSettingsManagement />} />
           <Route path="reports" element={<ReportsManagement />} />
           <Route path="settings" element={<SystemSettings />} />
         </Route>

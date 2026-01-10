@@ -11,3 +11,4 @@ export { TopProducts } from './TopProducts';
 export { TrafficSources } from './TrafficSources';
 export { SystemSettings } from './SystemSettings';
 export { NewsletterManagement } from './NewsletterManagement';
+export { EmailSettingsManagement } from './EmailSettingsManagement';
