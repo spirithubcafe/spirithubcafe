@@ -97,6 +97,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent navigation when clicking add to cart
     if (isAnimating) return;
+    if (product.isOrderable === false || product.price <= 0) return;
     
     setIsAnimating(true);
     
@@ -126,6 +127,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       openCart();
     }, 800);
   };
+
+  if (product.isOrderable === false) {
+    return null;
+  }
 
   const handleCardClick = () => {
     // Don't navigate if quick view modal is open or in the process of closing

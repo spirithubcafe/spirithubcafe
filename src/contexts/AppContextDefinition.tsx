@@ -4,6 +4,8 @@ export interface Product {
   id: string;
   slug?: string;
   isActive?: boolean;
+  // Derived client-side: false when product has no active variants and can't be purchased.
+  isOrderable?: boolean;
   isLimited?: boolean;
   isPremium?: boolean;
   name: string;

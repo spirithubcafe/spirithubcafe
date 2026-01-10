@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { AppContext, type Product, type Category, type AppContextType } from './AppContextDefinition';
 import { RegionContext } from './RegionContextDefinition';
 import { categoryService } from '../services/categoryService';
-import { productService, productImageService } from '../services/productService';
+import { productService, productImageService, productVariantService } from '../services/productService';
 import type { Category as ApiCategory, Product as ApiProduct } from '../types/product';
 import { getCategoryImageUrl, getProductImageUrl, resolveProductImagePath } from '../lib/imageUtils';
 import { cacheUtils, imageCacheUtils } from '../lib/cacheUtils';
@@ -176,6 +176,75 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     [preloadImagesBestEffort, scheduleProductsCacheSave],
   );
 
+  const enrichProductVariantsInBackground = useCallback(
+    (items: Product[], cacheKey: string, requestId: number) => {
+      // Only enrich when the list payload likely doesn't include variants.
+      // We correct pricing and hide products that have *no active variants*.
+      const candidates = items
+        .filter((p) => p.isOrderable === undefined)
+        .slice(0, 80); // safety cap
+
+      if (candidates.length === 0) return;
+
+      const limit = 4;
+      let index = 0;
+
+      const runWorker = async () => {
+        while (index < candidates.length) {
+          const current = candidates[index++];
+          const numericId = Number(current.id);
+          if (!Number.isFinite(numericId)) continue;
+
+          try {
+            const variants = await productVariantService.getByProduct(numericId);
+            const activeVariants = (variants ?? []).filter((v) => (v as unknown as { isActive?: boolean }).isActive !== false);
+
+            const isOrderable = activeVariants.length > 0;
+
+            // Pick the default active variant for price (or first active).
+            const defaultVariant =
+              activeVariants.find((v) => (v as unknown as { isDefault?: boolean }).isDefault) ??
+              activeVariants[0] ??
+              null;
+
+            const rawPrice =
+              (defaultVariant as unknown as { discountPrice?: number; price?: number } | null)?.discountPrice ??
+              (defaultVariant as unknown as { price?: number } | null)?.price ??
+              0;
+
+            const computedPrice = typeof rawPrice === 'number' ? rawPrice : 0;
+
+            if (!isMountedRef.current || requestId !== latestProductsRequestRef.current) {
+              return;
+            }
+
+            setProducts((prev) => {
+              const next = prev.map((p) => {
+                if (p.id !== current.id) return p;
+                return {
+                  ...p,
+                  isOrderable,
+                  // When not orderable, force price to 0 so UI doesn't show a misleading price.
+                  price: isOrderable ? computedPrice : 0,
+                };
+              });
+              scheduleProductsCacheSave(cacheKey, next);
+              return next;
+            });
+          } catch {
+            // best-effort
+          }
+        }
+      };
+
+      const workers = Array.from({ length: Math.min(limit, candidates.length) }, () => runWorker());
+      Promise.all(workers).catch(() => {
+        // ignore
+      });
+    },
+    [scheduleProductsCacheSave],
+  );
+
   // Toggle language between Arabic and English
   const toggleLanguage = () => {
     const newLang = language === 'ar' ? 'en' : 'ar';
@@ -271,20 +340,28 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
             (typeof pricing.price === 'number' ? pricing.price : undefined) ??
             0;
 
-          // If variants are already present in the list payload, prefer default variant price.
-          if (Array.isArray(p.variants) && p.variants.length > 0) {
+          // If variants are present in the list payload, use ACTIVE variants only.
+          // If there are NO active variants, mark as not orderable so it doesn't show in lists.
+          let isOrderable: boolean | undefined = undefined;
+          if (Array.isArray(p.variants)) {
             const activeVariants = p.variants.filter(
               (variant) => (variant as unknown as { isActive?: boolean }).isActive !== false,
             );
-            const defaultVariant =
-              activeVariants.find((variant) => (variant as unknown as { isDefault?: boolean }).isDefault) ??
-              activeVariants[0];
-            if (defaultVariant) {
-              const variantPrice =
-                (defaultVariant as unknown as { discountPrice?: number; price?: number }).discountPrice ??
-                (defaultVariant as unknown as { price?: number }).price ??
-                price;
-              price = typeof variantPrice === 'number' ? variantPrice : price;
+            if (activeVariants.length === 0) {
+              isOrderable = false;
+              price = 0;
+            } else {
+              isOrderable = true;
+              const defaultVariant =
+                activeVariants.find((variant) => (variant as unknown as { isDefault?: boolean }).isDefault) ??
+                activeVariants[0];
+              if (defaultVariant) {
+                const variantPrice =
+                  (defaultVariant as unknown as { discountPrice?: number; price?: number }).discountPrice ??
+                  (defaultVariant as unknown as { price?: number }).price ??
+                  price;
+                price = typeof variantPrice === 'number' ? variantPrice : price;
+              }
             }
           }
 
@@ -341,6 +418,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
             id: p.id.toString(),
             slug: p.slug,
             isActive: (p as unknown as { isActive?: boolean }).isActive,
+            isOrderable,
             isLimited,
             isPremium,
             name: language === 'ar' && p.nameAr ? p.nameAr : p.name,
@@ -406,6 +484,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       // If the list payload doesn't include images, enrich them in background (concurrency-limited).
       // This restores “main image in list” without going back to N+1 heavy detail fetches upfront.
       enrichProductImagesInBackground(mergedProducts, cacheKey, requestId);
+
+      // If list payload doesn't include variant info, correct pricing/availability in background.
+      enrichProductVariantsInBackground(mergedProducts, cacheKey, requestId);
       
       // Preload a small, safe subset of images in background.
       preloadImagesBestEffort(
@@ -425,7 +506,15 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         endLoading();
       }
     }
-  }, [language, currentRegionCode, beginLoading, endLoading, preloadImagesBestEffort]);
+  }, [
+    language,
+    currentRegionCode,
+    beginLoading,
+    endLoading,
+    preloadImagesBestEffort,
+    enrichProductImagesInBackground,
+    enrichProductVariantsInBackground,
+  ]);
 
   const fetchCategories = useCallback(async (forceRefresh = false) => {
     const requestId = ++latestCategoriesRequestRef.current;

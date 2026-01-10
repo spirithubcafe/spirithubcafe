@@ -107,6 +107,11 @@ export const ProductsPage = () => {
         return false;
       }
 
+      // If the product has no active variants, it should not appear in the listing.
+      if (product.isOrderable === false) {
+        return false;
+      }
+
       // Filter by category using categoryId when available
       const matchesCategory =
         selectedCategory === 'all' ||
