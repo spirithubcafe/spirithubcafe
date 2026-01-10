@@ -53,6 +53,9 @@
   --nav-height-tablet: 64px;
   --nav-height-desktop: 68px;
   --nav-height: var(--nav-height-mobile);
+
+  /* Top banner height (e.g., region chooser). Defaults to hidden. */
+  --region-banner-height: 0px;
   
   --radius: 0.625rem;
   --background: oklch(1 0 0);
@@ -315,13 +318,13 @@ pre {
 
 /* Page Top Padding - Accounts for fixed navigation */
 .page-padding-top {
-  padding-top: var(--nav-height);
+  padding-top: calc(var(--nav-height) + var(--region-banner-height));
 }
 
 /* Sticky Filter Bar - Same height as navigation */
 .sticky-filter-bar {
   position: sticky;
-  top: var(--nav-height);
+  top: calc(var(--nav-height) + var(--region-banner-height));
   height: var(--nav-height);
   z-index: 40;
 }

@@ -27,13 +27,18 @@ export const LoginForm: React.FC<LoginFormProps> = ({
   const isRTL = language === 'ar';
   
   const [formData, setFormData] = useState({
-    username: '',
+    email: '',
     password: ''
   });
   
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>('');
+
+  const validateEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -51,8 +56,13 @@ export const LoginForm: React.FC<LoginFormProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.username || !formData.password) {
-      setError('Please fill in all fields');
+    if (!formData.email.trim() || !formData.password) {
+      setError(t('auth.loginFailed'));
+      return;
+    }
+
+    if (!validateEmail(formData.email)) {
+      setError(t('auth.invalidEmail'));
       return;
     }
 
@@ -65,11 +75,11 @@ export const LoginForm: React.FC<LoginFormProps> = ({
       if (response.success) {
         onSuccess?.();
       } else {
-        setError(response.message || 'Login failed. Please try again.');
+        setError(response.message || t('auth.loginFailed'));
       }
     } catch (err) {
       console.error('Login error:', err);
-      setError('Login failed. Please check your credentials and try again.');
+      setError(t('auth.loginFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -87,21 +97,21 @@ export const LoginForm: React.FC<LoginFormProps> = ({
           
           <div className="space-y-2">
             <Label 
-              htmlFor="username" 
+              htmlFor="email" 
               className={`block text-sm font-medium ${isRTL ? 'text-right font-cairo' : 'text-left'}`}
             >
-              {t('auth.username')}
+              {t('auth.email')}
             </Label>
             <Input
-              id="username"
-              name="username"
-              type="text"
-              value={formData.username}
+              id="email"
+              name="email"
+              type="email"
+              value={formData.email}
               onChange={handleInputChange}
-              placeholder={t('auth.enterUsername')}
+              placeholder={t('auth.enterEmail')}
               disabled={isLoading}
-              className={`w-full ${isRTL ? 'text-right font-cairo placeholder:text-right' : 'text-left'}`}
-              dir={isRTL ? 'rtl' : 'ltr'}
+              className={`w-full ${isRTL ? 'font-cairo' : ''} text-left`}
+              dir="ltr"
             />
           </div>
           
@@ -153,7 +163,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
           <Button
             type="submit"
             className={`w-full bg-amber-600 hover:bg-amber-700 text-white ${isRTL ? 'font-cairo' : ''}`}
-            disabled={isLoading || !formData.username || !formData.password}
+            disabled={isLoading || !formData.email || !formData.password}
           >
             {isLoading ? (
               <>

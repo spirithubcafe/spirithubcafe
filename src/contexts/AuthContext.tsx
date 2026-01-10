@@ -120,9 +120,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   /**
    * Login function
    */
-  const login = async (credentials: { username: string; password: string }): Promise<LoginResponse> => {
+  const login = async (credentials: { email: string; password: string }): Promise<LoginResponse> => {
     try {
-      const response = await authService.login(credentials);
+      // UI uses email, but API expects it in `username`.
+      const response = await authService.login({
+        username: credentials.email,
+        password: credentials.password,
+      });
       
       if (response.success) {
         if (response.user) {
@@ -148,9 +152,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   /**
    * Register function
    */
-  const register = async (userData: { username: string; email: string; password: string; confirmPassword: string }): Promise<LoginResponse> => {
+  const register = async (userData: { email: string; password: string; confirmPassword: string }): Promise<LoginResponse> => {
     try {
-      const response = await authService.register(userData);
+      // UI only asks for an email, but API stores it in `username`.
+      const response = await authService.register({
+        username: userData.email,
+        email: userData.email,
+        password: userData.password,
+        confirmPassword: userData.confirmPassword,
+      });
       
       if (response.success && response.user) {
         setIsAuthenticated(true);

@@ -135,12 +135,15 @@ export const Navigation: React.FC = () => {
 
   return (
     <nav 
-      className={`z-50 fixed top-0 left-0 right-0 ${
+      className={`z-50 fixed left-0 right-0 ${
         isHomePage 
           ? 'bg-black/30 backdrop-blur-sm border-b border-white/10' 
           : 'bg-white shadow-md border-b border-gray-200'
       }`}
-      style={{ height: 'var(--nav-height)' }}
+      style={{
+        height: 'var(--nav-height)',
+        top: 'var(--region-banner-height)',
+      }}
       dir={language === 'ar' ? 'rtl' : 'ltr'}
     >
       <div className="container mx-auto px-3 sm:px-4 h-full">

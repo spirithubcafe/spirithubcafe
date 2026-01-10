@@ -15,14 +15,12 @@ interface RegisterFormProps {
 }
 
 interface FormData {
-  username: string;
   email: string;
   password: string;
   confirmPassword: string;
 }
 
 interface FormErrors {
-  username?: string;
   email?: string;
   password?: string;
   confirmPassword?: string;
@@ -38,7 +36,6 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
   const isRTL = language === 'ar';
   
   const [formData, setFormData] = useState<FormData>({
-    username: '',
     email: '',
     password: '',
     confirmPassword: ''
@@ -57,10 +54,6 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
 
   const validateForm = (): boolean => {
     const errors: FormErrors = {};
-
-    if (!formData.username.trim()) {
-      errors.username = t('auth.usernameRequired');
-    }
 
     if (!formData.email.trim()) {
       errors.email = t('auth.emailRequired');
@@ -115,7 +108,11 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
     setError('');
 
     try {
-      const response = await register(formData);
+      const response = await register({
+        email: formData.email,
+        password: formData.password,
+        confirmPassword: formData.confirmPassword,
+      });
       
       if (response.success) {
         onSuccess?.();
@@ -148,29 +145,6 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
-          
-          <div className="space-y-2">
-            <Label 
-              htmlFor="username" 
-              className={`block text-sm font-medium ${isRTL ? 'text-right font-cairo' : 'text-left'}`}
-            >
-              {t('auth.username')}
-            </Label>
-            <Input
-              id="username"
-              name="username"
-              type="text"
-              value={formData.username}
-              onChange={handleInputChange}
-              placeholder={t('auth.enterUsername')}
-              disabled={isLoading}
-              className={`w-full ${fieldErrors.username ? 'border-red-500' : ''} ${isRTL ? 'text-right font-cairo placeholder:text-right' : 'text-left'}`}
-              dir={isRTL ? 'rtl' : 'ltr'}
-            />
-            {fieldErrors.username && (
-              <p className={`text-sm text-red-500 ${isRTL ? 'text-right font-cairo' : 'text-left'}`}>{fieldErrors.username}</p>
-            )}
-          </div>
 
           <div className="space-y-2">
             <Label 
@@ -189,6 +163,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
               disabled={isLoading}
               className={`w-full ${fieldErrors.email ? 'border-red-500' : ''} ${isRTL ? 'text-right font-cairo placeholder:text-right' : 'text-left'}`}
               dir={isRTL ? 'rtl' : 'ltr'}
+              autoComplete="email"
             />
             {fieldErrors.email && (
               <p className={`text-sm text-red-500 ${isRTL ? 'text-right font-cairo' : 'text-left'}`}>{fieldErrors.email}</p>

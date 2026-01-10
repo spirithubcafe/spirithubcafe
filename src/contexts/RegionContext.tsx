@@ -33,45 +33,20 @@ const REGIONS: Record<RegionCode, RegionConfig> = {
 
 /**
  * Detect region from URL path
- * Returns 'om' or 'sa' based on the path
+ * Returns region code if the path has a region prefix, otherwise null.
  */
-const detectRegionFromPath = (): RegionCode => {
+const detectRegionFromPath = (): RegionCode | null => {
   const path = window.location.pathname;
   
   if (path.startsWith('/sa')) {
     return 'sa';
   }
-  
-  // Default to Oman
-  return 'om';
-};
 
-/**
- * Detect user's country using IP geolocation
- * Falls back to 'om' if detection fails
- */
-const detectRegionFromGeo = async (): Promise<RegionCode> => {
-  try {
-    // Try multiple geolocation services with fallbacks
-    const response = await fetch('https://ipapi.co/json/', { timeout: 3000 } as any);
-    
-    if (response.ok) {
-      const data = await response.json();
-      const countryCode = data.country_code?.toUpperCase();
-      
-      if (countryCode === 'SA') {
-        return 'sa';
-      }
-      if (countryCode === 'OM') {
-        return 'om';
-      }
-    }
-  } catch (error) {
-    console.log('Geolocation detection failed, using default region');
+  if (path.startsWith('/om')) {
+    return 'om';
   }
   
-  // Default to Oman
-  return 'om';
+  return null;
 };
 
 export const RegionProvider: React.FC<RegionProviderProps> = ({ children }) => {
@@ -121,18 +96,11 @@ export const RegionProvider: React.FC<RegionProviderProps> = ({ children }) => {
   // Detect region on initial load
   useEffect(() => {
     const initializeRegion = async () => {
-      // Check if user has manually selected a region
-      const savedRegion = safeStorage.getItem('spirithub-region') as RegionCode;
       const pathRegion = detectRegionFromPath();
       
-      // If there's no path region and no saved region, detect from geo
-      if (!pathRegion && !savedRegion) {
-        const geoRegion = await detectRegionFromGeo();
-        
-        // Redirect to appropriate region
-        const currentPath = window.location.pathname;
-        window.location.href = `/${geoRegion}${currentPath}`;
-      } else if (pathRegion && pathRegion !== currentRegion.code) {
+      // If there's no path region and no saved region, do NOT auto-detect/redirect.
+      // We require an explicit user confirmation (handled in RegionRedirect).
+      if (pathRegion && pathRegion !== currentRegion.code) {
         // Update current region to match path
         setCurrentRegion(REGIONS[pathRegion]);
         safeStorage.setItem('spirithub-region', pathRegion);
@@ -146,7 +114,7 @@ export const RegionProvider: React.FC<RegionProviderProps> = ({ children }) => {
   useEffect(() => {
     const handlePopState = () => {
       const pathRegion = detectRegionFromPath();
-      if (pathRegion !== currentRegion.code) {
+      if (pathRegion && pathRegion !== currentRegion.code) {
         setCurrentRegion(REGIONS[pathRegion]);
         safeStorage.setItem('spirithub-region', pathRegion);
       }

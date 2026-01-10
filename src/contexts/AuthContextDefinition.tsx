@@ -12,8 +12,10 @@ export interface AuthContextType {
   isLoading: boolean;
   
   // Actions
-  login: (credentials: { username: string; password: string }) => Promise<LoginResponse>;
-  register: (userData: { username: string; email: string; password: string; confirmPassword: string }) => Promise<LoginResponse>;
+  // UI asks for an email, but the API login endpoint expects it in the `username` field.
+  login: (credentials: { email: string; password: string }) => Promise<LoginResponse>;
+  // Register accepts a single email field in the UI; it is sent to the API as `username` (and also as `email` when supported).
+  register: (userData: { email: string; password: string; confirmPassword: string }) => Promise<LoginResponse>;
   loginWithGoogle: (googleData: GoogleLoginData) => Promise<LoginResponse>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
