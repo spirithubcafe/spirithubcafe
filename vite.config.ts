@@ -113,19 +113,14 @@ export default defineConfig({
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024, // 3 MB
         runtimeCaching: [
           {
-            urlPattern: /^https:\/\/api\.spirithubcafe\.com\/?.*/i,
-            handler: "NetworkFirst",
-            options: {
-              cacheName: "api-cache",
-              networkTimeoutSeconds: 10,
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 60 * 60
-              },
-              cacheableResponse: {
-                statuses: [0, 200]
-              }
-            }
+            // IMPORTANT: Do NOT runtime-cache all API calls.
+            // - The app already does its own caching (see AppContext).
+            // - Caching every unique API URL (and especially image URLs) causes constant churn
+            //   and repeated Workbox ExpirationPlugin cleanup logs ("Expired N entries...").
+            // Keep API calls as network-only, and separately cache API images below.
+            urlPattern: ({ url, request }) =>
+              url.origin === 'https://api.spirithubcafe.com' && request.destination !== 'image',
+            handler: 'NetworkOnly'
           },
           {
             // Product images from our API domain: keep a bigger cache with longer retention.

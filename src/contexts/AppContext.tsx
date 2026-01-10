@@ -6,7 +6,7 @@ import { RegionContext } from './RegionContextDefinition';
 import { categoryService } from '../services/categoryService';
 import { productService, productImageService } from '../services/productService';
 import type { Category as ApiCategory, Product as ApiProduct } from '../types/product';
-import { getCategoryImageUrl, getProductImageUrl, resolveProductImageUrl } from '../lib/imageUtils';
+import { getCategoryImageUrl, getProductImageUrl, resolveProductImagePath } from '../lib/imageUtils';
 import { cacheUtils, imageCacheUtils } from '../lib/cacheUtils';
 import { safeStorage } from '../lib/safeStorage';
 
@@ -129,7 +129,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     (items: Product[], cacheKey: string, requestId: number) => {
       // Only enrich when we likely have placeholder images.
       const candidates = items
-        .filter((p) => isDefaultProductImageUrl(p.image))
+        .filter((p) => isDefaultProductImageUrl(p.image) || !p.image)
         .slice(0, 80); // safety cap
 
       if (candidates.length === 0) return;
@@ -147,9 +147,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
             const images = await productImageService.getByProduct(numericId);
             const main = images.find((img) => img.isMain) ?? images[0];
             const imagePath = main?.imagePath;
-            if (!imagePath) continue;
-
-            const resolved = getProductImageUrl(imagePath);
+            const resolved = imagePath ? getProductImageUrl(imagePath) : getProductImageUrl(undefined);
 
             if (!isMountedRef.current || requestId !== latestProductsRequestRef.current) {
               return;
@@ -290,7 +288,11 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
             }
           }
 
-          const imageUrl = resolveProductImageUrl(p);
+          // IMPORTANT: Do not set the UI to a default placeholder image up-front.
+          // If the list payload does not contain an image path, keep it empty so the UI can
+          // show a neutral skeleton until the background enrichment resolves the real image.
+          const imagePath = resolveProductImagePath(p);
+          const imageUrl = imagePath ? getProductImageUrl(imagePath) : '';
           const fallbackCategoryName =
             (typeof p.categoryName === 'string' && p.categoryName) || '';
           const fallbackCategoryNameAr =
@@ -374,7 +376,10 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         const next: Product = { ...incoming };
 
         // Preserve image when list payload doesn't include image paths.
-        if (isDefaultProductImageUrl(next.image) && !isDefaultProductImageUrl(prev.image)) {
+        // Treat empty/default as placeholder; only override when cache has a real image.
+        const nextIsPlaceholder = !next.image || isDefaultProductImageUrl(next.image);
+        const prevIsReal = !!prev.image && !isDefaultProductImageUrl(prev.image);
+        if (nextIsPlaceholder && prevIsReal) {
           next.image = prev.image;
         }
 

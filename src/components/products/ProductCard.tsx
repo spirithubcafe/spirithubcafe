@@ -8,7 +8,7 @@ import { Button } from '../ui/button';
 import { useCart } from '../../hooks/useCart';
 import { useFavorites } from '../../hooks/useFavorites';
 import type { Product } from '../../contexts/AppContextDefinition';
-import { handleImageError } from '../../lib/imageUtils';
+import { getProductImageUrl, handleImageError } from '../../lib/imageUtils';
 import { ProductQuickView } from './ProductQuickView';
 
 interface ProductCardProps {
@@ -28,6 +28,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const [defaultVariantId, setDefaultVariantId] = useState<number | null>(null);
   const [hasDiscount, setHasDiscount] = useState(false);
   const [discountPercent, setDiscountPercent] = useState(0);
+  const [isImageLoaded, setIsImageLoaded] = useState(false);
 
   // Try to fetch default variant for this product so we always have a variantId when adding to cart
   useEffect(() => {
@@ -69,6 +70,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     return () => { mounted = false; };
   }, [product.id]);
 
+  // Reset loading state when the image URL changes (e.g., after background enrichment).
+  useEffect(() => {
+    setIsImageLoaded(false);
+  }, [product.image]);
+
   const isWishlisted = isFavorite(product.id);
 
   const handleToggleWishlist = (e: React.MouseEvent) => {
@@ -80,7 +86,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       slug: product.slug,
       name: product.name,
       price: product.price,
-      image: product.image,
+      image: product.image || getProductImageUrl(undefined),
       category: product.category,
       rating: 4.5 // Default rating since Product doesn't have rating field
     };
@@ -107,7 +113,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       productVariantId: variantId,
       name: product.name,
       price: product.price,
-      image: product.image,
+      image: product.image || getProductImageUrl(undefined),
       tastingNotes: product.tastingNotes,
       variantName: undefined,
       weight: undefined,
@@ -172,12 +178,25 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
       {/* Product Image - Square aspect ratio */}
       <div className="relative overflow-hidden aspect-square">
-        <img
-          src={product.image}
-          alt={product.name}
-          className="w-full h-full object-cover transition-transform duration-500"
-          onError={(event) => handleImageError(event, '/images/products/default-product.webp')}
-        />
+        {/* Skeleton/placeholder while the real image is loading */}
+        {!isImageLoaded && (
+          <div className="absolute inset-0 bg-gray-100 animate-pulse" aria-hidden="true" />
+        )}
+
+        {product.image ? (
+          <img
+            src={product.image}
+            alt={product.name}
+            className={`w-full h-full object-cover transition-transform duration-500 ${
+              isImageLoaded ? 'opacity-100' : 'opacity-0'
+            }`}
+            onLoad={() => setIsImageLoaded(true)}
+            onError={(event) => {
+              setIsImageLoaded(true);
+              handleImageError(event, '/images/products/default-product.webp');
+            }}
+          />
+        ) : null}
         
         {/* Sale Badge */}
         {hasDiscount && (
@@ -205,7 +224,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         {/* Animated clone for cart animation */}
         {isAnimating && (
           <motion.img
-            src={product.image}
+            src={product.image || getProductImageUrl(undefined)}
             alt={product.name}
             className="absolute inset-0 w-full h-full object-cover pointer-events-none"
             initial={{ scale: 1, opacity: 1, y: 0, x: 0 }}

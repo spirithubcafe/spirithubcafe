@@ -74,6 +74,21 @@ initScrollbars()
 // Register Service Worker as early as possible so image requests can be served from cache.
 // Note: The SW will start controlling the page after the first load + refresh.
 if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+  // One-time migration: older SW versions cached *all* API requests under "api-cache".
+  // That small cache caused constant eviction + console spam (Workbox ExpirationPlugin).
+  // We now keep API calls network-only and cache only API images.
+  try {
+    const migrationKey = 'spirithub_migrated_delete_api_cache_v1'
+    if (!window.localStorage.getItem(migrationKey) && 'caches' in window) {
+      // Best-effort: we don't want this to block boot.
+      window.caches.delete('api-cache').finally(() => {
+        window.localStorage.setItem(migrationKey, '1')
+      })
+    }
+  } catch {
+    // ignore
+  }
+
   try {
     registerSW({
       immediate: true,

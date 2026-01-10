@@ -64,25 +64,31 @@ export function getSalesDataByPeriod(
 
   switch (period) {
     case 'daily':
+    {
       const startDaily = subDays(now, count - 1);
       intervals = eachDayOfInterval({ start: startDaily, end: now });
       formatStr = 'MMM dd';
       groupKeyFn = (date: Date) => format(startOfDay(date), 'yyyy-MM-dd');
       break;
+    }
 
     case 'weekly':
+    {
       const startWeekly = subWeeks(now, count - 1);
       intervals = eachWeekOfInterval({ start: startWeekly, end: now }, { weekStartsOn: 0 });
       formatStr = 'MMM dd';
       groupKeyFn = (date: Date) => format(startOfWeek(date, { weekStartsOn: 0 }), 'yyyy-MM-dd');
       break;
+    }
 
     case 'monthly':
+    {
       const startMonthly = subMonths(now, count - 1);
       intervals = eachMonthOfInterval({ start: startMonthly, end: now });
       formatStr = 'MMM yyyy';
       groupKeyFn = (date: Date) => format(startOfMonth(date), 'yyyy-MM');
       break;
+    }
   }
 
   // Group orders by period
