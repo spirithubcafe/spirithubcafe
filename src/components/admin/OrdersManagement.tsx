@@ -2650,25 +2650,32 @@ export const OrdersManagement: React.FC = () => {
 
                 {/* Register Pickup Dialog */}
                 <Dialog open={showRegisterPickupDialog} onOpenChange={setShowRegisterPickupDialog}>
-                  <DialogContent className="max-w-2xl">
-                    <DialogHeader>
-                      <DialogTitle>
-                        {isArabic ? 'تسجيل الاستلام (Pickup) لدى أرامكس' : 'Register Aramex Pickup'}
-                      </DialogTitle>
-                      <DialogDescription>
-                        {isArabic
-                          ? 'حدد تاريخ/وقت الاستلام وبقية التفاصيل، ثم اضغط تسجيل.'
-                          : 'Set pickup date/time and details, then click Register.'}
-                      </DialogDescription>
-                    </DialogHeader>
+                  <DialogContent
+                    className="w-[min(96vw,42rem)] max-w-2xl max-h-[90vh] overflow-hidden p-0"
+                    dir={isArabic ? 'rtl' : 'ltr'}
+                  >
+                    <div className="flex max-h-[90vh] flex-col">
+                      <div className="shrink-0 px-6 pt-6">
+                        <DialogHeader className={cn(isArabic ? 'text-right sm:text-right' : 'text-left sm:text-left')}>
+                          <DialogTitle>
+                            {isArabic ? 'تسجيل الاستلام (Pickup) لدى أرامكس' : 'Register Aramex Pickup'}
+                          </DialogTitle>
+                          <DialogDescription>
+                            {isArabic
+                              ? 'حدد تاريخ/وقت الاستلام وبقية التفاصيل، ثم اضغط تسجيل.'
+                              : 'Set pickup date/time and details, then click Register.'}
+                          </DialogDescription>
+                        </DialogHeader>
+                      </div>
 
-                    {pickupDraft ? (
-                      <div className="space-y-4">
-                        {registerPickupError && (
-                          <div className="p-3 rounded-md border border-red-200 bg-red-50 text-red-800 text-sm">
-                            {registerPickupError}
-                          </div>
-                        )}
+                      <div className="flex-1 overflow-y-auto overflow-x-hidden px-6 pb-6 pt-4">
+                        {pickupDraft ? (
+                          <div className="space-y-4">
+                            {registerPickupError && (
+                              <div className="p-3 rounded-md border border-red-200 bg-red-50 text-red-800 text-sm">
+                                {registerPickupError}
+                              </div>
+                            )}
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
@@ -2937,7 +2944,16 @@ export const OrdersManagement: React.FC = () => {
                           </div>
                         </div>
 
-                        <div className="flex justify-end gap-2 pt-2">
+                          </div>
+                        ) : (
+                          <div className="py-6 text-sm text-muted-foreground">
+                            {isArabic ? 'جارٍ تجهيز بيانات الاستلام…' : 'Preparing pickup details…'}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="shrink-0 border-t bg-background px-6 py-4">
+                        <div className="flex justify-end gap-2">
                           <Button
                             variant="outline"
                             onClick={() => setShowRegisterPickupDialog(false)}
@@ -2947,7 +2963,7 @@ export const OrdersManagement: React.FC = () => {
                           </Button>
                           <Button
                             onClick={handleRegisterPickup}
-                            disabled={registerPickupLoading}
+                            disabled={registerPickupLoading || !pickupDraft}
                           >
                             {registerPickupLoading ? (
                               <>
@@ -2963,11 +2979,7 @@ export const OrdersManagement: React.FC = () => {
                           </Button>
                         </div>
                       </div>
-                    ) : (
-                      <div className="py-6 text-sm text-muted-foreground">
-                        {isArabic ? 'جارٍ تجهيز بيانات الاستلام…' : 'Preparing pickup details…'}
-                      </div>
-                    )}
+                    </div>
                   </DialogContent>
                 </Dialog>
 
@@ -3253,7 +3265,7 @@ export const OrdersManagement: React.FC = () => {
 
       {/* Shipment Confirmation Dialog */}
       <Dialog open={showShipmentConfirmDialog} onOpenChange={setShowShipmentConfirmDialog}>
-        <DialogContent className="w-[min(96vw,34rem)] max-w-[34rem] max-h-[85vh] overflow-y-auto overflow-x-hidden">
+        <DialogContent className="w-[min(96vw,34rem)] max-w-136 max-h-[85vh] overflow-y-auto overflow-x-hidden">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <PackagePlus className="h-5 w-5 text-red-600" />
@@ -3293,7 +3305,7 @@ export const OrdersManagement: React.FC = () => {
                       <span className={cn("shrink-0 font-medium text-muted-foreground whitespace-nowrap", isArabic ? "text-right" : "text-left")}>
                         {isArabic ? 'الوجهة:' : 'Destination:'}
                       </span>
-                      <span className={cn("flex-1 min-w-0 break-words", isArabic ? "text-left" : "text-right")}>
+                      <span className={cn("flex-1 min-w-0 wrap-break-word", isArabic ? "text-left" : "text-right")}>
                         {(() => {
                           const destination = selectedOrder.isGift && selectedOrder.giftRecipientCountry 
                             ? [selectedOrder.giftRecipientCity, selectedOrder.giftRecipientCountry].filter(Boolean).join(', ')
@@ -3307,7 +3319,7 @@ export const OrdersManagement: React.FC = () => {
                       <span className={cn("shrink-0 font-medium text-muted-foreground whitespace-nowrap", isArabic ? "text-right" : "text-left")}>
                         {isArabic ? 'المبلغ:' : 'Amount:'}
                       </span>
-                      <span className={cn("flex-1 min-w-0 font-semibold break-words", isArabic ? "text-left" : "text-right")}>
+                      <span className={cn("flex-1 min-w-0 font-semibold wrap-break-word", isArabic ? "text-left" : "text-right")}>
                         OMR {selectedOrder.totalAmount.toFixed(3)}
                       </span>
                     </div>
