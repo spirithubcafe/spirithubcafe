@@ -14,7 +14,7 @@ import { X } from 'lucide-react';
 export const RegionRedirect: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { currentRegion } = useRegion();
+  const { currentRegion, setRegion } = useRegion();
   const { language } = useApp();
 
   const isRTL = language === 'ar';
@@ -45,11 +45,12 @@ export const RegionRedirect: React.FC = () => {
   };
 
   const goToRegion = (region: RegionCode) => {
-    safeStorage.setItem('spirithub-region', region);
+    // Delegate to RegionContext so the whole UI (including the header dropdown)
+    // updates immediately.
+    setRegion(region);
 
-    const path = location.pathname;
-    const targetPath = path === '/' ? `/${region}` : `/${region}${path}`;
-    navigate(`${targetPath}${location.search}`, { replace: true });
+    // In case the banner is shown, dismiss it right away.
+    setShowBanner(false);
   };
 
   // Intentionally NOT persisted: if the user refreshes, they should see the banner again

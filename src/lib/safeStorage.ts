@@ -9,6 +9,22 @@
 
 export type StorageScope = 'local' | 'session';
 
+type SafeStorageChangeDetail = {
+  action: 'set' | 'remove';
+  scope: StorageScope;
+  key: string;
+  value?: string;
+};
+
+const notifySafeStorageChange = (detail: SafeStorageChangeDetail): void => {
+  if (typeof window === 'undefined') return;
+  try {
+    window.dispatchEvent(new CustomEvent<SafeStorageChangeDetail>('safeStorage:change', { detail }));
+  } catch {
+    // ignore
+  }
+};
+
 const memoryLocal = new Map<string, string>();
 const memorySession = new Map<string, string>();
 
@@ -44,14 +60,17 @@ const safeSetItem = (scope: StorageScope, key: string, value: string): void => {
 
   if (!storage) {
     mem.set(key, value);
+    notifySafeStorageChange({ action: 'set', scope, key, value });
     return;
   }
 
   try {
     storage.setItem(key, value);
+    notifySafeStorageChange({ action: 'set', scope, key, value });
   } catch {
     // Safari (private mode) can throw QuotaExceededError even on setItem.
     mem.set(key, value);
+    notifySafeStorageChange({ action: 'set', scope, key, value });
   }
 };
 
@@ -68,6 +87,8 @@ const safeRemoveItem = (scope: StorageScope, key: string): void => {
   }
 
   mem.delete(key);
+
+  notifySafeStorageChange({ action: 'remove', scope, key });
 };
 
 export const safeStorage = {

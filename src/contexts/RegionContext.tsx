@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import type { ReactNode } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { RegionContext, type RegionCode, type RegionConfig } from './RegionContextDefinition';
 import { safeStorage } from '../lib/safeStorage';
 
@@ -35,8 +36,8 @@ const REGIONS: Record<RegionCode, RegionConfig> = {
  * Detect region from URL path
  * Returns region code if the path has a region prefix, otherwise null.
  */
-const detectRegionFromPath = (): RegionCode | null => {
-  const path = window.location.pathname;
+const detectRegionFromPath = (pathname?: string): RegionCode | null => {
+  const path = pathname ?? (typeof window !== 'undefined' ? window.location.pathname : '/');
   
   if (path.startsWith('/sa')) {
     return 'sa';
@@ -50,6 +51,9 @@ const detectRegionFromPath = (): RegionCode | null => {
 };
 
 export const RegionProvider: React.FC<RegionProviderProps> = ({ children }) => {
+  const location = useLocation();
+  const navigate = useNavigate();
+
   const [currentRegion, setCurrentRegion] = useState<RegionConfig>(() => {
     // First check URL path
     const pathRegion = detectRegionFromPath();
@@ -72,8 +76,8 @@ export const RegionProvider: React.FC<RegionProviderProps> = ({ children }) => {
     safeStorage.setItem('spirithub-region', regionCode);
     
     // Update URL if needed
-    const currentPath = window.location.pathname;
-    const currentRegionPrefix = detectRegionFromPath();
+    const currentPath = location.pathname;
+    const currentRegionPrefix = detectRegionFromPath(currentPath);
     
     if (currentRegionPrefix !== regionCode) {
       let newPath = currentPath;
@@ -86,42 +90,57 @@ export const RegionProvider: React.FC<RegionProviderProps> = ({ children }) => {
       }
       
       // Add new region prefix
-      newPath = `/${regionCode}${newPath}`;
-      
-      // Navigate to new URL
-      window.history.pushState({}, '', newPath);
+      const suffix = newPath === '/' ? '' : newPath;
+      const targetPath = `/${regionCode}${suffix}`;
+
+      // Navigate via React Router so the whole app reacts to the change.
+      navigate(`${targetPath}${location.search}${location.hash}`, { replace: true });
     }
-  }, []);
+  }, [location.hash, location.pathname, location.search, navigate]);
 
-  // Detect region on initial load
+  // Keep region state in sync with the current URL.
+  // This is crucial because React Router navigation does not trigger a native
+  // `popstate` event for programmatic navigations.
   useEffect(() => {
-    const initializeRegion = async () => {
-      const pathRegion = detectRegionFromPath();
-      
-      // If there's no path region and no saved region, do NOT auto-detect/redirect.
-      // We require an explicit user confirmation (handled in RegionRedirect).
-      if (pathRegion && pathRegion !== currentRegion.code) {
-        // Update current region to match path
-        setCurrentRegion(REGIONS[pathRegion]);
-        safeStorage.setItem('spirithub-region', pathRegion);
+    const pathRegion = detectRegionFromPath(location.pathname);
+
+    // If there's no path region and no saved region, do NOT auto-detect/redirect.
+    // We require an explicit user confirmation (handled in RegionRedirect).
+    if (pathRegion && pathRegion !== currentRegion.code) {
+      setCurrentRegion(REGIONS[pathRegion]);
+      safeStorage.setItem('spirithub-region', pathRegion);
+    }
+  }, [currentRegion.code, location.pathname]);
+
+  // Also react to direct storage writes (same-tab + other tabs) to keep the UI fresh.
+  // This helps when some code updates localStorage without calling `setRegion`.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const applyRegion = (next: unknown) => {
+      if (next === currentRegion.code) return;
+      if (next === 'om' || next === 'sa') {
+        setCurrentRegion(REGIONS[next]);
       }
     };
 
-    initializeRegion();
-  }, []);
-
-  // Listen to popstate events (back/forward navigation)
-  useEffect(() => {
-    const handlePopState = () => {
-      const pathRegion = detectRegionFromPath();
-      if (pathRegion && pathRegion !== currentRegion.code) {
-        setCurrentRegion(REGIONS[pathRegion]);
-        safeStorage.setItem('spirithub-region', pathRegion);
-      }
+    const handleNativeStorage = (event: StorageEvent) => {
+      if (event.key !== 'spirithub-region') return;
+      applyRegion(event.newValue);
     };
 
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
+    const handleSafeStorageChange = (event: Event) => {
+      const custom = event as CustomEvent<{ key: string; value?: string }>;
+      if (!custom.detail || custom.detail.key !== 'spirithub-region') return;
+      applyRegion(custom.detail.value);
+    };
+
+    window.addEventListener('storage', handleNativeStorage);
+    window.addEventListener('safeStorage:change', handleSafeStorageChange as EventListener);
+    return () => {
+      window.removeEventListener('storage', handleNativeStorage);
+      window.removeEventListener('safeStorage:change', handleSafeStorageChange as EventListener);
+    };
   }, [currentRegion.code]);
 
   const value = {
