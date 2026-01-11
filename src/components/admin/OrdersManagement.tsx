@@ -3253,7 +3253,7 @@ export const OrdersManagement: React.FC = () => {
 
       {/* Shipment Confirmation Dialog */}
       <Dialog open={showShipmentConfirmDialog} onOpenChange={setShowShipmentConfirmDialog}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="w-[min(96vw,34rem)] max-w-[34rem] max-h-[85vh] overflow-y-auto overflow-x-hidden">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <PackagePlus className="h-5 w-5 text-red-600" />
@@ -3268,42 +3268,50 @@ export const OrdersManagement: React.FC = () => {
 
           {selectedOrder && (
             <div className="space-y-4">
-              <div className="space-y-2.5 p-4 bg-muted/50 rounded-lg text-sm border">
-                <div className="flex justify-between items-start gap-4">
-                  <span className="font-medium text-muted-foreground shrink-0">
-                    {isArabic ? 'رقم الطلب:' : 'Order #:'}
-                  </span>
-                  <span className="font-semibold text-right">{selectedOrder.orderNumber}</span>
-                </div>
-                
-                <div className="flex justify-between items-start gap-4">
-                  <span className="font-medium text-muted-foreground shrink-0">
-                    {isArabic ? 'العميل:' : 'Customer:'}
-                  </span>
-                  <span className="text-right break-all" title={selectedOrder.fullName || selectedOrder.email}>
-                    {selectedOrder.fullName || selectedOrder.email}
-                  </span>
-                </div>
-                
-                <div className="flex justify-between items-start gap-4">
-                  <span className="font-medium text-muted-foreground shrink-0">
-                    {isArabic ? 'الوجهة:' : 'Destination:'}
-                  </span>
-                  <span className="text-right break-all">
-                    {(() => {
-                      const destination = selectedOrder.isGift && selectedOrder.giftRecipientCountry 
-                        ? [selectedOrder.giftRecipientCity, selectedOrder.giftRecipientCountry].filter(Boolean).join(', ')
-                        : [selectedOrder.city, selectedOrder.country].filter(Boolean).join(', ');
-                      return destination || (isArabic ? 'غير محدد' : 'Not specified');
-                    })()}
-                  </span>
-                </div>
-                
-                <div className="flex justify-between items-start gap-4">
-                  <span className="font-medium text-muted-foreground shrink-0">
-                    {isArabic ? 'المبلغ:' : 'Amount:'}
-                  </span>
-                  <span className="font-semibold text-right">OMR {selectedOrder.totalAmount.toFixed(3)}</span>
+              <div className="w-full max-w-full rounded-lg border bg-card overflow-hidden">
+                <div className="p-4">
+                  <div className="space-y-2.5 text-sm">
+                    <div className={cn("flex w-full min-w-0 items-start gap-3", isArabic ? "flex-row-reverse" : "")}>
+                      <span className={cn("shrink-0 font-medium text-muted-foreground whitespace-nowrap", isArabic ? "text-right" : "text-left")}>
+                        {isArabic ? 'رقم الطلب:' : 'Order #:'}
+                      </span>
+                      <span className={cn("flex-1 min-w-0 font-semibold break-all", isArabic ? "text-left" : "text-right")}>
+                        {selectedOrder.orderNumber}
+                      </span>
+                    </div>
+                    
+                    <div className={cn("flex w-full min-w-0 items-start gap-3", isArabic ? "flex-row-reverse" : "")}>
+                      <span className={cn("shrink-0 font-medium text-muted-foreground whitespace-nowrap", isArabic ? "text-right" : "text-left")}>
+                        {isArabic ? 'العميل:' : 'Customer:'}
+                      </span>
+                      <span className={cn("flex-1 min-w-0 break-all", isArabic ? "text-left" : "text-right")}>
+                        {selectedOrder.fullName || selectedOrder.email}
+                      </span>
+                    </div>
+                    
+                    <div className={cn("flex w-full min-w-0 items-start gap-3", isArabic ? "flex-row-reverse" : "")}>
+                      <span className={cn("shrink-0 font-medium text-muted-foreground whitespace-nowrap", isArabic ? "text-right" : "text-left")}>
+                        {isArabic ? 'الوجهة:' : 'Destination:'}
+                      </span>
+                      <span className={cn("flex-1 min-w-0 break-words", isArabic ? "text-left" : "text-right")}>
+                        {(() => {
+                          const destination = selectedOrder.isGift && selectedOrder.giftRecipientCountry 
+                            ? [selectedOrder.giftRecipientCity, selectedOrder.giftRecipientCountry].filter(Boolean).join(', ')
+                            : [selectedOrder.city, selectedOrder.country].filter(Boolean).join(', ');
+                          return destination || (isArabic ? 'غير محدد' : 'Not specified');
+                        })()}
+                      </span>
+                    </div>
+                    
+                    <div className={cn("flex w-full min-w-0 items-start gap-3", isArabic ? "flex-row-reverse" : "")}>
+                      <span className={cn("shrink-0 font-medium text-muted-foreground whitespace-nowrap", isArabic ? "text-right" : "text-left")}>
+                        {isArabic ? 'المبلغ:' : 'Amount:'}
+                      </span>
+                      <span className={cn("flex-1 min-w-0 font-semibold break-words", isArabic ? "text-left" : "text-right")}>
+                        OMR {selectedOrder.totalAmount.toFixed(3)}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -3312,67 +3320,32 @@ export const OrdersManagement: React.FC = () => {
                   {isArabic ? 'نوع الشحنة:' : 'Shipment Mode:'}
                 </Label>
                 <Select value={shipmentMode} onValueChange={(value: 'AUTO' | 'DOMESTIC' | 'INTERNATIONAL') => setShipmentMode(value)}>
-                  <SelectTrigger id="shipmentMode" className="w-full h-auto">
-                    <SelectValue>
-                      <div className="flex flex-col items-start text-left py-0.5">
-                        <span className="font-medium text-sm">
-                          {shipmentMode === 'AUTO' && (isArabic ? 'تلقائي' : 'AUTO')}
-                          {shipmentMode === 'DOMESTIC' && (isArabic ? 'محلي (عُمان)' : 'DOMESTIC (Oman)')}
-                          {shipmentMode === 'INTERNATIONAL' && (isArabic ? 'دولي' : 'INTERNATIONAL')}
-                        </span>
-                        <span className="text-xs text-muted-foreground leading-tight mt-0.5">
-                          {shipmentMode === 'AUTO' && (isArabic 
-                            ? 'تلقائي حسب مقارنة بلد المرسل مع بلد المستلم (نفس البلد = DOM/OND، غير ذلك = EXP/PPX)'
-                            : 'Auto-detect by comparing shipper vs consignee country (same country = DOM/OND, otherwise = EXP/PPX)')}
-                          {shipmentMode === 'DOMESTIC' && (isArabic 
-                            ? 'إجباري: DOM / OND (شحن داخل عُمان)'
-                            : 'Force: DOM / OND (Domestic Oman)')}
-                          {shipmentMode === 'INTERNATIONAL' && (isArabic 
-                            ? 'إجباري: EXP / PPX (شحن دولي)'
-                            : 'Force: EXP / PPX (International)')}
-                        </span>
-                      </div>
-                    </SelectValue>
+                  <SelectTrigger id="shipmentMode" className="w-full">
+                    <SelectValue className="line-clamp-none" />
                   </SelectTrigger>
                   <SelectContent className="max-w-md">
-                    <SelectItem value="AUTO">
-                      <div className="flex flex-col items-start py-1.5">
-                        <span className="font-medium text-sm">
-                          {isArabic ? 'تلقائي' : 'AUTO'}
-                        </span>
-                        <span className="text-xs text-muted-foreground leading-tight mt-0.5 whitespace-normal">
-                          {isArabic 
-                            ? 'تلقائي حسب مقارنة بلد المرسل مع بلد المستلم (نفس البلد = DOM/OND، غير ذلك = EXP/PPX)'
-                            : 'Auto-detect by comparing shipper vs consignee country (same country = DOM/OND, otherwise = EXP/PPX)'}
-                        </span>
-                      </div>
+                    <SelectItem value="AUTO" textValue={isArabic ? 'تلقائي' : 'AUTO'}>
+                      <span className="font-medium">{isArabic ? 'تلقائي' : 'AUTO'}</span>
                     </SelectItem>
-                    <SelectItem value="DOMESTIC">
-                      <div className="flex flex-col items-start py-1.5">
-                        <span className="font-medium text-sm">
-                          {isArabic ? 'محلي (عُمان)' : 'DOMESTIC (Oman)'}
-                        </span>
-                        <span className="text-xs text-muted-foreground leading-tight mt-0.5 whitespace-normal">
-                          {isArabic 
-                            ? 'إجباري: DOM / OND (شحن داخل عُمان)'
-                            : 'Force: DOM / OND (Domestic Oman)'}
-                        </span>
-                      </div>
+                    <SelectItem value="DOMESTIC" textValue={isArabic ? 'محلي (عُمان)' : 'DOMESTIC (Oman)'}>
+                      <span className="font-medium">{isArabic ? 'محلي (عُمان)' : 'DOMESTIC (Oman)'}</span>
                     </SelectItem>
-                    <SelectItem value="INTERNATIONAL">
-                      <div className="flex flex-col items-start py-1.5">
-                        <span className="font-medium text-sm">
-                          {isArabic ? 'دولي' : 'INTERNATIONAL'}
-                        </span>
-                        <span className="text-xs text-muted-foreground leading-tight mt-0.5 whitespace-normal">
-                          {isArabic 
-                            ? 'إجباري: EXP / PPX (شحن دولي)'
-                            : 'Force: EXP / PPX (International)'}
-                        </span>
-                      </div>
+                    <SelectItem value="INTERNATIONAL" textValue={isArabic ? 'دولي' : 'INTERNATIONAL'}>
+                      <span className="font-medium">{isArabic ? 'دولي' : 'INTERNATIONAL'}</span>
                     </SelectItem>
                   </SelectContent>
                 </Select>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  {shipmentMode === 'AUTO' && (isArabic
+                    ? 'تلقائي حسب مقارنة بلد المرسل مع بلد المستلم (نفس البلد = DOM/OND، غير ذلك = EXP/PPX)'
+                    : 'Auto-detect by comparing shipper vs consignee country (same country = DOM/OND, otherwise = EXP/PPX)')}
+                  {shipmentMode === 'DOMESTIC' && (isArabic
+                    ? 'إجباري: DOM / OND (شحن داخل عُمان)'
+                    : 'Force: DOM / OND (Domestic Oman)')}
+                  {shipmentMode === 'INTERNATIONAL' && (isArabic
+                    ? 'إجباري: EXP / PPX (شحن دولي)'
+                    : 'Force: EXP / PPX (International)')}
+                </p>
               </div>
 
               <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
