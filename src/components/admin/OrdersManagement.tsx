@@ -1228,6 +1228,8 @@ export const OrdersManagement: React.FC = () => {
     }
   };
 
+  const [shipmentMode, setShipmentMode] = useState<'AUTO' | 'DOMESTIC' | 'INTERNATIONAL'>('AUTO');
+
   const handleCreateShipment = async (order: Order) => {
     if (order.shippingMethod !== 3) {
       setShipmentError(isArabic ? 'هذا الطلب ليس من نوع أرامكس' : 'This order is not an Aramex order');
@@ -1242,6 +1244,7 @@ export const OrdersManagement: React.FC = () => {
     }
 
     setSelectedOrder(order);
+    setShipmentMode('AUTO'); // Reset to AUTO
     setShowShipmentConfirmDialog(true);
   };
 
@@ -1253,7 +1256,7 @@ export const OrdersManagement: React.FC = () => {
     
     try {
       const { createShipmentForOrder } = await import('../../services');
-      const response = await createShipmentForOrder(selectedOrder.id);
+      const response = await createShipmentForOrder(selectedOrder.id, shipmentMode);
       
       console.log('📥 Response from API:', response);
       
@@ -2079,16 +2082,40 @@ export const OrdersManagement: React.FC = () => {
                                   <div>
                                     <div>{order.orderNumber}</div>
                                     {order.trackingNumber && (
-                                      <a
-                                        href={`https://www.aramex.com/om/en/track/shipments?ShipmentNumber=${order.trackingNumber}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-xs text-blue-600 hover:text-blue-800 font-mono mt-0.5 flex items-center gap-1 hover:underline"
-                                        title={isArabic ? 'تتبع الشحنة على أرامكس' : 'Track on Aramex'}
-                                      >
-                                        <Truck className="h-3 w-3" />
-                                        {order.trackingNumber}
-                                      </a>
+                                      <div className="mt-0.5 space-y-0.5">
+                                        <a
+                                          href={`https://www.aramex.com/om/en/track/shipments?ShipmentNumber=${order.trackingNumber}`}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="text-xs text-blue-600 hover:text-blue-800 font-mono flex items-center gap-1 hover:underline"
+                                          title={isArabic ? 'تتبع الشحنة على أرامكس' : 'Track on Aramex'}
+                                        >
+                                          <Truck className="h-3 w-3" />
+                                          {order.trackingNumber}
+                                        </a>
+                                        {(order.aramexProductGroup || order.aramexProductType) && (
+                                          <div className="text-xs text-muted-foreground flex items-center gap-1">
+                                            <Package className="h-3 w-3" />
+                                            <span className="font-medium">
+                                              {order.aramexProductGroup}/{order.aramexProductType}
+                                            </span>
+                                            <span className="text-[10px]">
+                                              ({order.aramexProductGroup === 'DOM' 
+                                                ? (isArabic ? 'محلي' : 'Domestic')
+                                                : (isArabic ? 'دولي' : 'International')})
+                                            </span>
+                                          </div>
+                                        )}
+                                        {order.aramexReadyTime && (
+                                          <div className="text-xs text-muted-foreground flex items-center gap-1">
+                                            <Clock className="h-3 w-3" />
+                                            <span>{isArabic ? 'جاهز:' : 'Ready:'} {order.aramexReadyTime}</span>
+                                            {order.aramexLastPickupTime && (
+                                              <span>→ {order.aramexLastPickupTime}</span>
+                                            )}
+                                          </div>
+                                        )}
+                                      </div>
                                     )}
                                   </div>
                                 </div>
@@ -3196,10 +3223,69 @@ export const OrdersManagement: React.FC = () => {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm font-medium">
+                    {isArabic ? 'الوجهة:' : 'Destination:'}
+                  </span>
+                  <span className="text-sm">
+                    {selectedOrder.isGift && selectedOrder.giftRecipientCountry 
+                      ? selectedOrder.giftRecipientCountry 
+                      : selectedOrder.country}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm font-medium">
                     {isArabic ? 'المبلغ:' : 'Amount:'}
                   </span>
                   <span className="text-sm">OMR {selectedOrder.totalAmount.toFixed(3)}</span>
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="shipmentMode" className="text-sm font-medium">
+                  {isArabic ? 'نوع الشحنة:' : 'Shipment Mode:'}
+                </Label>
+                <Select value={shipmentMode} onValueChange={(value: 'AUTO' | 'DOMESTIC' | 'INTERNATIONAL') => setShipmentMode(value)}>
+                  <SelectTrigger id="shipmentMode">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="AUTO">
+                      <div className="flex flex-col items-start">
+                        <span className="font-medium">
+                          {isArabic ? 'تلقائي' : 'AUTO'}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {isArabic 
+                            ? 'اكتشاف تلقائي حسب البلد (OM = DOM/OND، غيرها = EXP/PPX)'
+                            : 'Auto-detect by country (OM = DOM/OND, others = EXP/PPX)'}
+                        </span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="DOMESTIC">
+                      <div className="flex flex-col items-start">
+                        <span className="font-medium">
+                          {isArabic ? 'محلي (عُمان)' : 'DOMESTIC (Oman)'}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {isArabic 
+                            ? 'إجباري: DOM / OND (شحن داخل عُمان)'
+                            : 'Force: DOM / OND (Domestic Oman)'}
+                        </span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="INTERNATIONAL">
+                      <div className="flex flex-col items-start">
+                        <span className="font-medium">
+                          {isArabic ? 'دولي' : 'INTERNATIONAL'}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {isArabic 
+                            ? 'إجباري: EXP / PPX (شحن دولي)'
+                            : 'Force: EXP / PPX (International)'}
+                        </span>
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
@@ -3299,6 +3385,77 @@ export const OrdersManagement: React.FC = () => {
                     </span>
                   </div>
                 </div>
+
+                {/* Service Type Information */}
+                {(shipmentResult as any).serviceType && (
+                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg space-y-2">
+                    <div className="flex items-center gap-2 text-blue-900 font-semibold">
+                      <Package className="h-4 w-4" />
+                      {isArabic ? 'نوع الخدمة' : 'Service Type'}
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <div className="text-blue-700 font-medium">{isArabic ? 'المجموعة:' : 'Product Group:'}</div>
+                        <div className="text-blue-900 font-mono font-bold">
+                          {(shipmentResult as any).serviceType.productGroup}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-blue-700 font-medium">{isArabic ? 'النوع:' : 'Product Type:'}</div>
+                        <div className="text-blue-900 font-mono font-bold">
+                          {(shipmentResult as any).serviceType.productType}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-xs text-blue-700 pt-1 border-t border-blue-200">
+                      {(shipmentResult as any).serviceType.description}
+                    </div>
+                  </div>
+                )}
+
+                {/* Pickup Information */}
+                {(shipmentResult as any).pickup && (
+                  <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg space-y-2">
+                    <div className="flex items-center gap-2 text-purple-900 font-semibold">
+                      <Clock className="h-4 w-4" />
+                      {isArabic ? 'معلومات الاستلام' : 'Pickup Information'}
+                    </div>
+                    <div className="space-y-2 text-sm">
+                      {(shipmentResult as any).pickup.pickupDate && (
+                        <div className="flex justify-between">
+                          <span className="text-purple-700">{isArabic ? 'تاريخ الاستلام:' : 'Pickup Date:'}</span>
+                          <span className="text-purple-900 font-medium">
+                            {(shipmentResult as any).pickup.pickupDate}
+                          </span>
+                        </div>
+                      )}
+                      {(shipmentResult as any).pickup.readyTime && (
+                        <div className="flex justify-between">
+                          <span className="text-purple-700">{isArabic ? 'وقت الجاهزية:' : 'Ready Time:'}</span>
+                          <span className="text-purple-900 font-medium">
+                            {(shipmentResult as any).pickup.readyTime}
+                          </span>
+                        </div>
+                      )}
+                      {(shipmentResult as any).pickup.lastPickupTime && (
+                        <div className="flex justify-between">
+                          <span className="text-purple-700">{isArabic ? 'آخر وقت للاستلام:' : 'Last Pickup:'}</span>
+                          <span className="text-purple-900 font-medium">
+                            {(shipmentResult as any).pickup.lastPickupTime}
+                          </span>
+                        </div>
+                      )}
+                      {(shipmentResult as any).pickup.id && (
+                        <div className="flex justify-between pt-2 border-t border-purple-200">
+                          <span className="text-purple-700">{isArabic ? 'معرف الاستلام:' : 'Pickup ID:'}</span>
+                          <span className="text-purple-900 font-mono text-xs">
+                            {(shipmentResult as any).pickup.id}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 {shipmentResult.trackingUrl && (
                   <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">

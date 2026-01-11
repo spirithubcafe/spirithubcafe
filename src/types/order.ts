@@ -75,6 +75,13 @@ export interface Order {
   pickupReference?: string; // Pickup ID/Reference number from Aramex
   pickupGUID?: string;      // Pickup GUID from Aramex
   
+  // Aramex Service Type Information
+  aramexProductGroup?: string;  // DOM (Domestic) or EXP (Express/International)
+  aramexProductType?: string;   // OND (Overnight Domestic) or PPX (Priority Parcel Express)
+  aramexPickupDate?: string;    // Pickup date
+  aramexReadyTime?: string;     // Ready time for pickup
+  aramexLastPickupTime?: string; // Last pickup time
+  
   // Gift Information (Optional)
   isGift: boolean;
   giftRecipientName?: string;
