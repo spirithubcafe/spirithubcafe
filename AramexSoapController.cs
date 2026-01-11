@@ -987,6 +987,36 @@ public class AramexSoapController : ControllerBase
             var descriptionOfGoods = $"Order {order.OrderNumber}";
             var customsValue = order.TotalAmount; // Use order total for customs
 
+            // Determine product group and type based on shipment mode
+            string productGroup;
+            string productType;
+            var shipmentMode = request.ShipmentMode?.ToUpper() ?? "AUTO";
+            
+            switch (shipmentMode)
+            {
+                case "DOMESTIC":
+                    productGroup = "DOM";
+                    productType = "OND";
+                    _logger.LogInformation("Using DOMESTIC mode (DOM/OND) for Order {OrderId}", order.Id);
+                    break;
+                
+                case "INTERNATIONAL":
+                    productGroup = "EXP";
+                    productType = "PPX";
+                    _logger.LogInformation("Using INTERNATIONAL mode (EXP/PPX) for Order {OrderId}", order.Id);
+                    break;
+                
+                case "AUTO":
+                default:
+                    // Auto-detect based on recipient country
+                    var isDomestic = recipientCountry?.Equals("OM", StringComparison.OrdinalIgnoreCase) ?? false;
+                    productGroup = isDomestic ? "DOM" : "EXP";
+                    productType = isDomestic ? "OND" : "PPX";
+                    _logger.LogInformation("Using AUTO mode: Detected {Mode} (Country: {Country}, Group: {Group}, Type: {Type}) for Order {OrderId}", 
+                        isDomestic ? "DOMESTIC" : "INTERNATIONAL", recipientCountry, productGroup, productType, order.Id);
+                    break;
+            }
+
             var shipments = new[]
             {
                 new Services.Aramex.Shipping.Shipment
@@ -1030,8 +1060,8 @@ public class AramexSoapController : ControllerBase
                     },
                     Details = new Services.Aramex.Shipping.ShipmentDetails
                     {
-                        ProductGroup = "EXP",
-                        ProductType = "PPX",
+                        ProductGroup = productGroup,
+                        ProductType = productType,
                         PaymentType = "P",
                         ActualWeight = new Services.Aramex.Shipping.Weight
                         {
@@ -1090,7 +1120,12 @@ public class AramexSoapController : ControllerBase
                     ShippingMethodId = order.ShippingMethod,
                     TrackingNumber = trackingNumber,
                     PickupGUID = pickupResult.ProcessedPickup?.GUID.ToString(),
-                    PickupReference = pickupResult.ProcessedPickup?.ID
+                    PickupReference = pickupResult.ProcessedPickup?.ID,
+                    AramexProductGroup = productGroup,
+                    AramexProductType = productType,
+                    AramexPickupDate = pickupDate,
+                    AramexReadyTime = readyTime,
+                    AramexLastPickupTime = lastPickupTime
                 });
 
                 if (!updateResult.Success)
@@ -1108,6 +1143,12 @@ public class AramexSoapController : ControllerBase
                     awbNumber = trackingNumber,
                     trackingUrl = $"https://www.aramex.com/track/shipments?ShipmentNumber={trackingNumber}",
                     hasWarnings = response.HasErrors,
+                    serviceType = new
+                    {
+                        productGroup = productGroup,
+                        productType = productType,
+                        description = productGroup == "DOM" ? "Domestic Oman" : "International Express"
+                    },
                     pickupSuccess = pickupResult.Success,
                     pickupHasWarnings = pickupResult.HasWarnings,
                     pickup = pickupResult.ProcessedPickup == null ? null : new
@@ -1115,7 +1156,10 @@ public class AramexSoapController : ControllerBase
                         id = pickupResult.ProcessedPickup.ID,
                         guid = pickupResult.ProcessedPickup.GUID,
                         reference1 = pickupResult.ProcessedPickup.Reference1,
-                        reference2 = pickupResult.ProcessedPickup.Reference2
+                        reference2 = pickupResult.ProcessedPickup.Reference2,
+                        pickupDate = pickupDate.ToString("yyyy-MM-dd"),
+                        readyTime = readyTime.ToString("HH:mm"),
+                        lastPickupTime = lastPickupTime.ToString("HH:mm")
                     },
                     pickupErrors = pickupResult.Errors
                 });
@@ -1228,6 +1272,11 @@ public class CreateShipmentForOrderRequest
     [Required]
     [System.Text.Json.Serialization.JsonRequired]
     public int OrderId { get; set; }
+    
+    /// <summary>
+    /// Shipment mode: AUTO (detect by country), DOMESTIC (force DOM/OND), INTERNATIONAL (force EXP/PPX)
+    /// </summary>
+    public string? ShipmentMode { get; set; } = "AUTO";
 }
 
 public class CreatePickupRequestDto
