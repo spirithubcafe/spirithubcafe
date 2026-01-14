@@ -17,6 +17,7 @@ export { shippingService } from './shippingService';
 export { fileUploadService } from './fileUploadService';
 export { newsletterService } from './newsletterService';
 export { emailService } from './emailService';
+export { wholesaleOrderService } from './wholesaleOrderService';
 export {
   calculateAramexRate,
   getAramexCountries,

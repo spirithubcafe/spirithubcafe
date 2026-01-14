@@ -2,6 +2,7 @@
   "nav": {
     "home": "Home",
     "products": "Our Coffee",
+    "wholesale": "Wholesale",
     "about": "About",
     "contact": "Contact",
     "cart": "Cart",
@@ -109,6 +110,8 @@
     "manageOrders": "Manage Orders",
     "ordersDesc": "Customer orders and transactions",
     "ordersManagement": "Process and track customer orders and transactions",
+    "manageWholesaleOrders": "Wholesale Orders",
+    "wholesaleOrdersDesc": "Wholesale orders, status, and manual pricing",
     "orders": {
       "view": "View Orders",
       "viewDesc": "Review and process orders"

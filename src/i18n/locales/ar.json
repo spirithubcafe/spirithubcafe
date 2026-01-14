@@ -2,6 +2,7 @@
   "nav": {
     "home": "الرئيسية",
     "products": "قهوتنا",
+    "wholesale": "طلب الجملة",
     "about": "عن الشركة",
     "contact": "تواصل معنا",
     "cart": "سلة المشتريات",
@@ -181,6 +182,8 @@
     "manageOrders": "إدارة الطلبات",
     "ordersDesc": "طلبات العملاء والمعاملات",
     "ordersManagement": "معالجة وتتبع طلبات العملاء والمعاملات",
+    "manageWholesaleOrders": "طلبات الجملة",
+    "wholesaleOrdersDesc": "طلبات الجملة والحالة وحساب السعر اليدوي",
     "orders": {
       "view": "عرض الطلبات",
       "viewDesc": "مراجعة ومعالجة الطلبات"

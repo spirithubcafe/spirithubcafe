@@ -21,6 +21,7 @@ import {
   UsersManagement,
   SeoManagement,
   OrdersManagement,
+  WholesaleOrdersManagement,
   ReportsManagement,
   SystemSettings,
   NewsletterManagement,
@@ -43,6 +44,7 @@ import { DeliveryPolicyPage } from './pages/DeliveryPolicyPage';
 import { RefundPolicyPage } from './pages/RefundPolicyPage';
 import { ProductsPage } from './pages/ProductsPage';
 import { ProductDetailPage } from './pages/ProductDetailPage';
+import { WholesaleOrderPage } from './pages/WholesaleOrderPage';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
@@ -103,6 +105,7 @@ function AppContent() {
         <Route path="/om/refund" element={<RefundPolicyPage />} />
         <Route path="/om/products" element={<ProductsPage />} />
         <Route path="/om/products/:productId" element={<ProductDetailPage />} />
+        <Route path="/om/wholesale" element={<WholesaleOrderPage />} />
         <Route path="/om/login" element={<LoginPage />} />
         <Route path="/om/register" element={<RegisterPage />} />
         <Route path="/om/forgot-password" element={<ForgotPasswordPage />} />
@@ -132,6 +135,7 @@ function AppContent() {
         <Route path="/sa/refund" element={<RefundPolicyPage />} />
         <Route path="/sa/products" element={<ProductsPage />} />
         <Route path="/sa/products/:productId" element={<ProductDetailPage />} />
+        <Route path="/sa/wholesale" element={<WholesaleOrderPage />} />
         <Route path="/sa/login" element={<LoginPage />} />
         <Route path="/sa/register" element={<RegisterPage />} />
         <Route path="/sa/forgot-password" element={<ForgotPasswordPage />} />
@@ -159,6 +163,7 @@ function AppContent() {
           <Route path="seo" element={<SeoManagement />} />
           <Route path="users" element={<UsersManagement />} />
           <Route path="orders" element={<OrdersManagement />} />
+          <Route path="wholesale-orders" element={<WholesaleOrdersManagement />} />
           <Route path="newsletter" element={<NewsletterManagement />} />
           <Route path="email-settings" element={<EmailSettingsManagement />} />
           <Route path="reports" element={<ReportsManagement />} />
@@ -178,6 +183,7 @@ function AppContent() {
           <Route path="seo" element={<SeoManagement />} />
           <Route path="users" element={<UsersManagement />} />
           <Route path="orders" element={<OrdersManagement />} />
+          <Route path="wholesale-orders" element={<WholesaleOrdersManagement />} />
           <Route path="newsletter" element={<NewsletterManagement />} />
           <Route path="email-settings" element={<EmailSettingsManagement />} />
           <Route path="reports" element={<ReportsManagement />} />
@@ -199,6 +205,7 @@ function AppContent() {
         <Route path="/refund" element={<RefundPolicyPage />} />
         <Route path="/products" element={<ProductsPage />} />
         <Route path="/products/:productId" element={<ProductDetailPage />} />
+        <Route path="/wholesale" element={<WholesaleOrderPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />

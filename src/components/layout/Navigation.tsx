@@ -57,6 +57,7 @@ export const Navigation: React.FC = () => {
   const navItems = [
     { key: 'home', label: t('nav.home'), href: getRegionalUrl('/'), isRoute: true, hasDropdown: false },
     { key: 'products', label: t('nav.products'), href: getRegionalUrl('/products'), isRoute: true, hasDropdown: true },
+    { key: 'wholesale', label: t('nav.wholesale'), href: getRegionalUrl('/wholesale'), isRoute: true, hasDropdown: false },
     { key: 'about', label: t('nav.about'), href: getRegionalUrl('/about'), isRoute: true, hasDropdown: false },
     { key: 'contact', label: t('nav.contact'), href: getRegionalUrl('/contact'), isRoute: true, hasDropdown: false }
   ];

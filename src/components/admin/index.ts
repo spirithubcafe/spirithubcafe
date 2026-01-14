@@ -5,6 +5,7 @@ export { ProductsManagement } from './ProductsManagement';
 export { UsersManagement } from './UsersManagement';
 export { SeoManagement } from './SeoManagement';
 export { OrdersManagement } from './OrdersManagement';
+export { WholesaleOrdersManagement } from './WholesaleOrdersManagement';
 export { ReportsManagement } from './ReportsManagement';
 export { SalesChart } from './SalesChart';
 export { TopProducts } from './TopProducts';

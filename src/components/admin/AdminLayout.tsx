@@ -194,6 +194,14 @@ export const AdminLayout: React.FC = () => {
       roles: ['Admin', 'Manager'],
     },
     {
+      id: 'wholesaleOrders',
+      label: t('admin.manageWholesaleOrders'),
+      description: t('admin.wholesaleOrdersDesc'),
+      icon: FileText,
+      path: '/admin/wholesale-orders',
+      roles: ['Admin', 'Manager'],
+    },
+    {
       id: 'newsletter',
       label: t('admin.newsletter.title') || 'Newsletter',
       description: t('admin.newsletter.description') || 'Manage newsletter subscribers',
@@ -268,7 +276,7 @@ export const AdminLayout: React.FC = () => {
       id: 'operations',
       label: t('admin.navGroups.operations'),
       items: availableNavItems.filter((item) =>
-        ['orders', 'newsletter', 'emailSettings', 'reports', 'system', 'seo'].includes(item.id)
+        ['orders', 'wholesaleOrders', 'newsletter', 'emailSettings', 'reports', 'system', 'seo'].includes(item.id)
       ),
     },
   ].filter((group) => group.items.length > 0);
