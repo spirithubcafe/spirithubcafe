@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
-import { Plus, Trash2, Loader2, CheckCircle2, Package } from 'lucide-react';
+import { Plus, Trash2, Loader2, CheckCircle2, Package, Mail, AlertTriangle } from 'lucide-react';
 
 import { useApp } from '../hooks/useApp';
 import { useRegion } from '../hooks/useRegion';
@@ -17,6 +17,7 @@ import { Input } from '../components/ui/input';
 import { Textarea } from '../components/ui/textarea';
 import { Separator } from '../components/ui/separator';
 import { Alert, AlertDescription, AlertTitle } from '../components/ui/alert';
+import { Switch } from '../components/ui/switch';
 import {
   Form,
   FormControl,
@@ -28,29 +29,41 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { RadioGroup, RadioGroupItem } from '../components/ui/radio-group';
 
-import { productService, productVariantService, wholesaleOrderService } from '../services';
+import { productService, productVariantService, wholesaleCustomerLookupService, wholesaleOrderService } from '../services';
 import type { Product, ProductVariant } from '../types/product';
 import type { WholesaleOrder, WholesaleShippingMethod } from '../types/wholesale';
 
 const shippingMethodSchema = z.union([z.literal(1), z.literal(2)]);
 
-const wholesaleSchema = z.object({
-  customerName: z.string().min(1),
-  cafeName: z.string().min(1),
-  customerPhone: z.string().min(7),
-  customerEmail: z.string().email(),
-  shippingMethod: shippingMethodSchema,
-  notes: z.string().optional(),
-  items: z
-    .array(
-      z.object({
-        productId: z.number().int().positive(),
-        productVariantId: z.number().int().positive(),
-        quantity: z.number().int().min(1),
-      })
-    )
-    .min(1),
-});
+const wholesaleSchema = z
+  .object({
+    customerName: z.string().min(1),
+    cafeName: z.string().min(1),
+    customerPhone: z.string().min(7),
+    customerEmail: z.string().email(),
+    shippingMethod: shippingMethodSchema,
+    address: z.string().optional(),
+    city: z.string().optional(),
+    notes: z.string().optional(),
+    items: z
+      .array(
+        z.object({
+          productId: z.number().int().positive(),
+          productVariantId: z.number().int().positive(),
+          quantity: z.number().int().min(1),
+        })
+      )
+      .min(1),
+  })
+  .superRefine((val, ctx) => {
+    if (val.shippingMethod !== 2) return;
+    if (!val.address || !val.address.trim()) {
+      ctx.addIssue({ code: 'custom', path: ['address'], message: 'Address is required for Nool Delivery' });
+    }
+    if (!val.city || !val.city.trim()) {
+      ctx.addIssue({ code: 'custom', path: ['city'], message: 'City is required for Nool Delivery' });
+    }
+  });
 
 type WholesaleFormValues = z.infer<typeof wholesaleSchema>;
 
@@ -60,6 +73,8 @@ const defaultValues: WholesaleFormValues = {
   customerPhone: '',
   customerEmail: '',
   shippingMethod: 1,
+  address: '',
+  city: '',
   notes: '',
   items: [{ productId: 0, productVariantId: 0, quantity: 1 }],
 };
@@ -85,6 +100,13 @@ export const WholesaleOrderPage: React.FC = () => {
 
   const [submitLoading, setSubmitLoading] = useState(false);
   const [createdOrder, setCreatedOrder] = useState<WholesaleOrder | null>(null);
+  const [confirmationEmailState, setConfirmationEmailState] = useState<'idle' | 'sending' | 'sent' | 'failed'>('idle');
+
+  const [returningCustomerEnabled, setReturningCustomerEnabled] = useState(false);
+  const [lookupState, setLookupState] = useState<'idle' | 'loading' | 'found' | 'not-found' | 'error'>('idle');
+  const [lookupSummary, setLookupSummary] = useState<string | null>(null);
+  const lookupSeqRef = useRef(0);
+  const lastLookupKeyRef = useRef<string>('');
 
   const form = useForm<WholesaleFormValues>({
     resolver: zodResolver(wholesaleSchema),
@@ -92,8 +114,47 @@ export const WholesaleOrderPage: React.FC = () => {
     mode: 'onTouched',
   });
 
-  const { control, handleSubmit, watch, setValue } = form;
+  const { control, handleSubmit, watch, setValue, getValues, formState } = form;
   const items = watch('items');
+  const shippingMethod = watch('shippingMethod');
+  const customerEmail = watch('customerEmail');
+  const customerPhone = watch('customerPhone');
+
+  const shippingLabel = shippingMethod === 2
+    ? (isArabic ? 'نول للتوصيل' : 'Nool Delivery')
+    : (isArabic ? 'استلام' : 'Pickup');
+
+  const selectedItemsCount = (items || []).filter(
+    (it) => Number(it?.productId) > 0 && Number(it?.productVariantId) > 0 && Number(it?.quantity) > 0
+  ).length;
+
+  const totalQuantityKg = (() => {
+    let totalKg = 0;
+    for (const it of items || []) {
+      const productId = Number(it?.productId || 0);
+      const variantId = Number(it?.productVariantId || 0);
+      const quantity = Number(it?.quantity || 0);
+      if (!productId || !variantId || !quantity) continue;
+
+      const variants = variantCache[productId] || [];
+      const variant = variants.find((v) => v.id === variantId);
+      if (!variant) return null; // Variant not loaded yet.
+
+      const weight = Number(variant.weight);
+      const unit = (variant.weightUnit || '').trim().toLowerCase();
+      if (!Number.isFinite(weight) || weight <= 0) continue;
+
+      let perUnitKg: number | null = null;
+      if (unit === 'kg' || unit === 'kgs' || unit === 'kilogram' || unit === 'kilograms') perUnitKg = weight;
+      else if (unit === 'g' || unit === 'gm' || unit === 'gr' || unit === 'gram' || unit === 'grams') perUnitKg = weight / 1000;
+      else if (unit === 'lb' || unit === 'lbs' || unit === 'pound' || unit === 'pounds') perUnitKg = weight * 0.45359237;
+      else if (unit === 'oz' || unit === 'ounce' || unit === 'ounces') perUnitKg = weight * 0.028349523125;
+      else return null;
+
+      totalKg += perUnitKg * quantity;
+    }
+    return totalKg;
+  })();
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -174,6 +235,7 @@ export const WholesaleOrderPage: React.FC = () => {
 
   const onSubmit = async (values: WholesaleFormValues) => {
     setSubmitLoading(true);
+    setConfirmationEmailState('idle');
     try {
       const order = await wholesaleOrderService.create({
         customerName: values.customerName,
@@ -181,12 +243,30 @@ export const WholesaleOrderPage: React.FC = () => {
         customerPhone: values.customerPhone,
         customerEmail: values.customerEmail,
         shippingMethod: values.shippingMethod as WholesaleShippingMethod,
+        address: values.shippingMethod === 2 && values.address?.trim() ? values.address.trim() : undefined,
+        city: values.shippingMethod === 2 && values.city?.trim() ? values.city.trim() : undefined,
         notes: values.notes?.trim() ? values.notes : undefined,
         items: values.items,
       });
 
       setCreatedOrder(order);
       toast.success(isArabic ? 'تم إنشاء طلب الجملة بنجاح' : 'Wholesale order created');
+
+      // Best-effort: trigger a customer confirmation email.
+      setConfirmationEmailState('sending');
+      void (async () => {
+        const ok = await wholesaleOrderService.sendCustomerConfirmationEmail(order.id);
+        setConfirmationEmailState(ok ? 'sent' : 'failed');
+        if (ok) {
+          toast.success(isArabic ? 'تم إرسال تأكيد الطلب إلى بريدك الإلكتروني' : 'Order confirmation email sent');
+        } else {
+          toast.message(
+            isArabic
+              ? 'تم إرسال الطلب. إذا لم يصلك بريد تأكيد، تواصل معنا عبر واتساب.'
+              : 'Order submitted. If you don’t receive a confirmation email, please contact us on WhatsApp.'
+          );
+        }
+      })();
     } catch (err: any) {
       console.error('Wholesale submit failed:', err);
       toast.error(err?.message || (isArabic ? 'فشل إنشاء الطلب' : 'Failed to create wholesale order'));
@@ -197,19 +277,134 @@ export const WholesaleOrderPage: React.FC = () => {
 
   const resetFlow = () => {
     setCreatedOrder(null);
+    setConfirmationEmailState('idle');
+    setReturningCustomerEnabled(false);
+    setLookupState('idle');
+    setLookupSummary(null);
+    lastLookupKeyRef.current = '';
     form.reset(defaultValues);
   };
 
+  const isPlausibleEmail = (email: string): boolean => {
+    const v = email.trim();
+    if (!v) return false;
+    if (!v.includes('@')) return false;
+    // Avoid triggering on obvious partials.
+    if (v.endsWith('@') || v.startsWith('@')) return false;
+    if (v.length < 6) return false;
+    return true;
+  };
+
+  const isPlausiblePhone = (phone: string): boolean => {
+    const digits = phone.replace(/[^0-9]/g, '');
+    return digits.length >= 7;
+  };
+
+  const runCustomerLookup = async (trigger: 'debounce' | 'blur') => {
+    if (!returningCustomerEnabled) return;
+
+    const email = (getValues('customerEmail') || '').trim();
+    const phone = (getValues('customerPhone') || '').trim();
+
+    const canUseEmail = isPlausibleEmail(email);
+    const canUsePhone = !canUseEmail && isPlausiblePhone(phone);
+
+    if (!canUseEmail && !canUsePhone) {
+      setLookupState('idle');
+      setLookupSummary(null);
+      lastLookupKeyRef.current = '';
+      return;
+    }
+
+    const lookupKey = canUseEmail ? `email:${email.toLowerCase()}` : `phone:${phone}`;
+    if (trigger === 'debounce' && lookupKey === lastLookupKeyRef.current) return;
+    lastLookupKeyRef.current = lookupKey;
+
+    const seq = ++lookupSeqRef.current;
+    setLookupState('loading');
+    setLookupSummary(null);
+
+    try {
+      const found = await wholesaleCustomerLookupService.lookup({
+        email: canUseEmail ? email : undefined,
+        phone: canUsePhone ? phone : undefined,
+      });
+
+      if (seq !== lookupSeqRef.current) return; // Stale response.
+
+      if (!found) {
+        setLookupState('not-found');
+        setLookupSummary(null);
+        return;
+      }
+
+      const dirty = formState.dirtyFields as Partial<Record<keyof WholesaleFormValues, boolean>>;
+      const setIfSafe = (name: keyof WholesaleFormValues, value?: string) => {
+        const next = (value || '').trim();
+        if (!next) return;
+        if ((dirty as any)?.[name]) return;
+        setValue(name, next as any, { shouldValidate: true, shouldDirty: false, shouldTouch: false });
+      };
+
+      setIfSafe('customerName', found.customerName);
+      setIfSafe('cafeName', found.cafeName);
+      setIfSafe('customerPhone', found.customerPhone);
+      setIfSafe('customerEmail', found.customerEmail);
+
+      // Only fill address/city if Nool Delivery is selected (keeps UX predictable).
+      if (getValues('shippingMethod') === 2) {
+        setIfSafe('address', found.address);
+        setIfSafe('city', found.city);
+      }
+
+      const summaryParts: string[] = [];
+      if (found.customerName) summaryParts.push(found.customerName);
+      if (found.cafeName) summaryParts.push(found.cafeName);
+      setLookupSummary(summaryParts.length ? summaryParts.join(' • ') : null);
+      setLookupState('found');
+    } catch (err) {
+      if (seq !== lookupSeqRef.current) return;
+      console.error('Customer lookup failed:', err);
+      setLookupState('error');
+      setLookupSummary(null);
+    }
+  };
+
+  useEffect(() => {
+    if (!returningCustomerEnabled) {
+      setLookupState('idle');
+      setLookupSummary(null);
+      lastLookupKeyRef.current = '';
+      return;
+    }
+
+    const email = (customerEmail || '').trim();
+    const phone = (customerPhone || '').trim();
+    if (!email && !phone) {
+      setLookupState('idle');
+      setLookupSummary(null);
+      lastLookupKeyRef.current = '';
+      return;
+    }
+
+    const handle = window.setTimeout(() => {
+      void runCustomerLookup('debounce');
+    }, 600);
+
+    return () => window.clearTimeout(handle);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [returningCustomerEnabled, customerEmail, customerPhone]);
+
   const title = isArabic ? 'طلب جملة' : 'Wholesale Order';
-  const description = isArabic
-    ? 'يمكنك إنشاء طلب جملة بدون تسجيل الدخول. سيقوم المدير بتحديد السعر النهائي لاحقاً.'
-    : 'Create a wholesale order without signing in. Admin will set the final price later.';
+  const seoDescription = isArabic
+    ? 'حلول الجملة أصبحت أسهل، أرسل طلبك في أي وقت. واتساب: +968 72726999 / +968 91900005 · البريد الإلكتروني: info@spirithubcafe.com'
+    : 'Wholesale made simple, place your order anytime. WhatsApp: +968 72726999 / +968 91900005 · Email: info@spirithubcafe.com';
 
   return (
     <div className="min-h-screen bg-gray-50 page-padding-top" dir={isArabic ? 'rtl' : 'ltr'}>
       <Seo
         title={title}
-        description={description}
+        description={seoDescription}
         canonical={`${siteMetadata.baseUrl}/${currentRegion.code}/wholesale`}
       />
 
@@ -221,7 +416,23 @@ export const WholesaleOrderPage: React.FC = () => {
           className="mb-6"
         >
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{title}</h1>
-          <p className="mt-2 text-sm sm:text-base text-gray-600">{description}</p>
+          <div className="mt-2 text-sm sm:text-base text-gray-600">
+            <div>
+              {isArabic
+                ? 'حلول الجملة أصبحت أسهل، أرسل طلبك في أي وقت.'
+                : 'Wholesale made simple, place your order anytime.'}
+            </div>
+            <ul className={`mt-2 list-disc space-y-1 ${isArabic ? 'pr-5' : 'pl-5'}`}>
+              <li>
+                {isArabic ? 'واتساب:' : 'WhatsApp:'}{' '}
+                <span dir="ltr">+968 72726999 / +968 91900005</span>
+              </li>
+              <li>
+                {isArabic ? 'البريد الإلكتروني:' : 'Email:'}{' '}
+                <span dir="ltr">info@spirithubcafe.com</span>
+              </li>
+            </ul>
+          </div>
         </motion.div>
 
         {createdOrder ? (
@@ -243,6 +454,33 @@ export const WholesaleOrderPage: React.FC = () => {
                   <span className="font-semibold">{isArabic ? 'رقم الطلب:' : 'Order number:'}</span>{' '}
                   <span className="font-mono">{createdOrder.wholesaleOrderNumber}</span>
                 </div>
+
+                <div className="mt-2 text-sm">
+                  {confirmationEmailState === 'sending' ? (
+                    <div className="flex items-center gap-2 text-emerald-800">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>{isArabic ? 'جاري إرسال بريد التأكيد...' : 'Sending confirmation email...'}</span>
+                    </div>
+                  ) : null}
+
+                  {confirmationEmailState === 'sent' ? (
+                    <div className="flex items-center gap-2 text-emerald-800">
+                      <Mail className="h-4 w-4" />
+                      <span>{isArabic ? 'تم إرسال بريد تأكيد الطلب.' : 'Confirmation email sent.'}</span>
+                    </div>
+                  ) : null}
+
+                  {confirmationEmailState === 'failed' ? (
+                    <div className="flex items-center gap-2 text-amber-800">
+                      <AlertTriangle className="h-4 w-4" />
+                      <span>
+                        {isArabic
+                          ? 'لم نتمكن من إرسال بريد التأكيد. تواصل معنا عبر واتساب إذا لم يصلك شيء.'
+                          : 'Couldn’t send confirmation email. Contact us on WhatsApp if you don’t receive it.'}
+                      </span>
+                    </div>
+                  ) : null}
+                </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -258,7 +496,9 @@ export const WholesaleOrderPage: React.FC = () => {
                   <div className="font-medium text-gray-900">{createdOrder.status} / {createdOrder.paymentStatus}</div>
                   <div className="text-sm text-gray-600">
                     {isArabic ? 'طريقة الشحن:' : 'Shipping method:'}{' '}
-                    {createdOrder.shippingMethod === 1 ? (isArabic ? 'استلام' : 'Pickup') : (isArabic ? 'نول' : 'Nool')}
+                    {createdOrder.shippingMethod === 1
+                      ? (isArabic ? 'استلام' : 'Pickup')
+                      : (isArabic ? 'نول للتوصيل' : 'Nool Delivery')}
                   </div>
                 </div>
               </div>
@@ -296,11 +536,11 @@ export const WholesaleOrderPage: React.FC = () => {
           <Card className="bg-white">
             <CardHeader>
               <CardTitle className="text-gray-900">{isArabic ? 'إنشاء طلب جملة' : 'Create wholesale order'}</CardTitle>
-              <CardDescription>
-                {allowedCategoryIds && allowedCategoryIds.length === 0
-                  ? (isArabic ? 'البيع بالجملة غير متاح حالياً.' : 'Wholesale ordering is not enabled right now.')
-                  : (isArabic ? 'املأ المعلومات ثم أضف المنتجات بشكل ديناميكي.' : 'Fill details, then add items dynamically.')}
-              </CardDescription>
+              {allowedCategoryIds && allowedCategoryIds.length === 0 ? (
+                <CardDescription>
+                  {isArabic ? 'البيع بالجملة غير متاح حالياً.' : 'Wholesale ordering is not enabled right now.'}
+                </CardDescription>
+              ) : null}
             </CardHeader>
 
             <CardContent className="space-y-6">
@@ -327,7 +567,71 @@ export const WholesaleOrderPage: React.FC = () => {
               <Form {...form}>
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                   <div className="rounded-xl border bg-white p-4">
-                    <div className="font-semibold text-gray-900 mb-3">{isArabic ? 'معلومات العميل' : 'Customer info'}</div>
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
+                      <div className="font-semibold text-gray-900">{isArabic ? 'معلومات العميل' : 'Customer info'}</div>
+                      <div className="w-full sm:w-auto">
+                        <div className="flex items-center gap-3 rounded-lg border bg-gray-50 px-3 py-2">
+                          <div className={`text-sm text-gray-700 min-w-0 flex-1 ${isArabic ? 'text-right' : 'text-left'}`}>
+                            {isArabic ? 'عميل موجود؟' : 'Existing Customer'}
+                          </div>
+                          <Switch
+                          checked={returningCustomerEnabled}
+                          onCheckedChange={(checked) => {
+                            setReturningCustomerEnabled(!!checked);
+                            setLookupState('idle');
+                            setLookupSummary(null);
+                            lastLookupKeyRef.current = '';
+                          }}
+                          aria-label={isArabic ? 'تفعيل تعبئة تلقائية' : 'Enable auto-fill'}
+                          className="shrink-0"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {returningCustomerEnabled ? (
+                      <div className="mb-3 text-sm">
+                        <div className="rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-sky-800">
+                          <span className="font-medium">
+                            {isArabic
+                              ? 'أدخل البريد الإلكتروني أو رقم الهاتف وسنحاول تعبئة البيانات تلقائياً.'
+                              : 'Enter email or phone and we’ll try to auto-fill your details.'}
+                          </span>
+                        </div>
+
+                        {lookupState === 'loading' ? (
+                          <div className="mt-2 flex items-center gap-2 text-gray-600">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            {isArabic ? 'جاري البحث عن العميل...' : 'Looking up customer...'}
+                          </div>
+                        ) : null}
+
+                        {lookupState === 'found' ? (
+                          <div className="mt-2 flex items-center gap-2 text-emerald-700">
+                            <CheckCircle2 className="h-4 w-4" />
+                            <span>{isArabic ? 'تم العثور على العميل وتمت تعبئة البيانات.' : 'Customer found and details filled.'}</span>
+                            {lookupSummary ? <span className="text-emerald-800">({lookupSummary})</span> : null}
+                          </div>
+                        ) : null}
+
+                        {lookupState === 'not-found' ? (
+                          <div className="mt-2 text-amber-700">
+                            {isArabic
+                              ? 'لم يتم العثور على عميل بهذا البريد/الهاتف.'
+                              : 'No customer found for that email/phone.'}
+                          </div>
+                        ) : null}
+
+                        {lookupState === 'error' ? (
+                          <div className="mt-2 text-red-700">
+                            {isArabic
+                              ? 'تعذّر إجراء البحث الآن. حاول لاحقاً أو أكمل التعبئة يدوياً.'
+                              : 'Lookup is unavailable right now. Please continue manually.'}
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : null}
+
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <FormField
                         control={control}
@@ -348,9 +652,9 @@ export const WholesaleOrderPage: React.FC = () => {
                         name="cafeName"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>{isArabic ? 'اسم المقهى' : 'Cafe name'}</FormLabel>
+                            <FormLabel>{isArabic ? 'اسم المقهى' : 'Cafe / Company'}</FormLabel>
                             <FormControl>
-                              <Input placeholder={isArabic ? 'مثال: SpiritHub Cafe' : 'e.g. Spirithub Cafe'} {...field} />
+                              <Input placeholder={isArabic ? 'مثال: SpiritHub Cafe' : 'e.g. Spirithub Cafe or Spirithub Trading'} {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -364,7 +668,14 @@ export const WholesaleOrderPage: React.FC = () => {
                           <FormItem>
                             <FormLabel>{isArabic ? 'رقم الهاتف' : 'Phone'}</FormLabel>
                             <FormControl>
-                              <Input placeholder={isArabic ? '+968...' : '+968...'} {...field} />
+                              <Input
+                                placeholder={isArabic ? '+968...' : '+968...'}
+                                {...field}
+                                onBlur={() => {
+                                  field.onBlur();
+                                  void runCustomerLookup('blur');
+                                }}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -378,7 +689,15 @@ export const WholesaleOrderPage: React.FC = () => {
                           <FormItem>
                             <FormLabel>{isArabic ? 'البريد الإلكتروني' : 'Email'}</FormLabel>
                             <FormControl>
-                              <Input type="email" placeholder="name@example.com" {...field} />
+                              <Input
+                                type="email"
+                                placeholder="name@example.com"
+                                {...field}
+                                onBlur={() => {
+                                  field.onBlur();
+                                  void runCustomerLookup('blur');
+                                }}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -412,8 +731,8 @@ export const WholesaleOrderPage: React.FC = () => {
                               <label className="flex items-center gap-3 rounded-xl border bg-white p-4 cursor-pointer hover:bg-gray-50">
                                 <RadioGroupItem value="2" />
                                 <div>
-                                  <div className="font-medium text-gray-900">{isArabic ? 'نول (Nool)' : 'Nool'}</div>
-                                  <div className="text-xs text-gray-600">{isArabic ? 'شحن عبر النول' : 'Ship via Nool'}</div>
+                                  <div className="font-medium text-gray-900">{isArabic ? 'نول للتوصيل (Nool)' : 'Nool Delivery'}</div>
+                                  <div className="text-xs text-gray-600">{isArabic ? 'توصيل عبر نول' : 'Delivery via Nool'}</div>
                                 </div>
                               </label>
                             </RadioGroup>
@@ -422,6 +741,38 @@ export const WholesaleOrderPage: React.FC = () => {
                         </FormItem>
                       )}
                     />
+
+                    {shippingMethod === 2 ? (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <FormField
+                          control={control}
+                          name="address"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>{isArabic ? 'العنوان' : 'Address line'}</FormLabel>
+                              <FormControl>
+                                <Input placeholder={isArabic ? 'مبنى / شارع' : 'Building / Street'} {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={control}
+                          name="city"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>{isArabic ? 'المدينة' : 'City'}</FormLabel>
+                              <FormControl>
+                                <Input placeholder={isArabic ? 'مثال: مسقط' : 'e.g. Muscat'} {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    ) : null}
 
                     <FormField
                       control={control}
@@ -432,7 +783,7 @@ export const WholesaleOrderPage: React.FC = () => {
                           <FormControl>
                             <Textarea
                               placeholder={isArabic ? 'أي تفاصيل إضافية...' : 'Any extra details...'}
-                              className="min-h-[120px]"
+                              className="min-h-[80px]"
                               {...field}
                             />
                           </FormControl>
@@ -443,7 +794,7 @@ export const WholesaleOrderPage: React.FC = () => {
                   </div>
 
                   <div className="rounded-xl border bg-white p-4 space-y-4">
-                    <div className="flex items-start sm:items-center justify-between gap-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                       <div>
                         <div className="font-semibold text-gray-900">{isArabic ? 'المنتجات' : 'Items'}</div>
                         <div className="text-sm text-gray-600">
@@ -454,7 +805,7 @@ export const WholesaleOrderPage: React.FC = () => {
                         type="button"
                         variant="outline"
                         onClick={() => append({ productId: 0, productVariantId: 0, quantity: 1 })}
-                        className="gap-2"
+                        className="gap-2 w-full sm:w-auto"
                       >
                         <Plus className="h-4 w-4" />
                         {isArabic ? 'إضافة عنصر' : 'Add item'}
@@ -475,8 +826,8 @@ export const WholesaleOrderPage: React.FC = () => {
                         const isVariantsLoading = selectedProductId ? !!variantLoading[selectedProductId] : false;
 
                         return (
-                          <div key={f.id} className="rounded-xl border bg-white p-4">
-                            <div className="flex items-start justify-between gap-3 mb-3">
+                          <div key={f.id} className="rounded-xl border bg-white p-3 sm:p-4">
+                            <div className="flex items-center justify-between gap-3 mb-3">
                               <div className="font-medium text-gray-900">{isArabic ? `عنصر ${index + 1}` : `Item ${index + 1}`}</div>
                               <Button
                                 type="button"
@@ -496,12 +847,12 @@ export const WholesaleOrderPage: React.FC = () => {
                               </Button>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
                               <FormField
                                 control={control}
                                 name={`items.${index}.productId` as const}
                                 render={({ field }) => (
-                                  <FormItem className="md:col-span-6">
+                                  <FormItem className="sm:col-span-12 md:col-span-6">
                                     <FormLabel>{isArabic ? 'المنتج' : 'Product'}</FormLabel>
                                     <FormControl>
                                       <Select
@@ -515,7 +866,7 @@ export const WholesaleOrderPage: React.FC = () => {
                                           }
                                         }}
                                       >
-                                        <SelectTrigger>
+                                        <SelectTrigger className="w-full min-w-0">
                                           <SelectValue placeholder={isArabic ? 'اختر منتجاً' : 'Select a product'} />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -537,7 +888,7 @@ export const WholesaleOrderPage: React.FC = () => {
                                 control={control}
                                 name={`items.${index}.productVariantId` as const}
                                 render={({ field }) => (
-                                  <FormItem className="md:col-span-4">
+                                  <FormItem className="sm:col-span-8 md:col-span-4">
                                     <FormLabel>{isArabic ? 'العبوة (Variant)' : 'Package (Variant)'}</FormLabel>
                                     <FormControl>
                                       <Select
@@ -552,7 +903,7 @@ export const WholesaleOrderPage: React.FC = () => {
                                         onValueChange={(val) => field.onChange(Number(val))}
                                         disabled={!selectedProductId || isVariantsLoading}
                                       >
-                                        <SelectTrigger>
+                                        <SelectTrigger className="w-full min-w-0">
                                           <SelectValue
                                             placeholder={
                                               !selectedProductId
@@ -582,7 +933,7 @@ export const WholesaleOrderPage: React.FC = () => {
                                 control={control}
                                 name={`items.${index}.quantity` as const}
                                 render={({ field }) => (
-                                  <FormItem className="md:col-span-2">
+                                  <FormItem className="sm:col-span-4 md:col-span-2">
                                     <FormLabel>{isArabic ? 'الكمية' : 'Qty'}</FormLabel>
                                     <FormControl>
                                       <Input
@@ -603,15 +954,39 @@ export const WholesaleOrderPage: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-end gap-2 pt-2">
-                    <Button
-                      type="submit"
-                      disabled={submitLoading || productsLoading || (allowedCategoryIds?.length === 0)}
-                      className="gap-2"
-                    >
-                      {submitLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Package className="h-4 w-4" />}
-                      {isArabic ? 'إرسال الطلب' : 'Submit order'}
-                    </Button>
+                  <div className="pt-2">
+                    <div className="w-full sm:max-w-sm sm:ml-auto space-y-3">
+                      <div className="rounded-xl border bg-white p-4">
+                        <div className="font-semibold text-gray-900">{isArabic ? 'ملخص الطلب' : 'Order Summary'}</div>
+                        <div className="mt-3 space-y-2 text-sm">
+                          <div className="flex items-center justify-between gap-4">
+                            <div className="text-gray-600">{isArabic ? 'العناصر' : 'Items'}</div>
+                            <div className="font-semibold text-gray-900" dir="ltr">{selectedItemsCount}</div>
+                          </div>
+                          <div className="flex items-center justify-between gap-4">
+                            <div className="text-gray-600">{isArabic ? 'إجمالي الكمية' : 'Total quantity'}</div>
+                            <div className="font-semibold text-gray-900" dir="ltr">
+                              {totalQuantityKg == null
+                                ? '—'
+                                : `${totalQuantityKg.toFixed(2)} ${isArabic ? 'كجم' : 'kg'}`}
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-between gap-4">
+                            <div className="text-gray-600">{isArabic ? 'الشحن' : 'Shipping'}</div>
+                            <div className="font-semibold text-gray-900">{shippingLabel}</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <Button
+                        type="submit"
+                        disabled={submitLoading || productsLoading || (allowedCategoryIds?.length === 0)}
+                        className="gap-2 w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+                      >
+                        {submitLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Package className="h-4 w-4" />}
+                        {isArabic ? 'إرسال الطلب' : 'Submit Wholesale Request'}
+                      </Button>
+                    </div>
                   </div>
                 </form>
               </Form>

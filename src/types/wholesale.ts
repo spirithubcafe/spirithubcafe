@@ -15,6 +15,8 @@ export interface WholesaleOrderCreate {
   customerPhone: string;
   customerEmail: string;
   shippingMethod: WholesaleShippingMethod;
+  address?: string;
+  city?: string;
   notes?: string;
   items: WholesaleOrderItemCreate[];
 }
@@ -37,6 +39,8 @@ export interface WholesaleOrder {
   customerEmail: string;
   customerPhone: string;
   shippingMethod: WholesaleShippingMethod;
+  address?: string | null;
+  city?: string | null;
   status: WholesaleOrderStatus;
   paymentStatus: WholesalePaymentStatus;
   manualPrice?: number | null;
