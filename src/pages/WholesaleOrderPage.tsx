@@ -1,10 +1,10 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
-import { Plus, Trash2, Loader2, CheckCircle2, ChevronLeft, ChevronRight, Package } from 'lucide-react';
+import { Plus, Trash2, Loader2, CheckCircle2, Package } from 'lucide-react';
 
 import { useApp } from '../hooks/useApp';
 import { useRegion } from '../hooks/useRegion';
@@ -54,8 +54,6 @@ const wholesaleSchema = z.object({
 
 type WholesaleFormValues = z.infer<typeof wholesaleSchema>;
 
-type StepKey = 1 | 2 | 3;
-
 const defaultValues: WholesaleFormValues = {
   customerName: '',
   cafeName: '',
@@ -77,8 +75,6 @@ export const WholesaleOrderPage: React.FC = () => {
   const { language } = useApp();
   const isArabic = language === 'ar';
   const { currentRegion } = useRegion();
-
-  const [step, setStep] = useState<StepKey>(1);
   const [allowedCategoryIds, setAllowedCategoryIds] = useState<number[] | null>(null);
   const [productsLoading, setProductsLoading] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
@@ -96,35 +92,13 @@ export const WholesaleOrderPage: React.FC = () => {
     mode: 'onTouched',
   });
 
-  const { control, handleSubmit, watch, trigger, setValue } = form;
+  const { control, handleSubmit, watch, setValue } = form;
   const items = watch('items');
 
   const { fields, append, remove } = useFieldArray({
     control,
     name: 'items',
   });
-
-  const steps = useMemo(
-    () =>
-      [
-        {
-          key: 1 as const,
-          title: isArabic ? 'معلومات العميل' : 'Customer info',
-          description: isArabic ? 'بدون إنشاء حساب' : 'No account needed',
-        },
-        {
-          key: 2 as const,
-          title: isArabic ? 'الشحن' : 'Shipping',
-          description: isArabic ? 'اختر طريقة الشحن' : 'Choose shipping method',
-        },
-        {
-          key: 3 as const,
-          title: isArabic ? 'المنتجات' : 'Items',
-          description: isArabic ? 'أضف منتجاتك' : 'Add your products',
-        },
-      ] as const,
-    [isArabic]
-  );
 
   const loadAllowedAndProducts = async () => {
     setProductsLoading(true);
@@ -198,23 +172,6 @@ export const WholesaleOrderPage: React.FC = () => {
     }
   };
 
-  const nextStep = async () => {
-    const stepFields: Record<StepKey, Array<keyof WholesaleFormValues>> = {
-      1: ['customerName', 'cafeName', 'customerPhone', 'customerEmail'],
-      2: ['shippingMethod', 'notes'],
-      3: ['items'],
-    };
-
-    const ok = await trigger(stepFields[step] as any, { shouldFocus: true });
-    if (!ok) return;
-
-    setStep((prev) => (prev === 3 ? 3 : ((prev + 1) as StepKey)));
-  };
-
-  const prevStep = () => {
-    setStep((prev) => (prev === 1 ? 1 : ((prev - 1) as StepKey)));
-  };
-
   const onSubmit = async (values: WholesaleFormValues) => {
     setSubmitLoading(true);
     try {
@@ -240,7 +197,6 @@ export const WholesaleOrderPage: React.FC = () => {
 
   const resetFlow = () => {
     setCreatedOrder(null);
-    setStep(1);
     form.reset(defaultValues);
   };
 
@@ -366,36 +322,12 @@ export const WholesaleOrderPage: React.FC = () => {
                 </Alert>
               ) : null}
 
-              {/* Stepper */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {steps.map((s) => {
-                  const active = s.key === step;
-                  const done = s.key < step;
-                  return (
-                    <div
-                      key={s.key}
-                      className={`rounded-xl border px-4 py-3 transition ${
-                        active ? 'border-amber-300 bg-amber-50' : done ? 'border-emerald-200 bg-emerald-50/50' : 'bg-white'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="font-semibold text-gray-900">
-                          {s.key}. {s.title}
-                        </div>
-                        {done ? <CheckCircle2 className="h-4 w-4 text-emerald-600" /> : null}
-                      </div>
-                      <div className="text-xs text-gray-600 mt-1">{s.description}</div>
-                    </div>
-                  );
-                })}
-              </div>
-
               <Separator />
 
               <Form {...form}>
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                  {/* Step 1 */}
-                  {step === 1 && (
+                  <div className="rounded-xl border bg-white p-4">
+                    <div className="font-semibold text-gray-900 mb-3">{isArabic ? 'معلومات العميل' : 'Customer info'}</div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <FormField
                         control={control}
@@ -453,250 +385,233 @@ export const WholesaleOrderPage: React.FC = () => {
                         )}
                       />
                     </div>
-                  )}
+                  </div>
 
-                  {/* Step 2 */}
-                  {step === 2 && (
-                    <div className="space-y-4">
-                      <FormField
-                        control={control}
-                        name="shippingMethod"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>{isArabic ? 'طريقة الشحن' : 'Shipping method'}</FormLabel>
-                            <FormControl>
-                              <RadioGroup
-                                className="grid grid-cols-1 sm:grid-cols-2 gap-3"
-                                value={String(field.value)}
-                                onValueChange={(v) => field.onChange(Number(v))}
-                              >
-                                <label className="flex items-center gap-3 rounded-xl border bg-white p-4 cursor-pointer hover:bg-gray-50">
-                                  <RadioGroupItem value="1" />
-                                  <div>
-                                    <div className="font-medium text-gray-900">{isArabic ? 'استلام (Pickup)' : 'Pickup'}</div>
-                                    <div className="text-xs text-gray-600">{isArabic ? 'استلام من الفرع' : 'Collect from store'}</div>
-                                  </div>
-                                </label>
-                                <label className="flex items-center gap-3 rounded-xl border bg-white p-4 cursor-pointer hover:bg-gray-50">
-                                  <RadioGroupItem value="2" />
-                                  <div>
-                                    <div className="font-medium text-gray-900">{isArabic ? 'نول (Nool)' : 'Nool'}</div>
-                                    <div className="text-xs text-gray-600">{isArabic ? 'شحن عبر النول' : 'Ship via Nool'}</div>
-                                  </div>
-                                </label>
-                              </RadioGroup>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                  <div className="rounded-xl border bg-white p-4 space-y-4">
+                    <div className="font-semibold text-gray-900">{isArabic ? 'الشحن' : 'Shipping'}</div>
 
-                      <FormField
-                        control={control}
-                        name="notes"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>{isArabic ? 'ملاحظات (اختياري)' : 'Notes (optional)'}</FormLabel>
-                            <FormControl>
-                              <Textarea
-                                placeholder={isArabic ? 'أي تفاصيل إضافية...' : 'Any extra details...'}
-                                className="min-h-[120px]"
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  )}
+                    <FormField
+                      control={control}
+                      name="shippingMethod"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{isArabic ? 'طريقة الشحن' : 'Shipping method'}</FormLabel>
+                          <FormControl>
+                            <RadioGroup
+                              className="grid grid-cols-1 sm:grid-cols-2 gap-3"
+                              value={String(field.value)}
+                              onValueChange={(v) => field.onChange(Number(v))}
+                            >
+                              <label className="flex items-center gap-3 rounded-xl border bg-white p-4 cursor-pointer hover:bg-gray-50">
+                                <RadioGroupItem value="1" />
+                                <div>
+                                  <div className="font-medium text-gray-900">{isArabic ? 'استلام (Pickup)' : 'Pickup'}</div>
+                                  <div className="text-xs text-gray-600">{isArabic ? 'استلام من الفرع' : 'Collect from store'}</div>
+                                </div>
+                              </label>
+                              <label className="flex items-center gap-3 rounded-xl border bg-white p-4 cursor-pointer hover:bg-gray-50">
+                                <RadioGroupItem value="2" />
+                                <div>
+                                  <div className="font-medium text-gray-900">{isArabic ? 'نول (Nool)' : 'Nool'}</div>
+                                  <div className="text-xs text-gray-600">{isArabic ? 'شحن عبر النول' : 'Ship via Nool'}</div>
+                                </div>
+                              </label>
+                            </RadioGroup>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                  {/* Step 3 */}
-                  {step === 3 && (
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between gap-3">
-                        <div>
-                          <div className="font-semibold text-gray-900">{isArabic ? 'المنتجات' : 'Items'}</div>
-                          <div className="text-sm text-gray-600">
-                            {isArabic ? 'اختر المنتج والعبوة والكمية.' : 'Choose product, package (variant), and quantity.'}
-                          </div>
+                    <FormField
+                      control={control}
+                      name="notes"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{isArabic ? 'ملاحظات (اختياري)' : 'Notes (optional)'}</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              placeholder={isArabic ? 'أي تفاصيل إضافية...' : 'Any extra details...'}
+                              className="min-h-[120px]"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="rounded-xl border bg-white p-4 space-y-4">
+                    <div className="flex items-start sm:items-center justify-between gap-3">
+                      <div>
+                        <div className="font-semibold text-gray-900">{isArabic ? 'المنتجات' : 'Items'}</div>
+                        <div className="text-sm text-gray-600">
+                          {isArabic ? 'اختر المنتج والعبوة والكمية.' : 'Choose product, package (variant), and quantity.'}
                         </div>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => append({ productId: 0, productVariantId: 0, quantity: 1 })}
-                          className="gap-2"
-                        >
-                          <Plus className="h-4 w-4" />
-                          {isArabic ? 'إضافة عنصر' : 'Add item'}
-                        </Button>
                       </div>
-
-                      {productsLoading ? (
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          {isArabic ? 'جاري تحميل المنتجات...' : 'Loading products...'}
-                        </div>
-                      ) : null}
-
-                      <div className="space-y-3">
-                        {fields.map((f, index) => {
-                          const selectedProductId = items?.[index]?.productId ?? 0;
-                          const variants = selectedProductId ? variantCache[selectedProductId] : undefined;
-                          const isVariantsLoading = selectedProductId ? !!variantLoading[selectedProductId] : false;
-
-                          return (
-                            <div key={f.id} className="rounded-xl border bg-white p-4">
-                              <div className="flex items-start justify-between gap-3 mb-3">
-                                <div className="font-medium text-gray-900">{isArabic ? `عنصر ${index + 1}` : `Item ${index + 1}`}</div>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  onClick={() => {
-                                    if (fields.length === 1) {
-                                      setValue(`items.${index}.productId`, 0);
-                                      setValue(`items.${index}.productVariantId`, 0);
-                                      setValue(`items.${index}.quantity`, 1);
-                                      return;
-                                    }
-                                    remove(index);
-                                  }}
-                                  className="text-red-600 hover:text-red-700"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-
-                              <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
-                                <FormField
-                                  control={control}
-                                  name={`items.${index}.productId` as const}
-                                  render={({ field }) => (
-                                    <FormItem className="md:col-span-6">
-                                      <FormLabel>{isArabic ? 'المنتج' : 'Product'}</FormLabel>
-                                      <FormControl>
-                                        <Select
-                                          value={String(field.value ?? 0)}
-                                          onValueChange={async (val) => {
-                                            const nextId = Number(val);
-                                            field.onChange(nextId);
-                                            // reset variant when product changes
-                                            setValue(`items.${index}.productVariantId`, 0);
-                                            if (nextId > 0) {
-                                              await ensureVariants(nextId);
-                                            }
-                                          }}
-                                        >
-                                          <SelectTrigger>
-                                            <SelectValue placeholder={isArabic ? 'اختر منتجاً' : 'Select a product'} />
-                                          </SelectTrigger>
-                                          <SelectContent>
-                                            <SelectItem value="0">{isArabic ? '— اختر —' : '— Select —'}</SelectItem>
-                                            {products.map((p) => (
-                                              <SelectItem key={p.id} value={String(p.id)}>
-                                                {isArabic ? (p.nameAr || p.name) : p.name}
-                                              </SelectItem>
-                                            ))}
-                                          </SelectContent>
-                                        </Select>
-                                      </FormControl>
-                                      <FormMessage />
-                                    </FormItem>
-                                  )}
-                                />
-
-                                <FormField
-                                  control={control}
-                                  name={`items.${index}.productVariantId` as const}
-                                  render={({ field }) => (
-                                    <FormItem className="md:col-span-4">
-                                      <FormLabel>{isArabic ? 'العبوة (Variant)' : 'Package (Variant)'}</FormLabel>
-                                      <FormControl>
-                                        <Select
-                                          value={String(field.value ?? 0)}
-                                          onOpenChange={async (open) => {
-                                            if (!open) return;
-                                            const pid = Number(selectedProductId);
-                                            if (pid > 0) {
-                                              await ensureVariants(pid);
-                                            }
-                                          }}
-                                          onValueChange={(val) => field.onChange(Number(val))}
-                                          disabled={!selectedProductId || isVariantsLoading}
-                                        >
-                                          <SelectTrigger>
-                                            <SelectValue
-                                              placeholder={
-                                                !selectedProductId
-                                                  ? (isArabic ? 'اختر المنتج أولاً' : 'Select product first')
-                                                  : isVariantsLoading
-                                                    ? (isArabic ? 'جاري التحميل...' : 'Loading...')
-                                                    : (isArabic ? 'اختر العبوة' : 'Select package')
-                                              }
-                                            />
-                                          </SelectTrigger>
-                                          <SelectContent>
-                                            <SelectItem value="0">{isArabic ? '— اختر —' : '— Select —'}</SelectItem>
-                                            {(variants || []).map((v) => (
-                                              <SelectItem key={v.id} value={String(v.id)}>
-                                                {formatVariantLabel(v)}
-                                              </SelectItem>
-                                            ))}
-                                          </SelectContent>
-                                        </Select>
-                                      </FormControl>
-                                      <FormMessage />
-                                    </FormItem>
-                                  )}
-                                />
-
-                                <FormField
-                                  control={control}
-                                  name={`items.${index}.quantity` as const}
-                                  render={({ field }) => (
-                                    <FormItem className="md:col-span-2">
-                                      <FormLabel>{isArabic ? 'الكمية' : 'Qty'}</FormLabel>
-                                      <FormControl>
-                                        <Input
-                                          type="number"
-                                          min={1}
-                                          value={String(field.value ?? 1)}
-                                          onChange={(e) => field.onChange(Number(e.target.value))}
-                                        />
-                                      </FormControl>
-                                      <FormMessage />
-                                    </FormItem>
-                                  )}
-                                />
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="flex items-center justify-between gap-3 pt-2">
-                    <Button type="button" variant="outline" onClick={prevStep} disabled={step === 1} className="gap-2">
-                      {isArabic ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-                      {isArabic ? 'السابق' : 'Back'}
-                    </Button>
-
-                    {step < 3 ? (
-                      <Button type="button" onClick={nextStep} className="gap-2">
-                        {isArabic ? 'التالي' : 'Next'}
-                        {isArabic ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                      </Button>
-                    ) : (
                       <Button
-                        type="submit"
-                        disabled={submitLoading || productsLoading || (allowedCategoryIds?.length === 0)}
+                        type="button"
+                        variant="outline"
+                        onClick={() => append({ productId: 0, productVariantId: 0, quantity: 1 })}
                         className="gap-2"
                       >
-                        {submitLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Package className="h-4 w-4" />}
-                        {isArabic ? 'إرسال الطلب' : 'Submit order'}
+                        <Plus className="h-4 w-4" />
+                        {isArabic ? 'إضافة عنصر' : 'Add item'}
                       </Button>
-                    )}
+                    </div>
+
+                    {productsLoading ? (
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        {isArabic ? 'جاري تحميل المنتجات...' : 'Loading products...'}
+                      </div>
+                    ) : null}
+
+                    <div className="space-y-3">
+                      {fields.map((f, index) => {
+                        const selectedProductId = items?.[index]?.productId ?? 0;
+                        const variants = selectedProductId ? variantCache[selectedProductId] : undefined;
+                        const isVariantsLoading = selectedProductId ? !!variantLoading[selectedProductId] : false;
+
+                        return (
+                          <div key={f.id} className="rounded-xl border bg-white p-4">
+                            <div className="flex items-start justify-between gap-3 mb-3">
+                              <div className="font-medium text-gray-900">{isArabic ? `عنصر ${index + 1}` : `Item ${index + 1}`}</div>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                onClick={() => {
+                                  if (fields.length === 1) {
+                                    setValue(`items.${index}.productId`, 0);
+                                    setValue(`items.${index}.productVariantId`, 0);
+                                    setValue(`items.${index}.quantity`, 1);
+                                    return;
+                                  }
+                                  remove(index);
+                                }}
+                                className="text-red-600 hover:text-red-700"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
+                              <FormField
+                                control={control}
+                                name={`items.${index}.productId` as const}
+                                render={({ field }) => (
+                                  <FormItem className="md:col-span-6">
+                                    <FormLabel>{isArabic ? 'المنتج' : 'Product'}</FormLabel>
+                                    <FormControl>
+                                      <Select
+                                        value={String(field.value ?? 0)}
+                                        onValueChange={async (val) => {
+                                          const nextId = Number(val);
+                                          field.onChange(nextId);
+                                          setValue(`items.${index}.productVariantId`, 0);
+                                          if (nextId > 0) {
+                                            await ensureVariants(nextId);
+                                          }
+                                        }}
+                                      >
+                                        <SelectTrigger>
+                                          <SelectValue placeholder={isArabic ? 'اختر منتجاً' : 'Select a product'} />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="0">{isArabic ? '— اختر —' : '— Select —'}</SelectItem>
+                                          {products.map((p) => (
+                                            <SelectItem key={p.id} value={String(p.id)}>
+                                              {isArabic ? (p.nameAr || p.name) : p.name}
+                                            </SelectItem>
+                                          ))}
+                                        </SelectContent>
+                                      </Select>
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+
+                              <FormField
+                                control={control}
+                                name={`items.${index}.productVariantId` as const}
+                                render={({ field }) => (
+                                  <FormItem className="md:col-span-4">
+                                    <FormLabel>{isArabic ? 'العبوة (Variant)' : 'Package (Variant)'}</FormLabel>
+                                    <FormControl>
+                                      <Select
+                                        value={String(field.value ?? 0)}
+                                        onOpenChange={async (open) => {
+                                          if (!open) return;
+                                          const pid = Number(selectedProductId);
+                                          if (pid > 0) {
+                                            await ensureVariants(pid);
+                                          }
+                                        }}
+                                        onValueChange={(val) => field.onChange(Number(val))}
+                                        disabled={!selectedProductId || isVariantsLoading}
+                                      >
+                                        <SelectTrigger>
+                                          <SelectValue
+                                            placeholder={
+                                              !selectedProductId
+                                                ? (isArabic ? 'اختر المنتج أولاً' : 'Select product first')
+                                                : isVariantsLoading
+                                                  ? (isArabic ? 'جاري التحميل...' : 'Loading...')
+                                                  : (isArabic ? 'اختر العبوة' : 'Select package')
+                                            }
+                                          />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="0">{isArabic ? '— اختر —' : '— Select —'}</SelectItem>
+                                          {(variants || []).map((v) => (
+                                            <SelectItem key={v.id} value={String(v.id)}>
+                                              {formatVariantLabel(v)}
+                                            </SelectItem>
+                                          ))}
+                                        </SelectContent>
+                                      </Select>
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+
+                              <FormField
+                                control={control}
+                                name={`items.${index}.quantity` as const}
+                                render={({ field }) => (
+                                  <FormItem className="md:col-span-2">
+                                    <FormLabel>{isArabic ? 'الكمية' : 'Qty'}</FormLabel>
+                                    <FormControl>
+                                      <Input
+                                        type="number"
+                                        min={1}
+                                        value={String(field.value ?? 1)}
+                                        onChange={(e) => field.onChange(Number(e.target.value))}
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-end gap-2 pt-2">
+                    <Button
+                      type="submit"
+                      disabled={submitLoading || productsLoading || (allowedCategoryIds?.length === 0)}
+                      className="gap-2"
+                    >
+                      {submitLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Package className="h-4 w-4" />}
+                      {isArabic ? 'إرسال الطلب' : 'Submit order'}
+                    </Button>
                   </div>
                 </form>
               </Form>
