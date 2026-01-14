@@ -1,5 +1,5 @@
 // Export all services
-export { apiClient, http, tokenManager } from './apiClient';
+export { apiClient, publicApiClient, http, publicHttp, tokenManager } from './apiClient';
 export { authService } from './authService';
 export { categoryService } from './categoryService';
 export {
@@ -18,6 +18,7 @@ export { fileUploadService } from './fileUploadService';
 export { newsletterService } from './newsletterService';
 export { emailService } from './emailService';
 export { wholesaleOrderService } from './wholesaleOrderService';
+export { wholesaleCustomerLookupService } from './wholesaleCustomerLookupService';
 export {
   calculateAramexRate,
   getAramexCountries,

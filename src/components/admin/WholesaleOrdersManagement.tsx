@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import { RefreshCw, Eye, Loader2, Save, Settings2 } from 'lucide-react';
+import { RefreshCw, Eye, Loader2, Save, Settings2, MessageCircle } from 'lucide-react';
 
 import { useApp } from '../../hooks/useApp';
 import { cn } from '../../lib/utils';
@@ -35,6 +35,96 @@ const safeDate = (iso?: string) => {
   } catch {
     return iso;
   }
+};
+
+const sanitizeWhatsappPhone = (raw: string): string => {
+  // WhatsApp expects country code + number, digits only.
+  // Example: +968 9xxxxxxx -> 9689xxxxxxx
+  return (raw || '').replace(/[^0-9]/g, '');
+};
+
+const buildWholesaleWhatsappMessage = (args: {
+  order: WholesaleOrder;
+  status: WholesaleOrderStatus;
+  paymentStatus: WholesalePaymentStatus;
+  manualPrice: number | null;
+  isArabic: boolean;
+}): string => {
+  const { order, status, paymentStatus, manualPrice, isArabic } = args;
+  const shippingLabel = order.shippingMethod === 1
+    ? (isArabic ? 'استلام' : 'Pickup')
+    : (isArabic ? 'نول للتوصيل' : 'Nool Delivery');
+
+  const itemsLines = (order.items || []).map((it) => {
+    const variant = it.variantInfo ? ` (${it.variantInfo})` : '';
+    return `• ${it.productName}${variant} × ${it.quantity}`;
+  });
+
+  const priceLine = manualPrice === null
+    ? null
+    : (isArabic ? `السعر: ${manualPrice}` : `Price: ${manualPrice}`);
+
+  const statusLine = isArabic
+    ? `الحالة: ${status} | الدفع: ${paymentStatus}`
+    : `Status: ${status} | Payment: ${paymentStatus}`;
+
+  const statusHint = (() => {
+    if (isArabic) {
+      if (status === 'New') {
+        return 'سنراجع طلبك وسنتواصل معك قريباً لتأكيد السعر النهائي والتأكيد.';
+      }
+      if (status === 'Preparing') {
+        return 'طلبك قيد التجهيز. سنوافيك بالتحديثات قريباً.';
+      }
+      return order.shippingMethod === 1
+        ? 'طلبك جاهز للاستلام. سنقوم بالتواصل معك للتنسيق.'
+        : 'طلبك في طريقه للتوصيل عبر نول. سنقوم بالتواصل معك للتنسيق.';
+    }
+
+    if (status === 'New') {
+      return "We'll review your request and process it.";
+    }
+    if (status === 'Preparing') {
+      return "Your order is being prepared. We'll update you shortly.";
+    }
+    return order.shippingMethod === 1
+      ? "Your order is ready for pickup. We'll contact you to coordinate."
+      : "Your order is on the way via Nool delivery. We'll contact you to coordinate.";
+  })();
+
+  const addressLines: string[] = [];
+  if (order.shippingMethod === 2) {
+    if (order.address) addressLines.push(isArabic ? `العنوان: ${order.address}` : `Address: ${order.address}`);
+    if (order.city) addressLines.push(isArabic ? `المدينة: ${order.city}` : `City: ${order.city}`);
+  }
+
+  const greeting = isArabic
+    ? `مرحباً ${order.customerName}،`
+    : `Hello ${order.customerName},`;
+
+  const receivedLine = isArabic
+    ? `تم استلام طلب الجملة رقم ${order.wholesaleOrderNumber} ✅`
+    : `We've received your wholesale order ${order.wholesaleOrderNumber} ✅`;
+
+  const lines = [
+    greeting,
+    '',
+    receivedLine,
+    statusLine,
+    ...(priceLine ? [priceLine] : []),
+    (isArabic ? `طريقة الشحن: ${shippingLabel}` : `Shipping: ${shippingLabel}`),
+    ...addressLines,
+    '',
+    (isArabic ? 'العناصر:' : 'Items:'),
+    ...(itemsLines.length ? itemsLines : [isArabic ? '- (لا يوجد عناصر)' : '- (No items)']),
+    '',
+    statusHint,
+    '',
+    (isArabic ? 'شكراً لك!' : 'Thank you!'),
+    'https://spirithubcafe.com',
+  ];
+
+  return lines.join('\n');
 };
 
 const statusBadgeVariant = (status: WholesaleOrderStatus) => {
@@ -328,9 +418,9 @@ export const WholesaleOrdersManagement: React.FC = () => {
             </div>
 
             <div className="space-y-1">
-              <Label>{isArabic ? 'حالة الدفع' : 'Payment status'}</Label>
+              <Label>{isArabic ? 'الدفع' : 'Payment'}</Label>
               <Select value={paymentFilter} onValueChange={(v) => { setPage(1); setPaymentFilter(v as any); }}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder={isArabic ? 'الكل' : 'All'} />
                 </SelectTrigger>
                 <SelectContent>
@@ -467,6 +557,38 @@ export const WholesaleOrdersManagement: React.FC = () => {
                     <div className="text-sm text-muted-foreground">{selectedOrder.cafeName}</div>
                     <div className="text-sm text-muted-foreground">{selectedOrder.customerPhone}</div>
                     <div className="text-sm text-muted-foreground">{selectedOrder.customerEmail}</div>
+
+                    <div className="pt-3">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="gap-2 border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+                        onClick={() => {
+                          const phone = sanitizeWhatsappPhone(selectedOrder.customerPhone);
+                          if (!phone || phone.length < 8) {
+                            toast.error(isArabic ? 'رقم واتساب غير صالح' : 'Invalid WhatsApp number');
+                            return;
+                          }
+
+                          const manualPrice = editManualPrice.trim() === '' ? null : Number(editManualPrice);
+                          const safeManualPrice = manualPrice !== null && Number.isFinite(manualPrice) ? manualPrice : null;
+
+                          const message = buildWholesaleWhatsappMessage({
+                            order: selectedOrder,
+                            status: editStatus,
+                            paymentStatus: editPaymentStatus,
+                            manualPrice: safeManualPrice,
+                            isArabic,
+                          });
+
+                          const url = `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(message)}`;
+                          window.open(url, '_blank', 'noopener,noreferrer');
+                        }}
+                      >
+                        <MessageCircle className="h-4 w-4" />
+                        {isArabic ? 'واتساب العميل' : 'WhatsApp customer'}
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
 
@@ -474,11 +596,11 @@ export const WholesaleOrdersManagement: React.FC = () => {
                   <CardContent className="p-4 space-y-2">
                     <div className="text-xs text-muted-foreground">{isArabic ? 'تحديث الحالة' : 'Update status'}</div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
                       <div className="space-y-1">
                         <Label>{isArabic ? 'حالة الطلب' : 'Order status'}</Label>
                         <Select value={editStatus} onValueChange={(v) => setEditStatus(v as WholesaleOrderStatus)}>
-                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
                           <SelectContent>
                             {STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                           </SelectContent>
@@ -486,9 +608,9 @@ export const WholesaleOrdersManagement: React.FC = () => {
                       </div>
 
                       <div className="space-y-1">
-                        <Label>{isArabic ? 'حالة الدفع' : 'Payment status'}</Label>
+                        <Label>{isArabic ? 'الدفع' : 'Payment'}</Label>
                         <Select value={editPaymentStatus} onValueChange={(v) => setEditPaymentStatus(v as WholesalePaymentStatus)}>
-                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
                           <SelectContent>
                             {PAYMENT_STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                           </SelectContent>
@@ -501,16 +623,24 @@ export const WholesaleOrdersManagement: React.FC = () => {
                           type="number"
                           inputMode="decimal"
                           placeholder={isArabic ? 'اتركه فارغاً لإزالة السعر' : 'Leave empty to clear'}
+                          className="w-full"
                           value={editManualPrice}
                           onChange={(e) => setEditManualPrice(e.target.value)}
                         />
                       </div>
-                    </div>
 
-                    <Button type="button" onClick={() => void applyUpdates()} disabled={updateLoading} className="gap-2">
-                      {updateLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                      {isArabic ? 'حفظ التغييرات' : 'Save changes'}
-                    </Button>
+                      <div className="sm:col-span-3 pt-1">
+                        <Button
+                          type="button"
+                          onClick={() => void applyUpdates()}
+                          disabled={updateLoading}
+                          className="gap-2 w-full sm:w-auto"
+                        >
+                          {updateLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                          {isArabic ? 'حفظ التغييرات' : 'Save changes'}
+                        </Button>
+                      </div>
+                    </div>
                   </CardContent>
                 </Card>
               </div>

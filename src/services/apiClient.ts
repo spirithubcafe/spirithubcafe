@@ -172,8 +172,39 @@ const createApiClient = (): AxiosInstance => {
   return client;
 };
 
+// Create a public axios instance:
+// - No auth token injection
+// - No 401 refresh/redirect behavior
+// This is useful for truly public endpoints (e.g., customer confirmation email)
+// where we must avoid redirecting anonymous users to login.
+const createPublicApiClient = (): AxiosInstance => {
+  const client = axios.create({
+    baseURL: getApiBaseUrl(),
+    timeout: 30000,
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
+  });
+
+  client.interceptors.request.use(
+    (config) => {
+      config.baseURL = getApiBaseUrl();
+      const currentRegion = getActiveRegionForApi();
+      if (config.headers) {
+        config.headers['X-Branch'] = currentRegion;
+      }
+      return config;
+    },
+    (error) => Promise.reject(error)
+  );
+
+  return client;
+};
+
 // Create the API client instance
 export const apiClient = createApiClient();
+export const publicApiClient = createPublicApiClient();
 
 // HTTP methods helpers
 export const http = {
@@ -191,6 +222,24 @@ export const http = {
 
   delete: <T = unknown>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> =>
     apiClient.delete(url, config),
+};
+
+// Public HTTP methods (no auth, no redirect)
+export const publicHttp = {
+  get: <T = unknown>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> =>
+    publicApiClient.get(url, config),
+
+  post: <T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> =>
+    publicApiClient.post(url, data, config),
+
+  put: <T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> =>
+    publicApiClient.put(url, data, config),
+
+  patch: <T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> =>
+    publicApiClient.patch(url, data, config),
+
+  delete: <T = unknown>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> =>
+    publicApiClient.delete(url, config),
 };
 
 // Helper functions for token management

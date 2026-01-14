@@ -1,4 +1,4 @@
-import { http } from './apiClient';
+import { http, publicHttp } from './apiClient';
 import type {
   AllowedWholesaleCategoriesResponse,
   WholesaleApiResponse,
@@ -39,6 +39,49 @@ export const wholesaleOrderService = {
     }
 
     return data;
+  },
+
+  /**
+   * Best-effort customer confirmation email trigger.
+   * Uses publicHttp to avoid redirecting anonymous customers on 401s.
+   *
+   * Backend must implement one of these endpoints (or send email during `create`).
+   */
+  sendCustomerConfirmationEmail: async (orderId: number): Promise<boolean> => {
+    if (!orderId || orderId <= 0) return false;
+
+    const endpoints = [
+      `/api/wholesale-orders/${orderId}/send-confirmation`,
+      `/api/wholesale-orders/${orderId}/send-customer-confirmation`,
+      `/api/wholesale-orders/${orderId}/send-email`,
+      `/api/wholesale-orders/${orderId}/notify-customer`,
+      `/api/wholesale-orders/send-confirmation`,
+    ];
+
+    for (const endpoint of endpoints) {
+      try {
+        const response = endpoint.endsWith('/send-confirmation') && endpoint === '/api/wholesale-orders/send-confirmation'
+          ? await publicHttp.post<any>(endpoint, { orderId })
+          : await publicHttp.post<any>(endpoint);
+
+        // Accept common shapes: {success:true}, 204, or any 2xx.
+        if (response.status >= 200 && response.status < 300) {
+          const data = response.data;
+          if (data && typeof data === 'object' && 'success' in data) {
+            return Boolean((data as any).success);
+          }
+          return true;
+        }
+      } catch (err: any) {
+        const status = err?.response?.status;
+        // If endpoint doesn't exist, try next.
+        if (status === 404) continue;
+        // Any other error: stop trying.
+        return false;
+      }
+    }
+
+    return false;
   },
 
   // Auth: required
