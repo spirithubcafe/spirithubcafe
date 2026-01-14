@@ -100,7 +100,7 @@ export const WholesaleOrderPage: React.FC = () => {
 
   const [submitLoading, setSubmitLoading] = useState(false);
   const [createdOrder, setCreatedOrder] = useState<WholesaleOrder | null>(null);
-  const [confirmationEmailState, setConfirmationEmailState] = useState<'idle' | 'sending' | 'sent' | 'failed'>('idle');
+  const [confirmationEmailState, setConfirmationEmailState] = useState<'idle' | 'sending' | 'requested' | 'failed'>('idle');
 
   const [returningCustomerEnabled, setReturningCustomerEnabled] = useState(false);
   const [lookupState, setLookupState] = useState<'idle' | 'loading' | 'found' | 'not-found' | 'error'>('idle');
@@ -233,6 +233,30 @@ export const WholesaleOrderPage: React.FC = () => {
     }
   };
 
+  const triggerConfirmationEmail = (orderId: number) => {
+    if (!orderId || orderId <= 0) return;
+    setConfirmationEmailState('sending');
+
+    void (async () => {
+      const ok = await wholesaleOrderService.sendCustomerConfirmationEmail(orderId);
+      setConfirmationEmailState(ok ? 'requested' : 'failed');
+
+      if (ok) {
+        toast.success(
+          isArabic
+            ? 'تمت معالجة طلب إرسال بريد التأكيد. يرجى التحقق من البريد غير الهام (Spam) إذا لم يصلك.'
+            : 'Confirmation email request submitted. Please check your spam/junk folder if you don’t receive it.'
+        );
+      } else {
+        toast.message(
+          isArabic
+            ? 'تم إرسال الطلب. إذا لم يصلك بريد تأكيد، تواصل معنا عبر واتساب.'
+            : 'Order submitted. If you don’t receive a confirmation email, please contact us on WhatsApp.'
+        );
+      }
+    })();
+  };
+
   const onSubmit = async (values: WholesaleFormValues) => {
     setSubmitLoading(true);
     setConfirmationEmailState('idle');
@@ -253,20 +277,7 @@ export const WholesaleOrderPage: React.FC = () => {
       toast.success(isArabic ? 'تم إنشاء طلب الجملة بنجاح' : 'Wholesale order created');
 
       // Best-effort: trigger a customer confirmation email.
-      setConfirmationEmailState('sending');
-      void (async () => {
-        const ok = await wholesaleOrderService.sendCustomerConfirmationEmail(order.id);
-        setConfirmationEmailState(ok ? 'sent' : 'failed');
-        if (ok) {
-          toast.success(isArabic ? 'تم إرسال تأكيد الطلب إلى بريدك الإلكتروني' : 'Order confirmation email sent');
-        } else {
-          toast.message(
-            isArabic
-              ? 'تم إرسال الطلب. إذا لم يصلك بريد تأكيد، تواصل معنا عبر واتساب.'
-              : 'Order submitted. If you don’t receive a confirmation email, please contact us on WhatsApp.'
-          );
-        }
-      })();
+      triggerConfirmationEmail(order.id);
     } catch (err: any) {
       console.error('Wholesale submit failed:', err);
       toast.error(err?.message || (isArabic ? 'فشل إنشاء الطلب' : 'Failed to create wholesale order'));
@@ -463,21 +474,47 @@ export const WholesaleOrderPage: React.FC = () => {
                     </div>
                   ) : null}
 
-                  {confirmationEmailState === 'sent' ? (
-                    <div className="flex items-center gap-2 text-emerald-800">
-                      <Mail className="h-4 w-4" />
-                      <span>{isArabic ? 'تم إرسال بريد تأكيد الطلب.' : 'Confirmation email sent.'}</span>
+                  {confirmationEmailState === 'requested' ? (
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2 text-emerald-800">
+                        <Mail className="h-4 w-4" />
+                        <span>
+                          {isArabic
+                            ? 'تمت معالجة طلب إرسال بريد التأكيد. يرجى التحقق من البريد غير الهام (Spam).'
+                            : 'Confirmation email request submitted. Please check spam/junk.'}
+                        </span>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="border-emerald-200 text-emerald-900"
+                        onClick={() => triggerConfirmationEmail(createdOrder.id)}
+                      >
+                        {isArabic ? 'إعادة الإرسال' : 'Resend'}
+                      </Button>
                     </div>
                   ) : null}
 
                   {confirmationEmailState === 'failed' ? (
-                    <div className="flex items-center gap-2 text-amber-800">
-                      <AlertTriangle className="h-4 w-4" />
-                      <span>
-                        {isArabic
-                          ? 'لم نتمكن من إرسال بريد التأكيد. تواصل معنا عبر واتساب إذا لم يصلك شيء.'
-                          : 'Couldn’t send confirmation email. Contact us on WhatsApp if you don’t receive it.'}
-                      </span>
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2 text-amber-800">
+                        <AlertTriangle className="h-4 w-4" />
+                        <span>
+                          {isArabic
+                            ? 'لم نتمكن من إرسال بريد التأكيد. حاول مرة أخرى أو تواصل معنا عبر واتساب.'
+                            : 'Couldn’t send confirmation email. Try again or contact us on WhatsApp.'}
+                        </span>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="border-amber-200 text-amber-900"
+                        onClick={() => triggerConfirmationEmail(createdOrder.id)}
+                      >
+                        {isArabic ? 'حاول مرة أخرى' : 'Try again'}
+                      </Button>
                     </div>
                   ) : null}
                 </div>

@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import { RefreshCw, Eye, Loader2, Save, Settings2, MessageCircle } from 'lucide-react';
+import { RefreshCw, Eye, Loader2, Save, Settings2, MessageCircle, Mail } from 'lucide-react';
 
 import { useApp } from '../../hooks/useApp';
 import { cn } from '../../lib/utils';
@@ -180,6 +180,7 @@ export const WholesaleOrdersManagement: React.FC = () => {
   const [editPaymentStatus, setEditPaymentStatus] = useState<WholesalePaymentStatus>('Pending');
   const [editManualPrice, setEditManualPrice] = useState<string>('');
   const [updateLoading, setUpdateLoading] = useState(false);
+  const [resendEmailLoading, setResendEmailLoading] = useState(false);
 
   const loadAllowedCategories = async () => {
     setAllowedCategoriesLoading(true);
@@ -312,6 +313,29 @@ export const WholesaleOrdersManagement: React.FC = () => {
       toast.error(err?.message || (isArabic ? 'فشل تحديث الطلب' : 'Failed to update order'));
     } finally {
       setUpdateLoading(false);
+    }
+  };
+
+  const resendCustomerEmail = async () => {
+    if (!selectedOrder) return;
+    setResendEmailLoading(true);
+    try {
+      const ok = await wholesaleOrderService.sendCustomerConfirmationEmail(selectedOrder.id);
+      if (ok) {
+        toast.success(isArabic ? 'تم إرسال طلب إعادة إرسال بريد التأكيد' : 'Resend request submitted', {
+          description: isArabic
+            ? 'يرجى التحقق من البريد غير الهام (Spam) إذا لم يصل.'
+            : 'Ask the customer to check spam/junk if it doesn’t arrive.',
+          duration: 3500,
+        });
+      } else {
+        toast.error(isArabic ? 'فشل إرسال بريد التأكيد' : 'Couldn’t resend confirmation email');
+      }
+    } catch (err: any) {
+      console.error('Failed to resend wholesale confirmation email:', err);
+      toast.error(err?.message || (isArabic ? 'فشل إرسال بريد التأكيد' : 'Couldn’t resend confirmation email'));
+    } finally {
+      setResendEmailLoading(false);
     }
   };
 
@@ -559,35 +583,58 @@ export const WholesaleOrdersManagement: React.FC = () => {
                     <div className="text-sm text-muted-foreground">{selectedOrder.customerEmail}</div>
 
                     <div className="pt-3">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="gap-2 border-emerald-300 text-emerald-700 hover:bg-emerald-50"
-                        onClick={() => {
-                          const phone = sanitizeWhatsappPhone(selectedOrder.customerPhone);
-                          if (!phone || phone.length < 8) {
-                            toast.error(isArabic ? 'رقم واتساب غير صالح' : 'Invalid WhatsApp number');
-                            return;
-                          }
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="w-full min-w-0 gap-2 border-emerald-300 text-emerald-700 hover:bg-emerald-50 justify-center"
+                          onClick={() => {
+                            const phone = sanitizeWhatsappPhone(selectedOrder.customerPhone);
+                            if (!phone || phone.length < 8) {
+                              toast.error(isArabic ? 'رقم واتساب غير صالح' : 'Invalid WhatsApp number');
+                              return;
+                            }
 
-                          const manualPrice = editManualPrice.trim() === '' ? null : Number(editManualPrice);
-                          const safeManualPrice = manualPrice !== null && Number.isFinite(manualPrice) ? manualPrice : null;
+                            const manualPrice = editManualPrice.trim() === '' ? null : Number(editManualPrice);
+                            const safeManualPrice = manualPrice !== null && Number.isFinite(manualPrice) ? manualPrice : null;
 
-                          const message = buildWholesaleWhatsappMessage({
-                            order: selectedOrder,
-                            status: editStatus,
-                            paymentStatus: editPaymentStatus,
-                            manualPrice: safeManualPrice,
-                            isArabic,
-                          });
+                            const message = buildWholesaleWhatsappMessage({
+                              order: selectedOrder,
+                              status: editStatus,
+                              paymentStatus: editPaymentStatus,
+                              manualPrice: safeManualPrice,
+                              isArabic,
+                            });
 
-                          const url = `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(message)}`;
-                          window.open(url, '_blank', 'noopener,noreferrer');
-                        }}
-                      >
-                        <MessageCircle className="h-4 w-4" />
-                        {isArabic ? 'واتساب العميل' : 'WhatsApp customer'}
-                      </Button>
+                            const url = `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(message)}`;
+                            window.open(url, '_blank', 'noopener,noreferrer');
+                          }}
+                        >
+                          <MessageCircle className="h-4 w-4 shrink-0" />
+                          <span className="truncate">
+                            <span className="sm:hidden">{isArabic ? 'واتساب' : 'WhatsApp'}</span>
+                            <span className="hidden sm:inline">{isArabic ? 'واتساب العميل' : 'WhatsApp customer'}</span>
+                          </span>
+                        </Button>
+
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="w-full min-w-0 gap-2 justify-center"
+                          disabled={resendEmailLoading}
+                          onClick={() => void resendCustomerEmail()}
+                        >
+                          {resendEmailLoading ? (
+                            <Loader2 className="h-4 w-4 animate-spin shrink-0" />
+                          ) : (
+                            <Mail className="h-4 w-4 shrink-0" />
+                          )}
+                          <span className="truncate">
+                            <span className="sm:hidden">{isArabic ? 'إعادة إرسال' : 'Resend'}</span>
+                            <span className="hidden sm:inline">{isArabic ? 'إعادة إرسال بريد التأكيد' : 'Resend confirmation email'}</span>
+                          </span>
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>

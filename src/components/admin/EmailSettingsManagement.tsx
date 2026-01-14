@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { Mail, RefreshCw, Save, Loader2, CheckCircle2, XCircle } from 'lucide-react';
 import { useApp } from '../../hooks/useApp';
+import { useEmailSender } from '../../hooks/useEmailSender';
 import { emailSettingsService, type EmailSettingsDto } from '../../services/emailSettingsService';
 import { cn } from '../../lib/utils';
 import type { ApiError } from '../../types/auth';
@@ -50,6 +51,13 @@ export const EmailSettingsManagement: React.FC = () => {
   const { language } = useApp();
   const isArabic = language === 'ar';
 
+  const {
+    sendTestEmail,
+    loading: testEmailLoading,
+    error: testEmailError,
+    clearError: clearTestEmailError,
+  } = useEmailSender();
+
   const title = isArabic ? 'إعدادات البريد الإلكتروني' : 'Email Settings';
   const subtitle = isArabic
     ? 'تحديث معلومات المرسل وإعدادات SMTP/IMAP'
@@ -64,6 +72,7 @@ export const EmailSettingsManagement: React.FC = () => {
   const [draft, setDraft] = useState<EmailSettingsDto | null>(null);
   const [smtpPassword, setSmtpPassword] = useState('');
   const [imapPassword, setImapPassword] = useState('');
+  const [testRecipientEmail, setTestRecipientEmail] = useState('');
 
   const selected = useMemo(() => {
     if (selectedId == null) return null;
@@ -183,6 +192,37 @@ export const EmailSettingsManagement: React.FC = () => {
       });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleSendTestEmail = async () => {
+    if (!draft) return;
+
+    const email = (testRecipientEmail || '').trim();
+    if (!email || !email.includes('@')) {
+      toast.error(isArabic ? 'الرجاء إدخال بريد صحيح للاختبار' : 'Please enter a valid test recipient email');
+      return;
+    }
+
+    clearTestEmailError();
+    try {
+      const result = await sendTestEmail({ emailSettingsId: draft.id, testRecipientEmail: email });
+      if (result.success) {
+        toast.success(isArabic ? 'تم إرسال البريد التجريبي' : 'Test email sent', {
+          description: result.message,
+          duration: 3000,
+        });
+      } else {
+        toast.error(isArabic ? 'فشل إرسال البريد التجريبي' : 'Test email failed', {
+          description: (result.errors || []).join(' | ') || result.message,
+          duration: 4000,
+        });
+      }
+    } catch (err: any) {
+      toast.error(isArabic ? 'فشل إرسال البريد التجريبي' : 'Failed to send test email', {
+        description: err?.message || (isArabic ? 'حدث خطأ غير متوقع' : 'Unexpected error'),
+        duration: 4000,
+      });
     }
   };
 
@@ -484,6 +524,46 @@ export const EmailSettingsManagement: React.FC = () => {
                       />
                     </div>
                   </div>
+                </div>
+
+                <div className="rounded-xl border border-border/60 bg-muted/20 p-4">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <div className="text-sm font-semibold">{isArabic ? 'بريد تجريبي' : 'Test email'}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {isArabic
+                          ? 'أرسل بريدًا تجريبيًا للتأكد من عمل SMTP.'
+                          : 'Send a test email to verify SMTP is working.'}
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => void handleSendTestEmail()}
+                      disabled={!draft || saving || loading || testEmailLoading}
+                      className="gap-2"
+                    >
+                      {testEmailLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
+                      {isArabic ? 'إرسال اختبار' : 'Send test'}
+                    </Button>
+                  </div>
+
+                  <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
+                    <div className="space-y-2">
+                      <Label htmlFor="testRecipientEmail">{isArabic ? 'بريد المستلم للاختبار' : 'Test recipient email'}</Label>
+                      <Input
+                        id="testRecipientEmail"
+                        type="email"
+                        value={testRecipientEmail}
+                        onChange={(e) => setTestRecipientEmail(e.target.value)}
+                        placeholder={isArabic ? 'example@domain.com' : 'example@domain.com'}
+                      />
+                    </div>
+                  </div>
+
+                  {testEmailError ? (
+                    <div className="mt-2 text-xs text-destructive">{testEmailError}</div>
+                  ) : null}
                 </div>
 
                 <Separator />
