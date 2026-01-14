@@ -15,7 +15,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Textarea } from '../components/ui/textarea';
-import { Separator } from '../components/ui/separator';
 import { Alert, AlertDescription, AlertTitle } from '../components/ui/alert';
 import { Switch } from '../components/ui/switch';
 import {
@@ -84,6 +83,12 @@ const formatVariantLabel = (variant: ProductVariant) => {
   const weight = Number.isFinite(variant.weight) ? variant.weight : 0;
   const sku = variant.variantSku ? ` • ${variant.variantSku}` : '';
   return `${weight}${unit ? unit : ''}${sku}`;
+};
+
+const sanitizeWhatsappPhone = (raw: string): string => {
+  // WhatsApp expects country code + number, digits only.
+  // Example: +968 9xxxxxxx -> 9689xxxxxxx
+  return (raw || '').replace(/[^0-9]/g, '');
 };
 
 export const WholesaleOrderPage: React.FC = () => {
@@ -425,7 +430,25 @@ export const WholesaleOrderPage: React.FC = () => {
             <ul className={`mt-2 list-disc space-y-1 ${isArabic ? 'pr-5' : 'pl-5'}`}>
               <li>
                 {isArabic ? 'واتساب:' : 'WhatsApp:'}{' '}
-                <span dir="ltr">+968 72726999 / +968 91900005</span>
+                <span dir="ltr" className="whitespace-nowrap">
+                  <a
+                    className="text-emerald-700 hover:underline"
+                    href={`https://wa.me/${sanitizeWhatsappPhone('+968 72726999')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    +968 72726999
+                  </a>
+                  {' / '}
+                  <a
+                    className="text-emerald-700 hover:underline"
+                    href={`https://wa.me/${sanitizeWhatsappPhone('+968 91900005')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    +968 91900005
+                  </a>
+                </span>
               </li>
               <li>
                 {isArabic ? 'البريد الإلكتروني:' : 'Email:'}{' '}
@@ -488,7 +511,18 @@ export const WholesaleOrderPage: React.FC = () => {
                   <div className="text-xs text-muted-foreground">{isArabic ? 'العميل' : 'Customer'}</div>
                   <div className="font-medium text-gray-900">{createdOrder.customerName}</div>
                   <div className="text-sm text-gray-600">{createdOrder.cafeName}</div>
-                  <div className="text-sm text-gray-600">{createdOrder.customerPhone}</div>
+                  {createdOrder.customerPhone ? (
+                    <a
+                      className="text-sm text-emerald-700 hover:underline break-words"
+                      href={`https://wa.me/${sanitizeWhatsappPhone(createdOrder.customerPhone)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {createdOrder.customerPhone}
+                    </a>
+                  ) : (
+                    <div className="text-sm text-gray-600">—</div>
+                  )}
                   <div className="text-sm text-gray-600">{createdOrder.customerEmail}</div>
                 </div>
                 <div className="rounded-xl border bg-white p-4">
@@ -534,14 +568,13 @@ export const WholesaleOrderPage: React.FC = () => {
           </Card>
         ) : (
           <Card className="bg-white">
-            <CardHeader>
-              <CardTitle className="text-gray-900">{isArabic ? 'إنشاء طلب جملة' : 'Create wholesale order'}</CardTitle>
-              {allowedCategoryIds && allowedCategoryIds.length === 0 ? (
+            {allowedCategoryIds && allowedCategoryIds.length === 0 ? (
+              <CardHeader>
                 <CardDescription>
                   {isArabic ? 'البيع بالجملة غير متاح حالياً.' : 'Wholesale ordering is not enabled right now.'}
                 </CardDescription>
-              ) : null}
-            </CardHeader>
+              </CardHeader>
+            ) : null}
 
             <CardContent className="space-y-6">
               {productLoadError && (
@@ -561,8 +594,6 @@ export const WholesaleOrderPage: React.FC = () => {
                   </AlertDescription>
                 </Alert>
               ) : null}
-
-              <Separator />
 
               <Form {...form}>
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -798,7 +829,7 @@ export const WholesaleOrderPage: React.FC = () => {
                       <div>
                         <div className="font-semibold text-gray-900">{isArabic ? 'المنتجات' : 'Items'}</div>
                         <div className="text-sm text-gray-600">
-                          {isArabic ? 'اختر المنتج والعبوة والكمية.' : 'Choose product, package (variant), and quantity.'}
+                          {isArabic ? 'اختر المنتج والحجم / العبوة والكمية.' : 'Choose product, size / packaging, and quantity.'}
                         </div>
                       </div>
                       <Button
@@ -889,7 +920,7 @@ export const WholesaleOrderPage: React.FC = () => {
                                 name={`items.${index}.productVariantId` as const}
                                 render={({ field }) => (
                                   <FormItem className="sm:col-span-8 md:col-span-4">
-                                    <FormLabel>{isArabic ? 'العبوة (Variant)' : 'Package (Variant)'}</FormLabel>
+                                    <FormLabel>{isArabic ? 'الحجم / العبوة' : 'Size / Packaging'}</FormLabel>
                                     <FormControl>
                                       <Select
                                         value={String(field.value ?? 0)}
@@ -910,7 +941,7 @@ export const WholesaleOrderPage: React.FC = () => {
                                                 ? (isArabic ? 'اختر المنتج أولاً' : 'Select product first')
                                                 : isVariantsLoading
                                                   ? (isArabic ? 'جاري التحميل...' : 'Loading...')
-                                                  : (isArabic ? 'اختر العبوة' : 'Select package')
+                                                  : (isArabic ? 'اختر الحجم / العبوة' : 'Select size / packaging')
                                             }
                                           />
                                         </SelectTrigger>

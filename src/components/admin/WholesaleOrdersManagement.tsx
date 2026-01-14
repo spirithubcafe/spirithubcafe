@@ -395,7 +395,7 @@ export const WholesaleOrdersManagement: React.FC = () => {
                   : 'Review orders and update status, payment status, and manual price.'}
               </CardDescription>
             </div>
-            <Button type="button" variant="outline" onClick={loadOrders} disabled={loading} className="gap-2">
+            <Button type="button" variant="outline" onClick={loadOrders} disabled={loading} className="gap-2 w-full sm:w-auto">
               <RefreshCw className={cn('h-4 w-4', loading && 'animate-spin')} />
               {isArabic ? 'تحديث' : 'Refresh'}
             </Button>
@@ -405,7 +405,7 @@ export const WholesaleOrdersManagement: React.FC = () => {
             <div className="space-y-1">
               <Label>{isArabic ? 'حالة الطلب' : 'Order status'}</Label>
               <Select value={statusFilter} onValueChange={(v) => { setPage(1); setStatusFilter(v as any); }}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder={isArabic ? 'الكل' : 'All'} />
                 </SelectTrigger>
                 <SelectContent>
@@ -435,7 +435,7 @@ export const WholesaleOrdersManagement: React.FC = () => {
             <div className="space-y-1">
               <Label>{isArabic ? 'حجم الصفحة' : 'Page size'}</Label>
               <Select value={String(pageSize)} onValueChange={(v) => { setPage(1); setPageSize(Number(v)); }}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -455,18 +455,81 @@ export const WholesaleOrdersManagement: React.FC = () => {
             </div>
           ) : null}
 
-          <div className="mt-4 rounded-xl border overflow-hidden">
-            <Table>
+          {/* Mobile: card list */}
+          <div className="mt-4 space-y-3 md:hidden">
+            {loading ? (
+              <div className="rounded-xl border bg-white p-6">
+                <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  {isArabic ? 'جاري التحميل...' : 'Loading...'}
+                </div>
+              </div>
+            ) : orders.length === 0 ? (
+              <div className="rounded-xl border bg-white p-6 text-center text-sm text-muted-foreground">
+                {isArabic ? 'لا توجد طلبات' : 'No orders found'}
+              </div>
+            ) : (
+              orders.map((o) => (
+                <Card key={o.id} className="overflow-hidden">
+                  <CardContent className="p-4 space-y-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="font-mono text-xs text-muted-foreground whitespace-nowrap">{o.wholesaleOrderNumber}</div>
+                        <div className="font-medium text-gray-900 truncate">{o.customerName}</div>
+                        <div className="text-xs text-muted-foreground truncate">{o.cafeName}</div>
+                      </div>
+                      <Button type="button" variant="outline" size="sm" className="gap-2" onClick={() => void openDetails(o)}>
+                        <Eye className="h-4 w-4" />
+                        <span className="sr-only">{isArabic ? 'عرض' : 'View'}</span>
+                      </Button>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                      <Badge variant={statusBadgeVariant(o.status)}>{o.status}</Badge>
+                      <Badge variant={paymentBadgeVariant(o.paymentStatus)}>{o.paymentStatus}</Badge>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-0.5">
+                        <div className="text-[11px] text-muted-foreground">{isArabic ? 'الشحن' : 'Shipping'}</div>
+                        <div className="text-sm text-gray-900">
+                          {o.shippingMethod === 1 ? (isArabic ? 'استلام' : 'Pickup') : (isArabic ? 'نول' : 'Nool')}
+                        </div>
+                      </div>
+                      <div className="space-y-0.5">
+                        <div className="text-[11px] text-muted-foreground">{isArabic ? 'السعر اليدوي' : 'Manual price'}</div>
+                        <div className="text-sm text-gray-900">{formatMoney(o.manualPrice)}</div>
+                      </div>
+                      <div className="space-y-0.5 col-span-2">
+                        <div className="text-[11px] text-muted-foreground">{isArabic ? 'التاريخ' : 'Created'}</div>
+                        <div className="text-sm text-gray-900">{safeDate(o.createdAt)}</div>
+                      </div>
+                    </div>
+
+                    <Button type="button" variant="outline" className="w-full gap-2" onClick={() => void openDetails(o)}>
+                      <Eye className="h-4 w-4" />
+                      {isArabic ? 'عرض التفاصيل' : 'View details'}
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
+
+          {/* Desktop: table */}
+          <div className="mt-4 hidden md:block rounded-xl border">
+            <div className="w-full overflow-x-auto">
+              <Table className="min-w-[680px] md:min-w-0">
               <TableHeader>
                 <TableRow>
-                  <TableHead>{isArabic ? 'رقم الطلب' : 'Order #'}</TableHead>
+                  <TableHead className="whitespace-nowrap">{isArabic ? 'رقم الطلب' : 'Order #'}</TableHead>
                   <TableHead>{isArabic ? 'العميل' : 'Customer'}</TableHead>
-                  <TableHead>{isArabic ? 'الشحن' : 'Shipping'}</TableHead>
-                  <TableHead>{isArabic ? 'الحالة' : 'Status'}</TableHead>
-                  <TableHead>{isArabic ? 'الدفع' : 'Payment'}</TableHead>
-                  <TableHead>{isArabic ? 'السعر اليدوي' : 'Manual price'}</TableHead>
-                  <TableHead>{isArabic ? 'التاريخ' : 'Created'}</TableHead>
-                  <TableHead className="text-right">{isArabic ? 'إجراءات' : 'Actions'}</TableHead>
+                  <TableHead className="hidden md:table-cell whitespace-nowrap">{isArabic ? 'الشحن' : 'Shipping'}</TableHead>
+                  <TableHead className="whitespace-nowrap">{isArabic ? 'الحالة' : 'Status'}</TableHead>
+                  <TableHead className="whitespace-nowrap">{isArabic ? 'الدفع' : 'Payment'}</TableHead>
+                  <TableHead className="hidden md:table-cell whitespace-nowrap">{isArabic ? 'السعر اليدوي' : 'Manual price'}</TableHead>
+                  <TableHead className="hidden lg:table-cell whitespace-nowrap">{isArabic ? 'التاريخ' : 'Created'}</TableHead>
+                  <TableHead className="text-right whitespace-nowrap">{isArabic ? 'إجراءات' : 'Actions'}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -490,29 +553,34 @@ export const WholesaleOrdersManagement: React.FC = () => {
                 ) : (
                   orders.map((o) => (
                     <TableRow key={o.id}>
-                      <TableCell className="font-mono text-xs">{o.wholesaleOrderNumber}</TableCell>
+                      <TableCell className="font-mono text-xs whitespace-nowrap">{o.wholesaleOrderNumber}</TableCell>
                       <TableCell>
                         <div className="font-medium text-gray-900">{o.customerName}</div>
                         <div className="text-xs text-muted-foreground">{o.cafeName}</div>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="hidden md:table-cell whitespace-nowrap">
                         {o.shippingMethod === 1 ? (isArabic ? 'استلام' : 'Pickup') : (isArabic ? 'نول' : 'Nool')}
                       </TableCell>
-                      <TableCell><Badge variant={statusBadgeVariant(o.status)}>{o.status}</Badge></TableCell>
-                      <TableCell><Badge variant={paymentBadgeVariant(o.paymentStatus)}>{o.paymentStatus}</Badge></TableCell>
-                      <TableCell>{formatMoney(o.manualPrice)}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{safeDate(o.createdAt)}</TableCell>
+                      <TableCell className="whitespace-nowrap">
+                        <Badge variant={statusBadgeVariant(o.status)}>{o.status}</Badge>
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap">
+                        <Badge variant={paymentBadgeVariant(o.paymentStatus)}>{o.paymentStatus}</Badge>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell whitespace-nowrap">{formatMoney(o.manualPrice)}</TableCell>
+                      <TableCell className="hidden lg:table-cell text-xs text-muted-foreground whitespace-nowrap">{safeDate(o.createdAt)}</TableCell>
                       <TableCell className="text-right">
                         <Button type="button" variant="outline" size="sm" className="gap-2" onClick={() => void openDetails(o)}>
                           <Eye className="h-4 w-4" />
-                          {isArabic ? 'عرض' : 'View'}
+                          <span className="hidden sm:inline">{isArabic ? 'عرض' : 'View'}</span>
                         </Button>
                       </TableCell>
                     </TableRow>
                   ))
                 )}
               </TableBody>
-            </Table>
+              </Table>
+            </div>
           </div>
 
           <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -532,12 +600,15 @@ export const WholesaleOrdersManagement: React.FC = () => {
       </Card>
 
       <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent
+          dir={isArabic ? 'rtl' : 'ltr'}
+          className="max-w-3xl w-[calc(100vw-1rem)] sm:w-full max-h-[90vh] overflow-y-auto overflow-x-hidden overscroll-contain p-4 sm:p-6"
+        >
           <DialogHeader>
             <DialogTitle>{isArabic ? 'تفاصيل طلب الجملة' : 'Wholesale order details'}</DialogTitle>
             <DialogDescription>
               {selectedOrder ? (
-                <span className="font-mono text-xs">{selectedOrder.wholesaleOrderNumber}</span>
+                <span className="block font-mono text-xs break-all">{selectedOrder.wholesaleOrderNumber}</span>
               ) : null}
             </DialogDescription>
           </DialogHeader>
@@ -549,20 +620,20 @@ export const WholesaleOrdersManagement: React.FC = () => {
             </div>
           ) : (
             <div className="space-y-5">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <Card>
-                  <CardContent className="p-4 space-y-1">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 min-w-0">
+                <Card className="min-w-0">
+                  <CardContent className="p-3 sm:p-4 space-y-2 min-w-0">
                     <div className="text-xs text-muted-foreground">{isArabic ? 'العميل' : 'Customer'}</div>
                     <div className="font-medium text-gray-900">{selectedOrder.customerName}</div>
-                    <div className="text-sm text-muted-foreground">{selectedOrder.cafeName}</div>
-                    <div className="text-sm text-muted-foreground">{selectedOrder.customerPhone}</div>
-                    <div className="text-sm text-muted-foreground">{selectedOrder.customerEmail}</div>
+                    <div className="text-sm text-muted-foreground break-words">{selectedOrder.cafeName}</div>
+                    <div className="text-sm text-muted-foreground break-words">{selectedOrder.customerPhone}</div>
+                    <div className="text-sm text-muted-foreground break-all">{selectedOrder.customerEmail}</div>
 
                     <div className="pt-3">
                       <Button
                         type="button"
                         variant="outline"
-                        className="gap-2 border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+                        className="gap-2 border-emerald-300 text-emerald-700 hover:bg-emerald-50 w-full sm:w-auto"
                         onClick={() => {
                           const phone = sanitizeWhatsappPhone(selectedOrder.customerPhone);
                           if (!phone || phone.length < 8) {
@@ -592,8 +663,8 @@ export const WholesaleOrdersManagement: React.FC = () => {
                   </CardContent>
                 </Card>
 
-                <Card>
-                  <CardContent className="p-4 space-y-2">
+                <Card className="min-w-0">
+                  <CardContent className="p-3 sm:p-4 space-y-3 min-w-0">
                     <div className="text-xs text-muted-foreground">{isArabic ? 'تحديث الحالة' : 'Update status'}</div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
@@ -646,24 +717,24 @@ export const WholesaleOrdersManagement: React.FC = () => {
               </div>
 
               {selectedOrder.notes ? (
-                <div className="rounded-xl border bg-white p-4">
+                <div className="rounded-xl border bg-white p-3 sm:p-4">
                   <div className="text-xs text-muted-foreground mb-1">{isArabic ? 'ملاحظات' : 'Notes'}</div>
                   <div className="text-sm text-gray-800 whitespace-pre-wrap">{selectedOrder.notes}</div>
                 </div>
               ) : null}
 
               <div className="rounded-xl border bg-white">
-                <div className="px-4 py-3 border-b font-medium text-gray-900">
+                <div className="px-3 sm:px-4 py-2 sm:py-3 border-b font-medium text-gray-900">
                   {isArabic ? 'العناصر' : 'Items'}
                 </div>
                 <div className="divide-y">
                   {selectedOrder.items.map((it) => (
-                    <div key={it.id} className="px-4 py-3 flex items-start justify-between gap-4">
+                    <div key={it.id} className="px-3 sm:px-4 py-2 sm:py-3 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4">
                       <div className="min-w-0">
-                        <div className="font-medium text-gray-900 truncate">{it.productName}</div>
-                        {it.variantInfo ? <div className="text-sm text-muted-foreground">{it.variantInfo}</div> : null}
+                        <div className="font-medium text-gray-900 break-words">{it.productName}</div>
+                        {it.variantInfo ? <div className="text-sm text-muted-foreground break-words">{it.variantInfo}</div> : null}
                       </div>
-                      <div className="text-sm text-gray-700 whitespace-nowrap">
+                      <div className="text-sm text-gray-700 sm:whitespace-nowrap sm:text-right">
                         {isArabic ? 'الكمية:' : 'Qty:'} <span className="font-semibold">{it.quantity}</span>
                       </div>
                     </div>
