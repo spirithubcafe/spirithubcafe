@@ -3,6 +3,7 @@ import { toast } from 'sonner';
 import { Mail, RefreshCw, Save, Loader2, CheckCircle2, XCircle } from 'lucide-react';
 import { useApp } from '../../hooks/useApp';
 import { emailSettingsService, type EmailSettingsDto } from '../../services/emailSettingsService';
+import { useEmailSender } from '../../hooks/useEmailSender';
 import { cn } from '../../lib/utils';
 import type { ApiError } from '../../types/auth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
@@ -50,6 +51,12 @@ export const EmailSettingsManagement: React.FC = () => {
   const { language } = useApp();
   const isArabic = language === 'ar';
 
+  const {
+    sendEmail,
+    sendTestEmail,
+    loading: sendingEmailApi,
+  } = useEmailSender();
+
   const title = isArabic ? 'إعدادات البريد الإلكتروني' : 'Email Settings';
   const subtitle = isArabic
     ? 'تحديث معلومات المرسل وإعدادات SMTP/IMAP'
@@ -64,6 +71,15 @@ export const EmailSettingsManagement: React.FC = () => {
   const [draft, setDraft] = useState<EmailSettingsDto | null>(null);
   const [smtpPassword, setSmtpPassword] = useState('');
   const [imapPassword, setImapPassword] = useState('');
+  const [testRecipientEmail, setTestRecipientEmail] = useState('');
+
+  const parseBccList = (value: string | null | undefined): string[] => {
+    if (!value) return [];
+    return value
+      .split(',')
+      .map((v) => v.trim())
+      .filter(Boolean);
+  };
 
   const selected = useMemo(() => {
     if (selectedId == null) return null;
@@ -108,6 +124,92 @@ export const EmailSettingsManagement: React.FC = () => {
     setSmtpPassword('');
     setImapPassword('');
   }, [selected]);
+
+  const handleSendTestEmail = async () => {
+    if (!draft) return;
+
+    const recipient = testRecipientEmail.trim();
+    if (!recipient) {
+      toast.error(isArabic ? 'الرجاء إدخال بريد إلكتروني للاختبار' : 'Please enter a test recipient email');
+      return;
+    }
+
+    try {
+      const res = await sendTestEmail({
+        emailSettingsId: draft.id,
+        testRecipientEmail: recipient,
+      });
+
+      if (res.success) {
+        toast.success(isArabic ? 'تم إرسال بريد الاختبار' : 'Test email sent', {
+          description: isArabic ? 'يرجى التحقق من صندوق الوارد (وأيضاً البريد غير الهام).' : 'Check your inbox (and spam folder).',
+          duration: 3500,
+        });
+
+        // Refresh to pick up any backend-side test status fields.
+        await load();
+      } else {
+        toast.error(isArabic ? 'فشل إرسال بريد الاختبار' : 'Failed to send test email', {
+          description: res.message,
+          duration: 4000,
+        });
+      }
+    } catch (err: any) {
+      const details = formatApiErrors(err);
+      toast.error(isArabic ? 'فشل إرسال بريد الاختبار' : 'Failed to send test email', {
+        description: details || err?.response?.data?.message || err?.message,
+        duration: 4500,
+      });
+    }
+  };
+
+  const handleSendBccVerification = async () => {
+    if (!draft) return;
+
+    const recipient = testRecipientEmail.trim();
+    if (!recipient) {
+      toast.error(isArabic ? 'الرجاء إدخال بريد إلكتروني للاختبار' : 'Please enter a test recipient email');
+      return;
+    }
+
+    const bcc = parseBccList(draft.bccEmails);
+    if (bcc.length === 0) {
+      toast.error(isArabic ? 'الرجاء إضافة بريد في خانة BCC أولاً' : 'Please add at least one BCC email first');
+      return;
+    }
+
+    try {
+      const res = await sendEmail({
+        toEmail: recipient,
+        subject: 'Spirithub email test (BCC verification)',
+        body:
+          'This is a test email to verify BCC delivery. If you are in BCC, you should receive this message.',
+        isHtml: false,
+        bccEmails: bcc,
+        emailSettingsId: draft.id,
+      });
+
+      if (res.success) {
+        toast.success(isArabic ? 'تم إرسال بريد الاختبار (مع BCC)' : 'Test email sent (with BCC)', {
+          description: isArabic
+            ? 'تحقق من البريد الأساسي و spam في صندوق BCC أيضاً.'
+            : 'Check the BCC inbox too (including spam).',
+          duration: 4000,
+        });
+      } else {
+        toast.error(isArabic ? 'فشل إرسال بريد الاختبار' : 'Failed to send test email', {
+          description: res.message,
+          duration: 4500,
+        });
+      }
+    } catch (err: any) {
+      const details = formatApiErrors(err);
+      toast.error(isArabic ? 'فشل إرسال بريد الاختبار' : 'Failed to send test email', {
+        description: details || err?.response?.data?.message || err?.message,
+        duration: 4500,
+      });
+    }
+  };
 
   const hasChanges = useMemo(() => {
     if (!selected || !draft) return false;
@@ -312,10 +414,71 @@ export const EmailSettingsManagement: React.FC = () => {
           <CardContent className="space-y-6">
             {!draft ? (
               <div className="text-sm text-muted-foreground">
-                {isArabic ? 'لا يوجد عنصر محدد' : 'No selection'}
+                {isArabic ? 'لا يوجد إعداد محدد' : 'No selection'}
               </div>
             ) : (
               <div className="space-y-6">
+                {/* Test email */}
+                <div className="space-y-3">
+                  <div className="text-sm font-semibold">{isArabic ? 'اختبار الإرسال' : 'Send test email'}</div>
+                  <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_auto] md:items-end">
+                    <div className="space-y-2">
+                      <Label htmlFor="testRecipientEmail">{isArabic ? 'البريد الإلكتروني للاختبار' : 'Test recipient email'}</Label>
+                      <Input
+                        id="testRecipientEmail"
+                        type="email"
+                        dir="ltr"
+                        value={testRecipientEmail}
+                        onChange={(e) => setTestRecipientEmail(e.target.value)}
+                        placeholder={isArabic ? 'example@domain.com' : 'example@domain.com'}
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={() => void handleSendTestEmail()}
+                      disabled={loading || saving || sendingEmailApi}
+                      className="gap-2"
+                    >
+                      {sendingEmailApi ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
+                      {isArabic ? 'إرسال بريد اختبار' : 'Send test'}
+                    </Button>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => void handleSendBccVerification()}
+                      disabled={loading || saving || sendingEmailApi}
+                    >
+                      {isArabic ? 'اختبار BCC (إرسال فعلي)' : 'Test BCC (real send)'}
+                    </Button>
+                    <div className="text-xs text-muted-foreground self-center">
+                      {isArabic
+                        ? 'هذا الاختبار يرسل عبر /api/Email/send ويطبق BCC.'
+                        : 'This uses /api/Email/send and applies BCC.'}
+                    </div>
+                  </div>
+
+                  {(draft.lastTestedAt || draft.lastTestResult) && (
+                    <div className="text-xs text-muted-foreground">
+                      {draft.lastTestedAt ? (
+                        <div>
+                          {isArabic ? 'آخر اختبار:' : 'Last tested:'} {new Date(draft.lastTestedAt).toLocaleString()}
+                        </div>
+                      ) : null}
+                      {draft.lastTestResult ? (
+                        <div>
+                          {isArabic ? 'النتيجة:' : 'Result:'} {draft.lastTestResult}
+                        </div>
+                      ) : null}
+                    </div>
+                  )}
+                </div>
+
+                <Separator />
+
                 {/* General */}
                 <div className="space-y-4">
                   <div className="text-sm font-semibold">{isArabic ? 'معلومات عامة' : 'General'}</div>

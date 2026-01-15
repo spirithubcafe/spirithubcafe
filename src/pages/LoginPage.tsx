@@ -32,9 +32,24 @@ export const LoginPage: React.FC = () => {
   // Check for redirect in URL params first, then in location state, default to profile
   const redirectParam = sanitizeRedirect(new URLSearchParams(location.search).get('redirect'));
   const stateFrom = (location.state as any)?.from;
-  const stateMessage = (location.state as any)?.message;
+  const stateMessageI18n = (location.state as any)?.messageI18n as
+    | { en: string; ar: string }
+    | undefined;
   const redirectTarget = redirectParam || stateFrom || '/profile';
   const registerPath = redirectParam ? `/register?redirect=${encodeURIComponent(redirectParam)}` : '/register';
+
+  // If we arrived via a full-page redirect (e.g. 401 handler) we might lose router state.
+  // Derive a localized notice from the redirect target as a fallback.
+  const derivedMessageI18n: { en: string; ar: string } | undefined =
+    stateMessageI18n ??
+    (redirectTarget.includes('/wholesale')
+      ? { en: 'Please login to access wholesale orders.', ar: 'يرجى تسجيل الدخول للوصول إلى طلبات الجملة.' }
+      : undefined);
+
+  const stateMessage =
+    derivedMessageI18n
+      ? (language === 'ar' ? derivedMessageI18n.ar : derivedMessageI18n.en)
+      : (location.state as any)?.message;
 
   console.log('🔍 Login redirect info:', { 
     redirectParam, 

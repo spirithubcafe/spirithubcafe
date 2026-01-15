@@ -514,6 +514,7 @@ export const WholesaleOrderPage: React.FC = () => {
                   {createdOrder.customerPhone ? (
                     <a
                       className="text-sm text-emerald-700 hover:underline break-words"
+                      dir="ltr"
                       href={`https://wa.me/${sanitizeWhatsappPhone(createdOrder.customerPhone)}`}
                       target="_blank"
                       rel="noopener noreferrer"
@@ -531,8 +532,20 @@ export const WholesaleOrderPage: React.FC = () => {
                   <div className="text-sm text-gray-600">
                     {isArabic ? 'طريقة الشحن:' : 'Shipping method:'}{' '}
                     {createdOrder.shippingMethod === 1
-                      ? (isArabic ? 'استلام' : 'Pickup')
-                      : (isArabic ? 'نول للتوصيل' : 'Nool Delivery')}
+                      ? (isArabic ? (
+                          <>
+                            استلام <span dir="ltr">(Pickup)</span>
+                          </>
+                        ) : (
+                          'Pickup'
+                        ))
+                      : (isArabic ? (
+                          <>
+                            نول للتوصيل <span dir="ltr">(Nool Delivery)</span>
+                          </>
+                        ) : (
+                          'Nool Delivery'
+                        ))}
                   </div>
                 </div>
               </div>
@@ -701,6 +714,9 @@ export const WholesaleOrderPage: React.FC = () => {
                             <FormControl>
                               <Input
                                 placeholder={isArabic ? '+968...' : '+968...'}
+                                dir="ltr"
+                                inputMode="tel"
+                                className={isArabic ? 'text-right' : undefined}
                                 {...field}
                                 onBlur={() => {
                                   field.onBlur();
@@ -752,17 +768,41 @@ export const WholesaleOrderPage: React.FC = () => {
                               value={String(field.value)}
                               onValueChange={(v) => field.onChange(Number(v))}
                             >
-                              <label className="flex items-center gap-3 rounded-xl border bg-white p-4 cursor-pointer hover:bg-gray-50">
+                              <label
+                                className={`flex items-center gap-3 rounded-xl border bg-white p-4 cursor-pointer hover:bg-gray-50 ${
+                                  isArabic ? 'flex-row-reverse' : ''
+                                }`}
+                              >
                                 <RadioGroupItem value="1" />
-                                <div>
-                                  <div className="font-medium text-gray-900">{isArabic ? 'استلام (Pickup)' : 'Pickup'}</div>
+                                <div className={isArabic ? 'text-right' : undefined}>
+                                  <div className="font-medium text-gray-900">
+                                    {isArabic ? (
+                                      <>
+                                        استلام <span dir="ltr">(Pickup)</span>
+                                      </>
+                                    ) : (
+                                      'Pickup'
+                                    )}
+                                  </div>
                                   <div className="text-xs text-gray-600">{isArabic ? 'استلام من الفرع' : 'Collect from store'}</div>
                                 </div>
                               </label>
-                              <label className="flex items-center gap-3 rounded-xl border bg-white p-4 cursor-pointer hover:bg-gray-50">
+                              <label
+                                className={`flex items-center gap-3 rounded-xl border bg-white p-4 cursor-pointer hover:bg-gray-50 ${
+                                  isArabic ? 'flex-row-reverse' : ''
+                                }`}
+                              >
                                 <RadioGroupItem value="2" />
-                                <div>
-                                  <div className="font-medium text-gray-900">{isArabic ? 'نول للتوصيل (Nool)' : 'Nool Delivery'}</div>
+                                <div className={isArabic ? 'text-right' : undefined}>
+                                  <div className="font-medium text-gray-900">
+                                    {isArabic ? (
+                                      <>
+                                        نول للتوصيل <span dir="ltr">(Nool)</span>
+                                      </>
+                                    ) : (
+                                      'Nool Delivery'
+                                    )}
+                                  </div>
                                   <div className="text-xs text-gray-600">{isArabic ? 'توصيل عبر نول' : 'Delivery via Nool'}</div>
                                 </div>
                               </label>
@@ -839,7 +879,7 @@ export const WholesaleOrderPage: React.FC = () => {
                         className="gap-2 w-full sm:w-auto"
                       >
                         <Plus className="h-4 w-4" />
-                        {isArabic ? 'إضافة عنصر' : 'Add item'}
+                        {isArabic ? 'إضافة منتج' : 'Add item'}
                       </Button>
                     </div>
 
@@ -853,13 +893,15 @@ export const WholesaleOrderPage: React.FC = () => {
                     <div className="space-y-3">
                       {fields.map((f, index) => {
                         const selectedProductId = items?.[index]?.productId ?? 0;
+                        const selectedVariantId = Number(items?.[index]?.productVariantId ?? 0);
                         const variants = selectedProductId ? variantCache[selectedProductId] : undefined;
                         const isVariantsLoading = selectedProductId ? !!variantLoading[selectedProductId] : false;
+                        const canEditQty = selectedVariantId > 0;
 
                         return (
                           <div key={f.id} className="rounded-xl border bg-white p-3 sm:p-4">
                             <div className="flex items-center justify-between gap-3 mb-3">
-                              <div className="font-medium text-gray-900">{isArabic ? `عنصر ${index + 1}` : `Item ${index + 1}`}</div>
+                              <div className="font-medium text-gray-900">{isArabic ? 'إضافة منتج' : 'Add Product'}</div>
                               <Button
                                 type="button"
                                 variant="ghost"
@@ -970,6 +1012,7 @@ export const WholesaleOrderPage: React.FC = () => {
                                       <Input
                                         type="number"
                                         min={1}
+                                        disabled={!canEditQty}
                                         value={String(field.value ?? 1)}
                                         onChange={(e) => field.onChange(Number(e.target.value))}
                                       />
