@@ -28,12 +28,37 @@ const formatMoney = (value: number | null | undefined) => {
   return String(value);
 };
 
+const normalizeApiDate = (raw?: string): string | undefined => {
+  if (!raw) return undefined;
+  const trimmed = String(raw).trim();
+  if (!trimmed) return undefined;
+
+  // If the API includes an explicit timezone (Z or ±hh:mm / ±hhmm), keep it.
+  if (/[zZ]$/.test(trimmed) || /[+-]\d{2}:\d{2}$/.test(trimmed) || /[+-]\d{4}$/.test(trimmed)) {
+    return trimmed;
+  }
+
+  // Many APIs return UTC timestamps without a timezone suffix.
+  // Interpret these as UTC so the UI shows the user's local time.
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(trimmed)) {
+    return `${trimmed}Z`;
+  }
+
+  // Support common non-ISO shape: "YYYY-MM-DD HH:mm[:ss[.SSS]]" (assume UTC).
+  if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}/.test(trimmed)) {
+    return `${trimmed.replace(' ', 'T')}Z`;
+  }
+
+  return trimmed;
+};
+
 const safeDate = (iso?: string) => {
-  if (!iso) return '—';
+  const normalized = normalizeApiDate(iso);
+  if (!normalized) return '—';
   try {
-    return format(new Date(iso), 'yyyy-MM-dd HH:mm');
+    return format(new Date(normalized), 'yyyy-MM-dd HH:mm');
   } catch {
-    return iso;
+    return iso || '—';
   }
 };
 
