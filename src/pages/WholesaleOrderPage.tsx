@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
-import { Plus, Trash2, Loader2, CheckCircle2, Package, Mail, AlertTriangle } from 'lucide-react';
+import { Plus, Trash2, Loader2, CheckCircle2, Package, Mail, AlertTriangle, MessageCircle } from 'lucide-react';
 
 import { useApp } from '../hooks/useApp';
 import { useRegion } from '../hooks/useRegion';
@@ -290,6 +290,44 @@ export const WholesaleOrderPage: React.FC = () => {
     form.reset(defaultValues);
   };
 
+  const buildShareText = (order: WholesaleOrder): string => {
+    const orderUrl = `${siteMetadata.baseUrl}/${currentRegion.code}/wholesale`;
+
+    const shippingText = order.shippingMethod === 1
+      ? (isArabic ? 'استلام (Pickup)' : 'Pickup')
+      : (isArabic ? 'نول للتوصيل (Nool Delivery)' : 'Nool Delivery');
+
+    const lines: string[] = [];
+    lines.push(isArabic ? `طلب جملة رقم: ${order.wholesaleOrderNumber}` : `Wholesale order #: ${order.wholesaleOrderNumber}`);
+    lines.push(isArabic ? `العميل: ${order.customerName} - ${order.cafeName}` : `Customer: ${order.customerName} - ${order.cafeName}`);
+    lines.push(isArabic ? `طريقة الشحن: ${shippingText}` : `Shipping: ${shippingText}`);
+    lines.push(isArabic ? 'المنتجات:' : 'Items:');
+
+    for (const it of order.items || []) {
+      const variant = it.variantInfo ? ` (${it.variantInfo})` : '';
+      lines.push(`${isArabic ? '•' : '-'} ${it.productName}${variant} x ${it.quantity}`);
+    }
+
+    lines.push('');
+    lines.push(orderUrl);
+    return lines.join('\n');
+  };
+
+  const shareOnWhatsapp = (order: WholesaleOrder) => {
+    const message = buildShareText(order);
+    const url = `https://wa.me/?text=${encodeURIComponent(message)}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
+  const shareByEmail = (order: WholesaleOrder) => {
+    const subject = isArabic
+      ? `طلب جملة رقم ${order.wholesaleOrderNumber}`
+      : `Wholesale order #${order.wholesaleOrderNumber}`;
+    const body = buildShareText(order);
+    const url = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    window.location.href = url;
+  };
+
   const isPlausibleEmail = (email: string): boolean => {
     const v = email.trim();
     if (!v) return false;
@@ -400,7 +438,7 @@ export const WholesaleOrderPage: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [returningCustomerEnabled, customerEmail, customerPhone]);
 
-  const title = isArabic ? 'طلب جملة' : 'Wholesale Order';
+  const title = isArabic ? 'حلول الجملة' : 'Wholesale Order';
   const seoDescription = isArabic
     ? 'حلول الجملة أصبحت أسهل، أرسل طلبك في أي وقت. واتساب: +968 72726999 / +968 91900005 · البريد الإلكتروني: info@spirithubcafe.com'
     : 'Wholesale made simple, place your order anytime. WhatsApp: +968 72726999 / +968 91900005 · Email: info@spirithubcafe.com';
@@ -503,6 +541,21 @@ export const WholesaleOrderPage: React.FC = () => {
                       </span>
                     </div>
                   ) : null}
+                </div>
+
+                <div className="mt-3 flex flex-col sm:flex-row gap-2">
+                  <Button
+                    type="button"
+                    className="bg-emerald-700 text-white hover:bg-emerald-800"
+                    onClick={() => shareOnWhatsapp(createdOrder)}
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                    {isArabic ? 'رسالة واتساب' : 'WhatsApp message'}
+                  </Button>
+                  <Button type="button" variant="outline" onClick={() => shareByEmail(createdOrder)}>
+                    <Mail className="h-4 w-4" />
+                    {isArabic ? 'إرسال بريد' : 'Send email'}
+                  </Button>
                 </div>
               </div>
 
