@@ -12,18 +12,18 @@ type Props = {
  * Cross-platform region "flag" icon.
  *
  * Why: emoji flags can be missing on Windows; SVG renders consistently.
- * Note: Saudi emblem is intentionally simplified.
+ * Designed with authentic colors and improved styling.
  */
 export const RegionFlagIcon: React.FC<Props> = ({ region, className, title }) => {
   const common = {
     viewBox: '0 0 24 24',
-    className: cn('inline-block rounded-full ring-1 ring-black/10', className),
+    className: cn('inline-block rounded-full ring-2 ring-black/5 shadow-sm', className),
     role: 'img',
     'aria-label': title || (region === 'sa' ? 'Saudi Arabia' : 'Oman'),
   } as const;
 
   if (region === 'sa') {
-    // Simplified Saudi flag: green field with subtle white line.
+    // Saudi Arabia flag: green field with white Arabic text (Shahada) and sword
     return (
       <svg {...common} xmlns="http://www.w3.org/2000/svg">
         <defs>
@@ -32,14 +32,37 @@ export const RegionFlagIcon: React.FC<Props> = ({ region, className, title }) =>
           </clipPath>
         </defs>
         <g clipPath="url(#clip-sa)">
-          <rect x="0" y="0" width="24" height="24" fill="#006C35" />
-          <rect x="5" y="12.2" width="14" height="1.6" rx="0.8" fill="#FFFFFF" opacity="0.95" />
+          {/* Official Saudi green background */}
+          <rect x="0" y="0" width="24" height="24" fill="#165C2D" />
+          
+          {/* Stylized Shahada text (simplified) */}
+          <g transform="translate(12, 9)">
+            <text 
+              x="0" 
+              y="0" 
+              fill="#FFFFFF" 
+              fontFamily="Arial, sans-serif" 
+              fontSize="4.5" 
+              fontWeight="bold"
+              textAnchor="middle"
+              style={{ letterSpacing: '0.3px' }}
+            >
+              لا إله إلا الله
+            </text>
+          </g>
+          
+          {/* Stylized sword below text */}
+          <g transform="translate(12, 15)" stroke="#FFFFFF" strokeWidth="0.7" fill="none">
+            <line x1="-5" y1="0" x2="5" y2="0" strokeLinecap="round" />
+            <path d="M 5,0 L 6,-0.5 L 6,0.5 Z" fill="#FFFFFF" />
+            <circle cx="-5" cy="0" r="0.8" fill="#FFFFFF" />
+          </g>
         </g>
       </svg>
     );
   }
 
-  // Oman flag (simplified, without emblem): red hoist + white/green bands.
+  // Oman flag: three horizontal bands (white, red, green) with red vertical band
   return (
     <svg {...common} xmlns="http://www.w3.org/2000/svg">
       <defs>
@@ -48,9 +71,24 @@ export const RegionFlagIcon: React.FC<Props> = ({ region, className, title }) =>
         </clipPath>
       </defs>
       <g clipPath="url(#clip-om)">
-        <rect x="0" y="0" width="24" height="24" fill="#FFFFFF" />
-        <rect x="0" y="12" width="24" height="12" fill="#008000" />
-        <rect x="0" y="0" width="7.5" height="24" fill="#D81E05" />
+        {/* White band (top) */}
+        <rect x="0" y="0" width="24" height="8" fill="#FFFFFF" />
+        
+        {/* Red band (middle) */}
+        <rect x="0" y="8" width="24" height="8" fill="#EE1C25" />
+        
+        {/* Green band (bottom) */}
+        <rect x="0" y="16" width="24" height="8" fill="#239F40" />
+        
+        {/* Red vertical band (left side) */}
+        <rect x="0" y="0" width="7" height="24" fill="#EE1C25" />
+        
+        {/* National emblem simplified: white crossed daggers symbol */}
+        <g transform="translate(3.5, 12)" fill="#FFFFFF">
+          <path d="M -1.5,-3 L -1,-3 L -0.8,3 L -1.2,3 Z" opacity="0.9" />
+          <path d="M 1.5,-3 L 1,-3 L 0.8,3 L 1.2,3 Z" opacity="0.9" />
+          <circle cx="0" cy="-2.5" r="0.6" opacity="0.8" />
+        </g>
       </g>
     </svg>
   );

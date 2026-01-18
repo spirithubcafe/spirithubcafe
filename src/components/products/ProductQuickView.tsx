@@ -8,6 +8,7 @@ import {
 } from '../ui/dialog';
 import { Button } from '../ui/button';
 import { useCart } from '../../hooks/useCart';
+import { useRegion } from '../../hooks/useRegion';
 import type { Product } from '../../contexts/AppContextDefinition';
 import type { Product as ApiProduct, ProductVariant } from '../../types/product';
 import { handleImageError, getProductImageUrl, resolveProductImageUrls } from '../../lib/imageUtils';
@@ -28,6 +29,7 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
   const navigate = useNavigate();
   const isArabic = i18n.language === 'ar';
   const { addToCart, openCart } = useCart();
+  const { currentRegion } = useRegion();
   const [quantity, setQuantity] = useState(1);
   const [fullProduct, setFullProduct] = useState<ApiProduct | null>(null);
   const [selectedVariantId, setSelectedVariantId] = useState<number | null>(null);
@@ -377,7 +379,7 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
                     )}
                     <span className="text-base md:text-xl font-bold text-amber-900">
                       {currentPrice > 0
-                        ? `${currentPrice.toFixed(3)} ${isArabic ? 'ر.ع' : 'OMR'}`
+                        ? `${currentPrice.toFixed(3)} ${currentRegion.currencySymbol}`
                         : isArabic
                           ? 'قريباً'
                           : 'Soon'}

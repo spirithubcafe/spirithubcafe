@@ -336,7 +336,7 @@ export const OrderDetailPage: React.FC = () => {
                                     {isArabic ? 'الكمية:' : 'Quantity:'} <span className="font-medium">{item.quantity}</span>
                                   </p>
                                   <p>
-                                    {isArabic ? 'السعر:' : 'Price:'} <span className="font-medium">{item.unitPrice.toFixed(3)} {isArabic ? 'ر.ع' : 'OMR'}</span>
+                                    {isArabic ? 'السعر:' : 'Price:'} <span className="font-medium">{item.unitPrice.toFixed(3)} {currentRegion.currencySymbol}</span>
                                   </p>
                                   {item.variantInfo && (
                                     <p className="text-xs text-gray-500">
@@ -370,23 +370,23 @@ export const OrderDetailPage: React.FC = () => {
                   <div className="space-y-3">
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">{isArabic ? 'المجموع الفرعي:' : 'Subtotal:'}</span>
-                      <span className="font-medium">{order.subTotal.toFixed(3)} {isArabic ? 'ر.ع' : 'OMR'}</span>
+                      <span className="font-medium">{order.subTotal.toFixed(3)} {currentRegion.currencySymbol}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">{isArabic ? 'الشحن:' : 'Shipping:'}</span>
-                      <span className="font-medium">{order.shippingCost.toFixed(3)} {isArabic ? 'ر.ع' : 'OMR'}</span>
+                      <span className="font-medium">{order.shippingCost.toFixed(3)} {currentRegion.currencySymbol}</span>
                     </div>
                     {order.taxAmount > 0 && (
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-600">{isArabic ? 'الضريبة:' : 'Tax:'}</span>
-                        <span className="font-medium">{order.taxAmount.toFixed(3)} {isArabic ? 'ر.ع' : 'OMR'}</span>
+                        <span className="font-medium">{order.taxAmount.toFixed(3)} {currentRegion.currencySymbol}</span>
                       </div>
                     )}
                     <Separator />
                     <div className="flex justify-between items-center">
                       <span className="text-lg font-semibold">{isArabic ? 'الإجمالي:' : 'Total:'}</span>
                       <span className="text-2xl font-bold text-amber-600">
-                        {order.totalAmount.toFixed(3)} {isArabic ? 'ر.ع' : 'OMR'}
+                        {order.totalAmount.toFixed(3)} {currentRegion.currencySymbol}
                       </span>
                     </div>
                   </div>
@@ -500,7 +500,7 @@ export const OrderDetailPage: React.FC = () => {
                   
                   <div>
                     <Label className="text-xs text-gray-500">{isArabic ? 'تكلفة الشحن' : 'Shipping Cost'}</Label>
-                    <p className="font-medium">{order.shippingCost.toFixed(3)} {isArabic ? 'ر.ع' : 'OMR'}</p>
+                    <p className="font-medium">{order.shippingCost.toFixed(3)} {currentRegion.currencySymbol}</p>
                   </div>
 
                   {order.trackingNumber && (

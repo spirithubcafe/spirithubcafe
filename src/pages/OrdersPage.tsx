@@ -307,7 +307,7 @@ export const OrdersPage: React.FC = () => {
                 <CardContent className="p-4 text-center">
                   <DollarSign className="h-8 w-8 text-yellow-500 mx-auto mb-2" />
                   <h3 className="text-2xl font-bold text-gray-900">
-                    {orders.reduce((sum, order) => sum + order.total, 0).toFixed(3)} {isArabic ? 'ر.ع' : 'OMR'}
+                    {orders.reduce((sum, order) => sum + order.total, 0).toFixed(3)} {currentRegion.currencySymbol}
                   </h3>
                   <p className="text-gray-600">{t('orders.totalSpent')}</p>
                 </CardContent>
@@ -374,7 +374,7 @@ export const OrdersPage: React.FC = () => {
                               </Badge>
                               <div className="text-right">
                                 <p className="text-2xl font-bold text-stone-700">
-                                  {order.total.toFixed(3)} {isArabic ? 'ر.ع' : 'OMR'}
+                                  {order.total.toFixed(3)} {currentRegion.currencySymbol}
                                 </p>
                                 <p className="text-sm text-gray-500">
                                   {order.items.length} {t('orders.items')}

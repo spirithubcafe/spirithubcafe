@@ -86,17 +86,6 @@ const resolvePrice = (product: ApiProduct, variant?: ProductVariant): number => 
   return extras.price ?? extras.minPrice ?? extras.basePrice ?? 0;
 };
 
-const formatCurrency = (value: number, language: string): string => {
-  const formatter = new Intl.NumberFormat(language === 'ar' ? 'ar-OM' : 'en-OM', {
-    style: 'currency',
-    currency: 'OMR',
-    minimumFractionDigits: 3,
-    maximumFractionDigits: 3,
-  });
-
-  return formatter.format(value);
-};
-
 export const ProductDetailPage = () => {
   const { productId } = useParams<{ productId: string }>();
   const { language, t } = useApp();
@@ -108,7 +97,20 @@ export const ProductDetailPage = () => {
   const [selectedVariantId, setSelectedVariantId] = useState<number | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState('');
+
+  // Format currency based on current region
+  const formatCurrency = (value: number, lang: string): string => {
+    const formatter = new Intl.NumberFormat(currentRegion.locale, {
+      style: 'currency',
+      currency: currentRegion.currency,
+      minimumFractionDigits: 3,
+      maximumFractionDigits: 3,
+    });
+
+    return formatter.format(value);
+  };
+  
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [isZooming, setIsZooming] = useState(false);
   const [activeTab, setActiveTab] = useState<'description' | 'brewing'>('description');
@@ -283,7 +285,7 @@ export const ProductDetailPage = () => {
     // Priority 3: Auto-generate description
     if (product) {
       const categoryName = product.category?.name || '';
-      const priceText = price > 0 ? ` - ${price.toFixed(3)} OMR` : '';
+      const priceText = price > 0 ? ` - ${price.toFixed(3)} ${currentRegion.currency}` : '';
       
       return language === 'ar'
         ? `اشتري ${displayName} من سبيريت هب كافيه${priceText}. ${categoryName ? categoryName + ' - ' : ''}قهوة مختصة محمصة طازجة في مسقط، عمان. توصيل سريع، جودة مضمونة. ${plainDescription ? plainDescription.substring(0, 100) : ''}`
@@ -355,7 +357,7 @@ export const ProductDetailPage = () => {
       offers: offerPrice
         ? {
             '@type': 'Offer',
-            priceCurrency: 'OMR',
+            priceCurrency: currentRegion.currency,
             price: offerPrice,
             availability: product.isActive
               ? 'https://schema.org/InStock'

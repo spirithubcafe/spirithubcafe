@@ -4,6 +4,7 @@ import { ShoppingCart, Plus, Minus, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../hooks/useCart';
+import { useRegion } from '../../hooks/useRegion';
 import { Button } from '../ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from '../ui/sheet';
 import { ScrollArea } from '../ui/scroll-area';
@@ -13,6 +14,7 @@ export const CartDrawer: React.FC = () => {
   const isArabic = i18n.language === 'ar';
   const navigate = useNavigate();
   const { items, removeFromCart, updateQuantity, clearCart, totalItems, totalPrice, isOpen, closeCart } = useCart();
+  const { currentRegion } = useRegion();
 
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && closeCart()}>
@@ -62,7 +64,7 @@ export const CartDrawer: React.FC = () => {
                         )}
                         <div className="flex items-center justify-between">
                           <span className="font-bold text-amber-600">
-                            {item.price.toFixed(3)} {isArabic ? 'ر.ع' : 'OMR'}
+                            {item.price.toFixed(3)} {currentRegion.currencySymbol}
                           </span>
                           <div className="flex items-center gap-2">
                             <Button
@@ -110,7 +112,7 @@ export const CartDrawer: React.FC = () => {
               <div className="flex items-center justify-between text-lg font-bold">
                 <span>{isArabic ? 'المجموع' : 'Total'}</span>
                 <span className="text-amber-600">
-                  {totalPrice.toFixed(3)} {isArabic ? 'ر.ع' : 'OMR'}
+                  {totalPrice.toFixed(3)} {currentRegion.currencySymbol}
                 </span>
               </div>
               <div className="flex gap-2 w-full">

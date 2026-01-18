@@ -117,7 +117,7 @@ export const REGION_INFO: Record<RegionCode, RegionInfo> = {
         en: 'Spirit Hub Cafe brings exceptional specialty coffee to Saudi Arabia, showcasing the unique flavors, aromas, and origins behind every carefully roasted bean.',
         ar: 'يقدم سبيريت هب كافيه قهوة مختصة استثنائية إلى المملكة العربية السعودية، لتبرز النكهات والعطور والأصول الفريدة وراء كل حبة محمصة بعناية.'
       },
-      established: '2024'
+      established: '2026'
     }
   }
 };
