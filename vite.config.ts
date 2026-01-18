@@ -111,6 +111,8 @@ export default defineConfig({
         globPatterns: ["**/*.{js,css,html,ico,png,jpg,jpeg,gif,svg,webp,woff,woff2,ttf,eot,json,webmanifest}"],
         navigateFallback: "/index.html",
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024, // 3 MB
+        // Add version to cache names to force cache update
+        cacheId: 'spirithub-v1.0.0',
         runtimeCaching: [
           {
             // IMPORTANT: Do NOT runtime-cache all API calls.

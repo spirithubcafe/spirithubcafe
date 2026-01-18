@@ -92,6 +92,14 @@ if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
   try {
     registerSW({
       immediate: true,
+      onRegisteredSW(_swUrl, registration) {
+        // Check for app version updates every 60 minutes
+        if (registration) {
+          setInterval(() => {
+            registration.update();
+          }, 60 * 60 * 1000);
+        }
+      },
       onRegisterError(error: unknown) {
         // Keep this quiet in production—just a breadcrumb for debugging.
         console.warn('[PWA] Service Worker registration failed:', error)
@@ -100,4 +108,35 @@ if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
   } catch (error) {
     console.warn('[PWA] Service Worker registration threw:', error)
   }
+
+  // Check app version and force cache clear if needed
+  const checkAppVersion = async () => {
+    try {
+      const storedVersion = localStorage.getItem('app-version');
+      const response = await fetch('/version.json', { cache: 'no-cache' });
+      const versionData = await response.json();
+      
+      if (storedVersion && storedVersion !== versionData.version) {
+        // Version changed - clear caches and reload
+        console.log(`[Version] Updating from ${storedVersion} to ${versionData.version}`);
+        
+        if ('caches' in window) {
+          const cacheNames = await caches.keys();
+          await Promise.all(cacheNames.map(name => caches.delete(name)));
+        }
+        
+        localStorage.setItem('app-version', versionData.version);
+        
+        // Force reload to get new assets
+        window.location.reload();
+      } else if (!storedVersion) {
+        localStorage.setItem('app-version', versionData.version);
+      }
+    } catch (error) {
+      console.warn('[Version] Failed to check app version:', error);
+    }
+  };
+
+  // Check version on load
+  checkAppVersion();
 }

@@ -1,0 +1,17 @@
+{
+  "version": "1.0.0",
+  "buildDate": "2026-01-18",
+  "releaseNotes": [
+    "Initial release - Spirit Hub Cafe official launch",
+    "Multi-region support: Oman and Saudi Arabia",
+    "Bilingual interface: Arabic and English",
+    "Smart currency display (OMR/SAR) with language-aware formatting",
+    "Beautiful flag icons for region selection",
+    "Product catalog with detailed coffee information",
+    "User authentication and profile management",
+    "Shopping cart and checkout system",
+    "Order tracking and history",
+    "PWA support with offline capabilities",
+    "Responsive design for all devices"
+  ]
+}

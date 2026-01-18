@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Facebook, Instagram, Mail, MessageCircle } from 'lucide-react';
 import { useApp } from '../../hooks/useApp';
@@ -13,6 +13,15 @@ export const Footer: React.FC = () => {
   const [email, setEmail] = useState('');
   const [subscribeStatus, setSubscribeStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
+  const [appVersion, setAppVersion] = useState('');
+
+  // Load app version
+  useEffect(() => {
+    fetch('/version.json')
+      .then(res => res.json())
+      .then(data => setAppVersion(data.version))
+      .catch(() => setAppVersion('1.0.0'));
+  }, []);
 
   const handleNewsletterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -206,6 +215,11 @@ export const Footer: React.FC = () => {
                 <p className="text-gray-400 text-xs md:text-sm">
                   © 2026 SPIRITHUB ROASTERY
                 </p>
+                {appVersion && (
+                  <p className="text-gray-500 text-[10px] md:text-xs mt-1">
+                    v{appVersion}
+                  </p>
+                )}
               </div>
               
               {/* Newsletter - Right Side */}

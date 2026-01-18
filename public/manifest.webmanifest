@@ -1,6 +1,7 @@
 {
   "name": "Spirit Hub Cafe",
   "short_name": "Spirit Hub",
+  "version": "1.0.0",
   "description": "Specialty coffee roastery and café in Oman offering premium beans, artisan drinks, and a vibrant community experience.",
   "start_url": "/",
   "display": "standalone",
