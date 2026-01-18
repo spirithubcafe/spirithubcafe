@@ -469,7 +469,7 @@ const ProfilePage: React.FC = () => {
                       <span className="text-sm">{isArabic ? 'المجموع' : 'Total Spent'}</span>
                     </div>
                     <span className="font-semibold">
-                      {(userProfile?.totalSpent || stats.totalSpent).toFixed(3)} {currentRegion.currencySymbol}
+                      {formatPrice((userProfile?.totalSpent || stats.totalSpent), currentRegion.code, isArabic)}
                     </span>
                   </div>
                   
@@ -549,7 +549,7 @@ const ProfilePage: React.FC = () => {
                       <div className="text-center p-4 bg-green-50 rounded-lg">
                         <DollarSign className="h-8 w-8 text-green-600 mx-auto mb-2" />
                         <div className="text-2xl font-bold text-green-900">
-                          {stats.totalSpent.toFixed(1)} {currentRegion.currencySymbol}
+                          {stats.totalSpent.toFixed(1)} {isArabic ? currentRegion.currencySymbol : currentRegion.currency}
                         </div>
                         <div className="text-sm text-green-700">{isArabic ? 'إجمالي المبلغ' : 'Total Spent'}</div>
                       </div>
@@ -584,7 +584,7 @@ const ProfilePage: React.FC = () => {
                             </div>
                             <div className="text-right">
                               <div className="font-semibold">
-                                {order.totalAmount.toFixed(3)} {currentRegion.currencySymbol}
+                                {formatPrice(order.totalAmount, currentRegion.code, isArabic)}
                               </div>
                               <Badge 
                                 variant={order.paymentStatus === 'Paid' ? 'default' : 'secondary'}
@@ -1006,7 +1006,7 @@ const ProfilePage: React.FC = () => {
                               </div>
                               <div className="text-right">
                                 <div className="font-bold text-xl mb-2 text-amber-700">
-                                  {order.totalAmount.toFixed(3)} {currentRegion.currencySymbol}
+                                  {formatPrice(order.totalAmount, currentRegion.code, isArabic)}
                                 </div>
                                 <div className="flex gap-2 flex-wrap justify-end">
                                   <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(order.status)}`}>

@@ -9,6 +9,7 @@ import {
 import { Button } from '../ui/button';
 import { useCart } from '../../hooks/useCart';
 import { useRegion } from '../../hooks/useRegion';
+import { formatPrice } from '../../lib/regionUtils';
 import type { Product } from '../../contexts/AppContextDefinition';
 import type { Product as ApiProduct, ProductVariant } from '../../types/product';
 import { handleImageError, getProductImageUrl, resolveProductImageUrls } from '../../lib/imageUtils';
@@ -379,7 +380,7 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
                     )}
                     <span className="text-base md:text-xl font-bold text-amber-900">
                       {currentPrice > 0
-                        ? `${currentPrice.toFixed(3)} ${currentRegion.currencySymbol}`
+                        ? formatPrice(currentPrice, currentRegion.code, isArabic)
                         : isArabic
                           ? 'قريباً'
                           : 'Soon'}

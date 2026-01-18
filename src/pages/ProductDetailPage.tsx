@@ -99,16 +99,17 @@ export const ProductDetailPage = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [errorMessage, setErrorMessage] = useState('');
 
-  // Format currency based on current region
+  // Format currency based on current region and language
   const formatCurrency = (value: number, lang: string): string => {
-    const formatter = new Intl.NumberFormat(currentRegion.locale, {
-      style: 'currency',
-      currency: currentRegion.currency,
-      minimumFractionDigits: 3,
-      maximumFractionDigits: 3,
-    });
-
-    return formatter.format(value);
+    const formatted = value.toFixed(3);
+    
+    // For Arabic: show Arabic currency symbol (ر.ع. or ر.س)
+    if (lang === 'ar') {
+      return `${formatted} ${currentRegion.currencySymbol}`;
+    }
+    
+    // For English: show currency code (OMR or SAR)
+    return `${formatted} ${currentRegion.currency}`;
   };
   
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);

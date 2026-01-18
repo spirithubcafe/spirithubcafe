@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useApp } from '../hooks/useApp';
 import { useRegion } from '../hooks/useRegion';
+import { formatPrice } from '../lib/regionUtils';
 import { orderService } from '../services/orderService';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -336,7 +337,7 @@ export const OrderDetailPage: React.FC = () => {
                                     {isArabic ? 'الكمية:' : 'Quantity:'} <span className="font-medium">{item.quantity}</span>
                                   </p>
                                   <p>
-                                    {isArabic ? 'السعر:' : 'Price:'} <span className="font-medium">{item.unitPrice.toFixed(3)} {currentRegion.currencySymbol}</span>
+                                    {isArabic ? 'السعر:' : 'Price:'} <span className="font-medium">{formatPrice(item.unitPrice, currentRegion.code, isArabic)}</span>
                                   </p>
                                   {item.variantInfo && (
                                     <p className="text-xs text-gray-500">
@@ -370,23 +371,23 @@ export const OrderDetailPage: React.FC = () => {
                   <div className="space-y-3">
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">{isArabic ? 'المجموع الفرعي:' : 'Subtotal:'}</span>
-                      <span className="font-medium">{order.subTotal.toFixed(3)} {currentRegion.currencySymbol}</span>
+                      <span className="font-medium">{formatPrice(order.subTotal, currentRegion.code, isArabic)}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">{isArabic ? 'الشحن:' : 'Shipping:'}</span>
-                      <span className="font-medium">{order.shippingCost.toFixed(3)} {currentRegion.currencySymbol}</span>
+                      <span className="font-medium">{formatPrice(order.shippingCost, currentRegion.code, isArabic)}</span>
                     </div>
                     {order.taxAmount > 0 && (
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-600">{isArabic ? 'الضريبة:' : 'Tax:'}</span>
-                        <span className="font-medium">{order.taxAmount.toFixed(3)} {currentRegion.currencySymbol}</span>
+                        <span className="font-medium">{formatPrice(order.taxAmount, currentRegion.code, isArabic)}</span>
                       </div>
                     )}
                     <Separator />
                     <div className="flex justify-between items-center">
                       <span className="text-lg font-semibold">{isArabic ? 'الإجمالي:' : 'Total:'}</span>
                       <span className="text-2xl font-bold text-amber-600">
-                        {order.totalAmount.toFixed(3)} {currentRegion.currencySymbol}
+                        {formatPrice(order.totalAmount, currentRegion.code, isArabic)}
                       </span>
                     </div>
                   </div>
@@ -500,7 +501,7 @@ export const OrderDetailPage: React.FC = () => {
                   
                   <div>
                     <Label className="text-xs text-gray-500">{isArabic ? 'تكلفة الشحن' : 'Shipping Cost'}</Label>
-                    <p className="font-medium">{order.shippingCost.toFixed(3)} {currentRegion.currencySymbol}</p>
+                    <p className="font-medium">{formatPrice(order.shippingCost, currentRegion.code, isArabic)}</p>
                   </div>
 
                   {order.trackingNumber && (

@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../hooks/useCart';
 import { useRegion } from '../../hooks/useRegion';
+import { formatPrice } from '../../lib/regionUtils';
 import { Button } from '../ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from '../ui/sheet';
 import { ScrollArea } from '../ui/scroll-area';
@@ -64,7 +65,7 @@ export const CartDrawer: React.FC = () => {
                         )}
                         <div className="flex items-center justify-between">
                           <span className="font-bold text-amber-600">
-                            {item.price.toFixed(3)} {currentRegion.currencySymbol}
+                            {formatPrice(item.price, currentRegion.code, isArabic)}
                           </span>
                           <div className="flex items-center gap-2">
                             <Button
@@ -112,7 +113,7 @@ export const CartDrawer: React.FC = () => {
               <div className="flex items-center justify-between text-lg font-bold">
                 <span>{isArabic ? 'المجموع' : 'Total'}</span>
                 <span className="text-amber-600">
-                  {totalPrice.toFixed(3)} {currentRegion.currencySymbol}
+                  {formatPrice(totalPrice, currentRegion.code, isArabic)}
                 </span>
               </div>
               <div className="flex gap-2 w-full">

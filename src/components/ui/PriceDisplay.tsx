@@ -1,4 +1,5 @@
 import { useRegion } from '../../hooks/useRegion';
+import { useTranslation } from 'react-i18next';
 
 interface PriceDisplayProps {
   price: number;
@@ -7,7 +8,7 @@ interface PriceDisplayProps {
 }
 
 /**
- * Component to display price with correct currency based on region
+ * Component to display price with correct currency based on region and language
  */
 export const PriceDisplay: React.FC<PriceDisplayProps> = ({ 
   price, 
@@ -15,48 +16,45 @@ export const PriceDisplay: React.FC<PriceDisplayProps> = ({
   showCurrency = true 
 }) => {
   const { currentRegion } = useRegion();
+  const { i18n } = useTranslation();
+  const isArabic = i18n.language === 'ar';
 
-  const formattedPrice = new Intl.NumberFormat(currentRegion.locale, {
-    style: 'decimal',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(price);
+  const formattedPrice = price.toFixed(3);
+  
+  // Show currency symbol for Arabic, currency code for English
+  const currencyDisplay = isArabic ? currentRegion.currencySymbol : currentRegion.currency;
 
   return (
     <span className={className}>
-      {showCurrency && <span className="currency-symbol">{currentRegion.currencySymbol} </span>}
       {formattedPrice}
+      {showCurrency && <span className="currency-symbol"> {currencyDisplay}</span>}
     </span>
   );
 };
 
 /**
- * Hook to format price with region-specific currency
+ * Hook to format price with region-specific currency and language
  */
 export const usePrice = () => {
   const { currentRegion } = useRegion();
+  const { i18n } = useTranslation();
+  const isArabic = i18n.language === 'ar';
 
   const formatPrice = (price: number, showCurrency: boolean = true): string => {
-    const formattedPrice = new Intl.NumberFormat(currentRegion.locale, {
-      style: 'decimal',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(price);
+    const formattedPrice = price.toFixed(3);
+    const currencyDisplay = isArabic ? currentRegion.currencySymbol : currentRegion.currency;
 
     if (showCurrency) {
-      return `${currentRegion.currencySymbol} ${formattedPrice}`;
+      return `${formattedPrice} ${currencyDisplay}`;
     }
 
     return formattedPrice;
   };
 
   const formatPriceWithCurrency = (price: number): string => {
-    return new Intl.NumberFormat(currentRegion.locale, {
-      style: 'currency',
-      currency: currentRegion.currency,
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(price);
+    const formattedPrice = price.toFixed(3);
+    const currencyDisplay = isArabic ? currentRegion.currencySymbol : currentRegion.currency;
+    return `${formattedPrice} ${currencyDisplay}`;
   };
 
   return {

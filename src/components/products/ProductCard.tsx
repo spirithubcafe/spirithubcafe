@@ -8,6 +8,7 @@ import { Button } from '../ui/button';
 import { useCart } from '../../hooks/useCart';
 import { useFavorites } from '../../hooks/useFavorites';
 import { useRegion } from '../../hooks/useRegion';
+import { formatPrice } from '../../lib/regionUtils';
 import type { Product } from '../../contexts/AppContextDefinition';
 import { getProductImageUrl, handleImageError } from '../../lib/imageUtils';
 import { ProductQuickView } from './ProductQuickView';
@@ -271,7 +272,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           <span className="text-xs text-gray-400">{isArabic ? 'السعر' : 'Price'}</span>
           <span className="text-lg font-bold text-amber-600">
             {product.price > 0 
-              ? `${product.price.toFixed(3)} ${currentRegion.currencySymbol}` 
+              ? formatPrice(product.price, currentRegion.code, isArabic)
               : (isArabic ? 'قريباً' : 'Soon')}
           </span>
         </div>
