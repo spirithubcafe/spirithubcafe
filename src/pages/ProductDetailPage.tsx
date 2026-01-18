@@ -135,7 +135,7 @@ export const ProductDetailPage = () => {
       }
 
       setState('loading');
-      setErrorMessage(null);
+      setErrorMessage('');
 
       try {
         const isNumeric = /^\d+$/.test(productId);
