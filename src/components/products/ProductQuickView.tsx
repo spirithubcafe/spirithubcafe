@@ -9,7 +9,7 @@ import {
 import { Button } from '../ui/button';
 import { useCart } from '../../hooks/useCart';
 import type { Product } from '../../contexts/AppContextDefinition';
-import type { Product as ApiProduct, ProductVariant } from '../../types/product';
+import type { Product as ApiProduct, ProductReview, ProductVariant } from '../../types/product';
 import { handleImageError, getProductImageUrl, resolveProductImageUrls } from '../../lib/imageUtils';
 import { productService } from '../../services/productService';
 
@@ -107,8 +107,27 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
   };
 
   const currentPrice = resolvePrice();
-  const averageRating = fullProduct?.averageRating ?? 0;
-  const totalReviews = fullProduct?.reviewCount ?? 0;
+
+  const approvedReviewStats = useMemo(() => {
+    const reviews = (fullProduct?.reviews ?? []) as ProductReview[];
+    if (reviews.length === 0) {
+      return null;
+    }
+
+    const approved = reviews.filter((review) => review.isApproved);
+    if (approved.length === 0) {
+      return { averageRating: 0, totalReviews: 0 };
+    }
+
+    const sum = approved.reduce((acc, r) => acc + (Number(r.rating) || 0), 0);
+    return {
+      averageRating: sum / approved.length,
+      totalReviews: approved.length,
+    };
+  }, [fullProduct?.reviews]);
+
+  const averageRating = approvedReviewStats?.averageRating ?? fullProduct?.averageRating ?? 0;
+  const totalReviews = approvedReviewStats?.totalReviews ?? fullProduct?.reviewCount ?? 0;
 
   const handleAddToCart = () => {
     // Runtime guard: prevent adding an out-of-stock variant
