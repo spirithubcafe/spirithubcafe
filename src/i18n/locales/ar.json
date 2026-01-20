@@ -18,6 +18,8 @@
     "cta": "اكتشف منتجاتنا"
   },
   "sections": {
+    "manageReviews": "إدارة التقييمات",
+    "reviewsDesc": "مراجعة واعتماد أو رفض تقييمات المنتجات",
     "featuredProducts": "المنتجات المميزة",
     "bestSellers": "الأكثر مبيعاً",
     "trending": "الأكثر رواجاً",
@@ -54,10 +56,12 @@
     "logout": "تسجيل الخروج",
     "username": "اسم المستخدم",
     "email": "البريد الإلكتروني",
+    "emailOrUsername": "البريد الإلكتروني أو اسم المستخدم",
     "password": "كلمة المرور",
     "confirmPassword": "تأكيد كلمة المرور",
     "enterUsername": "أدخل اسم المستخدم",
     "enterEmail": "أدخل البريد الإلكتروني",
+    "enterEmailOrUsername": "أدخل البريد الإلكتروني أو اسم المستخدم",
     "enterPassword": "أدخل كلمة المرور",
     "confirmPasswordPlaceholder": "أكد كلمة المرور",
     "loginDescription": "أدخل بياناتك للوصول إلى حسابك",
@@ -203,7 +207,8 @@
       "systemDesc": "تكوين إعدادات التطبيق"
     },
     "reviews": {
-      "title": "التقييمات"
+      "title": "التقييمات",
+      "description": "إدارة تقييمات المنتجات"
     },
     "modules": "وحدات الإدارة",
     "modulesDesc": "اختر وحدة للإدارة",

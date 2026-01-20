@@ -18,6 +18,8 @@
     "cta": "Discover Our Products"
   },
   "sections": {
+    "manageReviews": "Manage Reviews",
+    "reviewsDesc": "Approve, reject, and edit product reviews",
     "featuredProducts": "Curated Selection",
     "bestSellers": "BEST SELLERS",
     "trending": "Trending Now",
@@ -54,10 +56,12 @@
     "logout": "Logout",
     "username": "Username",
     "email": "Email",
+    "emailOrUsername": "Email or username",
     "password": "Password",
     "confirmPassword": "Confirm Password",
     "enterUsername": "Enter your username",
     "enterEmail": "Enter your email",
+    "enterEmailOrUsername": "Enter your email or username",
     "enterPassword": "Enter your password",
     "confirmPasswordPlaceholder": "Confirm your password",
     "loginDescription": "Enter your credentials to access your account",
@@ -131,7 +135,8 @@
       "systemDesc": "Configure application settings"
     },
     "reviews": {
-      "title": "Reviews"
+      "title": "Reviews",
+      "description": "Product review moderation"
     },
     "modulesDesc": "Select a module to manage",
     "active": "Active",

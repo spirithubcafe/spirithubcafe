@@ -13,3 +13,4 @@ export { TrafficSources } from './TrafficSources';
 export { SystemSettings } from './SystemSettings';
 export { NewsletterManagement } from './NewsletterManagement';
 export { EmailSettingsManagement } from './EmailSettingsManagement';
+export { ReviewsManagement } from './ReviewsManagement.tsx';

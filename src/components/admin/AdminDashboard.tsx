@@ -79,7 +79,7 @@ export const AdminDashboard: React.FC = () => {
       color: 'text-blue-600',
       bgColor: 'bg-blue-50 hover:bg-blue-100 dark:bg-blue-950 dark:hover:bg-blue-900',
       href: '/admin/products/add',
-      onClick: () => navigate('/admin/products/add'),
+      onClick: () => navigate('products/add'),
     },
     {
       title: t('admin.categories.manage'),
@@ -88,7 +88,7 @@ export const AdminDashboard: React.FC = () => {
       color: 'text-purple-600',
       bgColor: 'bg-purple-50 hover:bg-purple-100 dark:bg-purple-950 dark:hover:bg-purple-900',
       href: '/admin/categories',
-      onClick: () => navigate('/admin/categories'),
+      onClick: () => navigate('categories'),
     },
     {
       title: t('admin.orders.view'),
@@ -97,7 +97,7 @@ export const AdminDashboard: React.FC = () => {
       color: 'text-green-600',
       bgColor: 'bg-green-50 hover:bg-green-100 dark:bg-green-950 dark:hover:bg-green-900',
       href: '/admin/orders',
-      onClick: () => navigate('/admin/orders'),
+      onClick: () => navigate('orders'),
     },
     {
       title: t('admin.users.manage'),
@@ -106,7 +106,7 @@ export const AdminDashboard: React.FC = () => {
       color: 'text-orange-600',
       bgColor: 'bg-orange-50 hover:bg-orange-100 dark:bg-orange-950 dark:hover:bg-orange-900',
       href: '/admin/users',
-      onClick: () => navigate('/admin/users'),
+      onClick: () => navigate('users'),
     },
     {
       title: t('admin.reports.view'),
@@ -115,7 +115,7 @@ export const AdminDashboard: React.FC = () => {
       color: 'text-indigo-600',
       bgColor: 'bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950 dark:hover:bg-indigo-900',
       href: '/admin/reports',
-      onClick: () => navigate('/admin/reports'),
+      onClick: () => navigate('reports'),
     },
     {
       title: t('admin.emailSettings.title') || (isArabic ? 'إعدادات البريد' : 'Email Settings'),
@@ -126,7 +126,7 @@ export const AdminDashboard: React.FC = () => {
       color: 'text-teal-600',
       bgColor: 'bg-teal-50 hover:bg-teal-100 dark:bg-teal-950 dark:hover:bg-teal-900',
       href: '/admin/email-settings',
-      onClick: () => navigate('/admin/email-settings'),
+      onClick: () => navigate('email-settings'),
     },
     {
       title: t('admin.settings.system'),
@@ -135,7 +135,7 @@ export const AdminDashboard: React.FC = () => {
       color: 'text-gray-600',
       bgColor: 'bg-gray-50 hover:bg-gray-100 dark:bg-gray-950 dark:hover:bg-gray-900',
       href: '/admin/settings',
-      onClick: () => navigate('/admin/settings'),
+      onClick: () => navigate('settings'),
     },
   ];
 
@@ -148,6 +148,7 @@ export const AdminDashboard: React.FC = () => {
           icon: Grid3X3,
           accent: 'text-purple-600',
           bgAccent: 'bg-purple-100 dark:bg-purple-950',
+          href: 'categories',
         },
         {
           title: t('admin.products.title'),
@@ -156,6 +157,7 @@ export const AdminDashboard: React.FC = () => {
           icon: Package,
           accent: 'text-orange-600',
           bgAccent: 'bg-orange-100 dark:bg-orange-950',
+          href: 'products',
           badges: stats.products.lowStock > 0
             ? [
                 {
@@ -172,6 +174,7 @@ export const AdminDashboard: React.FC = () => {
           icon: Users,
           accent: 'text-emerald-600',
           bgAccent: 'bg-emerald-100 dark:bg-emerald-950',
+          href: 'users',
           badges:
             stats.users.adminUsers > 0
               ? [
@@ -189,6 +192,7 @@ export const AdminDashboard: React.FC = () => {
           icon: MessageSquare,
           accent: 'text-amber-600',
           bgAccent: 'bg-amber-100 dark:bg-amber-950',
+          href: 'reviews',
           badges:
             stats.reviews.pending > 0
               ? [
@@ -246,11 +250,21 @@ export const AdminDashboard: React.FC = () => {
                 </CardContent>
               </Card>
             ))
-          : metricCards.map(({ title, primary, secondary, icon: Icon, accent, bgAccent, badges }, index) => (
+          : metricCards.map(({ title, primary, secondary, icon: Icon, accent, bgAccent, badges, href }, index) => (
               <Card 
                 key={`${title}-${index}`}
                 className="group hover:shadow-md transition-all duration-200 cursor-pointer animate-in slide-in-from-bottom"
                 style={{ animationDelay: `${index * 100}ms`, animationFillMode: 'backwards' }}
+                role="button"
+                tabIndex={0}
+                onClick={() => href && navigate(href)}
+                onKeyDown={(event) => {
+                  if (!href) return;
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    navigate(href);
+                  }
+                }}
               >
                 <CardContent className="p-3 sm:p-4">
                   <div className="flex items-center justify-between mb-2">

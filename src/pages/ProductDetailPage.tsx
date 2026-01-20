@@ -23,17 +23,28 @@ import {
 } from 'lucide-react';
 import { useApp } from '../hooks/useApp';
 import { useRegion } from '../hooks/useRegion';
+import { useAuth } from '../hooks/useAuth';
 import { productService } from '../services/productService';
+import { productReviewService } from '../services/productReviewService';
 import { getProductImageUrl, handleImageError, resolveProductImageUrls } from '../lib/imageUtils';
 import { generateProductSeoMetadata } from '../lib/productSeoUtils';
-import type { Product as ApiProduct, ProductVariant } from '../types/product';
+import type { Product as ApiProduct, ProductReview, ProductVariant, ProductReviewCreateDto } from '../types/product';
 import { useCart } from '../hooks/useCart';
 import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { Textarea } from '../components/ui/textarea';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog';
 import { Seo } from '../components/seo/Seo';
 import { siteMetadata, resolveAbsoluteUrl } from '../config/siteMetadata';
 import { ProductShare } from '../components/products/ProductShare';
+import { toast } from 'sonner';
 
 type LoadState = 'idle' | 'loading' | 'ready' | 'error';
+
+type ApprovedReviewStats = {
+  averageRating: number;
+  totalReviews: number;
+};
 
 const toNumber = (value: unknown): number | undefined => {
   if (typeof value === 'number' && Number.isFinite(value)) {
@@ -90,6 +101,7 @@ export const ProductDetailPage = () => {
   const { productId } = useParams<{ productId: string }>();
   const { language, t } = useApp();
   const { currentRegion } = useRegion();
+  const { isAuthenticated, user } = useAuth();
   const cart = useCart();
 
   const [state, setState] = useState<LoadState>('idle');
@@ -115,6 +127,80 @@ export const ProductDetailPage = () => {
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [isZooming, setIsZooming] = useState(false);
   const [activeTab, setActiveTab] = useState<'description' | 'brewing'>('description');
+  const [canReview, setCanReview] = useState<boolean | null>(null);
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [isReviewsDialogOpen, setIsReviewsDialogOpen] = useState(false);
+  const [approvedReviewStatsRemote, setApprovedReviewStatsRemote] = useState<ApprovedReviewStats | null>(null);
+  const [reviewForm, setReviewForm] = useState<ProductReviewCreateDto>({
+    productId: 0,
+    rating: 5,
+    title: '',
+    content: '',
+    customerName: '',
+    customerEmail: '',
+  });
+
+  const approvedReviewStatsLocal = useMemo<ApprovedReviewStats | null>(() => {
+    const reviews = (product?.reviews ?? []) as ProductReview[];
+    if (!reviews.length) return null;
+
+    const approved = reviews.filter((review) => review.isApproved);
+    if (!approved.length) {
+      return { averageRating: 0, totalReviews: 0 };
+    }
+    const sum = approved.reduce((acc, r) => acc + (Number(r.rating) || 0), 0);
+    return {
+      averageRating: sum / approved.length,
+      totalReviews: approved.length,
+    };
+  }, [product?.reviews]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadApprovedReviewStats = async () => {
+      if (!product?.id) return;
+
+      // If product payload already contains reviews, prefer local computation.
+      if ((product?.reviews ?? []).length > 0) {
+        setApprovedReviewStatsRemote(null);
+        return;
+      }
+
+      try {
+        const pageSize = 100;
+        const maxPages = 5;
+        let page = 1;
+        let totalPages = 1;
+        const all: ProductReview[] = [];
+
+        while (page <= totalPages && page <= maxPages) {
+          const res = await productReviewService.getByProduct(product.id, page, pageSize);
+          totalPages = res.totalPages || 1;
+          all.push(...(res.items ?? []));
+          page += 1;
+        }
+
+        const approved = all.filter((review) => review.isApproved);
+        const sum = approved.reduce((acc, r) => acc + (Number(r.rating) || 0), 0);
+        const stats: ApprovedReviewStats = {
+          averageRating: approved.length ? sum / approved.length : 0,
+          totalReviews: approved.length,
+        };
+
+        if (!cancelled) setApprovedReviewStatsRemote(stats);
+      } catch (err) {
+        console.error('Failed to load approved review stats', err);
+        // Be conservative: on error, avoid using product.averageRating/reviewCount (may include pending).
+        if (!cancelled) setApprovedReviewStatsRemote({ averageRating: 0, totalReviews: 0 });
+      }
+    };
+
+    loadApprovedReviewStats();
+    return () => {
+      cancelled = true;
+    };
+  }, [product?.id, product?.reviews]);
 
   // Scroll to top when component mounts or productId changes
   useEffect(() => {
@@ -165,6 +251,17 @@ export const ProductDetailPage = () => {
         };
 
         setProduct(sanitized);
+        setIsReviewsDialogOpen(false);
+        setCanReview(null);
+        setReviewForm((prev) => ({
+          ...prev,
+          productId: sanitized.id,
+          rating: 5,
+          title: '',
+          content: '',
+          customerName: user?.displayName || user?.username || '',
+          customerEmail: '',
+        }));
         const defaultVariant =
           activeVariants.find((variant) => variant.isDefault) ?? activeVariants[0] ?? null;
         setSelectedVariantId(defaultVariant ? defaultVariant.id : null);
@@ -193,6 +290,33 @@ export const ProductDetailPage = () => {
       isMounted = false;
     };
   }, [language, productId, currentRegion.code]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const checkCanReview = async () => {
+      if (!product) return;
+
+      // If user isn't authenticated, allow the form and let API enforce.
+      if (!isAuthenticated) {
+        setCanReview(true);
+        return;
+      }
+
+      try {
+        const allowed = await productReviewService.canReview(product.id);
+        if (!cancelled) setCanReview(Boolean(allowed));
+      } catch (err) {
+        // If endpoint is not available / unauthorized, don't block the UI.
+        if (!cancelled) setCanReview(true);
+      }
+    };
+
+    checkCanReview();
+    return () => {
+      cancelled = true;
+    };
+  }, [product, isAuthenticated]);
 
   const selectedVariant = useMemo(() => {
     if (!product || !product.variants) {
@@ -303,19 +427,22 @@ export const ProductDetailPage = () => {
       return null;
     }
 
+    const reviewStats = approvedReviewStatsLocal ?? approvedReviewStatsRemote;
+    const approvedAverage = reviewStats?.averageRating ?? 0;
+    const approvedCount = reviewStats?.totalReviews ?? 0;
+
     const imageList = images
       .map((img) => resolveAbsoluteUrl(img))
       .filter((src): src is string => Boolean(src));
 
     const offerPrice = price > 0 ? price.toFixed(3) : undefined;
-    const aggregate =
-      product.reviewCount && product.reviewCount > 0
-        ? {
-            '@type': 'AggregateRating',
-            ratingValue: product.averageRating ?? 0,
-            reviewCount: product.reviewCount,
-          }
-        : undefined;
+    const aggregate = approvedCount > 0
+      ? {
+          '@type': 'AggregateRating',
+          ratingValue: approvedAverage,
+          reviewCount: approvedCount,
+        }
+      : undefined;
 
     // Breadcrumb structured data
     const breadcrumbList = {
@@ -376,7 +503,7 @@ export const ProductDetailPage = () => {
 
     // Return both schemas as array
     return [breadcrumbList, productSchema];
-  }, [canonicalUrl, displayName, images, price, product, seoDescription, language]);
+  }, [canonicalUrl, displayName, images, price, product, seoDescription, language, approvedReviewStatsLocal, approvedReviewStatsRemote]);
 
   const isAvailable = product?.isActive ?? false;
   // Top badge: consider selected variant stock (if variant exists), otherwise fall back to product availability
@@ -390,8 +517,7 @@ export const ProductDetailPage = () => {
     }
     return product.isActive;
   })();
-  const averageRating = product?.averageRating ?? 0;
-  const totalReviews = product?.reviewCount ?? 0;
+  const averageRating = (approvedReviewStatsLocal ?? approvedReviewStatsRemote)?.averageRating ?? 0;
   const tastingNotes = language === 'ar' 
     ? (product?.tastingNotesAr ?? product?.notesAr ?? '') 
     : (product?.tastingNotes ?? product?.notes ?? '');
@@ -487,10 +613,62 @@ export const ProductDetailPage = () => {
     language === 'ar' ? 'الكمية' : 'Quantity';
   const chooseOptionLabel =
     language === 'ar' ? 'اختر الخيار' : 'Choose an option';
-  const reviewsLabel =
-    language === 'ar' ? 'مراجعات' : 'reviews';
   const stockLabel =
     language === 'ar' ? 'متوفر في المخزون' : 'In Stock';
+
+  const submitReview = async () => {
+    if (!product) return;
+
+    const rating = Number(reviewForm.rating);
+    if (!Number.isFinite(rating) || rating < 1 || rating > 5) {
+      toast.error(language === 'ar' ? 'الرجاء اختيار تقييم من 1 إلى 5' : 'Please choose a rating from 1 to 5');
+      return;
+    }
+    if (!reviewForm.content || reviewForm.content.trim().length < 10) {
+      toast.error(language === 'ar' ? 'اكتب مراجعة أطول (10 أحرف على الأقل)' : 'Please write a longer review (at least 10 characters)');
+      return;
+    }
+    if (!isAuthenticated) {
+      if (!reviewForm.customerName || reviewForm.customerName.trim().length < 2) {
+        toast.error(language === 'ar' ? 'الرجاء كتابة الاسم' : 'Please enter your name');
+        return;
+      }
+    }
+
+    try {
+      setReviewSubmitting(true);
+      await productReviewService.create({
+        productId: product.id,
+        rating,
+        title: reviewForm.title?.trim() || undefined,
+        content: reviewForm.content.trim(),
+        customerName: isAuthenticated ? (user?.displayName || user?.username) : (reviewForm.customerName?.trim() || undefined),
+        customerEmail: isAuthenticated ? undefined : (reviewForm.customerEmail?.trim() || undefined),
+      });
+
+      toast.success(
+        language === 'ar'
+          ? 'شكراً لك! مراجعتك قيد المراجعة للموافقة.'
+          : 'Thanks! Your review is pending approval.'
+      );
+
+      setReviewForm((prev) => ({
+        ...prev,
+        rating: 5,
+        title: '',
+        content: '',
+        customerName: isAuthenticated ? (user?.displayName || user?.username || '') : prev.customerName,
+        customerEmail: isAuthenticated ? '' : prev.customerEmail,
+      }));
+
+      setIsReviewsDialogOpen(false);
+    } catch (err: any) {
+      console.error('Failed to submit review', err);
+      toast.error(err?.response?.data?.message || err?.message || (language === 'ar' ? 'تعذر إرسال المراجعة' : 'Failed to submit review'));
+    } finally {
+      setReviewSubmitting(false);
+    }
+  };
 
   const seoMeta = useMemo(() => 
     product ? generateProductSeoMetadata(product, language as 'en' | 'ar') : null,
@@ -621,7 +799,12 @@ export const ProductDetailPage = () => {
                         
                         <div className="flex items-center gap-2 md:gap-3">
                           {averageRating > 0 ? (
-                            <div className="flex items-center gap-1.5 md:gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setIsReviewsDialogOpen(true)}
+                              className="flex items-center gap-1.5 md:gap-2 text-left hover:opacity-90"
+                              aria-label={language === 'ar' ? 'عرض المراجعات' : 'View reviews'}
+                            >
                               <div className="flex gap-0.5">
                                 {[1, 2, 3, 4, 5].map((star) => (
                                   <Star
@@ -634,19 +817,24 @@ export const ProductDetailPage = () => {
                                   />
                                 ))}
                               </div>
-                              <span className="text-[10px] md:text-xs text-gray-600">
-                                ({averageRating.toFixed(1)}) · {totalReviews} {reviewsLabel}
+                              <span className="text-[10px] md:text-xs text-gray-600 underline-offset-2 hover:underline">
+                                ({averageRating.toFixed(1)})
                               </span>
-                            </div>
+                            </button>
                           ) : (
-                            <div className="flex items-center gap-1.5 md:gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setIsReviewsDialogOpen(true)}
+                              className="flex items-center gap-1.5 md:gap-2 text-left hover:opacity-90"
+                              aria-label={language === 'ar' ? 'عرض المراجعات' : 'View reviews'}
+                            >
                               <div className="flex gap-0.5">
                                 {[1, 2, 3, 4, 5].map((star) => (
                                   <Star key={star} className="w-3 md:w-3.5 h-3 md:h-3.5 text-gray-300" />
                                 ))}
                               </div>
-                              <span className="text-[10px] md:text-xs text-gray-400">(0.0) · 0 {reviewsLabel}</span>
-                            </div>
+                              <span className="text-[10px] md:text-xs text-gray-400 underline-offset-2 hover:underline">(0.0)</span>
+                            </button>
                           )}
 
                           {topInStock ? (
@@ -767,7 +955,12 @@ export const ProductDetailPage = () => {
                           
                           <div className="flex items-center gap-3">
                             {averageRating > 0 ? (
-                              <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => setIsReviewsDialogOpen(true)}
+                                className="flex items-center gap-2 text-left hover:opacity-90"
+                                aria-label={language === 'ar' ? 'عرض المراجعات' : 'View reviews'}
+                              >
                                 <div className="flex gap-0.5">
                                   {[1, 2, 3, 4, 5].map((star) => (
                                     <Star
@@ -780,19 +973,24 @@ export const ProductDetailPage = () => {
                                     />
                                   ))}
                                 </div>
-                                <span className="text-xs text-gray-600">
-                                  ({averageRating.toFixed(1)}) · {totalReviews} {reviewsLabel}
+                                <span className="text-xs text-gray-600 underline-offset-2 hover:underline">
+                                  ({averageRating.toFixed(1)})
                                 </span>
-                              </div>
+                              </button>
                             ) : (
-                              <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => setIsReviewsDialogOpen(true)}
+                                className="flex items-center gap-2 text-left hover:opacity-90"
+                                aria-label={language === 'ar' ? 'عرض المراجعات' : 'View reviews'}
+                              >
                                 <div className="flex gap-0.5">
                                   {[1, 2, 3, 4, 5].map((star) => (
                                     <Star key={star} className="w-3.5 h-3.5 text-gray-300" />
                                   ))}
                                 </div>
-                                <span className="text-xs text-gray-400">(0.0) · 0 {reviewsLabel}</span>
-                              </div>
+                                <span className="text-xs text-gray-400 underline-offset-2 hover:underline">(0.0)</span>
+                              </button>
                             )}
 
                             {topInStock ? (
@@ -1446,6 +1644,118 @@ export const ProductDetailPage = () => {
                   </div>
                 </div>
               )}
+
+              {/* Reviews Popup */}
+              <Dialog open={isReviewsDialogOpen} onOpenChange={setIsReviewsDialogOpen}>
+                <DialogContent className="max-w-md p-0 overflow-hidden">
+                  <div className="bg-white">
+                    <div className="flex items-center gap-3 px-5 pt-5">
+                      <div className="flex-1">
+                        <DialogHeader>
+                          <DialogTitle className="text-base">
+                            {language === 'ar' ? 'إرسال مراجعتك' : 'Send your review'}
+                          </DialogTitle>
+                        </DialogHeader>
+                        <p className="text-xs text-muted-foreground">
+                          {language === 'ar' ? product?.nameAr ?? product?.name : product?.name}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="px-5 pb-5">
+                      {canReview === false ? (
+                        <div className="mt-4 text-sm text-gray-600">
+                          {language === 'ar'
+                            ? 'لا يمكنك إضافة مراجعة لهذا المنتج حالياً.'
+                            : "You can't review this product right now."}
+                        </div>
+                      ) : (
+                        <div className="mt-4 grid gap-4">
+                          <div className="grid grid-cols-5 gap-2">
+                            {[1, 2, 3, 4, 5].map((value) => {
+                              const selected = (reviewForm.rating ?? 5) === value;
+                              return (
+                                <button
+                                  key={value}
+                                  type="button"
+                                  onClick={() => setReviewForm((prev) => ({ ...prev, rating: value }))}
+                                  className={`rounded-xl border px-2 py-3 text-center transition ${
+                                    selected
+                                      ? 'bg-[#6B4423] text-white border-[#6B4423] shadow'
+                                      : 'bg-white text-gray-700 border-gray-200 hover:border-[#6B4423]'
+                                  }`}
+                                  aria-label={language === 'ar' ? `تقييم ${value}` : `Rate ${value}`}
+                                >
+                                  <Star className={`mx-auto h-5 w-5 ${selected ? 'text-white' : 'text-gray-400'}`} />
+                                  <div className="mt-1 text-xs font-semibold">{value}</div>
+                                </button>
+                              );
+                            })}
+                          </div>
+
+                          <div className="text-center">
+                            <div className="text-3xl font-semibold text-gray-800">
+                              {reviewForm.rating ?? 5}
+                            </div>
+                            <div className="mx-auto mt-1 h-0.5 w-16 rounded bg-gray-200" />
+                          </div>
+
+                          {!isAuthenticated ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                              <div>
+                                <label className="block text-xs font-semibold text-gray-700 mb-1">
+                                  {language === 'ar' ? 'الاسم' : 'Name'}
+                                </label>
+                                <Input
+                                  value={reviewForm.customerName ?? ''}
+                                  onChange={(e) => setReviewForm((prev) => ({ ...prev, customerName: e.target.value }))}
+                                  placeholder={language === 'ar' ? 'اسمك' : 'Your name'}
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-xs font-semibold text-gray-700 mb-1">
+                                  {language === 'ar' ? 'البريد الإلكتروني (اختياري)' : 'Email (optional)'}
+                                </label>
+                                <Input
+                                  value={reviewForm.customerEmail ?? ''}
+                                  onChange={(e) => setReviewForm((prev) => ({ ...prev, customerEmail: e.target.value }))}
+                                  placeholder={language === 'ar' ? 'example@email.com' : 'example@email.com'}
+                                />
+                              </div>
+                            </div>
+                          ) : null}
+
+                          <div>
+                            <Textarea
+                              value={reviewForm.content ?? ''}
+                              onChange={(e) => setReviewForm((prev) => ({ ...prev, content: e.target.value }))}
+                              rows={4}
+                              placeholder={language === 'ar' ? 'تعليق اختياري' : 'Optional comment'}
+                              className="rounded-xl"
+                            />
+                          </div>
+
+                          <Button
+                            type="button"
+                            onClick={submitReview}
+                            disabled={reviewSubmitting}
+                            className="w-full rounded-full bg-[#6B4423] hover:bg-[#5a3a1e] text-white"
+                          >
+                            {reviewSubmitting ? (
+                              <span className="inline-flex items-center gap-2">
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                                {language === 'ar' ? 'جاري الإرسال...' : 'Submitting...'}
+                              </span>
+                            ) : (
+                              <>{language === 'ar' ? 'إرسال المراجعة' : 'Submit review'}</>
+                            )}
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
               </>
             ) : null}
           </div>

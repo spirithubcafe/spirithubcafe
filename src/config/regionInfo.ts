@@ -72,8 +72,8 @@ export const REGION_INFO: Record<RegionCode, RegionInfo> = {
     },
     aboutContent: {
       companyName: {
-        en: 'Spirit Hub Cafe Oman',
-        ar: 'سبيريت هب كافيه عُمان'
+        en: 'Spirit Hub Roastery Oman',
+        ar: 'محمصة سبيريت هب عُمان'
       },
       description: {
         en: 'Founded in Oman, SpiritHub Roastery crafts exceptional specialty coffee, showcasing the unique flavors, aromas, and origins behind every carefully roasted bean.',
@@ -85,8 +85,9 @@ export const REGION_INFO: Record<RegionCode, RegionInfo> = {
   sa: {
     contact: {
       phone: '+966 53 983 9201',
+      phone2: '+966 051 050 1001',
       whatsapp: '966539839201',
-      email: 'info.sa@spirithubcafe.com',
+      email: 'info@spirithubcafe.com',
       address: {
         en: 'Al Khobar Al Shamalia',
         ar: 'الخبر الشمالية'
