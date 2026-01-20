@@ -18,6 +18,8 @@
     "cta": "Discover Our Products"
   },
   "sections": {
+    "manageReviews": "Manage Reviews",
+    "reviewsDesc": "Approve, reject, and edit product reviews",
     "featuredProducts": "Curated Selection",
     "bestSellers": "BEST SELLERS",
     "trending": "Trending Now",
@@ -131,7 +133,8 @@
       "systemDesc": "Configure application settings"
     },
     "reviews": {
-      "title": "Reviews"
+      "title": "Reviews",
+      "description": "Product review moderation"
     },
     "modulesDesc": "Select a module to manage",
     "active": "Active",

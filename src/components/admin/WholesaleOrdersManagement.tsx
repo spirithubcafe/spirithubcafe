@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import { RefreshCw, Eye, Loader2, Save, Settings2, MessageCircle } from 'lucide-react';
+import { RefreshCw, Eye, Loader2, Save, Settings2, MessageCircle, Download } from 'lucide-react';
 
 import { useApp } from '../../hooks/useApp';
 import { cn } from '../../lib/utils';
@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Separator } from '../ui/separator';
 
+import { buildCsv, downloadCsv } from '../../lib/csvUtils';
 import { categoryService, wholesaleOrderService } from '../../services';
 import type { Category } from '../../types/product';
 import type { WholesaleOrder, WholesaleOrderStatus, WholesalePaymentStatus } from '../../types/wholesale';
@@ -59,6 +60,16 @@ const safeDate = (iso?: string) => {
     return format(new Date(normalized), 'yyyy-MM-dd HH:mm');
   } catch {
     return iso || '—';
+  }
+};
+
+const csvDate = (iso?: string) => {
+  const normalized = normalizeApiDate(iso);
+  if (!normalized) return '';
+  try {
+    return format(new Date(normalized), 'yyyy-MM-dd HH:mm:ss');
+  } catch {
+    return iso || '';
   }
 };
 
@@ -205,6 +216,7 @@ export const WholesaleOrdersManagement: React.FC = () => {
   const [editPaymentStatus, setEditPaymentStatus] = useState<WholesalePaymentStatus>('Pending');
   const [editManualPrice, setEditManualPrice] = useState<string>('');
   const [updateLoading, setUpdateLoading] = useState(false);
+  const [exportLoading, setExportLoading] = useState(false);
 
   const loadAllowedCategories = async () => {
     setAllowedCategoriesLoading(true);
@@ -344,6 +356,227 @@ export const WholesaleOrdersManagement: React.FC = () => {
     ? `الصفحة ${page} من ${totalPages}`
     : `Page ${page} of ${totalPages}`;
 
+  const hydrateOrdersForExport = async (): Promise<WholesaleOrder[]> => {
+    // Some list endpoints may not include `items`. Fetch full details as needed.
+    return await Promise.all(
+      orders.map(async (o) => {
+        if (Array.isArray(o.items) && o.items.length > 0) return o;
+        try {
+          return await wholesaleOrderService.getById(o.id);
+        } catch {
+          return o;
+        }
+      })
+    );
+  };
+
+  const shippingLabel = (method: WholesaleOrder['shippingMethod']) => {
+    if (method === 1) return isArabic ? 'استلام' : 'Pickup';
+    return isArabic ? 'نول توصيل' : 'Nool Delivery';
+  };
+
+  const exportToCSV = async () => {
+    if (exportLoading) return;
+
+    setExportLoading(true);
+    try {
+      if (!orders.length) {
+        toast(isArabic ? 'لا توجد طلبات للتصدير' : 'No orders to export', {
+          description: isArabic ? 'غيّر الفلاتر أو حجم الصفحة وحاول مرة أخرى' : 'Try changing filters or page size',
+          duration: 2500,
+        });
+        return;
+      }
+
+      const hydratedOrders = await hydrateOrdersForExport();
+
+      const headers = isArabic
+        ? [
+            'رقم الطلب',
+            'العميل',
+            'المقهى',
+            'البريد',
+            'الهاتف',
+            'الشحن',
+            'الحالة',
+            'الدفع',
+            'السعر اليدوي',
+            'العنوان',
+            'المدينة',
+            'ملاحظات',
+            'تاريخ الإنشاء',
+            'العناصر',
+          ]
+        : [
+            'Order #',
+            'Customer',
+            'Cafe',
+            'Email',
+            'Phone',
+            'Shipping',
+            'Status',
+            'Payment',
+            'Manual Price',
+            'Address',
+            'City',
+            'Notes',
+            'Created At',
+            'Items',
+          ];
+
+      const rows = hydratedOrders.map((o) => {
+        const itemsList = (o.items || [])
+          .map((it) => `${it.productName}${it.variantInfo ? ` (${it.variantInfo})` : ''} — Qty: ${it.quantity}`)
+          .join('\n');
+
+        return [
+          o.wholesaleOrderNumber,
+          o.customerName,
+          o.cafeName,
+          o.customerEmail,
+          o.customerPhone,
+          shippingLabel(o.shippingMethod),
+          o.status,
+          o.paymentStatus,
+          o.manualPrice ?? '',
+          o.address ?? '',
+          o.city ?? '',
+          o.notes ?? '',
+          csvDate(o.createdAt),
+          itemsList,
+        ];
+      });
+
+      const csv = buildCsv(headers, rows);
+      const filename = `wholesale_orders_${format(new Date(), 'yyyy-MM-dd_HHmmss')}.csv`;
+      downloadCsv(csv, filename, { bom: true });
+
+      toast(isArabic ? 'تم التصدير بنجاح' : 'Export successful', {
+        description: isArabic
+          ? `تم تصدير ${orders.length} طلب (هذه الصفحة)`
+          : `Exported ${orders.length} orders (current page)`,
+        duration: 3000,
+      });
+    } catch (err) {
+      console.error('Wholesale orders export error:', err);
+      toast(isArabic ? 'فشل التصدير' : 'Export failed', {
+        description: isArabic ? 'حدث خطأ أثناء التصدير' : 'An error occurred during export',
+        duration: 3000,
+      });
+    } finally {
+      setExportLoading(false);
+    }
+  };
+
+  const exportDetailedRowsToCSV = async () => {
+    if (exportLoading) return;
+
+    setExportLoading(true);
+    try {
+      if (!orders.length) {
+        toast(isArabic ? 'لا توجد طلبات للتصدير' : 'No orders to export', {
+          description: isArabic ? 'غيّر الفلاتر أو حجم الصفحة وحاول مرة أخرى' : 'Try changing filters or page size',
+          duration: 2500,
+        });
+        return;
+      }
+
+      const hydratedOrders = await hydrateOrdersForExport();
+
+      const headers = isArabic
+        ? [
+            'رقم الطلب',
+            'العميل',
+            'المقهى',
+            'البريد',
+            'الهاتف',
+            'الشحن',
+            'الحالة',
+            'الدفع',
+            'السعر اليدوي',
+            'العنوان',
+            'المدينة',
+            'ملاحظات',
+            'تاريخ الإنشاء',
+            'المنتج',
+            'الخيارات',
+            'الكمية',
+          ]
+        : [
+            'Order #',
+            'Customer',
+            'Cafe',
+            'Email',
+            'Phone',
+            'Shipping',
+            'Status',
+            'Payment',
+            'Manual Price',
+            'Address',
+            'City',
+            'Notes',
+            'Created At',
+            'Item Name',
+            'Variant',
+            'Qty',
+          ];
+
+      const rows: Array<Array<string | number | null | undefined>> = [];
+
+      for (const o of hydratedOrders) {
+        const base = [
+          o.wholesaleOrderNumber,
+          o.customerName,
+          o.cafeName,
+          o.customerEmail,
+          o.customerPhone,
+          shippingLabel(o.shippingMethod),
+          o.status,
+          o.paymentStatus,
+          o.manualPrice ?? '',
+          o.address ?? '',
+          o.city ?? '',
+          o.notes ?? '',
+          csvDate(o.createdAt),
+        ];
+
+        const items = Array.isArray(o.items) ? o.items : [];
+        if (items.length === 0) {
+          rows.push([...base, '', '', '']);
+          continue;
+        }
+
+        for (const it of items) {
+          rows.push([
+            ...base,
+            it.productName,
+            it.variantInfo ?? '',
+            it.quantity,
+          ]);
+        }
+      }
+
+      const csv = buildCsv(headers, rows);
+      const filename = `wholesale_orders_detailed_${format(new Date(), 'yyyy-MM-dd_HHmmss')}.csv`;
+      downloadCsv(csv, filename, { bom: true });
+
+      toast(isArabic ? 'تم التصدير بنجاح' : 'Export successful', {
+        description: isArabic
+          ? `تم تصدير ${rows.length} صف (تفصيلي)`
+          : `Exported ${rows.length} rows (detailed)`,
+        duration: 3000,
+      });
+    } catch (err) {
+      console.error('Wholesale detailed export error:', err);
+      toast(isArabic ? 'فشل التصدير' : 'Export failed', {
+        description: isArabic ? 'حدث خطأ أثناء التصدير' : 'An error occurred during export',
+        duration: 3000,
+      });
+    } finally {
+      setExportLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <Card>
@@ -420,10 +653,32 @@ export const WholesaleOrdersManagement: React.FC = () => {
                   : 'Review orders and update status, payment status, and manual price.'}
               </CardDescription>
             </div>
-            <Button type="button" variant="outline" onClick={loadOrders} disabled={loading} className="gap-2 w-full sm:w-auto">
-              <RefreshCw className={cn('h-4 w-4', loading && 'animate-spin')} />
-              {isArabic ? 'تحديث' : 'Refresh'}
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => void exportToCSV()}
+                disabled={loading || exportLoading || orders.length === 0}
+                className="gap-2 w-full sm:w-auto"
+              >
+                {exportLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                {isArabic ? 'تصدير CSV' : 'Export CSV'}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => void exportDetailedRowsToCSV()}
+                disabled={loading || exportLoading || orders.length === 0}
+                className="gap-2 w-full sm:w-auto"
+              >
+                {exportLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                {isArabic ? 'تصدير (تفصيلي)' : 'Export (detailed rows)'}
+              </Button>
+              <Button type="button" variant="outline" onClick={loadOrders} disabled={loading} className="gap-2 w-full sm:w-auto">
+                <RefreshCw className={cn('h-4 w-4', loading && 'animate-spin')} />
+                {isArabic ? 'تحديث' : 'Refresh'}
+              </Button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">

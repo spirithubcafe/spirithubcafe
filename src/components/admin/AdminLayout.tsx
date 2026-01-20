@@ -48,6 +48,7 @@ import {
   Grid3X3,
   Home,
   Menu,
+  MessageSquare,
   PanelLeft,
   Search,
   LogOut,
@@ -194,6 +195,19 @@ export const AdminLayout: React.FC = () => {
       roles: ['Admin', 'Manager'],
     },
     {
+      id: 'reviews',
+      label: t('admin.reviews.title'),
+      description:
+        t('admin.reviews.description') !== 'admin.reviews.description'
+          ? t('admin.reviews.description')
+          : isArabic
+            ? 'اعتماد أو رفض مراجعات المنتجات'
+            : 'Approve or reject product reviews',
+      icon: MessageSquare,
+      path: '/admin/reviews',
+      roles: ['Admin', 'Manager'],
+    },
+    {
       id: 'wholesaleOrders',
       label: t('admin.manageWholesaleOrders'),
       description: t('admin.wholesaleOrdersDesc'),
@@ -269,7 +283,7 @@ export const AdminLayout: React.FC = () => {
       id: 'management',
       label: t('admin.navGroups.management'),
       items: availableNavItems.filter((item) =>
-        ['categories', 'products', 'users'].includes(item.id)
+        ['categories', 'products', 'users', 'reviews'].includes(item.id)
       ),
     },
     {
