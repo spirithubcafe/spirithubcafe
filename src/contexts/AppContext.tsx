@@ -45,6 +45,16 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const latestCategoriesRequestRef = React.useRef(0);
   const pendingRequestsRef = React.useRef(0);
   const productsCacheSaveTimerRef = React.useRef<number | null>(null);
+  const imageEnrichmentCooldownRef = React.useRef<Map<string, number>>(new Map());
+  const variantEnrichmentCooldownRef = React.useRef<Map<string, number>>(new Map());
+
+  const shouldAttemptEnrichment = useCallback((map: Map<string, number>, id: string, cooldownMs: number) => {
+    const now = Date.now();
+    const last = map.get(id);
+    if (last && now - last < cooldownMs) return false;
+    map.set(id, now);
+    return true;
+  }, []);
 
   const beginLoading = useCallback(() => {
     pendingRequestsRef.current += 1;
@@ -130,11 +140,12 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       // Only enrich when we likely have placeholder images.
       const candidates = items
         .filter((p) => isDefaultProductImageUrl(p.image) || !p.image)
-        .slice(0, 80); // safety cap
+        .filter((p) => shouldAttemptEnrichment(imageEnrichmentCooldownRef.current, p.id, 10 * 60 * 1000))
+        .slice(0, 40); // safety cap
 
       if (candidates.length === 0) return;
 
-      const limit = 4;
+      const limit = 3;
       let index = 0;
 
       const runWorker = async () => {
@@ -160,6 +171,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
             });
           } catch {
             // best-effort
+          } finally {
+            // Small delay to avoid rapid-fire requests.
+            await new Promise((resolve) => window.setTimeout(resolve, 120));
           }
         }
       };
@@ -173,7 +187,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         // ignore
       });
     },
-    [preloadImagesBestEffort, scheduleProductsCacheSave],
+    [preloadImagesBestEffort, scheduleProductsCacheSave, shouldAttemptEnrichment],
   );
 
   const enrichProductVariantsInBackground = useCallback(
@@ -182,11 +196,12 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       // We correct pricing and hide products that have *no active variants*.
       const candidates = items
         .filter((p) => p.isOrderable === undefined)
-        .slice(0, 80); // safety cap
+        .filter((p) => shouldAttemptEnrichment(variantEnrichmentCooldownRef.current, p.id, 10 * 60 * 1000))
+        .slice(0, 40); // safety cap
 
       if (candidates.length === 0) return;
 
-      const limit = 4;
+      const limit = 3;
       let index = 0;
 
       const runWorker = async () => {
@@ -233,6 +248,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
             });
           } catch {
             // best-effort
+          } finally {
+            // Small delay to avoid rapid-fire requests.
+            await new Promise((resolve) => window.setTimeout(resolve, 120));
           }
         }
       };
@@ -242,7 +260,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         // ignore
       });
     },
-    [scheduleProductsCacheSave],
+    [scheduleProductsCacheSave, shouldAttemptEnrichment],
   );
 
   // Toggle language between Arabic and English
