@@ -10,6 +10,7 @@ import { useApp } from '../hooks/useApp';
 import { useRegion } from '../hooks/useRegion';
 import { Seo } from '../components/seo/Seo';
 import { siteMetadata } from '../config/siteMetadata';
+import { REGION_INFO } from '../config/regionInfo';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -95,6 +96,9 @@ export const WholesaleOrderPage: React.FC = () => {
   const { language } = useApp();
   const isArabic = language === 'ar';
   const { currentRegion } = useRegion();
+  const regionInfo = REGION_INFO[currentRegion.code];
+  const contactInfo = regionInfo?.contact;
+  const whatsappNumbers = [contactInfo?.phone, contactInfo?.phone2].filter(Boolean) as string[];
   const [allowedCategoryIds, setAllowedCategoryIds] = useState<number[] | null>(null);
   const [productsLoading, setProductsLoading] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
@@ -439,9 +443,10 @@ export const WholesaleOrderPage: React.FC = () => {
   }, [returningCustomerEnabled, customerEmail, customerPhone]);
 
   const title = isArabic ? 'حلول الجملة' : 'Wholesale Order';
+  const whatsappDisplay = whatsappNumbers.length ? whatsappNumbers.join(' / ') : '';
   const seoDescription = isArabic
-    ? 'حلول الجملة أصبحت أسهل، أرسل طلبك في أي وقت. واتساب: +968 72726999 / +968 91900005 · البريد الإلكتروني: info@spirithubcafe.com'
-    : 'Wholesale made simple, place your order anytime. WhatsApp: +968 72726999 / +968 91900005 · Email: info@spirithubcafe.com';
+    ? `حلول الجملة أصبحت أسهل، أرسل طلبك في أي وقت. واتساب: ${whatsappDisplay} · البريد الإلكتروني: ${contactInfo?.email ?? ''}`
+    : `Wholesale made simple, place your order anytime. WhatsApp: ${whatsappDisplay} · Email: ${contactInfo?.email ?? ''}`;
 
   return (
     <div className="min-h-screen bg-gray-50 page-padding-top" dir={isArabic ? 'rtl' : 'ltr'}>
@@ -469,28 +474,28 @@ export const WholesaleOrderPage: React.FC = () => {
               <li>
                 {isArabic ? 'واتساب:' : 'WhatsApp:'}{' '}
                 <span dir="ltr" className="whitespace-nowrap">
-                  <a
-                    className="text-emerald-700 hover:underline"
-                    href={`https://wa.me/${sanitizeWhatsappPhone('+968 72726999')}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    +968 72726999
-                  </a>
-                  {' / '}
-                  <a
-                    className="text-emerald-700 hover:underline"
-                    href={`https://wa.me/${sanitizeWhatsappPhone('+968 91900005')}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    +968 91900005
-                  </a>
+                  {whatsappNumbers.length ? (
+                    whatsappNumbers.map((phone, idx) => (
+                      <React.Fragment key={phone}>
+                        <a
+                          className="text-emerald-700 hover:underline"
+                          href={`https://wa.me/${sanitizeWhatsappPhone(phone)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          {phone}
+                        </a>
+                        {idx < whatsappNumbers.length - 1 ? ' / ' : null}
+                      </React.Fragment>
+                    ))
+                  ) : (
+                    <span>—</span>
+                  )}
                 </span>
               </li>
               <li>
                 {isArabic ? 'البريد الإلكتروني:' : 'Email:'}{' '}
-                <span dir="ltr">info@spirithubcafe.com</span>
+                <span dir="ltr">{contactInfo?.email ?? '—'}</span>
               </li>
             </ul>
           </div>
