@@ -72,8 +72,8 @@ export const REGION_INFO: Record<RegionCode, RegionInfo> = {
     },
     aboutContent: {
       companyName: {
-        en: 'Spirit Hub Cafe Oman',
-        ar: 'سبيريت هب كافيه عُمان'
+        en: 'Spirit Hub Roastery Oman',
+        ar: 'محمصة سبيريت هب عُمان'
       },
       description: {
         en: 'Founded in Oman, SpiritHub Roastery crafts exceptional specialty coffee, showcasing the unique flavors, aromas, and origins behind every carefully roasted bean.',
