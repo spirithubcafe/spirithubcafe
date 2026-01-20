@@ -35,11 +35,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>('');
 
-  const validateEmail = (email: string): boolean => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -58,11 +53,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({
     
     if (!formData.email.trim() || !formData.password) {
       setError(t('auth.loginFailed'));
-      return;
-    }
-
-    if (!validateEmail(formData.email)) {
-      setError(t('auth.invalidEmail'));
       return;
     }
 
@@ -100,15 +90,15 @@ export const LoginForm: React.FC<LoginFormProps> = ({
               htmlFor="email" 
               className={`block text-sm font-medium ${isRTL ? 'text-right font-cairo' : 'text-left'}`}
             >
-              {t('auth.email')}
+              {t('auth.emailOrUsername')}
             </Label>
             <Input
               id="email"
               name="email"
-              type="email"
+              type="text"
               value={formData.email}
               onChange={handleInputChange}
-              placeholder={t('auth.enterEmail')}
+              placeholder={t('auth.enterEmailOrUsername')}
               disabled={isLoading}
               className={`w-full ${isRTL ? 'font-cairo' : ''} text-left`}
               dir="ltr"
