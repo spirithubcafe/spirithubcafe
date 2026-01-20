@@ -1644,22 +1644,59 @@ export const ProductDetailPage = () => {
 
               {/* Reviews Popup */}
               <Dialog open={isReviewsDialogOpen} onOpenChange={setIsReviewsDialogOpen}>
-                <DialogContent className="max-w-3xl p-0">
-                  <div className="p-4 md:p-6 max-h-[80vh] overflow-y-auto">
-                    <DialogHeader>
-                      <DialogTitle>{language === 'ar' ? 'اكتب مراجعة' : 'Write a review'}</DialogTitle>
-                    </DialogHeader>
+                <DialogContent className="max-w-md p-0 overflow-hidden">
+                  <div className="bg-white">
+                    <div className="flex items-center gap-3 px-5 pt-5">
+                      <div className="flex-1">
+                        <DialogHeader>
+                          <DialogTitle className="text-base">
+                            {language === 'ar' ? 'إرسال مراجعتك' : 'Send your review'}
+                          </DialogTitle>
+                        </DialogHeader>
+                        <p className="text-xs text-muted-foreground">
+                          {language === 'ar' ? product?.nameAr ?? product?.name : product?.name}
+                        </p>
+                      </div>
+                    </div>
 
-                    {/* Write review */}
-                    <div className="mt-4">
+                    <div className="px-5 pb-5">
                       {canReview === false ? (
-                        <div className="mt-3 text-sm text-gray-600">
+                        <div className="mt-4 text-sm text-gray-600">
                           {language === 'ar'
                             ? 'لا يمكنك إضافة مراجعة لهذا المنتج حالياً.'
                             : "You can't review this product right now."}
                         </div>
                       ) : (
-                        <div className="mt-4 grid gap-3">
+                        <div className="mt-4 grid gap-4">
+                          <div className="grid grid-cols-5 gap-2">
+                            {[1, 2, 3, 4, 5].map((value) => {
+                              const selected = (reviewForm.rating ?? 5) === value;
+                              return (
+                                <button
+                                  key={value}
+                                  type="button"
+                                  onClick={() => setReviewForm((prev) => ({ ...prev, rating: value }))}
+                                  className={`rounded-xl border px-2 py-3 text-center transition ${
+                                    selected
+                                      ? 'bg-[#6B4423] text-white border-[#6B4423] shadow'
+                                      : 'bg-white text-gray-700 border-gray-200 hover:border-[#6B4423]'
+                                  }`}
+                                  aria-label={language === 'ar' ? `تقييم ${value}` : `Rate ${value}`}
+                                >
+                                  <Star className={`mx-auto h-5 w-5 ${selected ? 'text-white' : 'text-gray-400'}`} />
+                                  <div className="mt-1 text-xs font-semibold">{value}</div>
+                                </button>
+                              );
+                            })}
+                          </div>
+
+                          <div className="text-center">
+                            <div className="text-3xl font-semibold text-gray-800">
+                              {reviewForm.rating ?? 5}
+                            </div>
+                            <div className="mx-auto mt-1 h-0.5 w-16 rounded bg-gray-200" />
+                          </div>
+
                           {!isAuthenticated ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                               <div>
@@ -1686,69 +1723,30 @@ export const ProductDetailPage = () => {
                           ) : null}
 
                           <div>
-                            <label className="block text-xs font-semibold text-gray-700 mb-1">
-                              {language === 'ar' ? 'التقييم' : 'Rating'}
-                            </label>
-                            <div className="flex items-center gap-2">
-                              {[1, 2, 3, 4, 5].map((value) => (
-                                <button
-                                  key={value}
-                                  type="button"
-                                  onClick={() => setReviewForm((prev) => ({ ...prev, rating: value }))}
-                                  className="p-1"
-                                  aria-label={language === 'ar' ? `تقييم ${value}` : `Rate ${value}`}
-                                >
-                                  <Star
-                                    className={`w-5 h-5 ${value <= (reviewForm.rating ?? 5) ? 'fill-amber-400 text-amber-400' : 'text-gray-300'}`}
-                                  />
-                                </button>
-                              ))}
-                              <span className="text-xs text-gray-600">
-                                {reviewForm.rating ?? 5}/5
-                              </span>
-                            </div>
-                          </div>
-
-                          <div>
-                            <label className="block text-xs font-semibold text-gray-700 mb-1">
-                              {language === 'ar' ? 'العنوان (اختياري)' : 'Title (optional)'}
-                            </label>
-                            <Input
-                              value={reviewForm.title ?? ''}
-                              onChange={(e) => setReviewForm((prev) => ({ ...prev, title: e.target.value }))}
-                              placeholder={language === 'ar' ? 'مثلاً: ممتاز' : 'e.g. Great coffee'}
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-xs font-semibold text-gray-700 mb-1">
-                              {language === 'ar' ? 'المراجعة' : 'Review'}
-                            </label>
                             <Textarea
                               value={reviewForm.content ?? ''}
                               onChange={(e) => setReviewForm((prev) => ({ ...prev, content: e.target.value }))}
-                              rows={5}
-                              placeholder={language === 'ar' ? 'اكتب تجربتك...' : 'Share your experience...'}
+                              rows={4}
+                              placeholder={language === 'ar' ? 'تعليق اختياري' : 'Optional comment'}
+                              className="rounded-xl"
                             />
                           </div>
 
-                          <div className="flex items-center gap-2">
-                            <Button
-                              type="button"
-                              onClick={submitReview}
-                              disabled={reviewSubmitting}
-                              className="bg-[#6B4423] hover:bg-[#5a3a1e] text-white"
-                            >
-                              {reviewSubmitting ? (
-                                <span className="inline-flex items-center gap-2">
-                                  <Loader2 className="w-4 h-4 animate-spin" />
-                                  {language === 'ar' ? 'جاري الإرسال...' : 'Submitting...'}
-                                </span>
-                              ) : (
-                                <>{language === 'ar' ? 'إرسال المراجعة' : 'Submit review'}</>
-                              )}
-                            </Button>
-                          </div>
+                          <Button
+                            type="button"
+                            onClick={submitReview}
+                            disabled={reviewSubmitting}
+                            className="w-full rounded-full bg-[#6B4423] hover:bg-[#5a3a1e] text-white"
+                          >
+                            {reviewSubmitting ? (
+                              <span className="inline-flex items-center gap-2">
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                                {language === 'ar' ? 'جاري الإرسال...' : 'Submitting...'}
+                              </span>
+                            ) : (
+                              <>{language === 'ar' ? 'إرسال المراجعة' : 'Submit review'}</>
+                            )}
+                          </Button>
                         </div>
                       )}
                     </div>
