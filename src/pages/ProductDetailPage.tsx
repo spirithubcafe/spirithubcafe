@@ -607,12 +607,10 @@ export const ProductDetailPage = () => {
     language === 'ar' ? 'إضافة إلى السلة' : 'Add to Cart';
   const unavailableLabel =
     language === 'ar' ? 'غير متوفر حالياً' : 'Currently unavailable';
-  const priceLabel =
-    language === 'ar' ? 'السعر' : 'Price';
   const quantityLabel =
     language === 'ar' ? 'الكمية' : 'Quantity';
   const chooseOptionLabel =
-    language === 'ar' ? 'اختر الخيار' : 'Choose an option';
+    language === 'ar' ? 'اختر الحجم' : 'Choose size';
   const stockLabel =
     language === 'ar' ? 'متوفر في المخزون' : 'In Stock';
 
@@ -1010,7 +1008,7 @@ export const ProductDetailPage = () => {
                         {/* Coffee Information - Compact List */}
                         <div className="bg-linear-to-br from-amber-50 to-orange-50 border border-amber-200 rounded-lg p-2.5 md:p-3 space-y-1.5 md:space-y-2">
                           <div className="flex items-center gap-1.5 mb-1">
-                            <Coffee className="w-3.5 md:w-4 h-3.5 md:h-4 text-amber-700" />
+                            <Coffee className="w-3 md:w-3.5 h-3 md:h-3.5 text-amber-700/70" />
                             <h3 className="text-[10px] md:text-xs font-bold text-gray-900">
                               {language === 'ar' ? 'معلومات القهوة' : 'Coffee Information'}
                             </h3>
@@ -1019,7 +1017,7 @@ export const ProductDetailPage = () => {
                           <div className="space-y-1 md:space-y-1.5 text-[10px] md:text-xs">{/* Roast Level */}
                             {(language === 'ar' ? product.roastLevelAr : product.roastLevel) ? (
                               <div className="flex items-center gap-2">
-                                <Flame className="w-3.5 md:w-4 h-3.5 md:h-4 text-amber-600 shrink-0" />
+                                <Flame className="w-3 md:w-3.5 h-3 md:h-3.5 text-amber-600/70 shrink-0" />
                                 <span className="text-gray-600 min-w-[60px] md:min-w-[70px]">
                                   {language === 'ar' ? 'التحميص:' : 'Roast:'}
                                 </span>
@@ -1032,7 +1030,7 @@ export const ProductDetailPage = () => {
                             {/* Process */}
                             {(language === 'ar' ? product.processAr : product.process) ? (
                               <div className="flex items-center gap-2">
-                                <RotateCw className="w-3.5 md:w-4 h-3.5 md:h-4 text-amber-600 shrink-0" />
+                                <RotateCw className="w-3 md:w-3.5 h-3 md:h-3.5 text-amber-600/70 shrink-0" />
                                 <span className="text-gray-600 min-w-[60px] md:min-w-[70px]">
                                   {language === 'ar' ? 'المعالجة:' : 'Process:'}
                                 </span>
@@ -1045,7 +1043,7 @@ export const ProductDetailPage = () => {
                             {/* Variety */}
                             {(language === 'ar' ? product.varietyAr : product.variety) ? (
                               <div className="flex items-center gap-2">
-                                <BarChart3 className="w-3.5 md:w-4 h-3.5 md:h-4 text-amber-600 shrink-0" />
+                                <BarChart3 className="w-3 md:w-3.5 h-3 md:h-3.5 text-amber-600/70 shrink-0" />
                                 <span className="text-gray-600 min-w-[60px] md:min-w-[70px]">
                                   {language === 'ar' ? 'الصنف:' : 'Variety:'}
                                 </span>
@@ -1058,7 +1056,7 @@ export const ProductDetailPage = () => {
                             {/* Altitude */}
                             {product.altitude ? (
                               <div className="flex items-center gap-2">
-                                <MapPin className="w-3.5 md:w-4 h-3.5 md:h-4 text-amber-600 shrink-0" />
+                                <MapPin className="w-3 md:w-3.5 h-3 md:h-3.5 text-amber-600/70 shrink-0" />
                                 <span className="text-gray-600 min-w-[60px] md:min-w-[70px]">
                                   {language === 'ar' ? 'الارتفاع:' : 'Altitude:'}
                                 </span>
@@ -1071,7 +1069,7 @@ export const ProductDetailPage = () => {
                             {/* Farm */}
                             {(language === 'ar' ? product.farmAr : product.farm) ? (
                               <div className="flex items-center gap-2">
-                                <Wheat className="w-3.5 md:w-4 h-3.5 md:h-4 text-amber-600 shrink-0" />
+                                <Wheat className="w-3 md:w-3.5 h-3 md:h-3.5 text-amber-600/70 shrink-0" />
                                 <span className="text-gray-600 min-w-[60px] md:min-w-[70px]">
                                   {language === 'ar' ? 'المزرعة:' : 'Farm:'}
                                 </span>
@@ -1084,7 +1082,7 @@ export const ProductDetailPage = () => {
                             {/* Notes */}
                             {displayNotes ? (
                               <div className="flex items-start gap-2">
-                                <ClipboardList className="w-3.5 md:w-4 h-3.5 md:h-4 text-amber-600 shrink-0 mt-0.5" />
+                                <ClipboardList className="w-3 md:w-3.5 h-3 md:h-3.5 text-amber-600/70 shrink-0 mt-0.5" />
                                 <span className="text-gray-600 min-w-[60px] md:min-w-[70px]">
                                   {language === 'ar' ? 'النكهات:' : 'Notes:'}
                                 </span>
@@ -1099,7 +1097,7 @@ export const ProductDetailPage = () => {
                               <div className="mt-1.5 md:mt-2 pt-1.5 md:pt-2 border-t border-amber-200">
                                 <div className="bg-rose-50 border border-rose-200 rounded-md px-2 md:px-2.5 py-1 md:py-1.5">
                                   <div className="flex items-center gap-2">
-                                    <Coffee className="w-3 md:w-3.5 h-3 md:h-3.5 text-rose-600 shrink-0" />
+                                    <Coffee className="w-2.5 md:w-3.5 h-2.5 md:h-3.5 text-rose-600/70 shrink-0" />
                                     <span className="text-rose-700 font-medium text-[9px] md:text-[10px]">
                                       {language === 'ar' ? 'الاستخدامات:' : 'Best For:'}
                                     </span>
@@ -1116,11 +1114,16 @@ export const ProductDetailPage = () => {
                         {/* Price, Variants, and Cart Section */}
                         <div className="bg-linear-to-br from-amber-50 to-orange-50 border border-amber-200 rounded-xl p-3 md:p-4 space-y-2 md:space-y-3 mt-3 md:mt-4">
                           {/* Price */}
-                          <div className="flex items-baseline justify-between py-0.5 md:py-1 border-b border-amber-200/50 pb-1.5 md:pb-2">
-                            <span className="text-[10px] md:text-xs text-gray-600 font-medium">{priceLabel}</span>
+                          <div className="flex items-center justify-between py-0.5 md:py-1 border-b border-amber-200/50 pb-1.5 md:pb-2">
+                            <div className="flex items-center gap-1.5">
+                              <Coffee className="w-3.5 md:w-4 h-3.5 md:h-4 text-amber-700/70" />
+                              <span className="text-[11px] md:text-sm text-gray-700 font-semibold">
+                                {language === 'ar' ? 'اختر حجم الكيس' : 'Select bag size'}
+                              </span>
+                            </div>
                             <span className="text-xl md:text-2xl font-bold text-amber-900">
                               {price > 0
-                                ? formatCurrency(price, language)
+                                ? formatCurrency(price * quantity, language)
                                 : language === 'ar'
                                   ? 'السعر عند الطلب'
                                   : 'Price on request'}
@@ -1130,8 +1133,7 @@ export const ProductDetailPage = () => {
                           {/* Variant Selection */}
                           {product.variants && product.variants.length > 0 ? (
                             <div className="space-y-1.5 md:space-y-2 pt-0.5 md:pt-1">
-                              <label className="text-[10px] md:text-xs font-bold text-gray-900 flex items-center gap-1 md:gap-1.5">
-                                <Coffee className="w-3 md:w-3.5 h-3 md:h-3.5 text-amber-600" />
+                              <label className="sr-only">
                                 {chooseOptionLabel}
                               </label>
                               <div className="flex flex-wrap gap-1.5 md:gap-2">
@@ -1231,10 +1233,10 @@ export const ProductDetailPage = () => {
                             </Button>
                           </div>
 
-                          {/* Roasted Fresh in Oman */}
+                          {/* Roasted Fresh Weekly in Oman */}
                           <div className="text-center pt-0.5 md:pt-1 border-t border-amber-200/50">
                             <p className="text-[10px] md:text-xs text-gray-500 italic">
-                              {language === 'ar' ? 'محمص طازج في عمان' : 'Roasted Fresh in Oman'}
+                              {language === 'ar' ? 'محمص طازج أسبوعياً في عمان' : 'Roasted fresh weekly in Oman'}
                             </p>
                           </div>
                         </div>
@@ -1569,6 +1571,18 @@ export const ProductDetailPage = () => {
                                 </ul>
                               </div>
 
+                              <div className="bg-emerald-50 p-2.5 md:p-3 rounded-lg border border-emerald-100">
+                                <h4 className="font-bold text-emerald-800 mb-1.5 flex items-center gap-1.5 text-[11px] md:text-xs">
+                                  <Coffee className="w-3.5 h-3.5 text-emerald-600" />
+                                  وصفات سريعة
+                                </h4>
+                                <ul className="space-y-1 mr-3 text-gray-700">
+                                  <li>• <strong>إسبريسو:</strong> ٢٠ جم قهوة → ٤٠ جم مستخلص خلال ٢٣–٣٠ ثانية</li>
+                                  <li>• <strong>حليب:</strong> نسبة ١:٣ لاتيه، و١:٢ فلات وايت</li>
+                                  <li>• <strong>فلتر:</strong> ٢٠ جم قهوة لكل ٣٠٠ جم ماء، وقت ٢:٤٥–٣:٣٠</li>
+                                </ul>
+                              </div>
+
                               <div className="bg-linear-to-r from-amber-50 to-orange-50 p-2.5 md:p-3 rounded-lg border border-amber-200">
                                 <h4 className="font-bold text-amber-800 mb-1.5 flex items-center gap-1.5 text-[11px] md:text-xs">
                                   <Sparkles className="w-3.5 h-3.5 text-amber-600" />
@@ -1625,6 +1639,18 @@ export const ProductDetailPage = () => {
                                   <li>• <strong>Espresso:</strong> 23–30 seconds</li>
                                   <li>• <strong>Pour Over:</strong> 2:30–4:00 minutes (bloom + pours)</li>
                                   <li>• <strong>French Press:</strong> 4 minutes</li>
+                                </ul>
+                              </div>
+
+                              <div className="bg-emerald-50 p-2.5 md:p-3 rounded-lg border border-emerald-100">
+                                <h4 className="font-bold text-emerald-800 mb-1.5 flex items-center gap-1.5 text-[11px] md:text-xs">
+                                  <Coffee className="w-3.5 h-3.5 text-emerald-600" />
+                                  Actionable Recipes
+                                </h4>
+                                <ul className="space-y-1 ml-3 text-gray-700">
+                                  <li>• <strong>Espresso:</strong> 20g in → 40g out in 23–30s</li>
+                                  <li>• <strong>Milk:</strong> 1:3 ratio for latte, 1:2 for flat white</li>
+                                  <li>• <strong>Filter:</strong> 20g coffee to 300g water, 2:45–3:30 brew</li>
                                 </ul>
                               </div>
 
