@@ -628,8 +628,6 @@ export const ProductDetailPage = () => {
     language === 'ar' ? 'إضافة إلى السلة' : 'Add to Cart';
   const unavailableLabel =
     language === 'ar' ? 'غير متوفر حالياً' : 'Currently unavailable';
-  const quantityLabel =
-    language === 'ar' ? 'الكمية' : 'Quantity';
   const chooseOptionLabel =
     language === 'ar' ? 'اختر الحجم' : 'Choose size';
   const stockLabel =
