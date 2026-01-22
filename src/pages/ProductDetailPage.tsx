@@ -59,7 +59,26 @@ const toNumber = (value: unknown): number | undefined => {
   return undefined;
 };
 
-const resolveVariantLabel = (variant: ProductVariant, language: string): string => {
+const isUfoDripProduct = (product?: ApiProduct | null): boolean => {
+  const name = (product?.name || '').toLowerCase();
+  const slug = (product?.slug || '').toLowerCase();
+  return name.includes('ufo drip') || slug.includes('ufo-drip');
+};
+
+const isCapsuleProduct = (product?: ApiProduct | null): boolean => {
+  const name = (product?.name || '').toLowerCase();
+  const slug = (product?.slug || '').toLowerCase();
+  const category = (product?.category?.name || '').toLowerCase();
+  return name.includes('capsule') || slug.includes('capsule') || category.includes('capsule');
+};
+
+const resolveVariantLabel = (variant: ProductVariant, language: string, product?: ApiProduct | null): string => {
+  if (isUfoDripProduct(product)) {
+    return '7 PCS';
+  }
+  if (isCapsuleProduct(product)) {
+    return language === 'ar' ? '10 كبسولات' : '10 PCS';
+  }
   // Display "1kg" instead of "1000g" for better UX, but keep actual weight as 1000g for Aramex
   let weightLabel: string | undefined;
   if (variant.weight && variant.weightUnit) {
@@ -364,6 +383,8 @@ export const ProductDetailPage = () => {
     return resolvePrice(product, selectedVariant);
   }, [product, selectedVariant]);
 
+  const hideVariantPrice = isUfoDripProduct(product) || isCapsuleProduct(product);
+
   const plainDescription = useMemo(() => {
     if (!displayDescription) {
       return '';
@@ -578,7 +599,7 @@ export const ProductDetailPage = () => {
     const variantKey = selectedVariant ? `-${selectedVariant.id}` : '';
     const cartId = `${product.id}${variantKey}`;
 
-    const variantLabel = selectedVariant ? resolveVariantLabel(selectedVariant, language) : '';
+    const variantLabel = selectedVariant ? resolveVariantLabel(selectedVariant, language, product) : '';
     const cartName = variantLabel ? `${displayName} - ${variantLabel}` : displayName;
     const image = images[0] ?? getProductImageUrl(undefined);
 
@@ -607,8 +628,6 @@ export const ProductDetailPage = () => {
     language === 'ar' ? 'إضافة إلى السلة' : 'Add to Cart';
   const unavailableLabel =
     language === 'ar' ? 'غير متوفر حالياً' : 'Currently unavailable';
-  const quantityLabel =
-    language === 'ar' ? 'الكمية' : 'Quantity';
   const chooseOptionLabel =
     language === 'ar' ? 'اختر الحجم' : 'Choose size';
   const stockLabel =
@@ -1117,9 +1136,24 @@ export const ProductDetailPage = () => {
                           <div className="flex items-center justify-between py-0.5 md:py-1 border-b border-amber-200/50 pb-1.5 md:pb-2">
                             <div className="flex items-center gap-1.5">
                               <Coffee className="w-3.5 md:w-4 h-3.5 md:h-4 text-amber-700/70" />
-                              <span className="text-[11px] md:text-sm text-gray-700 font-semibold">
-                                {language === 'ar' ? 'اختر حجم الكيس' : 'Select bag size'}
-                              </span>
+                              <div className="flex flex-col">
+                                <span className="text-[11px] md:text-sm text-gray-700 font-semibold">
+                                  {language === 'ar' ? 'اختر الحجم' : 'Choose Size'}
+                                </span>
+                                {isUfoDripProduct(product) ? (
+                                  <span className="text-[9px] md:text-[10px] text-emerald-700">
+                                    {language === 'ar'
+                                      ? '♻️ علب يو إف أو دريب قابلة لإعادة التدوير'
+                                      : '♻️ UFO Drip Boxes – 100% recyclable'}
+                                  </span>
+                                ) : isCapsuleProduct(product) ? (
+                                  <span className="text-[9px] md:text-[10px] text-emerald-700">
+                                    {language === 'ar'
+                                      ? '♻️ كبسولات ألمنيوم قابلة لإعادة التدوير'
+                                      : '♻️ Aluminium capsules – 100% recyclable'}
+                                  </span>
+                                ) : null}
+                              </div>
                             </div>
                             <span className="text-xl md:text-2xl font-bold text-amber-900">
                               {price > 0
@@ -1139,45 +1173,62 @@ export const ProductDetailPage = () => {
                               <div className="flex flex-wrap gap-1.5 md:gap-2">
                                 {product.variants.map((variant) => {
                                   const variantPrice = resolvePrice(product, variant);
-                                  const label = resolveVariantLabel(variant, language);
+                                  const label = resolveVariantLabel(variant, language, product);
                                   const isSelected = selectedVariant?.id === variant.id;
                                   const hasDiscount = variant.discountPrice && variant.discountPrice > 0 && variant.price && variant.discountPrice < variant.price;
                                   const variantOutOfStock = (variant.stockQuantity ?? 0) <= 0;
+                                  const isUfoDrip = isUfoDripProduct(product);
+                                  const isCapsule = isCapsuleProduct(product);
                                   
                                   return (
                                     <button
                                       key={variant.id}
                                       type="button"
                                       onClick={() => setSelectedVariantId(variant.id)}
-                                      className={`px-3 md:px-4 py-2 md:py-2.5 rounded-lg transition-all duration-200 font-semibold min-w-[100px] md:min-w-[110px] text-xs md:text-sm ${
-                                        isSelected
-                                          ? 'bg-[#6B4423] hover:bg-[#5a3a1e] text-white shadow-md scale-105'
-                                          : 'bg-white text-amber-900 hover:bg-amber-50 border-2 border-amber-300 hover:border-[#6B4423] hover:shadow-sm'
+                                      className={`rounded-lg font-semibold min-w-[100px] md:min-w-[110px] text-xs md:text-sm ${
+                                        isUfoDrip || isCapsule
+                                          ? 'px-3 md:px-4 py-1.5 md:py-2 bg-[#6B4423] text-white border-2 border-[#6B4423] cursor-default'
+                                          : `px-3 md:px-4 py-2 md:py-2.5 transition-all duration-200 ${
+                                              isSelected
+                                                ? 'bg-[#6B4423] hover:bg-[#5a3a1e] text-white shadow-md scale-105'
+                                                : 'bg-white text-amber-900 hover:bg-amber-50 border-2 border-amber-300 hover:border-[#6B4423] hover:shadow-sm'
+                                            }`
                                       } ${variantOutOfStock ? 'opacity-60' : ''}`}
                                     >
                                       <div className="flex flex-col items-center gap-0.5 md:gap-1">
                                         <span className="text-xs md:text-sm font-bold">{label}</span>
-                                        <div className="flex flex-col items-center">
-                                          <div className="flex items-center gap-1.5">
-                                            {hasDiscount && (
-                                              <span className={`text-[10px] line-through ${isSelected ? 'text-white/70' : 'text-amber-600/70'}`}>
-                                                {formatCurrency(variant.price!, language)}
+                                        {isUfoDrip ? (
+                                          <span className="text-[10px] md:text-[11px] text-white/80">
+                                            {language === 'ar' ? '(7 أكياس تقطير فردية)' : '(7 single-serve drip filters)'}
+                                          </span>
+                                        ) : isCapsule ? (
+                                          <span className="text-[10px] md:text-[11px] text-white/80">
+                                            {language === 'ar' ? '(10 كبسولات قهوة)' : '(10 coffee capsules)'}
+                                          </span>
+                                        ) : null}
+                                        {!hideVariantPrice && (
+                                          <div className="flex flex-col items-center">
+                                            <div className="flex items-center gap-1.5">
+                                              {hasDiscount && (
+                                                <span className={`text-[10px] line-through ${isSelected ? 'text-white/70' : 'text-amber-600/70'}`}>
+                                                  {formatCurrency(variant.price!, language)}
+                                                </span>
+                                              )}
+                                              <span className={`text-xs font-bold ${isSelected ? 'text-white' : 'text-[#6B4423]'}`}>
+                                                {variantPrice > 0
+                                                  ? formatCurrency(variantPrice, language)
+                                                  : language === 'ar'
+                                                    ? 'السعر عند الطلب'
+                                                    : 'Price on request'}
                                               </span>
-                                            )}
-                                            <span className={`text-xs font-bold ${isSelected ? 'text-white' : 'text-[#6B4423]'}`}>
-                                              {variantPrice > 0
-                                                ? formatCurrency(variantPrice, language)
-                                                : language === 'ar'
-                                                  ? 'السعر عند الطلب'
-                                                  : 'Price on request'}
-                                            </span>
+                                            </div>
                                           </div>
-                                          {variantOutOfStock && (
-                                            <span className="text-[10px] text-red-600 font-semibold mt-1">
-                                              {language === 'ar' ? 'نفد المخزون' : 'Out of Stock'}
-                                            </span>
-                                          )}
-                                        </div>
+                                        )}
+                                        {variantOutOfStock && (
+                                          <span className="text-[10px] text-red-600 font-semibold mt-1">
+                                            {language === 'ar' ? 'نفد المخزون' : 'Out of Stock'}
+                                          </span>
+                                        )}
                                       </div>
                                     </button>
                                   );
@@ -1187,15 +1238,18 @@ export const ProductDetailPage = () => {
                           ) : null}
 
                           {/* Quantity and Add to Cart */}
-                          <div className="flex items-center gap-1.5 md:gap-2 pt-1 md:pt-2">
-                            <div className="flex items-center gap-1 md:gap-1.5">
-                              <span className="text-[10px] md:text-xs font-semibold text-gray-700">{quantityLabel}</span>
-                              <div className="flex items-center border-2 border-amber-300 rounded-lg bg-white overflow-hidden">
+                          <div className="pt-1 md:pt-2 space-y-2">
+                            <span className="text-[10px] md:text-xs font-semibold text-gray-700">
+                              {language === 'ar' ? 'الكمية' : 'Quantity'}
+                            </span>
+                            <div className="flex items-center gap-1.5">
+                              <div className="flex items-center h-11 border-2 border-amber-300 rounded-lg bg-amber-100/60 overflow-hidden">
                                 <button
                                   type="button"
                                   onClick={decreaseQuantity}
-                                  className="px-2 md:px-2.5 py-1 md:py-1.5 text-sm md:text-base text-amber-900 hover:text-[#6B4423] hover:bg-amber-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-bold"
+                                  className="h-11 w-11 text-base font-extrabold text-amber-900 hover:text-[#6B4423] hover:bg-amber-200/60 transition-transform duration-150 active:scale-95 disabled:text-gray-400 disabled:hover:bg-transparent disabled:cursor-not-allowed"
                                   disabled={quantity <= 1}
+                                  aria-label={language === 'ar' ? 'تقليل الكمية' : 'Decrease quantity'}
                                 >
                                   –
                                 </button>
@@ -1206,7 +1260,7 @@ export const ProductDetailPage = () => {
                                     const val = parseInt(e.target.value) || 1;
                                     setQuantity(Math.min(Math.max(val, 1), 10));
                                   }}
-                                  className="px-2.5 md:px-3 py-1 md:py-1.5 text-xs md:text-sm font-bold text-gray-900 w-12 md:w-14 text-center border-x border-amber-200 focus:outline-none focus:bg-amber-50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                  className="h-11 w-12 md:w-14 text-sm md:text-base font-bold text-gray-900 text-center border-x border-amber-200 focus:outline-none focus:bg-amber-100/60 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                   min="1"
                                   max="10"
                                   aria-label={language === 'ar' ? 'الكمية' : 'Quantity'}
@@ -1214,23 +1268,24 @@ export const ProductDetailPage = () => {
                                 <button
                                   type="button"
                                   onClick={increaseQuantity}
-                                  className="px-2 md:px-2.5 py-1 md:py-1.5 text-sm md:text-base text-amber-900 hover:text-[#6B4423] hover:bg-amber-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-bold"
+                                  className="h-11 w-11 text-base font-extrabold text-amber-900 hover:text-[#6B4423] hover:bg-amber-200/60 transition-transform duration-150 active:scale-95 disabled:text-gray-400 disabled:hover:bg-transparent disabled:cursor-not-allowed"
                                   disabled={quantity >= 10}
+                                  aria-label={language === 'ar' ? 'زيادة الكمية' : 'Increase quantity'}
                                 >
                                   +
                                 </button>
                               </div>
-                            </div>
 
-                            <Button
-                              type="button"
-                              onClick={handleAddToCart}
-                              disabled={!isAvailable || price <= 0 || isVariantOutOfStock}
-                              className="flex-1 inline-flex items-center justify-center gap-1.5 md:gap-2 bg-[#6B4423] hover:bg-[#5a3a1e] text-white font-semibold text-xs md:text-sm h-9 md:h-10 shadow-md hover:shadow-lg transition-all duration-200"
-                            >
-                              <ShoppingCart className="w-3.5 md:w-4 h-3.5 md:h-4" />
-                              {addToCartLabel}
-                            </Button>
+                              <Button
+                                type="button"
+                                onClick={handleAddToCart}
+                                disabled={!isAvailable || price <= 0 || isVariantOutOfStock}
+                                className="flex-1 h-11 inline-flex items-center justify-center gap-1.5 md:gap-2 bg-[#6B4423] hover:bg-[#5a3a1e] text-white font-semibold text-xs md:text-sm shadow-md hover:shadow-lg transition-all duration-200"
+                              >
+                                <ShoppingCart className="w-3.5 md:w-4 h-3.5 md:h-4" />
+                                {addToCartLabel}
+                              </Button>
+                            </div>
                           </div>
 
                           {/* Roasted Fresh Weekly in Oman */}
