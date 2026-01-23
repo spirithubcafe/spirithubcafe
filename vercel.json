@@ -2,6 +2,10 @@
   "version": 2,
   "routes": [
     { "handle": "filesystem" },
+    { "src": "/(om|sa)/products-feed.xml", "dest": "/products-feed.xml" },
+    { "src": "/(om|sa)/sitemap.xml", "dest": "/sitemap.xml" },
+    { "src": "/(om|sa)/robots.txt", "dest": "/robots.txt" },
+    { "src": "/(om|sa)/manifest.webmanifest", "dest": "/manifest.webmanifest" },
     { "src": "/(.*)", "dest": "/api/ssr" }
   ]
 }

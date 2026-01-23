@@ -9,7 +9,7 @@
   <!-- ====================================== -->
   <url>
     <loc>https://spirithubcafe.com/</loc>
-    <lastmod>2025-11-19</lastmod>
+    <lastmod>2026-01-23</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
@@ -19,25 +19,25 @@
   <!-- ====================================== -->
   <url>
     <loc>https://spirithubcafe.com/products</loc>
-    <lastmod>2025-11-19</lastmod>
+    <lastmod>2026-01-23</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://spirithubcafe.com/about</loc>
-    <lastmod>2025-11-19</lastmod>
+    <lastmod>2026-01-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://spirithubcafe.com/contact</loc>
-    <lastmod>2025-11-19</lastmod>
+    <lastmod>2026-01-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://spirithubcafe.com/faq</loc>
-    <lastmod>2025-11-19</lastmod>
+    <lastmod>2026-01-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -47,25 +47,25 @@
   <!-- ====================================== -->
   <url>
     <loc>https://spirithubcafe.com/privacy</loc>
-    <lastmod>2025-11-19</lastmod>
+    <lastmod>2026-01-23</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
     <loc>https://spirithubcafe.com/terms</loc>
-    <lastmod>2025-11-19</lastmod>
+    <lastmod>2026-01-23</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
     <loc>https://spirithubcafe.com/delivery</loc>
-    <lastmod>2025-11-19</lastmod>
+    <lastmod>2026-01-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.4</priority>
   </url>
   <url>
     <loc>https://spirithubcafe.com/refund</loc>
-    <lastmod>2025-11-19</lastmod>
+    <lastmod>2026-01-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.4</priority>
   </url>
@@ -75,31 +75,31 @@
   <!-- ====================================== -->
   <url>
     <loc>https://spirithubcafe.com/products?category=espresso-milk-based-coffee</loc>
-    <lastmod>2025-11-19</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://spirithubcafe.com/products?category=ufo-drip-coffee-filters</loc>
-    <lastmod>2025-11-19</lastmod>
+    <lastmod>2026-01-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://spirithubcafe.com/products?category=filter-pour-over-coffee</loc>
-    <lastmod>2025-11-19</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://spirithubcafe.com/products?category=specialty-coffee-capsules</loc>
-    <lastmod>2025-11-19</lastmod>
+    <lastmod>2026-01-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://spirithubcafe.com/products?category=competition-premium-series</loc>
-    <lastmod>2025-11-19</lastmod>
+    <lastmod>2026-01-23</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://spirithubcafe.com/products?category=ufo-drip-coffee-filters</loc>
+    <lastmod>2026-01-23</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://spirithubcafe.com/products?category=specialty-coffee-capsules</loc>
+    <lastmod>2026-01-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -108,26 +108,56 @@
   <!-- UFO Drip Coffee -->
   <!-- ====================================== -->
   <url>
-    <loc>https://spirithubcafe.com/products/ufo-drip-yunnan-dehong-catimor-7-box</loc>
-    <lastmod>2025-11-19</lastmod>
+    <loc>https://spirithubcafe.com/products/ufo-drip-coffee-brazil-catuai-natural-7-drip-box</loc>
+    <lastmod>2026-01-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://spirithubcafe.com/products/ufo-drip-ethiopia-konga-amederaro-supernatural-7-box</loc>
-    <lastmod>2025-11-19</lastmod>
+    <loc>https://spirithubcafe.com/products/ufo-drip-coffee-el-salvador-red-bourbon-washed-7-drip-box</loc>
+    <lastmod>2026-01-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://spirithubcafe.com/products/colombia-pink-bourbon-honey-ufo-drip-coffee-spirithub</loc>
-    <lastmod>2025-11-19</lastmod>
+    <loc>https://spirithubcafe.com/products/ufo-drip-coffee-ethiopia-halo-hartume-natural-7-drip-box</loc>
+    <lastmod>2026-01-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://spirithubcafe.com/products/ufo-drip-coffee-ethiopia-gargari-gutity-yirgacheffe</loc>
-    <lastmod>2025-11-19</lastmod>
+    <loc>https://spirithubcafe.com/products/ufo-drip-coffee-kenya-karatu-estate-natural-7-drip-box</loc>
+    <lastmod>2026-01-23</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://spirithubcafe.com/products/ufo-drip-coffee-yemen-odaini-anaerobic-7-drip-box</loc>
+    <lastmod>2026-01-23</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://spirithubcafe.com/products/ufo-drip-coffee-yunnan-dehong-catimor-7-drip-box</loc>
+    <lastmod>2026-01-23</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://spirithubcafe.com/products/ufo-drip-coffee-ethiopia-konga-amederaro-7-drip-box</loc>
+    <lastmod>2026-01-23</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://spirithubcafe.com/products/ufo-drip-coffee-colombia-pink-bourbon-honey-7-drip-box</loc>
+    <lastmod>2026-01-23</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://spirithubcafe.com/products/ufo-drip-coffee-ethiopia-gargari-gutity-yirgacheffe-7-drip-box</loc>
+    <lastmod>2026-01-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -136,44 +166,38 @@
   <!-- Colombian Coffee -->
   <!-- ====================================== -->
   <url>
+    <loc>https://spirithubcafe.com/products/colombia-finca-milan-coconut-culturing</loc>
+    <lastmod>2026-01-23</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://spirithubcafe.com/products/colombia-aroma-nativo-aji-spirithub-exclusive-lot</loc>
-    <lastmod>2025-11-19</lastmod>
+    <lastmod>2026-01-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://spirithubcafe.com/products/colombia-decaf-coffee-capsules</loc>
-    <lastmod>2025-11-19</lastmod>
+    <lastmod>2026-01-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://spirithubcafe.com/products/colombia-floral-symphony-ombligon-natural-finca-diviso</loc>
-    <lastmod>2025-11-19</lastmod>
+    <loc>https://spirithubcafe.com/products/colombia-laurina-las-margaritas-natural</loc>
+    <lastmod>2026-01-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://spirithubcafe.com/products/colombia-laurina-natural-las-margaritas</loc>
-    <lastmod>2025-11-19</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://spirithubcafe.com/products/colombia-pink-bourbon-honey-coffee-spirithub</loc>
-    <lastmod>2025-11-19</lastmod>
+    <loc>https://spirithubcafe.com/products/colombia-pink-bourbon-honey</loc>
+    <lastmod>2026-01-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://spirithubcafe.com/products/colombia-typica-watermelon-frutalchemy</loc>
-    <lastmod>2025-11-19</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://spirithubcafe.com/products/colombia-yellow-pacamara-frutalchemy</loc>
-    <lastmod>2025-11-19</lastmod>
+    <lastmod>2026-01-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -183,19 +207,47 @@
   <!-- ====================================== -->
   <url>
     <loc>https://spirithubcafe.com/products/ethiopia-gargari-gutity-yirgacheffe-supernatural</loc>
-    <lastmod>2025-11-19</lastmod>
+    <lastmod>2026-01-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://spirithubcafe.com/products/ethiopia-halo-hartume-natural</loc>
-    <lastmod>2025-11-19</lastmod>
+    <lastmod>2026-01-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://spirithubcafe.com/products/ethiopia-konga-amederaro-supernatural</loc>
-    <lastmod>2025-11-19</lastmod>
+    <lastmod>2026-01-23</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://spirithubcafe.com/products/ethiopian-sidamo-coffee-capsules</loc>
+    <lastmod>2026-01-23</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- ====================================== -->
+  <!-- Coffee Capsules -->
+  <!-- ====================================== -->
+  <url>
+    <loc>https://spirithubcafe.com/products/intenso-coffee-capsules</loc>
+    <lastmod>2026-01-23</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://spirithubcafe.com/products/lungo-coffee-capsules</loc>
+    <lastmod>2026-01-23</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://spirithubcafe.com/products/palermo-coffee-capsules</loc>
+    <lastmod>2026-01-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -204,38 +256,44 @@
   <!-- Other Products -->
   <!-- ====================================== -->
   <url>
+    <loc>https://spirithubcafe.com/products/panama-geisha-jaguar-natural</loc>
+    <lastmod>2026-01-23</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://spirithubcafe.com/products/yunnan-dehong-catimor-anaerobic</loc>
-    <lastmod>2025-11-19</lastmod>
+    <lastmod>2026-01-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://spirithubcafe.com/products/kenya-karatu-estate-natural</loc>
-    <lastmod>2025-11-19</lastmod>
+    <lastmod>2026-01-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://spirithubcafe.com/products/el-salvador-red-bourbon-washed-finca-montevideo</loc>
-    <lastmod>2025-11-19</lastmod>
+    <loc>https://spirithubcafe.com/products/el-salvador-red-bourbon-washed</loc>
+    <lastmod>2026-01-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://spirithubcafe.com/products/brazil-catuai-natural</loc>
-    <lastmod>2025-11-19</lastmod>
+    <lastmod>2026-01-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://spirithubcafe.com/products/spirithub-experience-box-ufo-drip-coffee-collection</loc>
-    <lastmod>2025-11-19</lastmod>
+    <lastmod>2026-01-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://spirithubcafe.com/products/yemen-odaini-anaerobic-natural-coffee-spirithub</loc>
-    <lastmod>2025-11-19</lastmod>
+    <loc>https://spirithubcafe.com/products/yemen-odaini-anaerobic-natural</loc>
+    <lastmod>2026-01-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
