@@ -83,6 +83,7 @@ export const Seo: React.FC<SeoProps> = ({
   }, [canonical, location.pathname, location.search]);
 
   const resolvedLocale = locale ?? (language === 'ar' ? 'ar-OM' : 'en-OM');
+  const alternateLocale = resolvedLocale.startsWith('ar') ? 'en-OM' : 'ar-OM';
   const keywordsContent = Array.isArray(keywords)
     ? keywords.join(', ')
     : keywords ?? siteMetadata.defaultKeywords.join(', ');
@@ -131,6 +132,11 @@ export const Seo: React.FC<SeoProps> = ({
     }
     
     ensureMeta('meta[property="og:locale"]', { property: 'og:locale' }, resolvedLocale);
+    ensureMeta(
+      'meta[property="og:locale:alternate"]',
+      { property: 'og:locale:alternate' },
+      alternateLocale
+    );
     ensureMeta('meta[name="twitter:card"]', { name: 'twitter:card' }, 'summary_large_image');
     ensureMeta('meta[name="twitter:title"]', { name: 'twitter:title' }, resolvedTitle);
     ensureMeta('meta[name="twitter:description"]', { name: 'twitter:description' }, finalOgDesc);
@@ -159,6 +165,7 @@ export const Seo: React.FC<SeoProps> = ({
     const pathname = location.pathname;
     ensureLink('alternate', `${baseUrl}${pathname}`, 'en');
     ensureLink('alternate', `${baseUrl}${pathname}?lang=ar`, 'ar');
+    ensureLink('alternate', `${baseUrl}${pathname}`, 'x-default');
   }, [
     keywordsContent,
     noindex,
@@ -170,6 +177,7 @@ export const Seo: React.FC<SeoProps> = ({
     resolvedTitle,
     robots,
     type,
+    alternateLocale,
   ]);
 
   useEffect(() => {

@@ -4,524 +4,382 @@
     <title>Spirit Hub Cafe Product Feed</title>
     <link>https://spirithubcafe.com</link>
     <description>Latest active products from Spirit Hub Cafe</description>
-    
-    <!-- Product 1: Yunnan Dehong Catimor Anaerobic -->
-    <item>
-      <g:id>yunnan-dehong-catimor-anaerobic-250g</g:id>
-      <g:title>Yunnan Dehong Catimor Anaerobic – 250g</g:title>
-      <g:description>Premium Yunnan Dehong Catimor coffee with anaerobic processing, offering unique flavor notes and exceptional quality.</g:description>
+<item>
+      <g:id>panama-geisha-jaguar-natural</g:id>
+      <g:title>Panama - Geisha JAGUAR Natural</g:title>
+      <g:description>Panama - Geisha JAGUAR Natural</g:description>
+      <g:link>https://spirithubcafe.com/products/panama-geisha-jaguar-natural</g:link>
+      
+      <g:price>0.000 OMR</g:price>
+      <g:availability>out of stock</g:availability>
+      <g:condition>new</g:condition>
+      <g:brand>Spirit Hub Cafe</g:brand>
+      <g:google_product_category>499972</g:google_product_category>
+      <g:mpn>SH-FIL-PAN-GSH-JAG</g:mpn>
+    </item>
+<item>
+      <g:id>ufo-drip-coffee-brazil-catuai-natural-7-drip-box</g:id>
+      <g:title>UFO Drip Coffee – Brazil Catuai (Natural) | 7-Drip Box</g:title>
+      <g:description>UFO Drip Coffee – Brazil Catuai (Natural) | 7-Drip Box</g:description>
+      <g:link>https://spirithubcafe.com/products/ufo-drip-coffee-brazil-catuai-natural-7-drip-box</g:link>
+      
+      <g:price>0.000 OMR</g:price>
+      <g:availability>out of stock</g:availability>
+      <g:condition>new</g:condition>
+      <g:brand>Spirit Hub Cafe</g:brand>
+      <g:google_product_category>499972</g:google_product_category>
+      <g:mpn>UFO-BRA-CAT-NAT</g:mpn>
+    </item>
+<item>
+      <g:id>ufo-drip-coffee-el-salvador-red-bourbon-washed-7-d</g:id>
+      <g:title>UFO Drip Coffee – El Salvador Red Bourbon (Washed) | 7-Drip Box</g:title>
+      <g:description>UFO Drip Coffee – El Salvador Red Bourbon (Washed) | 7-Drip Box</g:description>
+      <g:link>https://spirithubcafe.com/products/ufo-drip-coffee-el-salvador-red-bourbon-washed-7-drip-box</g:link>
+      
+      <g:price>0.000 OMR</g:price>
+      <g:availability>out of stock</g:availability>
+      <g:condition>new</g:condition>
+      <g:brand>Spirit Hub Cafe</g:brand>
+      <g:google_product_category>499972</g:google_product_category>
+      <g:mpn>UFO-SLV-RB-WH</g:mpn>
+    </item>
+<item>
+      <g:id>ufo-drip-coffee-ethiopia-halo-hartume-natural-7-dr</g:id>
+      <g:title>UFO Drip Coffee – Ethiopia Halo Hartume (Natural) | 7-Drip Box</g:title>
+      <g:description>UFO Drip Coffee – Ethiopia Halo Hartume (Natural) | 7-Drip Box</g:description>
+      <g:link>https://spirithubcafe.com/products/ufo-drip-coffee-ethiopia-halo-hartume-natural-7-drip-box</g:link>
+      
+      <g:price>0.000 OMR</g:price>
+      <g:availability>out of stock</g:availability>
+      <g:condition>new</g:condition>
+      <g:brand>Spirit Hub Cafe</g:brand>
+      <g:google_product_category>499972</g:google_product_category>
+      <g:mpn>UFO-ETH-HH-NAT</g:mpn>
+    </item>
+<item>
+      <g:id>ufo-drip-coffee-kenya-karatu-estate-natural-7-drip</g:id>
+      <g:title>UFO Drip Coffee – Kenya Karatu Estate (Natural) | 7-Drip Box</g:title>
+      <g:description>UFO Drip Coffee – Kenya Karatu Estate (Natural) | 7-Drip Box</g:description>
+      <g:link>https://spirithubcafe.com/products/ufo-drip-coffee-kenya-karatu-estate-natural-7-drip-box</g:link>
+      
+      <g:price>0.000 OMR</g:price>
+      <g:availability>out of stock</g:availability>
+      <g:condition>new</g:condition>
+      <g:brand>Spirit Hub Cafe</g:brand>
+      <g:google_product_category>499972</g:google_product_category>
+      <g:mpn>UFO-KEN-KAR-NAT</g:mpn>
+    </item>
+<item>
+      <g:id>ufo-drip-coffee-yemen-odaini-anaerobic-7-drip-box</g:id>
+      <g:title>UFO Drip Coffee – Yemen Odaini Anaerobic | 7-Drip Box</g:title>
+      <g:description>UFO Drip Coffee – Yemen Odaini Anaerobic | 7-Drip Box</g:description>
+      <g:link>https://spirithubcafe.com/products/ufo-drip-coffee-yemen-odaini-anaerobic-7-drip-box</g:link>
+      
+      <g:price>0.000 OMR</g:price>
+      <g:availability>out of stock</g:availability>
+      <g:condition>new</g:condition>
+      <g:brand>Spirit Hub Cafe</g:brand>
+      <g:google_product_category>499972</g:google_product_category>
+      <g:mpn>UFO-YEM-ODA-AN</g:mpn>
+    </item>
+<item>
+      <g:id>colombia-finca-milan-coconut-culturing</g:id>
+      <g:title>Colombia - Finca Milan Coconut Culturing</g:title>
+      <g:description>Colombia - Finca Milan Coconut Culturing</g:description>
+      <g:link>https://spirithubcafe.com/products/colombia-finca-milan-coconut-culturing</g:link>
+      
+      <g:price>0.000 OMR</g:price>
+      <g:availability>out of stock</g:availability>
+      <g:condition>new</g:condition>
+      <g:brand>Spirit Hub Cafe</g:brand>
+      <g:google_product_category>499972</g:google_product_category>
+      <g:mpn>SHC-COL-MIL-COCO</g:mpn>
+    </item>
+<item>
+      <g:id>yunnan-dehong-catimor-anaerobic</g:id>
+      <g:title>Yunnan - Dehong Catimor Anaerobic</g:title>
+      <g:description>Yunnan - Dehong Catimor Anaerobic</g:description>
       <g:link>https://spirithubcafe.com/products/yunnan-dehong-catimor-anaerobic</g:link>
-      <g:image_link>https://spirithubcafe.com/images/products/default-product.webp</g:image_link>
-      <g:price>10.000 OMR</g:price>
-      <g:availability>in stock</g:availability>
+      
+      <g:price>0.000 OMR</g:price>
+      <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:brand>Spirit Hub Cafe</g:brand>
       <g:google_product_category>499972</g:google_product_category>
-      <g:mpn>yunnan-dehong-catimor-anaerobic-250g</g:mpn>
-      <g:item_group_id>yunnan-dehong-catimor-anaerobic</g:item_group_id>
+      <g:mpn>SHC-YNH-CAT</g:mpn>
     </item>
-    <item>
-      <g:id>yunnan-dehong-catimor-anaerobic-1kg</g:id>
-      <g:title>Yunnan Dehong Catimor Anaerobic – 1kg</g:title>
-      <g:description>Premium Yunnan Dehong Catimor coffee with anaerobic processing, offering unique flavor notes and exceptional quality.</g:description>
-      <g:link>https://spirithubcafe.com/products/yunnan-dehong-catimor-anaerobic</g:link>
-      <g:image_link>https://spirithubcafe.com/images/products/default-product.webp</g:image_link>
-      <g:price>25.000 OMR</g:price>
-      <g:availability>in stock</g:availability>
-      <g:condition>new</g:condition>
-      <g:brand>Spirit Hub Cafe</g:brand>
-      <g:google_product_category>499972</g:google_product_category>
-      <g:mpn>yunnan-dehong-catimor-anaerobic-1kg</g:mpn>
-      <g:item_group_id>yunnan-dehong-catimor-anaerobic</g:item_group_id>
-    </item>
-    
-    <!-- Product 2: Kenya Karatu Estate Natural -->
-    <item>
-      <g:id>kenya-karatu-estate-natural-250g</g:id>
-      <g:title>Kenya Karatu Estate Natural – 250g</g:title>
-      <g:description>Premium Kenya Karatu Estate coffee with natural processing, delivering bright acidity and fruity notes.</g:description>
+<item>
+      <g:id>kenya-karatu-estate-natural</g:id>
+      <g:title>Kenya - Karatu Estate Natural</g:title>
+      <g:description>Kenya - Karatu Estate Natural</g:description>
       <g:link>https://spirithubcafe.com/products/kenya-karatu-estate-natural</g:link>
-      <g:image_link>https://spirithubcafe.com/images/products/default-product.webp</g:image_link>
-      <g:price>11.000 OMR</g:price>
-      <g:availability>in stock</g:availability>
+      
+      <g:price>0.000 OMR</g:price>
+      <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:brand>Spirit Hub Cafe</g:brand>
       <g:google_product_category>499972</g:google_product_category>
-      <g:mpn>kenya-karatu-estate-natural-250g</g:mpn>
-      <g:item_group_id>kenya-karatu-estate-natural</g:item_group_id>
+      <g:mpn>SHC-KEN-KAR-NAT</g:mpn>
     </item>
-    <item>
-      <g:id>kenya-karatu-estate-natural-1kg</g:id>
-      <g:title>Kenya Karatu Estate Natural – 1kg</g:title>
-      <g:description>Premium Kenya Karatu Estate coffee with natural processing, delivering bright acidity and fruity notes.</g:description>
-      <g:link>https://spirithubcafe.com/products/kenya-karatu-estate-natural</g:link>
-      <g:image_link>https://spirithubcafe.com/images/products/default-product.webp</g:image_link>
-      <g:price>26.000 OMR</g:price>
-      <g:availability>in stock</g:availability>
-      <g:condition>new</g:condition>
-      <g:brand>Spirit Hub Cafe</g:brand>
-      <g:google_product_category>499972</g:google_product_category>
-      <g:mpn>kenya-karatu-estate-natural-1kg</g:mpn>
-      <g:item_group_id>kenya-karatu-estate-natural</g:item_group_id>
-    </item>
-    
-    <!-- Product 3: Colombia Aroma Nativo Aji -->
-    <item>
-      <g:id>colombia-aroma-nativo-aji-250g</g:id>
-      <g:title>Colombia Aroma Nativo Aji - SpiritHub Exclusive Lot – 250g</g:title>
-      <g:description>Exclusive Colombian coffee with Aroma Nativo Aji variety, featuring complex flavor profile and exceptional quality.</g:description>
+<item>
+      <g:id>colombia-aroma-nativo-aji-spirithub-exclusive-lot</g:id>
+      <g:title>Colombia - Aroma Nativo Aji SpiritHub Exclusive Lot</g:title>
+      <g:description>Colombia - Aroma Nativo Aji SpiritHub Exclusive Lot</g:description>
       <g:link>https://spirithubcafe.com/products/colombia-aroma-nativo-aji-spirithub-exclusive-lot</g:link>
-      <g:image_link>https://spirithubcafe.com/images/products/default-product.webp</g:image_link>
-      <g:price>12.000 OMR</g:price>
-      <g:availability>in stock</g:availability>
+      
+      <g:price>0.000 OMR</g:price>
+      <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:brand>Spirit Hub Cafe</g:brand>
       <g:google_product_category>499972</g:google_product_category>
-      <g:mpn>colombia-aroma-nativo-aji-250g</g:mpn>
-      <g:item_group_id>colombia-aroma-nativo-aji-spirithub</g:item_group_id>
+      <g:mpn>SH-COL-AJI-HON-DF</g:mpn>
     </item>
-    <item>
-      <g:id>colombia-aroma-nativo-aji-1kg</g:id>
-      <g:title>Colombia Aroma Nativo Aji - SpiritHub Exclusive Lot – 1kg</g:title>
-      <g:description>Exclusive Colombian coffee with Aroma Nativo Aji variety, featuring complex flavor profile and exceptional quality.</g:description>
-      <g:link>https://spirithubcafe.com/products/colombia-aroma-nativo-aji-spirithub-exclusive-lot</g:link>
-      <g:image_link>https://spirithubcafe.com/images/products/default-product.webp</g:image_link>
-      <g:price>28.000 OMR</g:price>
-      <g:availability>in stock</g:availability>
+<item>
+      <g:id>el-salvador-red-bourbon-washed</g:id>
+      <g:title>El Salvador - Red Bourbon Washed</g:title>
+      <g:description>El Salvador - Red Bourbon Washed</g:description>
+      <g:link>https://spirithubcafe.com/products/el-salvador-red-bourbon-washed</g:link>
+      
+      <g:price>0.000 OMR</g:price>
+      <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:brand>Spirit Hub Cafe</g:brand>
       <g:google_product_category>499972</g:google_product_category>
-      <g:mpn>colombia-aroma-nativo-aji-1kg</g:mpn>
-      <g:item_group_id>colombia-aroma-nativo-aji-spirithub</g:item_group_id>
+      <g:mpn>SH-SLV-RBO-WAS</g:mpn>
     </item>
-    
-    <!-- Product 4: El Salvador Red Bourbon -->
-    <item>
-      <g:id>el-salvador-red-bourbon-250g</g:id>
-      <g:title>El Salvador Red Bourbon - Washed (Finca Montevideo) – 250g</g:title>
-      <g:description>Premium El Salvador Red Bourbon coffee from Finca Montevideo, washed process with balanced flavor profile.</g:description>
-      <g:link>https://spirithubcafe.com/products/el-salvador-red-bourbon-washed-finca-montevideo</g:link>
-      <g:image_link>https://spirithubcafe.com/images/products/default-product.webp</g:image_link>
-      <g:price>10.000 OMR</g:price>
-      <g:availability>in stock</g:availability>
+<item>
+      <g:id>ufo-drip-coffee-yunnan-dehong-catimor-7-drip-box</g:id>
+      <g:title>UFO Drip Coffee – Yunnan Dehong Catimor | 7-Drip Box</g:title>
+      <g:description>UFO Drip Coffee – Yunnan Dehong Catimor | 7-Drip Box</g:description>
+      <g:link>https://spirithubcafe.com/products/ufo-drip-coffee-yunnan-dehong-catimor-7-drip-box</g:link>
+      
+      <g:price>0.000 OMR</g:price>
+      <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:brand>Spirit Hub Cafe</g:brand>
       <g:google_product_category>499972</g:google_product_category>
-      <g:mpn>el-salvador-red-bourbon-250g</g:mpn>
-      <g:item_group_id>el-salvador-red-bourbon-washed</g:item_group_id>
+      <g:mpn>UFO-CHN-DEH-CAT-7</g:mpn>
     </item>
-    <item>
-      <g:id>el-salvador-red-bourbon-1kg</g:id>
-      <g:title>El Salvador Red Bourbon - Washed (Finca Montevideo) – 1kg</g:title>
-      <g:description>Premium El Salvador Red Bourbon coffee from Finca Montevideo, washed process with balanced flavor profile.</g:description>
-      <g:link>https://spirithubcafe.com/products/el-salvador-red-bourbon-washed-finca-montevideo</g:link>
-      <g:image_link>https://spirithubcafe.com/images/products/default-product.webp</g:image_link>
-      <g:price>24.000 OMR</g:price>
-      <g:availability>in stock</g:availability>
+<item>
+      <g:id>ufo-drip-coffee-ethiopia-konga-amederaro-7-drip-bo</g:id>
+      <g:title>UFO Drip Coffee – Ethiopia Konga Amederaro | 7-Drip Box</g:title>
+      <g:description>UFO Drip Coffee – Ethiopia Konga Amederaro | 7-Drip Box</g:description>
+      <g:link>https://spirithubcafe.com/products/ufo-drip-coffee-ethiopia-konga-amederaro-7-drip-box</g:link>
+      
+      <g:price>0.000 OMR</g:price>
+      <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:brand>Spirit Hub Cafe</g:brand>
       <g:google_product_category>499972</g:google_product_category>
-      <g:mpn>el-salvador-red-bourbon-1kg</g:mpn>
-      <g:item_group_id>el-salvador-red-bourbon-washed</g:item_group_id>
+      <g:mpn>UFO-ETH-KON-7</g:mpn>
     </item>
-    
-    <!-- Product 5: UFO Drip Coffee – Yunnan Dehong Catimor (7-box single SKU) -->
-    <item>
-      <g:id>ufo-drip-yunnan-dehong-7box</g:id>
-      <g:title>UFO Drip Coffee – Yunnan Dehong Catimor</g:title>
-      <g:description>Convenient UFO drip coffee with Yunnan Dehong Catimor beans, 7 pack box for easy brewing anywhere.</g:description>
-      <g:link>https://spirithubcafe.com/products/ufo-drip-yunnan-dehong-catimor-7-box</g:link>
-      <g:image_link>https://spirithubcafe.com/images/products/default-product.webp</g:image_link>
-      <g:price>12.000 OMR</g:price>
-      <g:availability>in stock</g:availability>
-      <g:condition>new</g:condition>
-      <g:brand>Spirit Hub Cafe</g:brand>
-      <g:google_product_category>499972</g:google_product_category>
-      <g:mpn>ufo-drip-yunnan-dehong-7box</g:mpn>
-      <g:item_group_id>ufo-drip-yunnan-dehong-catimor-7-box</g:item_group_id>
-    </item>
-    
-    <!-- Product 6: UFO Drip Coffee – Ethiopia Konga Amederaro (7-box single SKU) -->
-    <item>
-      <g:id>ufo-drip-ethiopia-konga-7box</g:id>
-      <g:title>UFO Drip Coffee – Ethiopia Konga Amederaro Supernatural</g:title>
-      <g:description>Premium UFO drip coffee with Ethiopia Konga Amederaro Supernatural beans, 7 pack box.</g:description>
-      <g:link>https://spirithubcafe.com/products/ufo-drip-ethiopia-konga-amederaro-supernatural-7-box</g:link>
-      <g:image_link>https://spirithubcafe.com/images/products/default-product.webp</g:image_link>
-      <g:price>14.000 OMR</g:price>
-      <g:availability>in stock</g:availability>
-      <g:condition>new</g:condition>
-      <g:brand>Spirit Hub Cafe</g:brand>
-      <g:google_product_category>499972</g:google_product_category>
-      <g:mpn>ufo-drip-ethiopia-konga-7box</g:mpn>
-      <g:item_group_id>ufo-drip-ethiopia-konga-supernatural</g:item_group_id>
-    </item>
-    
-    <!-- Product 7: Brazil Catuai Natural -->
-    <item>
-      <g:id>brazil-catuai-natural-250g</g:id>
-      <g:title>Brazil Catuai Natural – 250g</g:title>
-      <g:description>Classic Brazilian Catuai coffee with natural processing, featuring sweet chocolate and nutty notes.</g:description>
+<item>
+      <g:id>brazil-catuai-natural</g:id>
+      <g:title>Brazil - Catuai Natural</g:title>
+      <g:description>Brazil - Catuai Natural</g:description>
       <g:link>https://spirithubcafe.com/products/brazil-catuai-natural</g:link>
-      <g:image_link>https://spirithubcafe.com/images/products/default-product.webp</g:image_link>
-      <g:price>8.000 OMR</g:price>
-      <g:availability>in stock</g:availability>
+      
+      <g:price>0.000 OMR</g:price>
+      <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:brand>Spirit Hub Cafe</g:brand>
       <g:google_product_category>499972</g:google_product_category>
-      <g:mpn>brazil-catuai-natural-250g</g:mpn>
-      <g:item_group_id>brazil-catuai-natural</g:item_group_id>
+      <g:mpn>BRAZ-CAT</g:mpn>
     </item>
-    <item>
-      <g:id>brazil-catuai-natural-1kg</g:id>
-      <g:title>Brazil Catuai Natural – 1kg</g:title>
-      <g:description>Classic Brazilian Catuai coffee with natural processing, featuring sweet chocolate and nutty notes.</g:description>
-      <g:link>https://spirithubcafe.com/products/brazil-catuai-natural</g:link>
-      <g:image_link>https://spirithubcafe.com/images/products/default-product.webp</g:image_link>
-      <g:price>20.000 OMR</g:price>
-      <g:availability>in stock</g:availability>
-      <g:condition>new</g:condition>
-      <g:brand>Spirit Hub Cafe</g:brand>
-      <g:google_product_category>499972</g:google_product_category>
-      <g:mpn>brazil-catuai-natural-1kg</g:mpn>
-      <g:item_group_id>brazil-catuai-natural</g:item_group_id>
-    </item>
-    
-    <!-- Product 8: Colombia Decaf Coffee Capsules (single SKU) -->
-    <item>
-      <g:id>colombia-decaf-capsules-10pk</g:id>
-      <g:title>Colombia Decaf Coffee Capsules</g:title>
-      <g:description>Premium Colombian decaffeinated coffee capsules, perfect for enjoying coffee without caffeine.</g:description>
+<item>
+      <g:id>colombia-decaf-coffee-capsules</g:id>
+      <g:title>Colombia - Decaf Coffee Capsules</g:title>
+      <g:description>Colombia - Decaf Coffee Capsules</g:description>
       <g:link>https://spirithubcafe.com/products/colombia-decaf-coffee-capsules</g:link>
-      <g:image_link>https://spirithubcafe.com/images/products/default-product.webp</g:image_link>
-      <g:price>18.000 OMR</g:price>
-      <g:availability>in stock</g:availability>
+      
+      <g:price>0.000 OMR</g:price>
+      <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:brand>Spirit Hub Cafe</g:brand>
       <g:google_product_category>499972</g:google_product_category>
-      <g:mpn>colombia-decaf-capsules-10pk</g:mpn>
-      <g:item_group_id>colombia-decaf-coffee-capsules</g:item_group_id>
+      <g:mpn>CPS-COL-DEC</g:mpn>
     </item>
-    
-    <!-- Product 9: Colombia Floral Symphony - Ombligon -->
-    <item>
-      <g:id>colombia-floral-symphony-250g</g:id>
-      <g:title>Colombia Floral Symphony - Ombligon (Natural) – 250g</g:title>
-      <g:description>Exquisite Colombian coffee from Finca Diviso with natural processing, featuring complex floral notes and Ombligon variety.</g:description>
-      <g:link>https://spirithubcafe.com/products/colombia-floral-symphony-ombligon-natural-finca-diviso</g:link>
-      <g:image_link>https://spirithubcafe.com/images/products/default-product.webp</g:image_link>
-      <g:price>13.000 OMR</g:price>
-      <g:availability>in stock</g:availability>
+<item>
+      <g:id>colombia-laurina-las-margaritas-natural</g:id>
+      <g:title>Colombia - Laurina Las Margaritas Natural</g:title>
+      <g:description>Colombia - Laurina Las Margaritas Natural</g:description>
+      <g:link>https://spirithubcafe.com/products/colombia-laurina-las-margaritas-natural</g:link>
+      
+      <g:price>0.000 OMR</g:price>
+      <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:brand>Spirit Hub Cafe</g:brand>
       <g:google_product_category>499972</g:google_product_category>
-      <g:mpn>colombia-floral-symphony-250g</g:mpn>
-      <g:item_group_id>colombia-floral-symphony-ombligon</g:item_group_id>
+      <g:mpn>SH-COL-LAU-NAT</g:mpn>
     </item>
-    <item>
-      <g:id>colombia-floral-symphony-1kg</g:id>
-      <g:title>Colombia Floral Symphony - Ombligon (Natural) – 1kg</g:title>
-      <g:description>Exquisite Colombian coffee from Finca Diviso with natural processing, featuring complex floral notes and Ombligon variety.</g:description>
-      <g:link>https://spirithubcafe.com/products/colombia-floral-symphony-ombligon-natural-finca-diviso</g:link>
-      <g:image_link>https://spirithubcafe.com/images/products/default-product.webp</g:image_link>
-      <g:price>30.000 OMR</g:price>
-      <g:availability>in stock</g:availability>
+<item>
+      <g:id>colombia-pink-bourbon-honey</g:id>
+      <g:title>Colombia - Pink Bourbon Honey</g:title>
+      <g:description>Colombia - Pink Bourbon Honey</g:description>
+      <g:link>https://spirithubcafe.com/products/colombia-pink-bourbon-honey</g:link>
+      
+      <g:price>0.000 OMR</g:price>
+      <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:brand>Spirit Hub Cafe</g:brand>
       <g:google_product_category>499972</g:google_product_category>
-      <g:mpn>colombia-floral-symphony-1kg</g:mpn>
-      <g:item_group_id>colombia-floral-symphony-ombligon</g:item_group_id>
+      <g:mpn>COL-PB</g:mpn>
     </item>
-    
-    <!-- Product 10: Colombia Laurina - Natural -->
-    <item>
-      <g:id>colombia-laurina-natural-250g</g:id>
-      <g:title>Colombia Laurina - Natural (Las Margaritas) – 250g</g:title>
-      <g:description>Premium Colombian Laurina coffee from Las Margaritas with natural processing, offering exceptional flavor complexity.</g:description>
-      <g:link>https://spirithubcafe.com/products/colombia-laurina-natural-las-margaritas</g:link>
-      <g:image_link>https://spirithubcafe.com/images/products/default-product.webp</g:image_link>
-      <g:price>14.000 OMR</g:price>
-      <g:availability>in stock</g:availability>
-      <g:condition>new</g:condition>
-      <g:brand>Spirit Hub Cafe</g:brand>
-      <g:google_product_category>499972</g:google_product_category>
-      <g:mpn>colombia-laurina-natural-250g</g:mpn>
-      <g:item_group_id>colombia-laurina-natural-las-margaritas</g:item_group_id>
-    </item>
-    <item>
-      <g:id>colombia-laurina-natural-1kg</g:id>
-      <g:title>Colombia Laurina - Natural (Las Margaritas) – 1kg</g:title>
-      <g:description>Premium Colombian Laurina coffee from Las Margaritas with natural processing, offering exceptional flavor complexity.</g:description>
-      <g:link>https://spirithubcafe.com/products/colombia-laurina-natural-las-margaritas</g:link>
-      <g:image_link>https://spirithubcafe.com/images/products/default-product.webp</g:image_link>
-      <g:price>32.000 OMR</g:price>
-      <g:availability>in stock</g:availability>
-      <g:condition>new</g:condition>
-      <g:brand>Spirit Hub Cafe</g:brand>
-      <g:google_product_category>499972</g:google_product_category>
-      <g:mpn>colombia-laurina-natural-1kg</g:mpn>
-      <g:item_group_id>colombia-laurina-natural-las-margaritas</g:item_group_id>
-    </item>
-    
-    <!-- Product 11: Colombia Pink Bourbon Honey -->
-    <item>
-      <g:id>colombia-pink-bourbon-250g</g:id>
-      <g:title>Colombia Pink Bourbon Honey – 250g</g:title>
-      <g:description>Premium Colombian Pink Bourbon coffee with honey processing, delivering sweet and fruity flavor notes.</g:description>
-      <g:link>https://spirithubcafe.com/products/colombia-pink-bourbon-honey-coffee-spirithub</g:link>
-      <g:image_link>https://spirithubcafe.com/images/products/default-product.webp</g:image_link>
-      <g:price>11.000 OMR</g:price>
-      <g:availability>in stock</g:availability>
-      <g:condition>new</g:condition>
-      <g:brand>Spirit Hub Cafe</g:brand>
-      <g:google_product_category>499972</g:google_product_category>
-      <g:mpn>colombia-pink-bourbon-250g</g:mpn>
-      <g:item_group_id>colombia-pink-bourbon-honey-spirithub</g:item_group_id>
-    </item>
-    <item>
-      <g:id>colombia-pink-bourbon-1kg</g:id>
-      <g:title>Colombia Pink Bourbon Honey – 1kg</g:title>
-      <g:description>Premium Colombian Pink Bourbon coffee with honey processing, delivering sweet and fruity flavor notes.</g:description>
-      <g:link>https://spirithubcafe.com/products/colombia-pink-bourbon-honey-coffee-spirithub</g:link>
-      <g:image_link>https://spirithubcafe.com/images/products/default-product.webp</g:image_link>
-      <g:price>27.000 OMR</g:price>
-      <g:availability>in stock</g:availability>
-      <g:condition>new</g:condition>
-      <g:brand>Spirit Hub Cafe</g:brand>
-      <g:google_product_category>499972</g:google_product_category>
-      <g:mpn>colombia-pink-bourbon-1kg</g:mpn>
-      <g:item_group_id>colombia-pink-bourbon-honey-spirithub</g:item_group_id>
-    </item>
-    
-    <!-- Product 12: Colombia Typica Watermelon – Frutalchemy -->
-    <item>
-      <g:id>colombia-typica-watermelon-250g</g:id>
-      <g:title>Colombia Typica Watermelon – Frutalchemy – 250g</g:title>
-      <g:description>Unique Colombian Typica coffee with watermelon flavor notes from Frutalchemy processing method.</g:description>
+<item>
+      <g:id>colombia-typica-watermelon-frutalchemy</g:id>
+      <g:title>Colombia - Typica Watermelon Frutalchemy</g:title>
+      <g:description>Colombia - Typica Watermelon Frutalchemy</g:description>
       <g:link>https://spirithubcafe.com/products/colombia-typica-watermelon-frutalchemy</g:link>
-      <g:image_link>https://spirithubcafe.com/images/products/default-product.webp</g:image_link>
-      <g:price>12.000 OMR</g:price>
-      <g:availability>in stock</g:availability>
+      
+      <g:price>0.000 OMR</g:price>
+      <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:brand>Spirit Hub Cafe</g:brand>
       <g:google_product_category>499972</g:google_product_category>
-      <g:mpn>colombia-typica-watermelon-250g</g:mpn>
-      <g:item_group_id>colombia-typica-watermelon-frutalchemy</g:item_group_id>
+      <g:mpn>COL-TYP-WM</g:mpn>
     </item>
-    <item>
-      <g:id>colombia-typica-watermelon-1kg</g:id>
-      <g:title>Colombia Typica Watermelon – Frutalchemy – 1kg</g:title>
-      <g:description>Unique Colombian Typica coffee with watermelon flavor notes from Frutalchemy processing method.</g:description>
-      <g:link>https://spirithubcafe.com/products/colombia-typica-watermelon-frutalchemy</g:link>
-      <g:image_link>https://spirithubcafe.com/images/products/default-product.webp</g:image_link>
-      <g:price>29.000 OMR</g:price>
-      <g:availability>in stock</g:availability>
-      <g:condition>new</g:condition>
-      <g:brand>Spirit Hub Cafe</g:brand>
-      <g:google_product_category>499972</g:google_product_category>
-      <g:mpn>colombia-typica-watermelon-1kg</g:mpn>
-      <g:item_group_id>colombia-typica-watermelon-frutalchemy</g:item_group_id>
-    </item>
-    
-    <!-- Product 13: Colombia Yellow Pacamara – Frutalchemy -->
-    <item>
-      <g:id>colombia-yellow-pacamara-250g</g:id>
-      <g:title>Colombia Yellow Pacamara – Frutalchemy – 250g</g:title>
-      <g:description>Exceptional Colombian Yellow Pacamara coffee with Frutalchemy processing, featuring vibrant and complex flavors.</g:description>
-      <g:link>https://spirithubcafe.com/products/colombia-yellow-pacamara-frutalchemy</g:link>
-      <g:image_link>https://spirithubcafe.com/images/products/default-product.webp</g:image_link>
-      <g:price>13.000 OMR</g:price>
-      <g:availability>in stock</g:availability>
-      <g:condition>new</g:condition>
-      <g:brand>Spirit Hub Cafe</g:brand>
-      <g:google_product_category>499972</g:google_product_category>
-      <g:mpn>colombia-yellow-pacamara-250g</g:mpn>
-      <g:item_group_id>colombia-yellow-pacamara-frutalchemy</g:item_group_id>
-    </item>
-    <item>
-      <g:id>colombia-yellow-pacamara-1kg</g:id>
-      <g:title>Colombia Yellow Pacamara – Frutalchemy – 1kg</g:title>
-      <g:description>Exceptional Colombian Yellow Pacamara coffee with Frutalchemy processing, featuring vibrant and complex flavors.</g:description>
-      <g:link>https://spirithubcafe.com/products/colombia-yellow-pacamara-frutalchemy</g:link>
-      <g:image_link>https://spirithubcafe.com/images/products/default-product.webp</g:image_link>
-      <g:price>31.000 OMR</g:price>
-      <g:availability>in stock</g:availability>
-      <g:condition>new</g:condition>
-      <g:brand>Spirit Hub Cafe</g:brand>
-      <g:google_product_category>499972</g:google_product_category>
-      <g:mpn>colombia-yellow-pacamara-1kg</g:mpn>
-      <g:item_group_id>colombia-yellow-pacamara-frutalchemy</g:item_group_id>
-    </item>
-    
-    <!-- Product 14: Ethiopia Gargari Gutity Yirgacheffe – Supernatural -->
-    <item>
-      <g:id>ethiopia-gargari-gutity-250g</g:id>
-      <g:title>Ethiopia Gargari Gutity Yirgacheffe – Supernatural – 250g</g:title>
-      <g:description>Premium Ethiopian coffee from Gargari Gutity Yirgacheffe with Supernatural processing, featuring floral and tea-like notes.</g:description>
+<item>
+      <g:id>ethiopia-gargari-gutity-yirgacheffe-supernatural</g:id>
+      <g:title>Ethiopia - Gargari Gutity Yirgacheffe – Supernatural</g:title>
+      <g:description>Ethiopia - Gargari Gutity Yirgacheffe – Supernatural</g:description>
       <g:link>https://spirithubcafe.com/products/ethiopia-gargari-gutity-yirgacheffe-supernatural</g:link>
-      <g:image_link>https://spirithubcafe.com/images/products/default-product.webp</g:image_link>
-      <g:price>11.000 OMR</g:price>
-      <g:availability>in stock</g:availability>
+      
+      <g:price>0.000 OMR</g:price>
+      <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:brand>Spirit Hub Cafe</g:brand>
       <g:google_product_category>499972</g:google_product_category>
-      <g:mpn>ethiopia-gargari-gutity-250g</g:mpn>
-      <g:item_group_id>ethiopia-gargari-gutity-supernatural</g:item_group_id>
+      <g:mpn>ETH-GG-SN</g:mpn>
     </item>
-    <item>
-      <g:id>ethiopia-gargari-gutity-1kg</g:id>
-      <g:title>Ethiopia Gargari Gutity Yirgacheffe – Supernatural – 1kg</g:title>
-      <g:description>Premium Ethiopian coffee from Gargari Gutity Yirgacheffe with Supernatural processing, featuring floral and tea-like notes.</g:description>
-      <g:link>https://spirithubcafe.com/products/ethiopia-gargari-gutity-yirgacheffe-supernatural</g:link>
-      <g:image_link>https://spirithubcafe.com/images/products/default-product.webp</g:image_link>
-      <g:price>26.000 OMR</g:price>
-      <g:availability>in stock</g:availability>
-      <g:condition>new</g:condition>
-      <g:brand>Spirit Hub Cafe</g:brand>
-      <g:google_product_category>499972</g:google_product_category>
-      <g:mpn>ethiopia-gargari-gutity-1kg</g:mpn>
-      <g:item_group_id>ethiopia-gargari-gutity-supernatural</g:item_group_id>
-    </item>
-    
-    <!-- Product 15: Ethiopia Halo Hartume Natural -->
-    <item>
-      <g:id>ethiopia-halo-hartume-250g</g:id>
-      <g:title>Ethiopia Halo Hartume Natural – 250g</g:title>
-      <g:description>Premium Ethiopian Halo Hartume coffee with natural processing, delivering fruity and wine-like characteristics.</g:description>
+<item>
+      <g:id>ethiopia-halo-hartume-natural</g:id>
+      <g:title>Ethiopia - Halo Hartume Natural</g:title>
+      <g:description>Ethiopia - Halo Hartume Natural</g:description>
       <g:link>https://spirithubcafe.com/products/ethiopia-halo-hartume-natural</g:link>
-      <g:image_link>https://spirithubcafe.com/images/products/default-product.webp</g:image_link>
-      <g:price>10.000 OMR</g:price>
-      <g:availability>in stock</g:availability>
+      
+      <g:price>0.000 OMR</g:price>
+      <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:brand>Spirit Hub Cafe</g:brand>
       <g:google_product_category>499972</g:google_product_category>
-      <g:mpn>ethiopia-halo-hartume-250g</g:mpn>
-      <g:item_group_id>ethiopia-halo-hartume-natural</g:item_group_id>
+      <g:mpn>ETH-HAL</g:mpn>
     </item>
-    <item>
-      <g:id>ethiopia-halo-hartume-1kg</g:id>
-      <g:title>Ethiopia Halo Hartume Natural – 1kg</g:title>
-      <g:description>Premium Ethiopian Halo Hartume coffee with natural processing, delivering fruity and wine-like characteristics.</g:description>
-      <g:link>https://spirithubcafe.com/products/ethiopia-halo-hartume-natural</g:link>
-      <g:image_link>https://spirithubcafe.com/images/products/default-product.webp</g:image_link>
-      <g:price>24.000 OMR</g:price>
-      <g:availability>in stock</g:availability>
-      <g:condition>new</g:condition>
-      <g:brand>Spirit Hub Cafe</g:brand>
-      <g:google_product_category>499972</g:google_product_category>
-      <g:mpn>ethiopia-halo-hartume-1kg</g:mpn>
-      <g:item_group_id>ethiopia-halo-hartume-natural</g:item_group_id>
-    </item>
-    
-    <!-- Product 16: Ethiopia Konga Amederaro – Supernatural -->
-    <item>
-      <g:id>ethiopia-konga-amederaro-250g</g:id>
-      <g:title>Ethiopia Konga Amederaro – Supernatural – 250g</g:title>
-      <g:description>Exceptional Ethiopian coffee from Konga Amederaro with Supernatural processing, featuring bright acidity and floral notes.</g:description>
+<item>
+      <g:id>ethiopia-konga-amederaro-supernatural</g:id>
+      <g:title>Ethiopia - Konga Amederaro Supernatural</g:title>
+      <g:description>Ethiopia - Konga Amederaro Supernatural</g:description>
       <g:link>https://spirithubcafe.com/products/ethiopia-konga-amederaro-supernatural</g:link>
-      <g:image_link>https://spirithubcafe.com/images/products/default-product.webp</g:image_link>
-      <g:price>11.000 OMR</g:price>
-      <g:availability>in stock</g:availability>
+      
+      <g:price>0.000 OMR</g:price>
+      <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:brand>Spirit Hub Cafe</g:brand>
       <g:google_product_category>499972</g:google_product_category>
-      <g:mpn>ethiopia-konga-amederaro-250g</g:mpn>
-      <g:item_group_id>ethiopia-konga-amederaro-supernatural</g:item_group_id>
+      <g:mpn>ETH-KON-SN</g:mpn>
     </item>
-    <item>
-      <g:id>ethiopia-konga-amederaro-1kg</g:id>
-      <g:title>Ethiopia Konga Amederaro – Supernatural – 1kg</g:title>
-      <g:description>Exceptional Ethiopian coffee from Konga Amederaro with Supernatural processing, featuring bright acidity and floral notes.</g:description>
-      <g:link>https://spirithubcafe.com/products/ethiopia-konga-amederaro-supernatural</g:link>
-      <g:image_link>https://spirithubcafe.com/images/products/default-product.webp</g:image_link>
-      <g:price>27.000 OMR</g:price>
-      <g:availability>in stock</g:availability>
+<item>
+      <g:id>ethiopian-sidamo-coffee-capsules</g:id>
+      <g:title>Ethiopian - Sidamo Coffee Capsules</g:title>
+      <g:description>Ethiopian - Sidamo Coffee Capsules</g:description>
+      <g:link>https://spirithubcafe.com/products/ethiopian-sidamo-coffee-capsules</g:link>
+      
+      <g:price>0.000 OMR</g:price>
+      <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:brand>Spirit Hub Cafe</g:brand>
       <g:google_product_category>499972</g:google_product_category>
-      <g:mpn>ethiopia-konga-amederaro-1kg</g:mpn>
-      <g:item_group_id>ethiopia-konga-amederaro-supernatural</g:item_group_id>
+      <g:mpn>CPS-ETH-SID</g:mpn>
     </item>
-    
-    <!-- Product 17: SpiritHub Experience Box (single SKU) -->
-    <item>
-      <g:id>spirithub-experience-box-7disk</g:id>
+<item>
+      <g:id>intenso-coffee-capsules</g:id>
+      <g:title>Intenso - Coffee Capsules</g:title>
+      <g:description>Intenso - Coffee Capsules</g:description>
+      <g:link>https://spirithubcafe.com/products/intenso-coffee-capsules</g:link>
+      
+      <g:price>0.000 OMR</g:price>
+      <g:availability>out of stock</g:availability>
+      <g:condition>new</g:condition>
+      <g:brand>Spirit Hub Cafe</g:brand>
+      <g:google_product_category>499972</g:google_product_category>
+      <g:mpn>CPS-INT-ESP</g:mpn>
+    </item>
+<item>
+      <g:id>lungo-coffee-capsules</g:id>
+      <g:title>Lungo Coffee Capsules</g:title>
+      <g:description>Lungo Coffee Capsules</g:description>
+      <g:link>https://spirithubcafe.com/products/lungo-coffee-capsules</g:link>
+      
+      <g:price>0.000 OMR</g:price>
+      <g:availability>out of stock</g:availability>
+      <g:condition>new</g:condition>
+      <g:brand>Spirit Hub Cafe</g:brand>
+      <g:google_product_category>499972</g:google_product_category>
+      <g:mpn>CPS-LUN-MED</g:mpn>
+    </item>
+<item>
+      <g:id>palermo-coffee-capsules</g:id>
+      <g:title>Palermo - Coffee Capsules</g:title>
+      <g:description>Palermo - Coffee Capsules</g:description>
+      <g:link>https://spirithubcafe.com/products/palermo-coffee-capsules</g:link>
+      
+      <g:price>0.000 OMR</g:price>
+      <g:availability>out of stock</g:availability>
+      <g:condition>new</g:condition>
+      <g:brand>Spirit Hub Cafe</g:brand>
+      <g:google_product_category>499972</g:google_product_category>
+      <g:mpn>CPS-PAL-MDK</g:mpn>
+    </item>
+<item>
+      <g:id>spirithub-experience-box-ufo-drip-coffee-collectio</g:id>
       <g:title>SpiritHub Experience Box | 7-Disk Collection</g:title>
-      <g:description>Curated collection of 7 UFO drip coffee disks featuring our best specialty coffees, perfect for sampling and gifting.</g:description>
+      <g:description>SpiritHub Experience Box | 7-Disk Collection</g:description>
       <g:link>https://spirithubcafe.com/products/spirithub-experience-box-ufo-drip-coffee-collection</g:link>
-      <g:image_link>https://spirithubcafe.com/images/products/default-product.webp</g:image_link>
-      <g:price>35.000 OMR</g:price>
-      <g:availability>in stock</g:availability>
+      
+      <g:price>0.000 OMR</g:price>
+      <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:brand>Spirit Hub Cafe</g:brand>
       <g:google_product_category>499972</g:google_product_category>
-      <g:mpn>spirithub-experience-box-7disk</g:mpn>
-      <g:item_group_id>spirithub-experience-box</g:item_group_id>
+      <g:mpn>SH-EXP</g:mpn>
     </item>
-    
-    <!-- Product 18: Colombia Pink Bourbon Honey — UFO Drip Coffee (single SKU) -->
-    <item>
-      <g:id>ufo-drip-pink-bourbon-7box</g:id>
-      <g:title>Colombia Pink Bourbon Honey — UFO Drip Coffee</g:title>
-      <g:description>Convenient UFO drip coffee with Colombian Pink Bourbon Honey beans, perfect for brewing on-the-go.</g:description>
-      <g:link>https://spirithubcafe.com/products/colombia-pink-bourbon-honey-ufo-drip-coffee-spirithub</g:link>
-      <g:image_link>https://spirithubcafe.com/images/products/default-product.webp</g:image_link>
-      <g:price>13.000 OMR</g:price>
-      <g:availability>in stock</g:availability>
+<item>
+      <g:id>ufo-drip-coffee-colombia-pink-bourbon-honey-7-drip</g:id>
+      <g:title>UFO Drip Coffee – Colombia Pink Bourbon Honey | 7-Drip Box</g:title>
+      <g:description>UFO Drip Coffee – Colombia Pink Bourbon Honey | 7-Drip Box</g:description>
+      <g:link>https://spirithubcafe.com/products/ufo-drip-coffee-colombia-pink-bourbon-honey-7-drip-box</g:link>
+      
+      <g:price>0.000 OMR</g:price>
+      <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:brand>Spirit Hub Cafe</g:brand>
       <g:google_product_category>499972</g:google_product_category>
-      <g:mpn>ufo-drip-pink-bourbon-7box</g:mpn>
-      <g:item_group_id>colombia-pink-bourbon-ufo-drip</g:item_group_id>
+      <g:mpn>SH-UFO-COL-PBH-7PK</g:mpn>
     </item>
-    
-    <!-- Product 19: UFO Drip Coffee – Ethiopia Gargari Gutity Yirgacheffe (single SKU) -->
-    <item>
-      <g:id>ufo-drip-gargari-gutity-7box</g:id>
-      <g:title>UFO Drip Coffee – Ethiopia Gargari Gutity Yirgacheffe</g:title>
-      <g:description>Premium UFO drip coffee with Ethiopia Gargari Gutity Yirgacheffe beans, 7 pack box for convenient brewing.</g:description>
-      <g:link>https://spirithubcafe.com/products/ufo-drip-coffee-ethiopia-gargari-gutity-yirgacheffe</g:link>
-      <g:image_link>https://spirithubcafe.com/images/products/default-product.webp</g:image_link>
-      <g:price>14.000 OMR</g:price>
-      <g:availability>in stock</g:availability>
+<item>
+      <g:id>ufo-drip-coffee-ethiopia-gargari-gutity-yirgacheff</g:id>
+      <g:title>UFO Drip Coffee – Ethiopia Gargari Gutity Yirgacheffe | 7-Drip Box</g:title>
+      <g:description>UFO Drip Coffee – Ethiopia Gargari Gutity Yirgacheffe | 7-Drip Box</g:description>
+      <g:link>https://spirithubcafe.com/products/ufo-drip-coffee-ethiopia-gargari-gutity-yirgacheffe-7-drip-box</g:link>
+      
+      <g:price>0.000 OMR</g:price>
+      <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:brand>Spirit Hub Cafe</g:brand>
       <g:google_product_category>499972</g:google_product_category>
-      <g:mpn>ufo-drip-gargari-gutity-7box</g:mpn>
-      <g:item_group_id>ufo-drip-ethiopia-gargari-gutity</g:item_group_id>
+      <g:mpn>UFO-ETH-GAR-7</g:mpn>
     </item>
-    
-    <!-- Product 20: Yemen Odaini Anaerobic Natural -->
-    <item>
-      <g:id>yemen-odaini-anaerobic-250g</g:id>
-      <g:title>Yemen Odaini Anaerobic Natural – 250g</g:title>
-      <g:description>Rare Yemeni coffee from Odaini with anaerobic natural processing, featuring exotic spice and fruit notes.</g:description>
-      <g:link>https://spirithubcafe.com/products/yemen-odaini-anaerobic-natural-coffee-spirithub</g:link>
-      <g:image_link>https://spirithubcafe.com/images/products/default-product.webp</g:image_link>
-      <g:price>16.000 OMR</g:price>
-      <g:availability>in stock</g:availability>
+<item>
+      <g:id>yemen-odaini-anaerobic-natural</g:id>
+      <g:title>Yemen - Odaini Anaerobic Natural</g:title>
+      <g:description>Yemen - Odaini Anaerobic Natural</g:description>
+      <g:link>https://spirithubcafe.com/products/yemen-odaini-anaerobic-natural</g:link>
+      
+      <g:price>0.000 OMR</g:price>
+      <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:brand>Spirit Hub Cafe</g:brand>
       <g:google_product_category>499972</g:google_product_category>
-      <g:mpn>yemen-odaini-anaerobic-250g</g:mpn>
-      <g:item_group_id>yemen-odaini-anaerobic-natural-spirithub</g:item_group_id>
+      <g:mpn>YEM-ODA</g:mpn>
     </item>
-    <item>
-      <g:id>yemen-odaini-anaerobic-1kg</g:id>
-      <g:title>Yemen Odaini Anaerobic Natural – 1kg</g:title>
-      <g:description>Rare Yemeni coffee from Odaini with anaerobic natural processing, featuring exotic spice and fruit notes.</g:description>
-      <g:link>https://spirithubcafe.com/products/yemen-odaini-anaerobic-natural-coffee-spirithub</g:link>
-      <g:image_link>https://spirithubcafe.com/images/products/default-product.webp</g:image_link>
-      <g:price>38.000 OMR</g:price>
-      <g:availability>in stock</g:availability>
-      <g:condition>new</g:condition>
-      <g:brand>Spirit Hub Cafe</g:brand>
-      <g:google_product_category>499972</g:google_product_category>
-      <g:mpn>yemen-odaini-anaerobic-1kg</g:mpn>
-      <g:item_group_id>yemen-odaini-anaerobic-natural-spirithub</g:item_group_id>
-    </item>
-    
   </channel>
 </rss>
-
-

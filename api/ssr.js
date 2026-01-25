@@ -66,7 +66,7 @@ async function fetchProductDetails(identifier) {
 
 // Helper function to generate meta tags based on route
 async function getMetaTagsForRoute(url, baseUrl) {
-  const resolvedBaseUrl = (baseUrl || process.env.VITE_SITE_URL || process.env.SITE_URL || 'https://www.spirithubcafe.com')
+  const resolvedBaseUrl = (baseUrl || process.env.VITE_SITE_URL || process.env.SITE_URL || 'https://spirithubcafe.com')
     .toString()
     .replace(/\/+$/, '');
   
@@ -211,13 +211,21 @@ async function getMetaTagsForRoute(url, baseUrl) {
     )
     .join('');
 
+  const canonicalUrl = `${resolvedBaseUrl}${cleanUrl}`;
+
   return `
     <title>${title}</title>
     <meta name="description" content="${description}" />
+    <link rel="canonical" href="${canonicalUrl}" />
+    <link rel="alternate" hreflang="en" href="${canonicalUrl}" />
+    <link rel="alternate" hreflang="ar" href="${canonicalUrl}?lang=ar" />
+    <link rel="alternate" hreflang="x-default" href="${canonicalUrl}" />
     <meta property="og:type" content="${ogType}" />
     <meta property="og:title" content="${title}" />
     <meta property="og:description" content="${description}" />
-    <meta property="og:url" content="${resolvedBaseUrl}${cleanUrl}" />
+    <meta property="og:url" content="${canonicalUrl}" />
+    <meta property="og:locale" content="en-OM" />
+    <meta property="og:locale:alternate" content="ar-OM" />
     ${ogImageTags}
     <meta property="og:site_name" content="Spirit Hub Cafe" />
     <meta name="twitter:card" content="summary_large_image" />
