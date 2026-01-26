@@ -78,7 +78,7 @@ export interface AramexAddress {
   line1: string;
   city: string;
   countryCode: string;
-  postCode: string;
+  postCode?: string;
 }
 
 export interface AramexShipmentDetails {

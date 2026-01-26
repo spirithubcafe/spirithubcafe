@@ -104,42 +104,54 @@ export function computeShippingMethods(opts: {
 export async function calculateAramexShippingRate(
   countryIso2: string,
   city: string,
-  weight: number
+  weight: number,
+  postalCode?: string,
 ): Promise<{ success: boolean; price?: number; error?: string }> {
   try {
-    const isOman = countryIso2 === 'OM';
+    const isOman = countryIso2 === "OM";
 
-    const productGroup = isOman ? 'DOM' : 'EXP';
-    const productType = isOman ? 'ONP' : 'PPX'; // ONP for domestic Oman, PPX for international
+    const productGroup = isOman ? "DOM" : "EXP";
+    const productType = isOman ? "ONP" : "PPX"; // ONP for domestic Oman, PPX for international
 
     const chargeableWeight = Math.max(1, Math.ceil(weight || 0));
 
+    // Helper function to get postal code based on country type
+    // GCC countries can use "00000", international countries should use provided postal code or undefined
+    const getPostalCodeForCountry = (countryCode: string, providedPostalCode?: string): string | undefined => {
+      const gccCountries = ["OM", "AE", "SA", "QA", "KW", "BH"];
+      if (gccCountries.includes(countryCode)) {
+        return "00000";
+      }
+      // For international countries, use provided postal code (required by Aramex API)
+      return providedPostalCode;
+    };
+
     const request: AramexRateRequest = {
       originAddress: {
-        line1: 'Al Hail',
-        city: 'Muscat',
-        countryCode: 'OM',
-        postCode: '111',
+        line1: "Al Hail",
+        city: "Muscat",
+        countryCode: "OM",
+        postCode: "111",
       },
       destinationAddress: {
-        line1: 'Customer Address',
+        line1: "Customer Address",
         city: city,
         countryCode: countryIso2,
-        postCode: '00000',
+        postCode: getPostalCodeForCountry(countryIso2, postalCode),
       },
       shipmentDetails: {
-        actualWeight: { unit: 'KG', value: chargeableWeight },
-        chargeableWeight: { unit: 'KG', value: chargeableWeight },
+        actualWeight: { unit: "KG", value: chargeableWeight },
+        chargeableWeight: { unit: "KG", value: chargeableWeight },
         numberOfPieces: 1,
         productGroup: productGroup,
         productType: productType,
-        paymentType: 'P',
-        descriptionOfGoods: 'Coffee Products',
+        paymentType: "P",
+        descriptionOfGoods: "Coffee Products",
         dimensions: {
           length: 20,
           width: 20,
           height: 20,
-          unit: 'CM',
+          unit: "CM",
         },
       },
     };
@@ -152,12 +164,12 @@ export async function calculateAramexShippingRate(
 
     return {
       success: false,
-      error: response.errors?.join(', ') || 'Rate unavailable'
+      error: response.errors?.join(", ") || "Rate unavailable",
     };
   } catch (err: any) {
     return {
       success: false,
-      error: err?.message || 'Network error'
+      error: err?.message || "Network error",
     };
   }
 }
