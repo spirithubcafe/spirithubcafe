@@ -5,14 +5,18 @@ import { safeStorage } from '../lib/safeStorage';
 import { getActiveRegionForApi } from '../lib/regionUtils';
 
 const getLoginRedirectUrl = (): string => {
+  const path = window.location.pathname;
+  const current = path + window.location.search;
+  if (path.startsWith('/wholesale')) {
+    return `/wholesale/login?redirect=${encodeURIComponent(current)}`;
+  }
   const savedRegion = safeStorage.getItem('spirithub-region') || 'om';
-  const current = window.location.pathname + window.location.search;
   const loginPath = `/${savedRegion}/login`;
   return `${loginPath}?redirect=${encodeURIComponent(current)}`;
 };
 
 const isLoginRoute = (pathname: string): boolean => {
-  return /^\/(om|sa)\/login\/?$/.test(pathname) || pathname === '/login';
+  return /^\/(om|sa)\/login\/?$/.test(pathname) || pathname === '/login' || /^\/wholesale\/login\/?$/.test(pathname);
 };
 
 // Get API Base URL based on current region

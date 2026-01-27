@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -93,6 +94,8 @@ const sanitizeWhatsappPhone = (raw: string): string => {
 };
 
 export const WholesaleOrderPage: React.FC = () => {
+  const location = useLocation();
+  const isWholesalePanel = /^\/wholesale(\/|$)/.test(location.pathname);
   const { language } = useApp();
   const isArabic = language === 'ar';
   const { currentRegion } = useRegion();
@@ -246,7 +249,19 @@ export const WholesaleOrderPage: React.FC = () => {
     setSubmitLoading(true);
     setConfirmationEmailState('idle');
     try {
-      const order = await wholesaleOrderService.create({
+      const order = await (isWholesalePanel
+        ? wholesaleOrderService.createSecured({
+            customerName: values.customerName,
+            cafeName: values.cafeName,
+            customerPhone: values.customerPhone,
+            customerEmail: values.customerEmail,
+            shippingMethod: values.shippingMethod as WholesaleShippingMethod,
+            address: values.shippingMethod === 2 && values.address?.trim() ? values.address.trim() : undefined,
+            city: values.shippingMethod === 2 && values.city?.trim() ? values.city.trim() : undefined,
+            notes: values.notes?.trim() ? values.notes : undefined,
+            items: values.items,
+          })
+        : wholesaleOrderService.create({
         customerName: values.customerName,
         cafeName: values.cafeName,
         customerPhone: values.customerPhone,
@@ -256,7 +271,7 @@ export const WholesaleOrderPage: React.FC = () => {
         city: values.shippingMethod === 2 && values.city?.trim() ? values.city.trim() : undefined,
         notes: values.notes?.trim() ? values.notes : undefined,
         items: values.items,
-      });
+          }));
 
       setCreatedOrder(order);
       toast.success(isArabic ? 'تم إنشاء طلب الجملة بنجاح' : 'Wholesale order created');

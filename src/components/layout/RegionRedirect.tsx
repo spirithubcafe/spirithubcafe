@@ -72,8 +72,8 @@ export const RegionRedirect: React.FC = () => {
   useEffect(() => {
     const path = location.pathname;
     
-    // Skip admin routes
-    if (path.includes('/admin')) {
+    // Skip admin and wholesale routes
+    if (path.includes('/admin') || path.startsWith('/wholesale')) {
       return;
     }
     

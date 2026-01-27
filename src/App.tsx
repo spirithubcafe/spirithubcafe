@@ -1,4 +1,4 @@
-import { Routes, Route, useLocation } from 'react-router-dom';
+import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { Toaster } from './components/ui/sonner';
 import { AppProvider } from './contexts/AppContext';
@@ -58,12 +58,17 @@ import { PaymentFailurePage } from './pages/PaymentFailurePage';
 import { PaymentCancelledPage } from './pages/PaymentCancelledPage';
 import { PaymentErrorPage } from './pages/PaymentErrorPage';
 import { RequireAuth } from './components/auth/RequireAuth';
+import { RequireWholesale } from './components/auth/RequireWholesale';
 import { AdminRegionRedirect } from './components/admin/AdminRegionRedirect';
 import { initVisitorTracking } from './lib/visitorTracking';
 import { migrateCartToRegionBased } from './lib/migrateCart';
 import { useEffect } from 'react';
 import './i18n';
 import './App.css';
+import WholesaleLoginPage from './pages/WholesaleLoginPage';
+import WholesaleDashboardPage from './pages/WholesaleDashboardPage';
+import WholesaleOrdersPage from './pages/WholesaleOrdersPage';
+import WholesaleOrderDetailsPage from './pages/WholesaleOrderDetailsPage';
 
 function AppContent() {
   const location = useLocation();
@@ -88,6 +93,42 @@ function AppContent() {
       <ScrollToTop />
       <Toaster position="top-center" duration={2000} richColors />
       <Routes>
+        {/* Wholesale panel routes */}
+        <Route path="/wholesale/login" element={<WholesaleLoginPage />} />
+        <Route
+          path="/wholesale/dashboard"
+          element={
+            <RequireWholesale>
+              <WholesaleDashboardPage />
+            </RequireWholesale>
+          }
+        />
+        <Route
+          path="/wholesale/orders"
+          element={
+            <RequireWholesale>
+              <WholesaleOrdersPage />
+            </RequireWholesale>
+          }
+        />
+        <Route
+          path="/wholesale/orders/new"
+          element={
+            <RequireWholesale>
+              <WholesaleOrderPage />
+            </RequireWholesale>
+          }
+        />
+        <Route
+          path="/wholesale/orders/:id"
+          element={
+            <RequireWholesale>
+              <WholesaleOrderDetailsPage />
+            </RequireWholesale>
+          }
+        />
+        <Route path="/wholesale" element={<Navigate to="/wholesale/dashboard" replace />} />
+
         {/* Root redirect */}
         <Route path="/" element={<HomePage />} />
         
@@ -106,7 +147,14 @@ function AppContent() {
         <Route path="/om/refund" element={<RefundPolicyPage />} />
         <Route path="/om/products" element={<ProductsPage />} />
         <Route path="/om/products/:productId" element={<ProductDetailPage />} />
-        <Route path="/om/wholesale" element={<WholesaleOrderPage />} />
+        <Route
+          path="/om/wholesale"
+          element={
+            <RequireWholesale>
+              <WholesaleOrderPage />
+            </RequireWholesale>
+          }
+        />
         <Route path="/om/login" element={<LoginPage />} />
         <Route path="/om/register" element={<RegisterPage />} />
         <Route path="/om/forgot-password" element={<ForgotPasswordPage />} />
@@ -136,7 +184,14 @@ function AppContent() {
         <Route path="/sa/refund" element={<RefundPolicyPage />} />
         <Route path="/sa/products" element={<ProductsPage />} />
         <Route path="/sa/products/:productId" element={<ProductDetailPage />} />
-        <Route path="/sa/wholesale" element={<WholesaleOrderPage />} />
+        <Route
+          path="/sa/wholesale"
+          element={
+            <RequireWholesale>
+              <WholesaleOrderPage />
+            </RequireWholesale>
+          }
+        />
         <Route path="/sa/login" element={<LoginPage />} />
         <Route path="/sa/register" element={<RegisterPage />} />
         <Route path="/sa/forgot-password" element={<ForgotPasswordPage />} />
@@ -208,7 +263,14 @@ function AppContent() {
         <Route path="/refund" element={<RefundPolicyPage />} />
         <Route path="/products" element={<ProductsPage />} />
         <Route path="/products/:productId" element={<ProductDetailPage />} />
-        <Route path="/wholesale" element={<WholesaleOrderPage />} />
+        <Route
+          path="/wholesale"
+          element={
+            <RequireWholesale>
+              <WholesaleOrderPage />
+            </RequireWholesale>
+          }
+        />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />

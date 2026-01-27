@@ -1,7 +1,15 @@
 export type WholesaleShippingMethod = 1 | 2; // 1=Pickup, 2=Nool
 
-export type WholesaleOrderStatus = 'New' | 'Preparing' | 'Shipped';
-export type WholesalePaymentStatus = 'Pending' | 'Paid';
+export type WholesaleOrderStatus =
+  | 'New'
+  | 'Pending'
+  | 'Confirmed'
+  | 'Processing'
+  | 'Preparing'
+  | 'Shipped'
+  | 'Delivered'
+  | 'Cancelled';
+export type WholesalePaymentStatus = 'Pending' | 'Paid' | 'Failed' | 'Refunded';
 
 export interface WholesaleOrderItemCreate {
   productId: number;

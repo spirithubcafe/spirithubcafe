@@ -41,6 +41,21 @@ export const wholesaleOrderService = {
     return data;
   },
 
+  // Auth required
+  createSecured: async (payload: WholesaleOrderCreate): Promise<WholesaleOrder> => {
+    const response = await http.post<WholesaleApiResponse<WholesaleOrder>>(
+      '/api/wholesale-orders/secured',
+      payload
+    );
+
+    const data = unwrap<WholesaleOrder>(response.data);
+    if (!data) {
+      throw new Error(response.data?.message ?? 'Wholesale order failed');
+    }
+
+    return data;
+  },
+
   /**
    * Best-effort customer confirmation email trigger.
    * Uses publicHttp to avoid redirecting anonymous customers on 401s.
