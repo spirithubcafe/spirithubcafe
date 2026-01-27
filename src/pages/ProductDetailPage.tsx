@@ -916,7 +916,7 @@ export const ProductDetailPage = () => {
                           ) : null}
 
                           {images.length > 1 ? (
-                            <div className="absolute inset-x-0 top-1/2 flex justify-between px-3 text-white">
+                            <div className={`absolute inset-x-0 top-1/2 flex justify-between px-3 text-white ${language === 'ar' ? 'flex-row-reverse' : ''}`}>
                               <button
                                 type="button"
                                 onClick={() => incrementImage(-1)}
