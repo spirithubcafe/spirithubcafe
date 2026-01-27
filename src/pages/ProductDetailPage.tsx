@@ -1733,7 +1733,7 @@ export const ProductDetailPage = () => {
                     <div className="flex items-center gap-3 px-5 pt-5">
                       <div className="flex-1">
                         <DialogHeader>
-                          <DialogTitle className="text-base">
+                          <DialogTitle className={`text-base ${language === 'ar' ? 'text-right' : 'text-left'}`}>
                             {language === 'ar' ? 'إرسال مراجعتك' : 'Send your review'}
                           </DialogTitle>
                         </DialogHeader>
