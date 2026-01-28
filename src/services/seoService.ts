@@ -1,8 +1,9 @@
 import type { SeoFileInfo, SeoGenerationResult, SeoOverview } from '../types/seo';
 import { siteMetadata } from '../config/siteMetadata';
 import { categoryService } from './categoryService';
-import { productService } from './productService';
+import { productService, productVariantService } from './productService';
 import type { Category, Product } from '../types/product';
+import { getProductImageUrl, resolveProductImagePath } from '../lib/imageUtils';
 
 const isLocalEnvironment = (() => {
   if (typeof window !== 'undefined' && window.location) {
@@ -169,7 +170,23 @@ const fetchAllProducts = async (): Promise<Product[]> => {
       break;
     }
   }
-  return products;
+  if (products.length === 0) {
+    return products;
+  }
+
+  const productsWithVariants = await Promise.all(
+    products.map(async (product) => {
+      try {
+        const variants = await productVariantService.getByProduct(product.id);
+        return { ...product, variants };
+      } catch (error) {
+        console.warn('Unable to fetch product variants for feed', product.id, error);
+        return product;
+      }
+    })
+  );
+
+  return productsWithVariants;
 };
 
 const fetchAllCategories = async (): Promise<Category[]> => {
@@ -324,14 +341,9 @@ const buildFeedXml = (baseUrl: string, products: Product[]): { xml: string; entr
     // Get description
     const description = product.metaDescription || product.description || product.name || '';
     
-    // Get main image - prioritize mainImage, fallback to first image in array
-    const mainImage = product.mainImage || (product.images && product.images.length > 0 ? product.images[0] : null);
-    let imageUrl = '';
-    if (mainImage && mainImage.imagePath) {
-      // Ensure image path uses WebP format (Google supports it)
-      const imagePath = mainImage.imagePath.replace(/\.(jpg|jpeg|png)$/i, '.webp');
-      imageUrl = `${baseUrl}${imagePath}`;
-    }
+    // Get main image URL (use API base + fallbacks for various product image fields)
+    const imagePath = resolveProductImagePath(product);
+    const imageUrl = imagePath ? getProductImageUrl(imagePath) : '';
     
     // Brand
     const brand = 'Spirit Hub Cafe';

@@ -85,7 +85,7 @@ export const REGION_INFO: Record<RegionCode, RegionInfo> = {
   sa: {
     contact: {
       phone: '+966 53 983 9201',
-      phone2: '+966 051 050 1001',
+      phone2: '+966 51 050 1001',
       whatsapp: '966539839201',
       email: 'info@spirithubcafe.com',
       address: {

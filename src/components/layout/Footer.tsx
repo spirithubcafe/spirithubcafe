@@ -170,18 +170,37 @@ export const Footer: React.FC = () => {
                   <p className="text-gray-300">
                     {language === 'ar' ? regionInfo.contact.address.ar : regionInfo.contact.address.en}
                   </p>
-                  <div
-                    className={`space-y-1 ${
+                  <ul
+                    className={`list-none pl-0 space-y-1 ${
                       language === 'ar' ? 'text-right' : 'text-left'
                     }`}
                     dir="ltr"
                   >
-                    <p className="text-gray-300">{regionInfo.contact.phone}</p>
+                    <li>
+                      <a
+                        href={`tel:${regionInfo.contact.phone.replace(/\s+/g, '')}`}
+                        className="text-gray-300 hover:text-amber-200 transition-colors"
+                      >
+                        {regionInfo.contact.phone}
+                      </a>
+                    </li>
                     {regionInfo.contact.phone2 && (
-                      <p className="text-gray-300">{regionInfo.contact.phone2}</p>
+                      <li>
+                        <a
+                          href={`tel:${regionInfo.contact.phone2.replace(/\s+/g, '')}`}
+                          className="text-gray-300 hover:text-amber-200 transition-colors"
+                        >
+                          {regionInfo.contact.phone2}
+                        </a>
+                      </li>
                     )}
-                  </div>
-                  <p className="text-gray-300">{regionInfo.contact.email}</p>
+                  </ul>
+                  <a
+                    href={`mailto:${regionInfo.contact.email}`}
+                    className="text-gray-300 hover:text-amber-200 transition-colors"
+                  >
+                    {regionInfo.contact.email}
+                  </a>
                   <p className="text-gray-300 font-medium whitespace-pre-line">
                     {language === 'ar' ? regionInfo.contact.workingHours.ar : regionInfo.contact.workingHours.en}
                   </p>
@@ -215,11 +234,6 @@ export const Footer: React.FC = () => {
                 <p className="text-gray-400 text-xs md:text-sm">
                   © 2026 SPIRITHUB ROASTERY
                 </p>
-                {appVersion && (
-                  <p className="text-gray-500 text-[10px] md:text-xs mt-1">
-                    v{appVersion}
-                  </p>
-                )}
               </div>
               
               {/* Newsletter - Right Side */}

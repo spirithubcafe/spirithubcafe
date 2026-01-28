@@ -44,7 +44,7 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import { format } from 'date-fns';
-import { createAramexPickup, orderService, productVariantService } from '../../services';
+import { createAramexPickup, emailService, orderService, productVariantService } from '../../services';
 import { REGION_INFO } from '../../config/regionInfo';
 import type { Order, OrderStatus, PaymentStatus } from '../../types/order';
 
@@ -289,22 +289,27 @@ export const OrdersManagement: React.FC = () => {
     return normalized === '00000000-0000-0000-0000-000000000000';
   };
 
-  const openRegisterPickupDialog = async () => {
-    if (!selectedOrder) return;
-    if (selectedOrder.shippingMethod !== 3) return;
-    if (!selectedOrder.trackingNumber) return;
+  const openRegisterPickupDialog = async (order?: Order) => {
+    const targetOrder = order ?? selectedOrder;
+    if (!targetOrder) return;
+    if (targetOrder.shippingMethod !== 3) return;
+    if (!targetOrder.trackingNumber) return;
+
+    if (order) {
+      setSelectedOrder(targetOrder);
+    }
 
     setRegisterPickupError(null);
 
     const region = resolveRegionFromStorage();
     const regionInfo = REGION_INFO[region];
 
-    const totalPieces = (selectedOrder.items || []).reduce((sum, item) => sum + (item.quantity || 0), 0) ||
-      (selectedOrder.items?.length ?? 1);
+    const totalPieces = (targetOrder.items || []).reduce((sum, item) => sum + (item.quantity || 0), 0) ||
+      (targetOrder.items?.length ?? 1);
 
     const variantIds = Array.from(
       new Set(
-        (selectedOrder.items || [])
+        (targetOrder.items || [])
           .map((i) => i.productVariantId)
           .filter((v): v is number => typeof v === 'number' && Number.isFinite(v))
       )
@@ -327,7 +332,7 @@ export const OrdersManagement: React.FC = () => {
       });
     }
 
-    const totalWeightKgRaw = (selectedOrder.items || []).reduce((sum, item) => {
+    const totalWeightKgRaw = (targetOrder.items || []).reduce((sum, item) => {
       const variantId = item.productVariantId;
       if (typeof variantId !== 'number') return sum;
       const v = variantsById.get(variantId);
@@ -338,7 +343,7 @@ export const OrdersManagement: React.FC = () => {
 
     const weightKg = totalWeightKgRaw > 0 ? Number(totalWeightKgRaw.toFixed(3)) : 2.5;
 
-    const dims = (selectedOrder.items || []).flatMap((item) => {
+    const dims = (targetOrder.items || []).flatMap((item) => {
       const variantId = item.productVariantId;
       if (typeof variantId !== 'number') return [];
       const v = variantsById.get(variantId);
@@ -367,7 +372,7 @@ export const OrdersManagement: React.FC = () => {
       vehicle: 'Car',
       // Aramex returned REQ27 when Status empty; default to a non-empty value.
       status: 'Ready',
-      comments: `Order ${selectedOrder.orderNumber} (manual pickup registration)`,
+      comments: `Order ${targetOrder.orderNumber} (manual pickup registration)`,
 
       productGroup: 'EXP',
       productType: 'PPX',
@@ -535,6 +540,17 @@ export const OrdersManagement: React.FC = () => {
         toast.error(msg);
         // Keep optimistic UI values so user can copy/see them.
       }
+
+      // Send confirmation email to customer (best-effort)
+      await sendPickupConfirmationEmail(
+        {
+          ...selectedOrder,
+          pickupReference,
+          pickupGUID,
+        },
+        pickupReference,
+        pickupDraft
+      );
 
       // Refresh local state
       const fresh = await orderService.getOrderById(selectedOrder.id);
@@ -859,6 +875,149 @@ export const OrdersManagement: React.FC = () => {
     }
   };
 
+  const buildPickupConfirmationEmail = (order: Order, pickupReference: string, draft?: PickupDraft) => {
+    const customerName = order.customerName || order.fullName || (isArabic ? 'العميل' : 'Customer');
+    const trackingNumber = order.trackingNumber || '';
+    const trackUrl = trackingNumber
+      ? `https://www.aramex.com/om/en/track/shipments?ShipmentNumber=${trackingNumber}`
+      : '';
+
+    const items = Array.isArray(order.items) ? order.items : [];
+    const itemsRows = items.length
+      ? items
+          .map(
+            (item) => `
+              <tr>
+                <td style="padding:8px;border:1px solid #e5e7eb;">${isArabic ? (item.productNameAr || item.productName) : (item.productName || item.productNameAr || 'Product')}</td>
+                <td style="padding:8px;border:1px solid #e5e7eb;text-align:center;">${item.quantity}</td>
+                <td style="padding:8px;border:1px solid #e5e7eb;text-align:right;">${Number(item.totalAmount || 0).toFixed(3)} ${isArabic ? 'ر.ع.' : 'OMR'}</td>
+              </tr>
+            `
+          )
+          .join('')
+      : `
+          <tr>
+            <td style="padding:8px;border:1px solid #e5e7eb;" colspan="3">${isArabic ? 'لا توجد عناصر' : 'No items'}</td>
+          </tr>
+        `;
+
+    const pickupWindow = draft?.pickupDate
+      ? `${draft.pickupDate} ${draft.readyTime || ''}${draft.lastPickupTime ? ` - ${draft.lastPickupTime}` : ''}`.trim()
+      : '';
+
+    const subject = isArabic
+      ? `تأكيد جدولة استلام أرامكس للطلب #${order.orderNumber}`
+      : `Aramex Pickup Scheduled for Order #${order.orderNumber}`;
+
+    const body = isArabic
+      ? `
+        <!DOCTYPE html>
+        <html dir="rtl" lang="ar">
+        <body style="font-family: Tahoma, Arial;">
+          <div style="max-width: 640px; margin: 0 auto; padding: 20px;">
+            <div style="text-align: right; margin-bottom: 10px;">
+              <img src="https://spirithubcafe.com/images/logo/logo-dark.png" alt="SpiritHub" style="height:48px;" />
+            </div>
+            <h2 style="margin: 0 0 12px;">تم جدولة استلام الشحنة</h2>
+            <p>مرحباً ${customerName}،</p>
+            <p>تم تأكيد جدولة استلام شحنتك عبر أرامكس.</p>
+            <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px;">
+              <p style="margin:0 0 6px;"><strong>رقم الطلب:</strong> ${order.orderNumber}</p>
+              ${trackingNumber ? `<p style="margin:0 0 6px;"><strong>رقم التتبع:</strong> ${trackingNumber}</p>` : ''}
+              <p style="margin:0 0 6px;"><strong>مرجع الاستلام:</strong> ${pickupReference}</p>
+              ${pickupWindow ? `<p style="margin:0;"><strong>موعد الاستلام:</strong> ${pickupWindow}</p>` : ''}
+            </div>
+            ${trackUrl ? `
+              <p style="margin:14px 0;">
+                تتبع الشحنة: <a href="${trackUrl}">${trackUrl}</a>
+              </p>
+            ` : ''}
+            <h3 style="margin-top:18px;">تفاصيل الطلب</h3>
+            <table style="width:100%;border-collapse:collapse;">
+              <thead>
+                <tr style="background:#f1f5f9;">
+                  <th style="padding:8px;border:1px solid #e5e7eb;text-align:right;">المنتج</th>
+                  <th style="padding:8px;border:1px solid #e5e7eb;text-align:center;">الكمية</th>
+                  <th style="padding:8px;border:1px solid #e5e7eb;text-align:right;">الإجمالي</th>
+                </tr>
+              </thead>
+              <tbody>${itemsRows}</tbody>
+            </table>
+            <p style="margin-top:12px;"><strong>إجمالي الطلب:</strong> ${order.totalAmount.toFixed(3)} ر.ع.</p>
+            <p>شكراً لاختيارك SpiritHub Roastery.</p>
+          </div>
+        </body>
+        </html>
+      `
+      : `
+        <!DOCTYPE html>
+        <html lang="en">
+        <body style="font-family: Arial, sans-serif;">
+          <div style="max-width: 640px; margin: 0 auto; padding: 20px;">
+            <div style="text-align: right; margin-bottom: 10px;">
+              <img src="https://spirithubcafe.com/images/logo/logo-dark.png" alt="SpiritHub" style="height:48px;" />
+            </div>
+            <h2 style="margin: 0 0 12px;">Your pickup has been scheduled</h2>
+            <p>Hi ${customerName},</p>
+            <p>Your Aramex pickup has been scheduled successfully.</p>
+            <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px;">
+              <p style="margin:0 0 6px;"><strong>Order #:</strong> ${order.orderNumber}</p>
+              ${trackingNumber ? `<p style="margin:0 0 6px;"><strong>Tracking #:</strong> ${trackingNumber}</p>` : ''}
+              <p style="margin:0 0 6px;"><strong>Pickup Reference:</strong> ${pickupReference}</p>
+              ${pickupWindow ? `<p style="margin:0;"><strong>Pickup window:</strong> ${pickupWindow}</p>` : ''}
+            </div>
+            ${trackUrl ? `
+              <p style="margin:14px 0;">
+                Track shipment: <a href="${trackUrl}">${trackUrl}</a>
+              </p>
+            ` : ''}
+            <h3 style="margin-top:18px;">Order details</h3>
+            <table style="width:100%;border-collapse:collapse;">
+              <thead>
+                <tr style="background:#f1f5f9;">
+                  <th style="padding:8px;border:1px solid #e5e7eb;text-align:left;">Item</th>
+                  <th style="padding:8px;border:1px solid #e5e7eb;text-align:center;">Qty</th>
+                  <th style="padding:8px;border:1px solid #e5e7eb;text-align:right;">Total</th>
+                </tr>
+              </thead>
+              <tbody>${itemsRows}</tbody>
+            </table>
+            <p style="margin-top:12px;"><strong>Order total:</strong> ${order.totalAmount.toFixed(3)} OMR</p>
+            <p>Thank you for choosing SpiritHub Roastery.</p>
+          </div>
+        </body>
+        </html>
+      `;
+
+    return { subject, body };
+  };
+
+  const sendPickupConfirmationEmail = async (order: Order, pickupReference: string, draft?: PickupDraft) => {
+    if (!order.email) {
+      toast.error(isArabic ? 'لا يوجد بريد إلكتروني للعميل' : 'Customer email is missing');
+      return;
+    }
+
+    try {
+      const { subject, body } = buildPickupConfirmationEmail(order, pickupReference, draft);
+      const result = await emailService.sendSingleEmail({
+        toEmail: order.email,
+        toName: order.customerName || order.fullName,
+        subject,
+        body,
+        isHtml: true,
+      });
+
+      if (!result?.success) {
+        const msg = result?.errors?.join(', ') || result?.message || (isArabic ? 'فشل إرسال البريد' : 'Email send failed');
+        toast.error(msg);
+      }
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || (isArabic ? 'فشل إرسال البريد' : 'Failed to send email');
+      toast.error(msg);
+    }
+  };
+
   const generateWhatsAppMessage = (order: Order): string => {
     const customerName = order.customerName || order.fullName || (isArabic ? 'العميل' : 'Customer');
     const orderAmount = `${order.totalAmount.toFixed(3)} OMR`;
@@ -1071,6 +1230,20 @@ export const OrdersManagement: React.FC = () => {
                 )}
                 {isArabic ? 'ملصق الشحن' : 'Print Label'}
               </DropdownMenuItem>
+              {!order.pickupReference && (
+                <DropdownMenuItem
+                  onSelect={() => openRegisterPickupDialog(order)}
+                  disabled={registerPickupLoading}
+                  className="text-orange-700 focus:text-orange-700"
+                >
+                  {registerPickupLoading ? (
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Calendar className="h-4 w-4" />
+                  )}
+                  {isArabic ? 'جدولة الاستلام' : 'Schedule Pickup'}
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem
                 onSelect={() => window.open(`https://www.aramex.com/om/en/track/shipments?ShipmentNumber=${order.trackingNumber}`, '_blank', 'noopener,noreferrer')}
               >
@@ -2605,7 +2778,7 @@ export const OrdersManagement: React.FC = () => {
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  onClick={openRegisterPickupDialog}
+                                  onClick={() => openRegisterPickupDialog()}
                                   disabled={registerPickupLoading}
                                   className="border-orange-300 bg-white hover:bg-orange-50"
                                 >
