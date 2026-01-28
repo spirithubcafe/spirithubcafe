@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Facebook, Instagram, Mail, MessageCircle } from 'lucide-react';
 import { useApp } from '../../hooks/useApp';
