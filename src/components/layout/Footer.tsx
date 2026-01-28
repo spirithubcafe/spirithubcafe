@@ -13,15 +13,6 @@ export const Footer: React.FC = () => {
   const [email, setEmail] = useState('');
   const [subscribeStatus, setSubscribeStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
-  const [appVersion, setAppVersion] = useState('');
-
-  // Load app version
-  useEffect(() => {
-    fetch('/version.json')
-      .then(res => res.json())
-      .then(data => setAppVersion(data.version))
-      .catch(() => setAppVersion('1.0.0'));
-  }, []);
 
   const handleNewsletterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

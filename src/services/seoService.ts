@@ -342,7 +342,7 @@ const buildFeedXml = (baseUrl: string, products: Product[]): { xml: string; entr
     const description = product.metaDescription || product.description || product.name || '';
     
     // Get main image URL (use API base + fallbacks for various product image fields)
-    const imagePath = resolveProductImagePath(product);
+    const imagePath = resolveProductImagePath(product as Product & Record<string, unknown>);
     const imageUrl = imagePath ? getProductImageUrl(imagePath) : '';
     
     // Brand
