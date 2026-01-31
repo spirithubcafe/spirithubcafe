@@ -6,11 +6,13 @@ import { CheckCircle, PackageCheck, Mail, Clock, Sparkles, ArrowRight, Package }
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { useApp } from '../hooks/useApp';
+import { useRegion } from '../hooks/useRegion';
 import { Seo } from '../components/seo/Seo';
 import { siteMetadata } from '../config/siteMetadata';
 
 export const PaymentSuccessPage: React.FC = () => {
   const { language } = useApp();
+  const { currentRegion } = useRegion();
   const isArabic = language === 'ar';
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -23,8 +25,11 @@ export const PaymentSuccessPage: React.FC = () => {
   useEffect(() => {
     setIsVisible(true);
 
-    // Clear cart after successful payment
+    // Clear cart after successful payment (region-specific)
     if (orderId) {
+      // Clear region-specific cart
+      localStorage.removeItem(`spirithub_cart_${currentRegion.code}`);
+      // Also clear legacy cart key for backward compatibility
       localStorage.removeItem('spirithub_cart');
       sessionStorage.removeItem('spirithub_checkout_order');
       sessionStorage.removeItem('spirithub_pending_checkout');
@@ -81,7 +86,7 @@ export const PaymentSuccessPage: React.FC = () => {
     });
 
     return () => clearInterval(interval);
-  }, [orderId]);
+  }, [orderId, currentRegion.code]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50 page-padding-top relative overflow-hidden">

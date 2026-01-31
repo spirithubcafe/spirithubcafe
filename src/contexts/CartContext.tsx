@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { CartContext, type CartItem, type CartContextType } from './CartContextDefinition';
 import { RegionContext } from './RegionContextDefinition';
@@ -10,65 +10,78 @@ interface CartProviderProps {
 // Helper function to get cart storage key for specific region
 const getCartStorageKey = (regionCode: string) => `spirithub_cart_${regionCode}`;
 
+// Helper function to load cart from localStorage
+const loadCartFromStorage = (regionCode: string): CartItem[] => {
+  try {
+    const cartKey = getCartStorageKey(regionCode);
+    const savedCart = localStorage.getItem(cartKey);
+    console.log(`🛒 Loading cart for region: ${regionCode} from key: ${cartKey}`);
+    if (!savedCart) return [];
+    const parsed = JSON.parse(savedCart) as any[];
+    // Ensure productVariantId exists for backward compatibility
+    return parsed.map(item => ({
+      ...item,
+      productVariantId: 'productVariantId' in item ? item.productVariantId : null,
+    })) as CartItem[];
+  } catch (error) {
+    console.error('Error loading cart from localStorage:', error);
+    return [];
+  }
+};
+
 export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
   // Get current region from RegionContext
   const regionContext = React.useContext(RegionContext);
   const currentRegionCode = regionContext?.currentRegion?.code || 'om';
   
+  // Track the region code that the current items belong to
+  // This prevents saving old items to a new region's storage key
+  const activeRegionRef = useRef<string>(currentRegionCode);
+  
   const [items, setItems] = useState<CartItem[]>(() => {
-    // Load cart from localStorage on initial render based on current region
-    try {
-      const cartKey = getCartStorageKey(currentRegionCode);
-      const savedCart = localStorage.getItem(cartKey);
-      console.log(`🛒 Loading cart for region: ${currentRegionCode} from key: ${cartKey}`);
-      if (!savedCart) return [];
-      const parsed = JSON.parse(savedCart) as any[];
-      // Ensure productVariantId exists for backward compatibility
-      return parsed.map(item => ({
-        ...item,
-        productVariantId: 'productVariantId' in item ? item.productVariantId : null,
-      })) as CartItem[];
-    } catch (error) {
-      console.error('Error loading cart from localStorage:', error);
-      return [];
-    }
+    return loadCartFromStorage(currentRegionCode);
   });
   
   const [isOpen, setIsOpen] = useState(false);
 
   // Load cart when region changes
   useEffect(() => {
-    try {
-      const cartKey = getCartStorageKey(currentRegionCode);
-      const savedCart = localStorage.getItem(cartKey);
-      console.log(`🔄 Region changed to: ${currentRegionCode}, loading cart from: ${cartKey}`);
-      
-      if (!savedCart) {
-        console.log(`📭 No cart found for ${currentRegionCode}, starting with empty cart`);
-        setItems([]);
-        return;
-      }
-      
-      const parsed = JSON.parse(savedCart) as any[];
-      const loadedItems = parsed.map(item => ({
-        ...item,
-        productVariantId: 'productVariantId' in item ? item.productVariantId : null,
-      })) as CartItem[];
-      
-      console.log(`✅ Loaded ${loadedItems.length} items for ${currentRegionCode}`);
-      setItems(loadedItems);
-    } catch (error) {
-      console.error('Error loading cart for region:', error);
-      setItems([]);
+    // Skip if region hasn't actually changed (initial render)
+    if (activeRegionRef.current === currentRegionCode) {
+      return;
     }
+    
+    console.log(`🔄 Region changed from ${activeRegionRef.current} to ${currentRegionCode}`);
+    
+    // Load cart for the new region
+    const loadedItems = loadCartFromStorage(currentRegionCode);
+    
+    if (loadedItems.length === 0) {
+      console.log(`📭 No cart found for ${currentRegionCode}, starting with empty cart`);
+    } else {
+      console.log(`✅ Loaded ${loadedItems.length} items for ${currentRegionCode}`);
+    }
+    
+    // Update the active region BEFORE setting items
+    // This ensures the save effect uses the correct key
+    activeRegionRef.current = currentRegionCode;
+    setItems(loadedItems);
   }, [currentRegionCode]);
 
-  // Save cart to localStorage whenever it changes (with region-specific key)
+  // Save cart to localStorage whenever items change
+  // ONLY save to the region that the items belong to
   useEffect(() => {
+    // Only save if the active region matches the current region
+    // This prevents overwriting when region is switching
+    if (activeRegionRef.current !== currentRegionCode) {
+      console.log(`⏭️ Skipping save: active region (${activeRegionRef.current}) !== current region (${currentRegionCode})`);
+      return;
+    }
+    
     try {
-      const cartKey = getCartStorageKey(currentRegionCode);
+      const cartKey = getCartStorageKey(activeRegionRef.current);
       localStorage.setItem(cartKey, JSON.stringify(items));
-      console.log(`💾 Saved cart for ${currentRegionCode}: ${items.length} items`);
+      console.log(`💾 Saved cart for ${activeRegionRef.current}: ${items.length} items`);
     } catch (error) {
       console.error('Error saving cart to localStorage:', error);
     }

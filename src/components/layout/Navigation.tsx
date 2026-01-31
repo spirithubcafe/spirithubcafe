@@ -64,12 +64,13 @@ export const Navigation: React.FC = () => {
 
   const DirectionChevron = language === 'ar' ? ChevronLeft : ChevronRight;
 
-  const NavContent = () => (
+  // Render navigation items inline to avoid re-mounting issues with dropdown
+  const renderNavItems = () => (
     <>
       {navItems.map((item) => {
         if (item.hasDropdown && item.key === 'products') {
           return (
-            <DropdownMenu key={item.key}>
+            <DropdownMenu key={item.key} modal={false}>
               <DropdownMenuTrigger asChild>
                 <button
                   className={`flex items-center gap-1 transition-colors duration-200 font-medium text-xs md:text-xs lg:text-sm whitespace-nowrap ${
@@ -85,6 +86,7 @@ export const Navigation: React.FC = () => {
               <DropdownMenuContent 
                 align={language === 'ar' ? 'end' : 'start'} 
                 className="w-56 bg-white border border-gray-200 shadow-lg"
+                onCloseAutoFocus={(e) => e.preventDefault()}
                >
                 {/* All Products Link */}
                 <DropdownMenuItem asChild>
@@ -160,7 +162,7 @@ export const Navigation: React.FC = () => {
 
           {/* Desktop Navigation - Hidden on tablet and below */}
           <div className="hidden lg:flex items-center space-x-6 xl:space-x-8">
-            <NavContent />
+            {renderNavItems()}
             
             {/* Region Switcher */}
             <RegionSwitcher isHomePage={isHomePage} />
@@ -218,7 +220,7 @@ export const Navigation: React.FC = () => {
           {/* Tablet Navigation - Show on medium screens */}
           <div className="hidden md:flex lg:hidden items-center space-x-3">
             <div className="flex items-center space-x-4">
-              <NavContent />
+              {renderNavItems()}
             </div>
             
             {/* Tablet Actions */}
