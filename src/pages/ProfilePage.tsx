@@ -249,12 +249,9 @@ const ProfilePage: React.FC = () => {
   // Load user data and orders
   useEffect(() => {
     if (isAuthenticated && user) {
-      console.log('👤 User authenticated, loading profile and orders...', user);
       loadUserProfile();
       loadUserOrders();
       loadNewsletterStatus();
-    } else {
-      console.log('❌ User not authenticated or user data missing');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, user?.id, currentRegion.code]);
@@ -264,7 +261,6 @@ const ProfilePage: React.FC = () => {
     
     try {
       setIsLoading(true);
-      console.log('📦 Loading orders for user:', user.id);
       
       // Use the new user-specific endpoint
       const response = await orderService.getOrdersByUserId(
@@ -275,25 +271,9 @@ const ProfilePage: React.FC = () => {
         }
       );
       
-      console.log('✅ User orders response:', response);
-      
       let userOrders = response.data || [];
-      console.log(`📊 Found ${userOrders.length} orders for user ${user.id}`);
-      
-      // Debug: Check order details
-      if (userOrders.length > 0) {
-        console.log('🔍 First order details:', userOrders[0]);
-        console.log('🔍 Items in first order:', userOrders[0].items);
-        console.log('🔍 Items count:', userOrders[0].items?.length);
-        console.log('🔍 ItemsCount field:', userOrders[0].itemsCount);
-        console.log('🔍 Address:', userOrders[0].address);
-        console.log('🔍 City:', userOrders[0].city);
-        console.log('🔍 Country:', userOrders[0].country);
-        console.log('🔍 ShippingMethod:', userOrders[0].shippingMethod);
-      }
       
       // Load full details for each order to get complete information
-      console.log('🔄 Loading full details for all orders...');
       const isAdmin = user?.roles?.includes('Admin') || false;
       const ordersWithFullDetails = await Promise.all(
         userOrders.map(async (order: Order) => {
@@ -304,20 +284,16 @@ const ProfilePage: React.FC = () => {
               ? await orderService.getOrderById(order.id)
               : await orderService.getMyOrderDetails(order.id);
             if (detailResponse.success && detailResponse.data) {
-              console.log(`✅ Loaded full details for order ${order.id}`);
               return detailResponse.data;
             } else {
-              console.warn(`⚠️ Failed to load details for order ${order.id}, using summary data`);
               return order;
             }
           } catch (error) {
-            console.error(`❌ Error loading details for order ${order.id}:`, error);
             return order;
           }
         })
       );
       
-      console.log('✅ All order details loaded');
       setOrders(ordersWithFullDetails);
       
       // Calculate stats

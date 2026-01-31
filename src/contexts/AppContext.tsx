@@ -316,13 +316,11 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     
     // Prevent duplicate concurrent requests
     if (ongoingProductsFetchRef.current === fetchKey) {
-      console.log('⏳ Products fetch already in progress for', fetchKey);
       return;
     }
     
     // Skip if we already fetched this exact data
     if (lastSuccessfulFetchRef.current.products === fetchKey) {
-      console.log('✅ Products already loaded for', fetchKey);
       return;
     }
     
@@ -340,12 +338,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     let usedCache = false;
     
     if (cachedData) {
-      console.log('📦 Using cached products for', lang);
-      console.log('🔍 Cached products (first 3):', cachedData.slice(0, 3).map(p => ({ id: p.id, name: p.name, slug: p.slug })));
-      
       // Check if cache has slug field, if not, clear cache and refetch
       if (cachedData.length > 0 && !cachedData[0].slug) {
-        console.log('⚠️ Cache missing slug field, clearing cache and refetching...');
         cacheUtils.remove(cacheKey);
         // Continue to fetch fresh data
       } else {
@@ -526,9 +520,6 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       const mergedProducts = transformedProducts.map(preserveImageFromCache);
       setProducts(mergedProducts);
       
-      // Debug: Check if slugs are present
-      console.log('🔍 Products with slugs:', transformedProducts.slice(0, 3).map(p => ({ id: p.id, name: p.name, slug: p.slug })));
-      
       // Cache the data
       cacheUtils.set(cacheKey, mergedProducts);
 
@@ -544,8 +535,6 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         mergedProducts.map((p) => p.image),
         24,
       );
-      
-      console.log('✅ Products fetched and cached for', lang);
     } catch (err) {
       console.error('❌ Error fetching products:', err);
       setError('Failed to fetch products');
@@ -576,13 +565,11 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     
     // Prevent duplicate concurrent requests (unless force refresh)
     if (!forceRefresh && ongoingCategoriesFetchRef.current === fetchKey) {
-      console.log('⏳ Categories fetch already in progress for', fetchKey);
       return;
     }
     
     // Skip if we already fetched this exact data (unless force refresh)
     if (!forceRefresh && lastSuccessfulFetchRef.current.categories === fetchKey) {
-      console.log('✅ Categories already loaded for', fetchKey);
       return;
     }
     
@@ -596,7 +583,6 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     const cachedAllCategories = cacheUtils.get<Category[]>(allCategoriesCacheKey);
     
     if (!forceRefresh && cachedData && cachedAllCategories) {
-      console.log('📦 Using cached categories for', lang);
       setCategories(cachedData);
       setAllCategories(cachedAllCategories);
       return;
@@ -625,13 +611,6 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         };
       });
       
-      // Log the categories with their display order
-      console.log('📋 Categories sorted by displayOrder:', transformedAllCategories.map(c => ({
-        name: c.name,
-        displayOrder: c.displayOrder
-      })));
-      console.log('💡 Tip: Press Ctrl+Shift+C to clear cache and refresh data');
-      
       // Filter categories for homepage display
       const homepageCategories = transformedAllCategories.filter((_cat, index) => {
         const apiCat = sortedCategories[index];
@@ -655,8 +634,6 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         transformedAllCategories.map((c) => c.image),
         24,
       );
-      
-      console.log('✅ Categories fetched and cached for', lang);
     } catch (err) {
       console.error('❌ Error fetching categories:', err);
       setError('Failed to fetch categories');
@@ -687,11 +664,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     
     // Skip if we already fetched for this exact region+language combination
     if (prevFetchKeyRef.current === fetchKey && initialFetchDoneRef.current) {
-      console.log('🔄 Data already fetched for', fetchKey);
       return;
     }
     
-    console.log('🚀 Fetching data for', fetchKey, '(prev:', prevFetchKeyRef.current, ')');
     prevFetchKeyRef.current = fetchKey;
     initialFetchDoneRef.current = true;
     
@@ -719,10 +694,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
       if (e.ctrlKey && e.shiftKey && e.key === 'C') {
-        console.log('🗑️ Clearing all SpiritHub cache...');
         cacheUtils.clear();
-        console.log('✅ Cleared cache entries');
-        console.log('🔄 Refreshing data...');
         // Reset fetch tracking to allow re-fetching
         prevFetchKeyRef.current = '';
         initialFetchDoneRef.current = false;

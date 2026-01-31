@@ -19,8 +19,6 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({ mode = 'lo
 
   const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
     try {
-      console.log('Google credential received');
-      
       if (!credentialResponse.credential) {
         throw new Error('No credential received from Google');
       }

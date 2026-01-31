@@ -84,8 +84,6 @@ export const OrderDetailPage: React.FC = () => {
       setIsLoading(true);
       setError(null);
       
-      console.log('🔍 Loading order details for ID:', orderId);
-      
       // Use appropriate endpoint based on user role
       // Admin can access any order, regular users can only access their own orders
       const isAdmin = user?.roles?.includes('Admin') || false;
@@ -94,27 +92,20 @@ export const OrderDetailPage: React.FC = () => {
         : await orderService.getMyOrderDetails(parseInt(orderId));
       
       if (response.success && response.data) {
-        console.log('✅ Order details loaded:', response.data);
-        
         const orderData = response.data;
         
         // Load product images for items that don't have them
         if (orderData.items && orderData.items.length > 0) {
-          console.log('🖼️ Loading product images for order items...');
-          
           const itemsWithImages = await Promise.all(
             orderData.items.map(async (item) => {
               // If item already has an image, use it
               if (item.productImage) {
-                console.log(`✅ Item ${item.productName} already has image: ${item.productImage}`);
                 return item;
               }
               
               // Otherwise, fetch product data to get the image
               try {
-                console.log(`🔍 Fetching product data for ID: ${item.productId}`);
                 const product = await productService.getById(item.productId);
-                console.log(`✅ Product data loaded for ${item.productName}:`, product);
                 
                 // Use main image or first available image
                 const mainImage = product.mainImage?.imagePath;
@@ -135,7 +126,6 @@ export const OrderDetailPage: React.FC = () => {
           );
           
           orderData.items = itemsWithImages;
-          console.log('✅ All product images loaded');
         }
         
         setOrder(orderData);

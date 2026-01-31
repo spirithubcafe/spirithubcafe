@@ -35,7 +35,6 @@ export const cacheUtils = {
 
       // Check version mismatch - clear if version is different
       if (!cacheItem.version || cacheItem.version !== CACHE_VERSION) {
-        console.log(`Cache version mismatch for ${key}, clearing...`);
         localStorage.removeItem(key);
         return null;
       }

@@ -51,17 +51,8 @@ export const LoginPage: React.FC = () => {
       ? (language === 'ar' ? derivedMessageI18n.ar : derivedMessageI18n.en)
       : (location.state as any)?.message;
 
-  console.log('🔍 Login redirect info:', { 
-    redirectParam, 
-    stateFrom, 
-    stateMessage,
-    redirectTarget,
-    locationState: location.state 
-  });
-
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
-      console.log('✅ User authenticated, redirecting to:', redirectTarget);
       navigate(redirectTarget, { replace: true });
     }
   }, [isAuthenticated, isLoading, navigate, redirectTarget]);

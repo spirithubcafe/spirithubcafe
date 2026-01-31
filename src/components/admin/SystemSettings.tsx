@@ -25,7 +25,6 @@ export const SystemSettings: React.FC = () => {
 
   const handleSave = () => {
     // TODO: Implement save functionality
-    console.log('Settings saved:', settings);
   };
 
   return (

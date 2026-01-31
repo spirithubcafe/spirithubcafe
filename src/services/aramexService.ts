@@ -130,8 +130,6 @@ export async function calculateAramexRate(
   request: AramexRateRequest
 ): Promise<AramexRateResponse> {
   try {
-    console.log('📤 Sending Aramex API Request:', request);
-
     const response = await apiClient.post<AramexRateResponse>(
       '/api/aramex/calculate-rate',
       request
@@ -142,15 +140,6 @@ export async function calculateAramexRate(
       currency?: string;
       currencyCode?: string;
     };
-
-    // Log the raw response for debugging
-    console.log('📥 Aramex API Raw Response:', {
-      data,
-      hasSuccess: 'success' in data,
-      hasTotalAmount: 'totalAmount' in data,
-      hasRate: 'rate' in data,
-      successValue: data.success,
-    });
 
     // Normalize response format - handle all known formats
     if (data.success && data.totalAmount && !data.rate) {
@@ -175,12 +164,7 @@ export async function calculateAramexRate(
         },
       };
 
-      console.log('✅ Normalized Aramex Response:', normalizedResponse);
       return normalizedResponse;
-    }
-
-    if (data.success && data.rate) {
-      console.log('✅ Already in correct format:', data);
     }
 
     return data;
@@ -301,13 +285,8 @@ export async function trackAramexShipment(awbNumber: string) {
  */
 export async function createShipmentForOrder(orderId: number, shipmentMode: 'AUTO' | 'DOMESTIC' | 'INTERNATIONAL' = 'AUTO') {
   try {
-    console.log('📦 Creating Aramex shipment for order:', orderId);
-    console.log('📤 Request payload:', { orderId, shipmentMode });
-    console.log('📍 Request URL:', '/api/aramex/create-shipment-for-order');
-    
     const response = await apiClient.post('/api/aramex/create-shipment-for-order', { orderId, shipmentMode });
     
-    console.log('✅ Shipment created successfully:', response.data);
     return response.data;
   } catch (error: any) {
     console.error('❌ Error creating shipment for order:', error);
@@ -336,8 +315,6 @@ export async function createShipmentForOrder(orderId: number, shipmentMode: 'AUT
  */
 export async function printLabel(shipmentNumber: string) {
   try {
-    console.log('🖨️ Downloading label for shipment:', shipmentNumber);
-    
     const response = await apiClient.get(`/api/aramex/print-label/${shipmentNumber}/download`, {
       responseType: 'blob'
     });
@@ -353,7 +330,6 @@ export async function printLabel(shipmentNumber: string) {
     document.body.removeChild(link);
     window.URL.revokeObjectURL(url);
     
-    console.log('✅ Label downloaded successfully');
     return { success: true };
   } catch (error: any) {
     console.error('❌ Error downloading label:', error);
@@ -366,13 +342,10 @@ export async function printLabel(shipmentNumber: string) {
  */
 export async function cancelAramexPickup(pickupGUID: string) {
   try {
-    console.log('🚫 Cancelling Aramex pickup:', pickupGUID);
-    
     const response = await apiClient.post('/api/aramex/cancel-pickup', {
       pickupGUID
     });
     
-    console.log('✅ Pickup cancelled successfully:', response.data);
     return response.data;
   } catch (error: any) {
     console.error('❌ Error cancelling pickup:', error);
@@ -385,11 +358,8 @@ export async function cancelAramexPickup(pickupGUID: string) {
  */
 export async function getPickupDetails(pickupGUID: string) {
   try {
-    console.log('📋 Getting pickup details:', pickupGUID);
-    
     const response = await apiClient.get(`/api/aramex/pickup/${pickupGUID}`);
     
-    console.log('✅ Pickup details retrieved:', response.data);
     return response.data;
   } catch (error: any) {
     console.error('❌ Error getting pickup details:', error);
@@ -470,9 +440,7 @@ export interface CreateAramexPickupResponse {
  */
 export async function createAramexPickup(request: CreateAramexPickupRequest) {
   try {
-    console.log('📦 Creating Aramex pickup:', request);
     const response = await apiClient.post<CreateAramexPickupResponse>('/api/aramex/create-pickup', request);
-    console.log('✅ Pickup created:', response.data);
     return response.data;
   } catch (error: any) {
     console.error('❌ Error creating pickup:', error);

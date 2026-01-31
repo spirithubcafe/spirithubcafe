@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AlertTriangle, ArrowLeftCircle, Home } from 'lucide-react';
 import { PageHeader } from '../components/layout/PageHeader';
@@ -18,15 +18,7 @@ export const PaymentErrorPage: React.FC = () => {
   const message = searchParams.get('message');
   const errorCode = searchParams.get('code');
 
-  useEffect(() => {
-    // Log all URL parameters for debugging
-    console.log('=== PaymentErrorPage Debug ===');
-    console.log('Current URL:', window.location.href);
-    console.log('Search params:', Object.fromEntries(searchParams.entries()));
-    console.log('Message:', message);
-    console.log('Error Code:', errorCode);
-    console.log('================================');
-  }, [searchParams, message, errorCode]);
+
 
   return (
     <div className="min-h-screen bg-linear-to-b from-red-50 to-white page-padding-top">

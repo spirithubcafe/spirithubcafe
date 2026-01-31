@@ -75,31 +75,18 @@ export const OrdersPage: React.FC = () => {
   // Load orders from API
   useEffect(() => {
     const fetchOrders = async () => {
-      console.log('=== OrdersPage Debug ===');
-      console.log('isAuthenticated:', isAuthenticated);
-      console.log('user:', user);
-      console.log('user.id:', user?.id);
-      
       if (!user?.id) {
-        console.log('❌ No user ID available - cannot fetch orders');
         setIsLoading(false);
         return;
       }
 
       try {
         setIsLoading(true);
-        console.log('🔵 Fetching orders for user ID:', user.id);
         
         const response = await orderService.getOrdersByUserId(user.id.toString());
         
-        console.log('📦 Orders API response:', response);
-        console.log('📦 Response data:', response.data);
-        console.log('📦 Response data length:', response.data?.length);
-        console.log('📦 Response pagination:', response.pagination);
-        
         if (response.success) {
           if (response.data && response.data.length > 0) {
-            console.log('🖼️ Loading product images for order items...');
             
             // Map backend order format to frontend format and load product images
             const mappedOrders: Order[] = await Promise.all(
@@ -158,33 +145,23 @@ export const OrdersPage: React.FC = () => {
             );
             
             setOrders(mappedOrders);
-            console.log('✅ Loaded orders:', mappedOrders.length, 'orders');
-            console.log('✅ Orders data:', mappedOrders);
           } else {
-            console.log('ℹ️ No orders found for this user (empty data array)');
             setOrders([]);
           }
         } else {
-          console.warn('⚠️ No orders found or failed response');
-          console.warn('Response success:', response.success);
-          console.warn('Response data:', response.data);
           setOrders([]);
         }
       } catch (error: any) {
-        console.error('❌ Error fetching orders:', error);
-        console.error('Error message:', error.message);
-        console.error('Error response:', error.response);
+        console.error('Error fetching orders:', error);
         setOrders([]);
       } finally {
         setIsLoading(false);
-        console.log('======================');
       }
     };
 
     if (isAuthenticated) {
       fetchOrders();
     } else {
-      console.log('❌ User not authenticated');
       setIsLoading(false);
     }
   }, [isAuthenticated, user, currentRegion.code]);

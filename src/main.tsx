@@ -16,9 +16,6 @@ import './index.css'
 import './styles/color-overrides.css'
 import App from './App.tsx'
 
-// PWA / Service Worker registration (Workbox runtime caching includes images)
-import { registerSW } from 'virtual:pwa-register'
-
 // Overlayscrollbars: import styles and init globally so all scrollable areas get styled
 import 'overlayscrollbars/styles/overlayscrollbars.css'
 import { OverlayScrollbars } from 'overlayscrollbars'
@@ -71,72 +68,20 @@ if (typeof window !== 'undefined') {
 // Also attach Overlayscrollbars to all modals, drawers and overflow containers dynamically
 initScrollbars()
 
-// Register Service Worker as early as possible so image requests can be served from cache.
-// Note: The SW will start controlling the page after the first load + refresh.
+// Unregister any existing service workers and clear caches (PWA removed)
 if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-  // One-time migration: older SW versions cached *all* API requests under "api-cache".
-  // That small cache caused constant eviction + console spam (Workbox ExpirationPlugin).
-  // We now keep API calls network-only and cache only API images.
-  try {
-    const migrationKey = 'spirithub_migrated_delete_api_cache_v1'
-    if (!window.localStorage.getItem(migrationKey) && 'caches' in window) {
-      // Best-effort: we don't want this to block boot.
-      window.caches.delete('api-cache').finally(() => {
-        window.localStorage.setItem(migrationKey, '1')
-      })
-    }
-  } catch {
-    // ignore
+  navigator.serviceWorker.getRegistrations().then((registrations) => {
+    registrations.forEach((registration) => {
+      registration.unregister();
+    });
+  });
+  
+  // Clear all caches
+  if ('caches' in window) {
+    caches.keys().then((names) => {
+      names.forEach((name) => {
+        caches.delete(name);
+      });
+    });
   }
-
-  try {
-    registerSW({
-      immediate: true,
-      onRegisteredSW(_swUrl, registration) {
-        // Check for app version updates every 60 minutes
-        if (registration) {
-          setInterval(() => {
-            registration.update();
-          }, 60 * 60 * 1000);
-        }
-      },
-      onRegisterError(error: unknown) {
-        // Keep this quiet in production—just a breadcrumb for debugging.
-        console.warn('[PWA] Service Worker registration failed:', error)
-      }
-    })
-  } catch (error) {
-    console.warn('[PWA] Service Worker registration threw:', error)
-  }
-
-  // Check app version and force cache clear if needed
-  const checkAppVersion = async () => {
-    try {
-      const storedVersion = localStorage.getItem('app-version');
-      const response = await fetch('/version.json', { cache: 'no-cache' });
-      const versionData = await response.json();
-      
-      if (storedVersion && storedVersion !== versionData.version) {
-        // Version changed - clear caches and reload
-        console.log(`[Version] Updating from ${storedVersion} to ${versionData.version}`);
-        
-        if ('caches' in window) {
-          const cacheNames = await caches.keys();
-          await Promise.all(cacheNames.map(name => caches.delete(name)));
-        }
-        
-        localStorage.setItem('app-version', versionData.version);
-        
-        // Force reload to get new assets
-        window.location.reload();
-      } else if (!storedVersion) {
-        localStorage.setItem('app-version', versionData.version);
-      }
-    } catch (error) {
-      console.warn('[Version] Failed to check app version:', error);
-    }
-  };
-
-  // Check version on load
-  checkAppVersion();
 }

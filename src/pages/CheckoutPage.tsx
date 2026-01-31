@@ -381,8 +381,6 @@ export const CheckoutPage: React.FC = () => {
           return sum + (weightInKg * item.quantity);
         }, 0);
 
-        console.log('📦 Calculated total weight:', totalWeight, 'KG for', items.length, 'items');
-
         const result = await calculateAramexShippingRate(
           effectiveCountry,
           effectiveCity,

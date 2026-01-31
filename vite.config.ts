@@ -1,15 +1,9 @@
 import path from "path"
-import { readFileSync } from "fs"
 import fs from "fs/promises"
 import tailwindcss from "@tailwindcss/vite"
 import react from "@vitejs/plugin-react-swc"
-import { VitePWA } from "vite-plugin-pwa"
 import { defineConfig, type ViteDevServer } from "vite"
 import type { IncomingMessage, ServerResponse } from "http"
-
-const pwaManifest = JSON.parse(
-  readFileSync(new URL("./public/manifest.webmanifest", import.meta.url), "utf-8")
-)
 
 const seoWriterPlugin = () => ({
   name: "seo-writer",
@@ -95,75 +89,6 @@ export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
-    VitePWA({
-      // We register the Service Worker explicitly in `src/main.tsx`.
-      // Disabling auto injection avoids accidental double-registration.
-      injectRegister: null,
-      registerType: "autoUpdate",
-      includeAssets: [
-        "images/logo/logo-light.png",
-        "images/logo/logo-dark.png",
-        "video/back.mp4"
-      ],
-      manifest: pwaManifest,
-      workbox: {
-        // Precache common build assets. Runtime caching (below) handles API images.
-        globPatterns: ["**/*.{js,css,html,ico,png,jpg,jpeg,gif,svg,webp,woff,woff2,ttf,eot,json,webmanifest}"],
-        navigateFallback: "/index.html",
-        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024, // 3 MB
-        // Add version to cache names to force cache update
-        cacheId: 'spirithub-v1.0.0',
-        runtimeCaching: [
-          {
-            // IMPORTANT: Do NOT runtime-cache all API calls.
-            // - The app already does its own caching (see AppContext).
-            // - Caching every unique API URL (and especially image URLs) causes constant churn
-            //   and repeated Workbox ExpirationPlugin cleanup logs ("Expired N entries...").
-            // Keep API calls as network-only, and separately cache API images below.
-            urlPattern: ({ url, request }) =>
-              url.origin === 'https://api.spirithubcafe.com' && request.destination !== 'image',
-            handler: 'NetworkOnly'
-          },
-          {
-            // Product images from our API domain: keep a bigger cache with longer retention.
-            urlPattern: ({ url, request }) =>
-              request.destination === "image" && url.origin === "https://api.spirithubcafe.com",
-            handler: "CacheFirst",
-            options: {
-              cacheName: "api-image-cache",
-              expiration: {
-                maxEntries: 400,
-                maxAgeSeconds: 60 * 60 * 24 * 90 // 90 days
-              },
-              cacheableResponse: {
-                statuses: [0, 200]
-              }
-            }
-          },
-          {
-            // All other images (site assets, CDN images, etc.)
-            urlPattern: ({ request }) => request.destination === "image",
-            handler: "CacheFirst",
-            options: {
-              cacheName: "image-cache",
-              expiration: {
-                maxEntries: 200,
-                maxAgeSeconds: 60 * 60 * 24 * 30
-              },
-              cacheableResponse: {
-                statuses: [0, 200]
-              }
-            }
-          }
-        ]
-      },
-      devOptions: {
-        enabled: true,
-        suppressWarnings: true,
-        navigateFallback: "index.html",
-        type: "module"
-      }
-    }),
     seoWriterPlugin()
   ],
   resolve: {

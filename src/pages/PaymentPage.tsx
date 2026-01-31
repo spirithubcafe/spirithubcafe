@@ -46,11 +46,8 @@ export const PaymentPage: React.FC = () => {
   const loadOrderFromPaymentLink = useCallback(async (orderId: number, token: string) => {
     setIsLoadingOrder(true);
     try {
-      console.log('🔍 Loading order from payment link:', { orderId, token });
-      
       // Verify token is valid (simple check - in production, this should be server-side)
       const decodedToken = atob(token);
-      console.log('🔐 Decoded token:', decodedToken);
       
       if (!decodedToken.includes(orderId.toString())) {
         throw new Error('Invalid payment token');
@@ -64,22 +61,13 @@ export const PaymentPage: React.FC = () => {
         : await orderService.getMyOrderDetails(orderId);
       const orderDetails = response.data!;
       
-      console.log('✅ Order loaded from payment link:', {
-        orderNumber: orderDetails.orderNumber,
-        status: orderDetails.status,
-        paymentStatus: orderDetails.paymentStatus,
-        items: orderDetails.items?.length || 0
-      });
-      
       // Check if order is already paid
       if (orderDetails.paymentStatus === 'Paid') {
-        console.log('⚠️ Order already paid, redirecting to success page');
         navigate(`/checkout/payment-success?orderNumber=${orderDetails.orderNumber}`, { replace: true });
         return;
       }
       
       // Load product images from product service (fetch all products in parallel)
-      console.log('🔍 Loading product images for', orderDetails.items?.length || 0, 'items');
       
       const itemsWithImages = await Promise.all(
         (orderDetails.items || []).map(async (item) => {
@@ -93,12 +81,8 @@ export const PaymentPage: React.FC = () => {
             const productImagePath = product.mainImage?.imagePath || product.images?.[0]?.imagePath;
             if (productImagePath) {
               imageUrl = getProductImageUrl(productImagePath);
-              console.log('✅ Loaded image for', item.productName, ':', productImagePath);
-            } else {
-              console.warn('⚠️ No image found for product:', item.productName, '- using fallback');
             }
           } catch (error) {
-            console.warn('⚠️ Failed to load product details for', item.productName, '- using order image or fallback');
           }
           
           return {
@@ -113,8 +97,6 @@ export const PaymentPage: React.FC = () => {
           };
         })
       );
-      
-      console.log('✅ All product images loaded successfully');
       
       // Convert Order to CheckoutOrder format for payment processing
       const checkoutOrder: CheckoutOrder = {
@@ -152,10 +134,8 @@ export const PaymentPage: React.FC = () => {
       };
       
       setOrder(checkoutOrder);
-      console.log('✅ Order converted to checkout format for payment');
       
     } catch (error: any) {
-      console.error('❌ Failed to load order from payment link:', error);
       alert(isArabic 
         ? 'فشل تحميل الطلب. تحقق من رابط الدفع.'
         : 'Failed to load order. Please check the payment link.'
@@ -169,8 +149,6 @@ export const PaymentPage: React.FC = () => {
   // Check authentication - redirect to login if not authenticated
   useEffect(() => {
     if (!isAuthenticated) {
-      console.warn('⚠️ User not authenticated, redirecting to login');
-      
       // Save the current URL with params to return after login
       const orderId = searchParams.get('orderId');
       const token = searchParams.get('token');
@@ -179,7 +157,6 @@ export const PaymentPage: React.FC = () => {
       let returnUrl = '/payment';
       if (orderId && token) {
         returnUrl = `/payment?orderId=${orderId}&token=${encodeURIComponent(token)}`;
-        console.log('💾 Saving payment link for after login:', returnUrl);
       }
       
       // Save the current order to return after login
@@ -203,21 +180,14 @@ export const PaymentPage: React.FC = () => {
   useEffect(() => {
     // Only proceed if authenticated
     if (!isAuthenticated) {
-      console.log('⚠️ Not authenticated, skipping order load');
       return;
     }
-
-    // Debug: Log user info
-    console.log('👤 Authenticated user:', user);
 
     // Check for orderId and token in URL parameters (for payment links)
     const orderId = searchParams.get('orderId');
     const token = searchParams.get('token');
 
-    console.log('🔍 URL Params:', { orderId, token, hasOrder: !!order });
-
     if (orderId && token) {
-      console.log('🔗 Payment link detected:', { orderId, token });
       loadOrderFromPaymentLink(parseInt(orderId), token);
       return;
     }
@@ -225,7 +195,6 @@ export const PaymentPage: React.FC = () => {
     const state = (location.state as PaymentLocationState) || {};
 
     if (state.order) {
-      console.log('📦 Loading order from navigation state');
       setOrder(state.order);
       sessionStorage.setItem(PENDING_ORDER_STORAGE_KEY, JSON.stringify(state.order));
       setIsLoadingOrder(false);
@@ -236,17 +205,14 @@ export const PaymentPage: React.FC = () => {
     if (stored) {
       try {
         const parsed: CheckoutOrder = JSON.parse(stored);
-        console.log('📦 Loading order from session storage');
         setOrder(parsed);
         setIsLoadingOrder(false);
         return;
       } catch (error) {
-        console.error('❌ Failed to parse stored order:', error);
         sessionStorage.removeItem(PENDING_ORDER_STORAGE_KEY);
       }
     }
 
-    console.log('⚠️ No order found, redirecting to checkout');
     setIsLoadingOrder(false);
     navigate('/checkout', { replace: true });
   }, [location.state, navigate, isAuthenticated, searchParams, user, isArabic, loadOrderFromPaymentLink]);
@@ -257,9 +223,8 @@ export const PaymentPage: React.FC = () => {
       try {
         const methods = await shippingService.getShippingMethods();
         setShippingMethods(methods);
-        console.log('📦 Loaded shipping methods:', methods);
       } catch (error) {
-        console.error('❌ Failed to load shipping methods:', error);
+        // Failed to load shipping methods
       }
     };
 
@@ -299,7 +264,6 @@ export const PaymentPage: React.FC = () => {
         // This is a payment link for an existing order - skip order creation
         setPaymentProgress(isArabic ? 'جاري تحميل الطلب...' : 'Loading order...');
         const existingOrderId = parseInt(order.id.replace('existing-', ''));
-        console.log('🔗 Processing payment for existing order ID:', existingOrderId);
         
         // Get order details for payment
         // Admin can access any order, regular users can only access their own orders
@@ -309,15 +273,8 @@ export const PaymentPage: React.FC = () => {
           : await orderService.getMyOrderDetails(existingOrderId);
         const orderDetails = response.data!;
         
-        console.log('✅ Existing order loaded for payment:', {
-          orderNumber: orderDetails.orderNumber,
-          totalAmount: orderDetails.totalAmount,
-          paymentStatus: orderDetails.paymentStatus
-        });
-        
         // Check if already paid
         if (orderDetails.paymentStatus === 'Paid') {
-          console.log('⚠️ Order already paid');
           navigate(`/checkout/payment-success?orderNumber=${orderDetails.orderNumber}`, { replace: true });
           return;
         }
@@ -326,7 +283,6 @@ export const PaymentPage: React.FC = () => {
         totalAmount = orderDetails.totalAmount;
       } else {
         // This is a new order - create it first
-        console.log('📦 Creating new order...');
         
         // Get full name (NEW API FORMAT - no need to split)
         const fullName = order.checkoutDetails.isGift 
@@ -338,12 +294,10 @@ export const PaymentPage: React.FC = () => {
           ? shippingService.mapShippingMethodId(order.shippingMethod.id, shippingMethods)
           : (() => {
               // Fallback if API methods not loaded yet
-              console.warn('⚠️ Shipping methods not loaded, using fallback mapping');
               const methodId = order.shippingMethod.id === 'pickup' ? 1 
                 : order.shippingMethod.id === 'nool' ? 2 
                 : order.shippingMethod.id === 'aramex' ? 3 
                 : 1;
-              console.log(`🚚 Fallback mapping: ${order.shippingMethod.id} -> ${methodId}`);
               return methodId;
             })();
 
@@ -397,16 +351,8 @@ export const PaymentPage: React.FC = () => {
         };
 
         // Fetch and populate items with variant IDs
-        console.log('🔍 Fetching product variants for items...');
         const itemsWithVariants = await Promise.all(
           order.items.map(async (item) => {
-            console.log('📦 Processing item:', {
-              id: item.id,
-              productId: item.productId,
-              productVariantId: item.productVariantId,
-              quantity: item.quantity,
-              name: item.name,
-            });
             
             if (!item.productId || isNaN(item.productId)) {
               console.error('❌ Invalid product ID:', item);
@@ -417,7 +363,6 @@ export const PaymentPage: React.FC = () => {
             
             // If productVariantId is missing or null, fetch the default variant from API
             if (!variantId || variantId <= 0) {
-              console.log(`⚠️ Missing variant ID for "${item.name}", fetching from API...`);
               try {
                 const product = await productService.getById(item.productId);
                 
@@ -431,13 +376,10 @@ export const PaymentPage: React.FC = () => {
 
                   // Use default active variant
                   variantId = defaultVariant.id;
-                  console.log(`✅ Using default variant ID ${variantId} for "${item.name}"`);
                 } else {
-                  console.error(`❌ No variants found for product ${item.productId}`);
                   throw new Error(`No variants available for item: ${item.name}`);
                 }
               } catch (error) {
-                console.error(`❌ Failed to fetch product ${item.productId}:`, error);
                 throw new Error(`Could not fetch variant for item: ${item.name}`);
               }
             }
@@ -477,27 +419,12 @@ export const PaymentPage: React.FC = () => {
           throw new Error('Order must contain at least one item');
         }
 
-        console.log('👤 User authentication status:', {
-          isAuthenticated,
-          userId: user?.id,
-          userIdInOrder: createOrderDto.userId
-        });
-        console.log('📦 Sending order data to API:', JSON.stringify(createOrderDto, null, 2));
-        
         setPaymentProgress(isArabic ? 'جاري حفظ الطلب في النظام...' : 'Saving order to system...');
         const orderResponse = await orderService.create(createOrderDto);
-        
-        console.log('✅ Order created successfully:', {
-          orderNumber: orderResponse.orderNumber,
-          orderId: orderResponse.id,
-          totalAmount: orderResponse.totalAmount
-        });
         
         orderNumber = orderResponse.orderNumber;
         totalAmount = orderResponse.totalAmount || order.totals.total;
       }
-
-      console.log('🎯 Proceeding to payment with:', { orderNumber, totalAmount });
 
       // Store server order number
       sessionStorage.setItem(ORDER_ID_KEY, orderNumber);
@@ -543,20 +470,7 @@ export const PaymentPage: React.FC = () => {
         language: isArabic ? 'AR' : 'EN',
       };
 
-      console.log('💳 Initiating payment with gateway:', {
-        orderId: orderNumber,
-        amount: totalAmount,
-        currency: 'OMR'
-      });
-
       const paymentResponse = await paymentService.initiatePayment(paymentRequest);
-
-      console.log('✅ Payment gateway response received:', {
-        success: paymentResponse.success,
-        hasPaymentUrl: !!paymentResponse.paymentUrl,
-        hasEncryptedData: !!paymentResponse.encryptedRequest,
-        hasAccessCode: !!paymentResponse.accessCode
-      });
 
       if (!paymentResponse.success || !paymentResponse.paymentUrl) {
         throw new Error(paymentResponse.errorMessage || 'Failed to initiate payment');
@@ -573,8 +487,6 @@ export const PaymentPage: React.FC = () => {
         serverOrderNumber: orderNumber 
       }));
 
-      console.log('🔄 Redirecting to payment gateway:', paymentResponse.paymentUrl);
-
       // Small delay to show progress message
       await new Promise(resolve => setTimeout(resolve, 500));
 
@@ -586,18 +498,7 @@ export const PaymentPage: React.FC = () => {
       );
 
     } catch (error: any) {
-      console.error('❌ Payment error:', error);
-      console.error('📋 Error details:', {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-      });
-      
-      // Log full error response if available
-      if (error.response?.data) {
-        console.error('📋 Full API Error Response:', JSON.stringify(error.response.data, null, 2));
-      }
+      console.error('Payment error:', error);
       
       setIsProcessing(false);
       
@@ -619,10 +520,6 @@ export const PaymentPage: React.FC = () => {
       } else if (typeof errorMessage === 'string') {
         // Show user-friendly message for shipping method error
         if (errorMessage.includes('shipping method')) {
-          console.error('🚨 SHIPPING METHOD ERROR - Please check backend configuration');
-          console.error('📋 Current shipping methods:', shippingMethods);
-          console.error('📋 Selected method:', order?.shippingMethod);
-          
           alert(isArabic 
             ? `طريقة الشحن المحددة غير متاحة.\n\nيرجى الاتصال بالدعم الفني.\n\nالطريقة المحددة: ${order?.shippingMethod.id}` 
             : `Selected shipping method is not available.\n\nPlease contact technical support.\n\nSelected method: ${order?.shippingMethod.id}`);

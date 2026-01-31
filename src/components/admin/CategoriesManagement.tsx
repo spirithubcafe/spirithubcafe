@@ -52,7 +52,6 @@ export const CategoriesManagement: React.FC = () => {
   const handleClearCache = () => {
     const keys = Object.keys(localStorage).filter(key => key.startsWith('spirithub_cache'));
     keys.forEach(key => localStorage.removeItem(key));
-    console.log(`🗑️ Cleared ${keys.length} cache entries`);
     alert('Cache cleared successfully! The page will refresh to load fresh data.');
     window.location.reload();
   };

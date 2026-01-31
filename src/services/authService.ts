@@ -125,15 +125,9 @@ export class AuthService {
    */
   async loginWithGoogle(googleData: GoogleLoginData): Promise<LoginResponse> {
     try {
-      console.log('Sending Google ID token to backend');
-      console.log('ID Token length:', googleData.idToken.length);
-      console.log('API endpoint:', '/api/auth/google/signin');
-      
       const response = await http.post<GoogleLoginResponse>('/api/auth/google/signin', {
         idToken: googleData.idToken
       });
-      
-      console.log('Backend response received:', response.status);
       
       if (response.data && response.data.success && response.data.accessToken && response.data.refreshToken) {
         // Store tokens
@@ -152,11 +146,6 @@ export class AuthService {
         safeStorage.setJson('user', userInfo);
         
         window.dispatchEvent(new CustomEvent('auth-login', { detail: userInfo }));
-        
-        console.log('✅ Google login successful!', {
-          user: userInfo,
-          isNewUser: response.data.isNewUser
-        });
         
         return {
           success: true,

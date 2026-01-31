@@ -10,18 +10,14 @@ export const migrateCartToRegionBased = () => {
     const oldCart = localStorage.getItem(oldCartKey);
     
     if (!oldCart) {
-      console.log('ℹ️ No old cart found, no migration needed');
       return;
     }
     
     // Check if migration already done
     const migrationKey = 'spirithub_cart_migrated';
     if (localStorage.getItem(migrationKey)) {
-      console.log('ℹ️ Cart already migrated');
       return;
     }
-    
-    console.log('🔄 Migrating old cart to region-based storage...');
     
     // Get current region from URL or default to 'om'
     const currentPath = window.location.pathname;
@@ -43,8 +39,8 @@ export const migrateCartToRegionBased = () => {
     // Remove old cart (optional - keep for safety)
     // localStorage.removeItem(oldCartKey);
     
-    console.log(`✅ Cart migrated to region: ${defaultRegion}`);
-    console.log('ℹ️ Old cart key preserved for safety');
+    // Remove old cart (optional - keep for safety)
+    // localStorage.removeItem(oldCartKey);
   } catch (error) {
     console.error('❌ Error migrating cart:', error);
   }
@@ -66,8 +62,6 @@ export const clearAllRegionCarts = () => {
         clearedCount++;
       }
     });
-    
-    console.log(`🗑️ Cleared ${clearedCount} region carts`);
   } catch (error) {
     console.error('❌ Error clearing carts:', error);
   }
@@ -97,7 +91,6 @@ export const debugAllRegionCarts = () => {
       }
     });
     
-    console.log('🛒 All Region Carts:', allCarts);
     return allCarts;
   } catch (error) {
     console.error('❌ Error debugging carts:', error);

@@ -117,7 +117,6 @@ export const orderService = {
   async createOrder(order: CreateOrderDto): Promise<ApiResponse<OrderDetailsDto>> {
     try {
       const response = await apiClient.post<ApiResponse<OrderDetailsDto>>('/api/orders', order);
-      console.log('✅ Order created successfully:', response.data);
       return response.data;
     } catch (error: any) {
       console.error('❌ Order creation failed');
@@ -196,15 +195,8 @@ export const orderService = {
       }
 
       const url = queryParams.toString() ? `/api/orders?${queryParams.toString()}` : '/api/orders';
-      console.log('📡 OrderService: Making GET request to:', url);
       
       const response = await apiClient.get<ApiResponse<Order[]> & { pagination?: PaginationInfo }>(url);
-      
-      console.log('📡 OrderService: Response received:', {
-        status: response.status,
-        hasData: !!response.data,
-        dataKeys: response.data ? Object.keys(response.data) : []
-      });
       
       return response.data;
     } catch (error: any) {
@@ -266,9 +258,7 @@ export const orderService = {
    */
   async getMyOrderDetails(id: number): Promise<ApiResponse<Order>> {
     try {
-      console.log('📡 OrderService: Fetching my order details for ID:', id);
       const response = await apiClient.get<ApiResponse<Order>>(`/api/orders/my-order/${id}`);
-      console.log('✅ OrderService: My order details retrieved successfully');
       return response.data;
     } catch (error: any) {
       console.error('❌ OrderService: Error fetching my order details:', {
@@ -340,15 +330,7 @@ export const orderService = {
         ? `/api/orders/user/${userId}?${queryParams.toString()}` 
         : `/api/orders/user/${userId}`;
       
-      console.log('📡 OrderService: Making GET request to:', url);
-      
       const response = await apiClient.get<ApiResponse<Order[]> & { pagination?: PaginationInfo }>(url);
-      
-      console.log('📡 OrderService: User orders response received:', {
-        status: response.status,
-        hasData: !!response.data,
-        dataKeys: response.data ? Object.keys(response.data) : []
-      });
       
       return response.data;
     } catch (error: any) {

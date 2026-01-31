@@ -54,15 +54,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Check current auth state from localStorage
       const authState = authService.getCurrentAuthState();
       
-      console.log('🔐 Initializing auth, current state:', {
-        hasValidToken: authState.hasValidToken,
-        hasUser: !!authState.user,
-        hasAccessToken: !!authState.accessToken,
-        hasRefreshToken: !!authState.refreshToken,
-        accessTokenInLocalStorage: !!safeStorage.getItem('accessToken'),
-        refreshTokenInLocalStorage: !!safeStorage.getItem('refreshToken')
-      });
-      
       if (authState.hasValidToken && authState.user) {
         // Check if user has roles, if not, try to extract from token
         let finalUser = authState.user;
@@ -95,7 +86,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             } else {
               // DON'T refresh user info automatically to avoid overwriting roles
               // Only refresh if explicitly requested
-              console.log('Server authentication verified, keeping local user info');
             }
           })
           .catch(error => {

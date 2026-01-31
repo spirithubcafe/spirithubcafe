@@ -62,7 +62,6 @@ export const sendWelcomeEmail = async (userEmail: string, userName: string) => {
       isHtml: true
     });
 
-    console.log('Welcome email sent:', result);
     return result;
   } catch (error) {
     console.error('Failed to send welcome email:', error);
@@ -135,7 +134,6 @@ export const sendOrderInvoice = async (orderData: OrderData, pdfFile?: File) => 
     }
 
     const result = await emailService.sendSingleEmail(emailData);
-    console.log('Invoice email sent:', result);
     return result;
   } catch (error) {
     console.error('Failed to send invoice email:', error);
@@ -184,7 +182,6 @@ export const sendOTPEmail = async (email: string, otpCode: string, expiryMinutes
       isHtml: true
     });
 
-    console.log('OTP email sent:', result);
     return result;
   } catch (error) {
     console.error('Failed to send OTP email:', error);
@@ -276,7 +273,6 @@ export const sendOrderStatusEmail = async (
       isHtml: true
     });
 
-    console.log('Order status email sent:', result);
     return result;
   } catch (error) {
     console.error('Failed to send order status email:', error);
@@ -303,11 +299,6 @@ export const sendNewsletter = async (data: NewsletterData) => {
       isHtml: true,
       delayBetweenEmailsMs: 500 // 500ms delay to avoid spam filters
     });
-
-    console.log(`Newsletter sent to ${result.successfulCount} subscribers`);
-    if (result.failedCount > 0) {
-      console.warn(`Failed to send to ${result.failedCount} subscribers:`, result.errors);
-    }
 
     return result;
   } catch (error) {
@@ -337,7 +328,6 @@ export const sendEmailWithCopy = async (
       bccEmails: bccEmails
     });
 
-    console.log('Email with CC/BCC sent:', result);
     return result;
   } catch (error) {
     console.error('Failed to send email with CC/BCC:', error);
@@ -366,7 +356,6 @@ export const sendEmailWithMultipleAttachments = async (
       attachments: attachments
     });
 
-    console.log(`Email sent with ${attachments.length} attachments:`, result);
     return result;
   } catch (error) {
     console.error('Failed to send email with attachments:', error);
@@ -426,7 +415,6 @@ export const sendPasswordResetEmail = async (
       isHtml: true
     });
 
-    console.log('Password reset email sent:', result);
     return result;
   } catch (error) {
     console.error('Failed to send password reset email:', error);

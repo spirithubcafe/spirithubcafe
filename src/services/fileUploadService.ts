@@ -101,8 +101,6 @@ export const fileUploadService = {
         formData.append('prefix', prefix);
       }
 
-      console.log(`📤 Uploading file: ${file.name} to folder: ${folder}`);
-
       const response = await apiClient.post<UploadResponse>(
         '/api/fileupload/upload',
         formData,
@@ -113,7 +111,6 @@ export const fileUploadService = {
         }
       );
 
-      console.log('✅ File uploaded successfully:', response.data);
       return response.data;
     } catch (error: any) {
       console.error('❌ File upload error:', error);
@@ -145,8 +142,6 @@ export const fileUploadService = {
       formData.append('folder', folder);
       formData.append('fileType', fileType);
 
-      console.log(`📤 Uploading ${files.length} files to folder: ${folder}`);
-
       const response = await apiClient.post<MultipleUploadResponse>(
         '/api/fileupload/upload-multiple',
         formData,
@@ -157,7 +152,6 @@ export const fileUploadService = {
         }
       );
 
-      console.log(`✅ Uploaded ${response.data.uploadedCount} files successfully`);
       return response.data;
     } catch (error: any) {
       console.error('❌ Multiple file upload error:', error);
@@ -201,7 +195,6 @@ export const fileUploadService = {
         { params: { fileName, folder } }
       );
 
-      console.log(`✅ File deleted: ${fileName}`);
       return response.data;
     } catch (error: any) {
       console.error('❌ Delete file error:', error);
@@ -405,7 +398,6 @@ export const fileUploadService = {
                 lastModified: Date.now(),
               });
 
-              console.log(`🗜️ Image compressed: ${this.formatFileSize(file.size)} -> ${this.formatFileSize(compressedFile.size)}`);
               resolve(compressedFile);
             },
             file.type,

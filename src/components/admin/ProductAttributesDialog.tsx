@@ -72,7 +72,6 @@ export const ProductAttributesDialog: React.FC<ProductAttributesDialogProps> = (
   // Update form when product changes
   useEffect(() => {
     if (product && open) {
-      console.log('Loading product attributes:', product);
       setFormData({
         aromaticProfile: product.aromaticProfile || '',
         aromaticProfileAr: product.aromaticProfileAr || '',

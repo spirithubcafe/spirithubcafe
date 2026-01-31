@@ -37,10 +37,8 @@ export const shippingService = {
         try {
           const response = await apiClient.get<ShippingMethodsResponse>(endpoint);
           if (response.data.success && response.data.data) {
-            console.log('✅ Shipping methods loaded:', response.data.data);
             return response.data.data;
           } else if (Array.isArray(response.data)) {
-            console.log('✅ Shipping methods loaded:', response.data);
             return response.data as any;
           }
         } catch (err) {
@@ -77,7 +75,6 @@ export const shippingService = {
       
       for (const term of searchTerms) {
         if (methodName.includes(term) || methodNameAr.includes(term)) {
-          console.log(`🔄 Mapped shipping method: "${localId}" -> ${method.id} (${method.name})`);
           return method.id;
         }
       }
@@ -88,7 +85,6 @@ export const shippingService = {
     // Return first active method as fallback
     const firstActive = methods.find(m => m.isActive);
     if (firstActive) {
-      console.log(`🔄 Using fallback shipping method: ${firstActive.id} (${firstActive.name})`);
       return firstActive.id;
     }
 

@@ -22,13 +22,6 @@ export const FileUploadTestPage: React.FC = () => {
   const [productGallery, setProductGallery] = useState<string[]>([]);
 
   const handleSubmit = () => {
-    console.log('Form Data:', {
-      productImage,
-      categoryImage,
-      document,
-      productGallery,
-    });
-
     alert(isArabic 
       ? 'تم حفظ البيانات بنجاح!'
       : 'Data saved successfully!'

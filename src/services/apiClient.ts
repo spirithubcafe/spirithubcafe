@@ -56,17 +56,6 @@ const createApiClient = (): AxiosInstance => {
       const token = safeStorage.getItem('accessToken');
       if (token && config.headers) {
         config.headers.Authorization = `Bearer ${token}`;
-        // Debug: Log token info for ProfilePage endpoints
-        if (config.url?.includes('/UserProfile/') || config.url?.includes('/orders/')) {
-          console.log('🔑 Sending request with token:', {
-            url: config.url,
-            baseURL: config.baseURL,
-            branch: currentRegion,
-            hasToken: !!token,
-            tokenLength: token?.length,
-            tokenPreview: token?.substring(0, 50) + '...'
-          });
-        }
       } else {
         // Public endpoints are allowed without a token; logging this as a warning is noisy.
         if (import.meta.env.DEV) {
@@ -111,21 +100,15 @@ const createApiClient = (): AxiosInstance => {
       if (error.response?.status === 401 && !originalRequest._retry) {
         originalRequest._retry = true;
 
-        console.log('🔄 Got 401 error, attempting token refresh...');
-
         try {
           const refreshToken = safeStorage.getItem('refreshToken');
           if (refreshToken) {
-            console.log('🔄 Attempting to refresh token...');
             // Try to refresh the token
             const refreshResponse = await axios.post(`${getApiBaseUrl()}/api/Account/RefreshToken`, {
               refreshToken,
             });
 
-            console.log('✅ Token refresh response:', refreshResponse.data);
-
             if (refreshResponse.data?.access_token) {
-              console.log('✅ Token refreshed successfully');
               safeStorage.setItem('accessToken', refreshResponse.data.access_token);
               safeStorage.setItem('refreshToken', refreshResponse.data.refresh_token);
               
@@ -142,7 +125,6 @@ const createApiClient = (): AxiosInstance => {
             safeStorage.removeItem('user');
 
             if (!isLoginRoute(window.location.pathname)) {
-              console.log('🚪 Redirecting to login...');
               window.location.href = getLoginRedirectUrl();
             }
           }
@@ -155,7 +137,6 @@ const createApiClient = (): AxiosInstance => {
           
           // Only redirect if we're not already on the login page
           if (!isLoginRoute(window.location.pathname)) {
-            console.log('🚪 Redirecting to login...');
             window.location.href = getLoginRedirectUrl();
           }
           return Promise.reject(refreshError);

@@ -76,18 +76,12 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
       return;
     }
     
-    // Save current cart to its region before switching
-    // (already saved by the items effect, but this ensures consistency)
-    
     // Update ref FIRST to prevent save effect from writing to wrong key
-    const prevRegion = activeRegionRef.current;
     activeRegionRef.current = currentRegionCode;
     
     // Load cart for the new region
     const loadedItems = loadCartFromStorage(currentRegionCode);
     setItems(loadedItems);
-    
-    console.log(`🔄 Cart switched: ${prevRegion} → ${currentRegionCode} (${loadedItems.length} items)`);
   }, [currentRegionCode]);
 
   // Save cart to localStorage whenever items change

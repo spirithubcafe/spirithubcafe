@@ -663,7 +663,6 @@ export const OrdersManagement: React.FC = () => {
       if (savedOrderIds) {
         const parsedIds = JSON.parse(savedOrderIds);
         knownOrderIdsRef.current = new Set(parsedIds);
-        console.log('📋 Restored known order IDs:', parsedIds.length);
       }
     } catch (error) {
       console.error('Failed to restore known order IDs:', error);
@@ -689,29 +688,9 @@ export const OrdersManagement: React.FC = () => {
     const targetSize = size ?? pageSize;
     
     try {
-      console.log('🔄 Loading orders from API...');
-      console.log('📍 API Base URL:', 'https://api.spirithubcafe.com');
-      
-      const token = localStorage.getItem('accessToken');
-      console.log('🔑 Token exists:', !!token);
-      if (token) {
-        console.log('🔑 Token preview:', token.substring(0, 20) + '...');
-      }
-      
-      console.log('📤 Request parameters:', { page: targetPage, pageSize: targetSize });
-      
       const response = await orderService.getOrders({
         page: targetPage,
         pageSize: targetSize,
-      });
-      
-      console.log('✅ Orders API Response:', response);
-      console.log('📊 Response structure:', {
-        hasSuccess: 'success' in response,
-        hasData: 'data' in response,
-        hasPagination: 'pagination' in response,
-        dataType: Array.isArray(response?.data) ? 'array' : typeof response?.data,
-        dataLength: Array.isArray(response?.data) ? response.data.length : 0
       });
       
       // Update pagination info
@@ -786,31 +765,13 @@ export const OrdersManagement: React.FC = () => {
       
       // Debug: Check if orders have items
       if (ordersWithItems.length > 0) {
-        const firstOrder = ordersWithItems[0];
-        console.log('🔍 First order check:', {
-          orderNumber: firstOrder.orderNumber,
-          hasItems: !!firstOrder.items,
-          itemsCount: firstOrder.items?.length || 0,
-          userId: firstOrder.userId,
-          allKeys: Object.keys(firstOrder)
-        });
-        
         const revenue = ordersWithItems
           .filter(o => o.paymentStatus === 'Paid')
           .reduce((sum, o) => sum + o.totalAmount, 0);
         setTotalRevenue(revenue);
-        console.log(`💰 Total revenue: ${revenue.toFixed(3)} OMR from ${ordersWithItems.length} orders`);
-      } else {
-        console.log('📦 No orders found');
       }
     } catch (error: any) {
-      console.error('❌ Error loading orders:', error);
-      console.error('📋 Error details:', {
-        message: error.message,
-        statusCode: error.statusCode,
-        errors: error.errors,
-        stack: error.stack
-      });
+      console.error('Error loading orders:', error);
       
       // Set user-friendly error message
       let errorMessage = isArabic ? 'فشل تحميل الطلبات: ' : 'Failed to load orders: ';
@@ -825,16 +786,10 @@ export const OrdersManagement: React.FC = () => {
         errorMessage += isArabic ? 'ليس لديك صلاحية الوصول إلى الطلبات' : 'You do not have permission to access orders';
       } else if (error.statusCode === 404) {
         errorMessage += isArabic ? 'نقطة النهاية غير موجودة' : 'Orders endpoint not found. The API may not support this feature yet.';
-        console.warn('⚠️ The orders endpoint may not be implemented in the API yet.');
       } else if (error.statusCode === 500) {
         errorMessage += isArabic 
           ? 'خطأ في الخادم. قد لا يكون جدول الطلبات موجوداً في قاعدة البيانات بعد.' 
           : 'Server error. The orders table may not exist in the database yet.';
-        console.error('⚠️ Server returned 500. Possible causes:');
-        console.error('   1. Orders table does not exist in database');
-        console.error('   2. Database connection issue');
-        console.error('   3. API endpoint not implemented correctly');
-        console.error('   4. Missing permissions in database');
       } else {
         errorMessage += error.message || (isArabic ? 'خطأ غير معروف' : 'Unknown error');
       }
@@ -1350,8 +1305,6 @@ export const OrdersManagement: React.FC = () => {
 
   const handleViewDetails = async (order: Order) => {
     try {
-      console.log('🔍 Loading order details for order ID:', order.id);
-      
       // Get full order details including items
       const response = await orderService.getOrderById(order.id);
       
@@ -1359,17 +1312,10 @@ export const OrdersManagement: React.FC = () => {
       const orderDetailsRaw: Order = response.data!;
       const orderDetails = mergePickupFromCache(orderDetailsRaw) as Order;
       
-      console.log('✅ Order details loaded:', {
-        id: orderDetails.id,
-        orderNumber: orderDetails.orderNumber,
-        itemsCount: orderDetails.items?.length || 0,
-        items: orderDetails.items
-      });
-      
       setSelectedOrder(orderDetails);
       setShowDetailsDialog(true);
     } catch (error: any) {
-      console.error('❌ Error loading order details:', error);
+      console.error('Error loading order details:', error);
       alert(isArabic ? 'فشل تحميل تفاصيل الطلب' : 'Failed to load order details');
     }
   };
@@ -1377,18 +1323,13 @@ export const OrdersManagement: React.FC = () => {
   const handleGenerateInvoice = async (order: Order) => {
     setInvoiceLoading(true);
     try {
-      console.log('📄 Generating invoice for order ID:', order.id);
-      
       // Get full order details including items for accurate invoice
       const response = await orderService.getOrderById(order.id);
       const orderDetails: Order = response.data!;
       
-      console.log('✅ Order details for invoice loaded, items count:', orderDetails.items?.length || 0);
-      
       await generateInvoicePDF(orderDetails);
-      console.log('✅ Invoice generated successfully');
     } catch (error: any) {
-      console.error('❌ Error generating invoice:', error);
+      console.error('Error generating invoice:', error);
       alert(isArabic ? 'فشل إنشاء الفاتورة' : 'Failed to generate invoice');
     } finally {
       setInvoiceLoading(false);
@@ -1407,9 +1348,8 @@ export const OrdersManagement: React.FC = () => {
       const link = `${window.location.origin}/payment?orderId=${order.id}&token=${generatePaymentToken(order)}`;
       setGeneratedPaymentLink(link);
       setShowPaymentLinkDialog(true);
-      console.log('✅ Payment link generated successfully');
     } catch (error: any) {
-      console.error('❌ Error generating payment link:', error);
+      console.error('Error generating payment link:', error);
       alert(isArabic ? 'فشل إنشاء رابط الدفع' : 'Failed to generate payment link');
     } finally {
       setPaymentLinkLoading(false);
@@ -1446,16 +1386,12 @@ export const OrdersManagement: React.FC = () => {
       const { createShipmentForOrder } = await import('../../services');
       const response = await createShipmentForOrder(selectedOrder.id, shipmentMode);
       
-      console.log('📥 Response from API:', response);
-      
       if (response.success) {
         setShipmentResult(response);
         setShipmentError('');
         
         // Reload orders to get updated tracking number
         await loadOrders();
-        
-        console.log('✅ Aramex shipment created successfully');
       } else {
         const errorMsg = response.error || response.errors?.join('\n') || 'Failed to create shipment';
         setShipmentError(errorMsg);
@@ -1485,7 +1421,7 @@ export const OrdersManagement: React.FC = () => {
       setLinkCopied(true);
       setTimeout(() => setLinkCopied(false), 2000);
     } catch (error) {
-      console.error('❌ Error copying to clipboard:', error);
+      // Failed to copy to clipboard
     }
   };
 
@@ -1500,9 +1436,8 @@ export const OrdersManagement: React.FC = () => {
     try {
       const { printLabel } = await import('../../services');
       await printLabel(order.trackingNumber);
-      console.log('✅ Label downloaded successfully');
     } catch (error: any) {
-      console.error('❌ Error downloading label:', error);
+      console.error('Error downloading label:', error);
       alert(isArabic ? 'فشل تحميل الملصق' : 'Failed to download label');
     } finally {
       setPrintLabelLoading(null);
