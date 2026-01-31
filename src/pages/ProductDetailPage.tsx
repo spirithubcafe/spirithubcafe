@@ -288,17 +288,22 @@ export const ProductDetailPage = () => {
         setCurrentImageIndex(0);
         setState('ready');
       } catch (error) {
-        console.error('Failed to load product details', error);
         if (!isMounted) {
           return;
         }
 
+        // Check if it's a 404 error (product not found)
+        const apiError = error as { statusCode?: number };
+        const is404 = apiError?.statusCode === 404;
+
         setProduct(null);
         setState('error');
         setErrorMessage(
-          language === 'ar'
-            ? 'حدث خطأ أثناء تحميل البيانات. الرجاء المحاولة لاحقاً.'
-            : 'Something went wrong while loading this product. Please try again later.',
+          is404
+            ? (language === 'ar' ? 'لم يتم العثور على هذا المنتج.' : 'We could not find that product.')
+            : (language === 'ar'
+                ? 'حدث خطأ أثناء تحميل البيانات. الرجاء المحاولة لاحقاً.'
+                : 'Something went wrong while loading this product. Please try again later.')
         );
       }
     };

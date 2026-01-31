@@ -1,11 +1,18 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import type { ReactNode } from 'react';
+import { useLocation } from 'react-router-dom';
 import { CartContext, type CartItem, type CartContextType } from './CartContextDefinition';
-import { RegionContext } from './RegionContextDefinition';
 
 interface CartProviderProps {
   children: ReactNode;
 }
+
+// Helper to detect region from URL path directly
+const getRegionFromPath = (pathname: string): string => {
+  if (pathname.startsWith('/sa')) return 'sa';
+  if (pathname.startsWith('/om')) return 'om';
+  return 'om'; // default
+};
 
 // Helper function to get cart storage key for specific region
 const getCartStorageKey = (regionCode: string) => `spirithub_cart_${regionCode}`;
@@ -22,8 +29,7 @@ const loadCartFromStorage = (regionCode: string): CartItem[] => {
       ...item,
       productVariantId: 'productVariantId' in item ? item.productVariantId : null,
     })) as CartItem[];
-  } catch (error) {
-    console.error('Error loading cart from localStorage:', error);
+  } catch {
     return [];
   }
 };
@@ -33,71 +39,69 @@ const saveCartToStorage = (regionCode: string, items: CartItem[]): void => {
   try {
     const cartKey = getCartStorageKey(regionCode);
     localStorage.setItem(cartKey, JSON.stringify(items));
-  } catch (error) {
-    console.error('Error saving cart to localStorage:', error);
+  } catch {
+    // ignore
   }
 };
 
 export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
-  // Get current region from RegionContext
-  const regionContext = React.useContext(RegionContext);
-  const currentRegionCode = regionContext?.currentRegion?.code || 'om';
+  // Get region directly from URL using useLocation - this is the source of truth
+  const location = useLocation();
+  const currentRegionCode = getRegionFromPath(location.pathname);
   
-  // Track the region code that the current items belong to
-  // This prevents saving old items to a new region's storage key
+  // Track the region that items currently belong to - this is the KEY to preventing mixing
   const activeRegionRef = useRef<string>(currentRegionCode);
-  // Track if this is the initial mount
-  const isInitialMountRef = useRef(true);
+  // Track what was last saved to prevent duplicate saves
+  const lastSavedRef = useRef<{ region: string; itemsHash: string }>({ region: '', itemsHash: '' });
   
   const [items, setItems] = useState<CartItem[]>(() => {
-    // On initial render, load from the detected region
-    const initialRegion = regionContext?.currentRegion?.code || 'om';
-    activeRegionRef.current = initialRegion;
-    return loadCartFromStorage(initialRegion);
+    // On initial render, load from the URL region
+    activeRegionRef.current = currentRegionCode;
+    return loadCartFromStorage(currentRegionCode);
   });
   
   const [isOpen, setIsOpen] = useState(false);
 
   // Handle region changes - load cart for new region
   useEffect(() => {
-    // Skip initial mount since we already loaded in useState
-    if (isInitialMountRef.current) {
-      isInitialMountRef.current = false;
-      // Make sure activeRegionRef matches currentRegionCode on mount
-      if (activeRegionRef.current !== currentRegionCode) {
-        activeRegionRef.current = currentRegionCode;
-        setItems(loadCartFromStorage(currentRegionCode));
-      }
-      return;
-    }
-    
     // Skip if region hasn't actually changed
     if (activeRegionRef.current === currentRegionCode) {
       return;
     }
     
-    // Update ref FIRST to prevent save effect from writing to wrong key
+    // Update ref BEFORE loading new items - this is critical
     activeRegionRef.current = currentRegionCode;
     
     // Load cart for the new region
     const loadedItems = loadCartFromStorage(currentRegionCode);
+    
+    // Mark this as "already saved" so the save effect won't re-save
+    const itemsHash = JSON.stringify(loadedItems);
+    lastSavedRef.current = { region: currentRegionCode, itemsHash };
+    
     setItems(loadedItems);
   }, [currentRegionCode]);
 
   // Save cart to localStorage whenever items change
   useEffect(() => {
-    // Don't save during initial mount - the cart was just loaded
-    if (isInitialMountRef.current) {
-      return;
-    }
-    
-    // Only save if the active region matches the current region
-    // This prevents overwriting during region switch
+    // Critical: only save if active region matches current region
     if (activeRegionRef.current !== currentRegionCode) {
       return;
     }
     
-    saveCartToStorage(activeRegionRef.current, items);
+    // Create a hash of current items to detect if we need to save
+    const itemsHash = JSON.stringify(items);
+    
+    // Skip if this exact state was already saved (prevents duplicate saves after region switch)
+    if (lastSavedRef.current.region === currentRegionCode && 
+        lastSavedRef.current.itemsHash === itemsHash) {
+      return;
+    }
+    
+    // Update last saved state
+    lastSavedRef.current = { region: currentRegionCode, itemsHash };
+    
+    saveCartToStorage(currentRegionCode, items);
   }, [items, currentRegionCode]);
 
   const addToCart = useCallback((newItem: Omit<CartItem, 'quantity'>) => {

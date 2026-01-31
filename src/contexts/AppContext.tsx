@@ -47,6 +47,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const productsCacheSaveTimerRef = React.useRef<number | null>(null);
   const imageEnrichmentCooldownRef = React.useRef<Map<string, number>>(new Map());
   const variantEnrichmentCooldownRef = React.useRef<Map<string, number>>(new Map());
+  // Abort controller for cancelling ongoing enrichment when region changes
+  const enrichmentAbortRef = React.useRef<AbortController | null>(null);
   
   // Track ongoing fetch operations to prevent duplicate requests
   const ongoingProductsFetchRef = React.useRef<string | null>(null);
@@ -151,32 +153,53 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     return url.includes('default-product.webp');
   };
 
+  // Abort controller for image enrichment
+  const imageEnrichmentAbortRef = React.useRef<AbortController | null>(null);
+
   const enrichProductImagesInBackground = useCallback(
     (items: Product[], cacheKey: string, requestId: number) => {
+      // Cancel any previous image enrichment operation
+      if (imageEnrichmentAbortRef.current) {
+        imageEnrichmentAbortRef.current.abort();
+      }
+      const abortController = new AbortController();
+      imageEnrichmentAbortRef.current = abortController;
+
       // Only enrich when we likely have placeholder images.
       const candidates = items
         .filter((p) => isDefaultProductImageUrl(p.image) || !p.image)
         .filter((p) => shouldAttemptEnrichment(imageEnrichmentCooldownRef.current, p.id, 10 * 60 * 1000))
-        .slice(0, 40); // safety cap
+        .slice(0, 20); // reduced safety cap
 
       if (candidates.length === 0) return;
 
-      const limit = 3;
+      // Use single worker to serialize requests
       let index = 0;
 
       const runWorker = async () => {
         while (index < candidates.length) {
+          // Check if aborted
+          if (abortController.signal.aborted) {
+            return;
+          }
+
           const current = candidates[index++];
           const numericId = Number(current.id);
           if (!Number.isFinite(numericId)) continue;
 
           try {
             const images = await productImageService.getByProduct(numericId);
+            
+            // Check abort again after async operation
+            if (abortController.signal.aborted) {
+              return;
+            }
+
             const main = images.find((img) => img.isMain) ?? images[0];
             const imagePath = main?.imagePath;
             const resolved = imagePath ? getProductImageUrl(imagePath) : getProductImageUrl(undefined);
 
-            if (!isMountedRef.current || requestId !== latestProductsRequestRef.current) {
+            if (!isMountedRef.current || requestId !== latestProductsRequestRef.current || abortController.signal.aborted) {
               return;
             }
 
@@ -187,47 +210,60 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
             });
           } catch {
             // best-effort
-          } finally {
-            // Small delay to avoid rapid-fire requests.
-            await new Promise((resolve) => window.setTimeout(resolve, 120));
           }
+          
+          // Longer delay between requests
+          await new Promise((resolve) => window.setTimeout(resolve, 300));
         }
       };
 
-      const workers = Array.from({ length: Math.min(limit, candidates.length) }, () => runWorker());
-      Promise.all(workers).then(() => {
-        // After enrichment, we *could* preload updated images, but the `candidates`
-        // array contains the pre-enrichment (default) URLs. Preloading defaults is
-        // pointless and can waste bandwidth.
-      }).catch(() => {
+      runWorker().catch(() => {
         // ignore
       });
     },
-    [preloadImagesBestEffort, scheduleProductsCacheSave, shouldAttemptEnrichment],
+    [scheduleProductsCacheSave, shouldAttemptEnrichment],
   );
 
   const enrichProductVariantsInBackground = useCallback(
     (items: Product[], cacheKey: string, requestId: number) => {
+      // Cancel any previous enrichment operation
+      if (enrichmentAbortRef.current) {
+        enrichmentAbortRef.current.abort();
+      }
+      const abortController = new AbortController();
+      enrichmentAbortRef.current = abortController;
+
       // Only enrich when the list payload likely doesn't include variants.
       // We correct pricing and hide products that have *no active variants*.
       const candidates = items
         .filter((p) => p.isOrderable === undefined)
         .filter((p) => shouldAttemptEnrichment(variantEnrichmentCooldownRef.current, p.id, 10 * 60 * 1000))
-        .slice(0, 40); // safety cap
+        .slice(0, 20); // reduced safety cap to prevent too many requests
 
       if (candidates.length === 0) return;
 
-      const limit = 3;
+      // Use only 1 worker to serialize requests and prevent ERR_INSUFFICIENT_RESOURCES
       let index = 0;
 
       const runWorker = async () => {
         while (index < candidates.length) {
+          // Check if aborted
+          if (abortController.signal.aborted) {
+            return;
+          }
+
           const current = candidates[index++];
           const numericId = Number(current.id);
           if (!Number.isFinite(numericId)) continue;
 
           try {
             const variants = await productVariantService.getByProduct(numericId);
+            
+            // Check abort again after async operation
+            if (abortController.signal.aborted) {
+              return;
+            }
+
             const activeVariants = (variants ?? []).filter((v) => (v as unknown as { isActive?: boolean }).isActive !== false);
 
             const isOrderable = activeVariants.length > 0;
@@ -245,7 +281,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 
             const computedPrice = typeof rawPrice === 'number' ? rawPrice : 0;
 
-            if (!isMountedRef.current || requestId !== latestProductsRequestRef.current) {
+            if (!isMountedRef.current || requestId !== latestProductsRequestRef.current || abortController.signal.aborted) {
               return;
             }
 
@@ -263,16 +299,16 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
               return next;
             });
           } catch {
-            // best-effort
-          } finally {
-            // Small delay to avoid rapid-fire requests.
-            await new Promise((resolve) => window.setTimeout(resolve, 120));
+            // best-effort - if request fails, continue with next
           }
+          
+          // Longer delay between requests to prevent resource exhaustion
+          await new Promise((resolve) => window.setTimeout(resolve, 300));
         }
       };
 
-      const workers = Array.from({ length: Math.min(limit, candidates.length) }, () => runWorker());
-      Promise.all(workers).catch(() => {
+      // Run single worker to serialize all requests
+      runWorker().catch(() => {
         // ignore
       });
     },
@@ -673,6 +709,16 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     // Update refs before fetching
     languageRef.current = language;
     currentRegionCodeRef.current = currentRegionCode;
+    
+    // Cancel any ongoing enrichment operations from previous region
+    if (enrichmentAbortRef.current) {
+      enrichmentAbortRef.current.abort();
+      enrichmentAbortRef.current = null;
+    }
+    if (imageEnrichmentAbortRef.current) {
+      imageEnrichmentAbortRef.current.abort();
+      imageEnrichmentAbortRef.current = null;
+    }
     
     // Reset successful fetch tracking when region/language changes
     lastSuccessfulFetchRef.current = { products: '', categories: '' };
