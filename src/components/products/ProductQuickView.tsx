@@ -393,6 +393,10 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
                 <img
                   src={images[currentImageIndex]}
                   alt={product.name}
+                  width={400}
+                  height={400}
+                  fetchPriority="high"
+                  decoding="async"
                   className={`absolute inset-0 w-full h-full object-cover transition-transform duration-200 ${
                     isZooming ? 'scale-150' : 'scale-100'
                   } zoom-origin-var`}
@@ -418,6 +422,10 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
                         <img
                           src={image}
                           alt={`${product.name} thumbnail ${index + 1}`}
+                          width={64}
+                          height={64}
+                          loading="lazy"
+                          decoding="async"
                           className="h-full w-full object-cover"
                           onError={(event) => handleImageError(event, '/images/products/default-product.webp')}
                         />

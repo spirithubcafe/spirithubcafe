@@ -92,7 +92,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     const effectiveType = nav.connection?.effectiveType || '';
     if (nav.connection?.saveData) return true;
     // Avoid aggressive preloading on slow networks.
-    return /(^|\b)(slow-2g|2g)(\b|$)/.test(effectiveType);
+    return /(^|\b)(slow-2g|2g|3g)(\b|$)/.test(effectiveType);
   }, []);
 
   const preloadImagesBestEffort = useCallback((urls: string[], maxToPreload: number) => {
@@ -105,8 +105,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 
     if (candidates.length === 0) return;
 
-    // Stagger preloads to avoid network/memory spikes.
-    const chunkSize = 8;
+    // Smaller chunks to avoid network/memory spikes.
+    const chunkSize = 4;
     const chunks: string[][] = [];
     for (let i = 0; i < candidates.length; i += chunkSize) {
       chunks.push(candidates.slice(i, i + chunkSize));
@@ -117,6 +117,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         // Sequential chunks: reduces peak connections and memory.
         await imageCacheUtils.preloadImages(chunk);
         imageCacheUtils.markImagesCached(chunk);
+        // Add delay between chunks to prevent resource exhaustion
+        await new Promise((resolve) => window.setTimeout(resolve, 100));
       }
     };
 
@@ -133,7 +135,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         run().catch(() => {
           // best-effort
         });
-      }, 0);
+      }, 200);
     }
   }, [shouldSkipImagePreload]);
 
@@ -567,9 +569,10 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       enrichProductVariantsInBackground(mergedProducts, cacheKey, requestId);
       
       // Preload a small, safe subset of images in background.
+      // Reduced from 24 to 12 to prevent resource exhaustion
       preloadImagesBestEffort(
         mergedProducts.map((p) => p.image),
-        24,
+        12,
       );
     } catch (err) {
       console.error('❌ Error fetching products:', err);
@@ -666,9 +669,10 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       cacheUtils.set(allCategoriesCacheKey, transformedAllCategories);
       
       // Preload a small, safe subset of images in background.
+      // Reduced from 24 to 8 to prevent resource exhaustion
       preloadImagesBestEffort(
         transformedAllCategories.map((c) => c.image),
-        24,
+        8,
       );
     } catch (err) {
       console.error('❌ Error fetching categories:', err);

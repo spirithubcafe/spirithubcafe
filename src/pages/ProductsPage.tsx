@@ -458,12 +458,15 @@ export const ProductsPage = () => {
                     <img
                       src={category.image || '/images/slides/slide1.webp'}
                       alt={category.name}
+                      width={200}
+                      height={200}
+                      loading="lazy"
+                      decoding="async"
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
                         target.src = '/images/slides/slide1.webp';
                       }}
-                      loading="lazy"
                     />
                     
                     {/* Overlay on Hover */}

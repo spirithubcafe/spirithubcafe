@@ -884,6 +884,10 @@ export const ProductDetailPage = () => {
                           <img
                             src={images[currentImageIndex]}
                             alt={getImageAlt(currentImageIndex)}
+                            width={600}
+                            height={600}
+                            fetchPriority="high"
+                            decoding="async"
                             className={`absolute inset-0 h-full w-full object-cover transition-transform duration-200 ${
                               isZooming ? 'scale-150' : 'scale-100'
                             } zoom-origin-var`}
@@ -958,6 +962,10 @@ export const ProductDetailPage = () => {
                                 <img
                                   src={image}
                                   alt={getImageAlt(index)}
+                                  width={64}
+                                  height={64}
+                                  loading="lazy"
+                                  decoding="async"
                                   className="h-full w-full object-cover"
                                   onError={(event) =>
                                     handleImageError(event, '/images/products/default-product.webp')

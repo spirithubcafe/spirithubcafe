@@ -195,6 +195,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           <img
             src={product.image}
             alt={product.name}
+            width={300}
+            height={300}
+            loading="lazy"
+            decoding="async"
             className={`w-full h-full object-cover transition-transform duration-500 ${
               isImageLoaded ? 'opacity-100' : 'opacity-0'
             }`}
