@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Globe, ShoppingCart, Menu, ChevronDown, ChevronRight, ChevronLeft, User, Heart, ShoppingBag, Shield } from 'lucide-react';
@@ -28,21 +28,22 @@ export const Navigation: React.FC = () => {
   const { totalItems, openCart } = useCart();
   const { currentRegion } = useRegion();
   const location = useLocation();
-  const handleMobileCartOpen = React.useCallback(() => {
+  const handleMobileCartOpen = useCallback(() => {
     setTimeout(() => {
       openCart();
     }, 0);
   }, [openCart]);
   
-  // Helper to build region-aware URLs
-  const getRegionalUrl = (path: string) => {
+  // Helper to build region-aware URLs - memoized
+  const regionCode = currentRegion.code;
+  const getRegionalUrl = useCallback((path: string) => {
     // If path already has region, return as is
     if (path.startsWith('/om/') || path.startsWith('/sa/')) {
       return path;
     }
     // Add current region prefix
-    return `/${currentRegion.code}${path}`;
-  };
+    return `/${regionCode}${path}`;
+  }, [regionCode]);
   
   // Check if we're on the home page
   const isHomePage = location.pathname === '/' || location.pathname === '/om' || location.pathname === '/om/' || location.pathname === '/sa' || location.pathname === '/sa/';
@@ -54,13 +55,14 @@ export const Navigation: React.FC = () => {
     return null;
   }
 
-  const navItems = [
+  // Memoize navItems to prevent recreation on every render
+  const navItems = useMemo(() => [
     { key: 'home', label: t('nav.home'), href: getRegionalUrl('/'), isRoute: true, hasDropdown: false },
     { key: 'products', label: t('nav.products'), href: getRegionalUrl('/products'), isRoute: true, hasDropdown: true },
     { key: 'wholesale', label: t('nav.wholesale'), href: getRegionalUrl('/wholesale'), isRoute: true, hasDropdown: false },
     { key: 'about', label: t('nav.about'), href: getRegionalUrl('/about'), isRoute: true, hasDropdown: false },
     { key: 'contact', label: t('nav.contact'), href: getRegionalUrl('/contact'), isRoute: true, hasDropdown: false }
-  ];
+  ], [t, getRegionalUrl]);
 
   const DirectionChevron = language === 'ar' ? ChevronLeft : ChevronRight;
 

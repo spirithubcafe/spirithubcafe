@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import type { ReactNode } from 'react';
 import { CartContext, type CartItem, type CartContextType } from './CartContextDefinition';
 import { RegionContext } from './RegionContextDefinition';
@@ -15,7 +15,6 @@ const loadCartFromStorage = (regionCode: string): CartItem[] => {
   try {
     const cartKey = getCartStorageKey(regionCode);
     const savedCart = localStorage.getItem(cartKey);
-    console.log(`🛒 Loading cart for region: ${regionCode} from key: ${cartKey}`);
     if (!savedCart) return [];
     const parsed = JSON.parse(savedCart) as any[];
     // Ensure productVariantId exists for backward compatibility
@@ -29,6 +28,16 @@ const loadCartFromStorage = (regionCode: string): CartItem[] => {
   }
 };
 
+// Helper function to save cart to localStorage
+const saveCartToStorage = (regionCode: string, items: CartItem[]): void => {
+  try {
+    const cartKey = getCartStorageKey(regionCode);
+    localStorage.setItem(cartKey, JSON.stringify(items));
+  } catch (error) {
+    console.error('Error saving cart to localStorage:', error);
+  }
+};
+
 export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
   // Get current region from RegionContext
   const regionContext = React.useContext(RegionContext);
@@ -37,54 +46,64 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
   // Track the region code that the current items belong to
   // This prevents saving old items to a new region's storage key
   const activeRegionRef = useRef<string>(currentRegionCode);
+  // Track if this is the initial mount
+  const isInitialMountRef = useRef(true);
   
   const [items, setItems] = useState<CartItem[]>(() => {
-    return loadCartFromStorage(currentRegionCode);
+    // On initial render, load from the detected region
+    const initialRegion = regionContext?.currentRegion?.code || 'om';
+    activeRegionRef.current = initialRegion;
+    return loadCartFromStorage(initialRegion);
   });
   
   const [isOpen, setIsOpen] = useState(false);
 
-  // Load cart when region changes
+  // Handle region changes - load cart for new region
   useEffect(() => {
-    // Skip if region hasn't actually changed (initial render)
+    // Skip initial mount since we already loaded in useState
+    if (isInitialMountRef.current) {
+      isInitialMountRef.current = false;
+      // Make sure activeRegionRef matches currentRegionCode on mount
+      if (activeRegionRef.current !== currentRegionCode) {
+        activeRegionRef.current = currentRegionCode;
+        setItems(loadCartFromStorage(currentRegionCode));
+      }
+      return;
+    }
+    
+    // Skip if region hasn't actually changed
     if (activeRegionRef.current === currentRegionCode) {
       return;
     }
     
-    console.log(`🔄 Region changed from ${activeRegionRef.current} to ${currentRegionCode}`);
+    // Save current cart to its region before switching
+    // (already saved by the items effect, but this ensures consistency)
+    
+    // Update ref FIRST to prevent save effect from writing to wrong key
+    const prevRegion = activeRegionRef.current;
+    activeRegionRef.current = currentRegionCode;
     
     // Load cart for the new region
     const loadedItems = loadCartFromStorage(currentRegionCode);
-    
-    if (loadedItems.length === 0) {
-      console.log(`📭 No cart found for ${currentRegionCode}, starting with empty cart`);
-    } else {
-      console.log(`✅ Loaded ${loadedItems.length} items for ${currentRegionCode}`);
-    }
-    
-    // Update the active region BEFORE setting items
-    // This ensures the save effect uses the correct key
-    activeRegionRef.current = currentRegionCode;
     setItems(loadedItems);
+    
+    console.log(`🔄 Cart switched: ${prevRegion} → ${currentRegionCode} (${loadedItems.length} items)`);
   }, [currentRegionCode]);
 
   // Save cart to localStorage whenever items change
-  // ONLY save to the region that the items belong to
   useEffect(() => {
-    // Only save if the active region matches the current region
-    // This prevents overwriting when region is switching
-    if (activeRegionRef.current !== currentRegionCode) {
-      console.log(`⏭️ Skipping save: active region (${activeRegionRef.current}) !== current region (${currentRegionCode})`);
+    // Don't save during initial mount - the cart was just loaded
+    if (isInitialMountRef.current) {
       return;
     }
     
-    try {
-      const cartKey = getCartStorageKey(activeRegionRef.current);
-      localStorage.setItem(cartKey, JSON.stringify(items));
-      console.log(`💾 Saved cart for ${activeRegionRef.current}: ${items.length} items`);
-    } catch (error) {
-      console.error('Error saving cart to localStorage:', error);
+    // Only save if the active region matches the current region
+    // This prevents overwriting during region switch
+    if (activeRegionRef.current !== currentRegionCode) {
+      return;
     }
+    
+    saveCartToStorage(activeRegionRef.current, items);
   }, [items, currentRegionCode]);
 
   const addToCart = useCallback((newItem: Omit<CartItem, 'quantity'>) => {
@@ -134,10 +153,19 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     setIsOpen(false);
   }, []);
 
-  const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
-  const totalPrice = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  // Memoize computed values to prevent unnecessary re-renders
+  const totalItems = useMemo(() => 
+    items.reduce((sum, item) => sum + item.quantity, 0),
+    [items]
+  );
+  
+  const totalPrice = useMemo(() => 
+    items.reduce((sum, item) => sum + item.price * item.quantity, 0),
+    [items]
+  );
 
-  const value: CartContextType = {
+  // Memoize the context value to prevent unnecessary re-renders of consumers
+  const value: CartContextType = useMemo(() => ({
     items,
     addToCart,
     removeFromCart,
@@ -148,7 +176,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     isOpen,
     openCart,
     closeCart,
-  };
+  }), [items, addToCart, removeFromCart, updateQuantity, clearCart, totalItems, totalPrice, isOpen, openCart, closeCart]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 };

@@ -47,6 +47,22 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const productsCacheSaveTimerRef = React.useRef<number | null>(null);
   const imageEnrichmentCooldownRef = React.useRef<Map<string, number>>(new Map());
   const variantEnrichmentCooldownRef = React.useRef<Map<string, number>>(new Map());
+  
+  // Track ongoing fetch operations to prevent duplicate requests
+  const ongoingProductsFetchRef = React.useRef<string | null>(null);
+  const ongoingCategoriesFetchRef = React.useRef<string | null>(null);
+  // Track last successful fetch to prevent re-fetching same data
+  const lastSuccessfulFetchRef = React.useRef<{ products: string; categories: string }>({ products: '', categories: '' });
+  
+  // Keep current values in refs to avoid useCallback dependency changes
+  const languageRef = React.useRef(language);
+  const currentRegionCodeRef = React.useRef(currentRegionCode);
+  
+  // Update refs when values change
+  useEffect(() => {
+    languageRef.current = language;
+    currentRegionCodeRef.current = currentRegionCode;
+  }, [language, currentRegionCode]);
 
   const shouldAttemptEnrichment = useCallback((map: Map<string, number>, id: string, cooldownMs: number) => {
     const now = Date.now();
@@ -292,12 +308,29 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     };
   }, []);
 
-  // Fetch products from API
+  // Fetch products from API - using refs to keep callback stable
   const fetchProducts = useCallback(async () => {
+    const lang = languageRef.current;
+    const regionCode = currentRegionCodeRef.current;
+    const fetchKey = `${regionCode}_${lang}`;
+    
+    // Prevent duplicate concurrent requests
+    if (ongoingProductsFetchRef.current === fetchKey) {
+      console.log('⏳ Products fetch already in progress for', fetchKey);
+      return;
+    }
+    
+    // Skip if we already fetched this exact data
+    if (lastSuccessfulFetchRef.current.products === fetchKey) {
+      console.log('✅ Products already loaded for', fetchKey);
+      return;
+    }
+    
+    ongoingProductsFetchRef.current = fetchKey;
     const requestId = ++latestProductsRequestRef.current;
 
     // Check cache first - include region in cache key
-    const cacheKey = `spirithub_cache_products_${currentRegionCode}_${language}`;
+    const cacheKey = `spirithub_cache_products_${regionCode}_${lang}`;
     const cachedData = cacheUtils.get<Product[]>(cacheKey);
 
     // If we loaded from cache, keep a reference so we can preserve non-default images
@@ -307,7 +340,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     let usedCache = false;
     
     if (cachedData) {
-      console.log('📦 Using cached products for', language);
+      console.log('📦 Using cached products for', lang);
       console.log('🔍 Cached products (first 3):', cachedData.slice(0, 3).map(p => ({ id: p.id, name: p.name, slug: p.slug })));
       
       // Check if cache has slug field, if not, clear cache and refetch
@@ -408,7 +441,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
             (typeof p.categorySlug === 'string' ? p.categorySlug : undefined);
 
           const categoryName =
-            language === 'ar'
+            lang === 'ar'
               ? (p.category as unknown as { nameAr?: string; name?: string } | undefined)?.nameAr ||
                 fallbackCategoryNameAr ||
                 (p.category as unknown as { name?: string } | undefined)?.name ||
@@ -439,10 +472,10 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
             isOrderable,
             isLimited,
             isPremium,
-            name: language === 'ar' && p.nameAr ? p.nameAr : p.name,
+            name: lang === 'ar' && p.nameAr ? p.nameAr : p.name,
             nameAr: p.nameAr,
             description:
-              language === 'ar' && p.descriptionAr ? p.descriptionAr : p.description || '',
+              lang === 'ar' && p.descriptionAr ? p.descriptionAr : p.description || '',
             descriptionAr: p.descriptionAr,
             price,
             image: imageUrl,
@@ -450,7 +483,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
             categorySlug,
             category: categoryName,
             tastingNotes:
-              language === 'ar' && p.tastingNotesAr ? p.tastingNotesAr : p.tastingNotes,
+              lang === 'ar' && p.tastingNotesAr ? p.tastingNotesAr : p.tastingNotes,
             tastingNotesAr: p.tastingNotesAr,
             featured: p.isFeatured,
           };
@@ -512,7 +545,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         24,
       );
       
-      console.log('✅ Products fetched and cached for', language);
+      console.log('✅ Products fetched and cached for', lang);
     } catch (err) {
       console.error('❌ Error fetching products:', err);
       setError('Failed to fetch products');
@@ -520,31 +553,50 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         setProducts([]);
       }
     } finally {
+      // Clear ongoing fetch marker
+      if (ongoingProductsFetchRef.current === fetchKey) {
+        ongoingProductsFetchRef.current = null;
+      }
+      // Mark as successfully fetched (only if no error)
+      if (!error) {
+        lastSuccessfulFetchRef.current.products = fetchKey;
+      }
       if (!usedCache) {
         endLoading();
       }
     }
-  }, [
-    language,
-    currentRegionCode,
-    beginLoading,
-    endLoading,
-    preloadImagesBestEffort,
-    enrichProductImagesInBackground,
-    enrichProductVariantsInBackground,
-  ]);
+  // Stable callback - uses refs for current language/region values
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [beginLoading, endLoading, preloadImagesBestEffort, enrichProductImagesInBackground, enrichProductVariantsInBackground]);
 
   const fetchCategories = useCallback(async (forceRefresh = false) => {
+    const lang = languageRef.current;
+    const regionCode = currentRegionCodeRef.current;
+    const fetchKey = `${regionCode}_${lang}`;
+    
+    // Prevent duplicate concurrent requests (unless force refresh)
+    if (!forceRefresh && ongoingCategoriesFetchRef.current === fetchKey) {
+      console.log('⏳ Categories fetch already in progress for', fetchKey);
+      return;
+    }
+    
+    // Skip if we already fetched this exact data (unless force refresh)
+    if (!forceRefresh && lastSuccessfulFetchRef.current.categories === fetchKey) {
+      console.log('✅ Categories already loaded for', fetchKey);
+      return;
+    }
+    
+    ongoingCategoriesFetchRef.current = fetchKey;
     const requestId = ++latestCategoriesRequestRef.current;
 
     // Check cache first for both categories and allCategories - include region in cache key
-    const cacheKey = `spirithub_cache_categories_${currentRegionCode}_${language}`;
-    const allCategoriesCacheKey = `spirithub_cache_all_categories_${currentRegionCode}_${language}`;
+    const cacheKey = `spirithub_cache_categories_${regionCode}_${lang}`;
+    const allCategoriesCacheKey = `spirithub_cache_all_categories_${regionCode}_${lang}`;
     const cachedData = cacheUtils.get<Category[]>(cacheKey);
     const cachedAllCategories = cacheUtils.get<Category[]>(allCategoriesCacheKey);
     
     if (!forceRefresh && cachedData && cachedAllCategories) {
-      console.log('📦 Using cached categories for', language);
+      console.log('📦 Using cached categories for', lang);
       setCategories(cachedData);
       setAllCategories(cachedAllCategories);
       return;
@@ -566,8 +618,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         return {
           id: cat.id.toString(),
           slug: cat.slug,
-          name: language === 'ar' && cat.nameAr ? cat.nameAr : cat.name,
-          description: language === 'ar' && cat.descriptionAr ? cat.descriptionAr : cat.description || '',
+          name: lang === 'ar' && cat.nameAr ? cat.nameAr : cat.name,
+          description: lang === 'ar' && cat.descriptionAr ? cat.descriptionAr : cat.description || '',
           image: imageUrl,
           displayOrder: cat.displayOrder
         };
@@ -604,33 +656,79 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         24,
       );
       
-      console.log('✅ Categories fetched and cached for', language);
+      console.log('✅ Categories fetched and cached for', lang);
     } catch (err) {
       console.error('❌ Error fetching categories:', err);
       setError('Failed to fetch categories');
       setCategories([]);
       setAllCategories([]);
     } finally {
+      // Clear ongoing fetch marker
+      if (ongoingCategoriesFetchRef.current === fetchKey) {
+        ongoingCategoriesFetchRef.current = null;
+      }
+      // Mark as successfully fetched (only if no error)
+      if (!error) {
+        lastSuccessfulFetchRef.current.categories = fetchKey;
+      }
       endLoading();
     }
-  }, [language, currentRegionCode, beginLoading, endLoading, preloadImagesBestEffort]);
+  // Stable callback - uses refs for current language/region values
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [beginLoading, endLoading, preloadImagesBestEffort]);
 
   // Initialize data and language settings - refetch when region changes
+  // Using a single stable effect to prevent infinite loops
+  const initialFetchDoneRef = React.useRef(false);
+  const prevFetchKeyRef = React.useRef<string>('');
+  
   useEffect(() => {
+    const fetchKey = `${currentRegionCode}_${language}`;
+    
+    // Skip if we already fetched for this exact region+language combination
+    if (prevFetchKeyRef.current === fetchKey && initialFetchDoneRef.current) {
+      console.log('🔄 Data already fetched for', fetchKey);
+      return;
+    }
+    
+    console.log('🚀 Fetching data for', fetchKey, '(prev:', prevFetchKeyRef.current, ')');
+    prevFetchKeyRef.current = fetchKey;
+    initialFetchDoneRef.current = true;
+    
+    // Update refs before fetching
+    languageRef.current = language;
+    currentRegionCodeRef.current = currentRegionCode;
+    
+    // Reset successful fetch tracking when region/language changes
+    lastSuccessfulFetchRef.current = { products: '', categories: '' };
+    ongoingProductsFetchRef.current = null;
+    ongoingCategoriesFetchRef.current = null;
+    
+    // Fetch data
     fetchProducts();
     fetchCategories();
     
     // Set initial document direction
     document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
     document.documentElement.lang = language;
-    
-    // Add keyboard shortcut to clear cache (Ctrl+Shift+C)
+  // Only depend on language and region - callbacks are stable now
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentRegionCode, language]);
+  
+  // Keyboard shortcut to clear cache (separate stable effect)
+  useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
       if (e.ctrlKey && e.shiftKey && e.key === 'C') {
         console.log('🗑️ Clearing all SpiritHub cache...');
         cacheUtils.clear();
         console.log('✅ Cleared cache entries');
         console.log('🔄 Refreshing data...');
+        // Reset fetch tracking to allow re-fetching
+        prevFetchKeyRef.current = '';
+        initialFetchDoneRef.current = false;
+        lastSuccessfulFetchRef.current = { products: '', categories: '' };
+        ongoingProductsFetchRef.current = null;
+        ongoingCategoriesFetchRef.current = null;
         fetchProducts();
         fetchCategories(true);
         alert('Cache cleared! Data refreshed.');
@@ -639,35 +737,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [language, currentRegionCode]); // Add currentRegionCode to dependencies
-
-  // Background refresh every hour
-  useEffect(() => {
-    const REFRESH_INTERVAL = 60 * 60 * 1000; // 1 hour
-    
-    const refreshData = () => {
-      const productsCacheKey = `spirithub_cache_products_${currentRegionCode}_${language}`;
-      const categoriesCacheKey = `spirithub_cache_categories_${currentRegionCode}_${language}`;
-      
-      // Check if cache is expired and refresh in background
-      if (cacheUtils.isExpired(productsCacheKey)) {
-        console.log('🔄 Background refresh: Products for', currentRegionCode);
-        fetchProducts();
-      }
-      
-      if (cacheUtils.isExpired(categoriesCacheKey)) {
-        console.log('🔄 Background refresh: Categories for', currentRegionCode);
-        fetchCategories();
-      }
-    };
-    
-    // Set up interval for background refresh
-    const intervalId = setInterval(refreshData, REFRESH_INTERVAL);
-    
-    // Cleanup on unmount
-    return () => clearInterval(intervalId);
-  }, [language, currentRegionCode, fetchProducts, fetchCategories]);
+  // Stable callbacks - no need to re-run
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const value: AppContextType = {
     language,
