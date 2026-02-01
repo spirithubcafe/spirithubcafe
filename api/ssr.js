@@ -218,31 +218,13 @@ async function getMetaTagsForRoute(url, baseUrl) {
     return 'image/jpeg';
   };
 
-  // Some social crawlers (notably WhatsApp/Telegram variants) can be picky about WebP.
-  // If the product image is WebP, provide a JPEG proxy first, then the original as a fallback.
-  const isWebp = (image || '').toLowerCase().endsWith('.webp');
-  const ogImages = [];
-  let twitterImage = image;
-
-  if (isWebp && image) {
-    const jpgProxy = `https://wsrv.nl/?url=${encodeURIComponent(image)}&output=jpg&w=1200&h=630&fit=cover`;
-    ogImages.push({ url: jpgProxy, type: 'image/jpeg' });
-    ogImages.push({ url: image, type: 'image/webp' });
-    twitterImage = jpgProxy;
-  } else if (image) {
-    ogImages.push({ url: image, type: guessMimeType(image) });
-  }
-
-  const ogImageTags = ogImages
-    .map(
-      ({ url, type }) => `
-    <meta property="og:image" content="${url}" />
-    <meta property="og:image:secure_url" content="${url}" />
-    <meta property="og:image:type" content="${type}" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />`
-    )
-    .join('');
+  // Use the original image directly (1080x1080)
+  const ogImageTags = image ? `
+    <meta property="og:image" content="${image}" />
+    <meta property="og:image:secure_url" content="${image}" />
+    <meta property="og:image:type" content="${guessMimeType(image)}" />
+    <meta property="og:image:width" content="1080" />
+    <meta property="og:image:height" content="1080" />` : '';
 
   const canonicalUrl = `${resolvedBaseUrl}${cleanUrl}`;
 
@@ -275,7 +257,7 @@ async function getMetaTagsForRoute(url, baseUrl) {
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="${title}" />
     <meta name="twitter:description" content="${description}" />
-    <meta name="twitter:image" content="${twitterImage}" />
+    <meta name="twitter:image" content="${image}" />
     <meta name="twitter:site" content="@spirithubcafe" />
   `;
 }
