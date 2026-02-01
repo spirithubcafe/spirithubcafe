@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { ShoppingCart, Eye, Heart } from 'lucide-react';
@@ -28,49 +28,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const [showQuickView, setShowQuickView] = useState(false);
   const [isClosingQuickView, setIsClosingQuickView] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
-  const [defaultVariantId, setDefaultVariantId] = useState<number | null>(null);
-  const [hasDiscount, setHasDiscount] = useState(false);
-  const [discountPercent, setDiscountPercent] = useState(0);
-
-  // Try to fetch default variant for this product so we always have a variantId when adding to cart
-  useEffect(() => {
-    let mounted = true;
-    const fetchDefault = async () => {
-      try {
-        const productId = parseInt(product.id, 10);
-        if (isNaN(productId)) return;
-        const variants = (await import('../../services/productService').then(m => m.productVariantService.getByProduct(productId))) as any[];
-
-        // Business rule: never use inactive variants
-        const activeVariants = variants.filter((v) => v?.isActive !== false);
-
-        const defaultVariant = activeVariants.find((v: any) => v.isDefault) ?? activeVariants[0] ?? null;
-        if (mounted) {
-          setDefaultVariantId(defaultVariant ? defaultVariant.id : null);
-          // Check if any variant has a discount and calculate max discount percentage
-          let maxDiscount = 0;
-          activeVariants.forEach((v: any) => {
-            if (v.discountPrice && v.discountPrice > 0 && v.discountPrice < v.price) {
-              const percent = Math.round(((v.price - v.discountPrice) / v.price) * 100);
-              if (percent > maxDiscount) maxDiscount = percent;
-            }
-          });
-          setHasDiscount(maxDiscount > 0);
-          setDiscountPercent(maxDiscount);
-        }
-      } catch (err) {
-        // ignore - optional optimization
-        console.debug('No variants loaded for product card', err);
-        if (mounted) {
-          setDefaultVariantId(null);
-          setHasDiscount(false);
-          setDiscountPercent(0);
-        }
-      }
-    };
-    fetchDefault();
-    return () => { mounted = false; };
-  }, [product.id]);
+  // NOTE: Variant fetching removed - not needed for product list display
+  // Variants are only fetched when user opens ProductQuickView or ProductDetailPage
 
   const isWishlisted = isFavorite(product.id);
 
@@ -100,15 +59,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     
     // Parse productId from string ID
     const productId = parseInt(product.id, 10);
-    
-    // Determine variant id: prefer fetched defaultVariantId, otherwise null
-    const variantId = defaultVariantId ?? null;
 
-    // Add to cart
+    // Add to cart - variant will be selected in QuickView or Detail page
     addToCart({
       id: product.id,
       productId: isNaN(productId) ? 0 : productId,
-      productVariantId: variantId,
+      productVariantId: null,
       name: product.name,
       price: product.price,
       image: product.image || getProductImageUrl(undefined),
@@ -187,13 +143,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           onError={(e) => handleImageError(e, '/images/products/default-product.webp')}
         />
         
-        {/* Sale Badge */}
-        {hasDiscount && (
-          <div className={`absolute top-2 bg-linear-to-r from-red-500 to-red-600 text-white px-2.5 py-1 rounded-full text-xs font-bold shadow-lg z-10 ${isArabic ? 'right-2' : 'left-2'}`}>
-            {isArabic ? `تخفيض ${discountPercent}٪` : `SALE ${discountPercent}%`}
-          </div>
-        )}
-
         {/* Premium / Limited badges */}
         {(product.isPremium || product.isLimited) && (
           <div className={`absolute bottom-2 z-10 flex flex-col gap-1 ${isArabic ? 'right-2 items-end' : 'left-2 items-start'}`}>

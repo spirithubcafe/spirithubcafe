@@ -165,8 +165,16 @@ const normaliseImageCandidates = (candidates: Array<string | null | undefined>):
 
 /**
  * Resolve the best raw path for a product's primary image
+ * PRIORITY: mainImagePath (from list API) > other sources
  */
 export const resolveProductImagePath = (product: ProductLike): string | undefined => {
+  // FIRST: Check mainImagePath directly - this is what the list API returns
+  const mainImagePath = (product as unknown as { mainImagePath?: string }).mainImagePath;
+  if (isNonEmptyString(mainImagePath)) {
+    return mainImagePath.trim();
+  }
+
+  // Fallback to other sources if mainImagePath is not available
   const candidates: Array<string | null | undefined> = [];
 
   const mainImageRecord = asRecord(product.mainImage);

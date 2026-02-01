@@ -413,40 +413,21 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 
       // IMPORTANT: Avoid N+1 calls (getById per product). Use list payload for initial rendering.
       type ApiProductExtended = ApiProduct & Record<string, unknown>;
-      type ProductPricing = { minPrice?: number; price?: number };
+      type ProductPricing = { minPrice?: number; maxPrice?: number; price?: number };
 
       const transformedProducts: Product[] = activeProducts
         .map((prod) => {
           const p = prod as ApiProductExtended;
           const pricing = p as ProductPricing;
-          let price = (typeof pricing.minPrice === 'number' ? pricing.minPrice : undefined) ??
+          
+          // Use minPrice from list API directly - no need to fetch variants
+          const price = (typeof pricing.minPrice === 'number' ? pricing.minPrice : undefined) ??
             (typeof pricing.price === 'number' ? pricing.price : undefined) ??
             0;
 
-          // If variants are present in the list payload, use ACTIVE variants only.
-          // If there are NO active variants, mark as not orderable so it doesn't show in lists.
-          let isOrderable: boolean | undefined = undefined;
-          if (Array.isArray(p.variants)) {
-            const activeVariants = p.variants.filter(
-              (variant) => (variant as unknown as { isActive?: boolean }).isActive !== false,
-            );
-            if (activeVariants.length === 0) {
-              isOrderable = false;
-              price = 0;
-            } else {
-              isOrderable = true;
-              const defaultVariant =
-                activeVariants.find((variant) => (variant as unknown as { isDefault?: boolean }).isDefault) ??
-                activeVariants[0];
-              if (defaultVariant) {
-                const variantPrice =
-                  (defaultVariant as unknown as { discountPrice?: number; price?: number }).discountPrice ??
-                  (defaultVariant as unknown as { price?: number }).price ??
-                  price;
-                price = typeof variantPrice === 'number' ? variantPrice : price;
-              }
-            }
-          }
+          // If minPrice > 0, the product is orderable (has active variants with price)
+          // This avoids fetching variants separately
+          const isOrderable = price > 0;
 
           // IMPORTANT: Do not set the UI to a default placeholder image up-front.
           // If the list payload does not contain an image path, keep it empty so the UI can
@@ -561,12 +542,10 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       // Cache the data
       cacheUtils.set(cacheKey, mergedProducts);
 
-      // If the list payload doesn't include images, enrich them in background (concurrency-limited).
-      // This restores “main image in list” without going back to N+1 heavy detail fetches upfront.
-      enrichProductImagesInBackground(mergedProducts, cacheKey, requestId);
-
-      // If list payload doesn't include variant info, correct pricing/availability in background.
-      enrichProductVariantsInBackground(mergedProducts, cacheKey, requestId);
+      // NOTE: Background enrichment disabled - list API now returns all needed data:
+      // - mainImagePath for images
+      // - minPrice for pricing  
+      // - isOrderable determined by minPrice > 0
       
       // Preload a small, safe subset of images in background.
       // Reduced from 24 to 12 to prevent resource exhaustion
@@ -595,7 +574,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     }
   // Stable callback - uses refs for current language/region values
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [beginLoading, endLoading, preloadImagesBestEffort, enrichProductImagesInBackground, enrichProductVariantsInBackground]);
+  }, [beginLoading, endLoading, preloadImagesBestEffort]);
 
   const fetchCategories = useCallback(async (forceRefresh = false) => {
     const lang = languageRef.current;
