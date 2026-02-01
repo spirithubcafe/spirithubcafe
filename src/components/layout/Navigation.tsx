@@ -48,13 +48,6 @@ export const Navigation: React.FC = () => {
   // Check if we're on the home page
   const isHomePage = location.pathname === '/' || location.pathname === '/om' || location.pathname === '/om/' || location.pathname === '/sa' || location.pathname === '/sa/';
   
-  // Hide navigation on admin pages
-  const isAdminPage = location.pathname.includes('/admin');
-  
-  if (isAdminPage) {
-    return null;
-  }
-
   // Memoize navItems to prevent recreation on every render
   const navItems = useMemo(() => [
     { key: 'home', label: t('nav.home'), href: getRegionalUrl('/'), isRoute: true, hasDropdown: false },
@@ -63,6 +56,13 @@ export const Navigation: React.FC = () => {
     { key: 'about', label: t('nav.about'), href: getRegionalUrl('/about'), isRoute: true, hasDropdown: false },
     { key: 'contact', label: t('nav.contact'), href: getRegionalUrl('/contact'), isRoute: true, hasDropdown: false }
   ], [t, getRegionalUrl]);
+
+  // Hide navigation on admin pages
+  const isAdminPage = location.pathname.includes('/admin');
+  
+  if (isAdminPage) {
+    return null;
+  }
 
   const DirectionChevron = language === 'ar' ? ChevronLeft : ChevronRight;
 

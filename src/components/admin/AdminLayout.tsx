@@ -396,9 +396,6 @@ export const AdminLayout: React.FC = () => {
                         <span className="font-semibold leading-tight text-foreground">
                           {item.label}
                         </span>
-                        <span className="text-xs text-muted-foreground">
-                          {item.description}
-                        </span>
                       </div>
                     )}
                     {item.badge && !collapsed && (
@@ -413,10 +410,6 @@ export const AdminLayout: React.FC = () => {
                   </div>
                 );
 
-                const tooltipDescription = item.disabled
-                  ? t('admin.comingSoon')
-                  : item.description;
-
                 if (item.disabled) {
                   if (collapsed) {
                     return (
@@ -427,9 +420,6 @@ export const AdminLayout: React.FC = () => {
                         <TooltipContent side="right" className="space-y-1">
                           <p className="font-medium leading-tight">
                             {item.label}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {tooltipDescription}
                           </p>
                         </TooltipContent>
                       </Tooltip>
