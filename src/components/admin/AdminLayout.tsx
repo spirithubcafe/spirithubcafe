@@ -454,9 +454,6 @@ export const AdminLayout: React.FC = () => {
                     <TooltipTrigger asChild>{link}</TooltipTrigger>
                     <TooltipContent side="right" className="space-y-1">
                       <p className="font-medium leading-tight">{item.label}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {tooltipDescription}
-                      </p>
                     </TooltipContent>
                   </Tooltip>
                 );
