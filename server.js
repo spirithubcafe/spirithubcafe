@@ -331,30 +331,19 @@ async function getMetaTagsForRoute(url, requestBaseUrl) {
     description = 'Join Spirit Hub Cafe community and enjoy exclusive benefits';
   }
 
-  // Some crawlers are picky about WebP. If WebP, provide a JPEG proxy first.
+  // WhatsApp doesn't support WebP - convert to JPEG
   const isWebp = (image || '').toLowerCase().endsWith('.webp');
-  const ogImages = [];
-  let twitterImage = image;
+  const ogImage = isWebp && image 
+    ? `https://wsrv.nl/?url=${encodeURIComponent(image)}&output=jpg&q=90` 
+    : image;
+  const ogImageType = isWebp ? 'image/jpeg' : guessMimeType(image);
 
-  if (isWebp && image) {
-    const jpgProxy = `https://wsrv.nl/?url=${encodeURIComponent(image)}&output=jpg&w=1200&h=630&fit=cover`;
-    ogImages.push({ url: jpgProxy, type: 'image/jpeg' });
-    ogImages.push({ url: image, type: 'image/webp' });
-    twitterImage = jpgProxy;
-  } else if (image) {
-    ogImages.push({ url: image, type: guessMimeType(image) });
-  }
-
-  const ogImageTags = ogImages
-    .map(
-      ({ url, type }) => `
-    <meta property="og:image" content="${url}" />
-    <meta property="og:image:secure_url" content="${url}" />
-    <meta property="og:image:type" content="${type}" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />`,
-    )
-    .join('');
+  const ogImageTags = ogImage ? `
+    <meta property="og:image" content="${ogImage}" />
+    <meta property="og:image:secure_url" content="${ogImage}" />
+    <meta property="og:image:type" content="${ogImageType}" />
+    <meta property="og:image:width" content="1080" />
+    <meta property="og:image:height" content="1080" />` : '';
 
   const canonicalUrl = `${baseUrl}${cleanUrl}`;
 
@@ -376,7 +365,7 @@ async function getMetaTagsForRoute(url, requestBaseUrl) {
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="${title}" />
     <meta name="twitter:description" content="${description}" />
-    <meta name="twitter:image" content="${twitterImage}" />
+    <meta name="twitter:image" content="${ogImage}" />
   `;
 }
 
