@@ -31,7 +31,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const [defaultVariantId, setDefaultVariantId] = useState<number | null>(null);
   const [hasDiscount, setHasDiscount] = useState(false);
   const [discountPercent, setDiscountPercent] = useState(0);
-  const [isImageLoaded, setIsImageLoaded] = useState(false);
 
   // Try to fetch default variant for this product so we always have a variantId when adding to cart
   useEffect(() => {
@@ -72,11 +71,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     fetchDefault();
     return () => { mounted = false; };
   }, [product.id]);
-
-  // Reset loading state when the image URL changes (e.g., after background enrichment).
-  useEffect(() => {
-    setIsImageLoaded(false);
-  }, [product.image]);
 
   const isWishlisted = isFavorite(product.id);
 
@@ -185,30 +179,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       </Button>
 
       {/* Product Image - Square aspect ratio */}
-      <div className="relative overflow-hidden aspect-square">
-        {/* Skeleton/placeholder while the real image is loading */}
-        {!isImageLoaded && (
-          <div className="absolute inset-0 bg-gray-100 animate-pulse" aria-hidden="true" />
-        )}
-
-        {product.image ? (
-          <img
-            src={product.image}
-            alt={product.name}
-            width={300}
-            height={300}
-            loading="lazy"
-            decoding="async"
-            className={`w-full h-full object-cover transition-transform duration-500 ${
-              isImageLoaded ? 'opacity-100' : 'opacity-0'
-            }`}
-            onLoad={() => setIsImageLoaded(true)}
-            onError={(event) => {
-              setIsImageLoaded(true);
-              handleImageError(event, '/images/products/default-product.webp');
-            }}
-          />
-        ) : null}
+      <div className="relative overflow-hidden aspect-square bg-gray-100">
+        <img
+          src={product.image || getProductImageUrl(undefined)}
+          alt={product.name}
+          className="w-full h-full object-cover"
+          onError={(e) => handleImageError(e, '/images/products/default-product.webp')}
+        />
         
         {/* Sale Badge */}
         {hasDiscount && (

@@ -417,6 +417,7 @@ pre {
     line-height: 2rem;
   }
 }
+
 *:focus-visible {
   outline: none !important;
   box-shadow: none !important;

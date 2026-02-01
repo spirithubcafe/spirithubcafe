@@ -964,8 +964,9 @@ export const ProductDetailPage = () => {
                                   alt={getImageAlt(index)}
                                   width={64}
                                   height={64}
-                                  loading="lazy"
-                                  decoding="async"
+                                  loading="eager"
+                                  decoding="sync"
+                                  fetchPriority="high"
                                   className="h-full w-full object-cover"
                                   onError={(event) =>
                                     handleImageError(event, '/images/products/default-product.webp')

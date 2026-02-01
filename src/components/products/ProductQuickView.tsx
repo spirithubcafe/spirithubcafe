@@ -424,8 +424,9 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
                           alt={`${product.name} thumbnail ${index + 1}`}
                           width={64}
                           height={64}
-                          loading="lazy"
-                          decoding="async"
+                          loading="eager"
+                          decoding="sync"
+                          fetchPriority="high"
                           className="h-full w-full object-cover"
                           onError={(event) => handleImageError(event, '/images/products/default-product.webp')}
                         />

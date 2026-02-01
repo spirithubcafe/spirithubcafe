@@ -81,7 +81,9 @@ export const CategoriesSection: React.FC = () => {
                     alt={category.name}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                     onError={(e) => handleImageError(e, '/images/slides/slide1.webp')}
-                    loading="lazy"
+                    loading="eager"
+                    decoding="sync"
+                    fetchPriority="high"
                   />
                   
                   {/* Subtle Overlay */}
