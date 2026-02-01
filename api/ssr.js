@@ -218,11 +218,18 @@ async function getMetaTagsForRoute(url, baseUrl) {
     return 'image/jpeg';
   };
 
-  // Use the original image directly (1080x1080)
-  const ogImageTags = image ? `
-    <meta property="og:image" content="${image}" />
-    <meta property="og:image:secure_url" content="${image}" />
-    <meta property="og:image:type" content="${guessMimeType(image)}" />
+  // WhatsApp doesn't support WebP - convert to JPEG using wsrv.nl proxy
+  const isWebp = (image || '').toLowerCase().endsWith('.webp');
+  const ogImage = isWebp && image 
+    ? `https://wsrv.nl/?url=${encodeURIComponent(image)}&output=jpg&q=90` 
+    : image;
+  const ogImageType = isWebp ? 'image/jpeg' : guessMimeType(image);
+
+  // Use converted image for og:image (1080x1080)
+  const ogImageTags = ogImage ? `
+    <meta property="og:image" content="${ogImage}" />
+    <meta property="og:image:secure_url" content="${ogImage}" />
+    <meta property="og:image:type" content="${ogImageType}" />
     <meta property="og:image:width" content="1080" />
     <meta property="og:image:height" content="1080" />` : '';
 
@@ -257,7 +264,7 @@ async function getMetaTagsForRoute(url, baseUrl) {
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="${title}" />
     <meta name="twitter:description" content="${description}" />
-    <meta name="twitter:image" content="${image}" />
+    <meta name="twitter:image" content="${ogImage}" />
     <meta name="twitter:site" content="@spirithubcafe" />
   `;
 }
