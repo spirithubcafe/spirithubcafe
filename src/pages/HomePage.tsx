@@ -7,6 +7,7 @@ import { CoffeeSelectionSection } from '../components/sections/CoffeeSelectionSe
 import { Seo } from '../components/seo/Seo';
 import { useApp } from '../hooks/useApp';
 import { siteMetadata } from '../config/siteMetadata';
+import { BestSellers } from '@/components/sections/BestSellers';
 
 const HomePage: React.FC = () => {
   const { language } = useApp();
@@ -143,6 +144,7 @@ const HomePage: React.FC = () => {
       />
       <h1 className="sr-only">{seoCopy.title}</h1>
       <ProfessionalHeroSlider />
+      <BestSellers />
       <SustainabilitySection />
 
       <FeaturedProducts /> 
