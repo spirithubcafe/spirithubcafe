@@ -127,7 +127,6 @@ export const imageCacheUtils = {
   // Preload multiple images with concurrency limit
   preloadImages: async (urls: string[], concurrency: number = 2): Promise<void> => {
     // Process images with limited concurrency to prevent resource exhaustion
-    const results: Promise<void>[] = [];
     let index = 0;
     
     const runNext = async (): Promise<void> => {
@@ -135,9 +134,8 @@ export const imageCacheUtils = {
         const currentIndex = index++;
         try {
           await imageCacheUtils.preloadImage(urls[currentIndex], 8000);
-        } catch (error) {
+        } catch {
           // Silently ignore individual image failures
-          console.debug('Image preload failed:', urls[currentIndex]);
         }
       }
     };

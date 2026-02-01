@@ -75,19 +75,33 @@ async function getMetaTagsForRoute(url, baseUrl) {
   let cleanUrl = originalPath;
   if (!cleanUrl.startsWith('/')) cleanUrl = `/${cleanUrl}`;
 
+  // Detect region from URL
+  let region = '';
+  if (cleanUrl === '/om' || cleanUrl.startsWith('/om/')) {
+    region = 'om';
+  } else if (cleanUrl === '/sa' || cleanUrl.startsWith('/sa/')) {
+    region = 'sa';
+  }
+
   // Normalize region prefixes for route matching (but keep originalPath for og:url)
   let normalizedPath = cleanUrl;
-  if (normalizedPath === '/om' || normalizedPath.startsWith('/om/')) {
+  if (region === 'om') {
     normalizedPath = normalizedPath.slice(3) || '/';
-  } else if (normalizedPath === '/sa' || normalizedPath.startsWith('/sa/')) {
+  } else if (region === 'sa') {
     normalizedPath = normalizedPath.slice(3) || '/';
   }
   
   // Default meta tags
-  let title = 'Spirit Hub Cafe | Specialty Coffee in Oman | سبيريت هب';
-  let description = 'Spirit Hub Cafe roasts specialty coffee in Oman. Discover premium beans, artisanal brews, and a vibrant community experience at سبيريت هب.';
+  const regionName = region === 'sa' ? 'Saudi Arabia' : 'Oman';
+  const regionNameAr = region === 'sa' ? 'السعودية' : 'عمان';
+  
+  let title = `Spirit Hub Cafe | Specialty Coffee in ${regionName} | سبيريت هب`;
+  let description = `Spirit Hub Cafe roasts specialty coffee in ${regionName}. Discover premium beans, artisanal brews, and a vibrant community experience at سبيريت هب ${regionNameAr}.`;
   let image = `${resolvedBaseUrl}/images/icon-512x512.png`;
   let ogType = 'website';
+  let productPrice = null;
+  let productCurrency = region === 'sa' ? 'SAR' : 'OMR';
+  let productAvailability = 'in stock';
 
   // Customize based on route
   if (normalizedPath.startsWith('/products/') && normalizedPath.length > 10) {
@@ -100,7 +114,8 @@ async function getMetaTagsForRoute(url, baseUrl) {
     if (product) {
       // Get product name
       const productName = product.name || 'Product';
-      title = `${productName} | Spirit Hub Cafe`;
+      const regionSuffix = region ? ` | ${regionName}` : '';
+      title = `${productName}${regionSuffix} | Spirit Hub Cafe`;
       
       // Get product description and strip HTML tags
       let productDesc = product.description || '';
@@ -115,15 +130,29 @@ async function getMetaTagsForRoute(url, baseUrl) {
       
       // If no description, use tasting notes
       if (!description && product.tastingNotes) {
-        description = `${productName} - ${product.tastingNotes}. Premium ${product.origin || 'specialty'} coffee from Spirit Hub Cafe in Oman`;
+        description = `${productName} - ${product.tastingNotes}. Premium ${product.origin || 'specialty'} coffee from Spirit Hub Cafe in ${regionName}`;
       }
       
-      // Fallback description
+      // Fallback description with more details
       if (!description) {
-        description = `Buy ${productName} from Spirit Hub Cafe - Premium specialty coffee in Oman`;
+        const details = [];
+        if (product.origin) details.push(product.origin);
+        if (product.roastLevel) details.push(product.roastLevel);
+        const detailsStr = details.length > 0 ? ` (${details.join(', ')})` : '';
+        description = `Buy ${productName}${detailsStr} from Spirit Hub Cafe - Premium specialty coffee in ${regionName}`;
       }
       
-      // Use product main image
+      // Get product price for structured data
+      if (product.price) {
+        productPrice = product.price;
+      }
+      
+      // Check product availability
+      if (product.inStock === false || product.stock === 0) {
+        productAvailability = 'out of stock';
+      }
+      
+      // Use product main image with better error handling
       if (product.images && Array.isArray(product.images) && product.images.length > 0) {
         // Find main image or use first image
         const mainImage = product.images.find(img => img.isMain) || product.images[0];
@@ -131,47 +160,51 @@ async function getMetaTagsForRoute(url, baseUrl) {
           // API returns path starting with /uploads
           try {
             const apiOrigin = new URL(API_BASE_URL).origin;
-            image = `${apiOrigin}${mainImage.imagePath}`;
+            // Ensure proper URL format
+            const imagePath = mainImage.imagePath.startsWith('/') ? mainImage.imagePath : `/${mainImage.imagePath}`;
+            image = `${apiOrigin}${imagePath}`;
           } catch {
-            // Fallback: if URL parsing fails, at least avoid breaking the scheme.
-            image = `https://api.spirithubcafe.com${mainImage.imagePath}`;
+            // Fallback: if URL parsing fails, construct manually
+            const imagePath = mainImage.imagePath.startsWith('/') ? mainImage.imagePath : `/${mainImage.imagePath}`;
+            image = `https://api.spirithubcafe.com${imagePath}`;
           }
         }
       }
       
       ogType = 'product';
-      console.log(`Generated meta for product: ${productName}`);
+      console.log(`Generated meta for product: ${productName} (${region || 'default'})`);
       console.log(`Image: ${image}`);
       console.log(`Description: ${description.substring(0, 50)}...`);
+      console.log(`Price: ${productPrice} ${productCurrency}`);
     } else {
-      title = `Product Details | Spirit Hub Cafe`;
-      description = `View our premium coffee products at Spirit Hub Cafe`;
+      title = `Product Details${region ? ` | ${regionName}` : ''} | Spirit Hub Cafe`;
+      description = `View our premium coffee products at Spirit Hub Cafe in ${regionName}`;
       ogType = 'product';
       console.log('Product not found, using default meta tags');
     }
   } else if (normalizedPath === '/products' || normalizedPath === '/products/') {
-    title = 'Our Products | Spirit Hub Cafe | سبيريت هب';
-    description = 'Browse our selection of specialty coffee beans, brewing equipment, and premium merchandise from Spirit Hub Cafe';
+    title = `Our Products${region ? ` | ${regionName}` : ''} | Spirit Hub Cafe | سبيريت هب`;
+    description = `Browse our selection of specialty coffee beans, brewing equipment, and premium merchandise from Spirit Hub Cafe in ${regionName}`;
   } else if (normalizedPath === '/about' || normalizedPath === '/about/') {
-    title = 'About Us | Spirit Hub Cafe | سبيريت هب';
-    description = 'Learn about Spirit Hub Cafe - our story, mission, and passion for roasting the finest specialty coffee in Oman';
+    title = `About Us${region ? ` | ${regionName}` : ''} | Spirit Hub Cafe | سبيريت هب`;
+    description = `Learn about Spirit Hub Cafe - our story, mission, and passion for roasting the finest specialty coffee in ${regionName}`;
   } else if (normalizedPath === '/contact' || normalizedPath === '/contact/') {
-    title = 'Contact Us | Spirit Hub Cafe | سبيريت هب';
-    description = 'Get in touch with Spirit Hub Cafe in Muscat, Oman - visit us, call us, or send us a message';
+    title = `Contact Us${region ? ` | ${regionName}` : ''} | Spirit Hub Cafe | سبيريت هب`;
+    description = `Get in touch with Spirit Hub Cafe in ${regionName === 'Saudi Arabia' ? 'Riyadh, Saudi Arabia' : 'Muscat, Oman'} - visit us, call us, or send us a message`;
   } else if (normalizedPath === '/favorites' || normalizedPath === '/favorites/') {
-    title = 'My Favorites | Spirit Hub Cafe';
-    description = 'View your favorite products from Spirit Hub Cafe';
+    title = `My Favorites${region ? ` | ${regionName}` : ''} | Spirit Hub Cafe`;
+    description = `View your favorite products from Spirit Hub Cafe in ${regionName}`;
   } else if (normalizedPath === '/orders' || normalizedPath === '/orders/') {
-    title = 'My Orders | Spirit Hub Cafe';
-    description = 'Track and manage your orders from Spirit Hub Cafe';
+    title = `My Orders${region ? ` | ${regionName}` : ''} | Spirit Hub Cafe`;
+    description = `Track and manage your orders from Spirit Hub Cafe in ${regionName}`;
   } else if (normalizedPath === '/checkout' || normalizedPath === '/checkout/') {
-    title = 'Checkout | Spirit Hub Cafe';
-    description = 'Complete your order from Spirit Hub Cafe - Oman\'s premier specialty coffee roastery';
+    title = `Checkout${region ? ` | ${regionName}` : ''} | Spirit Hub Cafe`;
+    description = `Complete your order from Spirit Hub Cafe - ${regionName}'s premier specialty coffee roastery`;
   } else if (normalizedPath === '/login' || normalizedPath === '/login/') {
-    title = 'Login | Spirit Hub Cafe';
+    title = `Login${region ? ` | ${regionName}` : ''} | Spirit Hub Cafe`;
     description = 'Sign in to your Spirit Hub Cafe account';
   } else if (normalizedPath === '/register' || normalizedPath === '/register/') {
-    title = 'Create Account | Spirit Hub Cafe';
+    title = `Create Account${region ? ` | ${regionName}` : ''} | Spirit Hub Cafe`;
     description = 'Join Spirit Hub Cafe community and enjoy exclusive benefits';
   }
 
@@ -213,6 +246,16 @@ async function getMetaTagsForRoute(url, baseUrl) {
 
   const canonicalUrl = `${resolvedBaseUrl}${cleanUrl}`;
 
+  // Build product-specific meta tags if it's a product page
+  let productMetaTags = '';
+  if (ogType === 'product' && productPrice) {
+    productMetaTags = `
+    <meta property="product:price:amount" content="${productPrice}" />
+    <meta property="product:price:currency" content="${productCurrency}" />
+    <meta property="product:availability" content="${productAvailability}" />
+    <meta property="og:availability" content="${productAvailability}" />`;
+  }
+
   return `
     <title>${title}</title>
     <meta name="description" content="${description}" />
@@ -228,10 +271,12 @@ async function getMetaTagsForRoute(url, baseUrl) {
     <meta property="og:locale:alternate" content="ar-OM" />
     ${ogImageTags}
     <meta property="og:site_name" content="Spirit Hub Cafe" />
+    ${productMetaTags}
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="${title}" />
     <meta name="twitter:description" content="${description}" />
     <meta name="twitter:image" content="${twitterImage}" />
+    <meta name="twitter:site" content="@spirithubcafe" />
   `;
 }
 

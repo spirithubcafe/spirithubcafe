@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { AppContext, type Product, type Category, type AppContextType } from './AppContextDefinition';
 import { RegionContext } from './RegionContextDefinition';
 import { categoryService } from '../services/categoryService';
-import { productService, productImageService, productVariantService } from '../services/productService';
+import { productService } from '../services/productService';
 import type { Category as ApiCategory, Product as ApiProduct } from '../types/product';
 import { getCategoryImageUrl, getProductImageUrl, resolveProductImagePath } from '../lib/imageUtils';
 import { cacheUtils, imageCacheUtils } from '../lib/cacheUtils';
@@ -44,9 +44,6 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const latestProductsRequestRef = React.useRef(0);
   const latestCategoriesRequestRef = React.useRef(0);
   const pendingRequestsRef = React.useRef(0);
-  const productsCacheSaveTimerRef = React.useRef<number | null>(null);
-  const imageEnrichmentCooldownRef = React.useRef<Map<string, number>>(new Map());
-  const variantEnrichmentCooldownRef = React.useRef<Map<string, number>>(new Map());
   // Abort controller for cancelling ongoing enrichment when region changes
   const enrichmentAbortRef = React.useRef<AbortController | null>(null);
   
@@ -65,14 +62,6 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     languageRef.current = language;
     currentRegionCodeRef.current = currentRegionCode;
   }, [language, currentRegionCode]);
-
-  const shouldAttemptEnrichment = useCallback((map: Map<string, number>, id: string, cooldownMs: number) => {
-    const now = Date.now();
-    const last = map.get(id);
-    if (last && now - last < cooldownMs) return false;
-    map.set(id, now);
-    return true;
-  }, []);
 
   const beginLoading = useCallback(() => {
     pendingRequestsRef.current += 1;
@@ -139,17 +128,6 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     }
   }, [shouldSkipImagePreload]);
 
-  const scheduleProductsCacheSave = useCallback((cacheKey: string, data: Product[]) => {
-    if (typeof window === 'undefined') return;
-    if (productsCacheSaveTimerRef.current) {
-      window.clearTimeout(productsCacheSaveTimerRef.current);
-    }
-    productsCacheSaveTimerRef.current = window.setTimeout(() => {
-      cacheUtils.set(cacheKey, data);
-      productsCacheSaveTimerRef.current = null;
-    }, 800);
-  }, []);
-
   const isDefaultProductImageUrl = (url: string | undefined): boolean => {
     if (!url) return true;
     return url.includes('default-product.webp');
@@ -157,165 +135,6 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 
   // Abort controller for image enrichment
   const imageEnrichmentAbortRef = React.useRef<AbortController | null>(null);
-
-  const enrichProductImagesInBackground = useCallback(
-    (items: Product[], cacheKey: string, requestId: number) => {
-      // Cancel any previous image enrichment operation
-      if (imageEnrichmentAbortRef.current) {
-        imageEnrichmentAbortRef.current.abort();
-      }
-      const abortController = new AbortController();
-      imageEnrichmentAbortRef.current = abortController;
-
-      // Only enrich when we likely have placeholder images.
-      const candidates = items
-        .filter((p) => isDefaultProductImageUrl(p.image) || !p.image)
-        .filter((p) => shouldAttemptEnrichment(imageEnrichmentCooldownRef.current, p.id, 10 * 60 * 1000))
-        .slice(0, 20); // reduced safety cap
-
-      if (candidates.length === 0) return;
-
-      // Use single worker to serialize requests
-      let index = 0;
-
-      const runWorker = async () => {
-        while (index < candidates.length) {
-          // Check if aborted
-          if (abortController.signal.aborted) {
-            return;
-          }
-
-          const current = candidates[index++];
-          const numericId = Number(current.id);
-          if (!Number.isFinite(numericId)) continue;
-
-          try {
-            const images = await productImageService.getByProduct(numericId);
-            
-            // Check abort again after async operation
-            if (abortController.signal.aborted) {
-              return;
-            }
-
-            const main = images.find((img) => img.isMain) ?? images[0];
-            const imagePath = main?.imagePath;
-            const resolved = imagePath ? getProductImageUrl(imagePath) : getProductImageUrl(undefined);
-
-            if (!isMountedRef.current || requestId !== latestProductsRequestRef.current || abortController.signal.aborted) {
-              return;
-            }
-
-            setProducts((prev) => {
-              const next = prev.map((p) => (p.id === current.id ? { ...p, image: resolved } : p));
-              scheduleProductsCacheSave(cacheKey, next);
-              return next;
-            });
-          } catch {
-            // best-effort
-          }
-          
-          // Longer delay between requests
-          await new Promise((resolve) => window.setTimeout(resolve, 300));
-        }
-      };
-
-      runWorker().catch(() => {
-        // ignore
-      });
-    },
-    [scheduleProductsCacheSave, shouldAttemptEnrichment],
-  );
-
-  const enrichProductVariantsInBackground = useCallback(
-    (items: Product[], cacheKey: string, requestId: number) => {
-      // Cancel any previous enrichment operation
-      if (enrichmentAbortRef.current) {
-        enrichmentAbortRef.current.abort();
-      }
-      const abortController = new AbortController();
-      enrichmentAbortRef.current = abortController;
-
-      // Only enrich when the list payload likely doesn't include variants.
-      // We correct pricing and hide products that have *no active variants*.
-      const candidates = items
-        .filter((p) => p.isOrderable === undefined)
-        .filter((p) => shouldAttemptEnrichment(variantEnrichmentCooldownRef.current, p.id, 10 * 60 * 1000))
-        .slice(0, 20); // reduced safety cap to prevent too many requests
-
-      if (candidates.length === 0) return;
-
-      // Use only 1 worker to serialize requests and prevent ERR_INSUFFICIENT_RESOURCES
-      let index = 0;
-
-      const runWorker = async () => {
-        while (index < candidates.length) {
-          // Check if aborted
-          if (abortController.signal.aborted) {
-            return;
-          }
-
-          const current = candidates[index++];
-          const numericId = Number(current.id);
-          if (!Number.isFinite(numericId)) continue;
-
-          try {
-            const variants = await productVariantService.getByProduct(numericId);
-            
-            // Check abort again after async operation
-            if (abortController.signal.aborted) {
-              return;
-            }
-
-            const activeVariants = (variants ?? []).filter((v) => (v as unknown as { isActive?: boolean }).isActive !== false);
-
-            const isOrderable = activeVariants.length > 0;
-
-            // Pick the default active variant for price (or first active).
-            const defaultVariant =
-              activeVariants.find((v) => (v as unknown as { isDefault?: boolean }).isDefault) ??
-              activeVariants[0] ??
-              null;
-
-            const rawPrice =
-              (defaultVariant as unknown as { discountPrice?: number; price?: number } | null)?.discountPrice ??
-              (defaultVariant as unknown as { price?: number } | null)?.price ??
-              0;
-
-            const computedPrice = typeof rawPrice === 'number' ? rawPrice : 0;
-
-            if (!isMountedRef.current || requestId !== latestProductsRequestRef.current || abortController.signal.aborted) {
-              return;
-            }
-
-            setProducts((prev) => {
-              const next = prev.map((p) => {
-                if (p.id !== current.id) return p;
-                return {
-                  ...p,
-                  isOrderable,
-                  // When not orderable, force price to 0 so UI doesn't show a misleading price.
-                  price: isOrderable ? computedPrice : 0,
-                };
-              });
-              scheduleProductsCacheSave(cacheKey, next);
-              return next;
-            });
-          } catch {
-            // best-effort - if request fails, continue with next
-          }
-          
-          // Longer delay between requests to prevent resource exhaustion
-          await new Promise((resolve) => window.setTimeout(resolve, 300));
-        }
-      };
-
-      // Run single worker to serialize all requests
-      runWorker().catch(() => {
-        // ignore
-      });
-    },
-    [scheduleProductsCacheSave, shouldAttemptEnrichment],
-  );
 
   // Toggle language between Arabic and English
   const toggleLanguage = () => {
