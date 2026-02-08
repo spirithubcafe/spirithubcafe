@@ -17,6 +17,8 @@ export { shippingService } from './shippingService';
 export { fileUploadService } from './fileUploadService';
 export { newsletterService } from './newsletterService';
 export { emailService } from './emailService';
+export { whatsappService } from './whatsappService';
+export { whatsappNotificationSettingsService } from './whatsappNotificationSettingsService';
 export { wholesaleOrderService } from './wholesaleOrderService';
 export { wholesaleCustomerLookupService } from './wholesaleCustomerLookupService';
 export {
@@ -35,6 +37,7 @@ export {
 // Export types
 export type * from '../types/auth';
 export type * from '../types/product';
+export type * from '../types/whatsapp';
 export type {
   AramexAddress,
   AramexShipmentDetails,

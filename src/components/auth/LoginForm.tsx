@@ -5,10 +5,13 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { GoogleLoginButton } from './GoogleLoginButton';
+import { PhoneLoginForm } from './PhoneLoginForm';
 import { Alert, AlertDescription } from '../ui/alert';
 import { Spinner } from '../ui/spinner';
-import { Eye, EyeOff, LogIn, AlertCircle } from 'lucide-react';
+import { Eye, EyeOff, LogIn, AlertCircle, Phone, Mail } from 'lucide-react';
 import { useApp } from '../../hooks/useApp';
+
+type LoginMethod = 'email' | 'phone';
 
 interface LoginFormProps {
   onSuccess?: () => void;
@@ -26,6 +29,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
   
   const isRTL = language === 'ar';
   
+  const [loginMethod, setLoginMethod] = useState<LoginMethod>('email');
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -77,6 +81,36 @@ export const LoginForm: React.FC<LoginFormProps> = ({
 
   return (
     <div className={`w-full ${isRTL ? 'rtl' : 'ltr'}`} dir={isRTL ? 'rtl' : 'ltr'}>
+      {/* Login Method Toggle */}
+      <div className="flex gap-2 mb-6">
+        <Button
+          type="button"
+          variant={loginMethod === 'email' ? 'default' : 'outline'}
+          className={`flex-1 ${loginMethod === 'email' ? 'bg-amber-600 hover:bg-amber-700' : ''}`}
+          onClick={() => setLoginMethod('email')}
+        >
+          <Mail className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+          {isRTL ? 'البريد الإلكتروني' : 'Email'}
+        </Button>
+        <Button
+          type="button"
+          variant={loginMethod === 'phone' ? 'default' : 'outline'}
+          className={`flex-1 ${loginMethod === 'phone' ? 'bg-green-600 hover:bg-green-700' : ''}`}
+          onClick={() => setLoginMethod('phone')}
+        >
+          <Phone className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+          {isRTL ? 'واتساب' : 'WhatsApp'}
+        </Button>
+      </div>
+
+      {/* Phone Login Form */}
+      {loginMethod === 'phone' ? (
+        <PhoneLoginForm
+          onSuccess={onSuccess}
+          onSwitchToEmail={() => setLoginMethod('email')}
+        />
+      ) : (
+        /* Email Login Form */
       <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
             <Alert variant="destructive">
@@ -197,6 +231,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
             </div>
           )}
         </form>
+      )}
     </div>
   );
 };

@@ -238,12 +238,32 @@ export const AdminLayout: React.FC = () => {
     },
     {
       id: 'emailNotificationSettings',
-      label: isArabic ? 'تنظیمات اعلان‌های ایمیل' : 'Email Notifications',
+      label: isArabic ? 'إشعارات البريد الإلكتروني' : 'Email Notifications',
       description: isArabic
-        ? 'فعال/غیرفعال کردن ایمیل‌های خودکار'
+        ? 'تفعيل/تعطيل إشعارات البريد التلقائية'
         : 'Enable/disable automatic email notifications',
       icon: Bell,
       path: '/admin/email-notification-settings',
+      roles: ['Admin'],
+    },
+    {
+      id: 'whatsappSend',
+      label: isArabic ? 'إرسال رسالة واتساب' : 'WhatsApp Message',
+      description: isArabic
+        ? 'إرسال رسائل أو صور للعملاء عبر واتساب'
+        : 'Send messages or images to customers via WhatsApp',
+      icon: MessageSquare,
+      path: '/admin/whatsapp-send',
+      roles: ['Admin', 'Manager'],
+    },
+    {
+      id: 'whatsappNotificationSettings',
+      label: isArabic ? 'إشعارات واتساب' : 'WhatsApp Notifications',
+      description: isArabic
+        ? 'إدارة رسائل واتساب التلقائية للعملاء والمشرفين'
+        : 'Manage automatic WhatsApp notification settings',
+      icon: Bell,
+      path: '/admin/whatsapp-notification-settings',
       roles: ['Admin'],
     },
     {
@@ -301,7 +321,7 @@ export const AdminLayout: React.FC = () => {
       id: 'operations',
       label: t('admin.navGroups.operations'),
       items: availableNavItems.filter((item) =>
-        ['orders', 'wholesaleOrders', 'newsletter', 'emailSettings', 'emailNotificationSettings', 'reports', 'system', 'seo'].includes(item.id)
+        ['orders', 'wholesaleOrders', 'newsletter', 'emailSettings', 'emailNotificationSettings', 'whatsappSend', 'whatsappNotificationSettings', 'reports', 'system', 'seo'].includes(item.id)
       ),
     },
   ].filter((group) => group.items.length > 0);

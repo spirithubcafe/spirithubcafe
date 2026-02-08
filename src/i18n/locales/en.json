@@ -234,6 +234,12 @@
       "title": "Newsletter",
       "description": "Manage newsletter subscribers and send campaigns"
     },
+    "whatsapp": {
+      "sendTitle": "WhatsApp Message",
+      "sendDescription": "Send messages to customers via WhatsApp",
+      "settingsTitle": "WhatsApp Settings",
+      "settingsDescription": "Configure WhatsApp notifications"
+    },
     "emailSettings": {
       "title": "Email Settings",
       "description": "Manage sender details and SMTP/IMAP configuration",

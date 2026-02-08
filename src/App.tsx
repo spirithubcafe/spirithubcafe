@@ -28,6 +28,8 @@ import {
   EmailSettingsManagement,
   EmailNotificationSettingsManagement,
   ReviewsManagement,
+  WhatsAppSendMessage,
+  WhatsAppNotificationSettingsManagement,
 } from './components/admin';
 import { CategoryAddPage } from './pages/CategoryAddPage';
 import { CategoryEditPage } from './pages/CategoryEditPage';
@@ -233,6 +235,8 @@ function AppContent() {
           <Route path="newsletter" element={<NewsletterManagement />} />
           <Route path="email-settings" element={<EmailSettingsManagement />} />
           <Route path="email-notification-settings" element={<EmailNotificationSettingsManagement />} />
+          <Route path="whatsapp-send" element={<WhatsAppSendMessage />} />
+          <Route path="whatsapp-notification-settings" element={<WhatsAppNotificationSettingsManagement />} />
           <Route path="reports" element={<ReportsManagement />} />
           <Route path="settings" element={<SystemSettings />} />
         </Route>
@@ -255,6 +259,8 @@ function AppContent() {
           <Route path="newsletter" element={<NewsletterManagement />} />
           <Route path="email-settings" element={<EmailSettingsManagement />} />
           <Route path="email-notification-settings" element={<EmailNotificationSettingsManagement />} />
+          <Route path="whatsapp-send" element={<WhatsAppSendMessage />} />
+          <Route path="whatsapp-notification-settings" element={<WhatsAppNotificationSettingsManagement />} />
           <Route path="reports" element={<ReportsManagement />} />
           <Route path="settings" element={<SystemSettings />} />
         </Route>

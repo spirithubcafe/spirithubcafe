@@ -307,6 +307,12 @@
       "title": "النشرة البريدية",
       "description": "إدارة مشتركي النشرة البريدية وإرسال الحملات"
     },
+    "whatsapp": {
+      "sendTitle": "رسالة واتساب",
+      "sendDescription": "إرسال رسائل للعملاء عبر واتساب",
+      "settingsTitle": "إعدادات واتساب",
+      "settingsDescription": "تكوين إشعارات واتساب"
+    },
     "emailSettings": {
       "title": "إعدادات البريد الإلكتروني",
       "description": "إدارة بيانات المرسل وإعدادات SMTP/IMAP",

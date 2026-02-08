@@ -5,6 +5,8 @@ import { useApp } from '../hooks/useApp';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { AdminDashboard, CategoriesManagement, ProductsManagement, UsersManagement, NewsletterManagement } from '../components/admin';
+import { WhatsAppSendMessage } from '../components/admin/WhatsAppSendMessage';
+import { WhatsAppNotificationSettingsManagement } from '../components/admin/WhatsAppNotificationSettingsManagement';
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '../components/ui/sheet';
 import { 
   Users, 
@@ -17,7 +19,9 @@ import {
   Grid3X3,
   Menu,
   Mail,
-  Home
+  Home,
+  MessageSquare,
+  Bell
 } from 'lucide-react';
 import { OrdersManagement } from '../components/admin/OrdersManagement';
 
@@ -94,6 +98,22 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
       roles: ['Admin', 'Manager']
     },
     {
+      id: 'whatsapp-send',
+      title: t('admin.whatsapp.sendTitle') || 'WhatsApp Message',
+      description: t('admin.whatsapp.sendDescription') || 'Send messages to customers via WhatsApp',
+      icon: MessageSquare,
+      color: 'green',
+      roles: ['Admin', 'Manager']
+    },
+    {
+      id: 'whatsapp-settings',
+      title: t('admin.whatsapp.settingsTitle') || 'WhatsApp Settings',
+      description: t('admin.whatsapp.settingsDescription') || 'Configure WhatsApp notifications',
+      icon: Bell,
+      color: 'emerald',
+      roles: ['Admin']
+    },
+    {
       id: 'reports',
       title: t('admin.reports.title'),
       description: t('admin.reportsDesc'),
@@ -131,6 +151,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
         return <OrdersContent />;
       case 'newsletter':
         return <NewsletterManagement />;
+      case 'whatsapp-send':
+        return <WhatsAppSendMessage />;
+      case 'whatsapp-settings':
+        return <WhatsAppNotificationSettingsManagement />;
       case 'reports':
         return <ReportsContent />;
       case 'system':

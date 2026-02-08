@@ -14,4 +14,6 @@ export { SystemSettings } from './SystemSettings';
 export { NewsletterManagement } from './NewsletterManagement';
 export { EmailSettingsManagement } from './EmailSettingsManagement';
 export { EmailNotificationSettingsManagement } from './EmailNotificationSettingsManagement';
+export { WhatsAppSendMessage } from './WhatsAppSendMessage';
+export { WhatsAppNotificationSettingsManagement } from './WhatsAppNotificationSettingsManagement';
 export { ReviewsManagement } from './ReviewsManagement';
