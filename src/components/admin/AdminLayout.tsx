@@ -39,6 +39,7 @@ import {
   DialogTitle,
 } from '../ui/dialog';
 import {
+  Bell,
   Users,
   Package,
   BarChart3,
@@ -236,6 +237,16 @@ export const AdminLayout: React.FC = () => {
       roles: ['Admin'],
     },
     {
+      id: 'emailNotificationSettings',
+      label: isArabic ? 'تنظیمات اعلان‌های ایمیل' : 'Email Notifications',
+      description: isArabic
+        ? 'فعال/غیرفعال کردن ایمیل‌های خودکار'
+        : 'Enable/disable automatic email notifications',
+      icon: Bell,
+      path: '/admin/email-notification-settings',
+      roles: ['Admin'],
+    },
+    {
       id: 'users',
       label: t('admin.manageUsers'),
       description: t('admin.usersDesc'),
@@ -290,7 +301,7 @@ export const AdminLayout: React.FC = () => {
       id: 'operations',
       label: t('admin.navGroups.operations'),
       items: availableNavItems.filter((item) =>
-        ['orders', 'wholesaleOrders', 'newsletter', 'emailSettings', 'reports', 'system', 'seo'].includes(item.id)
+        ['orders', 'wholesaleOrders', 'newsletter', 'emailSettings', 'emailNotificationSettings', 'reports', 'system', 'seo'].includes(item.id)
       ),
     },
   ].filter((group) => group.items.length > 0);

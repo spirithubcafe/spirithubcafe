@@ -26,6 +26,7 @@ import {
   SystemSettings,
   NewsletterManagement,
   EmailSettingsManagement,
+  EmailNotificationSettingsManagement,
   ReviewsManagement,
 } from './components/admin';
 import { CategoryAddPage } from './pages/CategoryAddPage';
@@ -231,6 +232,7 @@ function AppContent() {
           <Route path="wholesale-orders" element={<WholesaleOrdersManagement />} />
           <Route path="newsletter" element={<NewsletterManagement />} />
           <Route path="email-settings" element={<EmailSettingsManagement />} />
+          <Route path="email-notification-settings" element={<EmailNotificationSettingsManagement />} />
           <Route path="reports" element={<ReportsManagement />} />
           <Route path="settings" element={<SystemSettings />} />
         </Route>
@@ -252,6 +254,7 @@ function AppContent() {
           <Route path="wholesale-orders" element={<WholesaleOrdersManagement />} />
           <Route path="newsletter" element={<NewsletterManagement />} />
           <Route path="email-settings" element={<EmailSettingsManagement />} />
+          <Route path="email-notification-settings" element={<EmailNotificationSettingsManagement />} />
           <Route path="reports" element={<ReportsManagement />} />
           <Route path="settings" element={<SystemSettings />} />
         </Route>

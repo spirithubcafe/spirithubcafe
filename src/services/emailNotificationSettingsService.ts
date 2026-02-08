@@ -1,0 +1,65 @@
+import { http } from './apiClient';
+
+export interface EmailNotificationSettingsDto {
+  isEnabled: boolean;
+  adminEmails: string;
+  supportEmail: string;
+
+  // Customer notifications
+  customerOrderPlacedEnabled: boolean;
+  customerOrderStatusChangedEnabled: boolean;
+  customerPaymentStatusChangedEnabled: boolean;
+  customerShippingUpdateEnabled: boolean;
+  customerOrderCancelledEnabled: boolean;
+  customerWelcomeEnabled: boolean;
+  customerLoginSuccessEnabled: boolean;
+  customerPasswordResetEnabled: boolean;
+  customerPasswordChangedEnabled: boolean;
+
+  // Admin notifications
+  adminNewOrderEnabled: boolean;
+  adminPaymentReceivedEnabled: boolean;
+  adminOrderStatusChangedEnabled: boolean;
+}
+
+type ApiEnvelope<T> = {
+  success: boolean;
+  data: T;
+  message?: string;
+};
+
+const unwrap = <T>(payload: unknown): T => {
+  if (
+    payload &&
+    typeof payload === 'object' &&
+    'success' in payload &&
+    'data' in payload
+  ) {
+    return (payload as ApiEnvelope<T>).data;
+  }
+  return payload as T;
+};
+
+export const emailNotificationSettingsService = {
+  /**
+   * Get current email notification settings
+   */
+  get: async (): Promise<EmailNotificationSettingsDto> => {
+    const response = await http.get<
+      EmailNotificationSettingsDto | ApiEnvelope<EmailNotificationSettingsDto>
+    >('/api/EmailNotificationSettings');
+    return unwrap<EmailNotificationSettingsDto>(response.data);
+  },
+
+  /**
+   * Update email notification settings
+   */
+  update: async (
+    settings: EmailNotificationSettingsDto,
+  ): Promise<EmailNotificationSettingsDto> => {
+    const response = await http.put<
+      EmailNotificationSettingsDto | ApiEnvelope<EmailNotificationSettingsDto>
+    >('/api/EmailNotificationSettings', settings);
+    return unwrap<EmailNotificationSettingsDto>(response.data);
+  },
+};
