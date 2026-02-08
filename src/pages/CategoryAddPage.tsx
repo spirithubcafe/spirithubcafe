@@ -170,7 +170,7 @@ export const CategoryAddPage: React.FC = () => {
         taxPercentage: Number(formData.taxPercentage)
       };
 
-      const created = await categoryService.create(dataToSend);
+      await categoryService.create(dataToSend);
       navigate('/admin/categories');
     } catch (error: unknown) {
       console.error('Error creating category:', error);

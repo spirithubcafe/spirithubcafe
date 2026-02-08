@@ -12,6 +12,11 @@ import {
 } from 'lucide-react';
 import { useWhatsApp } from '../../hooks/useWhatsApp';
 import { useApp } from '../../hooks/useApp';
+import {
+  CountryCodePicker,
+  getDefaultCountry,
+  type Country,
+} from '../ui/CountryCodePicker';
 import { Card, CardContent, CardHeader } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -28,6 +33,7 @@ export const WhatsAppSendMessage: React.FC = () => {
 
   const [sendType, setSendType] = useState<SendType>('text');
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [selectedCountry, setSelectedCountry] = useState<Country>(getDefaultCountry);
   const [message, setMessage] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [caption, setCaption] = useState('');
@@ -36,15 +42,24 @@ export const WhatsAppSendMessage: React.FC = () => {
   const { loading, error, success, sendText, sendImage, reset, formatPhone, isValidPhone } = useWhatsApp();
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Only allow digits
     const value = e.target.value.replace(/\D/g, '');
-    setPhoneNumber(value);
+    if (value.length <= selectedCountry.maxDigits) {
+      setPhoneNumber(value);
+    }
     reset();
   };
 
+  const handleCountryChange = (country: Country) => {
+    setSelectedCountry(country);
+    setPhoneNumber('');
+    reset();
+  };
+
+  const phoneValid = isValidPhone(phoneNumber, selectedCountry.maxDigits, selectedCountry.startsWith);
+
   const handleSendText = async (e: React.FormEvent) => {
     e.preventDefault();
-    const result = await sendText({ phoneNumber, message });
+    const result = await sendText({ phoneNumber, message, countryDialCode: selectedCountry.dialCode });
     if (result) {
       toast.success(isArabic ? 'تم إرسال الرسالة بنجاح' : 'Message sent successfully');
       setMessage('');
@@ -56,7 +71,8 @@ export const WhatsAppSendMessage: React.FC = () => {
     const result = await sendImage({ 
       phoneNumber, 
       imageUrl, 
-      caption: caption || undefined 
+      caption: caption || undefined,
+      countryDialCode: selectedCountry.dialCode,
     });
     if (result) {
       toast.success(isArabic ? 'تم إرسال الصورة بنجاح' : 'Image sent successfully');
@@ -79,7 +95,7 @@ export const WhatsAppSendMessage: React.FC = () => {
       textTab: 'Text Message',
       imageTab: 'Image with Caption',
       phoneLabel: 'Recipient Phone Number',
-      phonePlaceholder: '92506030 or 96892506030',
+      phonePlaceholder: selectedCountry.code === 'OM' ? '92506030' : '5XXXXXXXX',
       messageLabel: 'Message',
       messagePlaceholder: 'Type your message here...',
       charCount: 'characters',
@@ -99,7 +115,7 @@ export const WhatsAppSendMessage: React.FC = () => {
       textTab: 'رسالة نصية',
       imageTab: 'صورة مع تعليق',
       phoneLabel: 'رقم هاتف المستلم',
-      phonePlaceholder: '92506030 أو 96892506030',
+      phonePlaceholder: selectedCountry.code === 'OM' ? '92506030' : '5XXXXXXXX',
       messageLabel: 'الرسالة',
       messagePlaceholder: 'اكتب رسالتك هنا...',
       charCount: 'حرف',
@@ -155,14 +171,18 @@ export const WhatsAppSendMessage: React.FC = () => {
               <Phone className="h-4 w-4" />
               {copy.phoneLabel}
             </Label>
-            <div className="flex gap-2">
-              <div className="flex items-center justify-center px-3 py-2 bg-gray-100 border border-gray-200 rounded-md text-gray-600 font-medium min-w-[70px]">
-                +968
-              </div>
+            <div className="flex gap-2" dir="ltr">
+              <CountryCodePicker
+                value={selectedCountry}
+                onChange={handleCountryChange}
+                isArabic={isArabic}
+                compact
+              />
               <Input
                 id="phone"
                 type="tel"
                 inputMode="numeric"
+                maxLength={selectedCountry.maxDigits}
                 value={phoneNumber}
                 onChange={handlePhoneChange}
                 placeholder={copy.phonePlaceholder}
@@ -171,14 +191,17 @@ export const WhatsAppSendMessage: React.FC = () => {
               />
             </div>
             {phoneNumber && (
-              <p className={`text-xs ${isValidPhone(phoneNumber) ? 'text-green-600' : 'text-yellow-600'}`}>
-                {isValidPhone(phoneNumber) ? (
+              <p className={`text-xs ${phoneValid ? 'text-green-600' : 'text-amber-600'}`}>
+                {phoneValid ? (
                   <span className="flex items-center gap-1">
                     <CheckCircle2 className="h-3 w-3" />
-                    {formatPhone(phoneNumber)}
+                    <span className="text-base leading-none">{selectedCountry.flag}</span>
+                    {formatPhone(phoneNumber, selectedCountry.dialCode)}
                   </span>
                 ) : (
-                  'Enter 8-digit Oman number starting with 9'
+                  isArabic
+                    ? `أدخل ${selectedCountry.maxDigits} أرقام${selectedCountry.startsWith ? ` تبدأ بـ ${selectedCountry.startsWith}` : ''}`
+                    : `Enter ${selectedCountry.maxDigits} digits${selectedCountry.startsWith ? ` starting with ${selectedCountry.startsWith}` : ''}`
                 )}
               </p>
             )}
@@ -224,7 +247,7 @@ export const WhatsAppSendMessage: React.FC = () => {
 
                 <Button
                   type="submit"
-                  disabled={loading || !phoneNumber || !message.trim() || !isValidPhone(phoneNumber)}
+                  disabled={loading || !phoneNumber || !message.trim() || !phoneValid}
                   className="w-full bg-green-600 hover:bg-green-700"
                 >
                   {loading ? (
@@ -307,7 +330,7 @@ export const WhatsAppSendMessage: React.FC = () => {
 
                 <Button
                   type="submit"
-                  disabled={loading || !phoneNumber || !imageUrl.trim() || imageError || !isValidPhone(phoneNumber)}
+                  disabled={loading || !phoneNumber || !imageUrl.trim() || imageError || !phoneValid}
                   className="w-full bg-green-600 hover:bg-green-700"
                 >
                   {loading ? (
@@ -342,7 +365,7 @@ export const WhatsAppSendMessage: React.FC = () => {
                 {isArabic ? 'نصائح مهمة:' : 'Important Tips:'}
               </p>
               <ul className="list-disc list-inside space-y-1 text-green-700">
-                <li>{isArabic ? 'يجب أن يبدأ الرقم بـ 9 (مثال: 92506030)' : 'Number must start with 9 (e.g., 92506030)'}</li>
+                <li>{isArabic ? 'اختر الدولة ثم أدخل رقم الهاتف المحلي' : 'Select the country, then enter the local phone number'}</li>
                 <li>{isArabic ? 'يجب أن يكون لدى المستلم تطبيق واتساب' : 'Recipient must have WhatsApp installed'}</li>
                 <li>{isArabic ? 'يجب أن تحتوي الصور على رابط URL عام يمكن الوصول إليه' : 'Images must have a publicly accessible URL'}</li>
               </ul>

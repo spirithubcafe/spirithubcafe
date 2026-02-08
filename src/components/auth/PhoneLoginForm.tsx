@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { usePhoneAuth } from '../../hooks/usePhoneAuth';
 import { whatsappService } from '../../services/whatsappService';
 import { useApp } from '../../hooks/useApp';
@@ -7,6 +7,11 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Alert, AlertDescription } from '../ui/alert';
 import { Spinner } from '../ui/spinner';
+import {
+  CountryCodePicker,
+  getDefaultCountry,
+  type Country,
+} from '../ui/CountryCodePicker';
 import { 
   Phone, 
   ArrowLeft, 
@@ -28,6 +33,7 @@ export const PhoneLoginForm: React.FC<PhoneLoginFormProps> = ({
   const { language } = useApp();
   const isRTL = language === 'ar';
   const otpInputRef = useRef<HTMLInputElement>(null);
+  const [selectedCountry, setSelectedCountry] = useState<Country>(getDefaultCountry);
 
   const {
     step,
@@ -39,11 +45,19 @@ export const PhoneLoginForm: React.FC<PhoneLoginFormProps> = ({
     countdown,
     setPhoneNumber,
     setOtpCode,
+    setCountryDialCode,
     requestOtp,
     verifyOtp,
     resendOtp,
     goBack,
   } = usePhoneAuth();
+
+  // Sync country code with hook
+  const handleCountryChange = (country: Country) => {
+    setSelectedCountry(country);
+    setCountryDialCode(country.dialCode);
+    setPhoneNumber('');
+  };
 
   // Auto-focus OTP input when step changes
   useEffect(() => {
@@ -53,10 +67,8 @@ export const PhoneLoginForm: React.FC<PhoneLoginFormProps> = ({
   }, [step]);
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Only allow digits
     const value = e.target.value.replace(/\D/g, '');
-    // Limit to 8 digits for Oman numbers
-    if (value.length <= 8) {
+    if (value.length <= selectedCountry.maxDigits) {
       setPhoneNumber(value);
     }
   };
@@ -92,8 +104,7 @@ export const PhoneLoginForm: React.FC<PhoneLoginFormProps> = ({
       title: 'Login with Phone',
       subtitle: 'Enter your mobile number to receive a verification code via WhatsApp',
       phoneLabel: 'Mobile Number',
-      phonePlaceholder: '92506030',
-      countryCode: '+968',
+      phonePlaceholder: selectedCountry.code === 'OM' ? '92506030' : '5XXXXXXXX',
       requestOtp: 'Get Verification Code',
       sending: 'Sending...',
       otpTitle: 'Verification Code',
@@ -115,8 +126,7 @@ export const PhoneLoginForm: React.FC<PhoneLoginFormProps> = ({
       title: 'تسجيل الدخول بالهاتف',
       subtitle: 'أدخل رقم هاتفك المحمول لتلقي رمز التحقق عبر واتساب',
       phoneLabel: 'رقم الهاتف',
-      phonePlaceholder: '92506030',
-      countryCode: '+968',
+      phonePlaceholder: selectedCountry.code === 'OM' ? '92506030' : '5XXXXXXXX',
       requestOtp: 'الحصول على رمز التحقق',
       sending: 'جاري الإرسال...',
       otpTitle: 'رمز التحقق',
@@ -165,16 +175,20 @@ export const PhoneLoginForm: React.FC<PhoneLoginFormProps> = ({
             >
               {copy.phoneLabel}
             </Label>
-            <div className="flex gap-2">
-              <div className="flex items-center justify-center px-3 py-2 bg-gray-100 border border-gray-300 rounded-md text-gray-600 font-medium min-w-[70px]">
-                {copy.countryCode}
-              </div>
+            <div className="flex gap-2" dir="ltr">
+              <CountryCodePicker
+                value={selectedCountry}
+                onChange={handleCountryChange}
+                disabled={loading}
+                isArabic={isRTL}
+                compact
+              />
               <Input
                 id="phone"
                 type="tel"
                 inputMode="numeric"
                 pattern="[0-9]*"
-                maxLength={8}
+                maxLength={selectedCountry.maxDigits}
                 value={phoneNumber}
                 onChange={handlePhoneChange}
                 placeholder={copy.phonePlaceholder}
@@ -184,20 +198,27 @@ export const PhoneLoginForm: React.FC<PhoneLoginFormProps> = ({
                 autoComplete="tel"
               />
             </div>
-            <p className="text-xs text-gray-500">
-              {whatsappService.isValidOmanPhone(phoneNumber) && (
-                <span className="text-green-600 flex items-center gap-1">
+            <div className="min-h-[20px]">
+              {phoneNumber && whatsappService.isValidPhone(phoneNumber, selectedCountry.maxDigits, selectedCountry.startsWith) && (
+                <p className="text-xs text-green-600 flex items-center gap-1">
                   <CheckCircle2 className="h-3 w-3" />
-                  {whatsappService.formatPhoneDisplay(phoneNumber)}
-                </span>
+                  {whatsappService.formatPhoneDisplay(phoneNumber, selectedCountry.dialCode)}
+                </p>
               )}
-            </p>
+              {phoneNumber && !whatsappService.isValidPhone(phoneNumber, selectedCountry.maxDigits, selectedCountry.startsWith) && (
+                <p className="text-xs text-amber-600">
+                  {isRTL
+                    ? `أدخل ${selectedCountry.maxDigits} أرقام${selectedCountry.startsWith ? ` تبدأ بـ ${selectedCountry.startsWith}` : ''}`
+                    : `Enter ${selectedCountry.maxDigits} digits${selectedCountry.startsWith ? ` starting with ${selectedCountry.startsWith}` : ''}`}
+                </p>
+              )}
+            </div>
           </div>
 
           <Button
             type="submit"
             className="w-full bg-green-600 hover:bg-green-700 text-white"
-            disabled={loading || phoneNumber.length < 8}
+            disabled={loading || !whatsappService.isValidPhone(phoneNumber, selectedCountry.maxDigits, selectedCountry.startsWith)}
           >
             {loading ? (
               <>
@@ -244,8 +265,9 @@ export const PhoneLoginForm: React.FC<PhoneLoginFormProps> = ({
             <p className="text-sm text-gray-500 mt-1">
               {copy.otpSubtitle}
             </p>
-            <p className="font-medium text-gray-700 mt-1" dir="ltr">
-              {whatsappService.formatPhoneDisplay(phoneNumber)}
+            <p className="font-medium text-gray-700 mt-1 flex items-center justify-center gap-1.5" dir="ltr">
+              <span className="text-base">{selectedCountry.flag}</span>
+              {whatsappService.formatPhoneDisplay(phoneNumber, selectedCountry.dialCode)}
             </p>
             {isNewUser && (
               <p className="mt-2 text-green-600 text-sm flex items-center justify-center gap-1">

@@ -14,8 +14,10 @@ interface UsePhoneAuthReturn {
   loading: boolean;
   error: string | null;
   countdown: number;
+  countryDialCode: string;
   setPhoneNumber: (phone: string) => void;
   setOtpCode: (code: string) => void;
+  setCountryDialCode: (dialCode: string) => void;
   requestOtp: () => Promise<boolean>;
   verifyOtp: () => Promise<{ success: boolean; user?: UserInfo }>;
   resendOtp: () => Promise<boolean>;
@@ -31,6 +33,7 @@ export const usePhoneAuth = (): UsePhoneAuthReturn => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [countdown, setCountdown] = useState(0);
+  const [countryDialCode, setCountryDialCode] = useState('+968');
   
   const countdownRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -59,17 +62,12 @@ export const usePhoneAuth = (): UsePhoneAuthReturn => {
       return false;
     }
 
-    if (!whatsappService.isValidOmanPhone(phoneNumber)) {
-      setError('Please enter a valid Oman phone number');
-      return false;
-    }
-
     setLoading(true);
     setError(null);
 
     try {
       const response = await whatsappService.requestOtp({ 
-        phoneNumber: whatsappService.normalizePhoneNumber(phoneNumber) 
+        phoneNumber: whatsappService.normalizePhoneNumber(phoneNumber, countryDialCode) 
       });
 
       if (response.success) {
@@ -92,7 +90,7 @@ export const usePhoneAuth = (): UsePhoneAuthReturn => {
     } finally {
       setLoading(false);
     }
-  }, [phoneNumber, startCountdown]);
+  }, [phoneNumber, countryDialCode, startCountdown]);
 
   const verifyOtp = useCallback(async (): Promise<{ success: boolean; user?: UserInfo }> => {
     if (!otpCode.trim() || otpCode.length < 6) {
@@ -105,7 +103,7 @@ export const usePhoneAuth = (): UsePhoneAuthReturn => {
 
     try {
       const response = await whatsappService.verifyOtp({
-        phoneNumber: whatsappService.normalizePhoneNumber(phoneNumber),
+        phoneNumber: whatsappService.normalizePhoneNumber(phoneNumber, countryDialCode),
         code: otpCode,
       });
 
@@ -139,7 +137,7 @@ export const usePhoneAuth = (): UsePhoneAuthReturn => {
     } finally {
       setLoading(false);
     }
-  }, [phoneNumber, otpCode]);
+  }, [phoneNumber, otpCode, countryDialCode]);
 
   const resendOtp = useCallback(async (): Promise<boolean> => {
     if (countdown > 0) {
@@ -176,8 +174,10 @@ export const usePhoneAuth = (): UsePhoneAuthReturn => {
     loading,
     error,
     countdown,
+    countryDialCode,
     setPhoneNumber,
     setOtpCode,
+    setCountryDialCode,
     requestOtp,
     verifyOtp,
     resendOtp,

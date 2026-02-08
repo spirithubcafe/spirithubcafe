@@ -93,54 +93,63 @@ export const whatsappService = {
   },
 
   /**
-   * Normalize phone number to international format
-   * Supports Oman phone numbers (8 digits starting with 9)
+   * Normalize phone number to international format (digits only, with country code)
+   * @param phone  – The local phone digits (without country code)
+   * @param countryDialCode – e.g. "+968", "+971"
    */
-  normalizePhoneNumber: (phone: string): string => {
-    // Remove all non-digit characters
+  normalizePhoneNumber: (phone: string, countryDialCode?: string): string => {
     const digits = phone.replace(/\D/g, '');
-    
-    // If 8 digits (Oman local format), add country code
-    if (digits.length === 8) {
-      return `968${digits}`;
-    }
-    
-    // If starts with 968 and has correct length
-    if (digits.startsWith('968') && digits.length === 11) {
+    const dialDigits = (countryDialCode ?? '+968').replace(/\D/g, '');
+
+    // Already contains country code
+    if (digits.startsWith(dialDigits)) {
       return digits;
     }
-    
-    // Return as-is for other formats
-    return digits;
+
+    return `${dialDigits}${digits}`;
   },
 
   /**
    * Format phone number for display
+   * @param phone  – local digits
+   * @param countryDialCode – e.g. "+968"
    */
-  formatPhoneDisplay: (phone: string): string => {
+  formatPhoneDisplay: (phone: string, countryDialCode?: string): string => {
     const digits = phone.replace(/\D/g, '');
-    if (digits.length === 8) {
-      return `+968 ${digits.slice(0, 4)} ${digits.slice(4)}`;
+    const dial = countryDialCode ?? '+968';
+    const dialDigits = dial.replace(/\D/g, '');
+
+    // Strip country code if present
+    const local = digits.startsWith(dialDigits) ? digits.slice(dialDigits.length) : digits;
+
+    // Group in 4-digit blocks
+    const parts: string[] = [];
+    for (let i = 0; i < local.length; i += 4) {
+      parts.push(local.slice(i, i + 4));
     }
-    if (digits.length === 11 && digits.startsWith('968')) {
-      return `+968 ${digits.slice(3, 7)} ${digits.slice(7)}`;
-    }
-    return phone;
+    return `${dial} ${parts.join(' ')}`.trim();
   },
 
   /**
-   * Validate Oman phone number
+   * Validate phone number based on country config
+   * @param phone – local digits (no country code)
+   * @param maxDigits – expected digit count for the country
+   * @param startsWith – optional: first digit must match
+   */
+  isValidPhone: (phone: string, maxDigits: number = 8, startsWith?: string): boolean => {
+    const digits = phone.replace(/\D/g, '');
+    if (digits.length !== maxDigits) return false;
+    if (startsWith && !digits.startsWith(startsWith)) return false;
+    return true;
+  },
+
+  /**
+   * Legacy: Validate Oman phone number (kept for backward-compatibility)
    */
   isValidOmanPhone: (phone: string): boolean => {
     const digits = phone.replace(/\D/g, '');
-    // 8 digit Oman number starting with 9
-    if (digits.length === 8 && digits.startsWith('9')) {
-      return true;
-    }
-    // 11 digit with country code
-    if (digits.length === 11 && digits.startsWith('968') && digits[3] === '9') {
-      return true;
-    }
+    if (digits.length === 8 && digits.startsWith('9')) return true;
+    if (digits.length === 11 && digits.startsWith('968') && digits[3] === '9') return true;
     return false;
   },
 };

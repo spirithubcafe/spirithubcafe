@@ -9,11 +9,11 @@ interface UseWhatsAppReturn {
   loading: boolean;
   error: string | null;
   success: boolean;
-  sendText: (params: WhatsAppSendDto) => Promise<boolean>;
-  sendImage: (params: WhatsAppSendImageDto) => Promise<boolean>;
+  sendText: (params: WhatsAppSendDto & { countryDialCode?: string }) => Promise<boolean>;
+  sendImage: (params: WhatsAppSendImageDto & { countryDialCode?: string }) => Promise<boolean>;
   reset: () => void;
-  formatPhone: (phone: string) => string;
-  isValidPhone: (phone: string) => boolean;
+  formatPhone: (phone: string, countryDialCode?: string) => string;
+  isValidPhone: (phone: string, maxDigits?: number, startsWith?: string) => boolean;
 }
 
 /**
@@ -24,7 +24,7 @@ export const useWhatsApp = (): UseWhatsAppReturn => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  const sendText = useCallback(async (params: WhatsAppSendDto): Promise<boolean> => {
+  const sendText = useCallback(async (params: WhatsAppSendDto & { countryDialCode?: string }): Promise<boolean> => {
     if (!params.phoneNumber.trim()) {
       setError('Phone number is required');
       return false;
@@ -40,9 +40,10 @@ export const useWhatsApp = (): UseWhatsAppReturn => {
     setSuccess(false);
 
     try {
+      const { countryDialCode, ...sendParams } = params;
       const response = await whatsappService.sendMessage({
-        ...params,
-        phoneNumber: whatsappService.normalizePhoneNumber(params.phoneNumber),
+        ...sendParams,
+        phoneNumber: whatsappService.normalizePhoneNumber(params.phoneNumber, countryDialCode),
       });
 
       if (response.success) {
@@ -60,7 +61,7 @@ export const useWhatsApp = (): UseWhatsAppReturn => {
     }
   }, []);
 
-  const sendImage = useCallback(async (params: WhatsAppSendImageDto): Promise<boolean> => {
+  const sendImage = useCallback(async (params: WhatsAppSendImageDto & { countryDialCode?: string }): Promise<boolean> => {
     if (!params.phoneNumber.trim()) {
       setError('Phone number is required');
       return false;
@@ -84,9 +85,10 @@ export const useWhatsApp = (): UseWhatsAppReturn => {
     setSuccess(false);
 
     try {
+      const { countryDialCode, ...sendParams } = params;
       const response = await whatsappService.sendImage({
-        ...params,
-        phoneNumber: whatsappService.normalizePhoneNumber(params.phoneNumber),
+        ...sendParams,
+        phoneNumber: whatsappService.normalizePhoneNumber(params.phoneNumber, countryDialCode),
       });
 
       if (response.success) {
@@ -109,12 +111,12 @@ export const useWhatsApp = (): UseWhatsAppReturn => {
     setSuccess(false);
   }, []);
 
-  const formatPhone = useCallback((phone: string): string => {
-    return whatsappService.formatPhoneDisplay(phone);
+  const formatPhone = useCallback((phone: string, countryDialCode?: string): string => {
+    return whatsappService.formatPhoneDisplay(phone, countryDialCode);
   }, []);
 
-  const isValidPhone = useCallback((phone: string): boolean => {
-    return whatsappService.isValidOmanPhone(phone);
+  const isValidPhone = useCallback((phone: string, maxDigits: number = 8, startsWith?: string): boolean => {
+    return whatsappService.isValidPhone(phone, maxDigits, startsWith);
   }, []);
 
   return {
