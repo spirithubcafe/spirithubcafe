@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Coffee, Filter, Search } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useApp } from '../hooks/useApp';
@@ -14,7 +14,6 @@ import {
 } from '../components/ui/select';
 import { Seo } from '../components/seo/Seo';
 import { siteMetadata } from '../config/siteMetadata';
-import { shopApi } from '../services/shopApi';
 
 type CategoryOption = {
   id: string;
@@ -30,39 +29,14 @@ export const ProductsPage = () => {
   const categoryFromUrl = searchParams.get('category');
   const [selectedCategory, setSelectedCategory] = useState<string>(categoryFromUrl || 'all');
   const [searchTerm, setSearchTerm] = useState('');
-  const [shopCategoryIds, setShopCategoryIds] = useState<Set<string>>(new Set());
 
   const isArabic = i18n.language === 'ar';
 
-  // Load shop category IDs to exclude them
-  useEffect(() => {
-    let isMounted = true;
-    const loadShopCategoryIds = async () => {
-      try {
-        const response = await shopApi.getShopPage();
-        if (isMounted && response.success) {
-          const ids = new Set(response.data.categories.map((c) => String(c.id)));
-          setShopCategoryIds(ids);
-        }
-      } catch {
-        // If shop API fails, don't exclude anything
-      }
-    };
-    loadShopCategoryIds();
-    return () => { isMounted = false; };
-  }, []);
+  // AppContext already fetches with excludeShop: true,
+  // so products and allCategories are already filtered.
+  const coffeeCategories = allCategories;
+  const coffeeProducts = products;
 
-  // Filter out shop categories from allCategories
-  const coffeeCategories = useMemo(() => {
-    if (shopCategoryIds.size === 0) return allCategories;
-    return allCategories.filter((cat) => !shopCategoryIds.has(cat.id));
-  }, [allCategories, shopCategoryIds]);
-
-  // Filter out products that belong to shop categories
-  const coffeeProducts = useMemo(() => {
-    if (shopCategoryIds.size === 0) return products;
-    return products.filter((p) => !p.categoryId || !shopCategoryIds.has(p.categoryId));
-  }, [products, shopCategoryIds]);
   const canonicalUrl = useMemo(() => {
     const suffix = categoryFromUrl ? `?category=${categoryFromUrl}` : '';
     return `${siteMetadata.baseUrl}/products${suffix}`;

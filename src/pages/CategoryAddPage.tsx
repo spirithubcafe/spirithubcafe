@@ -11,7 +11,6 @@ import { Label } from '../components/ui/label';
 import { Switch } from '../components/ui/switch';
 import { ArrowLeft, Loader2, Save, Upload, X } from 'lucide-react';
 import { categoryService } from '../services/categoryService';
-import { shopApi } from '../services/shopApi';
 import { fileUploadService } from '../services/fileUploadService';
 import type { CategoryCreateUpdateDto } from '../types/product';
 import { cn } from '../lib/utils';
@@ -172,10 +171,6 @@ export const CategoryAddPage: React.FC = () => {
       };
 
       const created = await categoryService.create(dataToSend);
-
-      if (formData.showInShop) {
-        await shopApi.toggleCategoryShop(created.id);
-      }
       navigate('/admin/categories');
     } catch (error: unknown) {
       console.error('Error creating category:', error);

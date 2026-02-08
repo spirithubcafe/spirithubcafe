@@ -11,7 +11,6 @@ import { Label } from '../components/ui/label';
 import { Switch } from '../components/ui/switch';
 import { ArrowLeft, Loader2, Save, Upload, X } from 'lucide-react';
 import { categoryService } from '../services/categoryService';
-import { shopApi } from '../services/shopApi';
 import { fileUploadService } from '../services/fileUploadService';
 import type { Category, CategoryCreateUpdateDto } from '../types/product';
 import { cn } from '../lib/utils';
@@ -46,7 +45,6 @@ export const CategoryEditPage: React.FC = () => {
   const [slugAvailable, setSlugAvailable] = useState<boolean | null>(null);
   const [checkingSlug, setCheckingSlug] = useState(false);
   const [slugMessage, setSlugMessage] = useState<string | null>(null);
-  const shopStateRef = useRef<{ showInShop: boolean } | null>(null);
 
   useEffect(() => {
     const loadCategory = async () => {
@@ -73,23 +71,6 @@ export const CategoryEditPage: React.FC = () => {
           shopDisplayOrder: data.shopDisplayOrder ?? 0,
           taxPercentage: data.taxPercentage
         });
-
-        try {
-          const shopResponse = await shopApi.getShopPage();
-          if (shopResponse.success) {
-            const shopCategory = shopResponse.data.categories.find((cat) => cat.id === data.id);
-            const showInShop = Boolean(shopCategory);
-            const shopDisplayOrder = shopCategory?.shopDisplayOrder ?? 0;
-            shopStateRef.current = { showInShop };
-            setFormData(prev => ({
-              ...prev,
-              showInShop,
-              shopDisplayOrder,
-            }));
-          }
-        } catch (shopError) {
-          console.warn('Unable to load shop visibility state:', shopError);
-        }
       } catch (error) {
         console.error('Error loading category:', error);
         alert(t('admin.categories.loadError'));
@@ -237,10 +218,6 @@ export const CategoryEditPage: React.FC = () => {
       };
 
       await categoryService.update(category.id, dataToSend);
-
-      if (shopStateRef.current && shopStateRef.current.showInShop !== formData.showInShop) {
-        await shopApi.toggleCategoryShop(category.id);
-      }
       navigate('/admin/categories');
     } catch (error: unknown) {
       console.error('Error updating category:', error);

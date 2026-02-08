@@ -222,6 +222,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         page: 1,
         pageSize: 100, // Get all products
         includeInactive: false,
+        excludeShop: true,
       });
 
       // Handle response - it might be array or paginated response
@@ -430,7 +431,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     
     try {
       // Fetch categories from API
-      const apiCategories = await categoryService.getAll({ includeInactive: false });
+      const apiCategories = await categoryService.getAll({ includeInactive: false, excludeShop: true });
       
       // Sort all categories by displayOrder
       const sortedCategories = apiCategories.sort((a, b) => a.displayOrder - b.displayOrder);
