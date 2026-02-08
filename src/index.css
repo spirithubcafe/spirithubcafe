@@ -216,16 +216,18 @@ html {
   }
 }
 
-/* Never allow horizontal page scrolling */
+/* Never allow horizontal page scrolling.
+   Use `clip` instead of `hidden` so RTL layouts don't create a scroll
+   container that clips the last (leftmost) grid column. */
 html,
 body {
   max-width: 100%;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 #root {
   max-width: 100%;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 /* Ensure media never overflows its container */

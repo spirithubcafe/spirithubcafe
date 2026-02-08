@@ -12,7 +12,7 @@ export const FeaturedProducts: React.FC = () => {
   const isArabic = i18n.language === 'ar';
 
   const latestProducts = useMemo(() => {
-    const items = (products || []).filter((p) => p.isActive !== false);
+    const items = (products || []).filter((p) => p.isActive !== false && p.isOrderable !== false && p.price > 0);
 
     const toNumericId = (value: string | undefined) => {
       if (!value) return Number.NEGATIVE_INFINITY;

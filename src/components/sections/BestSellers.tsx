@@ -8,7 +8,7 @@ export const BestSellers: React.FC = () => {
   const { products, loading } = useApp();
 
   const bestSellerProducts = useMemo(() => {
-    const items = (products || []).filter((p) => p.isActive !== false);
+    const items = (products || []).filter((p) => p.isActive !== false && p.isOrderable !== false && p.price > 0);
 
     if (items.length === 0) return [];
 
