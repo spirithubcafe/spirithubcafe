@@ -11,6 +11,7 @@ import { Label } from '../components/ui/label';
 import { Switch } from '../components/ui/switch';
 import { ArrowLeft, Loader2, Save, Upload, X } from 'lucide-react';
 import { categoryService } from '../services/categoryService';
+import { shopApi } from '../services/shopApi';
 import { fileUploadService } from '../services/fileUploadService';
 import type { Category, CategoryCreateUpdateDto } from '../types/product';
 import { cn } from '../lib/utils';
@@ -37,12 +38,15 @@ export const CategoryEditPage: React.FC = () => {
     imagePath: '',
     isActive: true,
     isDisplayedOnHomepage: false,
+    showInShop: false,
     displayOrder: 0,
+    shopDisplayOrder: 0,
     taxPercentage: 0
   });
   const [slugAvailable, setSlugAvailable] = useState<boolean | null>(null);
   const [checkingSlug, setCheckingSlug] = useState(false);
   const [slugMessage, setSlugMessage] = useState<string | null>(null);
+  const shopStateRef = useRef<{ showInShop: boolean } | null>(null);
 
   useEffect(() => {
     const loadCategory = async () => {
@@ -64,9 +68,28 @@ export const CategoryEditPage: React.FC = () => {
           imagePath: data.imagePath || '',
           isActive: data.isActive,
           isDisplayedOnHomepage: data.isDisplayedOnHomepage,
+          showInShop: data.showInShop ?? false,
           displayOrder: data.displayOrder,
+          shopDisplayOrder: data.shopDisplayOrder ?? 0,
           taxPercentage: data.taxPercentage
         });
+
+        try {
+          const shopResponse = await shopApi.getShopPage();
+          if (shopResponse.success) {
+            const shopCategory = shopResponse.data.categories.find((cat) => cat.id === data.id);
+            const showInShop = Boolean(shopCategory);
+            const shopDisplayOrder = shopCategory?.shopDisplayOrder ?? 0;
+            shopStateRef.current = { showInShop };
+            setFormData(prev => ({
+              ...prev,
+              showInShop,
+              shopDisplayOrder,
+            }));
+          }
+        } catch (shopError) {
+          console.warn('Unable to load shop visibility state:', shopError);
+        }
       } catch (error) {
         console.error('Error loading category:', error);
         alert(t('admin.categories.loadError'));
@@ -207,11 +230,17 @@ export const CategoryEditPage: React.FC = () => {
         imagePath: formData.imagePath?.trim() || undefined,
         isActive: formData.isActive,
         isDisplayedOnHomepage: formData.isDisplayedOnHomepage,
+        showInShop: formData.showInShop,
         displayOrder: Number(formData.displayOrder),
+        shopDisplayOrder: Number(formData.shopDisplayOrder),
         taxPercentage: Number(formData.taxPercentage)
       };
 
       await categoryService.update(category.id, dataToSend);
+
+      if (shopStateRef.current && shopStateRef.current.showInShop !== formData.showInShop) {
+        await shopApi.toggleCategoryShop(category.id);
+      }
       navigate('/admin/categories');
     } catch (error: unknown) {
       console.error('Error updating category:', error);
@@ -453,7 +482,7 @@ export const CategoryEditPage: React.FC = () => {
               </div>
 
               {/* Display Order and Tax Percentage */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="displayOrder">{t('admin.categories.displayOrder')}</Label>
                   <Input
@@ -461,6 +490,16 @@ export const CategoryEditPage: React.FC = () => {
                     type="number"
                     value={formData.displayOrder}
                     onChange={(e) => setFormData(prev => ({ ...prev, displayOrder: parseInt(e.target.value) || 0 }))}
+                    min="0"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="shopDisplayOrder">{t('admin.categories.shopDisplayOrder')}</Label>
+                  <Input
+                    id="shopDisplayOrder"
+                    type="number"
+                    value={formData.shopDisplayOrder || 0}
+                    onChange={(e) => setFormData(prev => ({ ...prev, shopDisplayOrder: parseInt(e.target.value) || 0 }))}
                     min="0"
                   />
                 </div>
@@ -487,6 +526,14 @@ export const CategoryEditPage: React.FC = () => {
                     onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isActive: checked }))}
                   />
                   <Label htmlFor="isActive" className="cursor-pointer">{t('admin.categories.active')}</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="showInShop"
+                    checked={Boolean(formData.showInShop)}
+                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, showInShop: checked }))}
+                  />
+                  <Label htmlFor="showInShop" className="cursor-pointer">{t('admin.categories.showInShop')}</Label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Switch

@@ -21,6 +21,7 @@ export const categoryService = {
     const response = await http.get<ApiResponse<Category[]>>('/api/Categories', {
       params: {
         includeInactive: params?.includeInactive || false,
+        excludeShop: params?.excludeShop,
       },
     });
     return response.data.data || (response.data as unknown as Category[]);

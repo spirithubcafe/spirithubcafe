@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback, useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Globe, ShoppingCart, Menu, ChevronDown, ChevronRight, ChevronLeft, User, Heart, ShoppingBag, Shield } from 'lucide-react';
@@ -20,19 +20,63 @@ import { MinimalUserProfile } from '../auth/MinimalUserProfile';
 import { ScrollArea } from '../ui/scroll-area';
 import { RegionSwitcher } from './RegionSwitcher';
 import { getAdminBasePath, getPreferredAdminRegion } from '../../lib/regionUtils';
+import { shopApi } from '../../services/shopApi';
+import { categoryService } from '../../services/categoryService';
+import type { ShopCategory } from '../../types/shop';
+import type { Category as ApiCategory } from '../../types/product';
 
 export const Navigation: React.FC = () => {
   const { t } = useTranslation();
-  const { language, toggleLanguage, categories } = useApp();
+  const { language, toggleLanguage } = useApp();
   const { isAuthenticated, isLoading, user } = useAuth();
   const { totalItems, openCart } = useCart();
   const { currentRegion } = useRegion();
   const location = useLocation();
+  const [shopCategories, setShopCategories] = useState<ShopCategory[]>([]);
+  const [coffeeCategories, setCoffeeCategories] = useState<{ id: number; slug: string; name: string; nameAr?: string }[]>([]);
   const handleMobileCartOpen = useCallback(() => {
     setTimeout(() => {
       openCart();
     }, 0);
   }, [openCart]);
+
+  useEffect(() => {
+    let isMounted = true;
+    const loadNavCategories = async () => {
+      try {
+        // Load shop categories
+        const shopResponse = await shopApi.getShopPage();
+        if (isMounted && shopResponse.success) {
+          setShopCategories(shopResponse.data.categories || []);
+        }
+      } catch (error) {
+        if (isMounted) {
+          setShopCategories([]);
+        }
+      }
+
+      try {
+        // Load coffee categories (excluding shop ones)
+        const cats = await categoryService.getAll({ excludeShop: true });
+        if (isMounted) {
+          const sorted = cats
+            .filter((c: ApiCategory) => c.isActive)
+            .sort((a: ApiCategory, b: ApiCategory) => a.displayOrder - b.displayOrder)
+            .map((c: ApiCategory) => ({ id: c.id, slug: c.slug, name: c.name, nameAr: c.nameAr }));
+          setCoffeeCategories(sorted);
+        }
+      } catch (error) {
+        if (isMounted) {
+          setCoffeeCategories([]);
+        }
+      }
+    };
+
+    loadNavCategories();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
   
   // Helper to build region-aware URLs - memoized
   const regionCode = currentRegion.code;
@@ -52,6 +96,7 @@ export const Navigation: React.FC = () => {
   const navItems = useMemo(() => [
     { key: 'home', label: t('nav.home'), href: getRegionalUrl('/'), isRoute: true, hasDropdown: false },
     { key: 'products', label: t('nav.products'), href: getRegionalUrl('/products'), isRoute: true, hasDropdown: true },
+    { key: 'shop', label: t('nav.shop'), href: getRegionalUrl('/shop'), isRoute: true, hasDropdown: true },
     { key: 'wholesale', label: t('nav.wholesale'), href: getRegionalUrl('/wholesale'), isRoute: true, hasDropdown: false },
     { key: 'about', label: t('nav.about'), href: getRegionalUrl('/about'), isRoute: true, hasDropdown: false },
     { key: 'contact', label: t('nav.contact'), href: getRegionalUrl('/contact'), isRoute: true, hasDropdown: false }
@@ -70,6 +115,7 @@ export const Navigation: React.FC = () => {
   const renderNavItems = () => (
     <>
       {navItems.map((item) => {
+        // "Our Coffee" products dropdown
         if (item.hasDropdown && item.key === 'products') {
           return (
             <DropdownMenu key={item.key} modal={false}>
@@ -87,32 +133,84 @@ export const Navigation: React.FC = () => {
               </DropdownMenuTrigger>
               <DropdownMenuContent 
                 align={language === 'ar' ? 'end' : 'start'} 
-                className="w-56 bg-white border border-gray-200 shadow-lg"
+                className="min-w-[16rem] w-max max-w-xs bg-white border border-gray-200 shadow-lg"
                 onCloseAutoFocus={(e) => e.preventDefault()}
-               >
+              >
                 {/* All Products Link */}
                 <DropdownMenuItem asChild>
                   <Link
                     to={getRegionalUrl('/products')}
-                    className={`w-full px-4 py-2 ${language === 'ar' ? 'text-right' : 'text-left'} text-gray-900 hover:bg-amber-50 hover:text-amber-600 font-medium`}
+                    className={`w-full px-4 py-2 whitespace-nowrap ${language === 'ar' ? 'text-right' : 'text-left'} text-gray-900 hover:bg-amber-50 hover:text-amber-600 font-medium`}
                   >
                     {language === 'ar' ? 'جميع المنتجات' : 'All Products'}
                   </Link>
                 </DropdownMenuItem>
                 
                 {/* Divider */}
-                {categories.length > 0 && (
+                {coffeeCategories.length > 0 && (
+                  <div className="h-px bg-gray-200 my-1" />
+                )}
+                
+                {/* Coffee Categories List */}
+                {coffeeCategories.map((category) => (
+                  <DropdownMenuItem key={category.id} asChild>
+                    <Link
+                      to={getRegionalUrl(`/products?category=${category.slug}`)}
+                      className={`w-full px-4 py-2 whitespace-nowrap ${language === 'ar' ? 'text-right' : 'text-left'} text-gray-700 hover:bg-amber-50 hover:text-amber-600`}
+                    >
+                      {language === 'ar' ? category.nameAr || category.name : category.name}
+                    </Link>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          );
+        }
+
+        // Shop dropdown
+        if (item.hasDropdown && item.key === 'shop') {
+          return (
+            <DropdownMenu key={item.key} modal={false}>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className={`flex items-center gap-1 transition-colors duration-200 font-medium text-xs md:text-xs lg:text-sm whitespace-nowrap ${
+                    isHomePage 
+                      ? 'text-white hover:text-amber-200' 
+                      : 'text-gray-900 hover:text-amber-600'
+                  } ${language === 'ar' ? 'flex-row-reverse' : ''}`}
+                >
+                  {item.label}
+                  <ChevronDown className="w-4 h-4" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent 
+                align={language === 'ar' ? 'end' : 'start'} 
+                className="min-w-[16rem] w-max max-w-xs bg-white border border-gray-200 shadow-lg"
+                onCloseAutoFocus={(e) => e.preventDefault()}
+               >
+                {/* Shop Main Link */}
+                <DropdownMenuItem asChild>
+                  <Link
+                    to={getRegionalUrl('/shop')}
+                    className={`w-full px-4 py-2 whitespace-nowrap ${language === 'ar' ? 'text-right' : 'text-left'} text-gray-900 hover:bg-amber-50 hover:text-amber-600 font-medium`}
+                  >
+                    {language === 'ar' ? 'المتجر' : 'Shop'}
+                  </Link>
+                </DropdownMenuItem>
+                
+                {/* Divider */}
+                {shopCategories.length > 0 && (
                   <div className="h-px bg-gray-200 my-1" />
                 )}
                 
                 {/* Categories List */}
-                {categories.map((category) => (
+                {shopCategories.map((category) => (
                   <DropdownMenuItem key={category.id} asChild>
                     <Link
-                      to={getRegionalUrl(`/products?category=${category.id}`)}
-                      className={`w-full px-4 py-2 ${language === 'ar' ? 'text-right' : 'text-left'} text-gray-700 hover:bg-amber-50 hover:text-amber-600`}
+                      to={getRegionalUrl(`/shop/${category.slug}`)}
+                      className={`w-full px-4 py-2 whitespace-nowrap ${language === 'ar' ? 'text-right' : 'text-left'} text-gray-700 hover:bg-amber-50 hover:text-amber-600`}
                     >
-                      {category.name}
+                      {language === 'ar' ? category.nameAr || category.name : category.name}
                     </Link>
                   </DropdownMenuItem>
                 ))}
@@ -364,6 +462,7 @@ export const Navigation: React.FC = () => {
                       <div>
                         <div className="mt-0 space-y-3">
                           {navItems.map((item) => {
+                            // "Our Coffee" products dropdown in mobile
                             if (item.hasDropdown && item.key === 'products') {
                               return (
                                 <div key={item.key} className="space-y-3">
@@ -377,26 +476,70 @@ export const Navigation: React.FC = () => {
                                     </Link>
                                   </SheetClose>
 
-                                  {categories.length > 0 && (
+                                  {coffeeCategories.length > 0 && (
                                     <div className={`space-y-2 pl-4 text-sm rtl:border-l-0 rtl:border-r rtl:pl-0 rtl:pr-4`}>
                                       <SheetClose asChild>
                                         <Link
-                                          to="/products"
+                                          to={getRegionalUrl('/products')}
                                           className="flex items-center justify-between rounded-xl bg-white/[0.06] px-3 py-2 text-amber-100 transition hover:bg-white/[0.12]"
                                         >
                                           <span>
-                                            {language === 'ar' ? 'جميع المنتجات' : 'All products'}
+                                            {language === 'ar' ? 'جميع المنتجات' : 'All Products'}
                                           </span>
                                           <DirectionChevron className="h-3.5 w-3.5" />
                                         </Link>
                                       </SheetClose>
-                                      {categories.map((category) => (
+                                      {coffeeCategories.map((category) => (
                                         <SheetClose asChild key={category.id}>
                                           <Link
-                                            to={`/products?category=${category.id}`}
+                                            to={getRegionalUrl(`/products?category=${category.slug}`)}
                                             className="flex items-center justify-between rounded-xl px-3 py-2 text-amber-100/90 transition hover:bg-white/[0.1] hover:text-white"
                                           >
-                                            <span>{category.name}</span>
+                                            <span>{language === 'ar' ? category.nameAr || category.name : category.name}</span>
+                                            <DirectionChevron className="h-3.5 w-3.5" />
+                                          </Link>
+                                        </SheetClose>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            }
+
+                            // Shop dropdown in mobile
+                            if (item.hasDropdown && item.key === 'shop') {
+                              return (
+                                <div key={item.key} className="space-y-3">
+                                  <SheetClose asChild>
+                                    <Link
+                                      to={item.href}
+                                      className="flex items-center justify-between rounded-2xl bg-white/[0.06] px-4 py-3 text-base font-medium text-white transition duration-200 hover:bg-white/[0.12]"
+                                    >
+                                      <span>{item.label}</span>
+                                      <DirectionChevron className="h-4 w-4" />
+                                    </Link>
+                                  </SheetClose>
+
+                                  {shopCategories.length > 0 && (
+                                    <div className={`space-y-2 pl-4 text-sm rtl:border-l-0 rtl:border-r rtl:pl-0 rtl:pr-4`}>
+                                      <SheetClose asChild>
+                                        <Link
+                                          to={getRegionalUrl('/shop')}
+                                          className="flex items-center justify-between rounded-xl bg-white/[0.06] px-3 py-2 text-amber-100 transition hover:bg-white/[0.12]"
+                                        >
+                                          <span>
+                                            {language === 'ar' ? 'المتجر' : 'Shop'}
+                                          </span>
+                                          <DirectionChevron className="h-3.5 w-3.5" />
+                                        </Link>
+                                      </SheetClose>
+                                      {shopCategories.map((category) => (
+                                        <SheetClose asChild key={category.id}>
+                                          <Link
+                                            to={getRegionalUrl(`/shop/${category.slug}`)}
+                                            className="flex items-center justify-between rounded-xl px-3 py-2 text-amber-100/90 transition hover:bg-white/[0.1] hover:text-white"
+                                          >
+                                            <span>{language === 'ar' ? category.nameAr || category.name : category.name}</span>
                                             <DirectionChevron className="h-3.5 w-3.5" />
                                           </Link>
                                         </SheetClose>

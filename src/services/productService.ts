@@ -54,6 +54,7 @@ export const productService = {
         categoryId: params?.categoryId,
         searchTerm: params?.searchTerm,
         isFeatured: params?.isFeatured,
+        excludeShop: params?.excludeShop,
       },
     });
     

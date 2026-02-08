@@ -11,6 +11,7 @@ import { Label } from '../components/ui/label';
 import { Switch } from '../components/ui/switch';
 import { ArrowLeft, Loader2, Save, Upload, X } from 'lucide-react';
 import { categoryService } from '../services/categoryService';
+import { shopApi } from '../services/shopApi';
 import { fileUploadService } from '../services/fileUploadService';
 import type { CategoryCreateUpdateDto } from '../types/product';
 import { cn } from '../lib/utils';
@@ -32,7 +33,9 @@ export const CategoryAddPage: React.FC = () => {
     imagePath: '',
     isActive: true,
     isDisplayedOnHomepage: false,
+    showInShop: false,
     displayOrder: 0,
+    shopDisplayOrder: 0,
     taxPercentage: 0
   });
   const [slugAvailable, setSlugAvailable] = useState<boolean | null>(null);
@@ -162,11 +165,17 @@ export const CategoryAddPage: React.FC = () => {
         imagePath: formData.imagePath?.trim() || undefined,
         isActive: formData.isActive,
         isDisplayedOnHomepage: formData.isDisplayedOnHomepage,
+        showInShop: formData.showInShop,
         displayOrder: Number(formData.displayOrder),
+        shopDisplayOrder: Number(formData.shopDisplayOrder),
         taxPercentage: Number(formData.taxPercentage)
       };
 
-      await categoryService.create(dataToSend);
+      const created = await categoryService.create(dataToSend);
+
+      if (formData.showInShop) {
+        await shopApi.toggleCategoryShop(created.id);
+      }
       navigate('/admin/categories');
     } catch (error: unknown) {
       console.error('Error creating category:', error);
@@ -391,7 +400,7 @@ export const CategoryAddPage: React.FC = () => {
               </div>
 
               {/* Display Order and Tax Percentage */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="displayOrder">{t('admin.categories.displayOrder')}</Label>
                   <Input
@@ -399,6 +408,16 @@ export const CategoryAddPage: React.FC = () => {
                     type="number"
                     value={formData.displayOrder}
                     onChange={(e) => setFormData(prev => ({ ...prev, displayOrder: parseInt(e.target.value) || 0 }))}
+                    min="0"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="shopDisplayOrder">{t('admin.categories.shopDisplayOrder')}</Label>
+                  <Input
+                    id="shopDisplayOrder"
+                    type="number"
+                    value={formData.shopDisplayOrder || 0}
+                    onChange={(e) => setFormData(prev => ({ ...prev, shopDisplayOrder: parseInt(e.target.value) || 0 }))}
                     min="0"
                   />
                 </div>
@@ -425,6 +444,14 @@ export const CategoryAddPage: React.FC = () => {
                     onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isActive: checked }))}
                   />
                   <Label htmlFor="isActive" className="cursor-pointer">{t('admin.categories.active')}</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="showInShop"
+                    checked={Boolean(formData.showInShop)}
+                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, showInShop: checked }))}
+                  />
+                  <Label htmlFor="showInShop" className="cursor-pointer">{t('admin.categories.showInShop')}</Label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Switch

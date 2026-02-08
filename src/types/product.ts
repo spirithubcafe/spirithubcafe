@@ -263,7 +263,9 @@ export interface Category {
   imagePath?: string;
   isActive: boolean;
   isDisplayedOnHomepage: boolean;
+  showInShop?: boolean;
   displayOrder: number;
+  shopDisplayOrder?: number;
   taxPercentage: number;
   productCount?: number;
   createdAt?: string;
@@ -279,7 +281,9 @@ export interface CategoryCreateUpdateDto {
   imagePath?: string;
   isActive: boolean;
   isDisplayedOnHomepage: boolean;
+  showInShop?: boolean;
   displayOrder: number;
+  shopDisplayOrder?: number;
   taxPercentage: number;
 }
 
@@ -311,6 +315,7 @@ export interface ProductQueryParams extends PaginationParams {
   categoryId?: number;
   searchTerm?: string;
   isFeatured?: boolean;
+  excludeShop?: boolean;
 }
 
 export interface ProductSearchParams extends PaginationParams {
@@ -320,6 +325,7 @@ export interface ProductSearchParams extends PaginationParams {
 // Category Query Parameters
 export interface CategoryQueryParams {
   includeInactive?: boolean;
+  excludeShop?: boolean;
 }
 
 // API Response Wrappers

@@ -45,6 +45,8 @@ import { DeliveryPolicyPage } from './pages/DeliveryPolicyPage';
 import { RefundPolicyPage } from './pages/RefundPolicyPage';
 import { ProductsPage } from './pages/ProductsPage';
 import { ProductDetailPage } from './pages/ProductDetailPage';
+import ShopPage from './pages/Shop/ShopPage';
+import ShopCategoryPage from './pages/Shop/ShopCategoryPage';
 import { WholesaleOrderPage } from './pages/WholesaleOrderPage';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
@@ -131,6 +133,8 @@ function AppContent() {
 
         {/* Root redirect */}
         <Route path="/" element={<HomePage />} />
+        <Route path="/shop" element={<ShopPage />} />
+        <Route path="/shop/:slug" element={<ShopCategoryPage />} />
         
         {/* Region-specific routes - /om and /sa */}
         <Route path="/om" element={<HomePage />} />
@@ -145,6 +149,8 @@ function AppContent() {
         <Route path="/om/terms" element={<TermsConditionsPage />} />
         <Route path="/om/delivery" element={<DeliveryPolicyPage />} />
         <Route path="/om/refund" element={<RefundPolicyPage />} />
+        <Route path="/om/shop" element={<ShopPage />} />
+        <Route path="/om/shop/:slug" element={<ShopCategoryPage />} />
         <Route path="/om/products" element={<ProductsPage />} />
         <Route path="/om/products/:productId" element={<ProductDetailPage />} />
         <Route
@@ -182,6 +188,8 @@ function AppContent() {
         <Route path="/sa/terms" element={<TermsConditionsPage />} />
         <Route path="/sa/delivery" element={<DeliveryPolicyPage />} />
         <Route path="/sa/refund" element={<RefundPolicyPage />} />
+        <Route path="/sa/shop" element={<ShopPage />} />
+        <Route path="/sa/shop/:slug" element={<ShopCategoryPage />} />
         <Route path="/sa/products" element={<ProductsPage />} />
         <Route path="/sa/products/:productId" element={<ProductDetailPage />} />
         <Route

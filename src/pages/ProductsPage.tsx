@@ -15,6 +15,7 @@ import {
 } from '../components/ui/select';
 import { Seo } from '../components/seo/Seo';
 import { siteMetadata } from '../config/siteMetadata';
+import { shopApi } from '../services/shopApi';
 
 type CategoryOption = {
   id: string;
@@ -30,8 +31,39 @@ export const ProductsPage = () => {
   const categoryFromUrl = searchParams.get('category');
   const [selectedCategory, setSelectedCategory] = useState<string>(categoryFromUrl || 'all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [shopCategoryIds, setShopCategoryIds] = useState<Set<string>>(new Set());
 
   const isArabic = i18n.language === 'ar';
+
+  // Load shop category IDs to exclude them
+  useEffect(() => {
+    let isMounted = true;
+    const loadShopCategoryIds = async () => {
+      try {
+        const response = await shopApi.getShopPage();
+        if (isMounted && response.success) {
+          const ids = new Set(response.data.categories.map((c) => String(c.id)));
+          setShopCategoryIds(ids);
+        }
+      } catch {
+        // If shop API fails, don't exclude anything
+      }
+    };
+    loadShopCategoryIds();
+    return () => { isMounted = false; };
+  }, []);
+
+  // Filter out shop categories from allCategories
+  const coffeeCategories = useMemo(() => {
+    if (shopCategoryIds.size === 0) return allCategories;
+    return allCategories.filter((cat) => !shopCategoryIds.has(cat.id));
+  }, [allCategories, shopCategoryIds]);
+
+  // Filter out products that belong to shop categories
+  const coffeeProducts = useMemo(() => {
+    if (shopCategoryIds.size === 0) return products;
+    return products.filter((p) => !p.categoryId || !shopCategoryIds.has(p.categoryId));
+  }, [products, shopCategoryIds]);
   const canonicalUrl = useMemo(() => {
     const suffix = categoryFromUrl ? `?category=${categoryFromUrl}` : '';
     return `${siteMetadata.baseUrl}/products${suffix}`;
@@ -69,11 +101,11 @@ export const ProductsPage = () => {
       return;
     }
 
-    const matchBySlug = allCategories.find((cat) => cat.slug === selectedCategory);
+    const matchBySlug = coffeeCategories.find((cat) => cat.slug === selectedCategory);
     if (matchBySlug && selectedCategory !== matchBySlug.id) {
       setSelectedCategory(matchBySlug.id);
     }
-  }, [allCategories, selectedCategory]);
+  }, [coffeeCategories, selectedCategory]);
 
   // Get current category details
   const currentCategory = useMemo(() => {
@@ -82,11 +114,11 @@ export const ProductsPage = () => {
     }
 
     return (
-      allCategories.find((cat) => cat.id === selectedCategory) ||
-      allCategories.find((cat) => cat.slug === selectedCategory) ||
+      coffeeCategories.find((cat) => cat.id === selectedCategory) ||
+      coffeeCategories.find((cat) => cat.slug === selectedCategory) ||
       null
     );
-  }, [selectedCategory, allCategories]);
+  }, [selectedCategory, coffeeCategories]);
 
   // Filter products
   const filteredProducts = useMemo(() => {
@@ -101,7 +133,7 @@ export const ProductsPage = () => {
       ? currentCategory.name.trim().toLowerCase()
       : null;
 
-    return products.filter((product) => {
+    return coffeeProducts.filter((product) => {
       // Business rule: never show inactive products publicly.
       if (product.isActive === false) {
         return false;
@@ -133,7 +165,7 @@ export const ProductsPage = () => {
       const searchableText = `${product.name} ${product.description || ''} ${product.category || ''}`;
       return searchableText.toLowerCase().includes(normalizedSearch);
     });
-  }, [products, searchTerm, selectedCategory, currentCategory]);
+  }, [coffeeProducts, searchTerm, selectedCategory, currentCategory]);
 
   // Group products by category when "All" is selected
   const productsByCategory = useMemo(() => {
@@ -152,7 +184,7 @@ export const ProductsPage = () => {
     });
 
     // Sort categories by their displayOrder
-    const sortedCategories = allCategories
+    const sortedCategories = coffeeCategories
       .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0))
       .map(cat => ({
         category: cat,
@@ -176,7 +208,7 @@ export const ProductsPage = () => {
     }
 
     return sortedCategories;
-  }, [selectedCategory, filteredProducts, allCategories, isArabic]);
+  }, [selectedCategory, filteredProducts, coffeeCategories, isArabic]);
 
   const seoContent = useMemo(() => {
     if (currentCategory && selectedCategory !== 'all') {
@@ -221,14 +253,14 @@ export const ProductsPage = () => {
       name: isArabic ? 'جميع المنتجات' : 'All Products',
     };
 
-    const mappedCategories = allCategories.map<CategoryOption>((category) => ({
+    const mappedCategories = coffeeCategories.map<CategoryOption>((category) => ({
       id: category.id,
       name: category.name,
       slug: category.slug,
     }));
 
     return [allOption, ...mappedCategories];
-  }, [allCategories, isArabic]);
+  }, [coffeeCategories, isArabic]);
 
   return (
     <div className={`min-h-screen bg-gray-50 ${isArabic ? 'rtl' : 'ltr'}`}>
@@ -440,7 +472,7 @@ export const ProductsPage = () => {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 max-w-7xl mx-auto">
-            {allCategories.map((category) => {
+            {coffeeCategories.map((category) => {
               const isActive = selectedCategory === category.id || selectedCategory === category.slug;
               
               return (
