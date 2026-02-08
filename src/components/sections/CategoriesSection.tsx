@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../hooks/useApp';
 import { useRegion } from '../../hooks/useRegion';
-import { Spinner } from '../ui/spinner';
 import { handleImageError } from '../../lib/imageUtils';
 import { Package } from 'lucide-react';
 
@@ -21,9 +20,23 @@ export const CategoriesSection: React.FC = () => {
   if (loading) {
     return (
       <section className="py-16 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="flex justify-center items-center min-h-[300px]">
-            <Spinner className="w-8 h-8" />
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Section Header Skeleton */}
+          <div className="flex flex-col items-center gap-3 mb-12">
+            <div className="h-8 w-48 animate-pulse rounded-lg bg-gray-200" />
+            <div className="h-4 w-64 animate-pulse rounded bg-gray-100" />
+          </div>
+          {/* Category Cards Skeleton */}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {[0, 1, 2, 3].map((i) => (
+              <div key={i} className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
+                <div className="aspect-[4/3] w-full animate-pulse bg-gray-100" />
+                <div className="p-4 space-y-2">
+                  <div className="h-5 w-2/3 animate-pulse rounded bg-gray-100" />
+                  <div className="h-3 w-full animate-pulse rounded bg-gray-50" />
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>

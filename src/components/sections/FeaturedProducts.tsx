@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import { ProductCard } from '../products/ProductCard';
 import { useApp } from '../../hooks/useApp';
 import { useRegion } from '../../hooks/useRegion';
-import { Spinner } from '../ui/spinner';
 import { Coffee } from 'lucide-react';
 
 export const FeaturedProducts: React.FC = () => {
@@ -29,9 +28,23 @@ export const FeaturedProducts: React.FC = () => {
   if (loading) {
     return (
       <section className="py-16 bg-gray-50">
-        <div className="container mx-auto px-4">
-          <div className="flex justify-center">
-            <Spinner className="w-8 h-8" />
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Section Header Skeleton */}
+          <div className="flex flex-col items-center gap-3 mb-12">
+            <div className="h-8 w-56 animate-pulse rounded-lg bg-gray-200" />
+          </div>
+          {/* Product Cards Skeleton */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 sm:gap-6">
+            {[0, 1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
+                <div className="aspect-square w-full animate-pulse bg-gray-100" />
+                <div className="space-y-2 p-3">
+                  <div className="h-3.5 w-3/4 animate-pulse rounded bg-gray-100" />
+                  <div className="h-3 w-1/2 animate-pulse rounded bg-gray-50" />
+                  <div className="h-4 w-20 animate-pulse rounded-md bg-gray-100" />
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>

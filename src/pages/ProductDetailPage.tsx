@@ -781,10 +781,58 @@ export const ProductDetailPage = () => {
             )}
 
             {state === 'loading' ? (
-              <div className="flex justify-center py-24">
-                <div className="flex flex-col items-center gap-3 text-gray-600">
-                  <Loader2 className="w-10 h-10 animate-spin text-amber-600" />
-                  <span>{language === 'ar' ? 'جاري تحميل المنتج...' : 'Loading product...'}</span>
+              <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+                <div className="p-3 md:p-4 lg:p-6">
+                  <div className="grid lg:grid-cols-2 gap-4 md:gap-6 lg:gap-8">
+                    {/* Image Gallery Skeleton */}
+                    <div className="space-y-3">
+                      <div className="aspect-square w-full animate-pulse rounded-xl bg-gray-100" />
+                      <div className="flex gap-2">
+                        {[0, 1, 2, 3].map((i) => (
+                          <div key={i} className="h-16 w-16 shrink-0 animate-pulse rounded-lg bg-gray-100" />
+                        ))}
+                      </div>
+                    </div>
+                    {/* Product Info Skeleton */}
+                    <div className="space-y-5">
+                      {/* Name */}
+                      <div className="space-y-2">
+                        <div className="h-7 w-3/4 animate-pulse rounded-lg bg-gray-100" />
+                        <div className="h-4 w-1/3 animate-pulse rounded bg-gray-50" />
+                      </div>
+                      {/* Rating */}
+                      <div className="flex items-center gap-2">
+                        <div className="flex gap-1">
+                          {[0, 1, 2, 3, 4].map((i) => (
+                            <div key={i} className="h-4 w-4 animate-pulse rounded bg-gray-100" />
+                          ))}
+                        </div>
+                        <div className="h-3 w-16 animate-pulse rounded bg-gray-50" />
+                      </div>
+                      {/* Price */}
+                      <div className="h-8 w-32 animate-pulse rounded-lg bg-gray-100" />
+                      {/* Variants */}
+                      <div className="space-y-2">
+                        <div className="h-4 w-20 animate-pulse rounded bg-gray-50" />
+                        <div className="flex gap-2">
+                          {[0, 1, 2].map((i) => (
+                            <div key={i} className="h-10 w-20 animate-pulse rounded-lg bg-gray-100" />
+                          ))}
+                        </div>
+                      </div>
+                      {/* Quantity + Add to Cart */}
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-28 animate-pulse rounded-lg bg-gray-100" />
+                        <div className="h-10 flex-1 animate-pulse rounded-lg bg-gray-100" />
+                      </div>
+                      {/* Description lines */}
+                      <div className="space-y-2 pt-4 border-t border-gray-100">
+                        <div className="h-4 w-full animate-pulse rounded bg-gray-50" />
+                        <div className="h-4 w-5/6 animate-pulse rounded bg-gray-50" />
+                        <div className="h-4 w-2/3 animate-pulse rounded bg-gray-50" />
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             ) : null}

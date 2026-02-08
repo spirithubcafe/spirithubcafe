@@ -3,7 +3,6 @@ import { Coffee, Filter, Search } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useApp } from '../hooks/useApp';
 import { ProductCard } from '../components/products/ProductCard';
-import { Spinner } from '../components/ui/spinner';
 import { PageHeader } from '../components/layout/PageHeader';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
@@ -359,8 +358,24 @@ export const ProductsPage = () => {
         <div className="py-16 bg-gray-50">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             {loading ? (
-              <div className="flex justify-center py-16">
-                <Spinner className="w-10 h-10" />
+              <div className="space-y-8">
+                {/* Results Count Skeleton */}
+                <div className="flex justify-center">
+                  <div className="h-4 w-36 animate-pulse rounded bg-gray-200" />
+                </div>
+                {/* Product Cards Grid Skeleton */}
+                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <div key={i} className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
+                      <div className="aspect-square w-full animate-pulse bg-gray-100" />
+                      <div className="space-y-2.5 p-4">
+                        <div className="h-4 w-3/4 animate-pulse rounded bg-gray-100" />
+                        <div className="h-3 w-1/2 animate-pulse rounded bg-gray-50" />
+                        <div className="h-5 w-24 animate-pulse rounded-md bg-gray-100" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             ) : filteredProducts.length === 0 ? (
               <div className="text-center py-16">
