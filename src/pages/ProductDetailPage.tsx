@@ -72,6 +72,17 @@ const isCapsuleProduct = (product?: ApiProduct | null): boolean => {
   return name.includes('capsule') || slug.includes('capsule') || category.includes('capsule');
 };
 
+const isVelvetHarmonyDiscoveryProduct = (product?: ApiProduct | null): boolean => {
+  const name = (product?.name || '').toLowerCase();
+  const slug = (product?.slug || '').toLowerCase();
+  const nameAr = product?.nameAr || '';
+  return (
+    name.includes('velvet harmony discovery') ||
+    slug.includes('velvet-harmony-discovery') ||
+    nameAr.includes('فلفت')
+  );
+};
+
 const resolveVariantLabel = (variant: ProductVariant, language: string, product?: ApiProduct | null): string => {
   if (isUfoDripProduct(product)) {
     return '7 PCS';
@@ -379,6 +390,8 @@ export const ProductDetailPage = () => {
     const description = language === 'ar' ? product.descriptionAr : product.description;
     return description ?? '';
   }, [language, product]);
+
+  const isVelvetHarmonyDiscovery = useMemo(() => isVelvetHarmonyDiscoveryProduct(product), [product]);
 
   const price = useMemo(() => {
     if (!product) {
@@ -860,191 +873,296 @@ export const ProductDetailPage = () => {
             {state === 'ready' && product ? (
               <>
                 {/* Product Details Card */}
-                <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-                  <div className="p-3 md:p-4 lg:p-6">
-                    <div className="grid lg:grid-cols-2 gap-4 md:gap-6 lg:gap-8">
-                      {/* Mobile: Product Name & Rating - Show above image */}
-                      <div className="lg:hidden mb-3">
-                        <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-2">{displayName}</h2>
-                        
-                        <div className="flex items-center gap-2 md:gap-3">
-                          {averageRating > 0 ? (
-                            <button
-                              type="button"
-                              onClick={() => setIsReviewsDialogOpen(true)}
-                              className="flex items-center gap-1.5 md:gap-2 text-left hover:opacity-90"
-                              aria-label={language === 'ar' ? 'عرض المراجعات' : 'View reviews'}
-                            >
-                              <div className="flex gap-0.5">
-                                {[1, 2, 3, 4, 5].map((star) => (
-                                  <Star
-                                    key={star}
-                                    className={`w-3 md:w-3.5 h-3 md:h-3.5 ${
-                                      star <= averageRating
-                                        ? 'text-yellow-400 fill-current'
-                                        : 'text-gray-300'
-                                    }`}
-                                  />
-                                ))}
+                {isVelvetHarmonyDiscovery ? (
+                  <div className="bg-[#fbf7f2] rounded-2xl shadow-lg overflow-hidden border border-stone-200">
+                    <div className="p-3 md:p-4 lg:p-6">
+                      <div className="grid lg:grid-cols-2 gap-4 md:gap-6 lg:gap-8">
+                        {/* Image Gallery */}
+                        <div className="space-y-2 md:space-y-3">
+                          <div 
+                            className="relative bg-linear-to-br from-stone-50 to-amber-50 rounded-2xl overflow-hidden aspect-square w-full cursor-zoom-in"
+                            onMouseMove={handleMouseMove}
+                            onMouseEnter={handleMouseEnter}
+                            onMouseLeave={handleMouseLeave}
+                          >
+                            <img
+                              src={images[currentImageIndex]}
+                              alt={getImageAlt(currentImageIndex)}
+                              width={600}
+                              height={600}
+                              fetchPriority="high"
+                              decoding="async"
+                              className={`absolute inset-0 h-full w-full object-cover transition-transform duration-200 ${
+                                isZooming ? 'scale-150' : 'scale-100'
+                              } zoom-origin-var`}
+                              onError={(event) =>
+                                handleImageError(event, '/images/products/default-product.webp')
+                              }
+                            />
+
+                            {!isAvailable ? (
+                              <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                                <span className="bg-red-500 text-white px-4 py-2 rounded-full font-semibold text-xs">
+                                  {unavailableLabel}
+                                </span>
                               </div>
-                              <span className="text-[10px] md:text-xs text-gray-600 underline-offset-2 hover:underline">
-                                ({averageRating.toFixed(1)})
-                              </span>
-                            </button>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={() => setIsReviewsDialogOpen(true)}
-                              className="flex items-center gap-1.5 md:gap-2 text-left hover:opacity-90"
-                              aria-label={language === 'ar' ? 'عرض المراجعات' : 'View reviews'}
-                            >
-                              <div className="flex gap-0.5">
-                                {[1, 2, 3, 4, 5].map((star) => (
-                                  <Star key={star} className="w-3 md:w-3.5 h-3 md:h-3.5 text-gray-300" />
-                                ))}
+                            ) : null}
+
+                            {images.length > 1 ? (
+                              <div className={`absolute inset-x-0 top-1/2 flex justify-between px-3 text-white ${language === 'ar' ? 'flex-row-reverse' : ''}`}>
+                                <button
+                                  type="button"
+                                  onClick={() => incrementImage(-1)}
+                                  className="rounded-full bg-black/40 p-1.5 hover:bg-black/60 transition-colors"
+                                  aria-label={language === 'ar' ? 'الصورة السابقة' : 'Previous image'}
+                                >
+                                  <ChevronLeft className="w-4 h-4" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => incrementImage(1)}
+                                  className="rounded-full bg-black/40 p-1.5 hover:bg-black/60 transition-colors"
+                                  aria-label={language === 'ar' ? 'الصورة التالية' : 'Next image'}
+                                >
+                                  <ChevronRight className="w-4 h-4" />
+                                </button>
                               </div>
-                              <span className="text-[10px] md:text-xs text-gray-400 underline-offset-2 hover:underline">(0.0)</span>
-                            </button>
-                          )}
-
-                          {topInStock ? (
-                            <div className="inline-flex items-center gap-1 md:gap-1.5 text-green-600 bg-green-50 px-2 md:px-2.5 py-0.5 md:py-1 rounded-full ml-auto">
-                              <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
-                              <span className="text-[9px] md:text-[10px] font-semibold">{stockLabel}</span>
-                            </div>
-                          ) : (
-                            <div className="inline-flex items-center gap-1 md:gap-1.5 text-red-700 bg-red-50 px-2 md:px-2.5 py-0.5 md:py-1 rounded-full ml-auto">
-                              <div className="w-1.5 h-1.5 bg-red-500 rounded-full"></div>
-                              <span className="text-[9px] md:text-[10px] font-semibold">{language === 'ar' ? 'غير متوفر' : 'Out of Stock'}</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Image Gallery */}
-                      <div className="space-y-2 md:space-y-3">
-                        <div 
-                          className="relative bg-linear-to-br from-amber-50 to-orange-100 rounded-xl overflow-hidden aspect-square w-full cursor-zoom-in"
-                          onMouseMove={handleMouseMove}
-                          onMouseEnter={handleMouseEnter}
-                          onMouseLeave={handleMouseLeave}
-                        >
-                          <img
-                            src={images[currentImageIndex]}
-                            alt={getImageAlt(currentImageIndex)}
-                            width={600}
-                            height={600}
-                            fetchPriority="high"
-                            decoding="async"
-                            className={`absolute inset-0 h-full w-full object-cover transition-transform duration-200 ${
-                              isZooming ? 'scale-150' : 'scale-100'
-                            } zoom-origin-var`}
-                            onError={(event) =>
-                              handleImageError(event, '/images/products/default-product.webp')
-                            }
-                          />
-
-                          {(product.isFeatured || product.isPremium || product.isLimited) ? (
-                            <div className="absolute top-3 ltr:left-3 rtl:right-3 flex flex-col gap-2">
-                              {product.isFeatured ? (
-                                <div className="bg-linear-to-r from-yellow-400 to-orange-400 text-white px-3 py-1.5 rounded-full text-sm font-bold shadow-md w-fit">
-                                  {language === 'ar' ? 'مميز' : 'Featured'}
-                                </div>
-                              ) : null}
-                              {product.isPremium ? (
-                                <div className="bg-linear-to-r from-orange-500 to-red-500 text-white px-3 py-1.5 rounded-full text-sm font-bold shadow-md w-fit">
-                                  {t('sections.bestSellerBadge')}
-                                </div>
-                              ) : null}
-                              {product.isLimited ? (
-                                <div className="bg-linear-to-r from-purple-500 to-pink-500 text-white px-3 py-1.5 rounded-full text-sm font-bold shadow-md w-fit">
-                                  {t('sections.limitedBadge')}
-                                </div>
-                              ) : null}
-                            </div>
-                          ) : null}
-
-                          {!isAvailable ? (
-                            <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                              <span className="bg-red-500 text-white px-4 py-2 rounded-lg font-semibold text-sm">
-                                {unavailableLabel}
-                              </span>
-                            </div>
-                          ) : null}
+                            ) : null}
+                          </div>
 
                           {images.length > 1 ? (
-                            <div className={`absolute inset-x-0 top-1/2 flex justify-between px-3 text-white ${language === 'ar' ? 'flex-row-reverse' : ''}`}>
-                              <button
-                                type="button"
-                                onClick={() => incrementImage(-1)}
-                                className="rounded-full bg-black/40 p-1.5 hover:bg-black/60 transition-colors"
-                                aria-label={language === 'ar' ? 'الصورة السابقة' : 'Previous image'}
-                              >
-                                <ChevronLeft className="w-4 h-4" />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => incrementImage(1)}
-                                className="rounded-full bg-black/40 p-1.5 hover:bg-black/60 transition-colors"
-                                aria-label={language === 'ar' ? 'الصورة التالية' : 'Next image'}
-                              >
-                                <ChevronRight className="w-4 h-4" />
-                              </button>
+                            <div className="flex flex-wrap gap-2 justify-start">
+                              {images.map((image, index) => (
+                                <button
+                                  key={image}
+                                  type="button"
+                                  onClick={() => setCurrentImageIndex(index)}
+                                  className={`relative h-16 w-16 rounded-lg overflow-hidden border-2 shrink-0 ${
+                                    currentImageIndex === index
+                                      ? 'border-amber-500 ring-2 ring-amber-300'
+                                      : 'border-transparent hover:border-amber-300'
+                                  }`}
+                                >
+                                  <img
+                                    src={image}
+                                    alt={getImageAlt(index)}
+                                    width={64}
+                                    height={64}
+                                    loading="eager"
+                                    decoding="sync"
+                                    fetchPriority="high"
+                                    className="h-full w-full object-cover"
+                                    onError={(event) =>
+                                      handleImageError(event, '/images/products/default-product.webp')
+                                    }
+                                  />
+                                </button>
+                              ))}
                             </div>
                           ) : null}
                         </div>
 
-                        {images.length > 1 ? (
-                          <div className="flex flex-wrap gap-2 justify-start">
-                            {images.map((image, index) => (
-                              <button
-                                key={image}
-                                type="button"
-                                onClick={() => setCurrentImageIndex(index)}
-                                className={`relative h-16 w-16 rounded-lg overflow-hidden border-2 shrink-0 ${
-                                  currentImageIndex === index
-                                    ? 'border-amber-500 ring-2 ring-amber-300'
-                                    : 'border-transparent hover:border-amber-300'
-                                }`}
-                              >
-                                <img
-                                  src={image}
-                                  alt={getImageAlt(index)}
-                                  width={64}
-                                  height={64}
-                                  loading="eager"
-                                  decoding="sync"
-                                  fetchPriority="high"
-                                  className="h-full w-full object-cover"
-                                  onError={(event) =>
-                                    handleImageError(event, '/images/products/default-product.webp')
-                                  }
-                                />
-                              </button>
-                            ))}
-                          </div>
-                        ) : null}
-                      </div>
+                        {/* Velvet Harmony Discovery Layout */}
+                        <div className="flex flex-col gap-4">
+                          <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div className="space-y-2">
+                              <h1 className="text-2xl lg:text-3xl font-bold text-stone-900">{displayName}</h1>
 
-                      {/* Product Information */}
-                      <div className="space-y-3 md:space-y-4">
-                        {/* Product Name & Rating - Desktop only */}
-                        <div className="hidden lg:block">
-                          <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">{displayName}</h1>
+                              {averageRating > 0 ? (
+                                <button
+                                  type="button"
+                                  onClick={() => setIsReviewsDialogOpen(true)}
+                                  className="flex items-center gap-2 text-left hover:opacity-90"
+                                  aria-label={language === 'ar' ? 'عرض المراجعات' : 'View reviews'}
+                                >
+                                  <div className="flex gap-0.5">
+                                    {[1, 2, 3, 4, 5].map((star) => (
+                                      <Star
+                                        key={star}
+                                        className={`w-3.5 h-3.5 ${
+                                          star <= averageRating
+                                            ? 'text-yellow-400 fill-current'
+                                            : 'text-gray-300'
+                                        }`}
+                                      />
+                                    ))}
+                                  </div>
+                                  <span className="text-xs text-stone-500 underline-offset-2 hover:underline">
+                                    ({averageRating.toFixed(1)})
+                                  </span>
+                                </button>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => setIsReviewsDialogOpen(true)}
+                                  className="flex items-center gap-2 text-left hover:opacity-90"
+                                  aria-label={language === 'ar' ? 'عرض المراجعات' : 'View reviews'}
+                                >
+                                  <div className="flex gap-0.5">
+                                    {[1, 2, 3, 4, 5].map((star) => (
+                                      <Star key={star} className="w-3.5 h-3.5 text-gray-300" />
+                                    ))}
+                                  </div>
+                                  <span className="text-xs text-stone-400 underline-offset-2 hover:underline">(0.0)</span>
+                                </button>
+                              )}
+                            </div>
+
+                            <div className="flex flex-col items-end gap-2">
+                              <span className="inline-flex items-center rounded-full border border-stone-200 bg-white px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-stone-600">
+                                {language === 'ar' ? 'باقة اكتشاف' : 'Discovery Bundle'}
+                              </span>
+                              {topInStock ? (
+                                <span className="inline-flex items-center gap-1 text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full text-[10px] font-semibold">
+                                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                                  {stockLabel}
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 text-red-700 bg-red-50 px-3 py-1 rounded-full text-[10px] font-semibold">
+                                  <span className="h-1.5 w-1.5 rounded-full bg-red-500"></span>
+                                  {language === 'ar' ? 'غير متوفر' : 'Out of Stock'}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
+                            {displayDescription ? (
+                              <div
+                                className="text-xs text-stone-600 leading-relaxed [&_p]:mb-2 [&_ul]:list-disc [&_ul]:ml-5 [&_ul]:mb-2 [&_ol]:list-decimal [&_ol]:ml-5 [&_ol]:mb-2 [&_li]:mb-1 [&_strong]:font-semibold"
+                                dangerouslySetInnerHTML={{ __html: displayDescription }}
+                              />
+                            ) : (
+                              <p className="text-xs text-stone-500">
+                                {language === 'ar' ? 'تفاصيل هذا المنتج ستتوفر قريباً.' : 'Details for this bundle are coming soon.'}
+                              </p>
+                            )}
+
+                            <div className="mt-2 rounded-2xl border border-stone-200 bg-stone-50/60 px-4 py-3 text-xs text-stone-600 shadow-inner">
+                              <div className="flex flex-wrap items-center justify-between gap-2">
+                                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-stone-500">
+                                  {language === 'ar'
+                                    ? 'ماذا يوجد داخل هذه الباقة'
+                                    : "What's inside this bundle"}
+                                </p>
+                                <span className="rounded-full border border-stone-300 bg-white px-2.5 py-1 text-[10px] font-semibold text-stone-600">
+                                  {language === 'ar' ? 'مختار بعناية' : 'Curated Selection'}
+                                </span>
+                              </div>
+                              <p className="mt-2 text-xs leading-relaxed text-stone-600">
+                                {language === 'ar'
+                                  ? 'تجربة متوازنة للاكتشاف مصممة للاستمتاع اليومي، تجمع بين الراحة والحلاوة والبنية النظيفة من ثلاث منشأات، مثالية للتحضير المنزلي والإهداء.'
+                                  : 'A balanced discovery selection crafted for everyday enjoyment, bringing together comfort, sweetness, and clean structure from three origins, ideal for home brewing and gifting.'}
+                              </p>
+                              <div className="mt-3 grid gap-2 md:grid-cols-2">
+                                <div className="rounded-xl border border-stone-200 bg-white px-3 py-2">
+                                  <p className="text-[11px] font-semibold text-stone-800">Brazil - Catuai Natural (200g)</p>
+                                  <p className="mt-1 text-[11px] text-stone-500">Chocolate, roasted nuts, caramel sweetness, smooth body</p>
+                                </div>
+                                <div className="rounded-xl border border-stone-200 bg-white px-3 py-2">
+                                  <p className="text-[11px] font-semibold text-stone-800">El Salvador - Red Bourbon Washed (200g)</p>
+                                  <p className="mt-1 text-[11px] text-stone-500">Brown sugar, red apple, soft citrus, clean finish</p>
+                                </div>
+                                <div className="rounded-xl border border-stone-200 bg-white px-3 py-2">
+                                  <p className="text-[11px] font-semibold text-stone-800">Panama - Pacas Anaerobic Natural (100g)</p>
+                                  <p className="mt-1 text-[11px] text-stone-500">Honey, stone fruit, gentle acidity, elegant balance</p>
+                                </div>
+                                <div className="rounded-xl border border-stone-200 bg-white px-3 py-2">
+                                  <p className="text-[11px] font-semibold text-stone-800">Paper Cups - 3 pcs</p>
+                                  <p className="mt-1 text-[11px] text-stone-500">Perfect for tasting, sharing, or gifting</p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm space-y-3">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-semibold text-stone-600">
+                                {language === 'ar' ? 'السعر' : 'Price'}
+                              </span>
+                              <span className="text-lg font-bold text-stone-900">
+                                {price > 0
+                                  ? formatCurrency(price * quantity, language)
+                                  : language === 'ar'
+                                    ? 'السعر عند الطلب'
+                                    : 'Price on request'}
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              <div className="flex items-center h-11 border border-stone-200 rounded-full bg-stone-50 overflow-hidden">
+                                <button
+                                  type="button"
+                                  onClick={decreaseQuantity}
+                                  className="h-11 w-11 text-base font-bold text-stone-700 hover:text-stone-900 hover:bg-stone-100 transition-transform duration-150 active:scale-95 disabled:text-stone-300 disabled:hover:bg-transparent disabled:cursor-not-allowed"
+                                  disabled={quantity <= 1}
+                                  aria-label={language === 'ar' ? 'تقليل الكمية' : 'Decrease quantity'}
+                                >
+                                  –
+                                </button>
+                                <input
+                                  type="number"
+                                  value={quantity}
+                                  onChange={(e) => {
+                                    const val = parseInt(e.target.value) || 1;
+                                    setQuantity(Math.min(Math.max(val, 1), 10));
+                                  }}
+                                  className="h-11 w-12 md:w-14 text-sm font-semibold text-stone-900 text-center border-x border-stone-200 focus:outline-none focus:bg-stone-100 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                  min="1"
+                                  max="10"
+                                  aria-label={language === 'ar' ? 'الكمية' : 'Quantity'}
+                                />
+                                <button
+                                  type="button"
+                                  onClick={increaseQuantity}
+                                  className="h-11 w-11 text-base font-bold text-stone-700 hover:text-stone-900 hover:bg-stone-100 transition-transform duration-150 active:scale-95 disabled:text-stone-300 disabled:hover:bg-transparent disabled:cursor-not-allowed"
+                                  disabled={quantity >= 10}
+                                  aria-label={language === 'ar' ? 'زيادة الكمية' : 'Increase quantity'}
+                                >
+                                  +
+                                </button>
+                              </div>
+
+                              <Button
+                                type="button"
+                                onClick={handleAddToCart}
+                                disabled={!isAvailable || price <= 0 || isVariantOutOfStock}
+                                className="flex-1 h-11 inline-flex items-center justify-center gap-2 rounded-full bg-[#7a1f2b] hover:bg-[#651a23] text-white font-semibold text-xs md:text-sm shadow-md hover:shadow-lg transition-all duration-200"
+                              >
+                                <ShoppingCart className="w-4 h-4" />
+                                {addToCartLabel}
+                              </Button>
+                            </div>
+
+                            <p className="text-[10px] text-stone-500 italic text-center">
+                              {language === 'ar' ? 'محمص طازج أسبوعياً في عمان' : 'Roasted fresh weekly in Oman'}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+                    <div className="p-3 md:p-4 lg:p-6">
+                      <div className="grid lg:grid-cols-2 gap-4 md:gap-6 lg:gap-8">
+                        {/* Mobile: Product Name & Rating - Show above image */}
+                        <div className="lg:hidden mb-3">
+                          <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-2">{displayName}</h2>
                           
-                          <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-2 md:gap-3">
                             {averageRating > 0 ? (
                               <button
                                 type="button"
                                 onClick={() => setIsReviewsDialogOpen(true)}
-                                className="flex items-center gap-2 text-left hover:opacity-90"
+                                className="flex items-center gap-1.5 md:gap-2 text-left hover:opacity-90"
                                 aria-label={language === 'ar' ? 'عرض المراجعات' : 'View reviews'}
                               >
                                 <div className="flex gap-0.5">
                                   {[1, 2, 3, 4, 5].map((star) => (
                                     <Star
                                       key={star}
-                                      className={`w-3.5 h-3.5 ${
+                                      className={`w-3 md:w-3.5 h-3 md:h-3.5 ${
                                         star <= averageRating
                                           ? 'text-yellow-400 fill-current'
                                           : 'text-gray-300'
@@ -1052,7 +1170,7 @@ export const ProductDetailPage = () => {
                                     />
                                   ))}
                                 </div>
-                                <span className="text-xs text-gray-600 underline-offset-2 hover:underline">
+                                <span className="text-[10px] md:text-xs text-gray-600 underline-offset-2 hover:underline">
                                   ({averageRating.toFixed(1)})
                                 </span>
                               </button>
@@ -1060,31 +1178,196 @@ export const ProductDetailPage = () => {
                               <button
                                 type="button"
                                 onClick={() => setIsReviewsDialogOpen(true)}
-                                className="flex items-center gap-2 text-left hover:opacity-90"
+                                className="flex items-center gap-1.5 md:gap-2 text-left hover:opacity-90"
                                 aria-label={language === 'ar' ? 'عرض المراجعات' : 'View reviews'}
                               >
                                 <div className="flex gap-0.5">
                                   {[1, 2, 3, 4, 5].map((star) => (
-                                    <Star key={star} className="w-3.5 h-3.5 text-gray-300" />
+                                    <Star key={star} className="w-3 md:w-3.5 h-3 md:h-3.5 text-gray-300" />
                                   ))}
                                 </div>
-                                <span className="text-xs text-gray-400 underline-offset-2 hover:underline">(0.0)</span>
+                                <span className="text-[10px] md:text-xs text-gray-400 underline-offset-2 hover:underline">(0.0)</span>
                               </button>
                             )}
 
                             {topInStock ? (
-                              <div className="inline-flex items-center gap-1.5 text-green-600 bg-green-50 px-2.5 py-1 rounded-full ml-auto">
+                              <div className="inline-flex items-center gap-1 md:gap-1.5 text-green-600 bg-green-50 px-2 md:px-2.5 py-0.5 md:py-1 rounded-full ml-auto">
                                 <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
-                                <span className="text-[10px] font-semibold">{stockLabel}</span>
+                                <span className="text-[9px] md:text-[10px] font-semibold">{stockLabel}</span>
                               </div>
                             ) : (
-                              <div className="inline-flex items-center gap-1.5 text-red-700 bg-red-50 px-2.5 py-1 rounded-full ml-auto">
+                              <div className="inline-flex items-center gap-1 md:gap-1.5 text-red-700 bg-red-50 px-2 md:px-2.5 py-0.5 md:py-1 rounded-full ml-auto">
                                 <div className="w-1.5 h-1.5 bg-red-500 rounded-full"></div>
-                                <span className="text-[10px] font-semibold">{language === 'ar' ? 'غير متوفر' : 'Out of Stock'}</span>
+                                <span className="text-[9px] md:text-[10px] font-semibold">{language === 'ar' ? 'غير متوفر' : 'Out of Stock'}</span>
                               </div>
                             )}
                           </div>
                         </div>
+
+                        {/* Image Gallery */}
+                        <div className="space-y-2 md:space-y-3">
+                          <div 
+                            className="relative bg-linear-to-br from-amber-50 to-orange-100 rounded-xl overflow-hidden aspect-square w-full cursor-zoom-in"
+                            onMouseMove={handleMouseMove}
+                            onMouseEnter={handleMouseEnter}
+                            onMouseLeave={handleMouseLeave}
+                          >
+                            <img
+                              src={images[currentImageIndex]}
+                              alt={getImageAlt(currentImageIndex)}
+                              width={600}
+                              height={600}
+                              fetchPriority="high"
+                              decoding="async"
+                              className={`absolute inset-0 h-full w-full object-cover transition-transform duration-200 ${
+                                isZooming ? 'scale-150' : 'scale-100'
+                              } zoom-origin-var`}
+                              onError={(event) =>
+                                handleImageError(event, '/images/products/default-product.webp')
+                              }
+                            />
+
+                            {(product.isFeatured || product.isPremium || product.isLimited) ? (
+                              <div className="absolute top-3 ltr:left-3 rtl:right-3 flex flex-col gap-2">
+                                {product.isFeatured ? (
+                                  <div className="bg-linear-to-r from-yellow-400 to-orange-400 text-white px-3 py-1.5 rounded-full text-sm font-bold shadow-md w-fit">
+                                    {language === 'ar' ? 'مميز' : 'Featured'}
+                                  </div>
+                                ) : null}
+                                {product.isPremium ? (
+                                  <div className="bg-linear-to-r from-orange-500 to-red-500 text-white px-3 py-1.5 rounded-full text-sm font-bold shadow-md w-fit">
+                                    {t('sections.bestSellerBadge')}
+                                  </div>
+                                ) : null}
+                                {product.isLimited ? (
+                                  <div className="bg-linear-to-r from-purple-500 to-pink-500 text-white px-3 py-1.5 rounded-full text-sm font-bold shadow-md w-fit">
+                                    {t('sections.limitedBadge')}
+                                  </div>
+                                ) : null}
+                              </div>
+                            ) : null}
+
+                            {!isAvailable ? (
+                              <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                                <span className="bg-red-500 text-white px-4 py-2 rounded-lg font-semibold text-sm">
+                                  {unavailableLabel}
+                                </span>
+                              </div>
+                            ) : null}
+
+                            {images.length > 1 ? (
+                              <div className={`absolute inset-x-0 top-1/2 flex justify-between px-3 text-white ${language === 'ar' ? 'flex-row-reverse' : ''}`}>
+                                <button
+                                  type="button"
+                                  onClick={() => incrementImage(-1)}
+                                  className="rounded-full bg-black/40 p-1.5 hover:bg-black/60 transition-colors"
+                                  aria-label={language === 'ar' ? 'الصورة السابقة' : 'Previous image'}
+                                >
+                                  <ChevronLeft className="w-4 h-4" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => incrementImage(1)}
+                                  className="rounded-full bg-black/40 p-1.5 hover:bg-black/60 transition-colors"
+                                  aria-label={language === 'ar' ? 'الصورة التالية' : 'Next image'}
+                                >
+                                  <ChevronRight className="w-4 h-4" />
+                                </button>
+                              </div>
+                            ) : null}
+                          </div>
+
+                          {images.length > 1 ? (
+                            <div className="flex flex-wrap gap-2 justify-start">
+                              {images.map((image, index) => (
+                                <button
+                                  key={image}
+                                  type="button"
+                                  onClick={() => setCurrentImageIndex(index)}
+                                  className={`relative h-16 w-16 rounded-lg overflow-hidden border-2 shrink-0 ${
+                                    currentImageIndex === index
+                                      ? 'border-amber-500 ring-2 ring-amber-300'
+                                      : 'border-transparent hover:border-amber-300'
+                                  }`}
+                                >
+                                  <img
+                                    src={image}
+                                    alt={getImageAlt(index)}
+                                    width={64}
+                                    height={64}
+                                    loading="eager"
+                                    decoding="sync"
+                                    fetchPriority="high"
+                                    className="h-full w-full object-cover"
+                                    onError={(event) =>
+                                      handleImageError(event, '/images/products/default-product.webp')
+                                    }
+                                  />
+                                </button>
+                              ))}
+                            </div>
+                          ) : null}
+                        </div>
+
+                        {/* Product Information */}
+                        <div className="space-y-3 md:space-y-4">
+                          {/* Product Name & Rating - Desktop only */}
+                          <div className="hidden lg:block">
+                            <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">{displayName}</h1>
+                            
+                            <div className="flex items-center gap-3">
+                              {averageRating > 0 ? (
+                                <button
+                                  type="button"
+                                  onClick={() => setIsReviewsDialogOpen(true)}
+                                  className="flex items-center gap-2 text-left hover:opacity-90"
+                                  aria-label={language === 'ar' ? 'عرض المراجعات' : 'View reviews'}
+                                >
+                                  <div className="flex gap-0.5">
+                                    {[1, 2, 3, 4, 5].map((star) => (
+                                      <Star
+                                        key={star}
+                                        className={`w-3.5 h-3.5 ${
+                                          star <= averageRating
+                                            ? 'text-yellow-400 fill-current'
+                                            : 'text-gray-300'
+                                        }`}
+                                      />
+                                    ))}
+                                  </div>
+                                  <span className="text-xs text-gray-600 underline-offset-2 hover:underline">
+                                    ({averageRating.toFixed(1)})
+                                  </span>
+                                </button>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => setIsReviewsDialogOpen(true)}
+                                  className="flex items-center gap-2 text-left hover:opacity-90"
+                                  aria-label={language === 'ar' ? 'عرض المراجعات' : 'View reviews'}
+                                >
+                                  <div className="flex gap-0.5">
+                                    {[1, 2, 3, 4, 5].map((star) => (
+                                      <Star key={star} className="w-3.5 h-3.5 text-gray-300" />
+                                    ))}
+                                  </div>
+                                  <span className="text-xs text-gray-400 underline-offset-2 hover:underline">(0.0)</span>
+                                </button>
+                              )}
+
+                              {topInStock ? (
+                                <div className="inline-flex items-center gap-1.5 text-green-600 bg-green-50 px-2.5 py-1 rounded-full ml-auto">
+                                  <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+                                  <span className="text-[10px] font-semibold">{stockLabel}</span>
+                                </div>
+                              ) : (
+                                <div className="inline-flex items-center gap-1.5 text-red-700 bg-red-50 px-2.5 py-1 rounded-full ml-auto">
+                                  <div className="w-1.5 h-1.5 bg-red-500 rounded-full"></div>
+                                  <span className="text-[10px] font-semibold">{language === 'ar' ? 'غير متوفر' : 'Out of Stock'}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
 
                         {/* Coffee Information - Compact List */}
                         <div className="bg-linear-to-br from-amber-50 to-orange-50 border border-amber-200 rounded-lg p-2.5 md:p-3 space-y-1.5 md:space-y-2">
@@ -1361,9 +1644,10 @@ export const ProductDetailPage = () => {
                     </div>
                   </div>
                 </div>
+              )}
 
               {/* Tabs Section for Description */}
-              {displayDescription && (
+              {!isVelvetHarmonyDiscovery && displayDescription && (
                 <div className="mt-4 md:mt-6 bg-white rounded-xl shadow-lg overflow-hidden">
                   <div className="border-b border-gray-200">
                     <div className="container mx-auto">
