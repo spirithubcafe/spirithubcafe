@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { User, Phone, Mail, CheckCircle, ArrowLeft, ArrowRight, Loader2 } from 'lucide-react';
+import { User, Phone, Mail, CheckCircle, ArrowLeft, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useApp } from '../hooks/useApp';
 import { useRegion } from '../hooks/useRegion';
