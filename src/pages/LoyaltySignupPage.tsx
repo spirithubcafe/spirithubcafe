@@ -177,9 +177,6 @@ export const LoyaltySignupPage: React.FC = () => {
             transition={{ duration: 0.4 }}
           >
             <div className="relative overflow-hidden rounded-3xl border border-stone-200 bg-white p-8 shadow-lg sm:p-10">
-              {/* Decorative top bar */}
-              <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700" />
-
               {/* Logo */}
               <div className="flex justify-center mb-6 pt-2">
                 <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-amber-500 to-amber-700 shadow-lg shadow-amber-200/50 overflow-hidden">

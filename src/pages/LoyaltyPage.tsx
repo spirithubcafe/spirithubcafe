@@ -122,9 +122,6 @@ export const LoyaltyPage: React.FC = () => {
             <div className="absolute -inset-4 rounded-[2rem] bg-gradient-to-br from-stone-700 to-stone-900 opacity-10 blur-2xl" />
 
             <div className="relative overflow-hidden rounded-3xl border border-stone-200 bg-white p-8 shadow-2xl sm:p-12">
-              {/* Decorative top bar */}
-              <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700" />
-
               {/* Branch badge */}
               <div className="mb-6 flex justify-center">
                 <span className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-stone-800 to-stone-900 px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-white shadow-sm">
@@ -259,10 +256,7 @@ export const LoyaltyPage: React.FC = () => {
           </div>
 
           <div className="mx-auto max-w-lg">
-            <div className="relative overflow-hidden rounded-3xl border border-amber-200/60 bg-gradient-to-br from-amber-50 via-white to-amber-50 p-8 shadow-lg sm:p-10">
-              {/* Decorative top bar */}
-              <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700" />
-
+            <div className="relative overflow-hidden rounded-3xl border border-stone-200 bg-gradient-to-br from-stone-50 via-white to-stone-50 p-8 shadow-lg sm:p-10">
               {/* Logo */}
               <div className="flex justify-center mb-6">
                 <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-amber-500 to-amber-700 shadow-lg shadow-amber-200/50 overflow-hidden">
