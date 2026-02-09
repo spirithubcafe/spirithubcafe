@@ -1,19 +1,25 @@
 import { useMemo } from 'react';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { useApp } from '../../hooks/useApp';
 import { useCategoryProducts, useShopCategory } from '../../hooks/useShop';
 import { ProductCard } from '../../components/shop/ProductCard';
 import { SortDropdown } from '../../components/shop/SortDropdown';
-import { getCategoryImageUrl, handleImageError } from '../../lib/imageUtils';
+import { getCategoryImageUrl, getProductImageUrl, handleImageError } from '../../lib/imageUtils';
 import { Seo } from '../../components/seo/Seo';
 import { siteMetadata } from '../../config/siteMetadata';
 import { PageHeader } from '../../components/layout/PageHeader';
+import { ProductBadges } from '../../components/shop/ProductBadges';
+import { PriceDisplay } from '../../components/shop/PriceDisplay';
+import { StarRating } from '../../components/shop/StarRating';
+import type { ShopProduct } from '../../types/shop';
+import { useRegion } from '../../hooks/useRegion';
 
 export const ShopCategoryPage = () => {
   const { slug } = useParams<{ slug: string }>();
   const { language } = useApp();
   const isArabic = language === 'ar';
   const { category, loading, error } = useShopCategory(slug);
+  const { currentRegion } = useRegion();
 
   const categoryId = category?.id ?? 0;
   const {
@@ -39,6 +45,22 @@ export const ShopCategoryPage = () => {
         : 'Shop';
     return isArabic ? `فئة ${name}` : `${name} category`;
   }, [category, isArabic]);
+
+  const isBundlesGiftCategory = useMemo(() => {
+    if (!category) {
+      return false;
+    }
+
+    const slugValue = category.slug?.toLowerCase() || '';
+    const nameValue = category.name?.toLowerCase() || '';
+    const nameArValue = category.nameAr || '';
+
+    return (
+      /bundle|gift/.test(slugValue) ||
+      /bundle|gift/.test(nameValue) ||
+      /هدايا|هدية|باقة|باقات/.test(nameArValue)
+    );
+  }, [category]);
 
   if (loading) {
     return (
@@ -177,11 +199,25 @@ export const ShopCategoryPage = () => {
         )}
 
         {products.length > 0 && (
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-            {products.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
+          isBundlesGiftCategory ? (
+            <div className="grid gap-6 lg:grid-cols-2">
+              {products.map((product) => (
+                <BundlesGiftProductCard
+                  key={product.id}
+                  product={product}
+                  isArabic={isArabic}
+                  currency={currentRegion.currency}
+                  regionCode={currentRegion.code}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+              {products.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          )
         )}
 
         {pagination && pagination.totalPages > 1 && (
@@ -207,6 +243,81 @@ export const ShopCategoryPage = () => {
             </button>
           </div>
         )}
+      </div>
+    </div>
+  );
+};
+
+const BundlesGiftProductCard = ({
+  product,
+  isArabic,
+  currency,
+  regionCode,
+}: {
+  product: ShopProduct;
+  isArabic: boolean;
+  currency: string;
+  regionCode: string;
+}) => {
+  const name = isArabic ? product.nameAr || product.name : product.name;
+  const tasting = isArabic ? product.tastingNotesAr || product.tastingNotes : product.tastingNotes;
+  const productSlug = product.slug || `${product.id}`;
+  const productUrl = `/${regionCode}/products/${productSlug}`;
+
+  return (
+    <div className="group overflow-hidden rounded-3xl border border-amber-100 bg-gradient-to-br from-white via-amber-50/40 to-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
+      <div className="grid grid-cols-1 md:grid-cols-[220px_1fr]">
+        <div className="relative">
+          <ProductBadges product={product} />
+          <Link to={productUrl} className="block">
+            <img
+              src={getProductImageUrl(product.mainImagePath)}
+              alt={name}
+              className="h-52 w-full object-cover md:h-full"
+              loading="lazy"
+              onError={(event) => handleImageError(event, '/images/products/default-product.webp')}
+            />
+          </Link>
+        </div>
+
+        <div className="flex flex-col gap-4 p-6">
+          <div className="space-y-2">
+            <p className="text-xs uppercase tracking-[0.3em] text-amber-700">
+              {isArabic ? 'حزمة مميزة' : 'Curated Bundle'}
+            </p>
+            <Link to={productUrl}>
+              <h3 className="text-xl font-semibold text-stone-900 transition group-hover:text-amber-700">
+                {name}
+              </h3>
+            </Link>
+          </div>
+
+          {tasting && (
+            <p className="text-sm text-stone-600 line-clamp-2">{tasting}</p>
+          )}
+
+          {product.reviewCount > 0 ? (
+            <StarRating rating={product.averageRating} count={product.reviewCount} />
+          ) : (
+            <p className="text-xs text-stone-400">
+              {isArabic ? 'مختار بعناية للإهداء' : 'Thoughtfully packed for gifting'}
+            </p>
+          )}
+
+          <div className="mt-auto flex flex-wrap items-center justify-between gap-3">
+            <PriceDisplay
+              minPrice={product.minPrice}
+              maxPrice={product.maxPrice}
+              currency={currency}
+            />
+            <Link
+              to={productUrl}
+              className="rounded-full bg-stone-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-stone-800"
+            >
+              {isArabic ? 'عرض التفاصيل' : 'View details'}
+            </Link>
+          </div>
+        </div>
       </div>
     </div>
   );
