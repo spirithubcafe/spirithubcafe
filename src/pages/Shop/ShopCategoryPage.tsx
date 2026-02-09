@@ -259,51 +259,47 @@ const BundlesGiftProductCard = ({
   regionCode: string;
 }) => {
   const name = isArabic ? product.nameAr || product.name : product.name;
-  const tasting = isArabic ? product.tastingNotesAr || product.tastingNotes : product.tastingNotes;
   const productSlug = product.slug || `${product.id}`;
   const productUrl = `/${regionCode}/shop/product/${productSlug}`;
 
   return (
-    <div className="group overflow-hidden rounded-3xl border border-amber-100 bg-gradient-to-br from-white via-amber-50/40 to-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
-      <div className="grid grid-cols-1 md:grid-cols-[220px_1fr]">
-        <div className="relative">
+    <div className="group overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
+      <div className="grid h-full grid-cols-[140px_1fr] sm:grid-cols-[180px_1fr] md:grid-cols-[220px_1fr]">
+        {/* Image – fixed height, fully covers left column */}
+        <Link to={productUrl} className="relative block h-full min-h-[200px] overflow-hidden bg-stone-100">
           <ProductBadges product={product} />
-          <Link to={productUrl} className="block">
-            <img
-              src={getProductImageUrl(product.mainImagePath)}
-              alt={name}
-              className="h-52 w-full object-cover md:h-full"
-              loading="lazy"
-              onError={(event) => handleImageError(event, '/images/products/default-product.webp')}
-            />
-          </Link>
-        </div>
+          <img
+            src={getProductImageUrl(product.mainImagePath)}
+            alt={name}
+            className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+            loading="lazy"
+            onError={(event) => handleImageError(event, '/images/products/default-product.webp')}
+          />
+        </Link>
 
-        <div className="flex flex-col gap-4 p-6">
-          <div className="space-y-2">
-            <p className="text-xs uppercase tracking-[0.3em] text-amber-700">
+        {/* Content */}
+        <div className="flex flex-col justify-between gap-3 p-4 sm:p-5">
+          {/* Top section */}
+          <div className="space-y-1.5">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-amber-600">
               {isArabic ? 'حزمة مميزة' : 'Curated Bundle'}
             </p>
             <Link to={productUrl}>
-              <h3 className="text-xl font-semibold text-stone-900 transition group-hover:text-amber-700">
+              <h3 className="truncate text-base font-bold text-stone-900 transition group-hover:text-amber-700 sm:text-lg">
                 {name}
               </h3>
             </Link>
+            {product.reviewCount > 0 ? (
+              <StarRating rating={product.averageRating} count={product.reviewCount} />
+            ) : (
+              <p className="text-[11px] text-stone-400 italic">
+                {isArabic ? 'مختار بعناية للإهداء' : 'Thoughtfully packed for gifting'}
+              </p>
+            )}
           </div>
 
-          {tasting && (
-            <p className="text-sm text-stone-600 line-clamp-2">{tasting}</p>
-          )}
-
-          {product.reviewCount > 0 ? (
-            <StarRating rating={product.averageRating} count={product.reviewCount} />
-          ) : (
-            <p className="text-xs text-stone-400">
-              {isArabic ? 'مختار بعناية للإهداء' : 'Thoughtfully packed for gifting'}
-            </p>
-          )}
-
-          <div className="mt-auto flex flex-wrap items-center justify-between gap-3">
+          {/* Bottom section */}
+          <div className="flex items-center justify-between gap-3">
             <PriceDisplay
               minPrice={product.minPrice}
               maxPrice={product.maxPrice}
@@ -311,7 +307,7 @@ const BundlesGiftProductCard = ({
             />
             <Link
               to={productUrl}
-              className="rounded-full bg-stone-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-stone-800"
+              className="shrink-0 rounded-full bg-stone-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-stone-800"
             >
               {isArabic ? 'عرض التفاصيل' : 'View details'}
             </Link>
