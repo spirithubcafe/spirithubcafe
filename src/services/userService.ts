@@ -6,8 +6,13 @@ export interface User {
   username: string;
   email?: string;
   displayName?: string;
+  fullName?: string;
+  phoneNumber?: string;
+  phoneVerified?: boolean;
+  profilePicture?: string;
   isActive: boolean;
   lastLoggedIn?: string;
+  memberSince?: string;
   roles: string[];
   serialNumber?: string;
   tokens?: UserToken[];
@@ -30,12 +35,17 @@ export interface UserQueryParams {
   pageSize?: number;
   searchTerm?: string;
   isActive?: boolean;
+  role?: string;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
 }
 
 export interface UserCreateDto {
   username: string;
   password: string;
   displayName?: string;
+  email?: string;
+  phoneNumber?: string;
   isActive?: boolean;
   roles?: string[];
 }
@@ -43,6 +53,8 @@ export interface UserCreateDto {
 export interface UserUpdateDto {
   username: string;
   displayName?: string;
+  email?: string;
+  phoneNumber?: string;
   isActive?: boolean;
   roles?: string[];
 }
@@ -81,6 +93,9 @@ export const userService = {
         pageSize: params?.pageSize || 20,
         searchTerm: params?.searchTerm,
         isActive: params?.isActive,
+        role: params?.role,
+        sortBy: params?.sortBy,
+        sortOrder: params?.sortOrder,
       },
     });
 

@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { useApp } from '../../hooks/useApp';
 import { getAdminBasePath, getPreferredAdminRegion } from '../../lib/regionUtils';
+import { profileService } from '../../services/profileService';
+import type { UserProfile as UserProfileType } from '../../services/profileService';
+import { getProfilePictureUrl } from '../../lib/profileUtils';
 import { Button } from '../ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Badge } from '../ui/badge';
@@ -21,7 +24,9 @@ import {
   Heart,
   ShoppingBag,
   Crown,
-  ChevronDown
+  ChevronDown,
+  Mail,
+  Phone
 } from 'lucide-react';
 
 export const MinimalUserProfile: React.FC = () => {
@@ -29,7 +34,29 @@ export const MinimalUserProfile: React.FC = () => {
   const { user, logout, isAuthenticated, isAdmin } = useAuth();
   const { t, language } = useApp();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [profileData, setProfileData] = useState<UserProfileType | null>(null);
+  const [profilePictureUrl, setProfilePictureUrl] = useState<string>('');
   const isRTL = language === 'ar';
+
+  // Fetch profile data including profile picture
+  useEffect(() => {
+    if (!isAuthenticated || !user) return;
+    let isMounted = true;
+    const loadProfile = async () => {
+      try {
+        const profile = await profileService.getMyProfile();
+        if (isMounted) {
+          setProfileData(profile);
+          const picUrl = getProfilePictureUrl(profile.profilePicture);
+          if (picUrl) setProfilePictureUrl(picUrl);
+        }
+      } catch (error) {
+        // Silently fail - will show initials fallback
+      }
+    };
+    loadProfile();
+    return () => { isMounted = false; };
+  }, [isAuthenticated, user]);
 
   if (!isAuthenticated || !user) {
     return null;
@@ -57,7 +84,9 @@ export const MinimalUserProfile: React.FC = () => {
       .slice(0, 2);
   };
 
-  const userName = user.displayName || user.username || 'User';
+  const userName = profileData?.fullName || profileData?.displayName || user.displayName || user.username || 'User';
+  const userEmail = profileData?.email || user.username || '';
+  const userPhone = profileData?.phoneNumber || '';
   const isVIP = user.roles?.includes('Admin') || user.roles?.includes('VIP');
   const adminEntryPath = getAdminBasePath(getPreferredAdminRegion());
 
@@ -69,7 +98,7 @@ export const MinimalUserProfile: React.FC = () => {
           className="relative h-10 w-10 rounded-full hover:bg-gray-100 transition-colors"
         >
           <Avatar className="h-9 w-9 ring-2 ring-gray-200 hover:ring-gray-300 transition-all">
-            <AvatarImage src="" alt={userName} />
+            <AvatarImage src={profilePictureUrl} alt={userName} />
             <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-semibold">
               {getInitials(userName)}
             </AvatarFallback>
@@ -91,8 +120,8 @@ export const MinimalUserProfile: React.FC = () => {
         {/* User Header */}
         <DropdownMenuLabel className="p-4">
           <div className="flex items-center gap-3">
-            <Avatar className="h-12 w-12 ring-2 ring-gray-200">
-              <AvatarImage src="" alt={userName} />
+            <Avatar className="h-14 w-14 ring-2 ring-gray-200 shadow-sm">
+              <AvatarImage src={profilePictureUrl} alt={userName} className="object-cover" />
               <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-semibold text-lg">
                 {getInitials(userName)}
               </AvatarFallback>
@@ -109,9 +138,18 @@ export const MinimalUserProfile: React.FC = () => {
                   </Badge>
                 )}
               </div>
-              <p className="text-xs text-gray-500 truncate mt-0.5">
-                @{user.username}
-              </p>
+              {userEmail && (
+                <div className="flex items-center gap-1.5 mt-1">
+                  <Mail className="h-3 w-3 text-gray-400 flex-shrink-0" />
+                  <p className="text-xs text-gray-500 truncate">{userEmail}</p>
+                </div>
+              )}
+              {userPhone && (
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <Phone className="h-3 w-3 text-gray-400 flex-shrink-0" />
+                  <p className="text-xs text-gray-500 truncate">{userPhone}</p>
+                </div>
+              )}
             </div>
           </div>
         </DropdownMenuLabel>

@@ -10,6 +10,9 @@ import {
   persistAdminRegion,
   type RegionCode,
 } from '../../lib/regionUtils';
+import { profileService } from '../../services/profileService';
+import type { UserProfile as UserProfileType } from '../../services/profileService';
+import { getProfilePictureUrl } from '../../lib/profileUtils';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Separator } from '../ui/separator';
@@ -28,7 +31,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
-import { Avatar, AvatarFallback } from '../ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Badge } from '../ui/badge';
 import { Sheet, SheetContent } from '../ui/sheet';
 import {
@@ -113,6 +116,28 @@ export const AdminLayout: React.FC = () => {
   });
 
   const adminRegion = getAdminRegionFromPath(location.pathname);
+  const [profileData, setProfileData] = useState<UserProfileType | null>(null);
+  const [profilePictureUrl, setProfilePictureUrl] = useState<string>('');
+
+  // Fetch profile data including profile picture
+  useEffect(() => {
+    if (!isAuthenticated || !user) return;
+    let isMounted = true;
+    const loadProfile = async () => {
+      try {
+        const profile = await profileService.getMyProfile();
+        if (isMounted) {
+          setProfileData(profile);
+          const picUrl = getProfilePictureUrl(profile.profilePicture);
+          if (picUrl) setProfilePictureUrl(picUrl);
+        }
+      } catch (error) {
+        // Silently fail - will show initials fallback
+      }
+    };
+    loadProfile();
+    return () => { isMounted = false; };
+  }, [isAuthenticated, user]);
 
   useEffect(() => {
     // Remember last used admin region so legacy /admin routes can redirect correctly.
@@ -357,7 +382,8 @@ export const AdminLayout: React.FC = () => {
     return `/${adminRegion}/admin${suffixWithLeadingSlash}`;
   };
 
-  const userName = user.displayName || user.username;
+  const userName = profileData?.fullName || profileData?.displayName || user.displayName || user.username;
+  const userEmail = profileData?.email || user.username || '';
   const primaryRole = user.roles?.[0];
   const userInitial =
     userName?.charAt(0).toUpperCase() ?? user.username.charAt(0).toUpperCase();
@@ -548,6 +574,7 @@ export const AdminLayout: React.FC = () => {
             )}
           >
             <Avatar className="h-10 w-10 border border-border/60">
+              <AvatarImage src={profilePictureUrl} alt={userName} className="object-cover" />
               <AvatarFallback className="bg-primary/10 text-primary font-semibold">
                 {userInitial}
               </AvatarFallback>
@@ -763,6 +790,7 @@ export const AdminLayout: React.FC = () => {
                         className="flex items-center gap-2 rounded-full border border-transparent px-2 py-1 hover:border-border/60"
                       >
                         <Avatar className="h-9 w-9 border border-border/60">
+                          <AvatarImage src={profilePictureUrl} alt={userName} className="object-cover" />
                           <AvatarFallback className="bg-primary/10 text-primary font-semibold">
                             {userInitial}
                           </AvatarFallback>
@@ -780,9 +808,33 @@ export const AdminLayout: React.FC = () => {
                         <ChevronDown className="hidden h-4 w-4 text-muted-foreground sm:inline" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-56">
-                      <DropdownMenuLabel>
-                        {userName}
+                    <DropdownMenuContent align="end" className="w-72">
+                      <DropdownMenuLabel className="p-3">
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-12 w-12 border border-border/60 shadow-sm">
+                            <AvatarImage src={profilePictureUrl} alt={userName} className="object-cover" />
+                            <AvatarFallback className="bg-primary/10 text-primary font-semibold text-lg">
+                              {userInitial}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-semibold text-foreground truncate">{userName}</p>
+                            {userEmail && (
+                              <p className="text-xs text-muted-foreground truncate flex items-center gap-1.5 mt-0.5">
+                                <Mail className="h-3 w-3 flex-shrink-0" />
+                                {userEmail}
+                              </p>
+                            )}
+                            {primaryRole && (
+                              <Badge
+                                variant="outline"
+                                className="mt-1 border-transparent bg-primary/10 text-primary text-xs"
+                              >
+                                {translateRoleName(primaryRole)}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
                       </DropdownMenuLabel>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem asChild>

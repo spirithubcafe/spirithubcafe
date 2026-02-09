@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { useApp } from '../../hooks/useApp';
 import { getAdminBasePath, getPreferredAdminRegion } from '../../lib/regionUtils';
+import { profileService } from '../../services/profileService';
+import type { UserProfile as UserProfileType } from '../../services/profileService';
+import { getProfilePictureUrl } from '../../lib/profileUtils';
 import { Button } from '../ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Spinner } from '../ui/spinner';
@@ -40,6 +43,28 @@ export const UserProfile: React.FC<UserProfileProps> = ({
   const { user, logout, isAuthenticated } = useAuth();
   const { t, language } = useApp();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [profileData, setProfileData] = useState<UserProfileType | null>(null);
+  const [profilePictureUrl, setProfilePictureUrl] = useState<string>('');
+
+  // Fetch profile data including profile picture
+  useEffect(() => {
+    if (!isAuthenticated || !user) return;
+    let isMounted = true;
+    const loadProfile = async () => {
+      try {
+        const profile = await profileService.getMyProfile();
+        if (isMounted) {
+          setProfileData(profile);
+          const picUrl = getProfilePictureUrl(profile.profilePicture);
+          if (picUrl) setProfilePictureUrl(picUrl);
+        }
+      } catch (error) {
+        // Silently fail - will show initials fallback
+      }
+    };
+    loadProfile();
+    return () => { isMounted = false; };
+  }, [isAuthenticated, user]);
 
   if (!isAuthenticated || !user) {
     return null;
@@ -67,8 +92,9 @@ export const UserProfile: React.FC<UserProfileProps> = ({
       .slice(0, 2);
   };
 
-  const userName = user.displayName || user.username || 'User';
-  const userEmail = user.username || '';
+  const userName = profileData?.fullName || profileData?.displayName || user.displayName || user.username || 'User';
+  const userEmail = profileData?.email || user.username || '';
+  const userPhone = profileData?.phoneNumber || '';
   const userHandle = user.username
     ? `@${user.username.split('@')[0]}`
     : '@member';
@@ -150,7 +176,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({
         <div className="flex items-center gap-3">
           <div className="relative">
             <Avatar className="h-12 w-12 ring-2 ring-white/20">
-              <AvatarImage src="" alt={userName} />
+              <AvatarImage src={profilePictureUrl} alt={userName} className="object-cover" />
               <AvatarFallback className="bg-stone-600 text-white font-semibold text-lg">
                 {getInitials(userName)}
               </AvatarFallback>
@@ -222,7 +248,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({
         <Button variant="ghost" className="flex items-center gap-2 h-auto p-2 bg-white hover:bg-white shadow-sm border border-gray-100">
           <div className="relative">
             <Avatar className="h-9 w-9 ring-2 ring-stone-200">
-              <AvatarImage src="" alt={userName} />
+              <AvatarImage src={profilePictureUrl} alt={userName} className="object-cover" />
               <AvatarFallback className="bg-stone-700 text-white font-semibold">
                 {getInitials(userName)}
               </AvatarFallback>
@@ -257,7 +283,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({
           <div className="flex items-center gap-4">
             <div className="relative">
               <Avatar className="h-14 w-14 ring-2 ring-white shadow-md">
-                <AvatarImage src="" alt={userName} />
+                <AvatarImage src={profilePictureUrl} alt={userName} className="object-cover" />
                 <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-500 text-white text-xl font-semibold">
                   {getInitials(userName)}
                 </AvatarFallback>
