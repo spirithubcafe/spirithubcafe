@@ -41,6 +41,8 @@ import { OrdersPage } from './pages/OrdersPage';
 import { OrderDetailPage } from './pages/OrderDetailPage';
 import { AboutPage } from './pages/AboutPage';
 import { ContactPage } from './pages/ContactPage';
+import { LoyaltyPage } from './pages/LoyaltyPage';
+import { LoyaltySignupPage } from './pages/LoyaltySignupPage';
 import { FAQPage } from './pages/FAQPage';
 import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage';
 import { TermsConditionsPage } from './pages/TermsConditionsPage';
@@ -148,6 +150,8 @@ function AppContent() {
         <Route path="/om/order/:orderId" element={<OrderDetailPage />} />
         <Route path="/om/about" element={<AboutPage />} />
         <Route path="/om/contact" element={<ContactPage />} />
+        <Route path="/om/loyalty" element={<LoyaltyPage />} />
+        <Route path="/om/loyalty/signup" element={<LoyaltySignupPage />} />
         <Route path="/om/faq" element={<FAQPage />} />
         <Route path="/om/privacy" element={<PrivacyPolicyPage />} />
         <Route path="/om/terms" element={<TermsConditionsPage />} />
@@ -188,6 +192,8 @@ function AppContent() {
         <Route path="/sa/order/:orderId" element={<OrderDetailPage />} />
         <Route path="/sa/about" element={<AboutPage />} />
         <Route path="/sa/contact" element={<ContactPage />} />
+        <Route path="/sa/loyalty" element={<LoyaltyPage />} />
+        <Route path="/sa/loyalty/signup" element={<LoyaltySignupPage />} />
         <Route path="/sa/faq" element={<FAQPage />} />
         <Route path="/sa/privacy" element={<PrivacyPolicyPage />} />
         <Route path="/sa/terms" element={<TermsConditionsPage />} />
@@ -276,6 +282,8 @@ function AppContent() {
         <Route path="/admin/*" element={<AdminRegionRedirect />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/contact" element={<ContactPage />} />
+        <Route path="/loyalty" element={<LoyaltyPage />} />
+        <Route path="/loyalty/signup" element={<LoyaltySignupPage />} />
         <Route path="/faq" element={<FAQPage />} />
         <Route path="/privacy" element={<PrivacyPolicyPage />} />
         <Route path="/terms" element={<TermsConditionsPage />} />

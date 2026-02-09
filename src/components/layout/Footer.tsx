@@ -56,7 +56,8 @@ export const Footer: React.FC = () => {
     { label: language === 'ar' ? 'الرئيسية' : 'Home', href: getRegionalUrl('/') },
     { label: language === 'ar' ? 'المتجر' : 'Shop', href: getRegionalUrl('/products') },
     { label: language === 'ar' ? 'من نحن' : 'About', href: getRegionalUrl('/about') },
-    { label: language === 'ar' ? 'اتصل بنا' : 'Contact Us', href: getRegionalUrl('/contact') }
+    { label: language === 'ar' ? 'اتصل بنا' : 'Contact Us', href: getRegionalUrl('/contact') },
+    { label: language === 'ar' ? 'برنامج الولاء' : 'Loyalty', href: getRegionalUrl('/loyalty') }
   ];
 
   const legalLinks = [

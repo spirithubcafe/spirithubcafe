@@ -99,7 +99,7 @@ export const Navigation: React.FC = () => {
     { key: 'shop', label: t('nav.shop'), href: getRegionalUrl('/shop'), isRoute: true, hasDropdown: true },
     { key: 'wholesale', label: t('nav.wholesale'), href: getRegionalUrl('/wholesale'), isRoute: true, hasDropdown: false },
     { key: 'about', label: t('nav.about'), href: getRegionalUrl('/about'), isRoute: true, hasDropdown: false },
-    { key: 'contact', label: t('nav.contact'), href: getRegionalUrl('/contact'), isRoute: true, hasDropdown: false }
+    { key: 'contact', label: t('nav.contact'), href: getRegionalUrl('/contact'), isRoute: true, hasDropdown: true }
   ], [t, getRegionalUrl]);
 
   // Hide navigation on admin pages
@@ -214,6 +214,49 @@ export const Navigation: React.FC = () => {
                     </Link>
                   </DropdownMenuItem>
                 ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          );
+        }
+
+        // Contact dropdown (with Loyalty sub-item)
+        if (item.hasDropdown && item.key === 'contact') {
+          return (
+            <DropdownMenu key={item.key} modal={false}>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className={`flex items-center gap-1 transition-colors duration-200 font-medium text-xs md:text-xs lg:text-sm whitespace-nowrap ${
+                    isHomePage 
+                      ? 'text-white hover:text-amber-200' 
+                      : 'text-gray-900 hover:text-amber-600'
+                  } ${language === 'ar' ? 'flex-row-reverse' : ''}`}
+                >
+                  {item.label}
+                  <ChevronDown className="w-4 h-4" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent 
+                align={language === 'ar' ? 'end' : 'start'} 
+                className="min-w-[14rem] w-max max-w-xs bg-white border border-gray-200 shadow-lg"
+                onCloseAutoFocus={(e) => e.preventDefault()}
+              >
+                <DropdownMenuItem asChild>
+                  <Link
+                    to={getRegionalUrl('/contact')}
+                    className={`w-full px-4 py-2 whitespace-nowrap ${language === 'ar' ? 'text-right' : 'text-left'} text-gray-900 hover:bg-amber-50 hover:text-amber-600 font-medium`}
+                  >
+                    {language === 'ar' ? 'اتصل بنا' : 'Contact Us'}
+                  </Link>
+                </DropdownMenuItem>
+                <div className="h-px bg-gray-200 my-1" />
+                <DropdownMenuItem asChild>
+                  <Link
+                    to={getRegionalUrl('/loyalty')}
+                    className={`w-full px-4 py-2 whitespace-nowrap ${language === 'ar' ? 'text-right' : 'text-left'} text-gray-700 hover:bg-amber-50 hover:text-amber-600`}
+                  >
+                    {language === 'ar' ? 'برنامج الولاء' : 'Loyalty Program'}
+                  </Link>
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           );
@@ -546,6 +589,48 @@ export const Navigation: React.FC = () => {
                                       ))}
                                     </div>
                                   )}
+                                </div>
+                              );
+                            }
+
+                            // Contact dropdown in mobile (with Loyalty sub-item)
+                            if (item.hasDropdown && item.key === 'contact') {
+                              return (
+                                <div key={item.key} className="space-y-3">
+                                  <SheetClose asChild>
+                                    <Link
+                                      to={item.href}
+                                      className="flex items-center justify-between rounded-2xl bg-white/[0.06] px-4 py-3 text-base font-medium text-white transition duration-200 hover:bg-white/[0.12]"
+                                    >
+                                      <span>{item.label}</span>
+                                      <DirectionChevron className="h-4 w-4" />
+                                    </Link>
+                                  </SheetClose>
+
+                                  <div className={`space-y-2 pl-4 text-sm rtl:border-l-0 rtl:border-r rtl:pl-0 rtl:pr-4`}>
+                                    <SheetClose asChild>
+                                      <Link
+                                        to={getRegionalUrl('/contact')}
+                                        className="flex items-center justify-between rounded-xl bg-white/[0.06] px-3 py-2 text-amber-100 transition hover:bg-white/[0.12]"
+                                      >
+                                        <span>
+                                          {language === 'ar' ? 'اتصل بنا' : 'Contact Us'}
+                                        </span>
+                                        <DirectionChevron className="h-3.5 w-3.5" />
+                                      </Link>
+                                    </SheetClose>
+                                    <SheetClose asChild>
+                                      <Link
+                                        to={getRegionalUrl('/loyalty')}
+                                        className="flex items-center justify-between rounded-xl px-3 py-2 text-amber-100/90 transition hover:bg-white/[0.1] hover:text-white"
+                                      >
+                                        <span>
+                                          {language === 'ar' ? 'برنامج الولاء' : 'Loyalty Program'}
+                                        </span>
+                                        <DirectionChevron className="h-3.5 w-3.5" />
+                                      </Link>
+                                    </SheetClose>
+                                  </div>
                                 </div>
                               );
                             }
