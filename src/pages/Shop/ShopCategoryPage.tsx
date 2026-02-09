@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useApp } from '../../hooks/useApp';
-import { useCategoryProducts, useShopCategory } from '../../hooks/useShop';
+import { useCategoryProducts, useShopCategory, useShopPage } from '../../hooks/useShop';
 import { ProductCard } from '../../components/shop/ProductCard';
 import { SortDropdown } from '../../components/shop/SortDropdown';
 import { getCategoryImageUrl, getProductImageUrl, handleImageError } from '../../lib/imageUtils';
@@ -19,6 +19,7 @@ export const ShopCategoryPage = () => {
   const { language } = useApp();
   const isArabic = language === 'ar';
   const { category, loading, error } = useShopCategory(slug);
+  const { shopData } = useShopPage();
   const { currentRegion } = useRegion();
 
   const categoryId = category?.id ?? 0;
@@ -46,21 +47,17 @@ export const ShopCategoryPage = () => {
     return isArabic ? `فئة ${name}` : `${name} category`;
   }, [category, isArabic]);
 
-  const isBundlesGiftCategory = useMemo(() => {
-    if (!category) {
+  const shopCategoryIds = useMemo(() => {
+    const ids = shopData?.categories?.map((shopCategory) => shopCategory.id) ?? [];
+    return new Set(ids);
+  }, [shopData]);
+
+  const hasShopProducts = useMemo(() => {
+    if (products.length === 0) {
       return false;
     }
-
-    const slugValue = category.slug?.toLowerCase() || '';
-    const nameValue = category.name?.toLowerCase() || '';
-    const nameArValue = category.nameAr || '';
-
-    return (
-      /bundle|gift/.test(slugValue) ||
-      /bundle|gift/.test(nameValue) ||
-      /هدايا|هدية|باقة|باقات/.test(nameArValue)
-    );
-  }, [category]);
+    return products.some((product) => shopCategoryIds.has(product.categoryId));
+  }, [products, shopCategoryIds]);
 
   if (loading) {
     return (
@@ -199,9 +196,15 @@ export const ShopCategoryPage = () => {
         )}
 
         {products.length > 0 && (
-          isBundlesGiftCategory ? (
-            <div className="grid gap-6 lg:grid-cols-2">
-              {products.map((product) => (
+          <div
+            className={
+              hasShopProducts
+                ? 'grid gap-6 lg:grid-cols-2'
+                : 'grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4'
+            }
+          >
+            {products.map((product) =>
+              shopCategoryIds.has(product.categoryId) ? (
                 <BundlesGiftProductCard
                   key={product.id}
                   product={product}
@@ -209,15 +212,11 @@ export const ShopCategoryPage = () => {
                   currency={currentRegion.currency}
                   regionCode={currentRegion.code}
                 />
-              ))}
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-              {products.map((product) => (
+              ) : (
                 <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
-          )
+              )
+            )}
+          </div>
         )}
 
         {pagination && pagination.totalPages > 1 && (

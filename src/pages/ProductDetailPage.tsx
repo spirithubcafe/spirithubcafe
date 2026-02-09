@@ -24,6 +24,7 @@ import {
 import { useApp } from '../hooks/useApp';
 import { useRegion } from '../hooks/useRegion';
 import { useAuth } from '../hooks/useAuth';
+import { useShopPage } from '../hooks/useShop';
 import { productService } from '../services/productService';
 import { productReviewService } from '../services/productReviewService';
 import { getProductImageUrl, handleImageError, resolveProductImageUrls } from '../lib/imageUtils';
@@ -72,16 +73,8 @@ const isCapsuleProduct = (product?: ApiProduct | null): boolean => {
   return name.includes('capsule') || slug.includes('capsule') || category.includes('capsule');
 };
 
-const isVelvetHarmonyDiscoveryProduct = (product?: ApiProduct | null): boolean => {
-  const name = (product?.name || '').toLowerCase();
-  const slug = (product?.slug || '').toLowerCase();
-  const nameAr = product?.nameAr || '';
-  return (
-    name.includes('velvet harmony discovery') ||
-    slug.includes('velvet-harmony-discovery') ||
-    nameAr.includes('فلفت')
-  );
-};
+// isVelvetHarmonyDiscovery is now determined dynamically by checking
+// whether the product's category exists in the shop categories list.
 
 const resolveVariantLabel = (variant: ProductVariant, language: string, product?: ApiProduct | null): string => {
   if (isUfoDripProduct(product)) {
@@ -391,7 +384,12 @@ export const ProductDetailPage = () => {
     return description ?? '';
   }, [language, product]);
 
-  const isVelvetHarmonyDiscovery = useMemo(() => isVelvetHarmonyDiscoveryProduct(product), [product]);
+  const { shopData } = useShopPage();
+
+  const isVelvetHarmonyDiscovery = useMemo(() => {
+    if (!product || !shopData?.categories) return false;
+    return shopData.categories.some((cat) => cat.id === product.categoryId);
+  }, [product, shopData]);
 
   const price = useMemo(() => {
     if (!product) {
