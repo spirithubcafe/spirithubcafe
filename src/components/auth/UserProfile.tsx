@@ -94,7 +94,6 @@ export const UserProfile: React.FC<UserProfileProps> = ({
 
   const userName = profileData?.fullName || profileData?.displayName || user.displayName || user.username || 'User';
   const userEmail = profileData?.email || user.username || '';
-  const userPhone = profileData?.phoneNumber || '';
   const userHandle = user.username
     ? `@${user.username.split('@')[0]}`
     : '@member';
