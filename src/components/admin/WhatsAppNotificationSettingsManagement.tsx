@@ -17,8 +17,11 @@ import {
   XCircle,
   UserPlus,
   AlertTriangle,
+  Globe,
 } from 'lucide-react';
 import { useApp } from '../../hooks/useApp';
+import { useRegion } from '../../hooks/useRegion';
+import type { RegionCode } from '../../contexts/RegionContextDefinition';
 import {
   whatsappNotificationSettingsService,
 } from '../../services/whatsappNotificationSettingsService';
@@ -67,7 +70,9 @@ const DEFAULT_SETTINGS: WhatsAppNotificationSettingsDto = {
 export const WhatsAppNotificationSettingsManagement: React.FC = () => {
   const { language } = useApp();
   const isArabic = language === 'ar';
+  const { currentRegion, regions } = useRegion();
 
+  const [selectedBranch, setSelectedBranch] = useState<RegionCode>(currentRegion.code);
   const [settings, setSettings] = useState<WhatsAppNotificationSettingsDto>(DEFAULT_SETTINGS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -75,10 +80,11 @@ export const WhatsAppNotificationSettingsManagement: React.FC = () => {
 
   /* ---------- Fetch ------------------------------------------------ */
 
-  const fetchSettings = useCallback(async () => {
+  const fetchSettings = useCallback(async (branch?: RegionCode) => {
+    const targetBranch = branch ?? selectedBranch;
     setLoading(true);
     try {
-      const data = await whatsappNotificationSettingsService.get();
+      const data = await whatsappNotificationSettingsService.get(targetBranch);
       setSettings(data);
       setDirty(false);
     } catch {
@@ -90,11 +96,26 @@ export const WhatsAppNotificationSettingsManagement: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [isArabic]);
+  }, [selectedBranch, isArabic]);
 
   useEffect(() => {
     fetchSettings();
   }, [fetchSettings]);
+
+  /* ---------- Branch switch ---------------------------------------- */
+
+  const handleBranchSwitch = (branch: RegionCode) => {
+    if (branch === selectedBranch) return;
+    if (dirty) {
+      const msg = isArabic
+        ? 'لديك تغييرات غير محفوظة. هل تريد تبديل الفرع؟'
+        : 'You have unsaved changes. Switch branch anyway?';
+      if (!window.confirm(msg)) return;
+    }
+    setSelectedBranch(branch);
+    setDirty(false);
+    fetchSettings(branch);
+  };
 
   /* ---------- Update helpers --------------------------------------- */
 
@@ -111,11 +132,11 @@ export const WhatsAppNotificationSettingsManagement: React.FC = () => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const data = await whatsappNotificationSettingsService.update(settings);
+      const data = await whatsappNotificationSettingsService.update(settings, selectedBranch);
       setSettings(data);
       setDirty(false);
       toast.success(
-        isArabic ? 'تم حفظ الإعدادات بنجاح' : 'Settings saved successfully',
+        isArabic ? 'تم حفظ الإعدادات بنجاح' : `Settings saved for ${regions[selectedBranch].flag} ${regions[selectedBranch].name}`,
       );
     } catch {
       toast.error(
@@ -391,7 +412,7 @@ export const WhatsAppNotificationSettingsManagement: React.FC = () => {
           <Button
             variant="outline"
             size="sm"
-            onClick={fetchSettings}
+            onClick={() => fetchSettings()}
             disabled={saving}
           >
             <RefreshCw className="mr-2 h-4 w-4" />
@@ -407,6 +428,41 @@ export const WhatsAppNotificationSettingsManagement: React.FC = () => {
           </Button>
         </div>
       </div>
+
+      {/* ---- Branch Selector ---- */}
+      <Card className="border-dashed">
+        <CardContent className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Globe className="h-4 w-4" />
+            <span className="font-medium">
+              {isArabic ? 'الفرع النشط:' : 'Active Branch:'}
+            </span>
+            <Badge variant="outline" className="font-semibold text-sm">
+              {regions[selectedBranch].flag} {regions[selectedBranch].name}
+            </Badge>
+            {dirty && (
+              <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
+                {isArabic ? 'غير محفوظ' : 'Unsaved'}
+              </Badge>
+            )}
+          </div>
+          <div className="flex gap-2">
+            {(Object.keys(regions) as RegionCode[]).map((code) => (
+              <Button
+                key={code}
+                variant={selectedBranch === code ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => handleBranchSwitch(code)}
+                disabled={loading || saving}
+                className={`gap-1.5 ${selectedBranch === code ? 'bg-green-600 hover:bg-green-700' : ''}`}
+              >
+                <span>{regions[code].flag}</span>
+                <span>{regions[code].name}</span>
+              </Button>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* ---- Global toggle ---- */}
       <Card className="border-2 transition-colors"

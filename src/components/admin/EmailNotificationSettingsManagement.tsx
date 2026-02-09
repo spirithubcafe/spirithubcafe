@@ -10,8 +10,11 @@ import {
   ShieldCheck,
   User,
   RefreshCw,
+  Globe,
 } from 'lucide-react';
 import { useApp } from '../../hooks/useApp';
+import { useRegion } from '../../hooks/useRegion';
+import type { RegionCode } from '../../contexts/RegionContextDefinition';
 import {
   emailNotificationSettingsService,
   type EmailNotificationSettingsDto,
@@ -55,7 +58,9 @@ const DEFAULT_SETTINGS: EmailNotificationSettingsDto = {
 export const EmailNotificationSettingsManagement: React.FC = () => {
   const { language } = useApp();
   const isArabic = language === 'ar';
+  const { currentRegion, regions } = useRegion();
 
+  const [selectedBranch, setSelectedBranch] = useState<RegionCode>(currentRegion.code);
   const [settings, setSettings] = useState<EmailNotificationSettingsDto>(DEFAULT_SETTINGS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -63,26 +68,42 @@ export const EmailNotificationSettingsManagement: React.FC = () => {
 
   /* ---------- Fetch ------------------------------------------------ */
 
-  const fetchSettings = useCallback(async () => {
+  const fetchSettings = useCallback(async (branch?: RegionCode) => {
+    const targetBranch = branch ?? selectedBranch;
     setLoading(true);
     try {
-      const data = await emailNotificationSettingsService.get();
+      const data = await emailNotificationSettingsService.get(targetBranch);
       setSettings(data);
       setDirty(false);
     } catch {
       toast.error(
         isArabic
-          ? 'خطا در بارگذاری تنظیمات اعلان‌ها'
+          ? 'فشل في تحميل إعدادات الإشعارات'
           : 'Failed to load notification settings',
       );
     } finally {
       setLoading(false);
     }
-  }, [isArabic]);
+  }, [selectedBranch, isArabic]);
 
   useEffect(() => {
     fetchSettings();
   }, [fetchSettings]);
+
+  /* ---------- Branch switch ---------------------------------------- */
+
+  const handleBranchSwitch = (branch: RegionCode) => {
+    if (branch === selectedBranch) return;
+    if (dirty) {
+      const msg = isArabic
+        ? 'لديك تغييرات غير محفوظة. هل تريد تبديل الفرع؟'
+        : 'You have unsaved changes. Switch branch anyway?';
+      if (!window.confirm(msg)) return;
+    }
+    setSelectedBranch(branch);
+    setDirty(false);
+    fetchSettings(branch);
+  };
 
   /* ---------- Update helpers --------------------------------------- */
 
@@ -99,15 +120,15 @@ export const EmailNotificationSettingsManagement: React.FC = () => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const data = await emailNotificationSettingsService.update(settings);
+      const data = await emailNotificationSettingsService.update(settings, selectedBranch);
       setSettings(data);
       setDirty(false);
       toast.success(
-        isArabic ? 'تنظیمات با موفقیت ذخیره شد' : 'Settings saved successfully',
+        isArabic ? `تم حفظ الإعدادات بنجاح - ${regions[selectedBranch].flag} ${regions[selectedBranch].name}` : `Settings saved for ${regions[selectedBranch].flag} ${regions[selectedBranch].name}`,
       );
     } catch {
       toast.error(
-        isArabic ? 'خطا در ذخیره تنظیمات' : 'Failed to save settings',
+        isArabic ? 'فشل في حفظ الإعدادات' : 'Failed to save settings',
       );
     } finally {
       setSaving(false);
@@ -152,73 +173,73 @@ export const EmailNotificationSettingsManagement: React.FC = () => {
   const customerToggles: ToggleItem[] = [
     {
       key: 'customerOrderPlacedEnabled',
-      label: isArabic ? 'تأیید ثبت سفارش' : 'Order Confirmation',
+      label: isArabic ? 'تأكيد الطلب' : 'Order Confirmation',
       description: isArabic
-        ? 'ارسال ایمیل هنگام ثبت سفارش جدید'
+        ? 'إرسال بريد إلكتروني عند تقديم طلب جديد'
         : 'Send email when a new order is placed',
       icon: MailCheck,
     },
     {
       key: 'customerOrderStatusChangedEnabled',
-      label: isArabic ? 'تغییر وضعیت سفارش' : 'Order Status Change',
+      label: isArabic ? 'تغيير حالة الطلب' : 'Order Status Change',
       description: isArabic
-        ? 'ارسال ایمیل هنگام تغییر وضعیت سفارش'
+        ? 'إرسال بريد إلكتروني عند تغيير حالة الطلب'
         : 'Send email when order status changes',
       icon: Mail,
     },
     {
       key: 'customerPaymentStatusChangedEnabled',
-      label: isArabic ? 'تغییر وضعیت پرداخت' : 'Payment Status Change',
+      label: isArabic ? 'تغيير حالة الدفع' : 'Payment Status Change',
       description: isArabic
-        ? 'ارسال ایمیل هنگام تغییر وضعیت پرداخت'
+        ? 'إرسال بريد إلكتروني عند تغيير حالة الدفع'
         : 'Send email when payment status changes',
       icon: Mail,
     },
     {
       key: 'customerShippingUpdateEnabled',
-      label: isArabic ? 'بروزرسانی ارسال' : 'Shipping Update',
+      label: isArabic ? 'تحديث الشحن' : 'Shipping Update',
       description: isArabic
-        ? 'ارسال ایمیل هنگام بروزرسانی اطلاعات ارسال'
+        ? 'إرسال بريد إلكتروني عند تحديث معلومات الشحن'
         : 'Send email when shipping info is updated',
       icon: Mail,
     },
     {
       key: 'customerOrderCancelledEnabled',
-      label: isArabic ? 'لغو سفارش' : 'Order Cancelled',
+      label: isArabic ? 'إلغاء الطلب' : 'Order Cancelled',
       description: isArabic
-        ? 'ارسال ایمیل هنگام لغو سفارش'
+        ? 'إرسال بريد إلكتروني عند إلغاء الطلب'
         : 'Send email when an order is cancelled',
       icon: Mail,
     },
     {
       key: 'customerWelcomeEnabled',
-      label: isArabic ? 'خوشامدگویی' : 'Welcome Email',
+      label: isArabic ? 'رسالة ترحيب' : 'Welcome Email',
       description: isArabic
-        ? 'ارسال ایمیل خوشامدگویی بعد از ثبت‌نام'
+        ? 'إرسال بريد ترحيب بعد التسجيل'
         : 'Send welcome email after registration',
       icon: User,
     },
     {
       key: 'customerLoginSuccessEnabled',
-      label: isArabic ? 'ورود موفق' : 'Login Success',
+      label: isArabic ? 'تسجيل دخول ناجح' : 'Login Success',
       description: isArabic
-        ? 'ارسال ایمیل هنگام ورود موفق'
+        ? 'إرسال بريد إلكتروني عند تسجيل الدخول بنجاح'
         : 'Send email on successful login',
       icon: ShieldCheck,
     },
     {
       key: 'customerPasswordResetEnabled',
-      label: isArabic ? 'بازیابی رمز عبور' : 'Password Reset',
+      label: isArabic ? 'إعادة تعيين كلمة المرور' : 'Password Reset',
       description: isArabic
-        ? 'ارسال ایمیل بازیابی رمز عبور'
+        ? 'إرسال بريد إعادة تعيين كلمة المرور'
         : 'Send password reset email',
       icon: Mail,
     },
     {
       key: 'customerPasswordChangedEnabled',
-      label: isArabic ? 'تغییر رمز عبور' : 'Password Changed',
+      label: isArabic ? 'تغيير كلمة المرور' : 'Password Changed',
       description: isArabic
-        ? 'ارسال ایمیل تأیید تغییر رمز عبور'
+        ? 'إرسال بريد تأكيد تغيير كلمة المرور'
         : 'Send email confirming password change',
       icon: ShieldCheck,
     },
@@ -227,25 +248,25 @@ export const EmailNotificationSettingsManagement: React.FC = () => {
   const adminToggles: ToggleItem[] = [
     {
       key: 'adminNewOrderEnabled',
-      label: isArabic ? 'سفارش جدید' : 'New Order',
+      label: isArabic ? 'طلب جديد' : 'New Order',
       description: isArabic
-        ? 'اعلان ایمیلی سفارش جدید به ادمین'
+        ? 'إشعار المشرف بالطلبات الجديدة عبر البريد'
         : 'Notify admin of new orders',
       icon: Bell,
     },
     {
       key: 'adminPaymentReceivedEnabled',
-      label: isArabic ? 'پرداخت دریافت شده' : 'Payment Received',
+      label: isArabic ? 'دفعة مستلمة' : 'Payment Received',
       description: isArabic
-        ? 'اعلان ایمیلی پرداخت به ادمین'
+        ? 'إشعار المشرف بالدفعات المستلمة عبر البريد'
         : 'Notify admin of received payments',
       icon: Bell,
     },
     {
       key: 'adminOrderStatusChangedEnabled',
-      label: isArabic ? 'تغییر وضعیت سفارش' : 'Order Status Change',
+      label: isArabic ? 'تغيير حالة الطلب' : 'Order Status Change',
       description: isArabic
-        ? 'اعلان ایمیلی تغییر وضعیت سفارش به ادمین'
+        ? 'إشعار المشرف بتغيير حالة الطلب عبر البريد'
         : 'Notify admin of order status changes',
       icon: Bell,
     },
@@ -336,11 +357,11 @@ export const EmailNotificationSettingsManagement: React.FC = () => {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">
-            {isArabic ? 'تنظیمات اعلان‌های ایمیل' : 'Email Notification Settings'}
+            {isArabic ? 'إعدادات إشعارات البريد الإلكتروني' : 'Email Notification Settings'}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             {isArabic
-              ? 'مدیریت ایمیل‌های خودکار ارسالی به مشتریان و ادمین'
+              ? 'إدارة رسائل البريد الإلكتروني التلقائية للعملاء والمشرفين'
               : 'Manage automatic emails sent to customers and admins'}
           </p>
         </div>
@@ -348,11 +369,11 @@ export const EmailNotificationSettingsManagement: React.FC = () => {
           <Button
             variant="outline"
             size="sm"
-            onClick={fetchSettings}
+            onClick={() => fetchSettings()}
             disabled={saving}
           >
             <RefreshCw className="mr-2 h-4 w-4" />
-            {isArabic ? 'بارگذاری مجدد' : 'Reload'}
+            {isArabic ? 'إعادة التحميل' : 'Reload'}
           </Button>
           <Button onClick={handleSave} disabled={saving || !dirty} size="sm">
             {saving ? (
@@ -360,10 +381,45 @@ export const EmailNotificationSettingsManagement: React.FC = () => {
             ) : (
               <Save className="mr-2 h-4 w-4" />
             )}
-            {isArabic ? 'ذخیره تغییرات' : 'Save Changes'}
+            {isArabic ? 'حفظ التغييرات' : 'Save Changes'}
           </Button>
         </div>
       </div>
+
+      {/* ---- Branch Selector ---- */}
+      <Card className="border-dashed">
+        <CardContent className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Globe className="h-4 w-4" />
+            <span className="font-medium">
+              {isArabic ? 'الفرع النشط:' : 'Active Branch:'}
+            </span>
+            <Badge variant="outline" className="font-semibold text-sm">
+              {regions[selectedBranch].flag} {regions[selectedBranch].name}
+            </Badge>
+            {dirty && (
+              <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
+                {isArabic ? 'غير محفوظ' : 'Unsaved'}
+              </Badge>
+            )}
+          </div>
+          <div className="flex gap-2">
+            {(Object.keys(regions) as RegionCode[]).map((code) => (
+              <Button
+                key={code}
+                variant={selectedBranch === code ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => handleBranchSwitch(code)}
+                disabled={loading || saving}
+                className="gap-1.5"
+              >
+                <span>{regions[code].flag}</span>
+                <span>{regions[code].name}</span>
+              </Button>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* ---- Global toggle ---- */}
       <Card className="border-2 transition-colors"
@@ -390,25 +446,25 @@ export const EmailNotificationSettingsManagement: React.FC = () => {
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-base font-semibold">
-                  {isArabic ? 'سیستم اعلان ایمیل' : 'Email Notification System'}
+                  {isArabic ? 'نظام إشعارات البريد الإلكتروني' : 'Email Notification System'}
                 </span>
                 <Badge variant={settings.isEnabled ? 'default' : 'destructive'}>
                   {settings.isEnabled
                     ? isArabic
-                      ? 'فعال'
+                      ? 'نشط'
                       : 'Active'
                     : isArabic
-                      ? 'غیرفعال'
+                      ? 'معطل'
                       : 'Disabled'}
                 </Badge>
               </div>
               <p className="text-sm text-muted-foreground mt-0.5">
                 {settings.isEnabled
                   ? isArabic
-                    ? 'ایمیل‌های خودکار فعال هستند'
+                    ? 'رسائل البريد الإلكتروني التلقائية مفعلة'
                     : 'Automatic emails are being sent'
                   : isArabic
-                    ? 'همه ایمیل‌های خودکار غیرفعال هستند'
+                    ? 'جميع رسائل البريد الإلكتروني التلقائية معطلة'
                     : 'All automatic emails are disabled'}
               </p>
             </div>
@@ -424,7 +480,7 @@ export const EmailNotificationSettingsManagement: React.FC = () => {
       {!settings.isEnabled && (
         <div className="rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
           {isArabic
-            ? '⚠️ سیستم اعلان ایمیل غیرفعال است. هیچ ایمیل خودکاری ارسال نخواهد شد.'
+            ? '⚠️ نظام إشعارات البريد الإلكتروني معطل. لن يتم إرسال أي رسائل تلقائية.'
             : '⚠️ Email notification system is disabled. No automatic emails will be sent.'}
         </div>
       )}
@@ -433,11 +489,11 @@ export const EmailNotificationSettingsManagement: React.FC = () => {
       <Card>
         <CardHeader className="pb-4">
           <CardTitle className="text-base">
-            {isArabic ? 'آدرس‌های ایمیل' : 'Email Addresses'}
+            {isArabic ? 'عناوين البريد الإلكتروني' : 'Email Addresses'}
           </CardTitle>
           <CardDescription>
             {isArabic
-              ? 'ایمیل‌های ادمین و پشتیبانی'
+              ? 'عناوين بريد المشرف والدعم'
               : 'Admin and support email addresses'}
           </CardDescription>
         </CardHeader>
@@ -445,7 +501,7 @@ export const EmailNotificationSettingsManagement: React.FC = () => {
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="adminEmails">
-                {isArabic ? 'ایمیل‌های ادمین' : 'Admin Emails'}
+                {isArabic ? 'بريد المشرف' : 'Admin Emails'}
               </Label>
               <Input
                 id="adminEmails"
@@ -456,13 +512,13 @@ export const EmailNotificationSettingsManagement: React.FC = () => {
               />
               <p className="text-xs text-muted-foreground">
                 {isArabic
-                  ? 'چند ایمیل را با کاما جدا کنید'
+                  ? 'افصل بين العناوين بفاصلة'
                   : 'Separate multiple emails with commas'}
               </p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="supportEmail">
-                {isArabic ? 'ایمیل پشتیبانی' : 'Support Email'}
+                {isArabic ? 'بريد الدعم' : 'Support Email'}
               </Label>
               <Input
                 id="supportEmail"
@@ -473,7 +529,7 @@ export const EmailNotificationSettingsManagement: React.FC = () => {
               />
               <p className="text-xs text-muted-foreground">
                 {isArabic
-                  ? 'ایمیل پشتیبانی که در ایمیل‌ها نمایش داده می‌شود'
+                  ? 'يظهر كجهة اتصال الدعم في الرسائل'
                   : 'Shown as the support contact in emails'}
               </p>
             </div>
@@ -488,11 +544,11 @@ export const EmailNotificationSettingsManagement: React.FC = () => {
             <div>
               <CardTitle className="flex items-center gap-2 text-base">
                 <User className="h-4 w-4" />
-                {isArabic ? 'اعلان‌های مشتری' : 'Customer Notifications'}
+                {isArabic ? 'إشعارات العملاء' : 'Customer Notifications'}
               </CardTitle>
               <CardDescription className="mt-1">
                 {isArabic
-                  ? 'ایمیل‌هایی که به مشتری ارسال می‌شوند'
+                  ? 'رسائل البريد الإلكتروني المرسلة إلى العملاء'
                   : 'Emails sent to customers'}
               </CardDescription>
             </div>
@@ -514,11 +570,11 @@ export const EmailNotificationSettingsManagement: React.FC = () => {
             <div>
               <CardTitle className="flex items-center gap-2 text-base">
                 <ShieldCheck className="h-4 w-4" />
-                {isArabic ? 'اعلان‌های ادمین' : 'Admin Notifications'}
+                {isArabic ? 'إشعارات المشرف' : 'Admin Notifications'}
               </CardTitle>
               <CardDescription className="mt-1">
                 {isArabic
-                  ? 'ایمیل‌هایی که به ادمین ارسال می‌شوند'
+                  ? 'رسائل البريد الإلكتروني المرسلة إلى فريق الإدارة'
                   : 'Emails sent to admin team'}
               </CardDescription>
             </div>

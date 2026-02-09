@@ -29,23 +29,28 @@ const unwrap = <T>(payload: unknown): T => {
 export const whatsappNotificationSettingsService = {
   /**
    * Get current WhatsApp notification settings
+   * @param branch Optional branch override (om/sa). If provided, sets X-Branch header.
    */
-  get: async (): Promise<WhatsAppNotificationSettingsResponse> => {
+  get: async (branch?: string): Promise<WhatsAppNotificationSettingsResponse> => {
+    const config = branch ? { headers: { 'X-Branch': branch } } : undefined;
     const response = await http.get<
       WhatsAppNotificationSettingsResponse | ApiEnvelope<WhatsAppNotificationSettingsResponse>
-    >('/api/whatsapp-notification-settings');
+    >('/api/whatsapp-notification-settings', config);
     return unwrap<WhatsAppNotificationSettingsResponse>(response.data);
   },
 
   /**
    * Update WhatsApp notification settings
+   * @param branch Optional branch override (om/sa). If provided, sets X-Branch header.
    */
   update: async (
-    settings: WhatsAppNotificationSettingsDto
+    settings: WhatsAppNotificationSettingsDto,
+    branch?: string,
   ): Promise<WhatsAppNotificationSettingsResponse> => {
+    const config = branch ? { headers: { 'X-Branch': branch } } : undefined;
     const response = await http.put<
       WhatsAppNotificationSettingsResponse | ApiEnvelope<WhatsAppNotificationSettingsResponse>
-    >('/api/whatsapp-notification-settings', settings);
+    >('/api/whatsapp-notification-settings', settings, config);
     return unwrap<WhatsAppNotificationSettingsResponse>(response.data);
   },
 };
