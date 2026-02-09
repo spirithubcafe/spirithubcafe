@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useLocation, useParams } from 'react-router-dom';
 import {
   ArrowLeft,
   ArrowRight,
@@ -122,8 +122,10 @@ const resolvePrice = (product: ApiProduct, variant?: ProductVariant): number => 
 
 export const ProductDetailPage = () => {
   const { productId } = useParams<{ productId: string }>();
+  const location = useLocation();
   const { language, t } = useApp();
   const { currentRegion } = useRegion();
+  const isShopRoute = location.pathname.includes('/shop/');
   const { isAuthenticated, user } = useAuth();
   const cart = useCart();
 
@@ -766,7 +768,7 @@ export const ProductDetailPage = () => {
                   asChild
                   className="gap-2"
                 >
-                  <Link to="/products">
+                  <Link to={isShopRoute ? `/${currentRegion.code}/shop` : '/products'}>
                     {language === 'ar' ? (
                       <>
                         الرجوع
@@ -859,10 +861,12 @@ export const ProductDetailPage = () => {
                         : 'An unexpected error occurred.')}
                   </h3>
                   <Link
-                    to="/products"
+                    to={isShopRoute ? `/${currentRegion.code}/shop` : '/products'}
                     className="inline-flex items-center gap-2 text-amber-600 hover:text-amber-700 font-semibold"
                   >
-                    {language === 'ar' ? 'العودة إلى المنتجات' : 'Back to products'}
+                    {isShopRoute
+                      ? (language === 'ar' ? 'العودة إلى المتجر' : 'Back to shop')
+                      : (language === 'ar' ? 'العودة إلى المنتجات' : 'Back to products')}
                   </Link>
                 </div>
               </div>

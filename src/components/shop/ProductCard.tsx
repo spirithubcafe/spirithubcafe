@@ -19,7 +19,7 @@ export const ProductCard = ({ product }: Props) => {
   const name = isArabic ? product.nameAr || product.name : product.name;
   const tasting = isArabic ? product.tastingNotesAr || product.tastingNotes : product.tastingNotes;
   const productSlug = product.slug || `${product.id}`;
-  const productUrl = `/${currentRegion.code}/products/${productSlug}`;
+  const productUrl = `/${currentRegion.code}/shop/product/${productSlug}`;
 
   return (
     <div className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg">

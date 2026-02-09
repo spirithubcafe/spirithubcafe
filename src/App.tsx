@@ -138,6 +138,7 @@ function AppContent() {
         <Route path="/" element={<HomePage />} />
         <Route path="/shop" element={<ShopPage />} />
         <Route path="/shop/:slug" element={<ShopCategoryPage />} />
+        <Route path="/shop/product/:productId" element={<ProductDetailPage />} />
         
         {/* Region-specific routes - /om and /sa */}
         <Route path="/om" element={<HomePage />} />
@@ -154,6 +155,7 @@ function AppContent() {
         <Route path="/om/refund" element={<RefundPolicyPage />} />
         <Route path="/om/shop" element={<ShopPage />} />
         <Route path="/om/shop/:slug" element={<ShopCategoryPage />} />
+        <Route path="/om/shop/product/:productId" element={<ProductDetailPage />} />
         <Route path="/om/products" element={<ProductsPage />} />
         <Route path="/om/products/:productId" element={<ProductDetailPage />} />
         <Route
@@ -193,6 +195,7 @@ function AppContent() {
         <Route path="/sa/refund" element={<RefundPolicyPage />} />
         <Route path="/sa/shop" element={<ShopPage />} />
         <Route path="/sa/shop/:slug" element={<ShopCategoryPage />} />
+        <Route path="/sa/shop/product/:productId" element={<ProductDetailPage />} />
         <Route path="/sa/products" element={<ProductsPage />} />
         <Route path="/sa/products/:productId" element={<ProductDetailPage />} />
         <Route

@@ -261,7 +261,7 @@ const BundlesGiftProductCard = ({
   const name = isArabic ? product.nameAr || product.name : product.name;
   const tasting = isArabic ? product.tastingNotesAr || product.tastingNotes : product.tastingNotes;
   const productSlug = product.slug || `${product.id}`;
-  const productUrl = `/${regionCode}/products/${productSlug}`;
+  const productUrl = `/${regionCode}/shop/product/${productSlug}`;
 
   return (
     <div className="group overflow-hidden rounded-3xl border border-amber-100 bg-gradient-to-br from-white via-amber-50/40 to-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
