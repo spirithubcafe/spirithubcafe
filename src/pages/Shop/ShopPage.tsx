@@ -82,21 +82,18 @@ export const ShopPage = () => {
         </div>
 
         <div className="mx-auto flex max-w-6xl flex-col gap-10 px-4 py-12">
-          {/* Stats Cards Skeleton */}
-          <div className="grid gap-4 md:grid-cols-3">
-            {[0, 1, 2].map((i) => (
-              <div key={i} className="rounded-3xl bg-white p-5 shadow-sm">
-                <div className="h-3 w-24 animate-pulse rounded bg-stone-100" />
-                <div className="mt-3 h-8 w-16 animate-pulse rounded-lg bg-stone-100" />
-              </div>
-            ))}
-          </div>
-
-          {/* Category Nav Skeleton */}
-          <div className="flex gap-3 overflow-hidden rounded-2xl bg-white p-3 shadow-sm">
-            {[0, 1, 2, 3].map((i) => (
-              <div key={i} className="h-9 w-28 shrink-0 animate-pulse rounded-full bg-stone-100" />
-            ))}
+          {/* Category Nav Skeleton — filter chips + category buttons */}
+          <div className="flex flex-col gap-4 rounded-3xl bg-white p-4 shadow-sm">
+            <div className="flex gap-4 overflow-hidden">
+              {["w-16", "w-28", "w-24", "w-28"].map((w, i) => (
+                <div key={i} className={`h-9 ${w} shrink-0 animate-pulse rounded-full bg-stone-100`} />
+              ))}
+            </div>
+            <div className="flex gap-3 flex-wrap">
+              {["w-36", "w-32", "w-40", "w-28", "w-36"].map((w, i) => (
+                <div key={i} className={`h-10 ${w} shrink-0 animate-pulse rounded-full bg-stone-50`} />
+              ))}
+            </div>
           </div>
 
           {/* Category Sections Skeleton */}
@@ -120,7 +117,7 @@ export const ShopPage = () => {
                 <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
                   {[0, 1, 2, 3].map((card) => (
                     <div key={card} className="overflow-hidden rounded-2xl border border-stone-100 bg-white shadow-sm">
-                      <div className="h-48 w-full animate-pulse bg-stone-100" />
+                      <div className="aspect-square w-full animate-pulse bg-stone-100" />
                       <div className="space-y-2.5 p-4">
                         <div className="h-4 w-3/4 animate-pulse rounded bg-stone-100" />
                         <div className="h-3 w-1/2 animate-pulse rounded bg-stone-50" />

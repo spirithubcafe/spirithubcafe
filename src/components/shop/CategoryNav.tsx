@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { ShopCategory } from '../../types/shop';
 import { getCategoryImageUrl, handleImageError } from '../../lib/imageUtils';
 import { useApp } from '../../hooks/useApp';
@@ -15,6 +15,20 @@ export const CategoryNav = ({ categories, activeFilter, onFilterChange }: Props)
   const { language } = useApp();
   const isArabic = language === 'ar';
   const [activeCategorySlug, setActiveCategorySlug] = useState<string | null>(null);
+  const [isStuck, setIsStuck] = useState(false);
+  const navRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const el = navRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsStuck(!entry.isIntersecting),
+      { threshold: [1], rootMargin: '-65px 0px 0px 0px' }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   const scrollToCategory = (slug: string) => {
     document
       .getElementById(`category-${slug}`)
@@ -22,11 +36,16 @@ export const CategoryNav = ({ categories, activeFilter, onFilterChange }: Props)
   };
 
   return (
-    <nav className="sticky top-16 z-30 flex flex-col gap-4 rounded-3xl bg-white/95 p-4 shadow-md backdrop-blur">
-      <div className="hide-scrollbar flex gap-3 overflow-x-auto pb-1 md:flex-wrap md:overflow-visible md:pb-0">
+    <nav
+      ref={navRef}
+      className={`sticky top-16 z-30 flex flex-col gap-4 bg-white/95 p-4 shadow-md backdrop-blur transition-[border-radius] duration-200 ${
+        isStuck ? 'rounded-b-3xl rounded-t-none' : 'rounded-3xl'
+      }`}
+    >
+      <div className="grid grid-cols-4 gap-2 md:flex md:flex-wrap md:gap-4">
         {[
           { id: 'all', label: isArabic ? 'الكل' : 'All' },
-          { id: 'gift-cards', label: isArabic ? 'بطاقات هدايا ⭐' : 'Gift Cards ⭐' },
+          { id: 'gift-cards', label: isArabic ? 'بطاقات هدايا' : 'Gift Cards' },
           { id: 'bundles', label: isArabic ? 'الباقات' : 'Bundles' },
           { id: 'under-15', label: isArabic ? 'اقل من 15 ر.ع' : 'Under 15 OMR' },
         ].map((chip) => (
@@ -37,7 +56,7 @@ export const CategoryNav = ({ categories, activeFilter, onFilterChange }: Props)
               setActiveCategorySlug(null);
               onFilterChange(chip.id as CategoryFilter);
             }}
-            className={`shrink-0 rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-wide transition ${
+            className={`whitespace-nowrap rounded-full border px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide transition text-center sm:px-3 sm:py-2 sm:text-[11px] md:px-4 md:text-xs ${
               activeFilter === chip.id
                 ? 'border-stone-900 bg-stone-900 text-white shadow-md ring-1 ring-stone-900/20'
                 : 'border-stone-200 bg-white text-stone-700 hover:border-amber-400 hover:text-amber-600'
