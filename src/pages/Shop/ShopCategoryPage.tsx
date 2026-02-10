@@ -222,7 +222,7 @@ export const ShopCategoryPage = () => {
           <div
             className={
               hasShopProducts
-                ? 'grid gap-6 lg:grid-cols-2'
+                ? 'grid grid-cols-2 gap-3 sm:gap-4 md:gap-6 lg:grid-cols-2'
                 : 'grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4'
             }
           >
@@ -287,9 +287,12 @@ const BundlesGiftProductCard = ({
 
   return (
     <div className="group overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
-      <div className="grid h-full grid-cols-[140px_1fr] sm:grid-cols-[180px_1fr] md:grid-cols-[220px_1fr]">
+      <div className="grid h-full grid-rows-[150px_1fr] sm:grid-rows-none sm:grid-cols-[140px_1fr] md:grid-cols-[180px_1fr] lg:grid-cols-[220px_1fr]">
         {/* Image – fixed height, fully covers left column */}
-        <Link to={productUrl} className="relative block h-full min-h-[200px] overflow-hidden bg-stone-100">
+        <Link
+          to={productUrl}
+          className="relative block h-full min-h-[150px] sm:min-h-[200px] overflow-hidden bg-stone-100"
+        >
           <ProductBadges product={product} />
           <img
             src={getProductImageUrl(product.mainImagePath)}
@@ -301,14 +304,14 @@ const BundlesGiftProductCard = ({
         </Link>
 
         {/* Content */}
-        <div className="flex flex-col justify-between gap-3 p-4 sm:p-5">
+        <div className="flex flex-col justify-between gap-3 p-3 sm:p-4 md:p-5">
           {/* Top section */}
           <div className="space-y-1.5">
             <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-amber-600">
               {isArabic ? 'حزمة مميزة' : 'Curated Bundle'}
             </p>
             <Link to={productUrl}>
-              <h3 className="truncate text-base font-bold text-stone-900 transition group-hover:text-amber-700 sm:text-lg">
+              <h3 className="text-sm font-bold text-stone-900 transition group-hover:text-amber-700 sm:text-base md:text-lg line-clamp-2 text-balance">
                 {name}
               </h3>
             </Link>
@@ -330,7 +333,7 @@ const BundlesGiftProductCard = ({
             />
             <Link
               to={productUrl}
-              className="shrink-0 rounded-full bg-stone-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-stone-800"
+              className="shrink-0 rounded-full bg-stone-900 px-3 py-1.5 text-[10px] font-semibold text-white transition hover:bg-stone-800 sm:px-4 sm:py-2 sm:text-xs"
             >
               {isArabic ? 'عرض التفاصيل' : 'View details'}
             </Link>
