@@ -164,7 +164,8 @@ export const ProductsManagement: React.FC = () => {
     metaKeywords: '',
     tags: '',
     slug: '',
-    categoryId: 0
+    categoryId: 0,
+    tagIds: [],
   });
 
   useEffect(() => {

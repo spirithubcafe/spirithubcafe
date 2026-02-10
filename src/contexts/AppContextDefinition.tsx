@@ -1,4 +1,5 @@
 import { createContext } from 'react';
+import type { ProductTagInfoDto } from '../types/productTag';
 
 export interface Product {
   id: string;
@@ -20,6 +21,8 @@ export interface Product {
   tastingNotes?: string;
   tastingNotesAr?: string;
   featured?: boolean;
+  topTags?: ProductTagInfoDto[];
+  bottomTags?: ProductTagInfoDto[];
 }
 
 export interface Category {

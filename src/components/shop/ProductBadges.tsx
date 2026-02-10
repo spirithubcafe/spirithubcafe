@@ -1,5 +1,6 @@
 import type { ShopProduct } from '../../types/shop';
 import { useApp } from '../../hooks/useApp';
+import { ProductTagBadge } from './ProductTagBadge';
 
 interface Props {
   product: ShopProduct;
@@ -20,7 +21,10 @@ export const ProductBadges = ({ product }: Props) => {
     badges.push({ label: isArabic ? 'فاخر' : 'Premium', className: 'bg-stone-900 text-white' });
   }
 
-  if (badges.length === 0) {
+  const topTags = product.topTags ?? [];
+  const hasContent = badges.length > 0 || topTags.length > 0;
+
+  if (!hasContent) {
     return null;
   }
 
@@ -33,6 +37,9 @@ export const ProductBadges = ({ product }: Props) => {
         >
           {badge.label}
         </span>
+      ))}
+      {topTags.map((tag) => (
+        <ProductTagBadge key={tag.id} tag={tag} />
       ))}
     </div>
   );

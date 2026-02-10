@@ -19,3 +19,5 @@ export { WhatsAppNotificationSettingsManagement } from './WhatsAppNotificationSe
 export { WhatsAppTemplatesManagement } from './WhatsAppTemplatesManagement';
 export { WhatsAppTemplateEditor } from './WhatsAppTemplateEditor';
 export { ReviewsManagement } from './ReviewsManagement';
+export { ProductTagsManagement } from './ProductTagsManagement';
+export { ProductTagSelector } from './ProductTagSelector';

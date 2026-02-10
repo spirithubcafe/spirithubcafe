@@ -1,4 +1,6 @@
 // Product Types
+import type { ProductTagInfoDto } from './productTag';
+
 export interface Product {
   id: number;
   sku: string;
@@ -57,6 +59,8 @@ export interface Product {
   reviewCount?: number;
   createdAt?: string;
   updatedAt?: string;
+  topTags?: ProductTagInfoDto[];
+  bottomTags?: ProductTagInfoDto[];
 }
 
 export interface ProductCreateUpdateDto {
@@ -107,6 +111,7 @@ export interface ProductCreateUpdateDto {
   slug?: string;
   categoryId: number;
   mainImageId?: number;
+  tagIds?: number[];
 }
 
 export interface ProductVariant {

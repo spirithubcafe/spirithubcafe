@@ -20,6 +20,7 @@ export { emailService } from './emailService';
 export { whatsappService } from './whatsappService';
 export { whatsappNotificationSettingsService } from './whatsappNotificationSettingsService';
 export { whatsappTemplateService } from './whatsappTemplateService';
+export { productTagService } from './productTagService';
 export { wholesaleOrderService } from './wholesaleOrderService';
 export { wholesaleCustomerLookupService } from './wholesaleCustomerLookupService';
 export {
@@ -39,6 +40,7 @@ export {
 export type * from '../types/auth';
 export type * from '../types/product';
 export type * from '../types/whatsapp';
+export type * from '../types/productTag';
 export type {
   AramexAddress,
   AramexShipmentDetails,

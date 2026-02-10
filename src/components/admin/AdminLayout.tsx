@@ -60,6 +60,7 @@ import {
   User,
   Globe,
   Mail,
+  Tag,
 } from 'lucide-react';
 
 interface AdminNavItem {
@@ -213,6 +214,16 @@ export const AdminLayout: React.FC = () => {
       roles: ['Admin', 'Manager'],
     },
     {
+      id: 'productTags',
+      label: isArabic ? 'تاج‌های محصول' : 'Product Tags',
+      description: isArabic
+        ? 'مدیریت تاج‌هایی که روی محصولات نمایش داده می‌شوند'
+        : 'Manage tags displayed on product cards',
+      icon: Tag,
+      path: '/admin/product-tags',
+      roles: ['Admin', 'Manager'],
+    },
+    {
       id: 'orders',
       label: t('admin.manageOrders'),
       description: t('admin.ordersDesc'),
@@ -349,7 +360,7 @@ export const AdminLayout: React.FC = () => {
       id: 'management',
       label: t('admin.navGroups.management'),
       items: availableNavItems.filter((item) =>
-        ['categories', 'products', 'users', 'reviews'].includes(item.id)
+        ['categories', 'products', 'productTags', 'users', 'reviews'].includes(item.id)
       ),
     },
     {

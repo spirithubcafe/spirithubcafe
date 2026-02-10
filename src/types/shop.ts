@@ -36,6 +36,8 @@ export interface ShopProduct {
   displayOrder: number;
   averageRating: number;
   reviewCount: number;
+  topTags?: import('./productTag').ProductTagInfoDto[];
+  bottomTags?: import('./productTag').ProductTagInfoDto[];
 }
 
 export interface Pagination {

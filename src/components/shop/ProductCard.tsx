@@ -3,6 +3,7 @@ import { ShoppingCart } from 'lucide-react';
 import type { ShopProduct } from '../../types/shop';
 import { getProductImageUrl, handleImageError } from '../../lib/imageUtils';
 import { ProductBadges } from './ProductBadges';
+import { ProductTagBadge } from './ProductTagBadge';
 import { PriceDisplay } from './PriceDisplay';
 import { StarRating } from './StarRating';
 import { useApp } from '../../hooks/useApp';
@@ -106,6 +107,15 @@ export const ProductCard = ({ product }: Props) => {
             </Link>
           )}
         </div>
+
+        {/* Bottom Tags */}
+        {product.bottomTags && product.bottomTags.length > 0 && (
+          <div className="flex flex-wrap gap-1 pt-1">
+            {product.bottomTags.map((tag) => (
+              <ProductTagBadge key={tag.id} tag={tag} />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

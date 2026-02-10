@@ -319,6 +319,12 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
               lang === 'ar' && p.tastingNotesAr ? p.tastingNotesAr : p.tastingNotes,
             tastingNotesAr: p.tastingNotesAr,
             featured: p.isFeatured,
+            topTags: Array.isArray((p as Record<string, unknown>).topTags)
+              ? (p as Record<string, unknown>).topTags as Product['topTags']
+              : undefined,
+            bottomTags: Array.isArray((p as Record<string, unknown>).bottomTags)
+              ? (p as Record<string, unknown>).bottomTags as Product['bottomTags']
+              : undefined,
           };
         })
         .filter((p) => (p as unknown as { isActive?: boolean }).isActive !== false);

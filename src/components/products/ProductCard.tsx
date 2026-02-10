@@ -12,6 +12,7 @@ import { formatPrice } from '../../lib/regionUtils';
 import type { Product } from '../../contexts/AppContextDefinition';
 import { getProductImageUrl, handleImageError } from '../../lib/imageUtils';
 import { ProductQuickView } from './ProductQuickView';
+import { ProductTagBadge } from '../shop/ProductTagBadge';
 
 interface ProductCardProps {
   product: Product;
@@ -144,7 +145,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         />
         
         {/* Premium / Limited badges */}
-        {(product.isPremium || product.isLimited) && (
+        {(product.isPremium || product.isLimited || (product.topTags && product.topTags.length > 0)) && (
           <div className={`absolute bottom-2 z-10 flex flex-col gap-1 ${isArabic ? 'right-2 items-end' : 'left-2 items-start'}`}>
             {product.isPremium ? (
               <div className="bg-linear-to-r from-orange-500 to-red-500 text-white px-2.5 py-1 rounded-full text-xs font-bold shadow-lg">
@@ -156,6 +157,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                 {t('sections.limitedBadge')}
               </div>
             ) : null}
+            {product.topTags?.map((tag) => (
+              <ProductTagBadge key={tag.id} tag={tag} />
+            ))}
           </div>
         )}
         
@@ -206,6 +210,15 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               : (isArabic ? 'قريباً' : 'Soon')}
           </span>
         </div>
+
+        {/* Bottom Tags */}
+        {product.bottomTags && product.bottomTags.length > 0 && (
+          <div className="flex flex-wrap gap-1 pt-1">
+            {product.bottomTags.map((tag) => (
+              <ProductTagBadge key={tag.id} tag={tag} />
+            ))}
+          </div>
+        )}
       </CardContent>
 
       {/* Action Buttons - Compact */}

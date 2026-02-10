@@ -38,6 +38,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/
 import { Seo } from '../components/seo/Seo';
 import { siteMetadata, resolveAbsoluteUrl } from '../config/siteMetadata';
 import { ProductShare } from '../components/products/ProductShare';
+import { ProductTagBadge } from '../components/shop/ProductTagBadge';
 import { toast } from 'sonner';
 
 type LoadState = 'idle' | 'loading' | 'ready' | 'error';
@@ -998,6 +999,15 @@ export const ProductDetailPage = () => {
                               <div className="flex flex-wrap items-center gap-3">
                                 <h1 className="text-2xl lg:text-3xl font-bold text-stone-900">{displayName}</h1>
 
+                                {/* Top Tags */}
+                                {product.topTags && product.topTags.length > 0 && (
+                                  <div className="flex flex-wrap gap-1.5">
+                                    {product.topTags.map((tag) => (
+                                      <ProductTagBadge key={tag.id} tag={tag} size="md" />
+                                    ))}
+                                  </div>
+                                )}
+
                                 {averageRating > 0 ? (
                                   <button
                                     type="button"
@@ -1104,6 +1114,15 @@ export const ProductDetailPage = () => {
                               </div>
                             </div>
 
+                            {/* Bottom Tags */}
+                            {product.bottomTags && product.bottomTags.length > 0 && (
+                              <div className="flex flex-wrap gap-1.5">
+                                {product.bottomTags.map((tag) => (
+                                  <ProductTagBadge key={tag.id} tag={tag} />
+                                ))}
+                              </div>
+                            )}
+
                             <div className="flex items-center gap-2">
                               <div className="flex items-center h-11 border border-stone-200 rounded-full bg-stone-50 overflow-hidden">
                                 <button
@@ -1194,6 +1213,15 @@ export const ProductDetailPage = () => {
                         <div className="lg:hidden mb-3">
                           <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-2">{displayName}</h2>
                           
+                          {/* Top Tags - Mobile */}
+                          {product.topTags && product.topTags.length > 0 && (
+                            <div className="flex flex-wrap gap-1.5 mb-2">
+                              {product.topTags.map((tag) => (
+                                <ProductTagBadge key={tag.id} tag={tag} size="md" />
+                              ))}
+                            </div>
+                          )}
+
                           <div className="flex items-center gap-2 md:gap-3">
                             {averageRating > 0 ? (
                               <button
@@ -1348,6 +1376,15 @@ export const ProductDetailPage = () => {
                           <div className="hidden lg:block">
                             <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">{displayName}</h1>
                             
+                            {/* Top Tags - Desktop */}
+                            {product.topTags && product.topTags.length > 0 && (
+                              <div className="flex flex-wrap gap-1.5 mb-2">
+                                {product.topTags.map((tag) => (
+                                  <ProductTagBadge key={tag.id} tag={tag} size="md" />
+                                ))}
+                              </div>
+                            )}
+
                             <div className="flex items-center gap-3">
                               {averageRating > 0 ? (
                                 <button
@@ -1549,6 +1586,15 @@ export const ProductDetailPage = () => {
                               </span>
                             </div>
                           </div>
+
+                          {/* Bottom Tags */}
+                          {product.bottomTags && product.bottomTags.length > 0 && (
+                            <div className="flex flex-wrap gap-1.5">
+                              {product.bottomTags.map((tag) => (
+                                <ProductTagBadge key={tag.id} tag={tag} />
+                              ))}
+                            </div>
+                          )}
 
                           {/* Variant Selection */}
                           {product.variants && product.variants.length > 0 ? (

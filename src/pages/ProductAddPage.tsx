@@ -13,6 +13,7 @@ import { productService } from '../services/productService';
 import { categoryService } from '../services/categoryService';
 import type { ProductCreateUpdateDto, Category, Product } from '../types/product';
 import { cn } from '../lib/utils';
+import { ProductTagSelector } from '../components/admin/ProductTagSelector';
 
 interface ProductFormPageProps {
   mode?: 'create' | 'edit';
@@ -67,6 +68,10 @@ const mapProductToFormData = (product: Product): ProductCreateUpdateDto => ({
   slug: product.slug || '',
   categoryId: product.categoryId || 0,
   mainImageId: product.mainImageId,
+  tagIds: [
+    ...(product.topTags || []).map((t) => t.id),
+    ...(product.bottomTags || []).map((t) => t.id),
+  ],
 });
 
 export const ProductAddPage: React.FC<ProductFormPageProps> = ({
@@ -135,6 +140,7 @@ export const ProductAddPage: React.FC<ProductFormPageProps> = ({
     slug: '',
     categoryId: 0,
     mainImageId: undefined,
+    tagIds: [],
   });
 
   const [skuAvailable, setSkuAvailable] = useState<boolean | null>(null);
@@ -597,6 +603,15 @@ export const ProductAddPage: React.FC<ProductFormPageProps> = ({
                     />
                   </div>
                 </div>
+              </div>
+
+              {/* Product Tags */}
+              <div>
+                <ProductTagSelector
+                  productId={isEditMode ? resolvedProductId : undefined}
+                  selectedTagIds={formData.tagIds || []}
+                  onChange={(tagIds) => setFormData(prev => ({ ...prev, tagIds }))}
+                />
               </div>
 
               {/* Action Buttons */}

@@ -31,6 +31,7 @@ import {
   WhatsAppSendMessage,
   WhatsAppNotificationSettingsManagement,
   WhatsAppTemplatesManagement,
+  ProductTagsManagement,
 } from './components/admin';
 import { CategoryAddPage } from './pages/CategoryAddPage';
 import { CategoryEditPage } from './pages/CategoryEditPage';
@@ -237,6 +238,7 @@ function AppContent() {
           <Route path="products/add" element={<ProductAddPage />} />
           <Route path="products/edit/:productId" element={<ProductEditPage />} />
           <Route path="products/:id/attributes" element={<ProductAttributesPage />} />
+          <Route path="product-tags" element={<ProductTagsManagement />} />
           <Route path="seo" element={<SeoManagement />} />
           <Route path="users" element={<UsersManagement />} />
           <Route path="orders" element={<OrdersManagement />} />
@@ -262,6 +264,7 @@ function AppContent() {
           <Route path="products/add" element={<ProductAddPage />} />
           <Route path="products/edit/:productId" element={<ProductEditPage />} />
           <Route path="products/:id/attributes" element={<ProductAttributesPage />} />
+          <Route path="product-tags" element={<ProductTagsManagement />} />
           <Route path="seo" element={<SeoManagement />} />
           <Route path="users" element={<UsersManagement />} />
           <Route path="orders" element={<OrdersManagement />} />
