@@ -999,15 +999,6 @@ export const ProductDetailPage = () => {
                               <div className="flex flex-wrap items-center gap-3">
                                 <h1 className="text-2xl lg:text-3xl font-bold text-stone-900">{displayName}</h1>
 
-                                {/* Top Tags */}
-                                {product.topTags && product.topTags.length > 0 && (
-                                  <div className="flex flex-wrap gap-1.5">
-                                    {product.topTags.map((tag) => (
-                                      <ProductTagBadge key={tag.id} tag={tag} size="md" />
-                                    ))}
-                                  </div>
-                                )}
-
                                 {averageRating > 0 ? (
                                   <button
                                     type="button"
@@ -1064,15 +1055,11 @@ export const ProductDetailPage = () => {
                                     ))
                                   : (
                                       <>
-                                        <span className="inline-flex items-center rounded-full border border-stone-200 bg-white px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-stone-600">
-                                          {language === 'ar' ? 'باقة اكتشاف' : 'Discovery Bundle'}
-                                        </span>
-                                        <span className="inline-flex items-center rounded-full border border-stone-200 bg-white px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-stone-600">
-                                          {language === 'ar' ? 'مختار بعناية' : 'Curated Selection'}
-                                        </span>
-                                        <span className="inline-flex items-center rounded-full border border-stone-200 bg-white px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-stone-600">
-                                          {language === 'ar' ? 'يتضمن أكواب' : 'Includes cups'}
-                                        </span>
+                                        {product.topTags && product.topTags.length > 0 ? (
+                                          product.topTags.map((tag) => (
+                                            <ProductTagBadge key={tag.id} tag={tag} size="md" />
+                                          ))
+                                        ) : null}
                                       </>
                                     )}
                               </div>
@@ -1113,15 +1100,6 @@ export const ProductDetailPage = () => {
                                 </span>
                               </div>
                             </div>
-
-                            {/* Bottom Tags */}
-                            {product.bottomTags && product.bottomTags.length > 0 && (
-                              <div className="flex flex-wrap gap-1.5">
-                                {product.bottomTags.map((tag) => (
-                                  <ProductTagBadge key={tag.id} tag={tag} />
-                                ))}
-                              </div>
-                            )}
 
                             <div className="flex items-center gap-2">
                               <div className="flex items-center h-11 border border-stone-200 rounded-full bg-stone-50 overflow-hidden">
@@ -1182,16 +1160,10 @@ export const ProductDetailPage = () => {
                                 </>
                               ) : (
                                 <>
-                                  <span className="inline-flex items-center rounded-full border border-stone-200 bg-stone-50 px-3 py-1 text-[10px] font-semibold text-stone-600">
-                                    {language === 'ar' ? 'محمص طازجاً' : 'Freshly roasted'}
-                                  </span>
-                                  <span className="inline-flex items-center rounded-full border border-stone-200 bg-stone-50 px-3 py-1 text-[10px] font-semibold text-stone-600">
-                                    {language === 'ar' ? 'مثالي للإهداء' : 'Perfect for gifting'}
-                                  </span>
-                                  {isVelvetHarmonyDiscovery ? (
-                                    <span className="inline-flex items-center rounded-full border border-stone-200 bg-stone-50 px-3 py-1 text-[10px] font-semibold text-stone-600">
-                                      {language === 'ar' ? 'يتضمن أكواب' : 'Includes cups'}
-                                    </span>
+                                  {product.bottomTags && product.bottomTags.length > 0 ? (
+                                    product.bottomTags.map((tag) => (
+                                      <ProductTagBadge key={tag.id} tag={tag} />
+                                    ))
                                   ) : null}
                                 </>
                               )}
@@ -1587,15 +1559,6 @@ export const ProductDetailPage = () => {
                             </div>
                           </div>
 
-                          {/* Bottom Tags */}
-                          {product.bottomTags && product.bottomTags.length > 0 && (
-                            <div className="flex flex-wrap gap-1.5">
-                              {product.bottomTags.map((tag) => (
-                                <ProductTagBadge key={tag.id} tag={tag} />
-                              ))}
-                            </div>
-                          )}
-
                           {/* Variant Selection */}
                           {product.variants && product.variants.length > 0 ? (
                             <div className="space-y-1.5 md:space-y-2 pt-0.5 md:pt-1">
@@ -1733,16 +1696,10 @@ export const ProductDetailPage = () => {
                                 </>
                               ) : (
                                 <>
-                                  <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[10px] font-semibold text-amber-900/80">
-                                    {language === 'ar' ? 'محمص طازجاً' : 'Freshly roasted'}
-                                  </span>
-                                  <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[10px] font-semibold text-amber-900/80">
-                                    {language === 'ar' ? 'مثالي للإهداء' : 'Perfect for gifting'}
-                                  </span>
-                                  {isVelvetHarmonyDiscovery ? (
-                                    <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[10px] font-semibold text-amber-900/80">
-                                      {language === 'ar' ? 'يتضمن أكواب' : 'Includes cups'}
-                                    </span>
+                                  {product.bottomTags && product.bottomTags.length > 0 ? (
+                                    product.bottomTags.map((tag) => (
+                                      <ProductTagBadge key={tag.id} tag={tag} />
+                                    ))
                                   ) : null}
                                 </>
                               )}
