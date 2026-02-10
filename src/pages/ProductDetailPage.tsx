@@ -125,6 +125,7 @@ export const ProductDetailPage = () => {
   const { productId } = useParams<{ productId: string }>();
   const location = useLocation();
   const { language, t } = useApp();
+  const isArabic = language === 'ar';
   const { currentRegion } = useRegion();
   const isShopRoute = location.pathname.includes('/shop/');
   const { isAuthenticated, user } = useAuth();
@@ -394,6 +395,28 @@ export const ProductDetailPage = () => {
     return shopData.categories.some((cat) => cat.id === product.categoryId);
   }, [product, shopData]);
 
+  const isGiftCard = useMemo(() => {
+    if (!product) return false;
+    const categoryFromShop = shopData?.categories?.find((cat) => cat.id === product.categoryId);
+    const categorySlug = (product.category?.slug || categoryFromShop?.slug || '').toLowerCase();
+    const categoryName = (product.category?.name || categoryFromShop?.name || '').toLowerCase();
+    const productType = (product as { type?: string })?.type;
+    const rawTags = (product as { tags?: string | string[] })?.tags;
+    const tagList = Array.isArray(rawTags)
+      ? rawTags
+      : typeof rawTags === 'string'
+        ? rawTags.split(',').map((tag) => tag.trim()).filter(Boolean)
+        : [];
+    const hasGiftTag = tagList.some((tag) => /gift\s*card|giftcard/i.test(tag));
+
+    return (
+      categorySlug === 'electronic-gift-cards' ||
+      categoryName === 'electronic gift cards' ||
+      productType === 'gift_card' ||
+      hasGiftTag
+    );
+  }, [product, shopData]);
+
   const price = useMemo(() => {
     if (!product) {
       return 0;
@@ -401,6 +424,26 @@ export const ProductDetailPage = () => {
 
     return resolvePrice(product, selectedVariant);
   }, [product, selectedVariant]);
+
+  const giftCardValue = useMemo(() => {
+    if (!isGiftCard) return null;
+    const match = displayName.toLowerCase().match(/(\d+(?:\.\d+)?)\s*omr/);
+    if (match) {
+      const parsed = Number(match[1]);
+      return Number.isFinite(parsed) ? parsed : null;
+    }
+    return price > 0 ? price : null;
+  }, [displayName, isGiftCard, price]);
+
+  const giftCardValueText = useMemo(() => {
+    if (!giftCardValue) return null;
+    const formatted = Number.isInteger(giftCardValue)
+      ? giftCardValue.toFixed(0)
+      : giftCardValue.toFixed(3);
+    return language === 'ar'
+      ? `${formatted} ${currentRegion.currencySymbol}`
+      : `${formatted} ${currentRegion.currency}`;
+  }, [currentRegion.currency, currentRegion.currencySymbol, giftCardValue, language]);
 
   const hideVariantPrice = isUfoDripProduct(product) || isCapsuleProduct(product);
 
@@ -1013,98 +1056,182 @@ export const ProductDetailPage = () => {
                               </div>
 
                               <div className="flex flex-wrap items-center gap-2">
-                                <span className="inline-flex items-center rounded-full border border-stone-200 bg-white px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-stone-600">
-                                  {language === 'ar' ? 'باقة اكتشاف' : 'Discovery Bundle'}
-                                </span>
-                                <span className="inline-flex items-center rounded-full border border-stone-200 bg-white px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-stone-600">
-                                  {language === 'ar' ? 'مختار بعناية' : 'Curated Selection'}
-                                </span>
-                                <span className="inline-flex items-center rounded-full border border-stone-200 bg-white px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-stone-600">
-                                  {language === 'ar' ? 'يتضمن أكواب' : 'Includes cups'}
-                                </span>
+                                {isGiftCard
+                                  ? [
+                                      isArabic ? 'تسليم فوري' : 'Instant delivery',
+                                      isArabic ? 'البريد وواتساب' : 'Email & WhatsApp',
+                                      isArabic ? 'هدية رقمية' : 'Digital Gift',
+                                    ].map((label) => (
+                                      <span
+                                        key={label}
+                                        className="inline-flex items-center rounded-full border border-stone-200 bg-white px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-stone-600"
+                                      >
+                                        {label}
+                                      </span>
+                                    ))
+                                  : (
+                                      <>
+                                        <span className="inline-flex items-center rounded-full border border-stone-200 bg-white px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-stone-600">
+                                          {language === 'ar' ? 'باقة اكتشاف' : 'Discovery Bundle'}
+                                        </span>
+                                        <span className="inline-flex items-center rounded-full border border-stone-200 bg-white px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-stone-600">
+                                          {language === 'ar' ? 'مختار بعناية' : 'Curated Selection'}
+                                        </span>
+                                        <span className="inline-flex items-center rounded-full border border-stone-200 bg-white px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-stone-600">
+                                          {language === 'ar' ? 'يتضمن أكواب' : 'Includes cups'}
+                                        </span>
+                                      </>
+                                    )}
                               </div>
                             </div>
                           </div>
 
                           <div className="rounded-2xl border border-stone-200 bg-white p-4 pt-0 shadow-sm">
-                            {displayDescription ? (
-                              <div
-                                className="text-xs text-stone-600 leading-relaxed [&_p]:mb-2 [&_ul]:list-disc [&_ul]:ml-5 [&_ul]:mb-2 [&_ol]:list-decimal [&_ol]:ml-5 [&_ol]:mb-2 [&_li]:mb-1 [&_strong]:font-semibold"
-                                dangerouslySetInnerHTML={{ __html: displayDescription }}
-                              />
-                            ) : (
-                              <p className="text-xs text-stone-500">
-                                {language === 'ar' ? 'تفاصيل هذا المنتج ستتوفر قريباً.' : 'Details for this bundle are coming soon.'}
-                              </p>
-                            )}
-
-                            <div className="mt-0 rounded-2xl border border-stone-200 bg-stone-50/60 px-4 py-3 text-xs text-stone-600 shadow-inner">
-                              <div className="flex flex-wrap items-center justify-between gap-2">
-                                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-stone-500">
-                                  {language === 'ar'
-                                    ? 'ماذا يوجد داخل هذه الباقة'
-                                    : "What's inside this bundle"}
+                            {!isGiftCard ? (
+                              displayDescription ? (
+                                <div
+                                  className="text-xs text-stone-600 leading-relaxed [&_p]:mb-2 [&_ul]:list-disc [&_ul]:ml-5 [&_ul]:mb-2 [&_ol]:list-decimal [&_ol]:ml-5 [&_ol]:mb-2 [&_li]:mb-1 [&_strong]:font-semibold"
+                                  dangerouslySetInnerHTML={{ __html: displayDescription }}
+                                />
+                              ) : (
+                                <p className="text-xs text-stone-500">
+                                  {language === 'ar' ? 'تفاصيل هذا المنتج ستتوفر قريباً.' : 'Details for this bundle are coming soon.'}
                                 </p>
-                              </div>
-                              <p className="mt-2 text-xs leading-relaxed text-stone-600">
-                                {language === 'ar'
-                                  ? 'تجربة متوازنة للاكتشاف مصممة للاستمتاع اليومي، تجمع بين الراحة والحلاوة والبنية النظيفة من ثلاث منشأات، مثالية للتحضير المنزلي والإهداء.'
-                                  : 'A balanced discovery selection crafted for everyday enjoyment, bringing together comfort, sweetness, and clean structure from three origins, ideal for home brewing and gifting.'}
-                              </p>
-                              <div className="mt-3 grid gap-2 md:grid-cols-2 divide-y divide-stone-200/60 md:divide-y-0">
-                                <div className="rounded-xl border border-stone-200/70 bg-white px-2.5 py-2">
-                                  <div className="flex items-center gap-2">
-                                    <Coffee className="h-3.5 w-3.5 text-stone-500" aria-hidden="true" />
-                                    <p className="text-[11px] font-bold text-stone-800">
-                                      {language === 'ar' ? 'البرازيل - كاتواي طبيعي (200 جم)' : 'Brazil - Catuai Natural (200g)'}
+                              )
+                            ) : null}
+
+                            <div
+                              className={`rounded-2xl border border-stone-200 bg-stone-50/60 px-4 py-3 text-xs text-stone-600 shadow-inner ${
+                                isGiftCard ? 'mt-4' : 'mt-0'
+                              }`}
+                            >
+                              {isGiftCard ? (
+                                <div className="space-y-3">
+                                  <div className="rounded-lg border border-amber-200/70 bg-amber-50/70 px-3 py-2">
+                                    <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-amber-700">
+                                      {isArabic ? 'ملاحظة مهمة' : 'Important Note'}
+                                    </p>
+                                    <p className="mt-1 text-xs text-amber-900/90">
+                                      {isArabic ? (
+                                        <span className="font-semibold">
+                                          امنح تجربة سبيريت هب في لحظات. تُرسل بطاقة الهدية الإلكترونية بقيمة{' '}
+                                          {giftCardValueText ?? '20 ر.ع'} فورًا عبر البريد الإلكتروني وواتساب.
+                                        </span>
+                                      ) : (
+                                        `Give SpiritHub in seconds. A ${giftCardValueText ?? '20 OMR'} digital gift card delivered instantly by email and WhatsApp.`
+                                      )}
                                     </p>
                                   </div>
-                                  <p className="mt-1 text-[10px] text-stone-500">
-                                    {language === 'ar'
-                                      ? 'شوكولاتة، مكسرات محمصة، حلاوة كراميل، قوام ناعم'
-                                      : 'Chocolate, roasted nuts, caramel sweetness, smooth body'}
-                                  </p>
-                                </div>
-                                <div className="rounded-xl border border-stone-200/70 bg-white px-2.5 py-2">
-                                  <div className="flex items-center gap-2">
-                                    <Coffee className="h-3.5 w-3.5 text-stone-500" aria-hidden="true" />
-                                    <p className="text-[11px] font-bold text-stone-800">
-                                      {language === 'ar' ? 'السلفادور - رِد بوربون مغسولة (200 جم)' : 'El Salvador - Red Bourbon Washed (200g)'}
+
+                                  <div className="rounded-xl border border-stone-200/70 bg-white px-3 py-2">
+                                    <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-stone-500">
+                                      {isArabic ? 'كيف تعمل' : 'HOW IT WORKS'}
                                     </p>
-                                  </div>
-                                  <p className="mt-1 text-[10px] text-stone-500">
-                                    {language === 'ar'
-                                      ? 'سكر بني، تفاح أحمر، حمضيات ناعمة، نهاية نظيفة'
-                                      : 'Brown sugar, red apple, soft citrus, clean finish'}
-                                  </p>
-                                </div>
-                                <div className="rounded-xl border border-stone-200/70 bg-white px-2.5 py-2">
-                                  <div className="flex items-center gap-2">
-                                    <Coffee className="h-3.5 w-3.5 text-stone-500" aria-hidden="true" />
-                                    <p className="text-[11px] font-bold text-stone-800">
-                                      {language === 'ar' ? 'بنما - باكاس لاهوائي طبيعي (100 جم)' : 'Panama - Pacas Anaerobic Natural (100g)'}
+                                    <p className="mt-2 text-xs text-stone-600">
+                                      {isArabic
+                                        ? 'طريقة سريعة وبسيطة لإرسال هدية أنيقة لمن تحب.'
+                                        : 'A fast, simple way to send a thoughtful gift in minutes.'}
                                     </p>
-                                  </div>
-                                  <p className="mt-1 text-[10px] text-stone-500">
-                                    {language === 'ar'
-                                      ? 'عسل، فاكهة نواة، حموضة لطيفة، توازن أنيق'
-                                      : 'Honey, stone fruit, gentle acidity, elegant balance'}
-                                  </p>
-                                </div>
-                                <div className="rounded-xl border border-amber-200/70 bg-amber-50/60 px-2.5 py-2">
-                                  <div className="flex items-center gap-2">
-                                    <CupSoda className="h-3.5 w-3.5 text-amber-700" aria-hidden="true" />
-                                    <p className="text-[11px] font-bold text-stone-800">
-                                      {language === 'ar' ? 'أكواب ورقية - 3 قطع' : 'Paper Cups - 3 pcs'}
+                                    <p className="mt-2 text-xs font-semibold text-stone-700">
+                                      {isArabic ? 'الخطوات' : 'Steps:'}
                                     </p>
+                                    <ol className="mt-1 list-decimal space-y-1 pl-4 text-xs text-stone-600">
+                                      {isArabic ? (
+                                        <>
+                                          <li>اختر قيمة بطاقة الهدية وأضفها إلى سلة التسوق.</li>
+                                          <li>أثناء إتمام الطلب، فعِّل خيار «إرسالها كهدية لشخص آخر».</li>
+                                          <li>أدخل اسم المستلم ورقم هاتفه ثم أكِّد الشراء.</li>
+                                          <li>تصل رسالة واتساب تلقائيًا إلى المستلم تحتوي على رمز بطاقة الهدية.</li>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <li>Select the gift card value and add it to your cart.</li>
+                                          <li>After entering your details, enable "Send as a gift to someone else."</li>
+                                          <li>Enter the recipient's name and phone number, then confirm the purchase.</li>
+                                          <li>The recipient will automatically receive a WhatsApp message with the gift card code.</li>
+                                        </>
+                                      )}
+                                    </ol>
+                                    <div className="mt-3 rounded-lg border border-amber-200/70 bg-amber-50/70 px-3 py-2">
+                                      <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-amber-700">
+                                        {isArabic ? 'ملاحظة مهمة' : 'Important Note'}
+                                      </p>
+                                      <p className="mt-1 text-xs text-amber-900/90">
+                                        {isArabic ? (
+                                          <span className="font-semibold">
+                                            يجب استخدام رصيد بطاقة الهدية في طلب واحد فقط (لا يمكن تقسيمه). أي رصيد متبقٍ غير قابل للاسترداد.
+                                          </span>
+                                        ) : (
+                                          'Use the full gift card balance in one order (it cannot be split). Any remaining balance is non-refundable.'
+                                        )}
+                                      </p>
+                                    </div>
                                   </div>
-                                  <p className="mt-1 text-[10px] text-stone-500">
-                                    {language === 'ar'
-                                      ? 'مثالية للتذوق أو المشاركة أو الإهداء'
-                                      : 'Perfect for tasting, sharing, or gifting'}
-                                  </p>
                                 </div>
-                              </div>
+                              ) : (
+                                <>
+                                  <div className="flex flex-wrap items-center justify-between gap-2" />
+                                  <p className="mt-2 text-xs leading-relaxed text-stone-600">
+                                    {language === 'ar'
+                                      ? 'تجربة متوازنة للاكتشاف مصممة للاستمتاع اليومي، تجمع بين الراحة والحلاوة والبنية النظيفة من ثلاث منشأات، مثالية للتحضير المنزلي والإهداء.'
+                                      : 'A balanced discovery selection crafted for everyday enjoyment, bringing together comfort, sweetness, and clean structure from three origins, ideal for home brewing and gifting.'}
+                                  </p>
+                                  <div className="mt-3 grid gap-2 md:grid-cols-2 divide-y divide-stone-200/60 md:divide-y-0">
+                                    <div className="rounded-xl border border-stone-200/70 bg-white px-2.5 py-2">
+                                      <div className="flex items-center gap-2">
+                                        <Coffee className="h-3.5 w-3.5 text-stone-500" aria-hidden="true" />
+                                        <p className="text-[11px] font-bold text-stone-800">
+                                          {language === 'ar' ? 'البرازيل - كاتواي طبيعي (200 جم)' : 'Brazil - Catuai Natural (200g)'}
+                                        </p>
+                                      </div>
+                                      <p className="mt-1 text-[10px] text-stone-500">
+                                        {language === 'ar'
+                                          ? 'شوكولاتة، مكسرات محمصة، حلاوة كراميل، قوام ناعم'
+                                          : 'Chocolate, roasted nuts, caramel sweetness, smooth body'}
+                                      </p>
+                                    </div>
+                                    <div className="rounded-xl border border-stone-200/70 bg-white px-2.5 py-2">
+                                      <div className="flex items-center gap-2">
+                                        <Coffee className="h-3.5 w-3.5 text-stone-500" aria-hidden="true" />
+                                        <p className="text-[11px] font-bold text-stone-800">
+                                          {language === 'ar' ? 'السلفادور - رِد بوربون مغسولة (200 جم)' : 'El Salvador - Red Bourbon Washed (200g)'}
+                                        </p>
+                                      </div>
+                                      <p className="mt-1 text-[10px] text-stone-500">
+                                        {language === 'ar'
+                                          ? 'سكر بني، تفاح أحمر، حمضيات ناعمة، نهاية نظيفة'
+                                          : 'Brown sugar, red apple, soft citrus, clean finish'}
+                                      </p>
+                                    </div>
+                                    <div className="rounded-xl border border-stone-200/70 bg-white px-2.5 py-2">
+                                      <div className="flex items-center gap-2">
+                                        <Coffee className="h-3.5 w-3.5 text-stone-500" aria-hidden="true" />
+                                        <p className="text-[11px] font-bold text-stone-800">
+                                          {language === 'ar' ? 'بنما - باكاس لاهوائي طبيعي (100 جم)' : 'Panama - Pacas Anaerobic Natural (100g)'}
+                                        </p>
+                                      </div>
+                                      <p className="mt-1 text-[10px] text-stone-500">
+                                        {language === 'ar'
+                                          ? 'عسل، فاكهة نواة، حموضة لطيفة، توازن أنيق'
+                                          : 'Honey, stone fruit, gentle acidity, elegant balance'}
+                                      </p>
+                                    </div>
+                                    <div className="rounded-xl border border-amber-200/70 bg-amber-50/60 px-2.5 py-2">
+                                      <div className="flex items-center gap-2">
+                                        <CupSoda className="h-3.5 w-3.5 text-amber-700" aria-hidden="true" />
+                                        <p className="text-[11px] font-bold text-stone-800">
+                                          {language === 'ar' ? 'أكواب ورقية - 3 قطع' : 'Paper Cups - 3 pcs'}
+                                        </p>
+                                      </div>
+                                      <p className="mt-1 text-[10px] text-stone-500">
+                                        {language === 'ar'
+                                          ? 'مثالية للتذوق أو المشاركة أو الإهداء'
+                                          : 'Perfect for tasting, sharing, or gifting'}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </>
+                              )}
                             </div>
                           </div>
 
@@ -1178,17 +1305,30 @@ export const ProductDetailPage = () => {
                             </div>
 
                             <div className="flex flex-wrap items-center justify-center gap-2">
-                              <span className="inline-flex items-center rounded-full border border-stone-200 bg-stone-50 px-3 py-1 text-[10px] font-semibold text-stone-600">
-                                {language === 'ar' ? 'محمص طازجاً' : 'Freshly roasted'}
-                              </span>
-                              <span className="inline-flex items-center rounded-full border border-stone-200 bg-stone-50 px-3 py-1 text-[10px] font-semibold text-stone-600">
-                                {language === 'ar' ? 'مثالي للإهداء' : 'Perfect for gifting'}
-                              </span>
-                              {isVelvetHarmonyDiscovery ? (
-                                <span className="inline-flex items-center rounded-full border border-stone-200 bg-stone-50 px-3 py-1 text-[10px] font-semibold text-stone-600">
-                                  {language === 'ar' ? 'يتضمن أكواب' : 'Includes cups'}
-                                </span>
-                              ) : null}
+                              {isGiftCard ? (
+                                <>
+                                  <span className="inline-flex items-center rounded-full border border-stone-200 bg-stone-50 px-3 py-1 text-[10px] font-semibold text-stone-600">
+                                    ⏱ Valid for 12 months
+                                  </span>
+                                  <span className="inline-flex items-center rounded-full border border-stone-200 bg-stone-50 px-3 py-1 text-[10px] font-semibold text-stone-600">
+                                    📩 Sent by email / WhatsApp
+                                  </span>
+                                </>
+                              ) : (
+                                <>
+                                  <span className="inline-flex items-center rounded-full border border-stone-200 bg-stone-50 px-3 py-1 text-[10px] font-semibold text-stone-600">
+                                    {language === 'ar' ? 'محمص طازجاً' : 'Freshly roasted'}
+                                  </span>
+                                  <span className="inline-flex items-center rounded-full border border-stone-200 bg-stone-50 px-3 py-1 text-[10px] font-semibold text-stone-600">
+                                    {language === 'ar' ? 'مثالي للإهداء' : 'Perfect for gifting'}
+                                  </span>
+                                  {isVelvetHarmonyDiscovery ? (
+                                    <span className="inline-flex items-center rounded-full border border-stone-200 bg-stone-50 px-3 py-1 text-[10px] font-semibold text-stone-600">
+                                      {language === 'ar' ? 'يتضمن أكواب' : 'Includes cups'}
+                                    </span>
+                                  ) : null}
+                                </>
+                              )}
                             </div>
 
                             <p className="text-[10px] text-stone-500 italic text-center">
@@ -1689,17 +1829,30 @@ export const ProductDetailPage = () => {
                             </div>
 
                             <div className="flex flex-wrap items-center justify-center gap-2">
-                              <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[10px] font-semibold text-amber-900/80">
-                                {language === 'ar' ? 'محمص طازجاً' : 'Freshly roasted'}
-                              </span>
-                              <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[10px] font-semibold text-amber-900/80">
-                                {language === 'ar' ? 'مثالي للإهداء' : 'Perfect for gifting'}
-                              </span>
-                              {isVelvetHarmonyDiscovery ? (
-                                <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[10px] font-semibold text-amber-900/80">
-                                  {language === 'ar' ? 'يتضمن أكواب' : 'Includes cups'}
-                                </span>
-                              ) : null}
+                              {isGiftCard ? (
+                                <>
+                                  <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[10px] font-semibold text-amber-900/80">
+                                    ⏱ Valid for 12 months
+                                  </span>
+                                  <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[10px] font-semibold text-amber-900/80">
+                                    📩 Sent by email / WhatsApp
+                                  </span>
+                                </>
+                              ) : (
+                                <>
+                                  <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[10px] font-semibold text-amber-900/80">
+                                    {language === 'ar' ? 'محمص طازجاً' : 'Freshly roasted'}
+                                  </span>
+                                  <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[10px] font-semibold text-amber-900/80">
+                                    {language === 'ar' ? 'مثالي للإهداء' : 'Perfect for gifting'}
+                                  </span>
+                                  {isVelvetHarmonyDiscovery ? (
+                                    <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[10px] font-semibold text-amber-900/80">
+                                      {language === 'ar' ? 'يتضمن أكواب' : 'Includes cups'}
+                                    </span>
+                                  ) : null}
+                                </>
+                              )}
                             </div>
                           </div>
 

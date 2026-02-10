@@ -116,23 +116,7 @@ export const ShopPage = () => {
       />
 
       <div className="mx-auto flex max-w-6xl flex-col gap-10 px-4 py-12">
-        <div className="grid gap-4 md:grid-cols-3">
-          <div className="rounded-3xl bg-white p-5 shadow-sm">
-            <p className="text-xs uppercase tracking-widest text-stone-400">
-              {isArabic ? 'إجمالي المنتجات' : 'Total products'}
-            </p>
-            <p className="mt-2 text-3xl font-semibold text-stone-900">
-              {shopData.totalProducts}
-            </p>
-          </div>
-          <div className="rounded-3xl bg-white p-5 shadow-sm">
-            <p className="text-xs uppercase tracking-widest text-stone-400">
-              {isArabic ? 'عدد الفئات' : 'Total categories'}
-            </p>
-            <p className="mt-2 text-3xl font-semibold text-stone-900">
-              {shopData.totalCategories}
-            </p>
-          </div>
+        <div className="grid gap-4">
           <div className="rounded-3xl bg-gradient-to-br from-amber-50 to-white p-5 shadow-sm">
             <p className="text-xs uppercase tracking-widest text-amber-700">
               {isArabic ? 'مختارات اليوم' : 'Today’s highlights'}
