@@ -191,6 +191,15 @@ video[autoplay][loop][muted][playsinline] {
   direction: ltr;
 }
 
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 /* Coffee Shop Custom Styles */
 
 /* Arabic Font Support */

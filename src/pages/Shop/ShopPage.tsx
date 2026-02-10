@@ -1,15 +1,74 @@
+import { useMemo, useState } from 'react';
 import { useShopPage } from '../../hooks/useShop';
 import { CategorySection } from '../../components/shop/CategorySection';
-import { CategoryNav } from '../../components/shop/CategoryNav';
+import { CategoryNav, type CategoryFilter } from '../../components/shop/CategoryNav';
 import { useApp } from '../../hooks/useApp';
 import { Seo } from '../../components/seo/Seo';
 import { siteMetadata } from '../../config/siteMetadata';
 import { PageHeader } from '../../components/layout/PageHeader';
+import type { ShopCategory } from '../../types/shop';
 
 export const ShopPage = () => {
   const { shopData, loading, error } = useShopPage();
   const { language } = useApp();
   const isArabic = language === 'ar';
+  const [activeFilter, setActiveFilter] = useState<CategoryFilter>('all');
+
+  const filteredCategories = useMemo(() => {
+    if (!shopData) {
+      return [] as ShopCategory[];
+    }
+
+    const toSearchText = (category: ShopCategory) =>
+      `${category.slug} ${category.name} ${category.nameAr ?? ''}`.toLowerCase();
+
+    const matchesBundles = (category: ShopCategory) => {
+      const text = toSearchText(category);
+      return text.includes('bundle') || text.includes('bundles') || text.includes('باقة') || text.includes('حزمة');
+    };
+
+    const matchesGiftCards = (category: ShopCategory) => {
+      const text = toSearchText(category);
+      return (
+        text.includes('gift card') ||
+        text.includes('gift-card') ||
+        text.includes('giftcard') ||
+        text.includes('بطاقة') ||
+        text.includes('بطاقات')
+      );
+    };
+
+    if (activeFilter === 'bundles') {
+      return shopData.categories.filter(matchesBundles);
+    }
+
+    if (activeFilter === 'gift-cards') {
+      return shopData.categories.filter(matchesGiftCards);
+    }
+
+    if (activeFilter === 'under-15') {
+      return shopData.categories
+        .map((category) => {
+          const products = category.products.filter((product) => {
+            const price = product.minPrice ?? product.maxPrice ?? Number.POSITIVE_INFINITY;
+            return price <= 15;
+          });
+
+          if (products.length === 0) {
+            return null;
+          }
+
+          return {
+            ...category,
+            products,
+            productCount: products.length,
+          };
+        })
+        .filter((category): category is ShopCategory => Boolean(category));
+    }
+
+    return shopData.categories;
+  }, [shopData, activeFilter]);
 
   if (loading) {
     return (
@@ -116,25 +175,17 @@ export const ShopPage = () => {
       />
 
       <div className="mx-auto flex max-w-6xl flex-col gap-10 px-4 py-12">
-        <div className="grid gap-4">
-          <div className="rounded-3xl bg-gradient-to-br from-amber-50 to-white p-5 shadow-sm">
-            <p className="text-xs uppercase tracking-widest text-amber-700">
-              {isArabic ? 'مختارات اليوم' : 'Today’s highlights'}
-            </p>
-            <p className="mt-2 text-sm text-stone-600">
-              {isArabic
-                ? 'منتجات منتقاة بعناية لعشاق القهوة المختصة.'
-                : 'Handpicked selections for specialty coffee lovers.'}
-            </p>
-          </div>
-        </div>
 
-        {shopData.categories.length > 0 ? (
+        {filteredCategories.length > 0 ? (
           <>
-            <CategoryNav categories={shopData.categories} />
+            <CategoryNav
+              categories={filteredCategories}
+              activeFilter={activeFilter}
+              onFilterChange={setActiveFilter}
+            />
 
             <div className="space-y-12">
-              {shopData.categories.map((category) => (
+              {filteredCategories.map((category) => (
                 <CategorySection key={category.id} category={category} />
               ))}
             </div>
