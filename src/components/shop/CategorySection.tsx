@@ -32,7 +32,10 @@ export const CategorySection = ({ category }: Props) => {
           <div className="space-y-1">
             <h2 className="text-2xl font-semibold text-stone-900">{name}</h2>
             {description && (
-              <p className="text-sm text-stone-600 max-w-xl">{description}</p>
+              <div
+                className="text-sm text-stone-600 max-w-xl leading-relaxed [&_p]:mb-2 [&_ul]:list-disc [&_ul]:ml-5 [&_ul]:mb-2 [&_ol]:list-decimal [&_ol]:ml-5 [&_ol]:mb-2 [&_li]:mb-1 [&_strong]:font-semibold"
+                dangerouslySetInnerHTML={{ __html: description }}
+              />
             )}
             <span className="text-xs font-medium text-stone-500">
               {category.productCount} {isArabic ? 'منتج' : 'products'}
