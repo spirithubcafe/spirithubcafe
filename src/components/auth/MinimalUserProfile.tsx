@@ -24,7 +24,7 @@ import {
   Heart,
   ShoppingBag,
   Crown,
-  ChevronDown,
+  ChevronRight,
   Mail,
   Phone
 } from 'lucide-react';
@@ -169,7 +169,7 @@ export const MinimalUserProfile: React.FC = () => {
             <span className="text-sm font-medium text-gray-700 group-hover:text-blue-700">
               {t('nav.profile')}
             </span>
-            <ChevronDown className={`h-4 w-4 text-gray-400 ms-auto ${isRTL ? '-rotate-90' : 'rotate-90'}`} />
+            <ChevronRight className="h-4 w-4 text-gray-400 ms-auto rtl:rotate-180" />
           </DropdownMenuItem>
 
           <DropdownMenuItem 
@@ -182,7 +182,7 @@ export const MinimalUserProfile: React.FC = () => {
             <span className="text-sm font-medium text-gray-700 group-hover:text-red-700">
               {t('nav.favorites')}
             </span>
-            <ChevronDown className={`h-4 w-4 text-gray-400 ms-auto ${isRTL ? '-rotate-90' : 'rotate-90'}`} />
+            <ChevronRight className="h-4 w-4 text-gray-400 ms-auto rtl:rotate-180" />
           </DropdownMenuItem>
 
           <DropdownMenuItem 
@@ -195,7 +195,7 @@ export const MinimalUserProfile: React.FC = () => {
             <span className="text-sm font-medium text-gray-700 group-hover:text-green-700">
               {t('nav.orders')}
             </span>
-            <ChevronDown className={`h-4 w-4 text-gray-400 ms-auto ${isRTL ? '-rotate-90' : 'rotate-90'}`} />
+            <ChevronRight className="h-4 w-4 text-gray-400 ms-auto rtl:rotate-180" />
           </DropdownMenuItem>
 
           {isAdmin() && (
@@ -211,7 +211,7 @@ export const MinimalUserProfile: React.FC = () => {
                 <span className="text-sm font-medium text-gray-700 group-hover:text-purple-700">
                   {t('nav.admin')}
                 </span>
-                <ChevronDown className={`h-4 w-4 text-gray-400 ms-auto ${isRTL ? '-rotate-90' : 'rotate-90'}`} />
+                <ChevronRight className="h-4 w-4 text-gray-400 ms-auto rtl:rotate-180" />
               </DropdownMenuItem>
             </>
           )}
