@@ -46,7 +46,6 @@ import {
   Eye,
   Globe,
   Lock,
-  Image as ImageIcon,
   Bell,
   BellOff,
   Loader2,
@@ -81,6 +80,8 @@ const ProfilePage: React.FC = () => {
   const isArabic = language === 'ar';
   
   const [activeTab, setActiveTab] = useState('overview');
+  const [isEditing, setIsEditing] = useState(false);
+  const [showPictureUpload, setShowPictureUpload] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -368,104 +369,164 @@ const ProfilePage: React.FC = () => {
         robots="noindex, nofollow"
       />
       
-      <div className="container mx-auto py-8 px-4">
+      <div className="container mx-auto py-4 sm:py-8 px-3 sm:px-4">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-4 sm:mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">
+            <h1 className="text-xl sm:text-3xl font-bold text-gray-900">
               {isArabic ? 'الملف الشخصي' : 'My Profile'}
             </h1>
-            <p className="text-gray-600">
+            <p className="text-xs sm:text-base text-gray-600">
               {isArabic ? 'إدارة معلوماتك الشخصية وطلباتك' : 'Manage your personal information and orders'}
             </p>
           </div>
-          <Button variant="outline" onClick={() => navigate('/')}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            {isArabic ? 'الرئيسية' : 'Home'}
+          <Button variant="outline" size="sm" className="sm:size-default" onClick={() => navigate('/')}>
+            <ArrowLeft className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">{isArabic ? 'الرئيسية' : 'Home'}</span>
           </Button>
         </div>
 
-
-
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Profile Sidebar */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-8">
+          {/* Profile Sidebar - Horizontal compact on mobile, vertical on desktop */}
           <div className="lg:col-span-1">
             <Card>
-              <CardContent className="p-6">
-                <div className="text-center mb-6">
-                  <div className="relative inline-block">
-                    <Avatar className="h-24 w-24 mx-auto ring-2 ring-stone-100">
+              <CardContent className="p-4 sm:p-6">
+                {/* Mobile: Horizontal layout */}
+                <div className="flex items-center gap-4 lg:hidden">
+                  <div className="relative shrink-0">
+                    <Avatar className="h-16 w-16 ring-2 ring-stone-100">
                       <AvatarImage src={getProfilePictureUrl(userProfile?.profilePicture) || profileData.avatar} />
-                      <AvatarFallback className="text-lg bg-stone-200 text-stone-700">
+                      <AvatarFallback className="text-sm bg-stone-200 text-stone-700">
                         {(userProfile?.displayName || profileData.fullName).split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'U'}
                       </AvatarFallback>
                     </Avatar>
                     <Button
                       size="sm"
                       variant="outline"
-                      className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full p-0 shadow-md"
-                      onClick={() => setActiveTab('picture')}
-                      title={isArabic ? 'تغيير الصورة' : 'Change picture'}
+                      className="absolute -bottom-1 -right-1 h-6 w-6 rounded-full p-0 shadow-md"
+                      onClick={() => { setActiveTab('profile'); setShowPictureUpload(true); setIsEditing(false); }}
                     >
-                      <Camera className="h-4 w-4" />
+                      <Camera className="h-3 w-3" />
                     </Button>
                   </div>
-                  <h3 className="text-xl font-semibold mt-4">
-                    {userProfile?.displayName || profileData.fullName || user?.displayName || 'User'}
-                  </h3>
-                  <p className="text-gray-600">{userProfile?.email || profileData.email}</p>
-                  {userProfile?.membershipType && (
-                    <Badge variant="secondary" className="mt-2">
-                      <Shield className="h-3 w-3 mr-1" />
-                      {userProfile.membershipType}
-                    </Badge>
-                  )}
-                  {userProfile?.points !== undefined && userProfile.points > 0 && (
-                    <div className="mt-2 text-sm">
-                      <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
-                        <Star className="h-3 w-3 mr-1" />
-                        {userProfile.points} {isArabic ? 'نقطة' : 'points'}
-                      </Badge>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-base font-semibold truncate">
+                      {userProfile?.displayName || profileData.fullName || user?.displayName || 'User'}
+                    </h3>
+                    <p className="text-xs text-gray-600 truncate">{userProfile?.email || profileData.email}</p>
+                    <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                      {userProfile?.membershipType && (
+                        <Badge variant="secondary" className="text-[10px] h-5">
+                          <Shield className="h-2.5 w-2.5 mr-0.5" />
+                          {userProfile.membershipType}
+                        </Badge>
+                      )}
+                      {userProfile?.points !== undefined && userProfile.points > 0 && (
+                        <Badge variant="outline" className="text-[10px] h-5 bg-amber-50 text-amber-700 border-amber-200">
+                          <Star className="h-2.5 w-2.5 mr-0.5" />
+                          {userProfile.points} {isArabic ? 'نقطة' : 'pts'}
+                        </Badge>
+                      )}
                     </div>
-                  )}
+                  </div>
+                  {/* Mobile quick stats - compact grid */}
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px] shrink-0">
+                    <div className="flex items-center gap-1">
+                      <ShoppingBag className="h-3 w-3 text-blue-600" />
+                      <span className="font-semibold">{stats.totalOrders}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <DollarSign className="h-3 w-3 text-green-600" />
+                      <span className="font-semibold">{formatPrice((userProfile?.totalSpent || stats.totalSpent), currentRegion.code, isArabic)}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Star className="h-3 w-3 text-yellow-600" />
+                      <span className="font-semibold">{userProfile?.points || stats.loyaltyPoints}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Calendar className="h-3 w-3 text-purple-600" />
+                      <span>{format(new Date(userProfile?.memberSince || stats.memberSince), 'MMM yy')}</span>
+                    </div>
+                  </div>
                 </div>
 
-                {/* Quick Stats */}
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <ShoppingBag className="h-4 w-4 text-blue-600" />
-                      <span className="text-sm">{isArabic ? 'الطلبات' : 'Orders'}</span>
+                {/* Desktop: Vertical layout */}
+                <div className="hidden lg:block">
+                  <div className="text-center mb-6">
+                    <div className="relative inline-block">
+                      <Avatar className="h-24 w-24 mx-auto ring-2 ring-stone-100">
+                        <AvatarImage src={getProfilePictureUrl(userProfile?.profilePicture) || profileData.avatar} />
+                        <AvatarFallback className="text-lg bg-stone-200 text-stone-700">
+                          {(userProfile?.displayName || profileData.fullName).split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'U'}
+                        </AvatarFallback>
+                      </Avatar>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full p-0 shadow-md"
+                        onClick={() => { setActiveTab('profile'); setShowPictureUpload(true); setIsEditing(false); }}
+                        title={isArabic ? 'تغيير الصورة' : 'Change picture'}
+                      >
+                        <Camera className="h-4 w-4" />
+                      </Button>
                     </div>
-                    <span className="font-semibold">{stats.totalOrders}</span>
+                    <h3 className="text-xl font-semibold mt-4">
+                      {userProfile?.displayName || profileData.fullName || user?.displayName || 'User'}
+                    </h3>
+                    <p className="text-gray-600">{userProfile?.email || profileData.email}</p>
+                    {userProfile?.membershipType && (
+                      <Badge variant="secondary" className="mt-2">
+                        <Shield className="h-3 w-3 mr-1" />
+                        {userProfile.membershipType}
+                      </Badge>
+                    )}
+                    {userProfile?.points !== undefined && userProfile.points > 0 && (
+                      <div className="mt-2 text-sm">
+                        <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
+                          <Star className="h-3 w-3 mr-1" />
+                          {userProfile.points} {isArabic ? 'نقطة' : 'points'}
+                        </Badge>
+                      </div>
+                    )}
                   </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <DollarSign className="h-4 w-4 text-green-600" />
-                      <span className="text-sm">{isArabic ? 'المجموع' : 'Total Spent'}</span>
+
+                  {/* Quick Stats */}
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <ShoppingBag className="h-4 w-4 text-blue-600" />
+                        <span className="text-sm">{isArabic ? 'الطلبات' : 'Orders'}</span>
+                      </div>
+                      <span className="font-semibold">{stats.totalOrders}</span>
                     </div>
-                    <span className="font-semibold">
-                      {formatPrice((userProfile?.totalSpent || stats.totalSpent), currentRegion.code, isArabic)}
-                    </span>
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Star className="h-4 w-4 text-yellow-600" />
-                      <span className="text-sm">{isArabic ? 'النقاط' : 'Points'}</span>
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <DollarSign className="h-4 w-4 text-green-600" />
+                        <span className="text-sm">{isArabic ? 'المجموع' : 'Total Spent'}</span>
+                      </div>
+                      <span className="font-semibold">
+                        {formatPrice((userProfile?.totalSpent || stats.totalSpent), currentRegion.code, isArabic)}
+                      </span>
                     </div>
-                    <span className="font-semibold">{userProfile?.points || stats.loyaltyPoints}</span>
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-purple-600" />
-                      <span className="text-sm">{isArabic ? 'العضوية' : 'Member Since'}</span>
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Star className="h-4 w-4 text-yellow-600" />
+                        <span className="text-sm">{isArabic ? 'النقاط' : 'Points'}</span>
+                      </div>
+                      <span className="font-semibold">{userProfile?.points || stats.loyaltyPoints}</span>
                     </div>
-                    <span className="text-sm">
-                      {format(new Date(userProfile?.memberSince || stats.memberSince), 'MMM yyyy')}
-                    </span>
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-purple-600" />
+                        <span className="text-sm">{isArabic ? 'العضوية' : 'Member Since'}</span>
+                      </div>
+                      <span className="text-sm">
+                        {format(new Date(userProfile?.memberSince || stats.memberSince), 'MMM yyyy')}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -474,67 +535,55 @@ const ProfilePage: React.FC = () => {
 
           {/* Main Content */}
           <div className="lg:col-span-3">
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-2">
-                <TabsTrigger value="overview">
-                  <Activity className="h-4 w-4 mr-1" />
-                  {isArabic ? 'نظرة عامة' : 'Overview'}
+            <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v); setIsEditing(false); setShowPictureUpload(false); }}>
+              <TabsList className="flex w-full h-auto p-1 bg-stone-100/80 backdrop-blur-sm rounded-xl gap-1">
+                <TabsTrigger value="overview" className="flex-1 flex items-center justify-center gap-1 py-2.5 px-1.5 sm:px-3 text-[11px] sm:text-sm rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-amber-700 data-[state=active]:font-semibold transition-all">
+                  <Activity className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+                  <span className="truncate">{isArabic ? 'عامة' : 'Overview'}</span>
                 </TabsTrigger>
-                <TabsTrigger value="profile">
-                  <User className="h-4 w-4 mr-1" />
-                  {isArabic ? 'المعلومات' : 'Info'}
+                <TabsTrigger value="profile" className="flex-1 flex items-center justify-center gap-1 py-2.5 px-1.5 sm:px-3 text-[11px] sm:text-sm rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-amber-700 data-[state=active]:font-semibold transition-all">
+                  <User className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+                  <span className="truncate">{isArabic ? 'الملف' : 'Profile'}</span>
                 </TabsTrigger>
-                <TabsTrigger value="edit">
-                  <Edit2 className="h-4 w-4 mr-1" />
-                  {isArabic ? 'تعديل' : 'Edit'}
+                <TabsTrigger value="settings" className="flex-1 flex items-center justify-center gap-1 py-2.5 px-1.5 sm:px-3 text-[11px] sm:text-sm rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-amber-700 data-[state=active]:font-semibold transition-all">
+                  <Shield className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+                  <span className="truncate">{isArabic ? 'إعدادات' : 'Settings'}</span>
                 </TabsTrigger>
-                <TabsTrigger value="picture">
-                  <ImageIcon className="h-4 w-4 mr-1" />
-                  {isArabic ? 'الصورة' : 'Picture'}
-                </TabsTrigger>
-                <TabsTrigger value="password">
-                  <Lock className="h-4 w-4 mr-1" />
-                  {isArabic ? 'كلمة المرور' : 'Password'}
-                </TabsTrigger>
-                <TabsTrigger value="newsletter">
-                  <Bell className="h-4 w-4 mr-1" />
-                  {isArabic ? 'النشرة' : 'Newsletter'}
-                </TabsTrigger>
-                <TabsTrigger value="orders">
-                  <ShoppingBag className="h-4 w-4 mr-1" />
-                  {isArabic ? 'الطلبات' : 'Orders'}
+                <TabsTrigger value="orders" className="flex-1 flex items-center justify-center gap-1 py-2.5 px-1.5 sm:px-3 text-[11px] sm:text-sm rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-amber-700 data-[state=active]:font-semibold transition-all">
+                  <ShoppingBag className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+                  <span className="truncate">{isArabic ? 'طلبات' : 'Orders'}</span>
                 </TabsTrigger>
               </TabsList>
 
               {/* Overview Tab */}
-              <TabsContent value="overview" className="space-y-6">
+              <TabsContent value="overview" className="space-y-4 sm:space-y-6">
                 <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Activity className="h-5 w-5" />
+                  <CardHeader className="pb-3 sm:pb-6">
+                    <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                      <Activity className="h-4 w-4 sm:h-5 sm:w-5" />
                       {isArabic ? 'نشاط الحساب' : 'Account Activity'}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      <div className="text-center p-4 bg-blue-50 rounded-lg">
-                        <Package className="h-8 w-8 text-blue-600 mx-auto mb-2" />
-                        <div className="text-2xl font-bold text-blue-900">{stats.totalOrders}</div>
-                        <div className="text-sm text-blue-700">{isArabic ? 'إجمالي الطلبات' : 'Total Orders'}</div>
+                    <div className="grid grid-cols-3 gap-2 sm:gap-6">
+                      <div className="text-center p-2.5 sm:p-4 bg-blue-50 rounded-lg">
+                        <Package className="h-5 w-5 sm:h-8 sm:w-8 text-blue-600 mx-auto mb-1 sm:mb-2" />
+                        <div className="text-lg sm:text-2xl font-bold text-blue-900">{stats.totalOrders}</div>
+                        <div className="text-[10px] sm:text-sm text-blue-700">{isArabic ? 'الطلبات' : 'Orders'}</div>
                       </div>
                       
-                      <div className="text-center p-4 bg-green-50 rounded-lg">
-                        <DollarSign className="h-8 w-8 text-green-600 mx-auto mb-2" />
-                        <div className="text-2xl font-bold text-green-900">
-                          {stats.totalSpent.toFixed(1)} {isArabic ? currentRegion.currencySymbol : currentRegion.currency}
+                      <div className="text-center p-2.5 sm:p-4 bg-green-50 rounded-lg">
+                        <DollarSign className="h-5 w-5 sm:h-8 sm:w-8 text-green-600 mx-auto mb-1 sm:mb-2" />
+                        <div className="text-lg sm:text-2xl font-bold text-green-900">
+                          {stats.totalSpent.toFixed(1)}
                         </div>
-                        <div className="text-sm text-green-700">{isArabic ? 'إجمالي المبلغ' : 'Total Spent'}</div>
+                        <div className="text-[10px] sm:text-sm text-green-700">{isArabic ? currentRegion.currencySymbol : currentRegion.currency}</div>
                       </div>
                       
-                      <div className="text-center p-4 bg-yellow-50 rounded-lg">
-                        <Star className="h-8 w-8 text-yellow-600 mx-auto mb-2" />
-                        <div className="text-2xl font-bold text-yellow-900">{stats.loyaltyPoints}</div>
-                        <div className="text-sm text-yellow-700">{isArabic ? 'نقاط الولاء' : 'Loyalty Points'}</div>
+                      <div className="text-center p-2.5 sm:p-4 bg-yellow-50 rounded-lg">
+                        <Star className="h-5 w-5 sm:h-8 sm:w-8 text-yellow-600 mx-auto mb-1 sm:mb-2" />
+                        <div className="text-lg sm:text-2xl font-bold text-yellow-900">{stats.loyaltyPoints}</div>
+                        <div className="text-[10px] sm:text-sm text-yellow-700">{isArabic ? 'النقاط' : 'Points'}</div>
                       </div>
                     </div>
                   </CardContent>
@@ -542,20 +591,20 @@ const ProfilePage: React.FC = () => {
 
                 {/* Recent Orders */}
                 <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Clock className="h-5 w-5" />
+                  <CardHeader className="pb-3 sm:pb-6">
+                    <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                      <Clock className="h-4 w-4 sm:h-5 sm:w-5" />
                       {isArabic ? 'آخر الطلبات' : 'Recent Orders'}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
                     {orders.length > 0 ? (
-                      <div className="space-y-4">
+                      <div className="space-y-3">
                         {orders.slice(0, 3).map((order) => (
-                          <div key={order.id} className="flex items-center justify-between p-4 border rounded-lg">
-                            <div>
-                              <div className="font-semibold">{order.orderNumber}</div>
-                              <div className="text-sm text-gray-600">
+                          <div key={order.id} className="flex items-center justify-between p-3 sm:p-4 border rounded-lg">
+                            <div className="min-w-0">
+                              <div className="font-semibold text-sm sm:text-base truncate">{order.orderNumber}</div>
+                              <div className="text-xs sm:text-sm text-gray-600">
                                 {format(new Date(order.createdAt), 'MMM dd, yyyy')}
                               </div>
                             </div>
@@ -595,118 +644,8 @@ const ProfilePage: React.FC = () => {
                 </Card>
               </TabsContent>
 
-              {/* Profile Tab - View Only */}
-              <TabsContent value="profile">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <User className="h-5 w-5" />
-                      {isArabic ? 'المعلومات الشخصية' : 'Personal Information'}
-                    </CardTitle>
-                    <CardDescription>
-                      {isArabic ? 'عرض معلوماتك الشخصية' : 'View your personal information'}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <Label>{isArabic ? 'الاسم المعروض' : 'Display Name'}</Label>
-                        <div className="mt-1 p-3 bg-gray-50 rounded-md">
-                          {userProfile?.displayName || (isArabic ? 'لم يتم تحديده' : 'Not provided')}
-                        </div>
-                      </div>
-
-                      <div>
-                        <Label>{isArabic ? 'الاسم الكامل' : 'Full Name'}</Label>
-                        <div className="mt-1 p-3 bg-gray-50 rounded-md">
-                          {userProfile?.fullName || (isArabic ? 'لم يتم تحديده' : 'Not provided')}
-                        </div>
-                      </div>
-
-                      <div>
-                        <Label>{isArabic ? 'البريد الإلكتروني' : 'Email'}</Label>
-                        <div className="mt-1 p-3 bg-gray-50 rounded-md flex items-center gap-2">
-                          <Mail className="h-4 w-4 text-gray-500" />
-                          {userProfile?.email}
-                          {userProfile?.emailVerified && (
-                            <CheckCircle className="h-4 w-4 text-green-600" />
-                          )}
-                        </div>
-                      </div>
-
-                      <div>
-                        <Label>{isArabic ? 'رقم الهاتف' : 'Phone Number'}</Label>
-                        <div className="mt-1 p-3 bg-gray-50 rounded-md flex items-center gap-2">
-                          <Phone className="h-4 w-4 text-gray-500" />
-                          {userProfile?.phoneNumber || (isArabic ? 'لم يتم تحديده' : 'Not provided')}
-                        </div>
-                      </div>
-
-                      <div>
-                        <Label>{isArabic ? 'البلد' : 'Country'}</Label>
-                        <div className="mt-1 p-3 bg-gray-50 rounded-md flex items-center gap-2">
-                          <Globe className="h-4 w-4 text-gray-500" />
-                          {userProfile?.country || (isArabic ? 'لم يتم تحديده' : 'Not provided')}
-                        </div>
-                      </div>
-
-                      <div>
-                        <Label>{isArabic ? 'المدينة' : 'City'}</Label>
-                        <div className="mt-1 p-3 bg-gray-50 rounded-md flex items-center gap-2">
-                          <MapPin className="h-4 w-4 text-gray-500" />
-                          {userProfile?.city || (isArabic ? 'لم يتم تحديده' : 'Not provided')}
-                        </div>
-                      </div>
-
-                      <div>
-                        <Label>{isArabic ? 'الرمز البريدي' : 'Postal Code'}</Label>
-                        <div className="mt-1 p-3 bg-gray-50 rounded-md">
-                          {userProfile?.postalCode || (isArabic ? 'لم يتم تحديده' : 'Not provided')}
-                        </div>
-                      </div>
-
-                      <div className="md:col-span-2">
-                        <Label>{isArabic ? 'العنوان الكامل' : 'Full Address'}</Label>
-                        <div className="mt-1 p-3 bg-gray-50 rounded-md min-h-20">
-                          {userProfile?.address || (isArabic ? 'لم يتم تحديده' : 'Not provided')}
-                        </div>
-                      </div>
-
-                      <div className="md:col-span-2">
-                        <Label>{isArabic ? 'نبذة شخصية' : 'Bio'}</Label>
-                        <div className="mt-1 p-3 bg-gray-50 rounded-md min-h-20">
-                          {userProfile?.bio || (isArabic ? 'لم يتم تحديده' : 'Not provided')}
-                        </div>
-                      </div>
-
-                      <div className="md:col-span-2">
-                        <Label>{isArabic ? 'نوع العضوية' : 'Membership Type'}</Label>
-                        <div className="mt-1 p-3 bg-gray-50 rounded-md">
-                          {userProfile?.membershipType || (isArabic ? 'عادي' : 'Standard')}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="mt-6 flex gap-3">
-                      <Button onClick={() => setActiveTab('edit')}>
-                        <Edit2 className="h-4 w-4 mr-2" />
-                        {isArabic ? 'تعديل المعلومات' : 'Edit Information'}
-                      </Button>
-                      <Button variant="outline" onClick={() => setActiveTab('picture')}>
-                        <ImageIcon className="h-4 w-4 mr-2" />
-                        {isArabic ? 'تغيير الصورة' : 'Change Picture'}
-                      </Button>
-                      <Button variant="outline" onClick={() => setActiveTab('password')}>
-                        <Lock className="h-4 w-4 mr-2" />
-                        {isArabic ? 'تغيير كلمة المرور' : 'Change Password'}
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              {/* Edit Profile Tab */}
-              <TabsContent value="edit">
+              {/* Profile Tab - Merged: Info + Edit + Picture */}
+              <TabsContent value="profile" className="space-y-6">
                 {isLoadingProfile ? (
                   <Card>
                     <CardContent className="py-12">
@@ -718,143 +657,189 @@ const ProfilePage: React.FC = () => {
                       </div>
                     </CardContent>
                   </Card>
-                ) : userProfile ? (
-                  <ProfileEditForm 
-                    profile={userProfile} 
-                    onUpdate={loadUserProfile}
-                    language={language}
-                  />
+                ) : showPictureUpload && userProfile ? (
+                  /* Profile Picture Upload Sub-view */
+                  <>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Button variant="ghost" size="sm" onClick={() => setShowPictureUpload(false)}>
+                        <ArrowLeft className="h-4 w-4 mr-1" />
+                        {isArabic ? 'رجوع' : 'Back'}
+                      </Button>
+                    </div>
+                    <ProfilePictureUpload 
+                      profile={userProfile} 
+                      onUpdate={() => { loadUserProfile(); setShowPictureUpload(false); }}
+                      language={language}
+                    />
+                  </>
+                ) : isEditing && userProfile ? (
+                  /* Edit Profile Sub-view */
+                  <>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Button variant="ghost" size="sm" onClick={() => setIsEditing(false)}>
+                        <ArrowLeft className="h-4 w-4 mr-1" />
+                        {isArabic ? 'رجوع' : 'Back'}
+                      </Button>
+                    </div>
+                    <ProfileEditForm 
+                      profile={userProfile} 
+                      onUpdate={() => { loadUserProfile(); setIsEditing(false); }}
+                      language={language}
+                    />
+                  </>
                 ) : (
+                  /* View Profile (default) */
                   <Card>
-                    <CardContent className="py-12">
-                      <div className="text-center">
-                        <User className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                        <p className="text-gray-600">
-                          {isArabic ? 'فشل في تحميل الملف الشخصي' : 'Failed to load profile'}
-                        </p>
-                        <Button className="mt-4" onClick={loadUserProfile}>
-                          {isArabic ? 'إعادة المحاولة' : 'Retry'}
-                        </Button>
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="flex items-center gap-2">
+                          <User className="h-5 w-5" />
+                          {isArabic ? 'المعلومات الشخصية' : 'Personal Information'}
+                        </CardTitle>
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="outline" onClick={() => setShowPictureUpload(true)}>
+                            <Camera className="h-4 w-4 mr-1" />
+                            {isArabic ? 'الصورة' : 'Photo'}
+                          </Button>
+                          <Button size="sm" onClick={() => setIsEditing(true)}>
+                            <Edit2 className="h-4 w-4 mr-1" />
+                            {isArabic ? 'تعديل' : 'Edit'}
+                          </Button>
+                        </div>
+                      </div>
+                      <CardDescription>
+                        {isArabic ? 'عرض وتعديل معلوماتك الشخصية' : 'View and manage your personal information'}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                          <Label>{isArabic ? 'الاسم المعروض' : 'Display Name'}</Label>
+                          <div className="mt-1 p-3 bg-gray-50 rounded-md">
+                            {userProfile?.displayName || (isArabic ? 'لم يتم تحديده' : 'Not provided')}
+                          </div>
+                        </div>
+
+                        <div>
+                          <Label>{isArabic ? 'الاسم الكامل' : 'Full Name'}</Label>
+                          <div className="mt-1 p-3 bg-gray-50 rounded-md">
+                            {userProfile?.fullName || (isArabic ? 'لم يتم تحديده' : 'Not provided')}
+                          </div>
+                        </div>
+
+                        <div>
+                          <Label>{isArabic ? 'البريد الإلكتروني' : 'Email'}</Label>
+                          <div className="mt-1 p-3 bg-gray-50 rounded-md flex items-center gap-2">
+                            <Mail className="h-4 w-4 text-gray-500" />
+                            {userProfile?.email}
+                            {userProfile?.emailVerified && (
+                              <CheckCircle className="h-4 w-4 text-green-600" />
+                            )}
+                          </div>
+                        </div>
+
+                        <div>
+                          <Label>{isArabic ? 'رقم الهاتف' : 'Phone Number'}</Label>
+                          <div className="mt-1 p-3 bg-gray-50 rounded-md flex items-center gap-2">
+                            <Phone className="h-4 w-4 text-gray-500" />
+                            {userProfile?.phoneNumber || (isArabic ? 'لم يتم تحديده' : 'Not provided')}
+                          </div>
+                        </div>
+
+                        <div>
+                          <Label>{isArabic ? 'البلد' : 'Country'}</Label>
+                          <div className="mt-1 p-3 bg-gray-50 rounded-md flex items-center gap-2">
+                            <Globe className="h-4 w-4 text-gray-500" />
+                            {userProfile?.country || (isArabic ? 'لم يتم تحديده' : 'Not provided')}
+                          </div>
+                        </div>
+
+                        <div>
+                          <Label>{isArabic ? 'المدينة' : 'City'}</Label>
+                          <div className="mt-1 p-3 bg-gray-50 rounded-md flex items-center gap-2">
+                            <MapPin className="h-4 w-4 text-gray-500" />
+                            {userProfile?.city || (isArabic ? 'لم يتم تحديده' : 'Not provided')}
+                          </div>
+                        </div>
+
+                        <div>
+                          <Label>{isArabic ? 'الرمز البريدي' : 'Postal Code'}</Label>
+                          <div className="mt-1 p-3 bg-gray-50 rounded-md">
+                            {userProfile?.postalCode || (isArabic ? 'لم يتم تحديده' : 'Not provided')}
+                          </div>
+                        </div>
+
+                        <div>
+                          <Label>{isArabic ? 'نوع العضوية' : 'Membership Type'}</Label>
+                          <div className="mt-1 p-3 bg-gray-50 rounded-md">
+                            {userProfile?.membershipType || (isArabic ? 'عادي' : 'Standard')}
+                          </div>
+                        </div>
+
+                        <div className="md:col-span-2">
+                          <Label>{isArabic ? 'العنوان الكامل' : 'Full Address'}</Label>
+                          <div className="mt-1 p-3 bg-gray-50 rounded-md min-h-20">
+                            {userProfile?.address || (isArabic ? 'لم يتم تحديده' : 'Not provided')}
+                          </div>
+                        </div>
+
+                        {userProfile?.bio && (
+                          <div className="md:col-span-2">
+                            <Label>{isArabic ? 'نبذة شخصية' : 'Bio'}</Label>
+                            <div className="mt-1 p-3 bg-gray-50 rounded-md min-h-20">
+                              {userProfile.bio}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
                 )}
               </TabsContent>
 
-              {/* Profile Picture Tab */}
-              <TabsContent value="picture">
-                {isLoadingProfile ? (
-                  <Card>
-                    <CardContent className="py-12">
-                      <div className="text-center">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600 mx-auto mb-4"></div>
-                        <p className="text-gray-600">
-                          {isArabic ? 'جاري التحميل...' : 'Loading...'}
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ) : userProfile ? (
-                  <ProfilePictureUpload 
-                    profile={userProfile} 
-                    onUpdate={loadUserProfile}
-                    language={language}
-                  />
-                ) : (
-                  <Card>
-                    <CardContent className="py-12">
-                      <div className="text-center">
-                        <ImageIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                        <p className="text-gray-600">
-                          {isArabic ? 'فشل في تحميل الملف الشخصي' : 'Failed to load profile'}
-                        </p>
-                        <Button className="mt-4" onClick={loadUserProfile}>
-                          {isArabic ? 'إعادة المحاولة' : 'Retry'}
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-              </TabsContent>
-
-              {/* Change Password Tab */}
-              <TabsContent value="password">
+              {/* Settings Tab - Merged: Password + Newsletter */}
+              <TabsContent value="settings" className="space-y-6">
+                {/* Change Password Section */}
                 <ChangePasswordForm 
                   language={language}
-                  onSuccess={() => {
-                    setTimeout(() => setActiveTab('overview'), 2000);
-                  }}
+                  onSuccess={() => {}}
                 />
-              </TabsContent>
 
-              {/* Newsletter Tab */}
-              <TabsContent value="newsletter">
+                {/* Newsletter Section */}
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Bell className="h-5 w-5" />
-                      {isArabic ? 'النشرة الإخبارية' : 'Newsletter Subscription'}
+                      {isArabic ? 'النشرة الإخبارية' : 'Newsletter'}
                     </CardTitle>
                     <CardDescription>
                       {isArabic 
                         ? 'إدارة اشتراكك في النشرة الإخبارية'
-                        : 'Manage your newsletter subscription preferences'}
+                        : 'Manage your newsletter subscription'}
                     </CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-6">
-                    {/* Newsletter Info */}
-                    <div className="flex items-start gap-4 p-4 bg-blue-50 rounded-lg border border-blue-100">
-                      <Mail className="h-6 w-6 text-blue-600 mt-1 shrink-0" />
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-blue-900 mb-2">
-                          {isArabic 
-                            ? 'ابق على اطلاع بآخر الأخبار'
-                            : 'Stay Updated with Our Newsletter'}
-                        </h3>
-                        <p className="text-sm text-blue-700 mb-3">
-                          {isArabic 
-                            ? 'احصل على آخر الأخبار والعروض الحصرية والمنتجات الجديدة مباشرة في بريدك الإلكتروني.'
-                            : 'Get the latest news, exclusive offers, and new products delivered straight to your inbox.'}
-                        </p>
-                        <ul className="text-sm text-blue-700 space-y-1">
-                          <li className="flex items-center gap-2">
-                            <CheckCircle className="h-4 w-4" />
-                            {isArabic ? 'عروض حصرية للمشتركين' : 'Exclusive subscriber offers'}
-                          </li>
-                          <li className="flex items-center gap-2">
-                            <CheckCircle className="h-4 w-4" />
-                            {isArabic ? 'إشعارات بالمنتجات الجديدة' : 'New product notifications'}
-                          </li>
-                          <li className="flex items-center gap-2">
-                            <CheckCircle className="h-4 w-4" />
-                            {isArabic ? 'نصائح وأخبار عن القهوة' : 'Coffee tips and news'}
-                          </li>
-                        </ul>
-                      </div>
-                    </div>
-
-                    {/* Current Status */}
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between p-4 border rounded-lg">
-                        <div className="flex items-center gap-3">
-                          {isSubscribed ? (
-                            <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
-                              <Bell className="h-5 w-5 text-green-600" />
-                            </div>
-                          ) : (
-                            <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center">
-                              <BellOff className="h-5 w-5 text-gray-400" />
-                            </div>
-                          )}
-                          <div>
-                            <div className="font-semibold">
-                              {isArabic ? 'حالة الاشتراك' : 'Subscription Status'}
-                            </div>
-                            <div className="text-sm text-gray-600">
-                              {user?.username || userProfile?.email}
-                            </div>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center justify-between p-4 border rounded-lg">
+                      <div className="flex items-center gap-3">
+                        {isSubscribed ? (
+                          <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
+                            <Bell className="h-5 w-5 text-green-600" />
+                          </div>
+                        ) : (
+                          <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center">
+                            <BellOff className="h-5 w-5 text-gray-400" />
+                          </div>
+                        )}
+                        <div>
+                          <div className="font-semibold">
+                            {isArabic ? 'حالة الاشتراك' : 'Subscription Status'}
+                          </div>
+                          <div className="text-sm text-gray-600">
+                            {user?.username || userProfile?.email}
                           </div>
                         </div>
+                      </div>
+                      <div className="flex items-center gap-3">
                         <Badge 
                           variant={isSubscribed ? 'default' : 'secondary'}
                           className={isSubscribed ? 'bg-green-500' : ''}
@@ -863,63 +848,46 @@ const ProfilePage: React.FC = () => {
                             ? (isArabic ? 'مشترك' : 'Subscribed')
                             : (isArabic ? 'غير مشترك' : 'Not Subscribed')}
                         </Badge>
-                      </div>
-
-                      {/* Success/Error Message */}
-                      {subscriptionMessage && (
-                        <div className={`p-4 rounded-lg border ${
-                          subscriptionMessage.type === 'success'
-                            ? 'bg-green-50 border-green-200 text-green-800'
-                            : 'bg-red-50 border-red-200 text-red-800'
-                        }`}>
-                          <div className="flex items-center gap-2">
-                            {subscriptionMessage.type === 'success' ? (
-                              <CheckCircle className="h-5 w-5" />
-                            ) : (
-                              <AlertCircle className="h-5 w-5" />
-                            )}
-                            <p className="text-sm font-medium">
-                              {subscriptionMessage.text}
-                            </p>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Action Button */}
-                      <div className="flex justify-center pt-4">
                         <Button
                           onClick={handleNewsletterToggle}
                           disabled={isLoadingSubscription}
                           variant={isSubscribed ? 'destructive' : 'default'}
-                          size="lg"
-                          className="min-w-[200px]"
+                          size="sm"
                         >
                           {isLoadingSubscription ? (
-                            <>
-                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                              {isArabic ? 'جاري المعالجة...' : 'Processing...'}
-                            </>
+                            <Loader2 className="h-4 w-4 animate-spin" />
                           ) : isSubscribed ? (
                             <>
-                              <BellOff className="h-4 w-4 mr-2" />
-                              {isArabic ? 'إلغاء الاشتراك' : 'Unsubscribe'}
+                              <BellOff className="h-4 w-4 mr-1" />
+                              {isArabic ? 'إلغاء' : 'Unsubscribe'}
                             </>
                           ) : (
                             <>
-                              <Bell className="h-4 w-4 mr-2" />
-                              {isArabic ? 'اشترك الآن' : 'Subscribe Now'}
+                              <Bell className="h-4 w-4 mr-1" />
+                              {isArabic ? 'اشتراك' : 'Subscribe'}
                             </>
                           )}
                         </Button>
                       </div>
                     </div>
 
-                    {/* Privacy Note */}
-                    <div className="text-xs text-gray-500 text-center pt-4 border-t">
-                      {isArabic 
-                        ? 'نحن نحترم خصوصيتك. يمكنك إلغاء الاشتراك في أي وقت.'
-                        : 'We respect your privacy. You can unsubscribe at any time.'}
-                    </div>
+                    {/* Success/Error Message */}
+                    {subscriptionMessage && (
+                      <div className={`p-3 rounded-lg border ${
+                        subscriptionMessage.type === 'success'
+                          ? 'bg-green-50 border-green-200 text-green-800'
+                          : 'bg-red-50 border-red-200 text-red-800'
+                      }`}>
+                        <div className="flex items-center gap-2">
+                          {subscriptionMessage.type === 'success' ? (
+                            <CheckCircle className="h-4 w-4" />
+                          ) : (
+                            <AlertCircle className="h-4 w-4" />
+                          )}
+                          <p className="text-sm">{subscriptionMessage.text}</p>
+                        </div>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -971,22 +939,22 @@ const ProfilePage: React.FC = () => {
                           };
 
                           return (
-                          <div key={order.id} className="border rounded-lg p-5 shadow-sm hover:shadow-md transition-shadow">
-                            <div className="flex items-start justify-between mb-4">
-                              <div className="flex-1">
-                                <div className="font-semibold text-lg mb-1">
+                          <div key={order.id} className="border rounded-lg p-3 sm:p-5 shadow-sm hover:shadow-md transition-shadow">
+                            <div className="flex items-start justify-between mb-3 sm:mb-4 gap-2">
+                              <div className="flex-1 min-w-0">
+                                <div className="font-semibold text-sm sm:text-lg mb-0.5 sm:mb-1 truncate">
                                   {isArabic ? 'طلب رقم' : 'Order'} #{order.orderNumber}
                                 </div>
-                                <div className="text-sm text-gray-500">
-                                  {format(new Date(order.createdAt), 'MMMM dd, yyyy - HH:mm')}
+                                <div className="text-xs sm:text-sm text-gray-500">
+                                  {format(new Date(order.createdAt), 'MMM dd, yyyy - HH:mm')}
                                 </div>
                               </div>
-                              <div className="text-right">
-                                <div className="font-bold text-xl mb-2 text-amber-700">
+                              <div className="text-right shrink-0">
+                                <div className="font-bold text-base sm:text-xl mb-1 sm:mb-2 text-amber-700">
                                   {formatPrice(order.totalAmount, currentRegion.code, isArabic)}
                                 </div>
-                                <div className="flex gap-2 flex-wrap justify-end">
-                                  <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(order.status)}`}>
+                                <div className="flex gap-1.5 sm:gap-2 flex-wrap justify-end">
+                                  <span className={`px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-semibold ${getStatusColor(order.status)}`}>
                                     {isArabic 
                                       ? order.status === 'Delivered' ? 'تم التوصيل'
                                         : order.status === 'Processing' ? 'قيد المعالجة'
@@ -997,7 +965,7 @@ const ProfilePage: React.FC = () => {
                                       : order.status
                                     }
                                   </span>
-                                  <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getPaymentColor(order.paymentStatus)}`}>
+                                  <span className={`px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-semibold ${getPaymentColor(order.paymentStatus)}`}>
                                     {isArabic
                                       ? order.paymentStatus === 'Paid' ? 'مدفوع'
                                         : order.paymentStatus === 'Unpaid' ? 'غير مدفوع'
@@ -1012,9 +980,9 @@ const ProfilePage: React.FC = () => {
                               </div>
                             </div>
                             
-                            <Separator className="my-3" />
+                            <Separator className="my-2 sm:my-3" />
                             
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                            <div className="grid grid-cols-2 gap-2 sm:gap-4 text-xs sm:text-sm">
                               <div>
                                 <span className="text-gray-600">{isArabic ? 'العناصر:' : 'Items:'}</span>
                                 <span className="ml-2 font-medium">
@@ -1068,13 +1036,14 @@ const ProfilePage: React.FC = () => {
                               )}
                             </div>
                             
-                            <div className="flex gap-2 mt-4">
+                            <div className="flex gap-2 mt-3 sm:mt-4">
                               <Button 
                                 variant="outline" 
                                 size="sm"
+                                className="text-xs sm:text-sm"
                                 onClick={() => navigate(`/order/${order.id}`)}
                               >
-                                <Eye className="h-4 w-4 mr-2" />
+                                <Eye className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                                 {isArabic ? 'التفاصيل' : 'View Details'}
                               </Button>
                               {order.paymentStatus !== 'Paid' && order.status !== 'Cancelled' && (
