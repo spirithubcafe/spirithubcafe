@@ -45,7 +45,6 @@ import {
   CheckCircle,
   Eye,
   Globe,
-  Lock,
   Bell,
   BellOff,
   Loader2,
