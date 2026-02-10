@@ -18,6 +18,7 @@ import {
   UserPlus,
   AlertTriangle,
   Globe,
+  Gift,
 } from 'lucide-react';
 import { useApp } from '../../hooks/useApp';
 import { useRegion } from '../../hooks/useRegion';
@@ -54,6 +55,7 @@ const DEFAULT_SETTINGS: WhatsAppNotificationSettingsDto = {
   customerPasswordResetEnabled: true,
   customerPasswordChangedEnabled: true,
   customerOtpEnabled: true,
+  customerGiftRecipientEnabled: true,
 
   // Admin notifications
   adminNewOrderEnabled: true,
@@ -262,6 +264,14 @@ export const WhatsAppNotificationSettingsManagement: React.FC = () => {
         ? 'إرسال رسالة تأكيد تغيير كلمة المرور'
         : 'Send message confirming password change',
       icon: ShieldCheck,
+    },
+    {
+      key: 'customerGiftRecipientEnabled',
+      label: isArabic ? 'إشعار مستلم الهدية' : 'Gift Recipient Notification',
+      description: isArabic
+        ? 'إرسال رسالة واتساب لمستلم الهدية عند تقديم طلب هدية'
+        : 'Send WhatsApp message to gift recipient when a gift order is placed',
+      icon: Gift,
     },
   ];
 

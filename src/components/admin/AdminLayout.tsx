@@ -292,6 +292,16 @@ export const AdminLayout: React.FC = () => {
       roles: ['Admin'],
     },
     {
+      id: 'whatsappTemplates',
+      label: isArabic ? 'قوالب رسائل واتساب' : 'WhatsApp Templates',
+      description: isArabic
+        ? 'تخصيص قوالب رسائل واتساب المرسلة للعملاء والمشرفين'
+        : 'Customize WhatsApp message templates for notifications',
+      icon: FileText,
+      path: '/admin/whatsapp-templates',
+      roles: ['Admin'],
+    },
+    {
       id: 'users',
       label: t('admin.manageUsers'),
       description: t('admin.usersDesc'),
@@ -346,7 +356,7 @@ export const AdminLayout: React.FC = () => {
       id: 'operations',
       label: t('admin.navGroups.operations'),
       items: availableNavItems.filter((item) =>
-        ['orders', 'wholesaleOrders', 'newsletter', 'emailSettings', 'emailNotificationSettings', 'whatsappSend', 'whatsappNotificationSettings', 'reports', 'system', 'seo'].includes(item.id)
+        ['orders', 'wholesaleOrders', 'newsletter', 'emailSettings', 'emailNotificationSettings', 'whatsappSend', 'whatsappNotificationSettings', 'whatsappTemplates', 'reports', 'system', 'seo'].includes(item.id)
       ),
     },
   ].filter((group) => group.items.length > 0);

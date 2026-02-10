@@ -16,4 +16,6 @@ export { EmailSettingsManagement } from './EmailSettingsManagement';
 export { EmailNotificationSettingsManagement } from './EmailNotificationSettingsManagement';
 export { WhatsAppSendMessage } from './WhatsAppSendMessage';
 export { WhatsAppNotificationSettingsManagement } from './WhatsAppNotificationSettingsManagement';
+export { WhatsAppTemplatesManagement } from './WhatsAppTemplatesManagement';
+export { WhatsAppTemplateEditor } from './WhatsAppTemplateEditor';
 export { ReviewsManagement } from './ReviewsManagement';

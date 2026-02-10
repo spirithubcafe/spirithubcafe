@@ -74,6 +74,7 @@ export interface WhatsAppNotificationSettingsDto {
   customerPasswordResetEnabled: boolean;
   customerPasswordChangedEnabled: boolean;
   customerOtpEnabled: boolean;
+  customerGiftRecipientEnabled: boolean;
   
   // Admin notifications
   adminNewOrderEnabled: boolean;
@@ -87,4 +88,41 @@ export interface WhatsAppNotificationSettingsResponse extends WhatsAppNotificati
   id: number;
   createdAt: string;
   updatedAt: string;
+}
+
+// ==================== WhatsApp Message Template Types ====================
+
+export interface WhatsAppMessageTemplateDto {
+  templateKey: string;
+  name: string;
+  description?: string;
+  body: string;
+  availablePlaceholders?: string;
+  isActive: boolean;
+  language: string;
+}
+
+export interface WhatsAppMessageTemplateResponse extends WhatsAppMessageTemplateDto {
+  id: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface WhatsAppMessageTemplateListItem {
+  id: number;
+  templateKey: string;
+  name: string;
+  description?: string;
+  isActive: boolean;
+  language: string;
+  updatedAt: string;
+}
+
+export interface WhatsAppTemplatePreviewRequest {
+  body: string;
+  sampleData?: Record<string, string>;
+}
+
+export interface WhatsAppTemplatePreviewResponse {
+  rendered: string;
 }

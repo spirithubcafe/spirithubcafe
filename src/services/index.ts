@@ -19,6 +19,7 @@ export { newsletterService } from './newsletterService';
 export { emailService } from './emailService';
 export { whatsappService } from './whatsappService';
 export { whatsappNotificationSettingsService } from './whatsappNotificationSettingsService';
+export { whatsappTemplateService } from './whatsappTemplateService';
 export { wholesaleOrderService } from './wholesaleOrderService';
 export { wholesaleCustomerLookupService } from './wholesaleCustomerLookupService';
 export {
