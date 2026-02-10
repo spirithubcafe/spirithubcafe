@@ -133,6 +133,7 @@ export const Navigation: React.FC = () => {
               </DropdownMenuTrigger>
               <DropdownMenuContent 
                 align={language === 'ar' ? 'end' : 'start'} 
+                dir={language === 'ar' ? 'rtl' : 'ltr'}
                 className="min-w-[16rem] w-max max-w-xs bg-white border border-gray-200 shadow-lg"
                 onCloseAutoFocus={(e) => e.preventDefault()}
               >
@@ -185,6 +186,7 @@ export const Navigation: React.FC = () => {
               </DropdownMenuTrigger>
               <DropdownMenuContent 
                 align={language === 'ar' ? 'end' : 'start'} 
+                dir={language === 'ar' ? 'rtl' : 'ltr'}
                 className="min-w-[16rem] w-max max-w-xs bg-white border border-gray-200 shadow-lg"
                 onCloseAutoFocus={(e) => e.preventDefault()}
                >
@@ -237,6 +239,7 @@ export const Navigation: React.FC = () => {
               </DropdownMenuTrigger>
               <DropdownMenuContent 
                 align={language === 'ar' ? 'end' : 'start'} 
+                dir={language === 'ar' ? 'rtl' : 'ltr'}
                 className="min-w-[14rem] w-max max-w-xs bg-white border border-gray-200 shadow-lg"
                 onCloseAutoFocus={(e) => e.preventDefault()}
               >
