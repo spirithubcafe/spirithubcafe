@@ -19,7 +19,7 @@ export const ShopCategoryPage = () => {
   const { language } = useApp();
   const isArabic = language === 'ar';
   const { category, loading, error } = useShopCategory(slug);
-  const { shopData } = useShopPage();
+  const { shopData, loading: shopPageLoading } = useShopPage();
   const { currentRegion } = useRegion();
 
   const categoryId = category?.id ?? 0;
@@ -181,7 +181,7 @@ export const ShopCategoryPage = () => {
           />
         </div>
 
-        {productsLoading && (
+        {(productsLoading || shopPageLoading) && (
           <div className="grid gap-6 lg:grid-cols-2">
             {Array.from({ length: 4 }).map((_, index) => (
               <div key={`skeleton-${index}`} className="overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm">
@@ -210,7 +210,7 @@ export const ShopCategoryPage = () => {
           </div>
         )}
 
-        {!productsLoading && products.length === 0 && (
+        {!productsLoading && !shopPageLoading && products.length === 0 && (
           <div className="rounded-3xl bg-white p-8 text-center shadow-sm">
             <p className="text-stone-600">
               {isArabic ? 'لا توجد منتجات في هذه الفئة' : 'No products in this category'}
@@ -218,7 +218,7 @@ export const ShopCategoryPage = () => {
           </div>
         )}
 
-        {products.length > 0 && (
+        {!shopPageLoading && products.length > 0 && (
           <div
             className={
               hasShopProducts

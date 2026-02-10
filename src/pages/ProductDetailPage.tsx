@@ -388,7 +388,11 @@ export const ProductDetailPage = () => {
     return description ?? '';
   }, [language, product]);
 
-  const { shopData } = useShopPage();
+  const { shopData, loading: shopDataLoading } = useShopPage();
+
+  // When accessed via a shop route, wait for shopData before deciding layout.
+  // This prevents the flash from normal → shop layout.
+  const shopDataReady = !isShopRoute || !shopDataLoading;
 
   const isVelvetHarmonyDiscovery = useMemo(() => {
     if (!product || !shopData?.categories) return false;
@@ -837,7 +841,7 @@ export const ProductDetailPage = () => {
               </div>
             )}
 
-            {state === 'loading' ? (
+            {(state === 'loading' || (state === 'ready' && !shopDataReady)) ? (
               <div className="bg-white rounded-xl shadow-lg overflow-hidden">
                 <div className="p-3 md:p-4 lg:p-6">
                   <div className="grid lg:grid-cols-2 gap-4 md:gap-6 lg:gap-8">
@@ -916,7 +920,7 @@ export const ProductDetailPage = () => {
               </div>
             ) : null}
 
-            {state === 'ready' && product ? (
+            {state === 'ready' && product && shopDataReady ? (
               <>
                 {/* Product Details Card */}
                 {isVelvetHarmonyDiscovery ? (
