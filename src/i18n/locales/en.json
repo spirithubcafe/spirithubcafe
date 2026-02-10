@@ -379,7 +379,15 @@
       "setAsMain": "Set as main",
       "noImages": "No images uploaded yet",
       "deleteImageWarning": "Are you sure you want to delete this image?",
-      "imageFormHint": "Paste a hosted image URL or CDN path to attach it to this product."
+      "imageFormHint": "Paste a hosted image URL or CDN path to attach it to this product.",
+      "basicInfo": "Basic Information",
+      "notes": "Notes",
+      "notesAr": "Notes (Arabic)",
+      "settings": "Settings",
+      "digital": "Digital",
+      "displayOrder": "Display Order",
+      "saveError": "Failed to save product",
+      "validationErrors": "Validation errors:"
     },
     "users": {
       "title": "Users Management",

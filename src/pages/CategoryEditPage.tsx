@@ -1,9 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import ReactQuill from 'react-quill-new';
-import 'react-quill-new/dist/quill.snow.css';
 import { useApp } from '../hooks/useApp';
+import { HtmlEditor } from '../components/ui/html-editor';
 import { Card, CardContent, CardHeader } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -23,8 +22,6 @@ export const CategoryEditPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [category, setCategory] = useState<Category | null>(null);
-  const quillRef = useRef<ReactQuill>(null);
-  const quillRefAr = useRef<ReactQuill>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -237,25 +234,6 @@ export const CategoryEditPage: React.FC = () => {
     }
   };
 
-  const quillModules = {
-    toolbar: [
-      [{ 'header': [1, 2, 3, false] }],
-      ['bold', 'italic', 'underline', 'strike'],
-      [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-      [{ 'align': [] }],
-      ['link'],
-      ['clean']
-    ]
-  };
-
-  const quillFormats = [
-    'header',
-    'bold', 'italic', 'underline', 'strike',
-    'list',
-    'align',
-    'link'
-  ];
-
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 page-padding-top pb-8 flex items-center justify-center">
@@ -349,31 +327,22 @@ export const CategoryEditPage: React.FC = () => {
               {/* Description with Rich Text Editor */}
               <div className="space-y-2">
                 <Label htmlFor="description">{t('admin.categories.description')}</Label>
-                <ReactQuill
-                  ref={quillRef}
-                  theme="snow"
+                <HtmlEditor
                   value={formData.description}
                   onChange={(value) => setFormData(prev => ({ ...prev, description: value }))}
-                  modules={quillModules}
-                  formats={quillFormats}
                   placeholder={t('admin.categories.descriptionPlaceholder')}
-                  className="bg-white"
+                  dir="ltr"
                 />
               </div>
 
               {/* Description Arabic with Rich Text Editor */}
               <div className="space-y-2">
                 <Label htmlFor="descriptionAr">{t('admin.categories.descriptionAr')}</Label>
-                <ReactQuill
-                  ref={quillRefAr}
-                  theme="snow"
+                <HtmlEditor
                   value={formData.descriptionAr}
                   onChange={(value) => setFormData(prev => ({ ...prev, descriptionAr: value }))}
-                  modules={quillModules}
-                  formats={quillFormats}
                   placeholder={t('admin.categories.descriptionArPlaceholder')}
-                  className="bg-white"
-                  style={{ direction: 'rtl' }}
+                  dir="rtl"
                 />
               </div>
 

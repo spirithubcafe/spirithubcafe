@@ -1,8 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import ReactQuill from 'react-quill-new';
-import 'react-quill-new/dist/quill.snow.css';
 import { useApp } from '../hooks/useApp';
+import { HtmlEditor } from '../components/ui/html-editor';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -87,10 +86,6 @@ export const ProductAddPage: React.FC<ProductFormPageProps> = ({
   const isEditMode = mode === 'edit' || typeof resolvedProductId === 'number';
   const [submitting, setSubmitting] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
-  const quillRefDesc = useRef<ReactQuill>(null);
-  const quillRefDescAr = useRef<ReactQuill>(null);
-  const quillRefNotes = useRef<ReactQuill>(null);
-  const quillRefNotesAr = useRef<ReactQuill>(null);
   
   const [formData, setFormData] = useState<ProductCreateUpdateDto>({
     sku: '',
@@ -326,25 +321,6 @@ export const ProductAddPage: React.FC<ProductFormPageProps> = ({
     }
   };
 
-  const quillModules = {
-    toolbar: [
-      [{ 'header': [1, 2, 3, false] }],
-      ['bold', 'italic', 'underline', 'strike'],
-      [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-      [{ 'align': [] }],
-      ['link'],
-      ['clean']
-    ]
-  };
-
-  const quillFormats = [
-    'header',
-    'bold', 'italic', 'underline', 'strike',
-    'list',
-    'align',
-    'link'
-  ];
-
   const pageTitle = isEditMode ? t('admin.products.edit') : t('admin.products.add');
   const submitLabel = isEditMode ? t('common.update') : t('common.create');
 
@@ -495,55 +471,43 @@ export const ProductAddPage: React.FC<ProductFormPageProps> = ({
 
                 <div className="space-y-2">
                   <Label>{t('admin.products.description')}</Label>
-                  <ReactQuill
-                    ref={quillRefDesc}
-                    theme="snow"
+                  <HtmlEditor
                     value={formData.description}
                     onChange={(value) => setFormData(prev => ({ ...prev, description: value }))}
-                    modules={quillModules}
-                    formats={quillFormats}
-                    className="bg-white"
+                    placeholder="Product description..."
+                    dir="ltr"
                   />
                 </div>
 
                 <div className="space-y-2">
                   <Label>{t('admin.products.descriptionAr')}</Label>
-                  <ReactQuill
-                    ref={quillRefDescAr}
-                    theme="snow"
+                  <HtmlEditor
                     value={formData.descriptionAr}
                     onChange={(value) => setFormData(prev => ({ ...prev, descriptionAr: value }))}
-                    modules={quillModules}
-                    formats={quillFormats}
-                    className="bg-white"
-                    style={{ direction: 'rtl' }}
+                    placeholder="وصف المنتج..."
+                    dir="rtl"
                   />
                 </div>
 
                 <div className="space-y-2">
                   <Label>{t('admin.products.notes')}</Label>
-                  <ReactQuill
-                    ref={quillRefNotes}
-                    theme="snow"
+                  <HtmlEditor
                     value={formData.notes}
                     onChange={(value) => setFormData(prev => ({ ...prev, notes: value }))}
-                    modules={quillModules}
-                    formats={quillFormats}
-                    className="bg-white"
+                    placeholder="Additional notes..."
+                    dir="ltr"
+                    minHeight="150px"
                   />
                 </div>
 
                 <div className="space-y-2">
                   <Label>{t('admin.products.notesAr')}</Label>
-                  <ReactQuill
-                    ref={quillRefNotesAr}
-                    theme="snow"
+                  <HtmlEditor
                     value={formData.notesAr}
                     onChange={(value) => setFormData(prev => ({ ...prev, notesAr: value }))}
-                    modules={quillModules}
-                    formats={quillFormats}
-                    className="bg-white"
-                    style={{ direction: 'rtl' }}
+                    placeholder="ملاحظات إضافية..."
+                    dir="rtl"
+                    minHeight="150px"
                   />
                 </div>
               </div>
