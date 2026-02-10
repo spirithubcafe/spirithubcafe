@@ -328,7 +328,7 @@ export const CategoryEditPage: React.FC = () => {
               <div className="space-y-2">
                 <Label htmlFor="description">{t('admin.categories.description')}</Label>
                 <HtmlEditor
-                  value={formData.description}
+                  value={formData.description ?? ''}
                   onChange={(value) => setFormData(prev => ({ ...prev, description: value }))}
                   placeholder={t('admin.categories.descriptionPlaceholder')}
                   dir="ltr"
@@ -339,7 +339,7 @@ export const CategoryEditPage: React.FC = () => {
               <div className="space-y-2">
                 <Label htmlFor="descriptionAr">{t('admin.categories.descriptionAr')}</Label>
                 <HtmlEditor
-                  value={formData.descriptionAr}
+                  value={formData.descriptionAr ?? ''}
                   onChange={(value) => setFormData(prev => ({ ...prev, descriptionAr: value }))}
                   placeholder={t('admin.categories.descriptionArPlaceholder')}
                   dir="rtl"

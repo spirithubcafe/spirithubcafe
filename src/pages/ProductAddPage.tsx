@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useApp } from '../hooks/useApp';
 import { HtmlEditor } from '../components/ui/html-editor';
@@ -472,7 +472,7 @@ export const ProductAddPage: React.FC<ProductFormPageProps> = ({
                 <div className="space-y-2">
                   <Label>{t('admin.products.description')}</Label>
                   <HtmlEditor
-                    value={formData.description}
+                    value={formData.description ?? ''}
                     onChange={(value) => setFormData(prev => ({ ...prev, description: value }))}
                     placeholder="Product description..."
                     dir="ltr"
@@ -482,7 +482,7 @@ export const ProductAddPage: React.FC<ProductFormPageProps> = ({
                 <div className="space-y-2">
                   <Label>{t('admin.products.descriptionAr')}</Label>
                   <HtmlEditor
-                    value={formData.descriptionAr}
+                    value={formData.descriptionAr ?? ''}
                     onChange={(value) => setFormData(prev => ({ ...prev, descriptionAr: value }))}
                     placeholder="وصف المنتج..."
                     dir="rtl"
@@ -492,7 +492,7 @@ export const ProductAddPage: React.FC<ProductFormPageProps> = ({
                 <div className="space-y-2">
                   <Label>{t('admin.products.notes')}</Label>
                   <HtmlEditor
-                    value={formData.notes}
+                    value={formData.notes ?? ''}
                     onChange={(value) => setFormData(prev => ({ ...prev, notes: value }))}
                     placeholder="Additional notes..."
                     dir="ltr"
@@ -503,7 +503,7 @@ export const ProductAddPage: React.FC<ProductFormPageProps> = ({
                 <div className="space-y-2">
                   <Label>{t('admin.products.notesAr')}</Label>
                   <HtmlEditor
-                    value={formData.notesAr}
+                    value={formData.notesAr ?? ''}
                     onChange={(value) => setFormData(prev => ({ ...prev, notesAr: value }))}
                     placeholder="ملاحظات إضافية..."
                     dir="rtl"
