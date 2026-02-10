@@ -17,7 +17,10 @@ export const CategorySection = ({ category }: Props) => {
   const description = isArabic ? category.descriptionAr || category.description : category.description;
 
   return (
-    <section id={`category-${category.slug}`} className="space-y-6">
+    <section
+      id={`category-${category.slug}`}
+      className="space-y-6 border-t border-stone-200/40 pt-6 first:border-t-0 first:pt-0"
+    >
       <div className="flex flex-col gap-4 rounded-3xl bg-white p-6 shadow-sm md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-4">
           {category.imagePath && (
@@ -37,9 +40,6 @@ export const CategorySection = ({ category }: Props) => {
                 dangerouslySetInnerHTML={{ __html: description }}
               />
             )}
-            <span className="text-xs font-medium text-stone-500">
-              {category.productCount} {isArabic ? 'منتج' : 'products'}
-            </span>
           </div>
         </div>
         <Link

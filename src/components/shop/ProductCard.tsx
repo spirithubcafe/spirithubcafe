@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { ShoppingCart } from 'lucide-react';
 import type { ShopProduct } from '../../types/shop';
 import { getProductImageUrl, handleImageError } from '../../lib/imageUtils';
 import { ProductBadges } from './ProductBadges';
@@ -6,6 +7,7 @@ import { PriceDisplay } from './PriceDisplay';
 import { StarRating } from './StarRating';
 import { useApp } from '../../hooks/useApp';
 import { useRegion } from '../../hooks/useRegion';
+import { useCart } from '../../hooks/useCart';
 
 interface Props {
   product: ShopProduct;
@@ -14,15 +16,41 @@ interface Props {
 export const ProductCard = ({ product }: Props) => {
   const { language } = useApp();
   const { currentRegion } = useRegion();
+  const { addToCart, openCart } = useCart();
   const isArabic = language === 'ar';
 
   const name = isArabic ? product.nameAr || product.name : product.name;
   const tasting = isArabic ? product.tastingNotesAr || product.tastingNotes : product.tastingNotes;
   const productSlug = product.slug || `${product.id}`;
   const productUrl = `/${currentRegion.code}/shop/product/${productSlug}`;
+  const priceForCart = product.minPrice ?? product.maxPrice ?? 0;
+  const canQuickAdd =
+    product.minPrice !== null &&
+    product.minPrice !== undefined &&
+    (product.maxPrice === null || product.maxPrice === undefined || product.minPrice === product.maxPrice) &&
+    priceForCart > 0;
+
+  const handleQuickAdd = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    addToCart({
+      id: `${product.id}`,
+      productId: product.id,
+      productVariantId: null,
+      name,
+      price: priceForCart,
+      image: getProductImageUrl(product.mainImagePath),
+      tastingNotes: product.tastingNotes ?? undefined,
+      variantName: undefined,
+      weight: undefined,
+      weightUnit: undefined,
+    });
+    openCart();
+  };
 
   return (
-    <div className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
+    <div className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:scale-[0.98] active:shadow-md">
       <div className="relative">
         <ProductBadges product={product} />
         <Link to={productUrl} className="block overflow-hidden">
@@ -53,11 +81,31 @@ export const ProductCard = ({ product }: Props) => {
           <StarRating rating={product.averageRating} count={product.reviewCount} />
         )}
 
-        <PriceDisplay
-          minPrice={product.minPrice}
-          maxPrice={product.maxPrice}
-          currency={currentRegion.currency}
-        />
+        <div className="flex items-center justify-between gap-3">
+          <PriceDisplay
+            minPrice={product.minPrice}
+            maxPrice={product.maxPrice}
+            currency={currentRegion.currency}
+          />
+          {canQuickAdd ? (
+            <button
+              type="button"
+              onClick={handleQuickAdd}
+              aria-label={isArabic ? 'إضافة إلى السلة' : 'Add to cart'}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-stone-200 text-stone-700 transition hover:border-amber-400 hover:text-amber-600"
+            >
+              <ShoppingCart className="h-4 w-4" />
+            </button>
+          ) : (
+            <Link
+              to={productUrl}
+              aria-label={isArabic ? 'عرض تفاصيل المنتج' : 'View product details'}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-stone-200 text-stone-700 transition hover:border-amber-400 hover:text-amber-600"
+            >
+              <ShoppingCart className="h-4 w-4" />
+            </Link>
+          )}
+        </div>
       </div>
     </div>
   );
