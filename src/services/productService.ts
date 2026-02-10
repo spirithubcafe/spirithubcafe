@@ -96,6 +96,19 @@ export const productService = {
   },
 
   /**
+   * Get best-selling products
+   * @param count Number of products to return (default 6)
+   * @returns Promise with array of best-selling products
+   */
+  getBestSellers: async (count: number = 6): Promise<Product[]> => {
+    const response = await http.get<ApiResponse<Product[]>>('/api/products/best-sellers', {
+      params: { count },
+    });
+    const apiResponse = response.data;
+    return apiResponse.data || [];
+  },
+
+  /**
    * Get products by category with pagination
    * @param categoryId Category ID
    * @param params Pagination parameters

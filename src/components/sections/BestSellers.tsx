@@ -1,68 +1,64 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ProductCard } from '../products/ProductCard';
 import { useApp } from '../../hooks/useApp';
+import { productService } from '../../services/productService';
+import { getProductImageUrl } from '../../lib/imageUtils';
+import type { Product } from '../../contexts/AppContextDefinition';
 
 export const BestSellers: React.FC = () => {
   const { t } = useTranslation();
-  const { products, loading } = useApp();
+  const { language } = useApp();
+  const [bestSellerProducts, setBestSellerProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const bestSellerProducts = useMemo(() => {
-    const items = (products || []).filter((p) => p.isActive !== false && p.isOrderable !== false && p.price > 0);
-
-    if (items.length === 0) return [];
-
-    // Sort helper - stable sort by ID
-    const toNumericId = (value: string | undefined | number) => {
-      if (!value) return Number.NEGATIVE_INFINITY;
-      const n = typeof value === 'number' ? value : Number.parseInt(value, 10);
-      return Number.isFinite(n) ? n : Number.NEGATIVE_INFINITY;
-    };
-
-    // Group products by category
-    const categoryMap = new Map<number, typeof items>();
-    
-    items.forEach((product) => {
-      const catId = typeof product.categoryId === 'number' ? product.categoryId : Number(product.categoryId) || 0;
-      if (!categoryMap.has(catId)) {
-        categoryMap.set(catId, []);
-      }
-      categoryMap.get(catId)!.push(product);
-    });
-
-    // Sort products within each category by ID (newest first)
-    categoryMap.forEach((products) => {
-      products.sort((a, b) => toNumericId(b.id) - toNumericId(a.id));
-    });
-
-    // Pick products rotating through categories for variety
-    const result: typeof items = [];
-
-    // Fill remaining slots with products rotating through categories
-    // Sort category IDs for consistent order
-    const categories = Array.from(categoryMap.keys()).sort((a, b) => a - b);
-    let categoryIndex = 0;
-
-    while (result.length < 6 && categoryMap.size > 0) {
-      const catId = categories[categoryIndex % categories.length];
-      const categoryProducts = categoryMap.get(catId);
-
-      if (categoryProducts && categoryProducts.length > 0) {
-        result.push(categoryProducts.shift()!);
-      }
-
-      // Remove empty categories
-      if (categoryProducts && categoryProducts.length === 0) {
-        categoryMap.delete(catId);
-        categories.splice(categoryIndex % categories.length, 1);
-        if (categories.length === 0) break;
-      } else {
-        categoryIndex++;
-      }
+  const fetchBestSellers = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await productService.getBestSellers(6);
+      const mapped: Product[] = (Array.isArray(data) ? data : []).map((p) => {
+        const record = p as unknown as Record<string, unknown>;
+        const minPrice = typeof record.minPrice === 'number' ? record.minPrice : 0;
+        const price = typeof record.price === 'number' ? record.price : minPrice;
+        const imagePath = (record.mainImagePath as string) || (record.imagePath as string) || '';
+        const lang = language;
+        return {
+          id: String(record.id),
+          slug: (record.slug as string) || undefined,
+          isActive: true,
+          isOrderable: price > 0,
+          isLimited: (record.isLimited as boolean) || undefined,
+          isPremium: (record.isPremium as boolean) || undefined,
+          name: lang === 'ar' && record.nameAr ? String(record.nameAr) : String(record.name || ''),
+          nameAr: record.nameAr ? String(record.nameAr) : undefined,
+          description: lang === 'ar' && record.descriptionAr ? String(record.descriptionAr) : String(record.description || ''),
+          descriptionAr: record.descriptionAr ? String(record.descriptionAr) : undefined,
+          price,
+          image: imagePath ? getProductImageUrl(imagePath) : '',
+          categoryId: record.categoryId != null ? String(record.categoryId) : undefined,
+          categorySlug: (record.categorySlug as string) || undefined,
+          category: lang === 'ar'
+            ? String(record.categoryNameAr || record.categoryName || '')
+            : String(record.categoryName || record.categoryNameAr || ''),
+          tastingNotes: lang === 'ar' && record.tastingNotesAr ? String(record.tastingNotesAr) : (record.tastingNotes as string) || undefined,
+          tastingNotesAr: record.tastingNotesAr ? String(record.tastingNotesAr) : undefined,
+          featured: (record.isFeatured as boolean) || undefined,
+          topTags: Array.isArray(record.topTags) ? record.topTags : undefined,
+          bottomTags: Array.isArray(record.bottomTags) ? record.bottomTags : undefined,
+        } as Product;
+      });
+      setBestSellerProducts(mapped);
+    } catch (err) {
+      console.error('[BestSellers] fetch error:', err);
+      setBestSellerProducts([]);
+    } finally {
+      setLoading(false);
     }
+  }, [language]);
 
-    return result.slice(0, 6);
-  }, [products]);
+  useEffect(() => {
+    fetchBestSellers();
+  }, [fetchBestSellers]);
 
   if (loading) {
     return (
