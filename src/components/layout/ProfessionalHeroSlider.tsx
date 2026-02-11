@@ -264,6 +264,32 @@ export const ProfessionalHeroSlider: React.FC = () => {
         language === 'ar' ? 'منتج يدوياً' : 'Hand Processed'
       ],
       cta: language === 'ar' ? 'تسوق الآن' : 'SHOP NOW'
+    },
+    {
+      id: '7',
+      image: '/images/slides/spirithub-hero-bundles-gifts.webp',
+      title: language === 'ar' ? 'هدايا مختارة بعناية وباقات اكتشاف' : 'THOUGHTFULLY CURATED GIFTS & DISCOVERY BUNDLES',
+      subtitle: language === 'ar' ? [
+        'من تشكيلات القهوة المختصة إلى تجارب الهدايا الأنيقة،',
+        'صُممت لتُسعد كل ذوق وتناسب كل مناسبة.'
+      ] : [
+        'From specialty coffee selections to elegant gift experiences,',
+        'crafted to delight every taste and occasion.'
+      ],
+      description: language === 'ar'
+        ? 'باقات هدايا وتشكيلات قهوة مختصة لكل مناسبة'
+        : 'Gift bundles and specialty coffee selections for every occasion',
+      stats: [
+        { value: '10+', label: language === 'ar' ? 'باقة مميزة' : 'Unique Bundles' },
+        { value: '100%', label: language === 'ar' ? 'تغليف فاخر' : 'Premium Packaging' },
+        { value: '5★', label: language === 'ar' ? 'تقييم' : 'Rating' }
+      ],
+      features: [
+        language === 'ar' ? 'هدايا مختارة بعناية' : 'Curated Gifts',
+        language === 'ar' ? 'تغليف أنيق' : 'Elegant Packaging',
+        language === 'ar' ? 'مناسب لكل مناسبة' : 'Perfect for Any Occasion'
+      ],
+      cta: language === 'ar' ? 'استكشف الباقات والهدايا' : 'EXPLORE BUNDLES & GIFTS'
     }
   ];
 
