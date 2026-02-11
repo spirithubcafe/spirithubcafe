@@ -1,4 +1,4 @@
-import { http } from './apiClient';
+import { http, publicHttp } from './apiClient';
 import type {
   ProductTagCreateUpdateDto,
   ProductTagResponseDto,
@@ -138,7 +138,7 @@ export const productTagService = {
   /** Get all tags assigned to a product */
   getProductTags: async (productId: number): Promise<ProductTagInfoDto[]> => {
     try {
-      const res = await http.get(`${API_BASE}/product/${productId}`);
+      const res = await publicHttp.get(`${API_BASE}/product/${productId}`);
       return ensureArray(unwrap<ProductTagInfoDto[]>(res.data));
     } catch (err) {
       console.error('[productTagService] getProductTags error:', err);
@@ -149,7 +149,7 @@ export const productTagService = {
   /** Get only top tags for a product */
   getProductTopTags: async (productId: number): Promise<ProductTagInfoDto[]> => {
     try {
-      const res = await http.get(`${API_BASE}/product/${productId}/top`);
+      const res = await publicHttp.get(`${API_BASE}/product/${productId}/top`);
       return ensureArray(unwrap<ProductTagInfoDto[]>(res.data));
     } catch (err) {
       console.error('[productTagService] getProductTopTags error:', err);
@@ -160,7 +160,7 @@ export const productTagService = {
   /** Get only bottom tags for a product */
   getProductBottomTags: async (productId: number): Promise<ProductTagInfoDto[]> => {
     try {
-      const res = await http.get(`${API_BASE}/product/${productId}/bottom`);
+      const res = await publicHttp.get(`${API_BASE}/product/${productId}/bottom`);
       return ensureArray(unwrap<ProductTagInfoDto[]>(res.data));
     } catch (err) {
       console.error('[productTagService] getProductBottomTags error:', err);

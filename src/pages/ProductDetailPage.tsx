@@ -27,6 +27,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useShopPage } from '../hooks/useShop';
 import { productService } from '../services/productService';
 import { productReviewService } from '../services/productReviewService';
+import { productTagService } from '../services/productTagService';
 import { getProductImageUrl, handleImageError, resolveProductImageUrls } from '../lib/imageUtils';
 import { generateProductSeoMetadata } from '../lib/productSeoUtils';
 import type { Product as ApiProduct, ProductReview, ProductVariant, ProductReviewCreateDto } from '../types/product';
@@ -278,6 +279,30 @@ export const ProductDetailPage = () => {
         };
 
         setProduct(sanitized);
+
+        // Enrich with all tags (backend may only embed a subset)
+        const productNumericId = typeof sanitized.id === 'string' ? Number(sanitized.id) : sanitized.id;
+        if (productNumericId) {
+          Promise.all([
+            productTagService.getProductTopTags(productNumericId).catch(() => []),
+            productTagService.getProductBottomTags(productNumericId).catch(() => []),
+          ]).then(([fetchedTop, fetchedBottom]) => {
+            if (!isMounted) return;
+            setProduct((prev) => {
+              if (!prev || (typeof prev.id === 'string' ? Number(prev.id) : prev.id) !== productNumericId) return prev;
+              const needsUpdate =
+                (fetchedTop.length > 0 && fetchedTop.length !== (prev.topTags?.length ?? 0)) ||
+                (fetchedBottom.length > 0 && fetchedBottom.length !== (prev.bottomTags?.length ?? 0));
+              if (!needsUpdate) return prev;
+              return {
+                ...prev,
+                topTags: fetchedTop.length > 0 ? fetchedTop : prev.topTags,
+                bottomTags: fetchedBottom.length > 0 ? fetchedBottom : prev.bottomTags,
+              };
+            });
+          });
+        }
+
         setIsReviewsDialogOpen(false);
         setCanReview(null);
         setReviewForm((prev) => ({
@@ -904,13 +929,13 @@ export const ProductDetailPage = () => {
               <>
                 {/* Product Details Card */}
                 {isVelvetHarmonyDiscovery ? (
-                  <div className="bg-[#fbf7f2] rounded-2xl shadow-lg overflow-hidden border border-stone-200">
+                  <div className="bg-[#fbf8f3] rounded-2xl shadow-lg overflow-hidden border border-stone-200">
                     <div className="p-3 md:p-4 lg:p-6">
                       <div className="grid lg:grid-cols-[0.48fr_0.52fr] gap-4 md:gap-6 lg:gap-8">
                         {/* Image Gallery */}
                         <div className="space-y-2 md:space-y-3">
                           <div 
-                            className="relative bg-linear-to-br from-stone-50 to-amber-50 rounded-2xl overflow-hidden aspect-square w-full max-h-[65vh] md:max-h-none cursor-zoom-in"
+                            className="relative bg-[#fbf8f3] rounded-2xl overflow-hidden aspect-square w-full max-h-[65vh] md:max-h-none cursor-zoom-in"
                             onMouseMove={handleMouseMove}
                             onMouseEnter={handleMouseEnter}
                             onMouseLeave={handleMouseLeave}
@@ -1066,7 +1091,7 @@ export const ProductDetailPage = () => {
                             </div>
                           </div>
 
-                          <div className="rounded-2xl border border-stone-200 bg-white p-4 pt-0 shadow-sm">
+                          <div className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
                             {displayDescription ? (
                               <div
                                 className="text-xs text-stone-600 leading-relaxed [&_p]:mb-2 [&_ul]:list-disc [&_ul]:ml-5 [&_ul]:mb-2 [&_ol]:list-decimal [&_ol]:ml-5 [&_ol]:mb-2 [&_li]:mb-1 [&_strong]:font-semibold"
@@ -1240,7 +1265,7 @@ export const ProductDetailPage = () => {
                         {/* Image Gallery */}
                         <div className="space-y-2 md:space-y-3">
                           <div 
-                            className="relative bg-linear-to-br from-amber-50 to-orange-100 rounded-xl overflow-hidden aspect-square w-full max-h-[65vh] md:max-h-none cursor-zoom-in"
+                            className="relative bg-[#fbf8f3] rounded-xl overflow-hidden aspect-square w-full max-h-[65vh] md:max-h-none cursor-zoom-in"
                             onMouseMove={handleMouseMove}
                             onMouseEnter={handleMouseEnter}
                             onMouseLeave={handleMouseLeave}

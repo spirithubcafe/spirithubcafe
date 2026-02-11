@@ -319,12 +319,24 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
               lang === 'ar' && p.tastingNotesAr ? p.tastingNotesAr : p.tastingNotes,
             tastingNotesAr: p.tastingNotesAr,
             featured: p.isFeatured,
-            topTags: Array.isArray((p as Record<string, unknown>).topTags)
-              ? (p as Record<string, unknown>).topTags as Product['topTags']
-              : undefined,
-            bottomTags: Array.isArray((p as Record<string, unknown>).bottomTags)
-              ? (p as Record<string, unknown>).bottomTags as Product['bottomTags']
-              : undefined,
+            topTags: (() => {
+              const raw = (p as Record<string, unknown>).topTags;
+              if (Array.isArray(raw)) return raw as Product['topTags'];
+              if (raw && typeof raw === 'object' && '$values' in (raw as Record<string, unknown>)) {
+                const vals = (raw as Record<string, unknown>).$values;
+                return Array.isArray(vals) ? vals as Product['topTags'] : undefined;
+              }
+              return undefined;
+            })(),
+            bottomTags: (() => {
+              const raw = (p as Record<string, unknown>).bottomTags;
+              if (Array.isArray(raw)) return raw as Product['bottomTags'];
+              if (raw && typeof raw === 'object' && '$values' in (raw as Record<string, unknown>)) {
+                const vals = (raw as Record<string, unknown>).$values;
+                return Array.isArray(vals) ? vals as Product['bottomTags'] : undefined;
+              }
+              return undefined;
+            })(),
           };
         })
         .filter((p) => (p as unknown as { isActive?: boolean }).isActive !== false);

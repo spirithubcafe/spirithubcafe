@@ -136,7 +136,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       </Button>
 
       {/* Product Image - Square aspect ratio */}
-      <div className="relative overflow-hidden aspect-square bg-gray-100">
+      <div className="relative overflow-hidden aspect-square bg-[#fbf8f3]">
         <img
           src={product.image || getProductImageUrl(undefined)}
           alt={product.name}

@@ -43,8 +43,24 @@ export const BestSellers: React.FC = () => {
           tastingNotes: lang === 'ar' && record.tastingNotesAr ? String(record.tastingNotesAr) : (record.tastingNotes as string) || undefined,
           tastingNotesAr: record.tastingNotesAr ? String(record.tastingNotesAr) : undefined,
           featured: (record.isFeatured as boolean) || undefined,
-          topTags: Array.isArray(record.topTags) ? record.topTags : undefined,
-          bottomTags: Array.isArray(record.bottomTags) ? record.bottomTags : undefined,
+          topTags: (() => {
+            const raw = record.topTags;
+            if (Array.isArray(raw)) return raw;
+            if (raw && typeof raw === 'object' && '$values' in (raw as Record<string, unknown>)) {
+              const vals = (raw as Record<string, unknown>).$values;
+              return Array.isArray(vals) ? vals : undefined;
+            }
+            return undefined;
+          })(),
+          bottomTags: (() => {
+            const raw = record.bottomTags;
+            if (Array.isArray(raw)) return raw;
+            if (raw && typeof raw === 'object' && '$values' in (raw as Record<string, unknown>)) {
+              const vals = (raw as Record<string, unknown>).$values;
+              return Array.isArray(vals) ? vals : undefined;
+            }
+            return undefined;
+          })(),
         } as Product;
       });
       setBestSellerProducts(mapped);

@@ -383,7 +383,7 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
             </button>
 
             {/* Product Image */}
-            <div className="relative overflow-hidden bg-white p-2 md:p-3">
+            <div className="relative overflow-hidden bg-[#fbf8f3] p-2 md:p-3">
               <div 
                 className="aspect-[3/2] md:aspect-square relative rounded-lg md:rounded-xl overflow-hidden cursor-zoom-in"
                 onMouseMove={handleMouseMove}

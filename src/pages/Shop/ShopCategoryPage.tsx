@@ -291,7 +291,7 @@ const BundlesGiftProductCard = ({
         {/* Image – fixed height, fully covers left column */}
         <Link
           to={productUrl}
-          className="relative block h-full min-h-[150px] sm:min-h-[200px] overflow-hidden bg-stone-100"
+          className="relative block h-full min-h-[150px] sm:min-h-[200px] overflow-hidden bg-[#fbf8f3]"
         >
           <ProductBadges product={product} />
           <img
