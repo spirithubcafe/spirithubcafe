@@ -671,7 +671,9 @@ export const ProductDetailPage = () => {
     const cartId = `${product.id}${variantKey}`;
 
     const variantLabel = selectedVariant ? resolveVariantLabel(selectedVariant, language, product) : '';
-    const cartName = variantLabel ? `${displayName} - ${variantLabel}` : displayName;
+    // For shop products (isVelvetHarmonyDiscovery), hide weight from cart display
+    const showWeightInCart = !isVelvetHarmonyDiscovery;
+    const cartName = (variantLabel && showWeightInCart) ? `${displayName} - ${variantLabel}` : displayName;
     const image = images[0] ?? getProductImageUrl(undefined);
 
     cart.addToCart({
@@ -683,9 +685,9 @@ export const ProductDetailPage = () => {
       price,
       image,
       tastingNotes,
-      variantName: variantLabel || undefined,
-      weight: selectedVariant?.weight,
-      weightUnit: selectedVariant?.weightUnit,
+      variantName: (variantLabel && showWeightInCart) ? variantLabel : undefined,
+      weight: showWeightInCart ? selectedVariant?.weight : undefined,
+      weightUnit: showWeightInCart ? selectedVariant?.weightUnit : undefined,
     });
 
     if (quantity > 1) {
