@@ -4,3 +4,21 @@
   background-position: center;
   background-repeat: no-repeat;
 }
+
+/* Shop hero - responsive height & mobile framing */
+.page-header-shop {
+  min-height: 380px;
+}
+
+@media (min-width: 768px) {
+  .page-header-shop {
+    min-height: 420px;
+  }
+}
+
+@media (max-width: 767px) {
+  .page-header-shop {
+    background-position: top center !important;
+    min-height: 260px;
+  }
+}
