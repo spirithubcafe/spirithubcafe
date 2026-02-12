@@ -40,6 +40,7 @@ import { Seo } from '../components/seo/Seo';
 import { siteMetadata, resolveAbsoluteUrl } from '../config/siteMetadata';
 import { ProductShare } from '../components/products/ProductShare';
 import { ProductTagBadge } from '../components/shop/ProductTagBadge';
+import { ProductViewers } from '../components/ui/LiveVisitors';
 import { toast } from 'sonner';
 
 type LoadState = 'idle' | 'loading' | 'ready' | 'error';
@@ -1064,6 +1065,8 @@ export const ProductDetailPage = () => {
                                     <span className="text-[11px] text-stone-400 underline-offset-2 hover:underline">(0.0)</span>
                                   </button>
                                 )}
+
+                                {product && <ProductViewers productId={String(product.id)} />}
                               </div>
 
                               <div className="flex flex-wrap items-center gap-2">
@@ -1261,6 +1264,8 @@ export const ProductDetailPage = () => {
                               </button>
                             )}
 
+                            {product && <ProductViewers productId={String(product.id)} />}
+
                           </div>
                         </div>
 
@@ -1423,6 +1428,8 @@ export const ProductDetailPage = () => {
                                   <span className="text-xs text-gray-400 underline-offset-2 hover:underline">(0.0)</span>
                                 </button>
                               )}
+
+                              {product && <ProductViewers productId={String(product.id)} />}
 
                               {topInStock ? (
                                 <div className="inline-flex items-center gap-1.5 text-green-600 bg-green-50 px-2.5 py-1 rounded-full ml-auto">

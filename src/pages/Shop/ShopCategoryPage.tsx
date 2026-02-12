@@ -304,38 +304,57 @@ const BundlesGiftProductCard = ({
         </Link>
 
         {/* Content */}
-        <div className="flex flex-col justify-between gap-3 p-3 sm:p-4 md:p-5">
+        <div className="flex h-full flex-col gap-3 p-3 sm:p-4 md:p-5">
           {/* Top section */}
           <div className="space-y-1.5">
             <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-amber-600">
-              {isArabic ? 'حزمة مميزة' : 'Curated Bundle'}
+              {product.categoryName?.toLowerCase() === 'electronic gift cards'
+                ? (isArabic ? 'هدية رقمية' : 'DIGITAL GIFT')
+                : product.categoryName?.toLowerCase() === 'tools & equipment'
+                ? (isArabic ? 'أداة تحضير' : 'BREWING TOOL')
+                : (isArabic ? 'حزمة مميزة' : 'Curated Bundle')}
             </p>
             <Link to={productUrl}>
               <h3 className="text-sm font-bold text-stone-900 transition group-hover:text-amber-700 sm:text-base md:text-lg line-clamp-2 text-balance">
                 {name}
               </h3>
             </Link>
-            {product.reviewCount > 0 ? (
+            {product.categoryName?.toLowerCase() === 'electronic gift cards' ? (
+              <p className="text-[11px] font-medium text-amber-600">
+                {isArabic ? 'خيار شائع' : 'Popular choice'}
+              </p>
+            ) : product.reviewCount > 0 ? (
               <StarRating rating={product.averageRating} count={product.reviewCount} />
-            ) : (
+            ) : product.categoryName?.toLowerCase() !== 'tools & equipment' ? (
               <p className="text-[11px] text-stone-400 italic">
                 {isArabic ? 'مختار بعناية للإهداء' : 'Thoughtfully packed for gifting'}
               </p>
-            )}
+            ) : null}
           </div>
 
           {/* Bottom section */}
-          <div className="flex items-center justify-between gap-3">
-            <PriceDisplay
-              minPrice={product.minPrice}
-              maxPrice={product.maxPrice}
-              currency={currency}
-            />
+          <div className="mt-auto flex items-center justify-between gap-3">
+            <div>
+              <PriceDisplay
+                minPrice={product.minPrice}
+                maxPrice={product.maxPrice}
+                currency={currency}
+              />
+              {product.categoryName?.toLowerCase() === 'electronic gift cards' && (
+                <p className="mt-0.5 text-[9px] font-medium text-emerald-600">
+                  {isArabic ? 'تُرسل فورًا' : 'Delivered instantly'}
+                </p>
+              )}
+            </div>
             <Link
               to={productUrl}
               className="shrink-0 rounded-full bg-stone-900 px-3 py-1.5 text-[10px] font-semibold text-white transition hover:bg-stone-800 sm:px-4 sm:py-2 sm:text-xs"
             >
-              {isArabic ? 'عرض التفاصيل' : 'View details'}
+              {product.categoryName?.toLowerCase() === 'electronic gift cards'
+                ? (isArabic ? 'أرسل كهدية' : 'Send as a Gift')
+                : product.categoryName?.toLowerCase() === 'tools & equipment'
+                ? (isArabic ? 'عرض المنتج' : 'View product')
+                : (isArabic ? 'عرض التفاصيل' : 'View details')}
             </Link>
           </div>
         </div>
