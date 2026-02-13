@@ -340,6 +340,24 @@ export default async function handler(req, res) {
       // If placeholder not found, inject before </head>
       html = html.replace('</head>', `${metaTags}\n  </head>`);
     }
+
+    // ── Attempt SSR (inject rendered HTML into <div id="root">) ────
+    // Wrapped in try/catch so a render failure never breaks the site.
+    try {
+      const ssrBundlePath = path.join(process.cwd(), 'dist/server/entry-server.js');
+      if (fs.existsSync(ssrBundlePath)) {
+        const { render } = await import(ssrBundlePath);
+        if (typeof render === 'function') {
+          const { html: appHtml, error } = render(url);
+          if (appHtml && !error) {
+            html = html.replace('<div id="root"></div>', `<div id="root">${appHtml}</div>`);
+          }
+        }
+      }
+    } catch (ssrError) {
+      // SSR failed – serve the SPA shell as before
+      console.warn('[SSR] render skipped:', ssrError?.message || ssrError);
+    }
     
     // Set headers
     res.setHeader('Content-Type', 'text/html; charset=utf-8');

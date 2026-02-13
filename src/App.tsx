@@ -71,6 +71,7 @@ import { RequireWholesale } from './components/auth/RequireWholesale';
 import { AdminRegionRedirect } from './components/admin/AdminRegionRedirect';
 import { initVisitorTracking } from './lib/visitorTracking';
 import { migrateCartToRegionBased } from './lib/migrateCart';
+import { initGA4, trackPageView } from './lib/ga4';
 import { useEffect } from 'react';
 import './i18n';
 import './App.css';
@@ -87,6 +88,16 @@ function AppContent() {
   useEffect(() => {
     initVisitorTracking();
   }, []);
+
+  // Initialize GA4 analytics (no-op when VITE_GA4_MEASUREMENT_ID is not set)
+  useEffect(() => {
+    initGA4();
+  }, []);
+
+  // Track page views on route change
+  useEffect(() => {
+    trackPageView(location.pathname + location.search);
+  }, [location.pathname, location.search]);
 
   // Migrate old cart to region-based storage on first load
   useEffect(() => {
