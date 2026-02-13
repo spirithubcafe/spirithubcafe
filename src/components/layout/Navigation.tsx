@@ -1,7 +1,7 @@
-import React, { useMemo, useCallback, useEffect, useState } from 'react';
+import React, { useMemo, useCallback, useEffect, useState, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Globe, ShoppingCart, Menu, ChevronDown, ChevronRight, ChevronLeft, User, Heart, ShoppingBag, Shield } from 'lucide-react';
+import { Globe, ShoppingCart, Menu, ChevronDown, ChevronRight, ChevronLeft, User, Heart, ShoppingBag, Shield, Coffee, Gift, Home as HomeIcon, Package, Info, Mail } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '../ui/sheet';
 import {
@@ -34,6 +34,10 @@ export const Navigation: React.FC = () => {
   const location = useLocation();
   const [shopCategories, setShopCategories] = useState<ShopCategory[]>([]);
   const [coffeeCategories, setCoffeeCategories] = useState<{ id: number; slug: string; name: string; nameAr?: string }[]>([]);
+  const [mobileAccordion, setMobileAccordion] = useState<string | null>(null);
+  const coffeeAccordionRef = useRef<HTMLDivElement>(null);
+  const shopAccordionRef = useRef<HTMLDivElement>(null);
+  const contactAccordionRef = useRef<HTMLDivElement>(null);
   const handleMobileCartOpen = useCallback(() => {
     setTimeout(() => {
       openCart();
@@ -196,7 +200,7 @@ export const Navigation: React.FC = () => {
                     to={getRegionalUrl('/shop')}
                     className={`w-full px-4 py-2 whitespace-nowrap ${language === 'ar' ? 'text-right' : 'text-left'} text-gray-900 hover:bg-amber-50 hover:text-amber-600 font-medium`}
                   >
-                    {language === 'ar' ? 'المتجر' : 'Shop'}
+                    {language === 'ar' ? 'أرسل هدية' : 'Send a Gift'}
                   </Link>
                 </DropdownMenuItem>
                 
@@ -444,7 +448,7 @@ export const Navigation: React.FC = () => {
             </Button>
 
             {/* Mobile Menu */}
-            <Sheet>
+            <Sheet onOpenChange={() => setMobileAccordion(null)}>
               <SheetTrigger asChild>
                 <Button
                   variant="ghost"
@@ -464,318 +468,338 @@ export const Navigation: React.FC = () => {
                 className="bg-[#120804] p-0 text-white flex flex-col"
               >
                 <div className="flex h-full flex-col">
-                  <div className="relative bg-gradient-to-br from-[#3e2010] via-[#2c160b] to-[#170b06] px-6 py-5 shadow-lg flex-shrink-0">
-                    <div className="mt-0">
-                      {isLoading ? (
-                        <div className="rounded-2xl bg-white/[0.04] p-4 backdrop-blur">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-white/20 animate-pulse"></div>
-                            <div className="space-y-2">
-                              <div className="w-24 h-4 bg-white/20 rounded animate-pulse"></div>
-                              <div className="w-16 h-3 bg-white/20 rounded animate-pulse"></div>
-                            </div>
+                  {/* Compact Profile Header */}
+                  <div className="border-b border-white/[0.03] px-4 py-2 flex-shrink-0">
+                    {isLoading ? (
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-full bg-white/10 animate-pulse flex-shrink-0"></div>
+                        <div className="space-y-1.5 flex-1 min-w-0">
+                          <div className="w-20 h-3.5 bg-white/10 rounded animate-pulse"></div>
+                          <div className="w-14 h-2.5 bg-white/10 rounded animate-pulse"></div>
+                        </div>
+                      </div>
+                    ) : isAuthenticated ? (
+                      <div className="flex items-center gap-2.5">
+                        <div className="relative flex-shrink-0">
+                          <div className="w-8 h-8 rounded-full bg-stone-600 flex items-center justify-center text-white text-xs font-semibold ring-1 ring-white/10">
+                            {user?.displayName?.charAt(0)?.toUpperCase() || user?.email?.charAt(0)?.toUpperCase() || 'U'}
                           </div>
                         </div>
-                      ) : isAuthenticated ? (
-                        <div className="rounded-2xl bg-white/[0.04] p-4 backdrop-blur">
-                          <UserProfile variant="inline" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-white truncate leading-tight">
+                            {user?.displayName || user?.email?.split('@')[0] || ''}
+                          </p>
+                          <p className="text-[11px] text-white/40 truncate leading-tight">
+                            {user?.email || ''}
+                          </p>
                         </div>
-                      ) : (
-                        <>
-                          <div className="rounded-2xl bg-white/[0.04] p-4 backdrop-blur">
-                            <div className="flex gap-2">
-                              <LoginButton
-                                variant="default"
-                                size="default"
-                                className="flex-1"
-                              />
-                              <RegisterButton
-                                variant="default"
-                                size="default"
-                                className="flex-1"
-                              />
-                            </div>
-                          </div>
-                        </>
-                      )}
-                    </div>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <LoginButton variant="default" size="sm" className="flex-1 h-8 text-xs" />
+                        <RegisterButton variant="default" size="sm" className="flex-1 h-8 text-xs" />
+                      </div>
+                    )}
                   </div>
 
+                  {/* Scrollable Menu Content */}
                   <div className="flex-1 min-h-0 overflow-hidden">
                     <ScrollArea className="h-full">
-                      <div className="px-6 py-6">
-                        <nav className="space-y-6 pb-4">
-                      <div>
-                        <div className="mt-0 space-y-3">
-                          {navItems.map((item) => {
-                            // "Our Coffee" products dropdown in mobile
-                            if (item.hasDropdown && item.key === 'products') {
-                              return (
-                                <div key={item.key} className="space-y-3">
-                                  <SheetClose asChild>
-                                    <Link
-                                      to={item.href}
-                                      className="flex items-center justify-between rounded-2xl bg-white/[0.06] px-4 py-3 text-base font-medium text-white transition duration-200 hover:bg-white/[0.12]"
+                      <div className="px-4 py-3">
+                        <nav>
+                          {/* Navigation Items */}
+                          <ul className="space-y-0.5">
+                            {navItems.map((item) => {
+                              // "Our Coffee" accordion
+                              if (item.hasDropdown && item.key === 'products') {
+                                const isOpen = mobileAccordion === 'products';
+                                return (
+                                  <li key={item.key}>
+                                    <button
+                                      onClick={() => setMobileAccordion(isOpen ? null : 'products')}
+                                      className={`w-full flex items-center justify-between px-3 py-2.5 text-[13px] font-medium rounded-lg transition-all duration-200 border-l-2 ${
+                                        isOpen
+                                          ? 'text-amber-300 bg-amber-500/[0.06] border-amber-400/40'
+                                          : 'text-white/90 bg-white/[0.02] border-amber-400/20 hover:bg-white/[0.04] hover:text-white hover:border-amber-400/30'
+                                      }`}
                                     >
-                                      <span>{item.label}</span>
-                                      <DirectionChevron className="h-4 w-4" />
-                                    </Link>
-                                  </SheetClose>
-
-                                  {coffeeCategories.length > 0 && (
-                                    <div className={`space-y-2 pl-4 text-sm rtl:border-l-0 rtl:border-r rtl:pl-0 rtl:pr-4`}>
-                                      <SheetClose asChild>
-                                        <Link
-                                          to={getRegionalUrl('/products')}
-                                          className="flex items-center justify-between rounded-xl bg-white/[0.06] px-3 py-2 text-amber-100 transition hover:bg-white/[0.12]"
-                                        >
-                                          <span>
+                                      <span className="flex items-center gap-2.5">
+                                        <Coffee className={`h-3.5 w-3.5 transition-colors duration-200 ${isOpen ? 'text-amber-400/80' : 'text-amber-400/60'}`} />
+                                        {item.label}
+                                      </span>
+                                      <ChevronDown
+                                        className={`h-3 w-3 transition-transform duration-300 ease-out ${isOpen ? 'rotate-180 text-amber-400/40' : 'text-white/20'}`}
+                                      />
+                                    </button>
+                                    <div
+                                      ref={coffeeAccordionRef}
+                                      className="overflow-hidden transition-all duration-250 ease-out"
+                                      style={{
+                                        maxHeight: isOpen
+                                          ? `${(coffeeCategories.length + 1) * 38 + 8}px`
+                                          : '0px',
+                                        opacity: isOpen ? 1 : 0,
+                                      }}
+                                    >
+                                      <div className={`pt-1 pb-1 ${language === 'ar' ? 'pr-6 border-r border-white/[0.04] mr-4' : 'pl-6 border-l border-white/[0.04] ml-4'}`}>
+                                        <SheetClose asChild>
+                                          <Link
+                                            to={getRegionalUrl('/products')}
+                                            className="flex items-center px-3 py-2 text-[12px] text-amber-200/80 rounded-md transition-colors hover:bg-white/[0.05] hover:text-amber-200"
+                                          >
                                             {language === 'ar' ? 'جميع المنتجات' : 'All Products'}
-                                          </span>
-                                          <DirectionChevron className="h-3.5 w-3.5" />
-                                        </Link>
-                                      </SheetClose>
-                                      {coffeeCategories.map((category) => (
-                                        <SheetClose asChild key={category.id}>
-                                          <Link
-                                            to={getRegionalUrl(`/products?category=${category.slug}`)}
-                                            className="flex items-center justify-between rounded-xl px-3 py-2 text-amber-100/90 transition hover:bg-white/[0.1] hover:text-white"
-                                          >
-                                            <span>{language === 'ar' ? category.nameAr || category.name : category.name}</span>
-                                            <DirectionChevron className="h-3.5 w-3.5" />
                                           </Link>
                                         </SheetClose>
-                                      ))}
+                                        {coffeeCategories.map((category) => (
+                                          <SheetClose asChild key={category.id}>
+                                            <Link
+                                              to={getRegionalUrl(`/products?category=${category.slug}`)}
+                                              className="flex items-center px-3 py-2 text-[12px] text-white/50 rounded-md transition-colors hover:bg-white/[0.05] hover:text-white/80"
+                                            >
+                                              {language === 'ar' ? category.nameAr || category.name : category.name}
+                                            </Link>
+                                          </SheetClose>
+                                        ))}
+                                      </div>
                                     </div>
-                                  )}
-                                </div>
-                              );
-                            }
+                                  </li>
+                                );
+                              }
 
-                            // Shop dropdown in mobile
-                            if (item.hasDropdown && item.key === 'shop') {
+                              // Shop accordion
+                              if (item.hasDropdown && item.key === 'shop') {
+                                const isOpen = mobileAccordion === 'shop';
+                                return (
+                                  <li key={item.key}>
+                                    <button
+                                      onClick={() => setMobileAccordion(isOpen ? null : 'shop')}
+                                      className={`w-full flex items-center justify-between px-3 py-2.5 text-[13px] font-medium rounded-lg transition-all duration-200 border-l-2 ${
+                                        isOpen
+                                          ? 'text-amber-300 bg-amber-500/[0.06] border-amber-400/40'
+                                          : 'text-white/90 bg-white/[0.02] border-amber-400/20 hover:bg-white/[0.04] hover:text-white hover:border-amber-400/30'
+                                      }`}
+                                    >
+                                      <span className="flex items-center gap-2.5">
+                                        <Gift className={`h-3.5 w-3.5 transition-colors duration-200 ${isOpen ? 'text-amber-400/80' : 'text-amber-400/60'}`} />
+                                        {item.label}
+                                      </span>
+                                      <ChevronDown
+                                        className={`h-3 w-3 transition-transform duration-300 ease-out ${isOpen ? 'rotate-180 text-amber-400/40' : 'text-white/20'}`}
+                                      />
+                                    </button>
+                                    <div
+                                      ref={shopAccordionRef}
+                                      className="overflow-hidden transition-all duration-250 ease-out"
+                                      style={{
+                                        maxHeight: isOpen
+                                          ? `${(shopCategories.length + 1) * 38 + 8}px`
+                                          : '0px',
+                                        opacity: isOpen ? 1 : 0,
+                                      }}
+                                    >
+                                      <div className={`pt-1 pb-1 ${language === 'ar' ? 'pr-6 border-r border-white/[0.04] mr-4' : 'pl-6 border-l border-white/[0.04] ml-4'}`}>
+                                        <SheetClose asChild>
+                                          <Link
+                                            to={getRegionalUrl('/shop')}
+                                            className="flex items-center px-3 py-2 text-[12px] text-amber-200/80 rounded-md transition-colors hover:bg-white/[0.05] hover:text-amber-200"
+                                          >
+                                            {language === 'ar' ? 'أرسل هدية' : 'Send a Gift'}
+                                          </Link>
+                                        </SheetClose>
+                                        {shopCategories.map((category) => (
+                                          <SheetClose asChild key={category.id}>
+                                            <Link
+                                              to={getRegionalUrl(`/shop/${category.slug}`)}
+                                              className="flex items-center px-3 py-2 text-[12px] text-white/50 rounded-md transition-colors hover:bg-white/[0.05] hover:text-white/80"
+                                            >
+                                              {language === 'ar' ? category.nameAr || category.name : category.name}
+                                            </Link>
+                                          </SheetClose>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  </li>
+                                );
+                              }
+
+                              // Contact accordion (with Loyalty sub-item)
+                              if (item.hasDropdown && item.key === 'contact') {
+                                const isOpen = mobileAccordion === 'contact';
+                                return (
+                                  <li key={item.key}>
+                                    <button
+                                      onClick={() => setMobileAccordion(isOpen ? null : 'contact')}
+                                      className={`w-full flex items-center justify-between px-3 py-2.5 text-[13px] font-medium rounded-lg transition-all duration-200 border-l-2 ${
+                                        isOpen
+                                          ? 'text-amber-300 bg-amber-500/[0.06] border-amber-400/40'
+                                          : 'text-white/90 bg-white/[0.02] border-amber-400/20 hover:bg-white/[0.04] hover:text-white hover:border-amber-400/30'
+                                      }`}
+                                    >
+                                      <span className="flex items-center gap-2.5">
+                                        <Mail className={`h-3.5 w-3.5 transition-colors duration-200 ${isOpen ? 'text-amber-400/80' : 'text-amber-400/60'}`} />
+                                        {item.label}
+                                      </span>
+                                      <ChevronDown
+                                        className={`h-3 w-3 transition-transform duration-300 ease-out ${isOpen ? 'rotate-180 text-amber-400/40' : 'text-white/20'}`}
+                                      />
+                                    </button>
+                                    <div
+                                      ref={contactAccordionRef}
+                                      className="overflow-hidden transition-all duration-250 ease-out"
+                                      style={{
+                                        maxHeight: isOpen ? '84px' : '0px',
+                                        opacity: isOpen ? 1 : 0,
+                                      }}
+                                    >
+                                      <div className={`pt-1 pb-1 ${language === 'ar' ? 'pr-6 border-r border-white/[0.04] mr-4' : 'pl-6 border-l border-white/[0.04] ml-4'}`}>
+                                        <SheetClose asChild>
+                                          <Link
+                                            to={getRegionalUrl('/contact')}
+                                            className="flex items-center px-3 py-2 text-[12px] text-amber-200/80 rounded-md transition-colors hover:bg-white/[0.05] hover:text-amber-200"
+                                          >
+                                            {language === 'ar' ? 'اتصل بنا' : 'Contact Us'}
+                                          </Link>
+                                        </SheetClose>
+                                        <SheetClose asChild>
+                                          <Link
+                                            to={getRegionalUrl('/loyalty')}
+                                            className="flex items-center px-3 py-2 text-[12px] text-white/50 rounded-md transition-colors hover:bg-white/[0.05] hover:text-white/80"
+                                          >
+                                            {language === 'ar' ? 'برنامج الولاء' : 'Loyalty Program'}
+                                          </Link>
+                                        </SheetClose>
+                                      </div>
+                                    </div>
+                                  </li>
+                                );
+                              }
+
+                              // Simple nav items (Home, Wholesale, About)
+                              const iconMap: Record<string, React.ReactNode> = {
+                                home: <HomeIcon className="h-3.5 w-3.5 text-amber-400/60" />,
+                                wholesale: <Package className="h-3.5 w-3.5 text-amber-400/60" />,
+                                about: <Info className="h-3.5 w-3.5 text-amber-400/60" />,
+                              };
                               return (
-                                <div key={item.key} className="space-y-3">
+                                <li key={item.key}>
                                   <SheetClose asChild>
                                     <Link
                                       to={item.href}
-                                      className="flex items-center justify-between rounded-2xl bg-white/[0.06] px-4 py-3 text-base font-medium text-white transition duration-200 hover:bg-white/[0.12]"
+                                      className="flex items-center gap-2.5 px-3 py-2.5 text-[13px] font-medium text-white/90 rounded-lg transition-colors duration-150 hover:bg-white/[0.04] hover:text-white"
                                     >
-                                      <span>{item.label}</span>
-                                      <DirectionChevron className="h-4 w-4" />
+                                      {iconMap[item.key]}
+                                      {item.label}
                                     </Link>
                                   </SheetClose>
-
-                                  {shopCategories.length > 0 && (
-                                    <div className={`space-y-2 pl-4 text-sm rtl:border-l-0 rtl:border-r rtl:pl-0 rtl:pr-4`}>
-                                      <SheetClose asChild>
-                                        <Link
-                                          to={getRegionalUrl('/shop')}
-                                          className="flex items-center justify-between rounded-xl bg-white/[0.06] px-3 py-2 text-amber-100 transition hover:bg-white/[0.12]"
-                                        >
-                                          <span>
-                                            {language === 'ar' ? 'المتجر' : 'Shop'}
-                                          </span>
-                                          <DirectionChevron className="h-3.5 w-3.5" />
-                                        </Link>
-                                      </SheetClose>
-                                      {shopCategories.map((category) => (
-                                        <SheetClose asChild key={category.id}>
-                                          <Link
-                                            to={getRegionalUrl(`/shop/${category.slug}`)}
-                                            className="flex items-center justify-between rounded-xl px-3 py-2 text-amber-100/90 transition hover:bg-white/[0.1] hover:text-white"
-                                          >
-                                            <span>{language === 'ar' ? category.nameAr || category.name : category.name}</span>
-                                            <DirectionChevron className="h-3.5 w-3.5" />
-                                          </Link>
-                                        </SheetClose>
-                                      ))}
-                                    </div>
-                                  )}
-                                </div>
+                                </li>
                               );
-                            }
+                            })}
+                          </ul>
 
-                            // Contact dropdown in mobile (with Loyalty sub-item)
-                            if (item.hasDropdown && item.key === 'contact') {
-                              return (
-                                <div key={item.key} className="space-y-3">
-                                  <SheetClose asChild>
-                                    <Link
-                                      to={item.href}
-                                      className="flex items-center justify-between rounded-2xl bg-white/[0.06] px-4 py-3 text-base font-medium text-white transition duration-200 hover:bg-white/[0.12]"
-                                    >
-                                      <span>{item.label}</span>
-                                      <DirectionChevron className="h-4 w-4" />
-                                    </Link>
-                                  </SheetClose>
+                          {/* Subtle separator */}
+                          <div className="my-3 h-px bg-gradient-to-r from-transparent via-white/[0.05] to-transparent" />
 
-                                  <div className={`space-y-2 pl-4 text-sm rtl:border-l-0 rtl:border-r rtl:pl-0 rtl:pr-4`}>
-                                    <SheetClose asChild>
-                                      <Link
-                                        to={getRegionalUrl('/contact')}
-                                        className="flex items-center justify-between rounded-xl bg-white/[0.06] px-3 py-2 text-amber-100 transition hover:bg-white/[0.12]"
-                                      >
-                                        <span>
-                                          {language === 'ar' ? 'اتصل بنا' : 'Contact Us'}
-                                        </span>
-                                        <DirectionChevron className="h-3.5 w-3.5" />
-                                      </Link>
-                                    </SheetClose>
-                                    <SheetClose asChild>
-                                      <Link
-                                        to={getRegionalUrl('/loyalty')}
-                                        className="flex items-center justify-between rounded-xl px-3 py-2 text-amber-100/90 transition hover:bg-white/[0.1] hover:text-white"
-                                      >
-                                        <span>
-                                          {language === 'ar' ? 'برنامج الولاء' : 'Loyalty Program'}
-                                        </span>
-                                        <DirectionChevron className="h-3.5 w-3.5" />
-                                      </Link>
-                                    </SheetClose>
-                                  </div>
-                                </div>
-                              );
-                            }
-
-                            return (
-                              <SheetClose asChild key={item.key}>
-                                <Link
-                                  to={item.href}
-                                  className="flex items-center justify-between rounded-2xl bg-white/[0.06] px-4 py-3 text-base font-medium text-white transition duration-200 hover:bg-white/[0.12]"
-                                >
-                                  <span>{item.label}</span>
-                                  <DirectionChevron className="h-4 w-4" />
-                                </Link>
-                              </SheetClose>
-                            );
-                          })}
-                        </div>
-                      </div>
-
-                      <div className="space-y-3">
-                        <p className="text-xs uppercase tracking-[0.35em] text-amber-200/70">
-                          {language === 'ar' ? 'إجراءات سريعة' : 'Quick actions'}
-                        </p>
-                        <SheetClose asChild>
-                          <Button
-                            variant="ghost"
-                            size="lg"
-                            onClick={handleMobileCartOpen}
-                            className="w-full justify-between rounded-2xl bg-white/[0.06] px-4 py-3 text-base font-medium text-white transition duration-200 hover:bg-white/[0.12] hover:text-white"
-                          >
-                            <span className="flex items-center gap-3">
-                              <ShoppingCart className="h-4 w-4" />
-                              {language === 'ar' ? 'عرض السلة' : 'View cart'}
-                            </span>
-                            <span className="flex items-center gap-2 text-sm text-amber-200/80">
-                              {totalItems}
-                              <DirectionChevron className="h-3.5 w-3.5" />
-                            </span>
-                          </Button>
-                        </SheetClose>
-                        
-                        {/* Profile Section for Mobile */}
-                        {isLoading ? (
-                          <div className="rounded-2xl bg-white/[0.06] p-4">
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-full bg-white/20 animate-pulse"></div>
-                              <div className="space-y-2 flex-1">
-                                <div className="w-24 h-4 bg-white/20 rounded animate-pulse"></div>
-                                <div className="w-16 h-3 bg-white/20 rounded animate-pulse"></div>
-                              </div>
-                            </div>
-                          </div>
-                        ) : isAuthenticated ? (
-                          <div className="space-y-3">
-                            <p className="text-xs uppercase tracking-[0.35em] text-amber-200/70">
-                              {language === 'ar' ? 'حسابي' : 'My Account'}
-                            </p>
-                            
-                            <SheetClose asChild>
-                              <Link
-                                to="/profile"
-                                className="flex items-center justify-between rounded-2xl bg-white/[0.06] px-4 py-3 text-base font-medium text-white transition duration-200 hover:bg-white/[0.12]"
-                              >
-                                <span className="flex items-center gap-3">
-                                  <User className="h-4 w-4" />
-                                  {language === 'ar' ? 'الملف الشخصي' : 'Profile'}
-                                </span>
-                                <DirectionChevron className="h-4 w-4" />
-                              </Link>
-                            </SheetClose>
-                            
-                            <SheetClose asChild>
-                              <Link
-                                to="/favorites"
-                                className="flex items-center justify-between rounded-2xl bg-white/[0.06] px-4 py-3 text-base font-medium text-white transition duration-200 hover:bg-white/[0.12]"
-                              >
-                                <span className="flex items-center gap-3">
-                                  <Heart className="h-4 w-4" />
-                                  {language === 'ar' ? 'المفضلة' : 'Favorites'}
-                                </span>
-                                <DirectionChevron className="h-4 w-4" />
-                              </Link>
-                            </SheetClose>
-                            
-                            <SheetClose asChild>
-                              <Button
-                                variant="ghost"
-                                size="lg"
-                                className="w-full justify-between rounded-2xl bg-white/[0.06] px-4 py-3 text-base font-medium text-white transition duration-200 hover:bg-white/[0.12] hover:text-white"
-                              >
-                                <span className="flex items-center gap-3">
-                                  <ShoppingBag className="h-4 w-4" />
-                                  {language === 'ar' ? 'طلباتي' : 'My Orders'}
-                                </span>
-                                <DirectionChevron className="h-4 w-4" />
-                              </Button>
-                            </SheetClose>
-                            
-                            {/* Admin Button - Only show for admin users */}
-                            {user && (user.roles?.includes('Admin') || user.roles?.includes('admin') || user.roles?.includes('Administrator')) && (
+                          {/* Quick Actions */}
+                          <p className="px-3 mb-1.5 text-[10px] uppercase tracking-[0.2em] text-amber-200/30 font-medium">
+                            {language === 'ar' ? 'إجراءات سريعة' : 'Quick actions'}
+                          </p>
+                          <ul className="space-y-0.5">
+                            <li>
                               <SheetClose asChild>
-                                <Link
-                                  to={getAdminBasePath(getPreferredAdminRegion())}
-                                  className="flex items-center justify-between rounded-2xl bg-blue-600/20 px-4 py-3 text-base font-medium text-blue-300 transition duration-200 hover:bg-blue-600/30 hover:text-blue-200 border border-blue-600/30"
+                                <Button
+                                  variant="ghost"
+                                  onClick={handleMobileCartOpen}
+                                  className="w-full justify-between h-auto px-3 py-2.5 text-[13px] font-medium text-white/90 rounded-lg hover:bg-white/[0.04] hover:text-white"
                                 >
-                                  <span className="flex items-center gap-3">
-                                    <Shield className="h-4 w-4" />
-                                    {language === 'ar' ? 'لوحة الإدارة' : 'Admin Panel'}
+                                  <span className="flex items-center gap-2.5">
+                                    <ShoppingCart className="h-3.5 w-3.5 text-amber-400/60" />
+                                    {language === 'ar' ? 'عرض السلة' : 'View cart'}
                                   </span>
-                                  <DirectionChevron className="h-4 w-4" />
-                                </Link>
+                                  {totalItems > 0 && (
+                                    <span className="text-[11px] bg-amber-600/80 text-white px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+                                      {totalItems}
+                                    </span>
+                                  )}
+                                </Button>
                               </SheetClose>
-                            )}
-                          </div>
-                        ) : null}
-                      </div>
+                            </li>
+                          </ul>
+                          
+                          {/* Account Section */}
+                          {isAuthenticated && !isLoading && (
+                            <>
+                              <div className="my-3 h-px bg-gradient-to-r from-transparent via-white/[0.05] to-transparent" />
+                              <p className="px-3 mb-1.5 text-[10px] uppercase tracking-[0.2em] text-amber-200/30 font-medium">
+                                {language === 'ar' ? 'حسابي' : 'My Account'}
+                              </p>
+                              <ul className="space-y-0.5">
+                                <li>
+                                  <SheetClose asChild>
+                                    <Link
+                                      to="/profile"
+                                      className="flex items-center gap-2.5 px-3 py-2.5 text-[13px] font-medium text-white/90 rounded-lg transition-colors hover:bg-white/[0.04] hover:text-white"
+                                    >
+                                      <User className="h-3.5 w-3.5 text-amber-400/60" />
+                                      {language === 'ar' ? 'الملف الشخصي' : 'Profile'}
+                                    </Link>
+                                  </SheetClose>
+                                </li>
+                                <li>
+                                  <SheetClose asChild>
+                                    <Link
+                                      to="/favorites"
+                                      className="flex items-center gap-2.5 px-3 py-2.5 text-[13px] font-medium text-white/90 rounded-lg transition-colors hover:bg-white/[0.04] hover:text-white"
+                                    >
+                                      <Heart className="h-3.5 w-3.5 text-amber-400/60" />
+                                      {language === 'ar' ? 'المفضلة' : 'Favorites'}
+                                    </Link>
+                                  </SheetClose>
+                                </li>
+                                <li>
+                                  <SheetClose asChild>
+                                    <Link
+                                      to="/orders"
+                                      className="flex items-center gap-2.5 px-3 py-2.5 text-[13px] font-medium text-white/90 rounded-lg transition-colors hover:bg-white/[0.04] hover:text-white"
+                                    >
+                                      <ShoppingBag className="h-3.5 w-3.5 text-amber-400/60" />
+                                      {language === 'ar' ? 'طلباتي' : 'My Orders'}
+                                    </Link>
+                                  </SheetClose>
+                                </li>
+                                {user && (user.roles?.includes('Admin') || user.roles?.includes('admin') || user.roles?.includes('Administrator')) && (
+                                  <li>
+                                    <SheetClose asChild>
+                                      <Link
+                                        to={getAdminBasePath(getPreferredAdminRegion())}
+                                        className="flex items-center gap-2.5 px-3 py-2.5 text-[13px] font-medium text-blue-300/80 rounded-lg transition-colors hover:bg-blue-600/10 hover:text-blue-200"
+                                      >
+                                        <Shield className="h-3.5 w-3.5 text-blue-400/60" />
+                                        {language === 'ar' ? 'لوحة الإدارة' : 'Admin Panel'}
+                                      </Link>
+                                    </SheetClose>
+                                  </li>
+                                )}
+                              </ul>
+                            </>
+                          )}
                         </nav>
                       </div>
                     </ScrollArea>
                   </div>
 
-                  <div className="bg-[#0d0603] px-6 py-5 flex-shrink-0">
-                    <div className="flex items-center justify-between gap-4">
-                      <div className="text-sm text-amber-100/80">
-                        <p className="font-medium">
-                          {language === 'ar'
-                            ? 'تبديل اللغة'
-                            : 'Switch language'}
-                        </p>
-                        <p>
-                          {language === 'ar'
-                            ? 'اختر بين العربية والإنجليزية.'
-                            : 'Choose Arabic or English.'}
-                        </p>
-                      </div>
+                  {/* Compact Footer */}
+                  <div className="border-t border-white/[0.03] px-4 py-2 flex-shrink-0">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] text-white/30">
+                        {language === 'ar' ? 'اللغة' : 'Language'}
+                      </span>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={toggleLanguage}
-                        className="rounded-full bg-white/[0.06] px-4 py-2 text-white transition hover:bg-white/[0.12] hover:text-white"
+                        className="h-7 px-3 text-[12px] text-white/60 hover:text-white hover:bg-white/[0.04] rounded-md"
                       >
-                        <Globe className="mr-2 h-4 w-4" />
+                        <Globe className="h-3 w-3 mr-1.5" />
                         {t('language.switch')}
                       </Button>
                     </div>

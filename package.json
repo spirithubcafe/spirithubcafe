@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "node server.js",
     "dev:spa": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build && vite build --ssr src/entry-server.tsx --outDir dist/server",
     "serve": "NODE_ENV=production node server.js",
     "lint": "eslint .",
     "preview": "vite preview"

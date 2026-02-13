@@ -135,6 +135,39 @@ const app = express();
 // Respect reverse-proxy headers (e.g., Vercel/NGINX) when constructing absolute URLs.
 app.set('trust proxy', true);
 
+// ── Dynamic sitemap route (registered first so it takes priority) ───
+// Serves a dynamically generated sitemap.xml by fetching current
+// products and categories from the API. Falls back to the static
+// public/sitemap.xml when the API is unreachable.
+app.get('/sitemap.xml', async (_req, res) => {
+  try {
+    const { buildSitemap } = await import('./api/sitemap.js');
+    const xml = await buildSitemap();
+    res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=600');
+    return res.status(200).send(xml);
+  } catch (err) {
+    console.error('Dynamic sitemap failed, serving static fallback:', err.message);
+    try {
+      const staticPath = path.resolve(__dirname, 'public/sitemap.xml');
+      if (fs.existsSync(staticPath)) {
+        const content = fs.readFileSync(staticPath, 'utf-8');
+        res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+        return res.status(200).send(content);
+      }
+    } catch { /* ignore */ }
+    res.status(500).send('<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>');
+  }
+});
+
+// Also handle region-prefixed sitemap requests
+app.get('/om/sitemap.xml', async (req, res) => {
+  res.redirect(301, '/sitemap.xml');
+});
+app.get('/sa/sitemap.xml', async (req, res) => {
+  res.redirect(301, '/sitemap.xml');
+});
+
 // Add Vite or respective production middlewares
 let vite;
 if (!isProduction) {
@@ -219,8 +252,39 @@ app.use(async (req, res, next) => {
     // Get meta tags based on route (async because product routes may call the API)
     const metaTags = await getMetaTagsForRoute(url, requestBaseUrl);
     
-    // Replace the meta tags in the template (no SSR, just meta injection)
+    // Replace the meta tags in the template
     let html = template.replace('<!--app-head-->', metaTags);
+
+    // ── Attempt SSR (inject rendered HTML into <div id="root">) ────
+    // Wrapped in try/catch so a render failure never breaks the site;
+    // users will just get the SPA shell (current behaviour) instead.
+    try {
+      let render;
+      if (!isProduction) {
+        // In dev, Vite compiles the module on the fly
+        const mod = await vite.ssrLoadModule('/src/entry-server.tsx');
+        render = mod.render;
+      } else {
+        // In production, import the pre-built SSR bundle
+        const ssrBundlePath = path.resolve(__dirname, 'dist/server/entry-server.js');
+        if (fs.existsSync(ssrBundlePath)) {
+          const mod = await import(ssrBundlePath);
+          render = mod.render;
+        }
+      }
+
+      if (typeof render === 'function') {
+        const { html: appHtml, error } = render(url);
+        if (appHtml && !error) {
+          // Inject the server-rendered markup inside <div id="root">
+          html = html.replace('<div id="root"></div>', `<div id="root">${appHtml}</div>`);
+        }
+        // If error, we just serve the SPA shell – no impact on users
+      }
+    } catch (ssrError) {
+      // SSR failed – serve the SPA shell as before.  Log for debugging.
+      console.warn('[SSR] render skipped:', ssrError?.message || ssrError);
+    }
 
     res.status(200).set({ 'Content-Type': 'text/html' }).send(html);
   } catch (e) {
