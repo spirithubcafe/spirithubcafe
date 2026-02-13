@@ -66,9 +66,9 @@ export const ProductCard = ({ product }: Props) => {
       </div>
 
       <div className="flex flex-1 flex-col gap-3 p-4">
-        <div className="space-y-1">
+        <div className="min-h-[3.5rem] space-y-1">
           <Link to={productUrl} className="block">
-            <h3 className="text-base font-semibold text-stone-900 transition group-hover:text-amber-600">
+            <h3 className="line-clamp-2 text-base font-semibold leading-snug text-stone-900 transition group-hover:text-amber-600">
               {name}
             </h3>
           </Link>
@@ -78,11 +78,13 @@ export const ProductCard = ({ product }: Props) => {
           <p className="text-sm text-stone-600 line-clamp-2">☕ {tasting}</p>
         )}
 
-        {product.reviewCount > 0 && (
-          <StarRating rating={product.averageRating} count={product.reviewCount} />
-        )}
+        <div className="min-h-5">
+          {product.reviewCount > 0 && (
+            <StarRating rating={product.averageRating} count={product.reviewCount} />
+          )}
+        </div>
 
-        <div className="flex items-center justify-between gap-3">
+        <div className="mt-auto flex items-center justify-between gap-3 pt-1">
           <PriceDisplay
             minPrice={product.minPrice}
             maxPrice={product.maxPrice}

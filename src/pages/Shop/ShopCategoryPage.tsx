@@ -353,7 +353,7 @@ const BundlesGiftProductCard = ({
               {product.categoryName?.toLowerCase() === 'electronic gift cards'
                 ? (isArabic ? 'أرسل كهدية' : 'Send as a Gift')
                 : product.categoryName?.toLowerCase() === 'tools & equipment'
-                ? (isArabic ? 'عرض المنتج' : 'View product')
+                ? (isArabic ? 'عرض المنتج' : 'View')
                 : (isArabic ? 'عرض التفاصيل' : 'View details')}
             </Link>
           </div>

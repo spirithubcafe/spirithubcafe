@@ -12,7 +12,7 @@ export const PriceDisplay = ({
   const formatAmount = (price: number) => price.toFixed(3);
 
   const renderPrice = (price: number) => (
-    <span className="inline-flex items-baseline gap-1">
+    <span className="inline-flex items-baseline gap-1 whitespace-nowrap">
       <span className="text-base font-bold text-stone-900">{formatAmount(price)}</span>
       <span className="text-xs font-medium text-stone-500">{currency}</span>
     </span>

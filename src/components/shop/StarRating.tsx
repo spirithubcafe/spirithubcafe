@@ -10,7 +10,7 @@ export const StarRating = ({ rating, count }: Props) => {
   const hasHalf = rating - fullStars >= 0.5;
 
   return (
-    <div className="flex items-center gap-2 text-sm text-amber-600">
+    <div className="flex items-center gap-2 whitespace-nowrap text-sm text-amber-600">
       <div className="flex items-center">
         {Array.from({ length: 5 }).map((_, index) => {
           const isFilled = index < fullStars;
