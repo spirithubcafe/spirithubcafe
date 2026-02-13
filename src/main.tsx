@@ -1,5 +1,5 @@
 import { StrictMode } from 'react'
-import { createRoot, hydrateRoot } from 'react-dom/client'
+import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 
 // Import fonts
@@ -23,27 +23,17 @@ import { initScrollbars } from './lib/scrollbars'
 
 const rootElement = document.getElementById('root')!;
 
-// Check if the app was server-rendered
-if (rootElement.hasChildNodes()) {
-  // Hydrate the server-rendered HTML
-  hydrateRoot(
-    rootElement,
-    <StrictMode>
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
-    </StrictMode>
-  );
-} else {
-  // Client-side render if not server-rendered
-  createRoot(rootElement).render(
-    <StrictMode>
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
-    </StrictMode>,
-  );
-}
+// Always client-render.  SSR is used only for <head> meta-tag injection
+// (SEO / social previews).  Hydrating the body would cause React error
+// #418 because server output diverges from client output due to
+// localStorage-dependent state (language, region, auth, cart).
+createRoot(rootElement).render(
+  <StrictMode>
+    <BrowserRouter>
+      <App />
+    </BrowserRouter>
+  </StrictMode>,
+);
 
 // Initialize Overlayscrollbars on the document body so scrollbars across the app are replaced
 // We keep this outside the render so it runs once on load. Use a custom theme class so we can
