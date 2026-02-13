@@ -85,7 +85,7 @@ const seoWriterPlugin = () => ({
 })
 
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ isSsrBuild }) => ({
   plugins: [
     react(),
     tailwindcss(),
@@ -100,16 +100,19 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          // React and core libraries
-          vendor: ['react', 'react-dom'],
-          // Icons and UI
-          ui: ['lucide-react'],
-          // i18n
-          i18n: ['react-i18next', 'i18next'],
-          // Router
-          router: ['react-router-dom']
-        }
+        // Only apply manualChunks for client builds; SSR externalizes these
+        ...(!isSsrBuild && {
+          manualChunks: {
+            // React and core libraries
+            vendor: ['react', 'react-dom'],
+            // Icons and UI
+            ui: ['lucide-react'],
+            // i18n
+            i18n: ['react-i18next', 'i18next'],
+            // Router
+            router: ['react-router-dom']
+          }
+        })
       }
     },
     // Increase chunk size warning limit
@@ -133,4 +136,4 @@ export default defineConfig({
     // Pre-bundle these dependencies
     include: ['react', 'react-dom', 'react-router-dom', 'react-router']
   }
-})
+}))
