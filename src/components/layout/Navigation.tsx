@@ -1,7 +1,7 @@
 import React, { useMemo, useCallback, useEffect, useState, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Globe, ShoppingCart, Menu, ChevronDown, ChevronRight, ChevronLeft, User, Heart, ShoppingBag, Shield, Coffee, Gift, Home as HomeIcon, Package, Info, Mail } from 'lucide-react';
+import { Globe, ShoppingCart, Menu, ChevronDown, User, Heart, ShoppingBag, Shield, Coffee, Gift, Home as HomeIcon, Package, Info, Mail } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '../ui/sheet';
 import {
@@ -15,7 +15,6 @@ import { useAuth } from '../../hooks/useAuth';
 import { useCart } from '../../hooks/useCart';
 import { useRegion } from '../../hooks/useRegion';
 import { AuthButtons, LoginButton, RegisterButton } from '../auth/AuthButtons';
-import { UserProfile } from '../auth/UserProfile';
 import { MinimalUserProfile } from '../auth/MinimalUserProfile';
 import { ScrollArea } from '../ui/scroll-area';
 import { RegionSwitcher } from './RegionSwitcher';
@@ -112,8 +111,6 @@ export const Navigation: React.FC = () => {
   if (isAdminPage) {
     return null;
   }
-
-  const DirectionChevron = language === 'ar' ? ChevronLeft : ChevronRight;
 
   // Render navigation items inline to avoid re-mounting issues with dropdown
   const renderNavItems = () => (
@@ -482,15 +479,15 @@ export const Navigation: React.FC = () => {
                       <div className="flex items-center gap-2.5">
                         <div className="relative flex-shrink-0">
                           <div className="w-8 h-8 rounded-full bg-stone-600 flex items-center justify-center text-white text-xs font-semibold ring-1 ring-white/10">
-                            {user?.displayName?.charAt(0)?.toUpperCase() || user?.email?.charAt(0)?.toUpperCase() || 'U'}
+                            {user?.displayName?.charAt(0)?.toUpperCase() || user?.username?.charAt(0)?.toUpperCase() || 'U'}
                           </div>
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-white truncate leading-tight">
-                            {user?.displayName || user?.email?.split('@')[0] || ''}
+                            {user?.displayName || user?.username?.split('@')[0] || ''}
                           </p>
                           <p className="text-[11px] text-white/40 truncate leading-tight">
-                            {user?.email || ''}
+                            {user?.username || ''}
                           </p>
                         </div>
                       </div>
