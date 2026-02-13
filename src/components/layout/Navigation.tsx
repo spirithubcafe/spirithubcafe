@@ -1,7 +1,7 @@
 import React, { useMemo, useCallback, useEffect, useState, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Globe, ShoppingCart, Menu, ChevronDown, User, Heart, ShoppingBag, Shield, Coffee, Gift, Home as HomeIcon, Package, Info, Mail } from 'lucide-react';
+import { Globe, ShoppingCart, Menu, ChevronDown, User, Heart, ShoppingBag, Shield, Coffee, Gift, Home as HomeIcon, Package, Info, Mail, LogOut } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '../ui/sheet';
 import {
@@ -16,9 +16,12 @@ import { useCart } from '../../hooks/useCart';
 import { useRegion } from '../../hooks/useRegion';
 import { AuthButtons, LoginButton, RegisterButton } from '../auth/AuthButtons';
 import { MinimalUserProfile } from '../auth/MinimalUserProfile';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { ScrollArea } from '../ui/scroll-area';
 import { RegionSwitcher } from './RegionSwitcher';
 import { getAdminBasePath, getPreferredAdminRegion } from '../../lib/regionUtils';
+import { profileService } from '../../services/profileService';
+import { getProfilePictureUrl } from '../../lib/profileUtils';
 import { shopApi } from '../../services/shopApi';
 import { categoryService } from '../../services/categoryService';
 import type { ShopCategory } from '../../types/shop';
@@ -27,13 +30,16 @@ import type { Category as ApiCategory } from '../../types/product';
 export const Navigation: React.FC = () => {
   const { t } = useTranslation();
   const { language, toggleLanguage } = useApp();
-  const { isAuthenticated, isLoading, user } = useAuth();
+  const { isAuthenticated, isLoading, user, logout } = useAuth();
   const { totalItems, openCart } = useCart();
   const { currentRegion } = useRegion();
   const location = useLocation();
   const [shopCategories, setShopCategories] = useState<ShopCategory[]>([]);
   const [coffeeCategories, setCoffeeCategories] = useState<{ id: number; slug: string; name: string; nameAr?: string }[]>([]);
   const [mobileAccordion, setMobileAccordion] = useState<string | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [dropdownKey, setDropdownKey] = useState(0);
+  const [profilePictureUrl, setProfilePictureUrl] = useState<string>('');
   const coffeeAccordionRef = useRef<HTMLDivElement>(null);
   const shopAccordionRef = useRef<HTMLDivElement>(null);
   const contactAccordionRef = useRef<HTMLDivElement>(null);
@@ -42,6 +48,36 @@ export const Navigation: React.FC = () => {
       openCart();
     }, 0);
   }, [openCart]);
+
+  // Close mobile menu and desktop dropdowns when viewport crosses md breakpoint
+  useEffect(() => {
+    const mql = window.matchMedia('(min-width: 768px)');
+    const handler = (e: MediaQueryListEvent) => {
+      if (e.matches) setMobileMenuOpen(false);
+      setDropdownKey(k => k + 1);
+    };
+    mql.addEventListener('change', handler);
+    return () => mql.removeEventListener('change', handler);
+  }, []);
+
+  // Load profile picture for mobile menu avatar
+  useEffect(() => {
+    if (!isAuthenticated || !user) return;
+    let isMounted = true;
+    const loadProfilePic = async () => {
+      try {
+        const profile = await profileService.getMyProfile();
+        if (isMounted) {
+          const picUrl = getProfilePictureUrl(profile.profilePicture);
+          if (picUrl) setProfilePictureUrl(picUrl);
+        }
+      } catch {
+        // Silently fail — will show initials fallback
+      }
+    };
+    loadProfilePic();
+    return () => { isMounted = false; };
+  }, [isAuthenticated, user]);
 
   useEffect(() => {
     let isMounted = true;
@@ -119,7 +155,7 @@ export const Navigation: React.FC = () => {
         // "Our Coffee" products dropdown
         if (item.hasDropdown && item.key === 'products') {
           return (
-            <DropdownMenu key={item.key} modal={false}>
+            <DropdownMenu key={`${item.key}-${dropdownKey}`} modal={false}>
               <DropdownMenuTrigger asChild>
                 <button
                   className={`flex items-center gap-1 transition-colors duration-200 font-medium text-xs md:text-xs lg:text-sm whitespace-nowrap ${
@@ -172,7 +208,7 @@ export const Navigation: React.FC = () => {
         // Shop dropdown
         if (item.hasDropdown && item.key === 'shop') {
           return (
-            <DropdownMenu key={item.key} modal={false}>
+            <DropdownMenu key={`${item.key}-${dropdownKey}`} modal={false}>
               <DropdownMenuTrigger asChild>
                 <button
                   className={`flex items-center gap-1 transition-colors duration-200 font-medium text-xs md:text-xs lg:text-sm whitespace-nowrap ${
@@ -225,7 +261,7 @@ export const Navigation: React.FC = () => {
         // Contact dropdown (with Loyalty sub-item)
         if (item.hasDropdown && item.key === 'contact') {
           return (
-            <DropdownMenu key={item.key} modal={false}>
+            <DropdownMenu key={`${item.key}-${dropdownKey}`} modal={false}>
               <DropdownMenuTrigger asChild>
                 <button
                   className={`flex items-center gap-1 transition-colors duration-200 font-medium text-xs md:text-xs lg:text-sm whitespace-nowrap ${
@@ -445,7 +481,7 @@ export const Navigation: React.FC = () => {
             </Button>
 
             {/* Mobile Menu */}
-            <Sheet onOpenChange={() => setMobileAccordion(null)}>
+            <Sheet open={mobileMenuOpen} onOpenChange={(open) => { setMobileMenuOpen(open); if (!open) setMobileAccordion(null); }}>
               <SheetTrigger asChild>
                 <Button
                   variant="ghost"
@@ -478,9 +514,12 @@ export const Navigation: React.FC = () => {
                     ) : isAuthenticated ? (
                       <div className="flex items-center gap-2.5">
                         <div className="relative flex-shrink-0">
-                          <div className="w-8 h-8 rounded-full bg-stone-600 flex items-center justify-center text-white text-xs font-semibold ring-1 ring-white/10">
-                            {user?.displayName?.charAt(0)?.toUpperCase() || user?.username?.charAt(0)?.toUpperCase() || 'U'}
-                          </div>
+                          <Avatar className="h-8 w-8 ring-1 ring-white/10">
+                            <AvatarImage src={profilePictureUrl} alt={user?.displayName || ''} className="object-cover" />
+                            <AvatarFallback className="bg-stone-600 text-white text-xs font-semibold">
+                              {user?.displayName?.charAt(0)?.toUpperCase() || user?.username?.charAt(0)?.toUpperCase() || 'U'}
+                            </AvatarFallback>
+                          </Avatar>
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-white truncate leading-tight">
@@ -777,6 +816,18 @@ export const Navigation: React.FC = () => {
                                   </li>
                                 )}
                               </ul>
+
+                              <div className="mt-2 pt-2 border-t border-white/[0.04]">
+                                <SheetClose asChild>
+                                  <button
+                                    onClick={() => logout()}
+                                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] font-medium text-red-400/80 rounded-lg transition-colors hover:bg-red-500/[0.06] hover:text-red-300"
+                                  >
+                                    <LogOut className="h-3.5 w-3.5" />
+                                    {language === 'ar' ? 'تسجيل الخروج' : 'Log out'}
+                                  </button>
+                                </SheetClose>
+                              </div>
                             </>
                           )}
                         </nav>
