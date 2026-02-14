@@ -55,17 +55,26 @@ export const RegionProvider: React.FC<RegionProviderProps> = ({ children }) => {
   const navigate = useNavigate();
 
   const [currentRegion, setCurrentRegion] = useState<RegionConfig>(() => {
-    // First check URL path
-    const pathRegion = detectRegionFromPath();
-    
-    // Then check localStorage
-    const savedRegion = safeStorage.getItem('spirithub-region') as RegionCode;
-    
-    // Prefer URL path over saved preference
-    const initialRegion = pathRegion || savedRegion || 'om';
-    
+    // Use React Router's location instead of window.location so SSR
+    // (StaticRouter) and client (BrowserRouter) produce the same result,
+    // avoiding hydration mismatches (React error #418).
+    const pathRegion = detectRegionFromPath(location.pathname);
+    const initialRegion = pathRegion || 'om';
     return REGIONS[initialRegion];
   });
+
+  // Restore saved region preference after hydration for paths without a
+  // region prefix (e.g. "/", "/shop").  This runs only once on mount.
+  useEffect(() => {
+    const pathRegion = detectRegionFromPath(location.pathname);
+    if (!pathRegion) {
+      const savedRegion = safeStorage.getItem('spirithub-region') as RegionCode;
+      if (savedRegion && REGIONS[savedRegion] && savedRegion !== currentRegion.code) {
+        setCurrentRegion(REGIONS[savedRegion]);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Set region and update URL
   const setRegion = useCallback((regionCode: RegionCode) => {
