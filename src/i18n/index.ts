@@ -1,6 +1,5 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
-import LanguageDetector from 'i18next-browser-languagedetector';
 
 import ar from './locales/ar.json';
 import en from './locales/en.json';
@@ -14,22 +13,19 @@ const resources = {
   }
 };
 
+// NOTE: LanguageDetector is intentionally NOT used here to avoid SSR/client
+// hydration mismatches (React error #418). The saved language preference is
+// restored after hydration in AppContext via safeStorage.
 i18n
-  .use(LanguageDetector)
   .use(initReactI18next)
   .init({
     resources,
-    lng: 'ar', // Arabic as default language
+    lng: 'ar', // Arabic as default language – deterministic for SSR & client
     fallbackLng: 'ar',
     
     interpolation: {
       escapeValue: false
     },
-    
-    detection: {
-      order: ['localStorage', 'navigator', 'htmlTag'],
-      caches: ['localStorage']
-    }
   });
 
 export default i18n;

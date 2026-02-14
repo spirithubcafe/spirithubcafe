@@ -27,11 +27,10 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   // Get current region code from context (om or sa)
   const currentRegionCode = regionContext?.currentRegion?.code || 'om';
   
-  // Initialize language from localStorage or default to browser language
-  const [language, setLanguage] = useState(() => {
-    const savedLanguage = safeStorage.getItem('spirithub-language');
-    return savedLanguage || i18n.language;
-  });
+  // Start with the deterministic default ('ar') so SSR and client hydration
+  // produce identical output (avoids React error #418).  The saved preference
+  // is restored after hydration in the useEffect below.
+  const [language, setLanguage] = useState('ar');
   
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -150,13 +149,24 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     document.documentElement.lang = newLang;
   };
 
-  // Initialize language settings on component mount
+  // Restore saved language preference after hydration (runs once on mount).
   useEffect(() => {
-    // Apply saved language to i18n and document
+    const savedLanguage = safeStorage.getItem('spirithub-language');
+    if (savedLanguage && savedLanguage !== language) {
+      i18n.changeLanguage(savedLanguage);
+      setLanguage(savedLanguage);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Keep i18n and document attributes in sync whenever the language changes.
+  useEffect(() => {
     i18n.changeLanguage(language);
-    document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
-    document.documentElement.lang = language;
-  }, [i18n, language]); // Include dependencies
+    if (typeof document !== 'undefined') {
+      document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
+      document.documentElement.lang = language;
+    }
+  }, [i18n, language]);
 
   useEffect(() => {
     isMountedRef.current = true;

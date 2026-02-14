@@ -51,16 +51,30 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
   
   // Track the region that items currently belong to - this is the KEY to preventing mixing
   const activeRegionRef = useRef<string>(currentRegionCode);
-  // Track what was last saved to prevent duplicate saves
-  const lastSavedRef = useRef<{ region: string; itemsHash: string }>({ region: '', itemsHash: '' });
+  // Track what was last saved to prevent duplicate saves.
+  // Initialise with the current region and empty-array hash so the save
+  // effect does NOT persist [] back to localStorage before the load effect
+  // has a chance to restore real items (avoids clearing the cart on mount).
+  const lastSavedRef = useRef<{ region: string; itemsHash: string }>({ region: currentRegionCode, itemsHash: '[]' });
   
-  const [items, setItems] = useState<CartItem[]>(() => {
-    // On initial render, load from the URL region
-    activeRegionRef.current = currentRegionCode;
-    return loadCartFromStorage(currentRegionCode);
-  });
+  // Start with an empty cart so SSR and client hydration produce identical
+  // output (avoids React error #418).  Real items are loaded after hydration
+  // in the useEffect below.
+  const [items, setItems] = useState<CartItem[]>([]);
   
   const [isOpen, setIsOpen] = useState(false);
+
+  // Load cart from localStorage after hydration (runs once on mount).
+  useEffect(() => {
+    activeRegionRef.current = currentRegionCode;
+    const loadedItems = loadCartFromStorage(currentRegionCode);
+    const itemsHash = JSON.stringify(loadedItems);
+    lastSavedRef.current = { region: currentRegionCode, itemsHash };
+    if (loadedItems.length > 0) {
+      setItems(loadedItems);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Handle region changes - load cart for new region
   useEffect(() => {
