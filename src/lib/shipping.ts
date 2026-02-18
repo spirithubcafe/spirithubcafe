@@ -26,11 +26,6 @@ export type ShippingMethod = {
 
 export const GCC_LOCATIONS = (locations as { countries: GCCCountry[] }).countries;
 
-/** Returns true when the country ISO2 code is Oman (OM). */
-export function isOman(countryIso2?: string): boolean {
-  return countryIso2 === 'OM';
-}
-
 /**
  * The category slug that identifies the "Bundles & Gift" category.
  * Matches the slug stored on CartItem.categorySlug when products are added to cart.
