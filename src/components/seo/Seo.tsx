@@ -51,9 +51,14 @@ const ensureLink = (rel: string, href: string, hreflang?: string) => {
 
 const removeMeta = (selector: string) => {
   if (typeof document === 'undefined') return;
-  const element = document.head.querySelector(selector);
-  if (element && element.parentNode) {
-    element.parentNode.removeChild(element);
+  try {
+    const element = document.head.querySelector(selector);
+    if (element && element.isConnected && element.parentNode) {
+      element.parentNode.removeChild(element);
+    }
+  } catch {
+    // Element may have already been removed by a concurrent update or
+    // a browser extension — safe to ignore.
   }
 };
 
@@ -197,8 +202,12 @@ export const Seo: React.FC<SeoProps> = ({
     document.head.appendChild(script);
 
     return () => {
-      if (script.parentNode) {
-        script.parentNode.removeChild(script);
+      try {
+        if (script.isConnected && script.parentNode) {
+          script.parentNode.removeChild(script);
+        }
+      } catch {
+        // Already detached — ignore.
       }
     };
   }, [structuredPayload]);

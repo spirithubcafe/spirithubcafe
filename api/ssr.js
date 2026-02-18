@@ -350,7 +350,7 @@ export default async function handler(req, res) {
         if (typeof render === 'function') {
           const { html: appHtml, error } = render(url);
           if (appHtml && !error) {
-            html = html.replace('<div id="root"></div>', `<div id="root">${appHtml}</div>`);
+            html = html.replace('<div id="root"></div>', `<div id="root" data-ssr="true">${appHtml}</div>`);
           }
         }
       }
