@@ -12,6 +12,7 @@ export interface CartItem {
   variantName?: string; // Display name for variant (e.g., "250g", "Medium Roast")
   weight?: number; // Weight per unit (from product variant)
   weightUnit?: string; // Weight unit (g, kg, oz, lb)
+  categorySlug?: string; // Category slug for shipping rule checks (e.g., "bundles-gift")
 }
 
 export interface CartContextType {

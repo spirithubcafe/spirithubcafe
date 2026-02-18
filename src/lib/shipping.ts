@@ -26,6 +26,36 @@ export type ShippingMethod = {
 
 export const GCC_LOCATIONS = (locations as { countries: GCCCountry[] }).countries;
 
+/** Returns true when the country ISO2 code is Oman (OM). */
+export function isOman(countryIso2?: string): boolean {
+  return countryIso2 === 'OM';
+}
+
+/**
+ * The category slug that identifies the "Bundles & Gift" category.
+ * Matches the slug stored on CartItem.categorySlug when products are added to cart.
+ */
+export const BUNDLES_GIFT_CATEGORY_SLUG = 'bundles-gift';
+
+/**
+ * Returns true when the cart contains at least one item AND every item belongs
+ * to the "Bundles & Gift" category (no digital gift-cards, no mixed carts).
+ *
+ * "Shippable" is enforced by slug: only items whose categorySlug matches
+ * BUNDLES_GIFT_CATEGORY_SLUG are considered qualifying items.
+ * Any item without a categorySlug (legacy cart data) makes this return false.
+ */
+export function isBundlesGiftOnlyCart(
+  items: ReadonlyArray<{ categorySlug?: string }>
+): boolean {
+  if (items.length === 0) return false;
+  return items.every(
+    (item) =>
+      typeof item.categorySlug === 'string' &&
+      item.categorySlug.toLowerCase() === BUNDLES_GIFT_CATEGORY_SLUG
+  );
+}
+
 export function getCountries() {
   return GCC_LOCATIONS.map(c => ({
     iso2: c.iso2,
@@ -74,8 +104,8 @@ export function computeShippingMethods(opts: {
       id: 'nool',
       label: { en: 'Nool Delivery', ar: 'توصيل نول' },
       description: {
-        en: 'Fast local delivery within Muscat area with our own delivery team.',
-        ar: 'توصيل محلي سريع داخل منطقة مسقط مع فريق التوصيل الخاص بنا.'
+        en: 'Fast local delivery within Oman area with our own delivery team.',
+        ar: 'توصيل محلي سريع داخل سلطنة عمان بواسطة فريق التوصيل الخاص بنا.‏'
       },
       eta: { en: '1-2 business days', ar: '١-٢ أيام عمل' },
       badge: { en: 'Fast delivery', ar: 'توصيل سريع' },

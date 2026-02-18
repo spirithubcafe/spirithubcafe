@@ -243,6 +243,7 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
         variantName: variantLabel || undefined,
         weight: selectedVariant?.weight,
         weightUnit: selectedVariant?.weightUnit,
+        categorySlug: product.categorySlug,
       });
     }
 

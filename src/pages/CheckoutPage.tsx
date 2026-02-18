@@ -24,7 +24,7 @@ import type { CheckoutOrder } from '../types/checkout';
 import { Seo } from '../components/seo/Seo';
 import { siteMetadata } from '../config/siteMetadata';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { computeShippingMethods, calculateAramexShippingRate, GCC_LOCATIONS } from '@/lib/shipping';
+import { computeShippingMethods, calculateAramexShippingRate, GCC_LOCATIONS, isBundlesGiftOnlyCart } from '@/lib/shipping';
 import { getCurrencySymbolByRegion } from '@/lib/regionUtils';
 import {
   getAramexCountries,
@@ -428,7 +428,11 @@ export const CheckoutPage: React.FC = () => {
       orderTotal: totalPrice,
     });
 
-    // Update Aramex price with calculated rate
+    // Free-Nool-Delivery eligibility: Oman + Nool + all items in Bundles & Gift category
+    const freeNool =
+      effectiveCountry === 'OM' && isBundlesGiftOnlyCart(items);
+
+    // Update Aramex price with calculated rate and apply free-Nool override
     return methods.map((method) => {
       if (method.id === 'aramex') {
         return {
@@ -438,9 +442,17 @@ export const CheckoutPage: React.FC = () => {
           calculationError: aramexError ?? undefined,
         };
       }
+      if (method.id === 'nool' && freeNool) {
+        return {
+          ...method,
+          price: 0,
+          label: { en: 'Free Nool Delivery', ar: 'توصيل نول مجاني' },
+          badge: { en: 'Free', ar: 'مجاني' },
+        };
+      }
       return method;
     });
-  }, [effectiveCountry, effectiveCity, totalPrice, aramexRate, aramexCalculating, aramexError]);
+  }, [effectiveCountry, effectiveCity, totalPrice, aramexRate, aramexCalculating, aramexError, items]);
 
   const selectedShipping =
     shippingMethods.find((method) => method.id === watchedShipping) ?? shippingMethods[0];
@@ -462,6 +474,11 @@ export const CheckoutPage: React.FC = () => {
 
   const subtotal = useMemo(() => totalPrice, [totalPrice]);
   const shippingCost = selectedShipping.price;
+
+  // True when the cart qualifies for free Nool delivery:
+  // country = Oman AND all items are in "Bundles & Gift" category
+  const freeNoolDelivery =
+    effectiveCountry === 'OM' && isBundlesGiftOnlyCart(items);
   
   // Calculate discount amount
   const discountAmount = useMemo(() => {
@@ -1212,19 +1229,18 @@ export const CheckoutPage: React.FC = () => {
                                                 <strong>Al Mouj Street</strong>.
                                               </span>
                                             )
-                                        : method.id === 'nool'
-                                        ? isArabic
-                                          ? (
-                                              <span>
-                                                توصيل محلي سريع داخل سلطنة عمان بواسطة فريق
-                                                التوصيل الخاص بنا{'.\u200F'}
-                                              </span>
-                                            )
-                                          : 'Fast local delivery within Oman area with our own delivery team.'
                                         : isArabic
                                         ? method.description.ar
                                         : method.description.en}
                                     </p>
+                                    {method.id === 'nool' && freeNoolDelivery && (
+                                      <p className="text-xs text-emerald-700 font-medium mb-2 flex items-center gap-1">
+                                        🎁{' '}
+                                        {isArabic
+                                          ? 'توصيل مجاني للباقات والهدايا (عُمان فقط)'
+                                          : 'Free delivery for Bundles & Gift (Oman only)'}
+                                      </p>
+                                    )}
                                     {method.calculationError &&
                                       method.id === 'aramex' && (
                                         <p className="text-xs text-orange-600 mb-2 flex items-center gap-1">

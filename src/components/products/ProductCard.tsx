@@ -73,6 +73,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       variantName: undefined,
       weight: undefined,
       weightUnit: undefined,
+      categorySlug: product.categorySlug,
     });
 
     // Wait for animation

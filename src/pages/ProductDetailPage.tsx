@@ -689,6 +689,13 @@ export const ProductDetailPage = () => {
       variantName: (variantLabel && showWeightInCart) ? variantLabel : undefined,
       weight: showWeightInCart ? selectedVariant?.weight : undefined,
       weightUnit: showWeightInCart ? selectedVariant?.weightUnit : undefined,
+      // Resolve slug: prefer the embedded category object, fall back to the matching
+      // shopData category (same fallback the isGiftCard check uses) so that
+      // isBundlesGiftOnlyCart works even when the API omits the nested category object.
+      categorySlug:
+        product.category?.slug ||
+        shopData?.categories?.find((cat) => cat.id === product.categoryId)?.slug ||
+        undefined,
     });
 
     if (quantity > 1) {
