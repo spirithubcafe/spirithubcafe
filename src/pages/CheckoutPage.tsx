@@ -421,7 +421,7 @@ export const CheckoutPage: React.FC = () => {
     return () => clearTimeout(timer);
   }, [effectiveCountry, effectiveCity, items]);
 
-  // Free-Nool-Delivery eligibility: Oman + all items in Bundles & Gift category
+  // free-Nool delivery eligibility: Oman + all items in Bundles & Gift category
   const freeNoolDelivery = React.useMemo(
     () => effectiveCountry === 'OM' && isBundlesGiftOnlyCart(items),
     [effectiveCountry, items]
