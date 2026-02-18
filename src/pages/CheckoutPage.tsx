@@ -421,16 +421,19 @@ export const CheckoutPage: React.FC = () => {
     return () => clearTimeout(timer);
   }, [effectiveCountry, effectiveCity, items]);
 
+  // True when the cart qualifies for free Nool delivery:
+  // country = Oman AND all items are in "Bundles & Gift" category
+  const freeNoolDelivery = React.useMemo(
+    () => effectiveCountry === 'OM' && isBundlesGiftOnlyCart(items),
+    [effectiveCountry, items]
+  );
+
   const shippingMethods = React.useMemo(() => {
     const methods = computeShippingMethods({
       countryIso2: effectiveCountry,
       city: effectiveCity,
       orderTotal: totalPrice,
     });
-
-    // Free-Nool-Delivery eligibility: Oman + Nool + all items in Bundles & Gift category
-    const freeNool =
-      effectiveCountry === 'OM' && isBundlesGiftOnlyCart(items);
 
     // Update Aramex price with calculated rate and apply free-Nool override
     return methods.map((method) => {
@@ -442,7 +445,7 @@ export const CheckoutPage: React.FC = () => {
           calculationError: aramexError ?? undefined,
         };
       }
-      if (method.id === 'nool' && freeNool) {
+      if (method.id === 'nool' && freeNoolDelivery) {
         return {
           ...method,
           price: 0,
@@ -452,7 +455,7 @@ export const CheckoutPage: React.FC = () => {
       }
       return method;
     });
-  }, [effectiveCountry, effectiveCity, totalPrice, aramexRate, aramexCalculating, aramexError, items]);
+  }, [effectiveCountry, effectiveCity, totalPrice, aramexRate, aramexCalculating, aramexError, freeNoolDelivery]);
 
   const selectedShipping =
     shippingMethods.find((method) => method.id === watchedShipping) ?? shippingMethods[0];
@@ -474,11 +477,6 @@ export const CheckoutPage: React.FC = () => {
 
   const subtotal = useMemo(() => totalPrice, [totalPrice]);
   const shippingCost = selectedShipping.price;
-
-  // True when the cart qualifies for free Nool delivery:
-  // country = Oman AND all items are in "Bundles & Gift" category
-  const freeNoolDelivery =
-    effectiveCountry === 'OM' && isBundlesGiftOnlyCart(items);
   
   // Calculate discount amount
   const discountAmount = useMemo(() => {
