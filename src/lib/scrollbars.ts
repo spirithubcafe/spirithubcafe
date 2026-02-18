@@ -1,92 +1,24 @@
-// Global Overlayscrollbars auto-initialization utility
-// Applies custom scrollbars to dialogs, sheets, drawers, scroll areas and any element
-// with overflow utility classes. Uses a MutationObserver for dynamic content.
-import { OverlayScrollbars } from 'overlayscrollbars'
-
-type OsInstance = ReturnType<typeof OverlayScrollbars> | null
-
-const SELECTORS = [
-  '[data-slot="dialog-content"]',
-  '[data-slot="alert-dialog-content"]',
-  '[data-slot="sheet-content"]',
-  '[data-slot="drawer-content"]',
-  '.overflow-y-auto',
-  '.overflow-auto',
-  '.overflow-x-auto'
-].join(',')
-
-const EXCLUDE_SELECTORS = [
-  '[data-slot="select-content"]',
-  '[data-slot="select-viewport"]',
-  '[data-radix-popper-content-wrapper]',
-  '[data-radix-portal]'
-].join(',')
-
-const applied = new Map<Element, OsInstance>()
-
-function applyTo(el: Element) {
-  if (applied.has(el)) return
-  // Skip if element already has an overlayscrollbars instance attribute
-  // (some components might initialize themselves later)
-  // Skip if element is 'fixed' positioned (likely a modal/dialog root)
-  const style = window.getComputedStyle(el)
-  if (style.position === 'fixed') return
-  
-  // Skip Radix Portal elements (Select, Popover, etc.) to avoid DOM conflicts
-  if (el.matches(EXCLUDE_SELECTORS) || el.closest(EXCLUDE_SELECTORS)) return
-  
-  try {
-    const instance = OverlayScrollbars(el as HTMLElement, {
-      className: 'os-theme-custom',
-      scrollbars: {
-        autoHide: 'leave',
-        clickScroll: true,
-        dragScroll: true
-      }
-    } as any)
-    applied.set(el, instance)
-  } catch {
-    // Fail silently – element might not be a suitable container yet.
-  }
-}
-
-function scan(root: ParentNode = document) {
-  root.querySelectorAll(SELECTORS).forEach(applyTo)
-}
-
-let observer: MutationObserver | null = null
+/**
+ * scrollbars.ts — OverlayScrollbars helper
+ *
+ * ⚠️  WARNING: Do NOT call initScrollbars() or apply OverlayScrollbars to any
+ * React-managed element.  OverlayScrollbars restructures the DOM by wrapping an
+ * element's children inside its own `os-viewport > os-content` nodes.  React's
+ * fiber tree keeps stale parent references, so when React later unmounts any of
+ * those children it calls `parent.removeChild(child)` on the wrong parent and
+ * throws:
+ *
+ *   NotFoundError: Failed to execute 'removeChild' on 'Node':
+ *   The node to be removed is not a child of this node.
+ *
+ * OverlayScrollbars may only be applied to `document.body` (which uses a safe
+ * special-case that does not restructure body's children) — see main.tsx.
+ */
 
 export function initScrollbars() {
-  if (typeof window === 'undefined') return
-  scan()
-  if (!observer) {
-    observer = new MutationObserver((mutations) => {
-      for (const m of mutations) {
-        if (m.type === 'childList') {
-          m.addedNodes.forEach((node) => {
-            if (node instanceof HTMLElement) {
-              if (node.matches(SELECTORS)) applyTo(node)
-              // Also scan inside the added subtree for matches
-              scan(node)
-            }
-          })
-        }
-      }
-    })
-    observer.observe(document.documentElement, {
-      childList: true,
-      subtree: true
-    })
-  }
+  // Intentionally disabled — see warning above.
 }
 
 export function destroyScrollbars() {
-  if (observer) {
-    observer.disconnect()
-    observer = null
-  }
-  applied.forEach((inst) => {
-    try { inst?.destroy() } catch { /* noop */ }
-  })
-  applied.clear()
+  // No-op — nothing was initialised.
 }

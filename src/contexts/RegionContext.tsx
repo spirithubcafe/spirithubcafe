@@ -55,8 +55,9 @@ export const RegionProvider: React.FC<RegionProviderProps> = ({ children }) => {
   const navigate = useNavigate();
 
   const [currentRegion, setCurrentRegion] = useState<RegionConfig>(() => {
-    // First check URL path
-    const pathRegion = detectRegionFromPath();
+    // First check URL path — use location.pathname from useLocation() so this works
+    // correctly on both the server (StaticRouter) and the client.
+    const pathRegion = detectRegionFromPath(location.pathname);
     
     // Then check localStorage
     const savedRegion = safeStorage.getItem('spirithub-region') as RegionCode;

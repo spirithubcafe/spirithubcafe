@@ -60,6 +60,7 @@ import { RegisterPage } from './pages/RegisterPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import { NotFound } from './components/pages/NotFound';
+import { ErrorBoundary, RouteErrorBoundary } from './components/pages/ErrorBoundary';
 import { CheckoutPage } from './pages/CheckoutPage';
 import { PaymentPage } from './pages/PaymentPage';
 import { PaymentSuccessPage } from './pages/PaymentSuccessPage';
@@ -112,6 +113,7 @@ function AppContent() {
       <CartDrawer />
       <ScrollToTop />
       <Toaster position="top-center" duration={2000} richColors />
+      <RouteErrorBoundary>
       <Routes>
         {/* Wholesale panel routes */}
         <Route path="/wholesale/login" element={<WholesaleLoginPage />} />
@@ -332,6 +334,7 @@ function AppContent() {
         
         <Route path="*" element={<NotFound />} />
       </Routes>
+      </RouteErrorBoundary>
 
       {!isAdminPage && <Footer />}
     </div>
@@ -353,15 +356,17 @@ function App() {
   }
 
   const app = (
-    <RegionProvider>
-      <AuthProvider>
-        <AppProvider>
-          <CartProvider>
-            <AppContent />
-          </CartProvider>
-        </AppProvider>
-      </AuthProvider>
-    </RegionProvider>
+    <ErrorBoundary>
+      <RegionProvider>
+        <AuthProvider>
+          <AppProvider>
+            <CartProvider>
+              <AppContent />
+            </CartProvider>
+          </AppProvider>
+        </AuthProvider>
+      </RegionProvider>
+    </ErrorBoundary>
   );
 
   return googleClientId ? (
