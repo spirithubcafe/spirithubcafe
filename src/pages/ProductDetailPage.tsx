@@ -694,8 +694,7 @@ export const ProductDetailPage = () => {
       // isBundlesGiftOnlyCart works even when the API omits the nested category object.
       categorySlug:
         product.category?.slug ||
-        shopData?.categories?.find((cat) => cat.id === product.categoryId)?.slug ||
-        undefined,
+        shopData?.categories?.find((cat) => cat.id === product.categoryId)?.slug,
     });
 
     if (quantity > 1) {
