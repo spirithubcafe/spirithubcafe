@@ -27,7 +27,13 @@ const GA4_ID: string | undefined =
 let initialised = false;
 
 /**
- * Inject the gtag.js script tag and initialise the GA4 data layer.
+ * Ensure the GA4 data layer and gtag function are available.
+ *
+ * The gtag.js script tag is now loaded directly from index.html so that
+ * Google's Tag Coverage checker (which inspects page source HTML) can
+ * detect it.  This function only wires up the JS-side helpers when
+ * the script tag is already present in the HTML.
+ *
  * Safe to call multiple times – subsequent calls are no-ops.
  */
 export function initGA4(): void {
@@ -36,22 +42,31 @@ export function initGA4(): void {
   // Prevent double-init
   initialised = true;
 
-  // Initialise the data layer before the script loads so events
-  // queued via gtag() are processed once the library is ready.
-  window.dataLayer = window.dataLayer || [];
-  window.gtag = function gtag(...args: any[]) {
-    window.dataLayer.push(args);
-  };
-  window.gtag('js', new Date());
-  window.gtag('config', GA4_ID, {
-    send_page_view: false, // We send page views manually on route change
-  });
+  // The dataLayer and gtag function should already exist from the
+  // inline script in index.html, but set them up defensively in case
+  // the HTML tag is missing (e.g. during tests or local dev without
+  // the env var).
+  if (!window.dataLayer) {
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = function gtag(...args: any[]) {
+      window.dataLayer.push(args);
+    };
+    window.gtag('js', new Date());
+    window.gtag('config', GA4_ID, {
+      send_page_view: false, // We send page views manually on route change
+    });
 
-  // Load gtag.js asynchronously – no impact on page load speed
-  const script = document.createElement('script');
-  script.src = `https://www.googletagmanager.com/gtag/js?id=${GA4_ID}`;
-  script.async = true;
-  document.head.appendChild(script);
+    // Fallback: inject the script dynamically if not already in the page
+    const existing = document.querySelector(
+      `script[src*="googletagmanager.com/gtag/js"]`,
+    );
+    if (!existing) {
+      const script = document.createElement('script');
+      script.src = `https://www.googletagmanager.com/gtag/js?id=${GA4_ID}`;
+      script.async = true;
+      document.head.appendChild(script);
+    }
+  }
 }
 
 /**
