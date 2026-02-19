@@ -317,7 +317,19 @@ export default async function handler(req, res) {
             '.webmanifest': 'application/manifest+json'
           };
           res.setHeader('Content-Type', contentTypes[ext] || 'application/octet-stream');
-          res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+
+          // Only cache hashed assets (Vite output with content hash) as immutable.
+          // Non-hashed files (manifest, version.json, etc.) get short cache.
+          const basename = path.basename(resolvedPath);
+          const isHashed = /[-\.][a-f0-9]{8,}\./i.test(basename);
+          const isServiceWorker = basename === 'sw.js' || basename === 'service-worker.js';
+          if (isServiceWorker) {
+            res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+          } else if (isHashed) {
+            res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+          } else {
+            res.setHeader('Cache-Control', 'public, max-age=3600, must-revalidate');
+          }
           return res.status(200).send(content);
         }
       } catch (err) {

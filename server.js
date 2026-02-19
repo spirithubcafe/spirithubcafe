@@ -188,31 +188,36 @@ if (!isProduction) {
   // NOTE: Express' default static caching is conservative. For a SPA/PWA we want:
   // - long-lived caching for fingerprinted assets + images
   // - no-cache for the service worker file so updates can ship immediately
-  const ONE_YEAR_MS = 1000 * 60 * 60 * 24 * 365;
   app.use(
     base,
     express.static(prodStaticRoot, {
       index: false,
-      maxAge: ONE_YEAR_MS,
-      immutable: true,
+      // Don't set a default maxAge – we control it per-file in setHeaders.
+      maxAge: 0,
       setHeaders(res, filePath) {
         const fp = (filePath || '').replace(/\\/g, '/');
+        const basename = fp.split('/').pop() || '';
 
         // Service worker should not be cached, otherwise updates can get stuck.
-        if (fp.endsWith('/sw.js') || fp.endsWith('/service-worker.js')) {
+        if (basename === 'sw.js' || basename === 'service-worker.js') {
           res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
           return;
         }
 
-        // Keep the manifest reasonably fresh (so installs update). If you'd like, we can
-        // make this even shorter, but 1 hour is a good balance.
-        if (fp.endsWith('/manifest.webmanifest')) {
-          res.setHeader('Cache-Control', 'public, max-age=3600');
+        // HTML documents – always revalidate.
+        if (basename.endsWith('.html')) {
+          res.setHeader('Cache-Control', 'no-cache, must-revalidate');
           return;
         }
 
-        // Everything else: cache hard.
-        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+        // Hashed assets (Vite output: name-<8+ hex chars>.ext) – cache forever.
+        if (/[-\.][a-f0-9]{8,}\./i.test(basename)) {
+          res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+          return;
+        }
+
+        // Everything else (manifest, version.json, images, etc.) – short cache.
+        res.setHeader('Cache-Control', 'public, max-age=3600, must-revalidate');
       }
     })
   );
@@ -286,7 +291,10 @@ app.use(async (req, res, next) => {
       console.warn('[SSR] render skipped:', ssrError?.message || ssrError);
     }
 
-    res.status(200).set({ 'Content-Type': 'text/html' }).send(html);
+    res.status(200).set({
+      'Content-Type': 'text/html',
+      'Cache-Control': 'no-cache, must-revalidate',
+    }).send(html);
   } catch (e) {
     if (!isProduction && vite) {
       vite.ssrFixStacktrace(e);

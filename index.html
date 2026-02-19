@@ -14,6 +14,11 @@
     
     <!--app-head-->
 
+    <!-- Aggressively unregister any stale service workers (runs before module scripts) -->
+    <script>
+      if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(function(r){r.forEach(function(reg){reg.unregister()})});if(window.caches){caches.keys().then(function(n){n.forEach(function(k){caches.delete(k)})})}}
+    </script>
+
     <!-- Favicons -->
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
