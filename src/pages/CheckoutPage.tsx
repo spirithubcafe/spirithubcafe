@@ -25,6 +25,7 @@ import { Seo } from '../components/seo/Seo';
 import { siteMetadata } from '../config/siteMetadata';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { computeShippingMethods, calculateAramexShippingRate, GCC_LOCATIONS } from '@/lib/shipping';
+import { useShopPage } from '@/hooks/useShop';
 import { getCurrencySymbolByRegion } from '@/lib/regionUtils';
 import {
   getAramexCountries,
@@ -189,9 +190,10 @@ const looksLikeNetworkError = (msg?: string | null) => {
 };
 
 export const CheckoutPage: React.FC = () => {
-  const { language } = useApp();
+  const { language, products: appProducts } = useApp();
   const { isAuthenticated, user } = useAuth();
   const { currentRegion } = useRegion();
+  const { shopData } = useShopPage();
   const isArabic = language === 'ar';
   const navigate = useNavigate();
   const { items, totalPrice } = useCart();
@@ -456,12 +458,50 @@ export const CheckoutPage: React.FC = () => {
     }
   }, [shippingMethods, effectiveCountry, form]);
 
+  // --------------- Bundles & Gift free-shipping eligibility ---------------
+  // True when every shippable item in the cart belongs to the "Bundles & Gift" category.
+  // Uses useApp().products first; falls back to shop catalog metadata for legacy items
+  // that may not carry a stored categorySlug.
+  const isBundlesGiftOnlyCart = useMemo(() => {
+    if (items.length === 0) return false;
+
+    // Build a quick lookup: productId -> categorySlug
+    const slugById = new Map<string, string>();
+
+    // Source 1: AppContext products (has categorySlug)
+    for (const p of appProducts) {
+      if (p.categorySlug) slugById.set(String(p.id), p.categorySlug);
+    }
+
+    // Source 2: Shop catalog (fallback – ShopProduct has categoryId + parent ShopCategory.slug)
+    if (shopData?.categories) {
+      for (const cat of shopData.categories) {
+        if (!cat.slug) continue;
+        for (const sp of cat.products) {
+          const key = String(sp.id);
+          if (!slugById.has(key)) slugById.set(key, cat.slug);
+        }
+      }
+    }
+
+    return items.every((cartItem) => {
+      const slug =
+        slugById.get(String(cartItem.productId)) ||
+        slugById.get(String(cartItem.id));
+      return slug === 'bundles-gift';
+    });
+  }, [items, appProducts, shopData]);
+
+  const isOman = effectiveCountry === 'OM';
+  const isNoolFreeShipping = isOman && watchedShipping === 'nool' && isBundlesGiftOnlyCart;
+  // -------------------------------------------------------------------------
+
   // Get currency based on current region
   const currencySymbol = getCurrencySymbolByRegion(currentRegion.code);
   const currencyLabel = isArabic ? currencySymbol : currentRegion.currency;
 
   const subtotal = useMemo(() => totalPrice, [totalPrice]);
-  const shippingCost = selectedShipping.price;
+  const shippingCost = isNoolFreeShipping ? 0 : selectedShipping.price;
   
   // Calculate discount amount
   const discountAmount = useMemo(() => {
@@ -588,11 +628,11 @@ export const CheckoutPage: React.FC = () => {
       items: items.map((item) => ({ ...item })),
       shippingMethod: {
         id: selectedShipping.id,
-        name: selectedShipping.label.en,
-        nameAr: selectedShipping.label.ar,
+        name: isNoolFreeShipping ? 'Free Nool Delivery' : selectedShipping.label.en,
+        nameAr: isNoolFreeShipping ? 'توصيل نول مجاني' : selectedShipping.label.ar,
         eta: selectedShipping.eta.en,
         etaAr: selectedShipping.eta.ar,
-        cost: selectedShipping.price,
+        cost: isNoolFreeShipping ? 0 : selectedShipping.price,
       },
       totals: {
         subtotal,
@@ -1162,7 +1202,13 @@ export const CheckoutPage: React.FC = () => {
                                       )}
                                     >
                                       <p className="font-semibold text-sm">
-                                        {isArabic ? method.label.ar : method.label.en}
+                                        {method.id === 'nool' && isOman && isBundlesGiftOnlyCart
+                                          ? isArabic
+                                            ? 'توصيل نول مجاني'
+                                            : 'Free Nool Delivery'
+                                          : isArabic
+                                          ? method.label.ar
+                                          : method.label.en}
                                       </p>
                                       <div className="flex items-center gap-1">
                                         {method.isCalculating && method.id === 'aramex' ? (
@@ -1178,7 +1224,7 @@ export const CheckoutPage: React.FC = () => {
                                         ) : method.id !== 'aramex' ||
                                           (method.id === 'aramex' && method.price > 0) ? (
                                           <p className="font-bold text-amber-600 text-sm whitespace-nowrap">
-                                            {method.price === 0
+                                            {method.price === 0 || (method.id === 'nool' && isOman && isBundlesGiftOnlyCart)
                                               ? isArabic
                                                 ? 'مجاني'
                                                 : 'Free'
@@ -1225,6 +1271,13 @@ export const CheckoutPage: React.FC = () => {
                                         ? method.description.ar
                                         : method.description.en}
                                     </p>
+                                    {method.id === 'nool' && isOman && isBundlesGiftOnlyCart && (
+                                      <p className="text-xs text-green-600 mt-1 mb-1" dir={isArabic ? 'rtl' : 'ltr'}>
+                                        {isArabic
+                                          ? (<span>توصيل مجاني لطلبات الباقات والهدايا <span dir="ltr">(عُمان فقط)</span></span>)
+                                          : 'Free delivery for Bundles & Gift (Oman only)'}
+                                      </p>
+                                    )}
                                     {method.calculationError &&
                                       method.id === 'aramex' && (
                                         <p className="text-xs text-orange-600 mb-2 flex items-center gap-1">
@@ -1405,11 +1458,17 @@ export const CheckoutPage: React.FC = () => {
                       <div className="flex justify-between text-gray-600">
                         <span>
                           {isArabic ? 'الشحن' : 'Shipping'} (
-                          {isArabic ? selectedShipping.label.ar : selectedShipping.label.en}
+                          {isNoolFreeShipping
+                            ? isArabic
+                              ? 'توصيل نول مجاني'
+                              : 'Free Nool Delivery'
+                            : isArabic
+                            ? selectedShipping.label.ar
+                            : selectedShipping.label.en}
                           )
                         </span>
                         <span>
-                          {selectedShipping.price === 0
+                          {isNoolFreeShipping || selectedShipping.price === 0
                             ? isArabic
                               ? 'مجاني'
                               : 'Free'
