@@ -5,7 +5,7 @@ interface Props {
   count?: number;
 }
 
-export const StarRating = ({ rating, count }: Props) => {
+export const StarRating = ({ rating, count: _count }: Props) => {
   const fullStars = Math.floor(rating);
   const hasHalf = rating - fullStars >= 0.5;
 
@@ -23,9 +23,7 @@ export const StarRating = ({ rating, count }: Props) => {
           );
         })}
       </div>
-      {typeof count === 'number' && (
-        <span className="text-stone-500">({count})</span>
-      )}
+
     </div>
   );
 };

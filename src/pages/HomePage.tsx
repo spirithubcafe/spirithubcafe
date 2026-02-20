@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { ProfessionalHeroSlider } from '../components/layout/ProfessionalHeroSlider';
+import { AnnouncementBar } from '../components/layout/AnnouncementBar';
 import { SustainabilitySection } from '../components/sections/SustainabilitySection';
 import { FeaturedProducts } from '../components/sections/FeaturedProducts';
 import { CategoriesSection } from '../components/sections/CategoriesSection';
@@ -144,6 +145,7 @@ const HomePage: React.FC = () => {
         structuredData={structuredData}
       />
       <h1 className="sr-only">{seoCopy.title}</h1>
+      <AnnouncementBar />
       <ProfessionalHeroSlider />
       <BestSellers />
       <SustainabilitySection />

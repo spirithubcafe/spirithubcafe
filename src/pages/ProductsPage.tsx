@@ -14,6 +14,7 @@ import {
 } from '../components/ui/select';
 import { Seo } from '../components/seo/Seo';
 import { siteMetadata } from '../config/siteMetadata';
+import { AnnouncementBar } from '../components/layout/AnnouncementBar';
 
 type CategoryOption = {
   id: string;
@@ -237,6 +238,7 @@ export const ProductsPage = () => {
 
   return (
     <div className={`min-h-screen bg-gray-50 ${isArabic ? 'rtl' : 'ltr'}`}>
+      <AnnouncementBar />
       <Seo
         title={seoContent.title}
         description={seoContent.description}
