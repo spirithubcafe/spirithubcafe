@@ -182,11 +182,11 @@ export const ShopCategoryPage = () => {
         </div>
 
         {(productsLoading || shopPageLoading) && (
-          <div className="grid gap-6 lg:grid-cols-2">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 md:gap-6">
             {Array.from({ length: 4 }).map((_, index) => (
               <div key={`skeleton-${index}`} className="overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm">
-                <div className="grid h-full grid-cols-[140px_1fr] sm:grid-cols-[180px_1fr] md:grid-cols-[220px_1fr]">
-                  <div className="min-h-[200px] animate-pulse bg-stone-100" />
+                <div className="grid h-full grid-rows-[120px_1fr] sm:grid-rows-none sm:grid-cols-[140px_1fr] md:grid-cols-[180px_1fr] lg:grid-cols-[220px_1fr]">
+                  <div className="min-h-[120px] sm:min-h-[200px] animate-pulse bg-stone-100" />
                   <div className="flex flex-col justify-between gap-3 p-4 sm:p-5">
                     <div className="space-y-2">
                       <div className="h-3 w-24 animate-pulse rounded bg-stone-100" />
@@ -222,7 +222,7 @@ export const ShopCategoryPage = () => {
           <div
             className={
               hasShopProducts
-                ? 'grid grid-cols-2 gap-3 sm:gap-4 md:gap-6 lg:grid-cols-2'
+                ? 'grid grid-cols-2 gap-3 sm:gap-4 md:gap-6'
                 : 'grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4'
             }
           >
@@ -287,11 +287,11 @@ const BundlesGiftProductCard = ({
 
   return (
     <div className="group overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
-      <div className="grid h-full grid-rows-[150px_1fr] sm:grid-rows-none sm:grid-cols-[140px_1fr] md:grid-cols-[180px_1fr] lg:grid-cols-[220px_1fr]">
-        {/* Image – fixed height, fully covers left column */}
+      <div className="grid h-full grid-rows-[120px_1fr] sm:grid-rows-none sm:grid-cols-[140px_1fr] md:grid-cols-[180px_1fr] lg:grid-cols-[220px_1fr]">
+        {/* Image – stacked on mobile, side-by-side on sm+ */}
         <Link
           to={productUrl}
-          className="relative block h-full min-h-[150px] sm:min-h-[200px] overflow-hidden bg-[#fbf8f3]"
+          className="relative block h-full min-h-[120px] sm:min-h-[200px] overflow-hidden bg-[#fbf8f3]"
         >
           <ProductBadges product={product} />
           <img
@@ -333,7 +333,7 @@ const BundlesGiftProductCard = ({
           </div>
 
           {/* Bottom section */}
-          <div className="mt-auto flex items-center justify-between gap-3">
+          <div className="mt-auto flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
             <div>
               <PriceDisplay
                 minPrice={product.minPrice}
@@ -348,7 +348,7 @@ const BundlesGiftProductCard = ({
             </div>
             <Link
               to={productUrl}
-              className="shrink-0 rounded-full bg-stone-900 px-3 py-1.5 text-[10px] font-semibold text-white transition hover:bg-stone-800 sm:px-4 sm:py-2 sm:text-xs"
+              className="shrink-0 self-start rounded-full bg-stone-900 px-3 py-1.5 text-[10px] font-semibold text-white transition hover:bg-stone-800 sm:self-auto sm:px-4 sm:py-2 sm:text-xs"
             >
               {product.categoryName?.toLowerCase() === 'electronic gift cards'
                 ? (isArabic ? 'أرسل كهدية' : 'Send as a Gift')

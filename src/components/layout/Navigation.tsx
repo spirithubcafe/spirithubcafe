@@ -328,7 +328,7 @@ export const Navigation: React.FC = () => {
       }`}
       style={{
         height: 'var(--nav-height)',
-        top: 'var(--region-banner-height)',
+        top: 'calc(var(--region-banner-height, 0px) + var(--announcement-bar-height, 0px))',
       }}
       dir={language === 'ar' ? 'rtl' : 'ltr'}
     >

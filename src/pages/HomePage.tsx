@@ -1,4 +1,5 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { ProfessionalHeroSlider } from '../components/layout/ProfessionalHeroSlider';
 import { SustainabilitySection } from '../components/sections/SustainabilitySection';
 import { FeaturedProducts } from '../components/sections/FeaturedProducts';
@@ -10,8 +11,19 @@ import { useApp } from '../hooks/useApp';
 import { siteMetadata } from '../config/siteMetadata';
 import { BestSellers } from '@/components/sections/BestSellers';
 
+const ANNOUNCEMENT_BAR_HEIGHT = 40; // px
+
 const HomePage: React.FC = () => {
   const { language } = useApp();
+
+  // Push the fixed navigation down while the announcement bar is visible
+  useEffect(() => {
+    const root = document.documentElement;
+    root.style.setProperty('--announcement-bar-height', `${ANNOUNCEMENT_BAR_HEIGHT}px`);
+    return () => {
+      root.style.setProperty('--announcement-bar-height', '0px');
+    };
+  }, []);
 
   const seoCopy = useMemo(
     () =>
@@ -144,6 +156,55 @@ const HomePage: React.FC = () => {
         structuredData={structuredData}
       />
       <h1 className="sr-only">{seoCopy.title}</h1>
+      {/* Announcement bar – fixed above the navbar */}
+      <div
+        className="fixed left-0 right-0 z-[55] w-full overflow-hidden bg-[#681e15] group"
+        style={{ top: 'var(--region-banner-height, 0px)', height: `${ANNOUNCEMENT_BAR_HEIGHT}px` }}
+        dir="ltr"
+      >
+        <div className="flex h-full items-center">
+          <div className="animate-marquee flex shrink-0 items-center whitespace-nowrap">
+            {[...Array(4)].map((_, i) => (
+              <React.Fragment key={i}>
+                <Link
+                  to="/om/shop"
+                  className="inline-block px-10 text-sm font-medium text-white hover:underline"
+                >
+                  🚚 Free shipping on Bundles &amp; Gift
+                </Link>
+                <Link
+                  to="/om/shop"
+                  className="inline-block px-10 text-sm font-medium text-white hover:underline"
+                  dir="rtl"
+                >
+                  🚚 شحن مجاني على الباقات والهدايا
+                </Link>
+              </React.Fragment>
+            ))}
+          </div>
+          <div className="animate-marquee flex shrink-0 items-center whitespace-nowrap" aria-hidden>
+            {[...Array(4)].map((_, i) => (
+              <React.Fragment key={i}>
+                <Link
+                  to="/om/shop"
+                  className="inline-block px-10 text-sm font-medium text-white hover:underline"
+                  tabIndex={-1}
+                >
+                  🚚 Free shipping on Bundles &amp; Gift
+                </Link>
+                <Link
+                  to="/om/shop"
+                  className="inline-block px-10 text-sm font-medium text-white hover:underline"
+                  dir="rtl"
+                  tabIndex={-1}
+                >
+                  🚚 شحن مجاني على الباقات والهدايا
+                </Link>
+              </React.Fragment>
+            ))}
+          </div>
+        </div>
+      </div>
       <ProfessionalHeroSlider />
       <BestSellers />
       <SustainabilitySection />

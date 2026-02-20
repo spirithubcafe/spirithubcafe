@@ -23,9 +23,7 @@ export const StarRating = ({ rating, count }: Props) => {
           );
         })}
       </div>
-      {typeof count === 'number' && (
-        <span className="text-stone-500">({count})</span>
-      )}
+
     </div>
   );
 };
