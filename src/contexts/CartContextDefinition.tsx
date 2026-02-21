@@ -12,11 +12,12 @@ export interface CartItem {
   variantName?: string; // Display name for variant (e.g., "250g", "Medium Roast")
   weight?: number; // Weight per unit (from product variant)
   weightUnit?: string; // Weight unit (g, kg, oz, lb)
+  maxStock?: number; // Variant stock limit (undefined = no limit known)
 }
 
 export interface CartContextType {
   items: CartItem[];
-  addToCart: (item: Omit<CartItem, 'quantity'>) => void;
+  addToCart: (item: Omit<CartItem, 'quantity'>, requestedQty?: number) => void;
   removeFromCart: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
