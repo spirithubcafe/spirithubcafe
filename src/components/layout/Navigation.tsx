@@ -1,7 +1,7 @@
 import React, { useMemo, useCallback, useEffect, useState, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Globe, ShoppingCart, Menu, ChevronDown, User, Heart, ShoppingBag, Shield, Coffee, Gift, Home as HomeIcon, Package, Info, Mail, LogOut } from 'lucide-react';
+import { Globe, ShoppingCart, Menu, ChevronDown, User, Heart, ShoppingBag, Shield, Coffee, Gift, Home as HomeIcon, Package, Info, Mail, LogOut, LogIn, UserPlus } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '../ui/sheet';
 import {
@@ -14,7 +14,8 @@ import { useApp } from '../../hooks/useApp';
 import { useAuth } from '../../hooks/useAuth';
 import { useCart } from '../../hooks/useCart';
 import { useRegion } from '../../hooks/useRegion';
-import { AuthButtons, LoginButton, RegisterButton } from '../auth/AuthButtons';
+import { AuthButtons } from '../auth/AuthButtons';
+import { AuthModal } from '../auth/AuthModal';
 import { MinimalUserProfile } from '../auth/MinimalUserProfile';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { ScrollArea } from '../ui/scroll-area';
@@ -38,6 +39,7 @@ export const Navigation: React.FC = () => {
   const [coffeeCategories, setCoffeeCategories] = useState<{ id: number; slug: string; name: string; nameAr?: string }[]>([]);
   const [mobileAccordion, setMobileAccordion] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileAuthModal, setMobileAuthModal] = useState<'login' | 'register' | null>(null);
   const [dropdownKey, setDropdownKey] = useState(0);
   const [profilePictureUrl, setProfilePictureUrl] = useState<string>('');
   const coffeeAccordionRef = useRef<HTMLDivElement>(null);
@@ -532,8 +534,14 @@ export const Navigation: React.FC = () => {
                       </div>
                     ) : (
                       <div className="flex gap-2">
-                        <LoginButton variant="default" size="sm" className="flex-1 h-8 text-xs" />
-                        <RegisterButton variant="default" size="sm" className="flex-1 h-8 text-xs" />
+                        <Button variant="default" size="sm" className="flex-1 h-8 text-xs" onClick={() => { setMobileMenuOpen(false); setMobileAuthModal('login'); }}>
+                          <LogIn className="mr-2 h-4 w-4" />
+                          {t('auth.login')}
+                        </Button>
+                        <Button variant="default" size="sm" className="flex-1 h-8 text-xs" onClick={() => { setMobileMenuOpen(false); setMobileAuthModal('register'); }}>
+                          <UserPlus className="mr-2 h-4 w-4" />
+                          {t('auth.register')}
+                        </Button>
                       </div>
                     )}
                   </div>
@@ -858,6 +866,13 @@ export const Navigation: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Standalone auth modal for mobile menu - rendered outside Sheet so it isn't unmounted when menu closes */}
+      <AuthModal
+        open={mobileAuthModal !== null}
+        onOpenChange={(open) => { if (!open) setMobileAuthModal(null); }}
+        defaultView={mobileAuthModal || 'login'}
+      />
     </nav>
   );
 };
