@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import type { ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
+import { toast } from 'sonner';
 import { CartContext, type CartItem, type CartContextType } from './CartContextDefinition';
+import { clampQuantity, DEFAULT_MAX_QUANTITY } from '../lib/stockUtils';
 
 interface CartProviderProps {
   children: ReactNode;
@@ -104,20 +106,38 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     saveCartToStorage(currentRegionCode, items);
   }, [items, currentRegionCode]);
 
-  const addToCart = useCallback((newItem: Omit<CartItem, 'quantity'>) => {
+  const addToCart = useCallback((newItem: Omit<CartItem, 'quantity'>, requestedQty: number = 1) => {
     setItems(prevItems => {
       const existingItem = prevItems.find(item => item.id === newItem.id);
-      
+      const currentQty = existingItem ? existingItem.quantity : 0;
+      // Use incoming maxStock, or keep what we already stored
+      const effectiveMax = newItem.maxStock ?? existingItem?.maxStock;
+      const ceiling = effectiveMax ?? DEFAULT_MAX_QUANTITY;
+
+      if (currentQty >= ceiling) {
+        // Already at limit – show toast outside setState via microtask
+        queueMicrotask(() => {
+          toast.warning(`Only ${ceiling} available`);
+        });
+        return prevItems;
+      }
+
+      const allowedAdd = Math.min(requestedQty, ceiling - currentQty);
+
+      if (allowedAdd < requestedQty) {
+        queueMicrotask(() => {
+          toast.warning(`Only ${ceiling} available`);
+        });
+      }
+
       if (existingItem) {
-        // Increment quantity if item already exists
         return prevItems.map(item =>
           item.id === newItem.id
-            ? { ...item, quantity: item.quantity + 1 }
+            ? { ...item, quantity: item.quantity + allowedAdd, maxStock: effectiveMax }
             : item
         );
       } else {
-        // Add new item with quantity 1
-        return [...prevItems, { ...newItem, quantity: 1 }];
+        return [...prevItems, { ...newItem, quantity: allowedAdd, maxStock: effectiveMax }];
       }
     });
   }, []);
@@ -131,12 +151,24 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
       removeFromCart(id);
       return;
     }
-    
-    setItems(prevItems =>
-      prevItems.map(item =>
-        item.id === id ? { ...item, quantity } : item
-      )
-    );
+
+    setItems(prevItems => {
+      const item = prevItems.find(i => i.id === id);
+      if (!item) return prevItems;
+
+      const clamped = clampQuantity(quantity, item.maxStock);
+
+      if (clamped < quantity) {
+        const ceiling = item.maxStock ?? DEFAULT_MAX_QUANTITY;
+        queueMicrotask(() => {
+          toast.warning(`Only ${ceiling} available`);
+        });
+      }
+
+      return prevItems.map(i =>
+        i.id === id ? { ...i, quantity: clamped } : i
+      );
+    });
   }, [removeFromCart]);
 
   const clearCart = useCallback(() => {

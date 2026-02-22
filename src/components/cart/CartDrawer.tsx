@@ -84,11 +84,13 @@ export const CartDrawer: React.FC = () => {
                               }}
                               className="w-10 text-center font-medium border border-gray-300 rounded px-1 py-0.5 text-sm focus:outline-none focus:border-amber-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                               min="1"
+                              max={item.maxStock ?? 10}
                             />
                             <Button
                               size="icon-sm"
                               variant="outline"
                               onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                              disabled={item.maxStock !== undefined && item.quantity >= item.maxStock}
                             >
                               <Plus className="w-3 h-3" />
                             </Button>

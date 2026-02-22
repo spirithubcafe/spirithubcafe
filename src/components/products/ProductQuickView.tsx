@@ -21,6 +21,7 @@ import { handleImageError, getProductImageUrl, resolveProductImageUrls } from '.
 import { productService } from '../../services/productService';
 import { productReviewService } from '../../services/productReviewService';
 import { toast } from 'sonner';
+import { getVariantStock, clampQuantity } from '../../lib/stockUtils';
 
 interface ProductQuickViewProps {
   product: Product;
@@ -142,6 +143,15 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
   // Minimal guard: treat variant as out of stock when stockQuantity is 0 or less
   const isVariantOutOfStock = selectedVariant ? (selectedVariant.stockQuantity ?? 0) <= 0 : false;
 
+  // Effective stock ceiling for the selected variant
+  const variantStock = getVariantStock(selectedVariant);
+  const maxQty = variantStock ?? 10;
+
+  // Reset quantity when variant changes so it doesn't exceed new variant's stock
+  useEffect(() => {
+    setQuantity((prev) => clampQuantity(prev, variantStock));
+  }, [selectedVariantId, variantStock]);
+
   // Get product images
   const images = useMemo(() => {
     if (!fullProduct) {
@@ -228,23 +238,25 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
     // Parse productId from string ID
     const productId = parseInt(product.id, 10);
 
+    // Clamp quantity to available stock
+    const safeQty = clampQuantity(quantity, variantStock);
+
   // Determine variant id to always include: prefer selectedVariant, then selectedVariantId, then first variant, else null
   const resolvedVariantId: number | null = (selectedVariant && selectedVariant.id) ?? (selectedVariantId ?? (fullProduct?.variants && fullProduct.variants.length > 0 ? fullProduct.variants[0].id : null));
 
-    for (let i = 0; i < quantity; i++) {
-      addToCart({
-        id: cartId,
-        productId: isNaN(productId) ? 0 : productId,
-        productVariantId: resolvedVariantId ?? null,
-        name: cartName,
-        price: currentPrice,
-        image: product.image,
-        tastingNotes: product.tastingNotes,
-        variantName: variantLabel || undefined,
-        weight: selectedVariant?.weight,
-        weightUnit: selectedVariant?.weightUnit,
-      });
-    }
+    addToCart({
+      id: cartId,
+      productId: isNaN(productId) ? 0 : productId,
+      productVariantId: resolvedVariantId ?? null,
+      name: cartName,
+      price: currentPrice,
+      image: product.image,
+      tastingNotes: product.tastingNotes,
+      variantName: variantLabel || undefined,
+      weight: selectedVariant?.weight,
+      weightUnit: selectedVariant?.weightUnit,
+      maxStock: variantStock,
+    }, safeQty);
 
     openCart();
     onOpenChange(false);
@@ -264,7 +276,14 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
   };
 
   const increaseQuantity = () => {
-    setQuantity((prev) => Math.min(10, prev + 1));
+    setQuantity((prev) => {
+      const ceiling = maxQty;
+      if (prev >= ceiling) {
+        toast.warning(`Only ${ceiling} available`);
+        return prev;
+      }
+      return Math.min(ceiling, prev + 1);
+    });
   };
 
   const handleClose = (e?: React.MouseEvent) => {
@@ -685,18 +704,18 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
                         value={quantity}
                         onChange={(e) => {
                           const val = parseInt(e.target.value) || 1;
-                          setQuantity(Math.min(Math.max(val, 1), 10));
+                          setQuantity(clampQuantity(val, variantStock));
                         }}
                         className="h-11 w-10 md:w-12 text-sm md:text-base font-bold text-gray-900 text-center border-x border-amber-200 focus:outline-none focus:bg-amber-100/60 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         min="1"
-                        max="10"
+                        max={maxQty}
                         aria-label={isArabic ? 'الكمية' : 'Quantity'}
                       />
                       <button
                         type="button"
                         onClick={increaseQuantity}
                         className="h-11 w-10 md:w-11 text-base font-extrabold text-amber-900 hover:text-[#6B4423] hover:bg-amber-200/60 transition-transform duration-150 active:scale-95 disabled:text-gray-400 disabled:hover:bg-transparent disabled:cursor-not-allowed"
-                        disabled={quantity >= 10}
+                        disabled={quantity >= maxQty}
                         aria-label={isArabic ? 'زيادة الكمية' : 'Increase quantity'}
                       >
                         +

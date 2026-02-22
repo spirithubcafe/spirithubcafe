@@ -42,6 +42,7 @@ import { ProductShare } from '../components/products/ProductShare';
 import { ProductTagBadge } from '../components/shop/ProductTagBadge';
 import { ProductViewers } from '../components/ui/LiveVisitors';
 import { toast } from 'sonner';
+import { getVariantStock, clampQuantity } from '../lib/stockUtils';
 
 type LoadState = 'idle' | 'loading' | 'ready' | 'error';
 
@@ -389,6 +390,15 @@ export const ProductDetailPage = () => {
   // Minimal guard: treat variant as out of stock when stockQuantity is 0 or less
   const isVariantOutOfStock = selectedVariant ? (selectedVariant.stockQuantity ?? 0) <= 0 : false;
 
+  // Effective stock ceiling for the selected variant
+  const variantStock = getVariantStock(selectedVariant);
+  const maxQty = variantStock ?? 10;
+
+  // Reset quantity when variant changes so it doesn't exceed new variant's stock
+  useEffect(() => {
+    setQuantity((prev) => clampQuantity(prev, variantStock));
+  }, [selectedVariantId, variantStock]);
+
   const images = useMemo(() => {
     if (!product) {
       return [getProductImageUrl(undefined)];
@@ -642,7 +652,14 @@ export const ProductDetailPage = () => {
   };
 
   const increaseQuantity = () => {
-    setQuantity((prev) => Math.min(10, prev + 1));
+    setQuantity((prev) => {
+      const ceiling = maxQty;
+      if (prev >= ceiling) {
+        toast.warning(`Only ${ceiling} available`);
+        return prev;
+      }
+      return Math.min(ceiling, prev + 1);
+    });
   };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -671,6 +688,9 @@ export const ProductDetailPage = () => {
     const variantKey = selectedVariant ? `-${selectedVariant.id}` : '';
     const cartId = `${product.id}${variantKey}`;
 
+    // Clamp quantity to available stock
+    const safeQty = clampQuantity(quantity, variantStock);
+
     const variantLabel = selectedVariant ? resolveVariantLabel(selectedVariant, language, product) : '';
     // For shop products (isVelvetHarmonyDiscovery), hide weight from cart display
     const showWeightInCart = !isVelvetHarmonyDiscovery;
@@ -689,11 +709,8 @@ export const ProductDetailPage = () => {
       variantName: (variantLabel && showWeightInCart) ? variantLabel : undefined,
       weight: showWeightInCart ? selectedVariant?.weight : undefined,
       weightUnit: showWeightInCart ? selectedVariant?.weightUnit : undefined,
-    });
-
-    if (quantity > 1) {
-      cart.updateQuantity(cartId, quantity);
-    }
+      maxStock: variantStock,
+    }, safeQty);
 
     cart.openCart();
   };
@@ -1147,18 +1164,18 @@ export const ProductDetailPage = () => {
                                   value={quantity}
                                   onChange={(e) => {
                                     const val = parseInt(e.target.value) || 1;
-                                    setQuantity(Math.min(Math.max(val, 1), 10));
+                                    setQuantity(clampQuantity(val, variantStock));
                                   }}
                                   className="h-11 w-12 md:w-14 text-sm font-semibold text-stone-900 text-center border-x border-stone-200 focus:outline-none focus:bg-stone-100 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                   min="1"
-                                  max="10"
+                                  max={maxQty}
                                   aria-label={language === 'ar' ? 'الكمية' : 'Quantity'}
                                 />
                                 <button
                                   type="button"
                                   onClick={increaseQuantity}
                                   className="h-11 w-11 text-base font-bold text-stone-700 hover:text-stone-900 hover:bg-stone-100 transition-transform duration-150 active:scale-95 disabled:text-stone-300 disabled:hover:bg-transparent disabled:cursor-not-allowed"
-                                  disabled={quantity >= 10}
+                                  disabled={quantity >= maxQty}
                                   aria-label={language === 'ar' ? 'زيادة الكمية' : 'Increase quantity'}
                                 >
                                   +
@@ -1687,18 +1704,18 @@ export const ProductDetailPage = () => {
                                   value={quantity}
                                   onChange={(e) => {
                                     const val = parseInt(e.target.value) || 1;
-                                    setQuantity(Math.min(Math.max(val, 1), 10));
+                                    setQuantity(clampQuantity(val, variantStock));
                                   }}
                                   className="h-11 w-12 md:w-14 text-sm md:text-base font-bold text-gray-900 text-center border-x border-amber-200 focus:outline-none focus:bg-amber-100/60 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                   min="1"
-                                  max="10"
+                                  max={maxQty}
                                   aria-label={language === 'ar' ? 'الكمية' : 'Quantity'}
                                 />
                                 <button
                                   type="button"
                                   onClick={increaseQuantity}
                                   className="h-11 w-11 text-base font-extrabold text-amber-900 hover:text-[#6B4423] hover:bg-amber-200/60 transition-transform duration-150 active:scale-95 disabled:text-gray-400 disabled:hover:bg-transparent disabled:cursor-not-allowed"
-                                  disabled={quantity >= 10}
+                                  disabled={quantity >= maxQty}
                                   aria-label={language === 'ar' ? 'زيادة الكمية' : 'Increase quantity'}
                                 >
                                   +
