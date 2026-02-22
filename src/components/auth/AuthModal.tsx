@@ -10,18 +10,41 @@ interface AuthModalProps {
   children?: React.ReactNode;
   defaultView?: 'login' | 'register';
   onSuccess?: () => void;
+  onOpen?: () => void;
+  /** Controlled mode: externally control open state */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({ 
   children, 
   defaultView = 'login',
-  onSuccess 
+  onSuccess,
+  onOpen,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
 }) => {
   const { t, language } = useApp();
-  const [isOpen, setIsOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  
+  const isControlled = controlledOpen !== undefined;
+  const isOpen = isControlled ? controlledOpen : internalOpen;
+  const setIsOpen = (open: boolean) => {
+    if (isControlled) {
+      controlledOnOpenChange?.(open);
+    } else {
+      setInternalOpen(open);
+    }
+  };
+
   const [mode, setMode] = useState<'login' | 'register'>(defaultView);
   
   const isRTL = language === 'ar';
+
+  // Reset mode when controlled open changes
+  React.useEffect(() => {
+    if (isOpen) setMode(defaultView);
+  }, [isOpen, defaultView]);
 
   const handleSuccess = () => {
     setIsOpen(false);
@@ -29,15 +52,17 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        {children || (
-          <Button variant="outline" size="sm">
-            <LogIn className="mr-2 h-4 w-4" />
-            {t('auth.login')}
-          </Button>
-        )}
-      </DialogTrigger>
+    <Dialog open={isOpen} onOpenChange={(open) => { setIsOpen(open); if (open) onOpen?.(); }}>
+      {!isControlled && (
+        <DialogTrigger asChild>
+          {children || (
+            <Button variant="outline" size="sm">
+              <LogIn className="mr-2 h-4 w-4" />
+              {t('auth.login')}
+            </Button>
+          )}
+        </DialogTrigger>
+      )}
       
             <DialogContent className={`w-full max-w-md mx-auto ${isRTL ? 'rtl' : 'ltr'}`} dir={isRTL ? 'rtl' : 'ltr'}>
         <DialogHeader className={isRTL ? 'text-right' : 'text-left'}>
@@ -81,11 +106,13 @@ export const LoginButton: React.FC<{
   variant?: 'default' | 'outline' | 'ghost';
   size?: 'default' | 'sm' | 'lg' | 'icon' | 'icon-sm' | 'icon-lg';
   onSuccess?: () => void;
-}> = ({ variant = 'outline', size = 'sm', onSuccess }) => {
+  onOpen?: () => void;
+  className?: string;
+}> = ({ variant = 'outline', size = 'sm', onSuccess, onOpen }) => {
   const { t } = useApp();
   
   return (
-    <AuthModal defaultView="login" onSuccess={onSuccess}>
+    <AuthModal defaultView="login" onSuccess={onSuccess} onOpen={onOpen}>
       <Button variant={variant} size={size}>
         <LogIn className="mr-2 h-4 w-4" />
         {t('auth.login')}
@@ -98,11 +125,13 @@ export const RegisterButton: React.FC<{
   variant?: 'default' | 'outline' | 'ghost';
   size?: 'default' | 'sm' | 'lg' | 'icon' | 'icon-sm' | 'icon-lg';
   onSuccess?: () => void;
-}> = ({ variant = 'default', size = 'sm', onSuccess }) => {
+  onOpen?: () => void;
+  className?: string;
+}> = ({ variant = 'default', size = 'sm', onSuccess, onOpen }) => {
   const { t } = useApp();
   
   return (
-    <AuthModal defaultView="register" onSuccess={onSuccess}>
+    <AuthModal defaultView="register" onSuccess={onSuccess} onOpen={onOpen}>
       <Button variant={variant} size={size}>
         <UserPlus className="mr-2 h-4 w-4" />
         {t('auth.register')}
