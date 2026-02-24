@@ -15,44 +15,32 @@ import '@fontsource/cairo/700.css';
 import './index.css'
 import './styles/color-overrides.css'
 import App from './App.tsx'
-import { ErrorBoundary } from './components/pages/ErrorBoundary'
 
-// Overlayscrollbars: import styles and apply to document.body only.
-// NOTE: Do NOT apply OverlayScrollbars to React-managed elements — it restructures
-// the DOM (wrapping children in os-viewport/os-content) which breaks React's fiber
-// references and causes "removeChild: node is not a child" crashes.
+// Overlayscrollbars: import styles and init globally so all scrollable areas get styled
 import 'overlayscrollbars/styles/overlayscrollbars.css'
 import { OverlayScrollbars } from 'overlayscrollbars'
+import { initScrollbars } from './lib/scrollbars'
 
 const rootElement = document.getElementById('root')!;
 
-// Check if the app was server-rendered.
-// We rely on the data-ssr attribute injected by api/ssr.js rather than
-// hasChildNodes() which can return true spuriously (browser extensions,
-// injected whitespace nodes, etc.).
-const isSSR = rootElement.getAttribute('data-ssr') === 'true';
-
-if (isSSR) {
+// Check if the app was server-rendered
+if (rootElement.hasChildNodes()) {
   // Hydrate the server-rendered HTML
   hydrateRoot(
     rootElement,
     <StrictMode>
-      <ErrorBoundary>
-        <BrowserRouter>
-          <App />
-        </BrowserRouter>
-      </ErrorBoundary>
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
     </StrictMode>
   );
 } else {
-  // Client-side render (no SSR content injected)
+  // Client-side render if not server-rendered
   createRoot(rootElement).render(
     <StrictMode>
-      <ErrorBoundary>
-        <BrowserRouter>
-          <App />
-        </BrowserRouter>
-      </ErrorBoundary>
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
     </StrictMode>,
   );
 }
@@ -76,6 +64,9 @@ if (typeof window !== 'undefined') {
     // console.warn('OverlayScrollbars init failed', e)
   }
 }
+
+// Also attach Overlayscrollbars to all modals, drawers and overflow containers dynamically
+initScrollbars()
 
 // Unregister any existing service workers and clear caches (PWA removed)
 if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
