@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, ShoppingBag, ShoppingCart, User } from 'lucide-react';
+import { Home, ShoppingBag, ShoppingCart, User, Gift } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../hooks/useAuth';
@@ -25,6 +25,13 @@ export const MobileBottomNav: React.FC = () => {
       label: t('nav.products'),
       icon: ShoppingBag,
       path: '/products',
+      action: null,
+    },
+    {
+      key: 'gift',
+      label: t('nav.shop'),
+      icon: Gift,
+      path: '/om/shop',
       action: null,
     },
     {
@@ -157,6 +164,59 @@ export const MobileBottomNav: React.FC = () => {
                       </span>
                     </div>
                   </motion.button>
+                );
+              }
+
+              // Special "Send a Gift" item
+              if (item.key === 'gift') {
+                return (
+                  <motion.div
+                    key={item.key}
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{
+                      delay: index * 0.1,
+                      type: "spring",
+                      stiffness: 200,
+                      damping: 15,
+                    }}
+                    className="relative"
+                  >
+                    {/* Pulsing glow behind the button */}
+                    <motion.div
+                      className="absolute inset-0 rounded-xl"
+                      animate={{ boxShadow: ["0 0 0px 0px rgba(244,63,94,0)", "0 0 12px 4px rgba(244,63,94,0.55)", "0 0 0px 0px rgba(244,63,94,0)"] }}
+                      transition={{ repeat: Infinity, duration: 2.4, ease: "easeInOut" }}
+                    />
+
+                    <Link
+                      to={item.path!}
+                      className="group relative flex flex-col items-center justify-center p-3 min-w-[68px] rounded-xl overflow-hidden"
+                    >
+                      {/* Gradient background — always visible */}
+                      <div className={`absolute inset-0 rounded-xl transition-opacity duration-200 ${
+                        active
+                          ? 'bg-gradient-to-br from-rose-400 to-pink-600 opacity-100'
+                          : 'bg-gradient-to-br from-rose-500 to-pink-600 opacity-90 group-hover:opacity-100'
+                      }`} />
+
+                      {/* Shine overlay */}
+                      <div className="absolute inset-0 rounded-xl bg-gradient-to-b from-white/20 to-transparent pointer-events-none" />
+
+                      <div className="relative flex flex-col items-center gap-1.5">
+                        <motion.div
+                          animate={{ y: [0, -2, 0] }}
+                          transition={{ repeat: Infinity, duration: 1.8, ease: "easeInOut" }}
+                        >
+                          <Icon className="w-5 h-5 text-white drop-shadow-sm" />
+                        </motion.div>
+
+                        <span className="text-[10px] font-semibold leading-none text-white drop-shadow-sm text-center w-full block">
+                          {item.label}
+                        </span>
+                      </div>
+                    </Link>
+                  </motion.div>
                 );
               }
 
