@@ -1992,7 +1992,7 @@ export const OrdersManagement: React.FC = () => {
                       <div className="shrink-0 text-right">
                         <div className="font-semibold">OMR {order.totalAmount.toFixed(3)}</div>
                         <div className="mt-1 text-xs text-muted-foreground">
-                          {format(new Date(order.createdAt), 'MMM dd, yyyy HH:mm:ss')}
+                          {format(new Date(order.createdAt), 'MMM dd, yyyy')}
                         </div>
                       </div>
                     </div>
@@ -2021,7 +2021,7 @@ export const OrdersManagement: React.FC = () => {
                       <TableHead>{isArabic ? 'المبلغ' : 'Amount'}</TableHead>
                       <TableHead>{isArabic ? 'الحالة' : 'Status'}</TableHead>
                       <TableHead>{isArabic ? 'الدفع' : 'Payment'}</TableHead>
-                      <TableHead>{isArabic ? 'التاريخ / الوقت' : 'Date / Time'}</TableHead>
+                      <TableHead>{isArabic ? 'التاريخ' : 'Date'}</TableHead>
                       <TableHead className="text-right">
                         {isArabic ? 'الإجراءات' : 'Actions'}
                       </TableHead>
@@ -2080,7 +2080,7 @@ export const OrdersManagement: React.FC = () => {
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          {format(new Date(order.createdAt), 'MMM dd, yyyy HH:mm:ss')}
+                          {format(new Date(order.createdAt), 'MMM dd, yyyy')}
                         </TableCell>
                         <TableCell className="text-right">
                           <OrderActionsMenu order={order} triggerVariant="icon" />
@@ -2155,7 +2155,7 @@ export const OrdersManagement: React.FC = () => {
                             <div className="shrink-0 text-right">
                               <div className="font-semibold">OMR {order.totalAmount.toFixed(3)}</div>
                               <div className="mt-1 text-xs text-muted-foreground">
-                                {format(new Date(order.createdAt), 'MMM dd, yyyy HH:mm:ss')}
+                                {format(new Date(order.createdAt), 'MMM dd, yyyy')}
                               </div>
                             </div>
                           </div>
@@ -2181,7 +2181,7 @@ export const OrdersManagement: React.FC = () => {
                             <TableHead>{isArabic ? 'المبلغ' : 'Amount'}</TableHead>
                             <TableHead>{isArabic ? 'الحالة' : 'Status'}</TableHead>
                             <TableHead>{isArabic ? 'الدفع' : 'Payment'}</TableHead>
-                            <TableHead>{isArabic ? 'التاريخ / الوقت' : 'Date / Time'}</TableHead>
+                            <TableHead>{isArabic ? 'التاريخ' : 'Date'}</TableHead>
                             <TableHead className="text-right">{isArabic ? 'الإجراءات' : 'Actions'}</TableHead>
                           </TableRow>
                         </TableHeader>
@@ -2256,7 +2256,7 @@ export const OrdersManagement: React.FC = () => {
                               <TableCell>
                                 <Badge className={getPaymentStatusColor(order.paymentStatus)}>{order.paymentStatus}</Badge>
                               </TableCell>
-                              <TableCell>{format(new Date(order.createdAt), 'MMM dd, yyyy HH:mm:ss')}</TableCell>
+                              <TableCell>{format(new Date(order.createdAt), 'MMM dd, yyyy')}</TableCell>
                               <TableCell className="text-right">
                                 <OrderActionsMenu order={order} triggerVariant="icon" />
                               </TableCell>
