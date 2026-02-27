@@ -2,6 +2,9 @@ import { safeStorage } from './safeStorage';
 
 export type RegionCode = 'om' | 'sa';
 
+export const FORCED_REGION_CODE: RegionCode = 'om';
+export const REGION_SELECTION_ENABLED = false;
+
 export const isRegionCode = (value: unknown): value is RegionCode => value === 'om' || value === 'sa';
 
 export const getRegionFromPath = (pathname: string): RegionCode | null => {
@@ -13,14 +16,13 @@ export const getRegionFromPath = (pathname: string): RegionCode | null => {
 export const isAdminPath = (pathname: string): boolean => pathname.includes('/admin');
 
 export const getPreferredStorefrontRegion = (): RegionCode => {
-  const saved = safeStorage.getItem('spirithub-region');
-  return isRegionCode(saved) ? saved : 'om';
+  safeStorage.setItem('spirithub-region', FORCED_REGION_CODE);
+  return FORCED_REGION_CODE;
 };
 
 export const getPreferredAdminRegion = (): RegionCode => {
-  const savedAdmin = safeStorage.getItem('spirithub-admin-region');
-  if (isRegionCode(savedAdmin)) return savedAdmin;
-  return getPreferredStorefrontRegion();
+  safeStorage.setItem('spirithub-admin-region', FORCED_REGION_CODE);
+  return FORCED_REGION_CODE;
 };
 
 /**
@@ -31,17 +33,8 @@ export const getPreferredAdminRegion = (): RegionCode => {
  * - If we're on an admin route without prefix (legacy /admin), use the stored admin region.
  * - Otherwise, fall back to the storefront region.
  */
-export const getActiveRegionForApi = (pathname?: string): RegionCode => {
-  const path = pathname ?? (typeof window !== 'undefined' ? window.location.pathname : '/');
-
-  const pathRegion = getRegionFromPath(path);
-  if (pathRegion) return pathRegion;
-
-  if (isAdminPath(path)) {
-    return getPreferredAdminRegion();
-  }
-
-  return getPreferredStorefrontRegion();
+export const getActiveRegionForApi = (_pathname?: string): RegionCode => {
+  return FORCED_REGION_CODE;
 };
 
 export const getAdminBasePath = (region: RegionCode): string => `/${region}/admin`;
@@ -64,8 +57,8 @@ export const buildAdminPathForRegion = (currentPathname: string, targetRegion: R
   return `${getAdminBasePath(targetRegion)}${suffixWithLeadingSlash}`;
 };
 
-export const persistAdminRegion = (region: RegionCode): void => {
-  safeStorage.setItem('spirithub-admin-region', region);
+export const persistAdminRegion = (_region: RegionCode): void => {
+  safeStorage.setItem('spirithub-admin-region', FORCED_REGION_CODE);
 };
 
 /**

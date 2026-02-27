@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useRegion } from '../../hooks/useRegion';
 import { safeStorage } from '../../lib/safeStorage';
-import { isRegionCode, type RegionCode } from '../../lib/regionUtils';
+import { REGION_SELECTION_ENABLED, type RegionCode } from '../../lib/regionUtils';
 import { Button } from '../ui/button';
 import { useApp } from '../../hooks/useApp';
 import { X } from 'lucide-react';
@@ -71,6 +71,12 @@ export const RegionRedirect: React.FC = () => {
 
   useEffect(() => {
     const path = location.pathname;
+
+    if (path.startsWith('/sa')) {
+      const suffix = path.substring(3);
+      navigate(`/om${suffix}${location.search}`, { replace: true });
+      return;
+    }
     
     // Skip admin and wholesale routes
     if (path.includes('/admin') || path.startsWith('/wholesale')) {
@@ -83,18 +89,10 @@ export const RegionRedirect: React.FC = () => {
     
     // If no region prefix, redirect to current region
     if (!hasRegionPrefix) {
-      const saved = safeStorage.getItem('spirithub-region');
-      if (isRegionCode(saved)) {
-        const targetPath = path === '/' ? `/${saved}` : `/${saved}${path}`;
-        navigate(`${targetPath}${location.search}`, { replace: true });
-        return;
-      }
+      safeStorage.setItem('spirithub-region', 'om');
+      setRegion('om');
 
-      // No saved preference: require explicit user confirmation.
-      setShowBanner(true);
-
-      // Optionally suggest a region via browser geolocation (no external services).
-      if (typeof window !== 'undefined' && 'geolocation' in navigator) {
+      if (REGION_SELECTION_ENABLED && typeof window !== 'undefined' && 'geolocation' in navigator) {
         navigator.geolocation.getCurrentPosition(
           (pos) => {
             const inferred = regionFromCoordinates(pos.coords.latitude, pos.coords.longitude);
@@ -106,11 +104,16 @@ export const RegionRedirect: React.FC = () => {
           { enableHighAccuracy: false, timeout: 4000, maximumAge: 60_000 }
         );
       }
+
+      const targetPath = path === '/' ? '/om' : `/om${path}`;
+      navigate(`${targetPath}${location.search}`, { replace: true });
+      return;
     } else {
       setShowBanner(false);
     }
   }, [location.pathname, location.search, currentRegion.code, navigate]);
 
+  if (!REGION_SELECTION_ENABLED) return null;
   if (!showBanner) return null;
 
   return (

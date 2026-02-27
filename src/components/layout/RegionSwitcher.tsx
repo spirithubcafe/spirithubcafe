@@ -7,6 +7,7 @@ import {
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
 import { RegionFlagIcon } from '../ui/RegionFlagIcon';
+import { REGION_SELECTION_ENABLED } from '../../lib/regionUtils';
 import './RegionSwitcher.css';
 
 interface RegionSwitcherProps {
@@ -19,6 +20,10 @@ interface RegionSwitcherProps {
  */
 export const RegionSwitcher: React.FC<RegionSwitcherProps> = ({ isHomePage = false }) => {
   const { currentRegion, setRegion, regions } = useRegion();
+
+  if (!REGION_SELECTION_ENABLED) {
+    return null;
+  }
 
   return (
     <DropdownMenu>

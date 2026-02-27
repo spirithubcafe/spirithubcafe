@@ -6,7 +6,8 @@ import { cn } from '../../lib/utils';
 import { safeStorage } from '../../lib/safeStorage';
 import {
   buildAdminPathForRegion,
-  getRegionFromPath,
+  FORCED_REGION_CODE,
+  REGION_SELECTION_ENABLED,
   persistAdminRegion,
   type RegionCode,
 } from '../../lib/regionUtils';
@@ -83,9 +84,8 @@ interface AdminNavGroup {
 const SIDEBAR_STORAGE_KEY = 'admin.sidebar.collapsed';
 const THEME_STORAGE_KEY = 'admin.theme.preference';
 
-const getAdminRegionFromPath = (pathname: string): RegionCode => {
-  // Admin routes are always /om/admin/* or /sa/admin/* after our redirect.
-  return getRegionFromPath(pathname) ?? 'om';
+const getAdminRegionFromPath = (_pathname: string): RegionCode => {
+  return FORCED_REGION_CODE;
 };
 
 const normalizeAdminPath = (pathname: string): string => {
@@ -145,13 +145,20 @@ export const AdminLayout: React.FC = () => {
     persistAdminRegion(adminRegion);
   }, [adminRegion]);
 
-  const setAdminRegion = (region: RegionCode) => {
-    persistAdminRegion(region);
-    const targetPath = buildAdminPathForRegion(location.pathname, region);
+  const setAdminRegion = (_region: RegionCode) => {
+    persistAdminRegion(FORCED_REGION_CODE);
+    const targetPath = buildAdminPathForRegion(location.pathname, FORCED_REGION_CODE);
     // Use full navigation by assigning href, to ensure everything re-initializes cleanly.
     // This also avoids subtle state issues across two admin branches.
     window.location.href = `${targetPath}${window.location.search}`;
   };
+
+  useEffect(() => {
+    if (location.pathname.startsWith('/sa/admin')) {
+      const targetPath = buildAdminPathForRegion(location.pathname, FORCED_REGION_CODE);
+      window.location.replace(`${targetPath}${window.location.search}`);
+    }
+  }, [location.pathname, location.search]);
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -698,78 +705,80 @@ export const AdminLayout: React.FC = () => {
                 </form>
 
                 <div className="flex items-center gap-2">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="hidden items-center gap-2 rounded-full border-border/60 px-3 py-2 text-xs font-semibold uppercase tracking-wide md:inline-flex"
-                        aria-label={
-                          adminRegion === 'om'
-                            ? 'Active branch: Oman'
-                            : 'Active branch: Saudi Arabia'
-                        }
-                      >
-                        <Globe className="h-4 w-4" />
-                        <span className="text-muted-foreground">Branch</span>
-                        <Badge
+                  {REGION_SELECTION_ENABLED && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
                           variant="outline"
-                          className={cn(
-                            'ml-1 border-transparent font-semibold',
+                          className="hidden items-center gap-2 rounded-full border-border/60 px-3 py-2 text-xs font-semibold uppercase tracking-wide md:inline-flex"
+                          aria-label={
                             adminRegion === 'om'
-                              ? 'bg-emerald-500/10 text-emerald-700'
-                              : 'bg-sky-500/10 text-sky-700'
+                              ? 'Active branch: Oman'
+                              : 'Active branch: Saudi Arabia'
+                          }
+                        >
+                          <Globe className="h-4 w-4" />
+                          <span className="text-muted-foreground">Branch</span>
+                          <Badge
+                            variant="outline"
+                            className={cn(
+                              'ml-1 border-transparent font-semibold',
+                              adminRegion === 'om'
+                                ? 'bg-emerald-500/10 text-emerald-700'
+                                : 'bg-sky-500/10 text-sky-700'
+                            )}
+                          >
+                            {adminRegion.toUpperCase()}
+                          </Badge>
+                          <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-64">
+                        <DropdownMenuLabel>Active branch</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onSelect={(e) => {
+                            e.preventDefault();
+                            setAdminRegion('om');
+                          }}
+                          className={cn(
+                            'flex items-center justify-between',
+                            adminRegion === 'om' && 'bg-emerald-500/10'
                           )}
                         >
-                          {adminRegion.toUpperCase()}
-                        </Badge>
-                        <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-64">
-                      <DropdownMenuLabel>Active branch</DropdownMenuLabel>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        onSelect={(e) => {
-                          e.preventDefault();
-                          setAdminRegion('om');
-                        }}
-                        className={cn(
-                          'flex items-center justify-between',
-                          adminRegion === 'om' && 'bg-emerald-500/10'
-                        )}
-                      >
-                        <span className="flex items-center gap-2">
-                          <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                          Oman (OM)
-                        </span>
-                        {adminRegion === 'om' && (
-                          <Badge variant="outline" className="border-transparent bg-emerald-500/10 text-emerald-700">
-                            Selected
-                          </Badge>
-                        )}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onSelect={(e) => {
-                          e.preventDefault();
-                          setAdminRegion('sa');
-                        }}
-                        className={cn(
-                          'flex items-center justify-between',
-                          adminRegion === 'sa' && 'bg-sky-500/10'
-                        )}
-                      >
-                        <span className="flex items-center gap-2">
-                          <span className="h-2 w-2 rounded-full bg-sky-500" />
-                          Saudi Arabia (SA)
-                        </span>
-                        {adminRegion === 'sa' && (
-                          <Badge variant="outline" className="border-transparent bg-sky-500/10 text-sky-700">
-                            Selected
-                          </Badge>
-                        )}
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                          <span className="flex items-center gap-2">
+                            <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                            Oman (OM)
+                          </span>
+                          {adminRegion === 'om' && (
+                            <Badge variant="outline" className="border-transparent bg-emerald-500/10 text-emerald-700">
+                              Selected
+                            </Badge>
+                          )}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onSelect={(e) => {
+                            e.preventDefault();
+                            setAdminRegion('sa');
+                          }}
+                          className={cn(
+                            'flex items-center justify-between',
+                            adminRegion === 'sa' && 'bg-sky-500/10'
+                          )}
+                        >
+                          <span className="flex items-center gap-2">
+                            <span className="h-2 w-2 rounded-full bg-sky-500" />
+                            Saudi Arabia (SA)
+                          </span>
+                          {adminRegion === 'sa' && (
+                            <Badge variant="outline" className="border-transparent bg-sky-500/10 text-sky-700">
+                              Selected
+                            </Badge>
+                          )}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
 
                   <Button
                     type="button"
