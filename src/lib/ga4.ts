@@ -49,8 +49,11 @@ export function initGA4(): void {
   // the env var baked into index.html).
   if (!window.dataLayer) {
     window.dataLayer = window.dataLayer || [];
-    window.gtag = function gtag(...args: any[]) {
-      window.dataLayer.push(args);
+    // Use `arguments` (not a rest array) so the dataLayer entries match
+    // the format expected by gtag.js when it loads and replays the queue.
+    window.gtag = function gtag() {
+      // eslint-disable-next-line prefer-rest-params
+      window.dataLayer.push(arguments);
     };
     window.gtag('js', new Date());
     window.gtag('config', GA4_ID, {
