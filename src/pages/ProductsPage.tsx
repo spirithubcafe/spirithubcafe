@@ -462,7 +462,7 @@ export const ProductsPage = () => {
             </h2>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 max-w-7xl mx-auto">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 max-w-7xl mx-auto items-stretch">
             {coffeeCategories.map((category) => {
               const isActive = selectedCategory === category.id || selectedCategory === category.slug;
               
@@ -470,53 +470,48 @@ export const ProductsPage = () => {
                 <button
                   key={category.id}
                   onClick={() => handleCategoryChange(category.id)}
-                  className="group cursor-pointer text-left transition-all"
+                  className="group w-full h-full cursor-pointer text-left transition-all"
                 >
-                  {/* Category Image */}
-                  <div className={`relative overflow-hidden rounded-lg aspect-square mb-4 border-2 transition-all duration-300 ${
-                    isActive 
-                      ? 'border-amber-500 shadow-lg' 
-                      : 'border-gray-200 group-hover:border-amber-400 group-hover:shadow-md'
+                  <div className={`h-full overflow-hidden rounded-2xl border bg-white transition-all duration-300 flex flex-col ${
+                    isActive
+                      ? 'border-amber-500 shadow-md'
+                      : 'border-gray-200 group-hover:border-gray-300'
                   }`}>
-                    <img
-                      src={category.image || '/images/slides/slide1.webp'}
-                      alt={category.name}
-                      width={200}
-                      height={200}
-                      loading="eager"
-                      decoding="sync"
-                      fetchPriority="high"
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.src = '/images/slides/slide1.webp';
-                      }}
-                    />
-                    
-                    {/* Overlay on Hover */}
-                    <div className={`absolute inset-0 transition-all duration-300 ${
-                      isActive 
-                        ? 'bg-amber-500/20' 
-                        : 'bg-black/0 group-hover:bg-black/10'
-                    }`} />
-                    
-                    {/* Active Badge */}
-                    {isActive && (
-                      <div className="absolute top-2 right-2 bg-amber-500 text-white text-xs font-bold px-2 py-1 rounded-full">
-                        {isArabic ? 'محدد' : 'Active'}
-                      </div>
-                    )}
-                  </div>
-                  
-                  {/* Category Name */}
-                  <div className="text-center">
-                    <h3 className={`text-base font-bold transition-colors duration-200 ${
-                      isActive 
-                        ? 'text-amber-600' 
-                        : 'text-gray-900 group-hover:text-amber-600'
-                    }`}>
-                      {category.name}
-                    </h3>
+                    {/* Category Image */}
+                    <div className="relative overflow-hidden aspect-square">
+                      <img
+                        src={category.image || '/images/slides/slide1.webp'}
+                        alt={category.name}
+                        width={200}
+                        height={200}
+                        loading="eager"
+                        decoding="sync"
+                        fetchPriority="high"
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = '/images/slides/slide1.webp';
+                        }}
+                      />
+
+                      {/* Overlay on Hover */}
+                      <div className={`absolute inset-0 transition-all duration-300 ${
+                        isActive
+                          ? 'bg-amber-500/10'
+                          : 'bg-black/0 group-hover:bg-black/5'
+                      }`} />
+                    </div>
+
+                    {/* Category Name */}
+                    <div className="flex min-h-[86px] items-center bg-gray-50 px-4 py-4 sm:px-5">
+                      <h3 className={`text-[1.05rem] font-semibold leading-6 transition-colors duration-200 ${
+                        isActive
+                          ? 'text-amber-600'
+                          : 'text-gray-900 group-hover:text-amber-600'
+                      }`}>
+                        {category.name}
+                      </h3>
+                    </div>
                   </div>
                 </button>
               );
