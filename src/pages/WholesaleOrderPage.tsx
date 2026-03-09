@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
-import { Plus, Trash2, Loader2, CheckCircle2, Package, Mail, AlertTriangle, MessageCircle } from 'lucide-react';
+import { Plus, Trash2, Loader2, CheckCircle2, Package, Mail, AlertTriangle, MessageCircle, Coffee, Filter, Pill, Disc3 } from 'lucide-react';
 
 import { useApp } from '../hooks/useApp';
 import { useRegion } from '../hooks/useRegion';
@@ -27,10 +27,10 @@ import {
   FormLabel,
   FormMessage,
 } from '../components/ui/form';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectSeparator, SelectTrigger, SelectValue } from '../components/ui/select';
 import { RadioGroup, RadioGroupItem } from '../components/ui/radio-group';
 
-import { productService, productVariantService, wholesaleCustomerLookupService, wholesaleOrderService } from '../services';
+import { categoryService, productService, productVariantService, wholesaleCustomerLookupService, wholesaleOrderService } from '../services';
 import type { Product, ProductVariant } from '../types/product';
 import type { WholesaleOrder, WholesaleShippingMethod } from '../types/wholesale';
 
@@ -87,6 +87,13 @@ const formatVariantLabel = (variant: ProductVariant) => {
   return `${weight}${unit ? unit : ''}${sku}`;
 };
 
+const PINNED_PRODUCT_NAMES = [
+  'Decaf Colombia \u2013 Swiss Water Decaffeinated',
+  'El Salvador - Red Bourbon Washed',
+  'Ethiopia - Halo Hartume Natural',
+  'Brazil - Catuai Natural',
+];
+
 const sanitizeWhatsappPhone = (raw: string): string => {
   // WhatsApp expects country code + number, digits only.
   // Example: +968 9xxxxxxx -> 9689xxxxxxx
@@ -107,6 +114,9 @@ export const WholesaleOrderPage: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [productLoadError, setProductLoadError] = useState<string | null>(null);
 
+  const [espressoCategoryIds, setEspressoCategoryIds] = useState<Set<number>>(new Set());
+  const [capsuleCategoryIds, setCapsuleCategoryIds] = useState<Set<number>>(new Set());
+  const [ufoCategoryIds, setUfoCategoryIds] = useState<Set<number>>(new Set());
   const [variantCache, setVariantCache] = useState<Record<number, ProductVariant[]>>({});
   const [variantLoading, setVariantLoading] = useState<Record<number, boolean>>({});
 
@@ -178,8 +188,32 @@ export const WholesaleOrderPage: React.FC = () => {
     setProductLoadError(null);
 
     try {
-      const ids = await wholesaleOrderService.getAllowedCategories();
+      const [ids, allCategories] = await Promise.all([
+        wholesaleOrderService.getAllowedCategories(),
+        categoryService.getAll({ includeInactive: false }).catch(() => [] as import('../types/product').Category[]),
+      ]);
       setAllowedCategoryIds(ids);
+
+      const espressoIds = new Set(
+        allCategories
+          .filter((cat) => /espresso/i.test(cat.slug) || /espresso/i.test(cat.name))
+          .map((cat) => cat.id)
+      );
+      setEspressoCategoryIds(espressoIds);
+
+      const capsuleIds = new Set(
+        allCategories
+          .filter((cat) => /capsule/i.test(cat.slug) || /capsule/i.test(cat.name))
+          .map((cat) => cat.id)
+      );
+      setCapsuleCategoryIds(capsuleIds);
+
+      const ufoIds = new Set(
+        allCategories
+          .filter((cat) => /ufo/i.test(cat.slug) || /ufo/i.test(cat.name))
+          .map((cat) => cat.id)
+      );
+      setUfoCategoryIds(ufoIds);
 
       if (!ids || ids.length === 0) {
         setProducts([]);
@@ -208,9 +242,17 @@ export const WholesaleOrderPage: React.FC = () => {
         }
       }
 
-      const list = Array.from(merged.values())
+      const baseList = Array.from(merged.values())
         .filter((p) => p.isActive)
         .sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0));
+
+      // Pin specific products to the top in the declared order.
+      const pinned = PINNED_PRODUCT_NAMES
+        .map((name) => baseList.find((p) => p.name === name))
+        .filter(Boolean) as import('../types/product').Product[];
+      const pinnedIds = new Set(pinned.map((p) => p.id));
+      const rest = baseList.filter((p) => !pinnedIds.has(p.id));
+      const list = [...pinned, ...rest];
 
       setProducts(list);
     } catch (err: any) {
@@ -1017,11 +1059,143 @@ export const WholesaleOrderPage: React.FC = () => {
                                         </SelectTrigger>
                                         <SelectContent>
                                           <SelectItem value="0">{isArabic ? '— اختر —' : '— Select —'}</SelectItem>
-                                          {products.map((p) => (
-                                            <SelectItem key={p.id} value={String(p.id)}>
-                                              {isArabic ? (p.nameAr || p.name) : p.name}
-                                            </SelectItem>
-                                          ))}
+                                          {/* Pinned products */}
+                                          {products.some((p) => PINNED_PRODUCT_NAMES.includes(p.name)) && (
+                                            <SelectGroup>
+                                              {products
+                                                .filter((p) => PINNED_PRODUCT_NAMES.includes(p.name))
+                                                .sort((a, b) => PINNED_PRODUCT_NAMES.indexOf(a.name) - PINNED_PRODUCT_NAMES.indexOf(b.name))
+                                                .map((p) => (
+                                                  <SelectItem key={p.id} value={String(p.id)}>
+                                                    {isArabic ? (p.nameAr || p.name) : p.name}
+                                                  </SelectItem>
+                                                ))}
+                                            </SelectGroup>
+                                          )}
+                                          {/* Grouped products by category type */}
+                                          {(() => {
+                                            const notPinned = (p: Product) => !PINNED_PRODUCT_NAMES.includes(p.name);
+                                            const espressoProducts = products.filter(
+                                              (p) => notPinned(p) && espressoCategoryIds.has(p.categoryId)
+                                            );
+                                            const capsuleProducts = products.filter(
+                                              (p) => notPinned(p) && capsuleCategoryIds.has(p.categoryId)
+                                            );
+                                            const ufoProducts = products.filter(
+                                              (p) => notPinned(p) && ufoCategoryIds.has(p.categoryId)
+                                            );
+                                            const filterProducts = products.filter(
+                                              (p) =>
+                                                notPinned(p) &&
+                                                !espressoCategoryIds.has(p.categoryId) &&
+                                                !capsuleCategoryIds.has(p.categoryId) &&
+                                                !ufoCategoryIds.has(p.categoryId)
+                                            );
+                                            return (
+                                              <>
+                                                {espressoProducts.length > 0 && (
+                                                  <>
+                                                    <SelectSeparator />
+                                                    <SelectGroup>
+                                                      <SelectLabel className="text-amber-700 font-semibold" dir={isArabic ? 'rtl' : 'ltr'}>
+                                                        <span className="inline-flex items-center gap-1">
+                                                          <Coffee className="w-3.5 h-3.5" />
+                                                          {isArabic ? 'قهوة إسبريسو' : 'Espresso Coffee'}
+                                                        </span>
+                                                      </SelectLabel>
+                                                      {espressoProducts.map((p) => (
+                                                        <SelectItem
+                                                          key={p.id}
+                                                          value={String(p.id)}
+                                                          className="bg-amber-50 text-amber-900 data-[highlighted]:bg-amber-100 data-[state=checked]:bg-amber-100"
+                                                        >
+                                                          <span className={`inline-flex items-center gap-1.5${isArabic ? ' flex-row-reverse' : ''}`}>
+                                                            <span className="inline-block w-2 h-2 rounded-full bg-amber-700 shrink-0" />
+                                                            {isArabic ? (p.nameAr || p.name) : p.name}
+                                                          </span>
+                                                        </SelectItem>
+                                                      ))}
+                                                    </SelectGroup>
+                                                  </>
+                                                )}
+                                                {filterProducts.length > 0 && (
+                                                  <>
+                                                    <SelectSeparator />
+                                                    <SelectGroup>
+                                                      <SelectLabel className="text-green-700 font-semibold" dir={isArabic ? 'rtl' : 'ltr'}>
+                                                        <span className="inline-flex items-center gap-1">
+                                                          <Filter className="w-3.5 h-3.5" />
+                                                          {isArabic ? 'قهوة فلتر' : 'Filter Coffee'}
+                                                        </span>
+                                                      </SelectLabel>
+                                                      {filterProducts.map((p) => (
+                                                        <SelectItem
+                                                          key={p.id}
+                                                          value={String(p.id)}
+                                                          className="bg-green-50 text-green-900 data-[highlighted]:bg-green-100 data-[state=checked]:bg-green-100"
+                                                        >
+                                                          <span className={`inline-flex items-center gap-1.5${isArabic ? ' flex-row-reverse' : ''}`}>
+                                                            <span className="inline-block w-2 h-2 rounded-full bg-green-600 shrink-0" />
+                                                            {isArabic ? (p.nameAr || p.name) : p.name}
+                                                          </span>
+                                                        </SelectItem>
+                                                      ))}
+                                                    </SelectGroup>
+                                                  </>
+                                                )}
+                                                {capsuleProducts.length > 0 && (
+                                                  <>
+                                                    <SelectSeparator />
+                                                    <SelectGroup>
+                                                      <SelectLabel className="text-purple-700 font-semibold" dir={isArabic ? 'rtl' : 'ltr'}>
+                                                        <span className="inline-flex items-center gap-1">
+                                                          <Pill className="w-3.5 h-3.5" />
+                                                          {isArabic ? 'كبسولات قهوة' : 'Capsules Coffee'}
+                                                        </span>
+                                                      </SelectLabel>
+                                                      {capsuleProducts.map((p) => (
+                                                        <SelectItem
+                                                          key={p.id}
+                                                          value={String(p.id)}
+                                                          className="text-purple-900 data-[highlighted]:bg-purple-50 data-[state=checked]:bg-purple-50"
+                                                        >
+                                                          <span className={`inline-flex items-center gap-1.5${isArabic ? ' flex-row-reverse' : ''}`}>
+                                                            <span className="inline-block w-2 h-2 rounded-full bg-purple-600 shrink-0" />
+                                                            {isArabic ? (p.nameAr || p.name) : p.name}
+                                                          </span>
+                                                        </SelectItem>
+                                                      ))}
+                                                    </SelectGroup>
+                                                  </>
+                                                )}
+                                                {ufoProducts.length > 0 && (
+                                                  <>
+                                                    <SelectSeparator />
+                                                    <SelectGroup>
+                                                      <SelectLabel className="text-sky-700 font-semibold" dir={isArabic ? 'rtl' : 'ltr'}>
+                                                        <span className="inline-flex items-center gap-1">
+                                                          <Disc3 className="w-3.5 h-3.5" />
+                                                          {isArabic ? 'يوفو دريب قهوة' : 'UFO Drip Coffee'}
+                                                        </span>
+                                                      </SelectLabel>
+                                                      {ufoProducts.map((p) => (
+                                                        <SelectItem
+                                                          key={p.id}
+                                                          value={String(p.id)}
+                                                          className="text-sky-900 data-[highlighted]:bg-sky-50 data-[state=checked]:bg-sky-50"
+                                                        >
+                                                          <span className={`inline-flex items-center gap-1.5${isArabic ? ' flex-row-reverse' : ''}`}>
+                                                            <span className="inline-block w-2 h-2 rounded-full bg-sky-500 shrink-0" />
+                                                            {isArabic ? (p.nameAr || p.name) : p.name}
+                                                          </span>
+                                                        </SelectItem>
+                                                      ))}
+                                                    </SelectGroup>
+                                                  </>
+                                                )}
+                                              </>
+                                            );
+                                          })()}
                                         </SelectContent>
                                       </Select>
                                     </FormControl>
