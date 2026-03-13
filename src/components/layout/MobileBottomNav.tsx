@@ -167,6 +167,61 @@ export const MobileBottomNav: React.FC = () => {
                 );
               }
 
+              // Special glossy "Our Coffee" item
+              if (item.key === 'shop') {
+                return (
+                  <motion.div
+                    key={item.key}
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{
+                      delay: index * 0.1,
+                      type: "spring",
+                      stiffness: 200,
+                      damping: 15,
+                    }}
+                    className="relative"
+                  >
+                    <Link
+                      to={item.path!}
+                      className="group relative flex flex-col items-center justify-center p-3 min-w-[68px] rounded-xl overflow-hidden"
+                    >
+                      <div className={`absolute inset-0 rounded-xl transition-opacity duration-300 ${
+                        active
+                          ? 'bg-gradient-to-br from-amber-300 via-orange-400 to-amber-600 opacity-100'
+                          : 'bg-gradient-to-br from-amber-200/90 via-orange-300/90 to-amber-500/95 opacity-90 group-hover:opacity-100'
+                      }`} />
+
+                      {/* Glass gloss layer */}
+                      <div className="absolute inset-0 rounded-xl bg-gradient-to-b from-white/45 via-white/10 to-transparent pointer-events-none" />
+
+                      {/* Soft highlight bubble */}
+                      <div className="absolute -top-5 -right-4 w-12 h-12 rounded-full bg-white/30 blur-md pointer-events-none" />
+
+                      {/* Animated diagonal shine */}
+                      <motion.div
+                        className="absolute top-0 -left-10 h-full w-6 bg-white/35 blur-[1px] rotate-12 pointer-events-none"
+                        animate={{ x: [-8, 86, -8] }}
+                        transition={{ repeat: Infinity, duration: 2.8, ease: "easeInOut" }}
+                      />
+
+                      <div className="relative flex flex-col items-center gap-1.5">
+                        <motion.div
+                          animate={active ? { y: [0, -1.5, 0], scale: [1, 1.06, 1] } : { y: [0, -1, 0] }}
+                          transition={{ repeat: Infinity, duration: 2.2, ease: "easeInOut" }}
+                        >
+                          <Icon className="w-5 h-5 text-[#3a2308] drop-shadow-sm" />
+                        </motion.div>
+
+                        <span className="text-[10px] font-semibold leading-none text-[#3a2308] drop-shadow-sm text-center w-full block">
+                          {item.label}
+                        </span>
+                      </div>
+                    </Link>
+                  </motion.div>
+                );
+              }
+
               // Special "Send a Gift" item
               if (item.key === 'gift') {
                 return (
