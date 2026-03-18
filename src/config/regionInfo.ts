@@ -3,6 +3,8 @@ import type { RegionCode } from '../contexts/RegionContextDefinition';
 export interface RegionContactInfo {
   phone: string;
   phone2?: string;
+  phone3?: string;
+  phone3Label?: { en: string; ar: string };
   whatsapp: string;
   email: string;
   address: {
@@ -48,6 +50,8 @@ export const REGION_INFO: Record<RegionCode, RegionInfo> = {
     contact: {
       phone: '+968 9190 0005',
       phone2: '+968 7272 6999',
+      phone3: '+968 7193 6999',
+      phone3Label: { en: 'Wholesale', ar: 'بيع بالجملة' },
       whatsapp: '96891900005',
       email: 'info@spirithubcafe.com',
       address: {
