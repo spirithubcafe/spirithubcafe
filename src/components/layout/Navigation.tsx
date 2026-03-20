@@ -1,7 +1,7 @@
 import React, { useMemo, useCallback, useEffect, useState, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Globe, ShoppingCart, Menu, ChevronDown, User, Heart, ShoppingBag, Shield, Coffee, Gift, Home as HomeIcon, Package, Info, Mail, LogOut, LogIn, UserPlus } from 'lucide-react';
+import { Globe, ShoppingCart, Menu, ChevronDown, User, Heart, ShoppingBag, Shield, Coffee, Gift, Star, Home as HomeIcon, Package, Info, Mail, LogOut, LogIn, UserPlus } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '../ui/sheet';
 import {
@@ -459,6 +459,8 @@ export const Navigation: React.FC = () => {
               variant="ghost"
               size="sm"
               onClick={toggleLanguage}
+              aria-label={language === 'ar' ? 'تغيير اللغة' : 'Switch language'}
+              title={language === 'ar' ? 'تغيير اللغة' : 'Switch language'}
               className={`transition-colors p-2.5 ${
                 isHomePage 
                   ? 'text-white hover:text-amber-200 hover:bg-white/10' 
@@ -468,11 +470,41 @@ export const Navigation: React.FC = () => {
               <Globe className="w-5 h-5" />
             </Button>
 
+            {/* Loyalty - Mobile */}
+            <Link
+              to={getRegionalUrl('/loyalty')}
+              aria-label={language === 'ar' ? 'برنامج الولاء' : 'Loyalty Program'}
+              title={language === 'ar' ? 'برنامج الولاء' : 'Loyalty Program'}
+              className={`inline-flex items-center justify-center transition-colors p-2.5 rounded-md ${
+                isHomePage
+                  ? 'text-white hover:text-amber-200 hover:bg-white/10'
+                  : 'text-gray-900 hover:text-amber-600 hover:bg-gray-100'
+              }`}
+            >
+              <Star className="w-5 h-5" />
+            </Link>
+
+            {/* Wholesale - Mobile */}
+            <Link
+              to={getRegionalUrl('/wholesale')}
+              aria-label={t('nav.wholesale')}
+              title={t('nav.wholesale')}
+              className={`inline-flex items-center justify-center transition-colors p-2.5 rounded-md ${
+                isHomePage
+                  ? 'text-white hover:text-amber-200 hover:bg-white/10'
+                  : 'text-gray-900 hover:text-amber-600 hover:bg-gray-100'
+              }`}
+            >
+              <Package className="w-5 h-5" />
+            </Link>
+
             {/* Cart */}
             <Button
               variant="ghost"
               size="sm"
               onClick={openCart}
+              aria-label={language === 'ar' ? 'السلة' : 'Cart'}
+              title={language === 'ar' ? 'السلة' : 'Cart'}
               className={`transition-colors p-2.5 ${
                 isHomePage 
                   ? 'text-white hover:text-amber-200 hover:bg-white/10' 

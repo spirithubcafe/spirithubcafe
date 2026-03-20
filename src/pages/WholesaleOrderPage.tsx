@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
-import { Plus, Trash2, Loader2, CheckCircle2, Package, Mail, AlertTriangle, MessageCircle } from 'lucide-react';
+import { Plus, Trash2, Loader2, CheckCircle2, Package, Mail, AlertTriangle, MessageCircle, Coffee, Filter, Pill, Disc3 } from 'lucide-react';
 
 import { useApp } from '../hooks/useApp';
 import { useRegion } from '../hooks/useRegion';
@@ -27,10 +27,10 @@ import {
   FormLabel,
   FormMessage,
 } from '../components/ui/form';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectSeparator, SelectTrigger, SelectValue } from '../components/ui/select';
 import { RadioGroup, RadioGroupItem } from '../components/ui/radio-group';
 
-import { productService, productVariantService, wholesaleCustomerLookupService, wholesaleOrderService } from '../services';
+import { categoryService, productService, productVariantService, wholesaleCustomerLookupService, wholesaleOrderService } from '../services';
 import type { Product, ProductVariant } from '../types/product';
 import type { WholesaleOrder, WholesaleShippingMethod } from '../types/wholesale';
 
@@ -87,6 +87,13 @@ const formatVariantLabel = (variant: ProductVariant) => {
   return `${weight}${unit ? unit : ''}${sku}`;
 };
 
+const PINNED_PRODUCT_NAMES = [
+  'Decaf Colombia \u2013 Swiss Water Decaffeinated',
+  'El Salvador - Red Bourbon Washed',
+  'Ethiopia - Halo Hartume Natural',
+  'Brazil - Catuai Natural',
+];
+
 const sanitizeWhatsappPhone = (raw: string): string => {
   // WhatsApp expects country code + number, digits only.
   // Example: +968 9xxxxxxx -> 9689xxxxxxx
@@ -101,12 +108,15 @@ export const WholesaleOrderPage: React.FC = () => {
   const { currentRegion } = useRegion();
   const regionInfo = REGION_INFO[currentRegion.code];
   const contactInfo = regionInfo?.contact;
-  const whatsappNumbers = [contactInfo?.phone, contactInfo?.phone2].filter(Boolean) as string[];
+  const whatsappNumbers = [contactInfo?.phone, contactInfo?.phone3].filter(Boolean) as string[];
   const [allowedCategoryIds, setAllowedCategoryIds] = useState<number[] | null>(null);
   const [productsLoading, setProductsLoading] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [productLoadError, setProductLoadError] = useState<string | null>(null);
 
+  const [espressoCategoryIds, setEspressoCategoryIds] = useState<Set<number>>(new Set());
+  const [capsuleCategoryIds, setCapsuleCategoryIds] = useState<Set<number>>(new Set());
+  const [ufoCategoryIds, setUfoCategoryIds] = useState<Set<number>>(new Set());
   const [variantCache, setVariantCache] = useState<Record<number, ProductVariant[]>>({});
   const [variantLoading, setVariantLoading] = useState<Record<number, boolean>>({});
 
@@ -178,8 +188,32 @@ export const WholesaleOrderPage: React.FC = () => {
     setProductLoadError(null);
 
     try {
-      const ids = await wholesaleOrderService.getAllowedCategories();
+      const [ids, allCategories] = await Promise.all([
+        wholesaleOrderService.getAllowedCategories(),
+        categoryService.getAll({ includeInactive: false }).catch(() => [] as import('../types/product').Category[]),
+      ]);
       setAllowedCategoryIds(ids);
+
+      const espressoIds = new Set(
+        allCategories
+          .filter((cat) => /espresso/i.test(cat.slug) || /espresso/i.test(cat.name))
+          .map((cat) => cat.id)
+      );
+      setEspressoCategoryIds(espressoIds);
+
+      const capsuleIds = new Set(
+        allCategories
+          .filter((cat) => /capsule/i.test(cat.slug) || /capsule/i.test(cat.name))
+          .map((cat) => cat.id)
+      );
+      setCapsuleCategoryIds(capsuleIds);
+
+      const ufoIds = new Set(
+        allCategories
+          .filter((cat) => /ufo/i.test(cat.slug) || /ufo/i.test(cat.name))
+          .map((cat) => cat.id)
+      );
+      setUfoCategoryIds(ufoIds);
 
       if (!ids || ids.length === 0) {
         setProducts([]);
@@ -208,9 +242,17 @@ export const WholesaleOrderPage: React.FC = () => {
         }
       }
 
-      const list = Array.from(merged.values())
+      const baseList = Array.from(merged.values())
         .filter((p) => p.isActive)
         .sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0));
+
+      // Pin specific products to the top in the declared order.
+      const pinned = PINNED_PRODUCT_NAMES
+        .map((name) => baseList.find((p) => p.name === name))
+        .filter(Boolean) as import('../types/product').Product[];
+      const pinnedIds = new Set(pinned.map((p) => p.id));
+      const rest = baseList.filter((p) => !pinnedIds.has(p.id));
+      const list = [...pinned, ...rest];
 
       setProducts(list);
     } catch (err: any) {
@@ -460,8 +502,8 @@ export const WholesaleOrderPage: React.FC = () => {
   const title = isArabic ? 'حلول الجملة' : 'Wholesale Order';
   const whatsappDisplay = whatsappNumbers.length ? whatsappNumbers.join(' / ') : '';
   const seoDescription = isArabic
-    ? `حلول الجملة أصبحت أسهل، أرسل طلبك في أي وقت. واتساب: ${whatsappDisplay} · البريد الإلكتروني: ${contactInfo?.email ?? ''}`
-    : `Wholesale made simple, place your order anytime. WhatsApp: ${whatsappDisplay} · Email: ${contactInfo?.email ?? ''}`;
+    ? `في محمصة سبيريت هب نجعل طلب القهوة تجربة سهلة، مع قهوة مختارة بعناية، وتحميص دقيق، وجودة ثابتة يمكنك الاعتماد عليها. واتساب: ${whatsappDisplay} · البريد الإلكتروني: ${contactInfo?.email ?? ''}`
+    : `At SpiritHub Roastery, we make wholesale simple, with carefully sourced beans, precision roasting, and consistent quality you can trust. WhatsApp: ${whatsappDisplay} · Email: ${contactInfo?.email ?? ''}`;
 
   return (
     <div className="min-h-screen bg-gray-50 page-padding-top" dir={isArabic ? 'rtl' : 'ltr'}>
@@ -482,35 +524,41 @@ export const WholesaleOrderPage: React.FC = () => {
           <div className="mt-2 text-sm sm:text-base text-gray-600">
             <div>
               {isArabic
-                ? 'حلول الجملة أصبحت أسهل، أرسل طلبك في أي وقت.'
-                : 'Wholesale made simple, place your order anytime.'}
+                ? 'في محمصة سبيريت هب نجعل طلب القهوة تجربة سهلة، مع قهوة مختارة بعناية، وتحميص دقيق، وجودة ثابتة يمكنك الاعتماد عليها.'
+                : 'At SpiritHub Roastery, we make wholesale simple, with carefully sourced beans, precision roasting, and consistent quality you can trust.'}
             </div>
             <ul className={`mt-2 list-disc space-y-1 ${isArabic ? 'pr-5' : 'pl-5'}`}>
-              <li>
-                {isArabic ? 'واتساب:' : 'WhatsApp:'}{' '}
-                <span dir="ltr" className="whitespace-nowrap">
-                  {whatsappNumbers.length ? (
-                    whatsappNumbers.map((phone, idx) => (
-                      <React.Fragment key={phone}>
-                        <a
-                          className="text-emerald-700 hover:underline"
-                          href={`https://wa.me/${sanitizeWhatsappPhone(phone)}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          {phone}
-                        </a>
-                        {idx < whatsappNumbers.length - 1 ? ' / ' : null}
-                      </React.Fragment>
-                    ))
-                  ) : (
-                    <span>—</span>
-                  )}
+              <li className="flex items-start gap-2">
+                <MessageCircle className="mt-0.5 h-4 w-4 text-emerald-700" aria-hidden="true" />
+                <span>
+                  {isArabic ? 'واتساب:' : 'WhatsApp:'}{' '}
+                  <span dir="ltr" className="whitespace-nowrap">
+                    {whatsappNumbers.length ? (
+                      whatsappNumbers.map((phone, idx) => (
+                        <React.Fragment key={phone}>
+                          <a
+                            className="text-emerald-700 hover:underline"
+                            href={`https://wa.me/${sanitizeWhatsappPhone(phone)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            {phone}
+                          </a>
+                          {idx < whatsappNumbers.length - 1 ? ' / ' : null}
+                        </React.Fragment>
+                      ))
+                    ) : (
+                      <span>—</span>
+                    )}
+                  </span>
                 </span>
               </li>
-              <li>
-                {isArabic ? 'البريد الإلكتروني:' : 'Email:'}{' '}
-                <span dir="ltr">{contactInfo?.email ?? '—'}</span>
+              <li className="flex items-start gap-2">
+                <Mail className="mt-0.5 h-4 w-4 text-sky-700" aria-hidden="true" />
+                <span>
+                  {isArabic ? 'البريد الإلكتروني:' : 'Email:'}{' '}
+                  <span dir="ltr">{contactInfo?.email ?? '—'}</span>
+                </span>
               </li>
             </ul>
           </div>
@@ -586,18 +634,22 @@ export const WholesaleOrderPage: React.FC = () => {
                   <div className="text-sm text-gray-600">{createdOrder.cafeName}</div>
                   {createdOrder.customerPhone ? (
                     <a
-                      className="text-sm text-emerald-700 hover:underline break-words"
+                      className="mt-1 inline-flex items-center gap-1 text-sm text-emerald-700 hover:underline break-words"
                       dir="ltr"
                       href={`https://wa.me/${sanitizeWhatsappPhone(createdOrder.customerPhone)}`}
                       target="_blank"
                       rel="noopener noreferrer"
                     >
+                      <MessageCircle className="h-3.5 w-3.5" aria-hidden="true" />
                       {createdOrder.customerPhone}
                     </a>
                   ) : (
                     <div className="text-sm text-gray-600">—</div>
                   )}
-                  <div className="text-sm text-gray-600">{createdOrder.customerEmail}</div>
+                  <div className="mt-1 inline-flex items-center gap-1 text-sm text-gray-600" dir="ltr">
+                    <Mail className="h-3.5 w-3.5" aria-hidden="true" />
+                    {createdOrder.customerEmail}
+                  </div>
                 </div>
                 <div className="rounded-xl border bg-white p-4">
                   <div className="text-xs text-muted-foreground">{isArabic ? 'الحالة' : 'Status'}</div>
@@ -686,12 +738,8 @@ export const WholesaleOrderPage: React.FC = () => {
                   <div className="rounded-xl border bg-white p-4">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
                       <div className="font-semibold text-gray-900">{isArabic ? 'معلومات العميل' : 'Customer info'}</div>
-                      <div className="w-full sm:w-auto">
-                        <div className="flex items-center gap-3 rounded-lg border bg-gray-50 px-3 py-2">
-                          <div className={`text-sm text-gray-700 min-w-0 flex-1 ${isArabic ? 'text-right' : 'text-left'}`}>
-                            {isArabic ? 'عميل موجود؟' : 'Existing Customer'}
-                          </div>
-                          <Switch
+                      <div className="hidden">
+                        <Switch
                           checked={returningCustomerEnabled}
                           onCheckedChange={(checked) => {
                             setReturningCustomerEnabled(!!checked);
@@ -699,10 +747,7 @@ export const WholesaleOrderPage: React.FC = () => {
                             setLookupSummary(null);
                             lastLookupKeyRef.current = '';
                           }}
-                          aria-label={isArabic ? 'تفعيل تعبئة تلقائية' : 'Enable auto-fill'}
-                          className="shrink-0"
-                          />
-                        </div>
+                        />
                       </div>
                     </div>
 
@@ -826,7 +871,7 @@ export const WholesaleOrderPage: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="rounded-xl border bg-white p-4 space-y-4">
+                  <div className="rounded-xl border bg-white p-3 space-y-3 sm:p-4">
                     <div className="font-semibold text-gray-900">{isArabic ? 'الشحن' : 'Shipping'}</div>
 
                     <FormField
@@ -837,18 +882,18 @@ export const WholesaleOrderPage: React.FC = () => {
                           <FormLabel>{isArabic ? 'طريقة الشحن' : 'Shipping method'}</FormLabel>
                           <FormControl>
                             <RadioGroup
-                              className="grid grid-cols-1 sm:grid-cols-2 gap-3"
+                              className="grid grid-cols-1 sm:grid-cols-2 gap-2"
                               value={String(field.value)}
                               onValueChange={(v) => field.onChange(Number(v))}
                             >
                               <label
-                                className={`flex items-center gap-3 rounded-xl border bg-white p-4 cursor-pointer hover:bg-gray-50 ${
+                                className={`flex items-center gap-2 rounded-lg border bg-white p-2.5 sm:p-3 cursor-pointer hover:bg-gray-50 ${
                                   isArabic ? 'flex-row-reverse' : ''
                                 }`}
                               >
                                 <RadioGroupItem value="1" />
                                 <div className={isArabic ? 'text-right' : undefined}>
-                                  <div className="font-medium text-gray-900">
+                                  <div className="text-sm font-medium text-gray-900 leading-tight">
                                     {isArabic ? (
                                       <>
                                         استلام <span dir="ltr">(Pickup)</span>
@@ -861,13 +906,13 @@ export const WholesaleOrderPage: React.FC = () => {
                                 </div>
                               </label>
                               <label
-                                className={`flex items-center gap-3 rounded-xl border bg-white p-4 cursor-pointer hover:bg-gray-50 ${
+                                className={`flex items-center gap-2 rounded-lg border bg-white p-2.5 sm:p-3 cursor-pointer hover:bg-gray-50 ${
                                   isArabic ? 'flex-row-reverse' : ''
                                 }`}
                               >
                                 <RadioGroupItem value="2" />
                                 <div className={isArabic ? 'text-right' : undefined}>
-                                  <div className="font-medium text-gray-900">
+                                  <div className="text-sm font-medium text-gray-900 leading-tight">
                                     {isArabic ? (
                                       <>
                                         نول للتوصيل <span dir="ltr">(Nool)</span>
@@ -887,7 +932,7 @@ export const WholesaleOrderPage: React.FC = () => {
                     />
 
                     {shippingMethod === 2 ? (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         <FormField
                           control={control}
                           name="address"
@@ -927,7 +972,7 @@ export const WholesaleOrderPage: React.FC = () => {
                           <FormControl>
                             <Textarea
                               placeholder={isArabic ? 'أي تفاصيل إضافية...' : 'Any extra details...'}
-                              className="min-h-[80px]"
+                              className="min-h-[64px]"
                               {...field}
                             />
                           </FormControl>
@@ -1017,11 +1062,143 @@ export const WholesaleOrderPage: React.FC = () => {
                                         </SelectTrigger>
                                         <SelectContent>
                                           <SelectItem value="0">{isArabic ? '— اختر —' : '— Select —'}</SelectItem>
-                                          {products.map((p) => (
-                                            <SelectItem key={p.id} value={String(p.id)}>
-                                              {isArabic ? (p.nameAr || p.name) : p.name}
-                                            </SelectItem>
-                                          ))}
+                                          {/* Pinned products */}
+                                          {products.some((p) => PINNED_PRODUCT_NAMES.includes(p.name)) && (
+                                            <SelectGroup>
+                                              {products
+                                                .filter((p) => PINNED_PRODUCT_NAMES.includes(p.name))
+                                                .sort((a, b) => PINNED_PRODUCT_NAMES.indexOf(a.name) - PINNED_PRODUCT_NAMES.indexOf(b.name))
+                                                .map((p) => (
+                                                  <SelectItem key={p.id} value={String(p.id)}>
+                                                    {isArabic ? (p.nameAr || p.name) : p.name}
+                                                  </SelectItem>
+                                                ))}
+                                            </SelectGroup>
+                                          )}
+                                          {/* Grouped products by category type */}
+                                          {(() => {
+                                            const notPinned = (p: Product) => !PINNED_PRODUCT_NAMES.includes(p.name);
+                                            const espressoProducts = products.filter(
+                                              (p) => notPinned(p) && espressoCategoryIds.has(p.categoryId)
+                                            );
+                                            const capsuleProducts = products.filter(
+                                              (p) => notPinned(p) && capsuleCategoryIds.has(p.categoryId)
+                                            );
+                                            const ufoProducts = products.filter(
+                                              (p) => notPinned(p) && ufoCategoryIds.has(p.categoryId)
+                                            );
+                                            const filterProducts = products.filter(
+                                              (p) =>
+                                                notPinned(p) &&
+                                                !espressoCategoryIds.has(p.categoryId) &&
+                                                !capsuleCategoryIds.has(p.categoryId) &&
+                                                !ufoCategoryIds.has(p.categoryId)
+                                            );
+                                            return (
+                                              <>
+                                                {espressoProducts.length > 0 && (
+                                                  <>
+                                                    <SelectSeparator />
+                                                    <SelectGroup>
+                                                      <SelectLabel className="text-amber-700 font-semibold" dir={isArabic ? 'rtl' : 'ltr'}>
+                                                        <span className="inline-flex items-center gap-1">
+                                                          <Coffee className="w-3.5 h-3.5" />
+                                                          {isArabic ? 'قهوة إسبريسو' : 'Espresso Coffee'}
+                                                        </span>
+                                                      </SelectLabel>
+                                                      {espressoProducts.map((p) => (
+                                                        <SelectItem
+                                                          key={p.id}
+                                                          value={String(p.id)}
+                                                          className="bg-amber-50 text-amber-900 data-[highlighted]:bg-amber-100 data-[state=checked]:bg-amber-100"
+                                                        >
+                                                          <span className={`inline-flex items-center gap-1.5${isArabic ? ' flex-row-reverse' : ''}`}>
+                                                            <span className="inline-block w-2 h-2 rounded-full bg-amber-700 shrink-0" />
+                                                            {isArabic ? (p.nameAr || p.name) : p.name}
+                                                          </span>
+                                                        </SelectItem>
+                                                      ))}
+                                                    </SelectGroup>
+                                                  </>
+                                                )}
+                                                {filterProducts.length > 0 && (
+                                                  <>
+                                                    <SelectSeparator />
+                                                    <SelectGroup>
+                                                      <SelectLabel className="text-green-700 font-semibold" dir={isArabic ? 'rtl' : 'ltr'}>
+                                                        <span className="inline-flex items-center gap-1">
+                                                          <Filter className="w-3.5 h-3.5" />
+                                                          {isArabic ? 'قهوة فلتر' : 'Filter Coffee'}
+                                                        </span>
+                                                      </SelectLabel>
+                                                      {filterProducts.map((p) => (
+                                                        <SelectItem
+                                                          key={p.id}
+                                                          value={String(p.id)}
+                                                          className="bg-green-50 text-green-900 data-[highlighted]:bg-green-100 data-[state=checked]:bg-green-100"
+                                                        >
+                                                          <span className={`inline-flex items-center gap-1.5${isArabic ? ' flex-row-reverse' : ''}`}>
+                                                            <span className="inline-block w-2 h-2 rounded-full bg-green-600 shrink-0" />
+                                                            {isArabic ? (p.nameAr || p.name) : p.name}
+                                                          </span>
+                                                        </SelectItem>
+                                                      ))}
+                                                    </SelectGroup>
+                                                  </>
+                                                )}
+                                                {capsuleProducts.length > 0 && (
+                                                  <>
+                                                    <SelectSeparator />
+                                                    <SelectGroup>
+                                                      <SelectLabel className="text-purple-700 font-semibold" dir={isArabic ? 'rtl' : 'ltr'}>
+                                                        <span className="inline-flex items-center gap-1">
+                                                          <Pill className="w-3.5 h-3.5" />
+                                                          {isArabic ? 'كبسولات قهوة' : 'Capsules Coffee'}
+                                                        </span>
+                                                      </SelectLabel>
+                                                      {capsuleProducts.map((p) => (
+                                                        <SelectItem
+                                                          key={p.id}
+                                                          value={String(p.id)}
+                                                          className="text-purple-900 data-[highlighted]:bg-purple-50 data-[state=checked]:bg-purple-50"
+                                                        >
+                                                          <span className={`inline-flex items-center gap-1.5${isArabic ? ' flex-row-reverse' : ''}`}>
+                                                            <span className="inline-block w-2 h-2 rounded-full bg-purple-600 shrink-0" />
+                                                            {isArabic ? (p.nameAr || p.name) : p.name}
+                                                          </span>
+                                                        </SelectItem>
+                                                      ))}
+                                                    </SelectGroup>
+                                                  </>
+                                                )}
+                                                {ufoProducts.length > 0 && (
+                                                  <>
+                                                    <SelectSeparator />
+                                                    <SelectGroup>
+                                                      <SelectLabel className="text-sky-700 font-semibold" dir={isArabic ? 'rtl' : 'ltr'}>
+                                                        <span className="inline-flex items-center gap-1">
+                                                          <Disc3 className="w-3.5 h-3.5" />
+                                                          {isArabic ? 'يوفو دريب قهوة' : 'UFO Drip Coffee'}
+                                                        </span>
+                                                      </SelectLabel>
+                                                      {ufoProducts.map((p) => (
+                                                        <SelectItem
+                                                          key={p.id}
+                                                          value={String(p.id)}
+                                                          className="text-sky-900 data-[highlighted]:bg-sky-50 data-[state=checked]:bg-sky-50"
+                                                        >
+                                                          <span className={`inline-flex items-center gap-1.5${isArabic ? ' flex-row-reverse' : ''}`}>
+                                                            <span className="inline-block w-2 h-2 rounded-full bg-sky-500 shrink-0" />
+                                                            {isArabic ? (p.nameAr || p.name) : p.name}
+                                                          </span>
+                                                        </SelectItem>
+                                                      ))}
+                                                    </SelectGroup>
+                                                  </>
+                                                )}
+                                              </>
+                                            );
+                                          })()}
                                         </SelectContent>
                                       </Select>
                                     </FormControl>
