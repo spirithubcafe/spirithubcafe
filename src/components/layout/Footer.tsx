@@ -186,6 +186,32 @@ export const Footer: React.FC = () => {
                         </a>
                       </li>
                     )}
+                    {regionInfo.contact.phone3 && (
+                      <li className="inline-flex items-center gap-2 whitespace-nowrap" dir="ltr">
+                        {regionInfo.contact.phone3Label && language === 'ar' && (
+                          <span
+                            className="text-xs bg-amber-700/60 text-amber-100 rounded px-1.5 py-0.5 leading-none whitespace-nowrap"
+                            dir="rtl"
+                          >
+                            {regionInfo.contact.phone3Label.ar}
+                          </span>
+                        )}
+                        <a
+                          href={`tel:${regionInfo.contact.phone3.replace(/\s+/g, '')}`}
+                          className="text-gray-300 hover:text-amber-200 transition-colors whitespace-nowrap"
+                        >
+                          {regionInfo.contact.phone3}
+                        </a>
+                        {regionInfo.contact.phone3Label && language !== 'ar' && (
+                          <span
+                            className="text-xs bg-amber-700/60 text-amber-100 rounded px-1.5 py-0.5 leading-none whitespace-nowrap"
+                            dir="ltr"
+                          >
+                            {regionInfo.contact.phone3Label.en}
+                          </span>
+                        )}
+                      </li>
+                    )}
                   </ul>
                   <a
                     href={`mailto:${regionInfo.contact.email}`}

@@ -162,7 +162,11 @@ export const ContactPage: React.FC = () => {
     title: string;
     value: string;
     value2?: string;
+    value3?: string;
+    value3Label?: string;
     link: string;
+    link2?: string;
+    link3?: string;
     forceLtr?: boolean;
   };
 
@@ -172,7 +176,13 @@ export const ContactPage: React.FC = () => {
       title: language === 'ar' ? 'الهاتف' : 'Phone',
       value: regionInfo.contact.phone,
       value2: regionInfo.contact.phone2,
+      value3: regionInfo.contact.phone3,
+      value3Label: regionInfo.contact.phone3Label
+        ? (language === 'ar' ? regionInfo.contact.phone3Label.ar : regionInfo.contact.phone3Label.en)
+        : undefined,
       link: `tel:${regionInfo.contact.phone.replace(/\s/g, '')}`,
+      link2: regionInfo.contact.phone2 ? `tel:${regionInfo.contact.phone2.replace(/\s/g, '')}` : undefined,
+      link3: regionInfo.contact.phone3 ? `tel:${regionInfo.contact.phone3.replace(/\s/g, '')}` : undefined,
       forceLtr: true
     },
     {
@@ -223,11 +233,8 @@ export const ContactPage: React.FC = () => {
           {contactInfo.map((info, index) => {
             const IconComponent = info.icon;
             return (
-              <motion.a
+              <motion.div
                 key={index}
-                href={info.link}
-                target={info.link.startsWith('http') ? '_blank' : undefined}
-                rel={info.link.startsWith('http') ? 'noopener noreferrer' : undefined}
                 variants={itemVariants}
                 whileHover="hover"
                 className="group block"
@@ -248,23 +255,61 @@ export const ContactPage: React.FC = () => {
                     </div>
                   </div>
                   <div className="text-base font-medium text-foreground space-y-1">
-                    <p
-                      className="wrap-break-word font-medium tracking-wide"
+                    <a
+                      href={info.link}
+                      target={info.link.startsWith('http') ? '_blank' : undefined}
+                      rel={info.link.startsWith('http') ? 'noopener noreferrer' : undefined}
+                      className="wrap-break-word font-medium tracking-wide hover:text-primary transition-colors"
                       dir={info.forceLtr ? 'ltr' : undefined}
+                      onClick={(e) => e.stopPropagation()}
                     >
                       {info.value}
-                    </p>
+                    </a>
                     {info.value2 && (
-                      <p
-                        className="wrap-break-word font-medium tracking-wide"
+                      <a
+                        href={info.link2 ?? info.link}
+                        target={(info.link2 ?? info.link).startsWith('http') ? '_blank' : undefined}
+                        rel={(info.link2 ?? info.link).startsWith('http') ? 'noopener noreferrer' : undefined}
+                        className="wrap-break-word font-medium tracking-wide hover:text-primary transition-colors block"
                         dir={info.forceLtr ? 'ltr' : undefined}
+                        style={info.forceLtr ? { direction: 'ltr', unicodeBidi: 'isolate', textAlign: language === 'ar' ? 'right' : 'left' } : undefined}
+                        onClick={(e) => e.stopPropagation()}
                       >
                         {info.value2}
-                      </p>
+                      </a>
+                    )}
+                    {info.value3 && (
+                      <div className="inline-flex items-center gap-2 whitespace-nowrap" dir={info.forceLtr ? 'ltr' : undefined}>
+                        {info.value3Label && language === 'ar' && (
+                          <span
+                            className="text-xs bg-amber-700/60 text-amber-800 rounded px-1.5 py-0.5 leading-none font-semibold whitespace-nowrap"
+                            dir="rtl"
+                          >
+                            {info.value3Label}
+                          </span>
+                        )}
+                        <a
+                          href={info.link3 ?? info.link}
+                          target={(info.link3 ?? info.link).startsWith('http') ? '_blank' : undefined}
+                          rel={(info.link3 ?? info.link).startsWith('http') ? 'noopener noreferrer' : undefined}
+                          className="wrap-break-word font-medium tracking-wide hover:text-primary transition-colors whitespace-nowrap"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {info.value3}
+                        </a>
+                        {info.value3Label && language !== 'ar' && (
+                          <span
+                            className="text-xs bg-amber-700/60 text-amber-800 rounded px-1.5 py-0.5 leading-none font-semibold whitespace-nowrap"
+                            dir="ltr"
+                          >
+                            {info.value3Label}
+                          </span>
+                        )}
+                      </div>
                     )}
                   </div>
                 </motion.div>
-              </motion.a>
+              </motion.div>
             );
           })}
         </motion.div>

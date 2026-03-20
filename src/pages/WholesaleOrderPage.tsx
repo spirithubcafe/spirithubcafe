@@ -108,7 +108,7 @@ export const WholesaleOrderPage: React.FC = () => {
   const { currentRegion } = useRegion();
   const regionInfo = REGION_INFO[currentRegion.code];
   const contactInfo = regionInfo?.contact;
-  const whatsappNumbers = [contactInfo?.phone, contactInfo?.phone2].filter(Boolean) as string[];
+  const whatsappNumbers = [contactInfo?.phone, contactInfo?.phone3].filter(Boolean) as string[];
   const [allowedCategoryIds, setAllowedCategoryIds] = useState<number[] | null>(null);
   const [productsLoading, setProductsLoading] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
@@ -502,8 +502,8 @@ export const WholesaleOrderPage: React.FC = () => {
   const title = isArabic ? 'حلول الجملة' : 'Wholesale Order';
   const whatsappDisplay = whatsappNumbers.length ? whatsappNumbers.join(' / ') : '';
   const seoDescription = isArabic
-    ? `حلول الجملة أصبحت أسهل، أرسل طلبك في أي وقت. واتساب: ${whatsappDisplay} · البريد الإلكتروني: ${contactInfo?.email ?? ''}`
-    : `Wholesale made simple, place your order anytime. WhatsApp: ${whatsappDisplay} · Email: ${contactInfo?.email ?? ''}`;
+    ? `في محمصة سبيريت هب نجعل طلب القهوة تجربة سهلة، مع قهوة مختارة بعناية، وتحميص دقيق، وجودة ثابتة يمكنك الاعتماد عليها. واتساب: ${whatsappDisplay} · البريد الإلكتروني: ${contactInfo?.email ?? ''}`
+    : `At SpiritHub Roastery, we make wholesale simple, with carefully sourced beans, precision roasting, and consistent quality you can trust. WhatsApp: ${whatsappDisplay} · Email: ${contactInfo?.email ?? ''}`;
 
   return (
     <div className="min-h-screen bg-gray-50 page-padding-top" dir={isArabic ? 'rtl' : 'ltr'}>
@@ -524,35 +524,41 @@ export const WholesaleOrderPage: React.FC = () => {
           <div className="mt-2 text-sm sm:text-base text-gray-600">
             <div>
               {isArabic
-                ? 'حلول الجملة أصبحت أسهل، أرسل طلبك في أي وقت.'
-                : 'Wholesale made simple, place your order anytime.'}
+                ? 'في محمصة سبيريت هب نجعل طلب القهوة تجربة سهلة، مع قهوة مختارة بعناية، وتحميص دقيق، وجودة ثابتة يمكنك الاعتماد عليها.'
+                : 'At SpiritHub Roastery, we make wholesale simple, with carefully sourced beans, precision roasting, and consistent quality you can trust.'}
             </div>
             <ul className={`mt-2 list-disc space-y-1 ${isArabic ? 'pr-5' : 'pl-5'}`}>
-              <li>
-                {isArabic ? 'واتساب:' : 'WhatsApp:'}{' '}
-                <span dir="ltr" className="whitespace-nowrap">
-                  {whatsappNumbers.length ? (
-                    whatsappNumbers.map((phone, idx) => (
-                      <React.Fragment key={phone}>
-                        <a
-                          className="text-emerald-700 hover:underline"
-                          href={`https://wa.me/${sanitizeWhatsappPhone(phone)}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          {phone}
-                        </a>
-                        {idx < whatsappNumbers.length - 1 ? ' / ' : null}
-                      </React.Fragment>
-                    ))
-                  ) : (
-                    <span>—</span>
-                  )}
+              <li className="flex items-start gap-2">
+                <MessageCircle className="mt-0.5 h-4 w-4 text-emerald-700" aria-hidden="true" />
+                <span>
+                  {isArabic ? 'واتساب:' : 'WhatsApp:'}{' '}
+                  <span dir="ltr" className="whitespace-nowrap">
+                    {whatsappNumbers.length ? (
+                      whatsappNumbers.map((phone, idx) => (
+                        <React.Fragment key={phone}>
+                          <a
+                            className="text-emerald-700 hover:underline"
+                            href={`https://wa.me/${sanitizeWhatsappPhone(phone)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            {phone}
+                          </a>
+                          {idx < whatsappNumbers.length - 1 ? ' / ' : null}
+                        </React.Fragment>
+                      ))
+                    ) : (
+                      <span>—</span>
+                    )}
+                  </span>
                 </span>
               </li>
-              <li>
-                {isArabic ? 'البريد الإلكتروني:' : 'Email:'}{' '}
-                <span dir="ltr">{contactInfo?.email ?? '—'}</span>
+              <li className="flex items-start gap-2">
+                <Mail className="mt-0.5 h-4 w-4 text-sky-700" aria-hidden="true" />
+                <span>
+                  {isArabic ? 'البريد الإلكتروني:' : 'Email:'}{' '}
+                  <span dir="ltr">{contactInfo?.email ?? '—'}</span>
+                </span>
               </li>
             </ul>
           </div>
@@ -628,18 +634,22 @@ export const WholesaleOrderPage: React.FC = () => {
                   <div className="text-sm text-gray-600">{createdOrder.cafeName}</div>
                   {createdOrder.customerPhone ? (
                     <a
-                      className="text-sm text-emerald-700 hover:underline break-words"
+                      className="mt-1 inline-flex items-center gap-1 text-sm text-emerald-700 hover:underline break-words"
                       dir="ltr"
                       href={`https://wa.me/${sanitizeWhatsappPhone(createdOrder.customerPhone)}`}
                       target="_blank"
                       rel="noopener noreferrer"
                     >
+                      <MessageCircle className="h-3.5 w-3.5" aria-hidden="true" />
                       {createdOrder.customerPhone}
                     </a>
                   ) : (
                     <div className="text-sm text-gray-600">—</div>
                   )}
-                  <div className="text-sm text-gray-600">{createdOrder.customerEmail}</div>
+                  <div className="mt-1 inline-flex items-center gap-1 text-sm text-gray-600" dir="ltr">
+                    <Mail className="h-3.5 w-3.5" aria-hidden="true" />
+                    {createdOrder.customerEmail}
+                  </div>
                 </div>
                 <div className="rounded-xl border bg-white p-4">
                   <div className="text-xs text-muted-foreground">{isArabic ? 'الحالة' : 'Status'}</div>
@@ -728,12 +738,8 @@ export const WholesaleOrderPage: React.FC = () => {
                   <div className="rounded-xl border bg-white p-4">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
                       <div className="font-semibold text-gray-900">{isArabic ? 'معلومات العميل' : 'Customer info'}</div>
-                      <div className="w-full sm:w-auto">
-                        <div className="flex items-center gap-3 rounded-lg border bg-gray-50 px-3 py-2">
-                          <div className={`text-sm text-gray-700 min-w-0 flex-1 ${isArabic ? 'text-right' : 'text-left'}`}>
-                            {isArabic ? 'عميل موجود؟' : 'Existing Customer'}
-                          </div>
-                          <Switch
+                      <div className="hidden">
+                        <Switch
                           checked={returningCustomerEnabled}
                           onCheckedChange={(checked) => {
                             setReturningCustomerEnabled(!!checked);
@@ -741,10 +747,7 @@ export const WholesaleOrderPage: React.FC = () => {
                             setLookupSummary(null);
                             lastLookupKeyRef.current = '';
                           }}
-                          aria-label={isArabic ? 'تفعيل تعبئة تلقائية' : 'Enable auto-fill'}
-                          className="shrink-0"
-                          />
-                        </div>
+                        />
                       </div>
                     </div>
 
@@ -868,7 +871,7 @@ export const WholesaleOrderPage: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="rounded-xl border bg-white p-4 space-y-4">
+                  <div className="rounded-xl border bg-white p-3 space-y-3 sm:p-4">
                     <div className="font-semibold text-gray-900">{isArabic ? 'الشحن' : 'Shipping'}</div>
 
                     <FormField
@@ -879,18 +882,18 @@ export const WholesaleOrderPage: React.FC = () => {
                           <FormLabel>{isArabic ? 'طريقة الشحن' : 'Shipping method'}</FormLabel>
                           <FormControl>
                             <RadioGroup
-                              className="grid grid-cols-1 sm:grid-cols-2 gap-3"
+                              className="grid grid-cols-1 sm:grid-cols-2 gap-2"
                               value={String(field.value)}
                               onValueChange={(v) => field.onChange(Number(v))}
                             >
                               <label
-                                className={`flex items-center gap-3 rounded-xl border bg-white p-4 cursor-pointer hover:bg-gray-50 ${
+                                className={`flex items-center gap-2 rounded-lg border bg-white p-2.5 sm:p-3 cursor-pointer hover:bg-gray-50 ${
                                   isArabic ? 'flex-row-reverse' : ''
                                 }`}
                               >
                                 <RadioGroupItem value="1" />
                                 <div className={isArabic ? 'text-right' : undefined}>
-                                  <div className="font-medium text-gray-900">
+                                  <div className="text-sm font-medium text-gray-900 leading-tight">
                                     {isArabic ? (
                                       <>
                                         استلام <span dir="ltr">(Pickup)</span>
@@ -903,13 +906,13 @@ export const WholesaleOrderPage: React.FC = () => {
                                 </div>
                               </label>
                               <label
-                                className={`flex items-center gap-3 rounded-xl border bg-white p-4 cursor-pointer hover:bg-gray-50 ${
+                                className={`flex items-center gap-2 rounded-lg border bg-white p-2.5 sm:p-3 cursor-pointer hover:bg-gray-50 ${
                                   isArabic ? 'flex-row-reverse' : ''
                                 }`}
                               >
                                 <RadioGroupItem value="2" />
                                 <div className={isArabic ? 'text-right' : undefined}>
-                                  <div className="font-medium text-gray-900">
+                                  <div className="text-sm font-medium text-gray-900 leading-tight">
                                     {isArabic ? (
                                       <>
                                         نول للتوصيل <span dir="ltr">(Nool)</span>
@@ -929,7 +932,7 @@ export const WholesaleOrderPage: React.FC = () => {
                     />
 
                     {shippingMethod === 2 ? (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         <FormField
                           control={control}
                           name="address"
@@ -969,7 +972,7 @@ export const WholesaleOrderPage: React.FC = () => {
                           <FormControl>
                             <Textarea
                               placeholder={isArabic ? 'أي تفاصيل إضافية...' : 'Any extra details...'}
-                              className="min-h-[80px]"
+                              className="min-h-[64px]"
                               {...field}
                             />
                           </FormControl>
