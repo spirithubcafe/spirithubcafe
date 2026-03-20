@@ -223,8 +223,24 @@ export const OrdersManagement: React.FC = () => {
   };
 
   const isOmanDestination = (country?: string | null): boolean => {
-    const c = String(country ?? '').trim().toLowerCase();
-    return c === 'oman' || c === 'om' || c === 'عمان' || c === 'سلطنة عمان';
+    const raw = String(country ?? '').trim();
+    if (!raw) return false;
+
+    const normalized = raw
+      .toLowerCase()
+      .replace(/[()\[\]\-_,.]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    return (
+      normalized === 'om' ||
+      normalized === 'omn' ||
+      normalized === 'oman' ||
+      normalized === 'sultanate of oman' ||
+      normalized === 'sultanate oman' ||
+      normalized === 'عمان' ||
+      normalized === 'سلطنة عمان'
+    );
   };
 
   /// <summary>
