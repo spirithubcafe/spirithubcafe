@@ -222,6 +222,11 @@ export const OrdersManagement: React.FC = () => {
     return value;
   };
 
+  const isOmanDestination = (country?: string | null): boolean => {
+    const c = String(country ?? '').trim().toLowerCase();
+    return c === 'oman' || c === 'om' || c === 'عمان' || c === 'سلطنة عمان';
+  };
+
   /// <summary>
   /// Skip weekends (Friday and Saturday in Oman/GCC)
   /// </summary>
@@ -363,6 +368,9 @@ export const OrdersManagement: React.FC = () => {
 
     const { pickupDate, readyTime, lastPickupTime, closingTime } = buildDefaultPickupTimes();
 
+    const destinationCountry = targetOrder.giftRecipientCountry || targetOrder.country;
+    const isDomesticOman = isOmanDestination(destinationCountry);
+
     setPickupDraft({
       pickupDate: toYmd(pickupDate),
       readyTime: toHm(readyTime),
@@ -374,8 +382,8 @@ export const OrdersManagement: React.FC = () => {
       status: 'Ready',
       comments: `Order ${targetOrder.orderNumber} (manual pickup registration)`,
 
-      productGroup: 'EXP',
-      productType: 'PPX',
+      productGroup: isDomesticOman ? 'DOM' : 'EXP',
+      productType: isDomesticOman ? 'OND' : 'PPX',
       payment: 'P',
       packageType: 'Box',
       numberOfPieces: totalPieces,
@@ -2935,7 +2943,15 @@ export const OrdersManagement: React.FC = () => {
                               <Select
                                 value={pickupDraft.productGroup}
                                 onValueChange={(value) =>
-                                  setPickupDraft((p) => (p ? { ...p, productGroup: value } : p))
+                                  setPickupDraft((p) =>
+                                    p
+                                      ? {
+                                          ...p,
+                                          productGroup: value,
+                                          productType: value === 'DOM' ? 'OND' : 'PPX',
+                                        }
+                                      : p
+                                  )
                                 }
                               >
                                 <SelectTrigger>
