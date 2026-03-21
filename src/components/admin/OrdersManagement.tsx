@@ -399,7 +399,7 @@ export const OrdersManagement: React.FC = () => {
       comments: `Order ${targetOrder.orderNumber} (manual pickup registration)`,
 
       productGroup: isDomesticOman ? 'DOM' : 'EXP',
-      productType: isDomesticOman ? 'OND' : 'PPX',
+      productType: isDomesticOman ? 'ONP' : 'PPX',
       payment: 'P',
       packageType: 'Box',
       numberOfPieces: totalPieces,
@@ -506,7 +506,12 @@ export const OrdersManagement: React.FC = () => {
       const hasValidId = Boolean(processed?.id && String(processed.id).trim().length > 0);
       const hasValidGuid = Boolean(processed?.guid && String(processed.guid).trim().length > 0 && !isZeroGuid(processed.guid));
 
-      if (!createResponse?.success || !hasValidId || !hasValidGuid) {
+      // Aramex Oman domestic (DOM/ONP) returns success:true but with null id and zero GUID —
+      // treat as success if the API call itself succeeded, even without a pickup reference.
+      const isDomesticOmanPickup = pickupDraft?.productGroup === 'DOM';
+      const isAcceptableSuccess = createResponse?.success && (hasValidId || hasValidGuid || isDomesticOmanPickup);
+
+      if (!isAcceptableSuccess) {
         const notif = Array.isArray(createResponse?.notifications)
           ? createResponse.notifications.map((n) => `[${n.code}] ${n.message}`).join('\n')
           : '';
@@ -520,9 +525,9 @@ export const OrdersManagement: React.FC = () => {
         return;
       }
 
-      // Persist pickup info onto the order
-      const pickupReference = String(processed!.id);
-      const pickupGUID = String(processed!.guid);
+      // Persist pickup info onto the order — for Oman domestic, id/guid may be null/zero
+      const pickupReference = String(processed?.id ?? '');
+      const pickupGUID = String(processed?.guid ?? '');
 
       // Cache pickup locally to avoid UI reverting due to stale/missing API fields
       upsertPickupCache(selectedOrder.id, pickupReference, pickupGUID);
@@ -608,7 +613,11 @@ export const OrdersManagement: React.FC = () => {
 
       await loadOrders({ silent: true });
       setShowRegisterPickupDialog(false);
-      toast.success(isArabic ? 'تم تسجيل الاستلام بنجاح' : 'Pickup registered successfully');
+      if (isDomesticOmanPickup && !hasValidId && !hasValidGuid) {
+        toast.success(isArabic ? 'تم تسجيل الاستلام (عُمان داخلي - بدون رقم مرجعي)' : 'Pickup registered (Oman domestic — no pickup reference returned)', { duration: 5000 });
+      } else {
+        toast.success(isArabic ? 'تم تسجيل الاستلام بنجاح' : 'Pickup registered successfully');
+      }
     } catch (err: any) {
       const msg = err?.message || (isArabic ? 'حدث خطأ أثناء تسجيل الاستلام' : 'Error registering pickup');
       setRegisterPickupError(msg);
@@ -1407,6 +1416,119 @@ export const OrdersManagement: React.FC = () => {
     setShipmentLoading(selectedOrder.id);
     
     try {
+      // For DOMESTIC mode: build the full request on the frontend to guarantee DOM/ONP.
+      // The backend's create-shipment-for-order ignores shipmentMode and defaults to EXP/PPX.
+      if (shipmentMode === 'DOMESTIC') {
+        const region = resolveRegionFromStorage();
+        const regionInfo = REGION_INFO[region];
+
+        const consigneeCountryRaw = selectedOrder.isGift && selectedOrder.giftRecipientCountry
+          ? selectedOrder.giftRecipientCountry
+          : selectedOrder.country;
+        const consigneeCity = (selectedOrder.isGift && selectedOrder.giftRecipientCity
+          ? selectedOrder.giftRecipientCity
+          : selectedOrder.city) || 'Muscat';
+        const consigneeName = (selectedOrder.isGift && selectedOrder.giftRecipientName
+          ? selectedOrder.giftRecipientName
+          : (selectedOrder.fullName || selectedOrder.customerName)) || 'Customer';
+        const consigneePhone = (selectedOrder.isGift && selectedOrder.giftRecipientPhone
+          ? selectedOrder.giftRecipientPhone
+          : selectedOrder.phone) || regionInfo.contact.phone;
+        const consigneePostal = selectedOrder.isGift && selectedOrder.giftRecipientPostalCode
+          ? selectedOrder.giftRecipientPostalCode
+          : (selectedOrder.postalCode || '111');
+        const consigneeAddress = (selectedOrder.isGift && selectedOrder.giftRecipientAddress
+          ? selectedOrder.giftRecipientAddress
+          : (selectedOrder.address || selectedOrder.addressLine1)) || consigneeCity;
+
+        // Normalize country to ISO2 code — order.country may be a full name like "Oman"
+        const normalizeToIso2 = (c: string): string => {
+          const v = String(c ?? '').trim();
+          if (v.length === 2) return v.toUpperCase();
+          const lower = v.toLowerCase().replace(/[^a-z]/g, '');
+          const map: Record<string,string> = {
+            oman:'OM', om:'OM', uae:'AE', unitedarabemirates:'AE',
+            saudiarabia:'SA', ksa:'SA', kuwait:'KW', bahrain:'BH',
+            qatar:'QA', jordan:'JO', egypt:'EG', lebanon:'LB',
+            usa:'US', uk:'GB', unitedkingdom:'GB', unitedstates:'US',
+          };
+          return map[lower] ?? v.toUpperCase().slice(0, 2);
+        };
+        const consigneeCountry = normalizeToIso2(consigneeCountryRaw || 'OM');
+
+        const chargeableWeight = Math.max(1, Math.ceil(
+          (selectedOrder.items || []).reduce((sum, item) => {
+            const w = Number((item as any).weight ?? (item as any).unitWeight ?? 0);
+            return sum + w * (item.quantity || 1);
+          }, 0) || 1.5
+        ));
+
+        const { createAramexShipment } = await import('../../services/aramexService');
+        const shipmentPayload = {
+          shipper: {
+            partyAddress: {
+              line1: regionInfo.contact.address.en,
+              city: region === 'sa' ? 'Khobar' : 'Muscat',
+              countryCode: region === 'sa' ? 'SA' : 'OM',
+              postCode: region === 'sa' ? '' : '111',
+            },
+            contact: {
+              personName: regionInfo.aboutContent.companyName.en,
+              companyName: regionInfo.aboutContent.companyName.en,
+              phoneNumber1: regionInfo.contact.phone,
+              emailAddress: regionInfo.contact.email,
+            },
+          },
+          consignee: {
+            partyAddress: {
+              line1: consigneeAddress,
+              city: consigneeCity,
+              countryCode: consigneeCountry,
+              postCode: consigneePostal,
+            },
+            contact: {
+              personName: consigneeName,
+              companyName: consigneeName,
+              phoneNumber1: consigneePhone,
+              emailAddress: selectedOrder.email,
+            },
+          },
+          details: {
+            actualWeight: { unit: 'KG', value: chargeableWeight },
+            chargeableWeight: { unit: 'KG', value: chargeableWeight },
+            numberOfPieces: Math.max(1, selectedOrder.items?.reduce((s, i) => s + (i.quantity || 1), 0) || 1),
+            productGroup: 'DOM',
+            productType: 'ONP',
+            paymentType: 'P',
+            descriptionOfGoods: 'Coffee Products',
+            dimensions: { length: 20, width: 20, height: 20, unit: 'CM' },
+          },
+        };
+
+        const shipRes = await createAramexShipment(shipmentPayload);
+
+        if (!shipRes?.success || !shipRes?.awbNumber) {
+          const msg = shipRes?.errors?.join('\n') || shipRes?.error || 'Failed to create domestic shipment';
+          setShipmentError(msg);
+          setShipmentResult(null);
+          setShowShipmentResultDialog(true);
+          return;
+        }
+
+        // Save tracking number to the order
+        await orderService.updateShipping(selectedOrder.id, {
+          shippingMethodId: selectedOrder.shippingMethod,
+          trackingNumber: shipRes.awbNumber,
+        });
+
+        setShipmentResult(shipRes);
+        setShipmentError('');
+        await loadOrders();
+        setShowShipmentResultDialog(true);
+        return;
+      }
+
+      // AUTO / INTERNATIONAL: let the backend decide
       const { createShipmentForOrder } = await import('../../services');
       const response = await createShipmentForOrder(selectedOrder.id, shipmentMode);
       
@@ -1423,14 +1545,22 @@ export const OrdersManagement: React.FC = () => {
       }
     } catch (error: any) {
       console.error('❌ Error creating Aramex shipment:', error);
-      
+
+      // Extract validation errors from 400 responses (e.g. ASP.NET problem details)
+      const responseData = error?.response?.data;
       let errorMessage = error?.message || 'Unknown error';
-      if (error?.errors && Array.isArray(error.errors) && error.errors.length > 0) {
+      if (responseData?.errors && typeof responseData.errors === 'object') {
+        errorMessage = Object.entries(responseData.errors)
+          .flatMap(([field, msgs]) => (msgs as string[]).map((m) => `${field}: ${m}`))
+          .join('\n');
+      } else if (responseData?.title) {
+        errorMessage = responseData.title;
+      } else if (error?.errors && Array.isArray(error.errors) && error.errors.length > 0) {
         errorMessage = error.errors.join('\n');
       } else if (error?.errors && typeof error.errors === 'string') {
         errorMessage = error.errors;
       }
-      
+
       setShipmentError(errorMessage);
       setShipmentResult(null);
     } finally {
@@ -2433,7 +2563,7 @@ export const OrdersManagement: React.FC = () => {
                 <SelectTrigger id="status">
                   <SelectValue placeholder={isArabic ? 'اختر الحالة' : 'Select status'} />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent position="popper" className="z-[200]">
                   <SelectItem value="Pending">{isArabic ? 'قيد الانتظار' : 'Pending'}</SelectItem>
                   <SelectItem value="Processing">{isArabic ? 'قيد المعالجة' : 'Processing'}</SelectItem>
                   <SelectItem value="Shipped">{isArabic ? 'تم الشحن' : 'Shipped'}</SelectItem>
@@ -2452,7 +2582,7 @@ export const OrdersManagement: React.FC = () => {
                 <SelectTrigger id="paymentStatus">
                   <SelectValue placeholder={isArabic ? 'اختر حالة الدفع' : 'Select payment status'} />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent position="popper" className="z-[200]">
                   <SelectItem value="Unpaid">{isArabic ? 'غير مدفوع' : 'Unpaid'}</SelectItem>
                   <SelectItem value="Paid">{isArabic ? 'مدفوع' : 'Paid'}</SelectItem>
                   <SelectItem value="Failed">{isArabic ? 'فشل' : 'Failed'}</SelectItem>
@@ -2964,7 +3094,7 @@ export const OrdersManagement: React.FC = () => {
                                       ? {
                                           ...p,
                                           productGroup: value,
-                                          productType: value === 'DOM' ? 'OND' : 'PPX',
+                                          productType: value === 'DOM' ? 'ONP' : 'PPX',
                                         }
                                       : p
                                   )
@@ -2973,7 +3103,7 @@ export const OrdersManagement: React.FC = () => {
                                 <SelectTrigger>
                                   <SelectValue placeholder="Select..." />
                                 </SelectTrigger>
-                                <SelectContent>
+                                <SelectContent position="popper" className="z-[200]">
                                   <SelectItem value="EXP">EXP (Express/International)</SelectItem>
                                   <SelectItem value="DOM">DOM (Domestic)</SelectItem>
                                 </SelectContent>
@@ -2990,9 +3120,9 @@ export const OrdersManagement: React.FC = () => {
                                 <SelectTrigger>
                                   <SelectValue placeholder="Select..." />
                                 </SelectTrigger>
-                                <SelectContent>
+                                <SelectContent position="popper" className="z-[200]">
                                   <SelectItem value="PPX">PPX (Priority Parcel Express)</SelectItem>
-                                  <SelectItem value="OND">OND (Overnight Document)</SelectItem>
+                                  <SelectItem value="ONP">ONP (Overnight Parcel)</SelectItem>
                                 </SelectContent>
                               </Select>
                             </div>
@@ -3405,7 +3535,7 @@ export const OrdersManagement: React.FC = () => {
 
       {/* Shipment Confirmation Dialog */}
       <Dialog open={showShipmentConfirmDialog} onOpenChange={setShowShipmentConfirmDialog}>
-        <DialogContent className="w-[min(96vw,34rem)] max-w-136 max-h-[85vh] overflow-y-auto overflow-x-hidden">
+        <DialogContent className="w-[min(96vw,34rem)] max-w-136 max-h-[85vh] overflow-y-auto overflow-x-visible">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <PackagePlus className="h-5 w-5 text-red-600" />
@@ -3475,7 +3605,7 @@ export const OrdersManagement: React.FC = () => {
                   <SelectTrigger id="shipmentMode" className="w-full">
                     <SelectValue className="line-clamp-none" />
                   </SelectTrigger>
-                  <SelectContent className="max-w-md">
+                  <SelectContent position="popper" className="max-w-md z-[200]">
                     <SelectItem value="AUTO" textValue={isArabic ? 'تلقائي' : 'AUTO'}>
                       <span className="font-medium">{isArabic ? 'تلقائي' : 'AUTO'}</span>
                     </SelectItem>
@@ -3489,11 +3619,11 @@ export const OrdersManagement: React.FC = () => {
                 </Select>
                 <p className="text-xs text-muted-foreground leading-relaxed">
                   {shipmentMode === 'AUTO' && (isArabic
-                    ? 'تلقائي حسب مقارنة بلد المرسل مع بلد المستلم (نفس البلد = DOM/OND، غير ذلك = EXP/PPX)'
-                    : 'Auto-detect by comparing shipper vs consignee country (same country = DOM/OND, otherwise = EXP/PPX)')}
+                    ? 'تلقائي حسب مقارنة بلد المرسل مع بلد المستلم (نفس البلد = DOM/ONP، غير ذلك = EXP/PPX)'
+                    : 'Auto-detect by comparing shipper vs consignee country (same country = DOM/ONP, otherwise = EXP/PPX)')}
                   {shipmentMode === 'DOMESTIC' && (isArabic
-                    ? 'إجباري: DOM / OND (شحن داخل عُمان)'
-                    : 'Force: DOM / OND (Domestic Oman)')}
+                    ? 'إجباري: DOM / ONP (شحن داخل عُمان)'
+                    : 'Force: DOM / ONP (Domestic Oman)')}
                   {shipmentMode === 'INTERNATIONAL' && (isArabic
                     ? 'إجباري: EXP / PPX (شحن دولي)'
                     : 'Force: EXP / PPX (International)')}
