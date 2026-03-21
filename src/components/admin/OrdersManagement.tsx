@@ -399,7 +399,7 @@ export const OrdersManagement: React.FC = () => {
       comments: `Order ${targetOrder.orderNumber} (manual pickup registration)`,
 
       productGroup: isDomesticOman ? 'DOM' : 'EXP',
-      productType: isDomesticOman ? 'OND' : 'PPX',
+      productType: isDomesticOman ? 'ONP' : 'PPX',
       payment: 'P',
       packageType: 'Box',
       numberOfPieces: totalPieces,
@@ -506,7 +506,7 @@ export const OrdersManagement: React.FC = () => {
       const hasValidId = Boolean(processed?.id && String(processed.id).trim().length > 0);
       const hasValidGuid = Boolean(processed?.guid && String(processed.guid).trim().length > 0 && !isZeroGuid(processed.guid));
 
-      // Aramex Oman domestic (DOM/OND) returns success:true but with null id and zero GUID —
+      // Aramex Oman domestic (DOM/ONP) returns success:true but with null id and zero GUID —
       // treat as success if the API call itself succeeded, even without a pickup reference.
       const isDomesticOmanPickup = pickupDraft?.productGroup === 'DOM';
       const isAcceptableSuccess = createResponse?.success && (hasValidId || hasValidGuid || isDomesticOmanPickup);
@@ -1416,7 +1416,7 @@ export const OrdersManagement: React.FC = () => {
     setShipmentLoading(selectedOrder.id);
     
     try {
-      // For DOMESTIC mode: build the full request on the frontend to guarantee DOM/OND.
+      // For DOMESTIC mode: build the full request on the frontend to guarantee DOM/ONP.
       // The backend's create-shipment-for-order ignores shipmentMode and defaults to EXP/PPX.
       if (shipmentMode === 'DOMESTIC') {
         const region = resolveRegionFromStorage();
@@ -1498,7 +1498,7 @@ export const OrdersManagement: React.FC = () => {
             chargeableWeight: { unit: 'KG', value: chargeableWeight },
             numberOfPieces: Math.max(1, selectedOrder.items?.reduce((s, i) => s + (i.quantity || 1), 0) || 1),
             productGroup: 'DOM',
-            productType: 'OND',
+            productType: 'ONP',
             paymentType: 'P',
             descriptionOfGoods: 'Coffee Products',
             dimensions: { length: 20, width: 20, height: 20, unit: 'CM' },
@@ -3094,7 +3094,7 @@ export const OrdersManagement: React.FC = () => {
                                       ? {
                                           ...p,
                                           productGroup: value,
-                                          productType: value === 'DOM' ? 'OND' : 'PPX',
+                                          productType: value === 'DOM' ? 'ONP' : 'PPX',
                                         }
                                       : p
                                   )
@@ -3123,7 +3123,6 @@ export const OrdersManagement: React.FC = () => {
                                 <SelectContent position="popper" className="z-[200]">
                                   <SelectItem value="PPX">PPX (Priority Parcel Express)</SelectItem>
                                   <SelectItem value="ONP">ONP (Overnight Parcel)</SelectItem>
-                                  <SelectItem value="OND">OND (Overnight Document)</SelectItem>
                                 </SelectContent>
                               </Select>
                             </div>
@@ -3620,11 +3619,11 @@ export const OrdersManagement: React.FC = () => {
                 </Select>
                 <p className="text-xs text-muted-foreground leading-relaxed">
                   {shipmentMode === 'AUTO' && (isArabic
-                    ? 'تلقائي حسب مقارنة بلد المرسل مع بلد المستلم (نفس البلد = DOM/OND، غير ذلك = EXP/PPX)'
-                    : 'Auto-detect by comparing shipper vs consignee country (same country = DOM/OND, otherwise = EXP/PPX)')}
+                    ? 'تلقائي حسب مقارنة بلد المرسل مع بلد المستلم (نفس البلد = DOM/ONP، غير ذلك = EXP/PPX)'
+                    : 'Auto-detect by comparing shipper vs consignee country (same country = DOM/ONP, otherwise = EXP/PPX)')}
                   {shipmentMode === 'DOMESTIC' && (isArabic
-                    ? 'إجباري: DOM / OND (شحن داخل عُمان)'
-                    : 'Force: DOM / OND (Domestic Oman)')}
+                    ? 'إجباري: DOM / ONP (شحن داخل عُمان)'
+                    : 'Force: DOM / ONP (Domestic Oman)')}
                   {shipmentMode === 'INTERNATIONAL' && (isArabic
                     ? 'إجباري: EXP / PPX (شحن دولي)'
                     : 'Force: EXP / PPX (International)')}
