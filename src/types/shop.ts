@@ -23,6 +23,8 @@ export interface ShopProduct {
   name: string;
   nameAr: string | null;
   slug: string | null;
+  /** Populated at runtime from ShopCategory.slug during recommendation scoring. */
+  categorySlug?: string;
   isFeatured: boolean;
   isLimited: boolean;
   isPremium: boolean;

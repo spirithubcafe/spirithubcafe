@@ -39,6 +39,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/
 import { Seo } from '../components/seo/Seo';
 import { siteMetadata, resolveAbsoluteUrl } from '../config/siteMetadata';
 import { ProductShare } from '../components/products/ProductShare';
+import { RelatedProducts } from '../components/products/RelatedProducts';
 import { ProductTagBadge } from '../components/shop/ProductTagBadge';
 import { ProductViewers } from '../components/ui/LiveVisitors';
 import { toast } from 'sonner';
@@ -2195,6 +2196,9 @@ export const ProductDetailPage = () => {
                   </div>
                 </div>
               )}
+
+              {/* You might also like */}
+              <RelatedProducts currentProduct={product} shopData={shopData ?? null} />
 
               {/* Reviews Popup */}
               <Dialog open={isReviewsDialogOpen} onOpenChange={setIsReviewsDialogOpen}>
