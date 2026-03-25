@@ -15,6 +15,11 @@ const STORAGE_KEY = 'spirithub_browsing_signals';
 const MAX_RECENT_VIEWS = 30;
 const DEFAULT_MAX_RESULTS = 4;
 
+/** Browsing data older than this is fully discarded (14 days). */
+const SIGNALS_EXPIRY_MS = 14 * 24 * 60 * 60 * 1000;
+/** Soft-decay begins at 7 days; scores linearly fade to 0 by day 14. */
+const SIGNALS_DECAY_START_MS = 7 * 24 * 60 * 60 * 1000;
+
 /**
  * The only category slugs used for preference scoring and recommendation
  * boosting. Keys are normalised exactly as they appear in the API.
@@ -289,12 +294,66 @@ const EMPTY_SIGNALS: BrowsingSignals = {
   lastUpdated: 0,
 };
 
+/**
+ * Apply time-based decay to browsing signals.
+ *
+ * - Age ≥ 14 days → full reset; localStorage entry is removed.
+ * - Age 7–14 days → all numeric scores linearly decayed toward 0.
+ * - Age < 7 days  → unchanged (individual views older than 14 days are
+ *                   still pruned via their `viewedAt` timestamp).
+ */
+function applySignalDecay(signals: BrowsingSignals, now: number): BrowsingSignals {
+  const age = now - signals.lastUpdated;
+
+  // Hard expiry: wipe everything
+  if (age >= SIGNALS_EXPIRY_MS) {
+    safeStorage.removeItem(STORAGE_KEY);
+    return { ...EMPTY_SIGNALS };
+  }
+
+  // Always prune individual views whose own timestamp has expired
+  const cutoff = now - SIGNALS_EXPIRY_MS;
+  const recentViews = signals.recentViews.filter(
+    (v) => v.viewedAt == null || v.viewedAt > cutoff,
+  );
+
+  // No decay needed yet
+  if (age < SIGNALS_DECAY_START_MS) {
+    return recentViews.length === signals.recentViews.length
+      ? signals
+      : { ...signals, recentViews };
+  }
+
+  // Soft decay: linear 1 → 0 over the 7–14 day window
+  const decayFactor =
+    1 - (age - SIGNALS_DECAY_START_MS) / (SIGNALS_EXPIRY_MS - SIGNALS_DECAY_START_MS);
+
+  const decayMap = (map: Record<string, number>): Record<string, number> => {
+    const result: Record<string, number> = {};
+    for (const [k, v] of Object.entries(map)) {
+      const decayed = v * decayFactor;
+      if (decayed > 0.01) result[k] = decayed;
+    }
+    return result;
+  };
+
+  return {
+    ...signals,
+    recentViews,
+    tagFrequency: decayMap(signals.tagFrequency),
+    originFrequency: decayMap(signals.originFrequency),
+    brewTypeFrequency: decayMap(signals.brewTypeFrequency),
+    roastFrequency: decayMap(signals.roastFrequency),
+    categoryScores: decayMap(signals.categoryScores),
+  };
+}
+
 /** Load browsing signals from localStorage (safe even in SSR / private mode). */
 export function loadBrowsingSignals(): BrowsingSignals {
   const stored = safeStorage.getJson<BrowsingSignals>(STORAGE_KEY);
   if (!stored) return { ...EMPTY_SIGNALS };
 
-  return {
+  const signals: BrowsingSignals = {
     ...EMPTY_SIGNALS,
     ...stored,
     // Coerce arrays to guard against storage corruption
@@ -307,6 +366,8 @@ export function loadBrowsingSignals(): BrowsingSignals {
         ? stored.categoryScores
         : {},
   };
+
+  return applySignalDecay(signals, Date.now());
 }
 
 /** Record a product view and update frequency maps in localStorage.
@@ -429,8 +490,25 @@ export function getUserCategoryPreferences(): [string, number][] {
 }
 
 /**
- * Standalone ranking helper: given a list of scored candidates, re-ranks
- * them by blending in the user's category preference scores.
+ * Standalone ranking helper: sorts scored candidates, guarantees at least one
+ * slot for each of the user's top preferred categories, then fills remaining
+ * slots with the highest-scoring remaining products.
+ *
+ * Algorithm:
+ *   Phase 1 — Preference guarantees
+ *     • Identify allowed categories where the user has a positive
+ *       `categoryScores` value, sorted highest-to-lowest.
+ *     • Reserve up to floor(maxResults / 2) guaranteed slots — one per
+ *       top preferred category — choosing each category's best-scored product.
+ *
+ *   Phase 2 — Fill remaining slots
+ *     • Walk the full score-sorted list (skipping already-selected products).
+ *     • Apply a per-category cap of ceil(maxResults / 2) so no single
+ *       category dominates the remaining slots.
+ *
+ *   Phase 3 — Back-fill
+ *     • If slots still remain (rare, e.g. very few candidates), fill from
+ *       any leftover deferred products regardless of the cap.
  *
  * Exposed separately so it can be reused in future recommendation sections.
  */
@@ -439,25 +517,71 @@ export function rankRecommendedProducts(
   browsing: BrowsingSignals,
   maxResults: number = DEFAULT_MAX_RESULTS,
 ): ShopProduct[] {
-  const maxCatScore = Math.max(
-    1,
-    ...Object.values(browsing.categoryScores),
+  const sorted = [...scored].sort(
+    (a, b) =>
+      b.score - a.score || a.product.displayOrder - b.product.displayOrder,
   );
 
-  const ranked = scored
-    .map((s) => {
-      const slug = s.product.categorySlug ?? null;
-      const catPref = slug ? (browsing.categoryScores[slug] ?? 0) : 0;
-      // Normalise to 0–8 so category preference doesn't overwhelm similarity
-      const catBoost = (catPref / maxCatScore) * 8;
-      return { ...s, score: s.score + catBoost };
-    })
-    .sort(
-      (a, b) =>
-        b.score - a.score || a.product.displayOrder - b.product.displayOrder,
-    );
+  // ── Phase 1: guarantee one slot per top-preferred category ─────────────────
 
-  return ranked.slice(0, maxResults).map((s) => s.product);
+  // Max number of slots we'll reserve for preference guarantees
+  const maxGuaranteedSlots = Math.floor(maxResults / 2);
+
+  // Group best-scored product per categorySlug (slug → top ScoredProduct)
+  const bestBySlug = new Map<string, ScoredProduct>();
+  for (const s of sorted) {
+    const slug = s.product.categorySlug;
+    if (slug && !bestBySlug.has(slug)) bestBySlug.set(slug, s);
+  }
+
+  // Preferred slugs = allowed categories with a positive user score, best first
+  const preferredSlugs = (ALLOWED_CATEGORIES as readonly string[])
+    .filter((slug) => (browsing.categoryScores[slug] ?? 0) > 0)
+    .sort((a, b) => (browsing.categoryScores[b] ?? 0) - (browsing.categoryScores[a] ?? 0));
+
+  const selectedIds = new Set<number>();
+  const selected: ScoredProduct[] = [];
+  const categoryCounts = new Map<number, number>();
+
+  for (const slug of preferredSlugs) {
+    if (selected.length >= maxGuaranteedSlots) break;
+    const best = bestBySlug.get(slug);
+    if (!best || selectedIds.has(best.product.id)) continue;
+    selected.push(best);
+    selectedIds.add(best.product.id);
+    categoryCounts.set(
+      best.product.categoryId,
+      (categoryCounts.get(best.product.categoryId) ?? 0) + 1,
+    );
+  }
+
+  // ── Phase 2: fill remaining slots with highest-scoring products ────────────
+
+  const maxPerCategory = Math.max(1, Math.ceil(maxResults / 2));
+  const deferred: ScoredProduct[] = [];
+
+  for (const s of sorted) {
+    if (selected.length >= maxResults) break;
+    if (selectedIds.has(s.product.id)) continue;
+    const catId = s.product.categoryId;
+    const count = categoryCounts.get(catId) ?? 0;
+    if (count < maxPerCategory) {
+      selected.push(s);
+      selectedIds.add(s.product.id);
+      categoryCounts.set(catId, count + 1);
+    } else {
+      deferred.push(s);
+    }
+  }
+
+  // ── Phase 3: back-fill if slots still remain ───────────────────────────────
+
+  for (const s of deferred) {
+    if (selected.length >= maxResults) break;
+    if (!selectedIds.has(s.product.id)) selected.push(s);
+  }
+
+  return selected.map((s) => s.product);
 }
 
 // ── Scoring ───────────────────────────────────────────────────────────────────
@@ -543,9 +667,8 @@ export function scoreRecommendation(
   // User has previously carted something from this category
   if (browsing.cartedCategoryIds.includes(cs.categoryId)) personal += 4;
 
-  // Category preference score boost (normalised to 0–6, applied here for
-  // per-product scoring; rankRecommendedProducts applies the same boost
-  // globally when re-ranking the full list)
+  // Category preference score boost — normalised to 0–6 so it nudges
+  // ranking without overpowering product similarity.
   const slug = cs.categorySlug;
   if (slug && (ALLOWED_CATEGORIES as readonly string[]).includes(slug)) {
     const catScore = browsing.categoryScores[slug] ?? 0;

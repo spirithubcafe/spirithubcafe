@@ -68,11 +68,10 @@ const RecommendedCard = ({
   return (
     <div
       className="group flex h-full flex-col overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-black/5 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:ring-amber-300/70"
-      onClick={() => onCardClick(product.categorySlug)}
     >
 
       {/* ── Image ── */}
-      <Link to={productUrl} className="relative block shrink-0 overflow-hidden bg-white" style={{ aspectRatio: '5/3' }}>
+      <Link to={productUrl} className="relative block shrink-0 overflow-hidden bg-white" style={{ aspectRatio: '5/3' }} onClick={() => onCardClick(product.categorySlug)}>
         <img
           src={getProductImageUrl(product.mainImagePath)}
           alt={name}
@@ -107,7 +106,7 @@ const RecommendedCard = ({
         </span>
 
         {/* Name */}
-        <Link to={productUrl} className="block flex-1">
+        <Link to={productUrl} className="block flex-1" onClick={() => onCardClick(product.categorySlug)}>
           <h3 className="line-clamp-2 text-[12px] font-semibold leading-tight text-stone-900 transition-colors group-hover:text-amber-700">
             {name}
           </h3>
@@ -160,6 +159,7 @@ const RecommendedCard = ({
               to={productUrl}
               aria-label={isArabic ? 'عرض المنتج' : 'View product'}
               className="inline-flex items-center gap-1 rounded-lg bg-[#6B4423] px-3 py-1.5 text-[11px] font-bold text-white shadow-sm transition-all duration-200 hover:bg-amber-700 hover:shadow-md active:scale-95"
+              onClick={() => onCardClick(product.categorySlug)}
             >
               <ShoppingCart className="h-3.5 w-3.5" />
               {isArabic ? 'عرض' : 'View'}
@@ -253,7 +253,7 @@ export const RelatedProducts = ({ currentProduct, shopData }: Props) => {
           onClick={() => scrollCards('left')}
           disabled={isArabic ? !canScrollRight : !canScrollLeft}
           aria-label={isArabic ? 'التالي' : 'Scroll left'}
-          className={`absolute left-2 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white shadow-md ring-1 ring-black/10 transition-all duration-200 hover:bg-[#6B4423] hover:text-white hover:shadow-lg active:scale-90 md:-left-3 ${
+          className={`absolute left-2 top-1/2 z-10 hidden md:flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white shadow-md ring-1 ring-black/10 transition-all duration-200 hover:bg-[#6B4423] hover:text-white hover:shadow-lg active:scale-90 md:-left-3 ${
             (isArabic ? canScrollRight : canScrollLeft) ? 'opacity-100' : 'pointer-events-none opacity-0'
           }`}
         >
@@ -271,7 +271,7 @@ export const RelatedProducts = ({ currentProduct, shopData }: Props) => {
 
           <div
             ref={scrollRef}
-            className="flex snap-x snap-mandatory gap-2.5 overflow-x-auto scroll-smooth pb-1 touch-pan-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:gap-3"
+            className="flex snap-x snap-mandatory gap-2.5 overflow-x-auto scroll-smooth pb-1 [touch-action:pan-x_pan-y] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:gap-3"
           >
             {recommendations.map((p) => (
               <div
@@ -289,7 +289,7 @@ export const RelatedProducts = ({ currentProduct, shopData }: Props) => {
           onClick={() => scrollCards('right')}
           disabled={isArabic ? !canScrollLeft : !canScrollRight}
           aria-label={isArabic ? 'السابق' : 'Scroll right'}
-          className={`absolute right-2 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white shadow-md ring-1 ring-black/10 transition-all duration-200 hover:bg-[#6B4423] hover:text-white hover:shadow-lg active:scale-90 md:-right-3 ${
+          className={`absolute right-2 top-1/2 z-10 hidden md:flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white shadow-md ring-1 ring-black/10 transition-all duration-200 hover:bg-[#6B4423] hover:text-white hover:shadow-lg active:scale-90 md:-right-3 ${
             (isArabic ? canScrollLeft : canScrollRight) ? 'opacity-100' : 'pointer-events-none opacity-0'
           }`}
         >
