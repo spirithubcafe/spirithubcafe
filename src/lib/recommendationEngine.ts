@@ -13,7 +13,7 @@ import { safeStorage } from './safeStorage';
 
 const STORAGE_KEY = 'spirithub_browsing_signals';
 const MAX_RECENT_VIEWS = 30;
-const DEFAULT_MAX_RESULTS = 4;
+const DEFAULT_MAX_RESULTS = 6;
 
 /** Browsing data older than this is fully discarded (14 days). */
 const SIGNALS_EXPIRY_MS = 14 * 24 * 60 * 60 * 1000;
@@ -490,25 +490,29 @@ export function getUserCategoryPreferences(): [string, number][] {
 }
 
 /**
- * Standalone ranking helper: sorts scored candidates, guarantees at least one
- * slot for each of the user's top preferred categories, then fills remaining
- * slots with the highest-scoring remaining products.
+ * Standalone ranking helper: applies category diversity to the scored
+ * candidates and returns the top N products.
  *
  * Algorithm:
- *   Phase 1 — Preference guarantees
- *     • Identify allowed categories where the user has a positive
- *       `categoryScores` value, sorted highest-to-lowest.
- *     • Reserve up to floor(maxResults / 2) guaranteed slots — one per
- *       top preferred category — choosing each category's best-scored product.
+ *   Step 1 — Anchors (top 2 by score, any category)
+ *     • Always include the two highest-scoring products so relevance is
+ *       never sacrificed.
  *
- *   Phase 2 — Fill remaining slots
- *     • Walk the full score-sorted list (skipping already-selected products).
- *     • Apply a per-category cap of ceil(maxResults / 2) so no single
- *       category dominates the remaining slots.
+ *   Step 2 — Preferred-category guarantees
+ *     • Identify the user's top 2–3 preferred allowed categories
+ *       (positive categoryScores, sorted highest-to-lowest).
+ *     • For each preferred category not yet represented in the anchors,
+ *       add the best-scored product from that category (if available and
+ *       a slot remains).
  *
- *   Phase 3 — Back-fill
- *     • If slots still remain (rare, e.g. very few candidates), fill from
- *       any leftover deferred products regardless of the cap.
+ *   Step 3 — Diversity fill
+ *     • Walk the score-sorted list and fill remaining slots.
+ *     • Cap each category at ceil(maxResults / 2) so no single category
+ *       dominates (anchor and guarantee slots count toward the cap).
+ *
+ *   Step 4 — Back-fill
+ *     • If slots still remain (rare), add deferred products regardless of
+ *       the cap.
  *
  * Exposed separately so it can be reused in future recommendation sections.
  */
@@ -522,40 +526,54 @@ export function rankRecommendedProducts(
       b.score - a.score || a.product.displayOrder - b.product.displayOrder,
   );
 
-  // ── Phase 1: guarantee one slot per top-preferred category ─────────────────
-
-  // Max number of slots we'll reserve for preference guarantees
-  const maxGuaranteedSlots = Math.floor(maxResults / 2);
-
-  // Group best-scored product per categorySlug (slug → top ScoredProduct)
-  const bestBySlug = new Map<string, ScoredProduct>();
-  for (const s of sorted) {
-    const slug = s.product.categorySlug;
-    if (slug && !bestBySlug.has(slug)) bestBySlug.set(slug, s);
-  }
-
-  // Preferred slugs = allowed categories with a positive user score, best first
-  const preferredSlugs = (ALLOWED_CATEGORIES as readonly string[])
-    .filter((slug) => (browsing.categoryScores[slug] ?? 0) > 0)
-    .sort((a, b) => (browsing.categoryScores[b] ?? 0) - (browsing.categoryScores[a] ?? 0));
+  if (sorted.length === 0) return [];
 
   const selectedIds = new Set<number>();
   const selected: ScoredProduct[] = [];
-  const categoryCounts = new Map<number, number>();
+  // slug → how many selected products belong to it
+  const categoryCount = new Map<string, number>();
 
-  for (const slug of preferredSlugs) {
-    if (selected.length >= maxGuaranteedSlots) break;
-    const best = bestBySlug.get(slug);
-    if (!best || selectedIds.has(best.product.id)) continue;
-    selected.push(best);
-    selectedIds.add(best.product.id);
-    categoryCounts.set(
-      best.product.categoryId,
-      (categoryCounts.get(best.product.categoryId) ?? 0) + 1,
-    );
+  const addToSelected = (s: ScoredProduct) => {
+    selected.push(s);
+    selectedIds.add(s.product.id);
+    const slug = s.product.categorySlug;
+    if (slug) categoryCount.set(slug, (categoryCount.get(slug) ?? 0) + 1);
+  };
+
+  // ── Step 1: anchors – top 2 by score, any category ────────────────────────
+
+  for (const s of sorted) {
+    if (selected.length >= 2) break;
+    addToSelected(s);
   }
 
-  // ── Phase 2: fill remaining slots with highest-scoring products ────────────
+  // ── Step 2: guarantee 1 slot each for top 2–3 preferred categories ─────────
+
+  // How many guarantee slots are still available after anchors
+  const maxGuaranteeSlots = Math.max(0, Math.min(3, maxResults - selected.length));
+
+  const preferredSlugs = (ALLOWED_CATEGORIES as readonly string[])
+    .filter((slug) => (browsing.categoryScores[slug] ?? 0) > 0)
+    .sort(
+      (a, b) => (browsing.categoryScores[b] ?? 0) - (browsing.categoryScores[a] ?? 0),
+    )
+    .slice(0, maxGuaranteeSlots + 2); // fetch a few extras to skip already-covered ones
+
+  let guaranteesAdded = 0;
+  for (const slug of preferredSlugs) {
+    if (guaranteesAdded >= maxGuaranteeSlots) break;
+    if (selected.length >= maxResults) break;
+    if ((categoryCount.get(slug) ?? 0) > 0) continue; // already represented
+    const best = sorted.find(
+      (s) => s.product.categorySlug === slug && !selectedIds.has(s.product.id),
+    );
+    if (best) {
+      addToSelected(best);
+      guaranteesAdded++;
+    }
+  }
+
+  // ── Step 3: diversity fill – per-category cap ──────────────────────────────
 
   const maxPerCategory = Math.max(1, Math.ceil(maxResults / 2));
   const deferred: ScoredProduct[] = [];
@@ -563,22 +581,41 @@ export function rankRecommendedProducts(
   for (const s of sorted) {
     if (selected.length >= maxResults) break;
     if (selectedIds.has(s.product.id)) continue;
-    const catId = s.product.categoryId;
-    const count = categoryCounts.get(catId) ?? 0;
+    const slug = s.product.categorySlug ?? '';
+    const count = categoryCount.get(slug) ?? 0;
     if (count < maxPerCategory) {
-      selected.push(s);
-      selectedIds.add(s.product.id);
-      categoryCounts.set(catId, count + 1);
+      addToSelected(s);
     } else {
       deferred.push(s);
     }
   }
 
-  // ── Phase 3: back-fill if slots still remain ───────────────────────────────
+  // ── Step 4: back-fill if slots still remain ────────────────────────────────
 
   for (const s of deferred) {
     if (selected.length >= maxResults) break;
-    if (!selectedIds.has(s.product.id)) selected.push(s);
+    if (!selectedIds.has(s.product.id)) addToSelected(s);
+  }
+
+  // ── Step 5: diversity safeguard ───────────────────────────────────────────
+  // If fewer than 3 unique categories are represented, swap the last selected
+  // product out for the highest-scoring product from an unrepresented category.
+
+  const uniqueCategories = new Set(
+    selected.map((s) => s.product.categorySlug ?? s.product.categoryId),
+  );
+
+  if (uniqueCategories.size < 3 && selected.length > 1) {
+    const swap = sorted.find(
+      (s) =>
+        !selectedIds.has(s.product.id) &&
+        !uniqueCategories.has(s.product.categorySlug ?? s.product.categoryId),
+    );
+    if (swap) {
+      // Remove the last entry and replace with the diverse candidate
+      selected.pop();
+      selected.push(swap);
+    }
   }
 
   return selected.map((s) => s.product);
