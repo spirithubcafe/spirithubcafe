@@ -1,4 +1,5 @@
 import { http } from './apiClient';
+import { safeStorage } from '../lib/safeStorage';
 import type {
   ProductReview,
   ProductReviewCreateDto,
@@ -158,6 +159,10 @@ export const productReviewService = {
    * @returns Promise with boolean
    */
   canReview: async (productId: number): Promise<boolean> => {
+    // Guard: if there is no token in storage the user is not truly authenticated
+    // (stale React auth state), so skip the call and allow the form to render.
+    if (!safeStorage.getItem('accessToken')) return true;
+
     const response = await http.get<ApiResponse<boolean>>(
       `/api/ProductReviews/product/${productId}/check`
     );
