@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { ShoppingCart, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
-import { useRef, useState, useCallback, useEffect } from 'react';
+import { useRef, useState, useCallback, useEffect, memo } from 'react';
 import type { Product as ApiProduct } from '../../types/product';
 import type { ShopProduct, ShopPage } from '../../types/shop';
 import { getProductImageUrl, handleImageError } from '../../lib/imageUtils';
@@ -173,7 +173,7 @@ const RecommendedCard = ({
 
 // ── Section ───────────────────────────────────────────────────────────────────
 
-export const RelatedProducts = ({ currentProduct, shopData }: Props) => {
+const RelatedProductsInner = ({ currentProduct, shopData }: Props) => {
   const { language } = useApp();
   const { currentRegion } = useRegion();
   const isArabic = language === 'ar';
@@ -312,3 +312,40 @@ export const RelatedProducts = ({ currentProduct, shopData }: Props) => {
     </section>
   );
 };
+
+// ── Lazy wrapper ──────────────────────────────────────────────────────────────
+// Defers scoring + render until the section enters the viewport.
+// Falls back to immediate render on SSR and browsers without IntersectionObserver.
+
+export const RelatedProducts = memo(({ currentProduct, shopData }: Props) => {
+  // Default to true when IO is unavailable (SSR, old browsers) so content always renders
+  const [isVisible, setIsVisible] = useState(
+    () => typeof IntersectionObserver === 'undefined',
+  );
+  const sentinelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (isVisible) return; // already revealed, nothing to observe
+    const el = sentinelRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: '200px' }, // start loading 200px before section scrolls into view
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [isVisible]);
+
+  if (!isVisible) {
+    // Placeholder preserves approximate page height to avoid layout shift
+    return <div ref={sentinelRef} className="mt-8 md:mt-10" style={{ minHeight: 360 }} aria-hidden="true" />;
+  }
+
+  return <RelatedProductsInner currentProduct={currentProduct} shopData={shopData} />;
+});
