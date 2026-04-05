@@ -86,7 +86,7 @@ export interface AramexShipmentDetails {
   chargeableWeight: { unit: string; value: number };
   numberOfPieces: number;
   productGroup: string; // 'DOM' for domestic Oman, 'EXP' for international GCC
-  productType: string;  // 'ONP' (Overnight domestic), 'PPX' (Priority Parcel Express), 'EPX', 'GRD'
+  productType: string;  // 'OND' (On Demand domestic), 'PPX' (Priority Parcel Express), 'EPX', 'GRD'
   paymentType: string;  // 'P' for prepaid, 'C' for collect
   descriptionOfGoods: string;
   dimensions: {
@@ -281,7 +281,7 @@ export async function trackAramexShipment(awbNumber: string) {
 /**
  * Create shipment for an existing order
  * @param orderId - The order ID
- * @param shipmentMode - 'AUTO' (default), 'DOMESTIC' (force DOM/ONP), or 'INTERNATIONAL' (force EXP/PPX)
+ * @param shipmentMode - 'AUTO' (default), 'DOMESTIC' (force DOM/OND), or 'INTERNATIONAL' (force EXP/PPX)
  */
 export async function createShipmentForOrder(orderId: number, shipmentMode: 'AUTO' | 'DOMESTIC' | 'INTERNATIONAL' = 'AUTO') {
   try {

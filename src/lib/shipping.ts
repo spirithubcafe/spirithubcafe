@@ -110,7 +110,7 @@ export async function calculateAramexShippingRate(
     const isOman = countryIso2 === 'OM';
 
     const productGroup = isOman ? 'DOM' : 'EXP';
-    const productType = isOman ? 'ONP' : 'PPX'; // ONP for domestic Oman, PPX for international
+    const productType = isOman ? 'OND' : 'PPX'; // OND for domestic Oman, PPX for international
 
     const chargeableWeight = Math.max(1, Math.ceil(weight || 0));
 

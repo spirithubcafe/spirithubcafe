@@ -399,7 +399,7 @@ export const OrdersManagement: React.FC = () => {
       comments: `Order ${targetOrder.orderNumber} (manual pickup registration)`,
 
       productGroup: isDomesticOman ? 'DOM' : 'EXP',
-      productType: isDomesticOman ? 'ONP' : 'PPX',
+      productType: isDomesticOman ? 'OND' : 'PPX',
       payment: 'P',
       packageType: 'Box',
       numberOfPieces: totalPieces,
@@ -1498,7 +1498,7 @@ export const OrdersManagement: React.FC = () => {
             chargeableWeight: { unit: 'KG', value: chargeableWeight },
             numberOfPieces: Math.max(1, selectedOrder.items?.reduce((s, i) => s + (i.quantity || 1), 0) || 1),
             productGroup: 'DOM',
-            productType: 'ONP',
+            productType: 'OND',
             paymentType: 'P',
             descriptionOfGoods: 'Coffee Products',
             dimensions: { length: 20, width: 20, height: 20, unit: 'CM' },
@@ -3094,7 +3094,7 @@ export const OrdersManagement: React.FC = () => {
                                       ? {
                                           ...p,
                                           productGroup: value,
-                                          productType: value === 'DOM' ? 'ONP' : 'PPX',
+                                          productType: value === 'DOM' ? 'OND' : 'PPX',
                                         }
                                       : p
                                   )
@@ -3122,7 +3122,7 @@ export const OrdersManagement: React.FC = () => {
                                 </SelectTrigger>
                                 <SelectContent position="popper" className="z-[200]">
                                   <SelectItem value="PPX">PPX (Priority Parcel Express)</SelectItem>
-                                  <SelectItem value="ONP">ONP (Overnight Parcel)</SelectItem>
+                                  <SelectItem value="OND">OND (On Demand)</SelectItem>
                                 </SelectContent>
                               </Select>
                             </div>
