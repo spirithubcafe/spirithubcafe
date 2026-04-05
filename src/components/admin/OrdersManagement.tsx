@@ -525,8 +525,11 @@ export const OrdersManagement: React.FC = () => {
         return;
       }
 
-      // Persist pickup info onto the order — for Oman domestic, id/guid may be null/zero
-      const pickupReference = String(processed?.id ?? '');
+      // Persist pickup info onto the order — for Oman domestic, id/guid may be null/zero.
+      // Use sentinel 'DOM-PICKUP' when no reference is returned so the "Pickup Not Registered"
+      // warning clears (it checks !pickupReference, which would stay true for an empty string).
+      const rawPickupReference = String(processed?.id ?? '');
+      const pickupReference = rawPickupReference || (isDomesticOmanPickup ? 'DOM-PICKUP' : '');
       const pickupGUID = String(processed?.guid ?? '');
 
       // Cache pickup locally to avoid UI reverting due to stale/missing API fields
@@ -2806,7 +2809,7 @@ export const OrdersManagement: React.FC = () => {
                           </div>
                         </div>
                       )}
-                      {selectedOrder.pickupReference && (
+                      {selectedOrder.pickupReference && selectedOrder.pickupReference !== 'DOM-PICKUP' && (
                         <div className="md:col-span-2">
                           <Label className="text-sm font-medium flex items-center gap-2">
                             <Package className="h-4 w-4 text-green-600" />
@@ -2827,6 +2830,17 @@ export const OrdersManagement: React.FC = () => {
                               <Copy className="h-4 w-4" />
                             </Button>
                           </div>
+                        </div>
+                      )}
+                      {selectedOrder.pickupReference === 'DOM-PICKUP' && (
+                        <div className="md:col-span-2">
+                          <Label className="text-sm font-medium flex items-center gap-2">
+                            <Package className="h-4 w-4 text-green-600" />
+                            {isArabic ? 'حالة الاستلام' : 'Pickup Status'}
+                          </Label>
+                          <p className="mt-1 text-sm text-green-700 bg-green-50 px-3 py-2 rounded border border-green-200">
+                            {isArabic ? 'تم تسجيل الاستلام المحلي (عُمان) — لا يصدر أرامكس رقم مرجعي للشحنات الداخلية' : 'Domestic pickup registered — Aramex does not issue a reference number for domestic Oman pickups'}
+                          </p>
                         </div>
                       )}
                       {selectedOrder.pickupGUID && (

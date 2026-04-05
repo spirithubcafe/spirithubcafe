@@ -51,6 +51,7 @@ export const AramexPickupInfo: React.FC<AramexPickupInfoProps> = ({
   // Check if order uses Aramex shipping
   const isAramexShipping = order.shippingMethod === 3;
   const hasPickup = !!order.pickupReference;
+  const isDomesticPickup = order.pickupReference === 'DOM-PICKUP';
   const hasTracking = !!order.trackingNumber;
 
   // Copy to clipboard function
@@ -137,12 +138,14 @@ export const AramexPickupInfo: React.FC<AramexPickupInfoProps> = ({
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     
-                    <DropdownMenuItem
-                      onClick={() => copyToClipboard(order.pickupReference!, 'reference')}
-                    >
-                      <Copy className="h-4 w-4 mr-2" />
-                      {isArabic ? 'نسخ رقم الاستلام' : 'Copy Pickup ID'}
-                    </DropdownMenuItem>
+                    {!isDomesticPickup && (
+                      <DropdownMenuItem
+                        onClick={() => copyToClipboard(order.pickupReference!, 'reference')}
+                      >
+                        <Copy className="h-4 w-4 mr-2" />
+                        {isArabic ? 'نسخ رقم الاستلام' : 'Copy Pickup ID'}
+                      </DropdownMenuItem>
+                    )}
                     
                     {order.pickupGUID && (
                       <DropdownMenuItem
@@ -155,13 +158,15 @@ export const AramexPickupInfo: React.FC<AramexPickupInfoProps> = ({
                     
                     <DropdownMenuSeparator />
                     
-                    <DropdownMenuItem
-                      onClick={() => setShowCancelDialog(true)}
-                      className="text-red-600 focus:text-red-600"
-                    >
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      {isArabic ? 'إلغاء الاستلام' : 'Cancel Pickup'}
-                    </DropdownMenuItem>
+                    {!isDomesticPickup && (
+                      <DropdownMenuItem
+                        onClick={() => setShowCancelDialog(true)}
+                        className="text-red-600 focus:text-red-600"
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        {isArabic ? 'إلغاء الاستلام' : 'Cancel Pickup'}
+                      </DropdownMenuItem>
+                    )}
                   </DropdownMenuContent>
                 </DropdownMenu>
               )}
@@ -193,32 +198,45 @@ export const AramexPickupInfo: React.FC<AramexPickupInfoProps> = ({
             {hasPickup && (
               <div className="space-y-4">
                 {/* Pickup Reference */}
-                <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-green-200">
-                  <div>
+                {isDomesticPickup ? (
+                  <div className="p-3 bg-green-50 rounded-lg border border-green-200">
                     <p className="text-xs text-gray-500 mb-1">
-                      {isArabic ? 'رقم الاستلام' : 'Pickup Reference'}
+                      {isArabic ? 'حالة الاستلام' : 'Pickup Status'}
                     </p>
-                    <p className="font-mono font-bold text-lg text-green-700">
-                      {order.pickupReference}
+                    <p className="text-sm text-green-700">
+                      {isArabic
+                        ? 'تم تسجيل الاستلام المحلي (عُمان) — لا يصدر أرامكس رقم مرجعي للشحنات الداخلية'
+                        : 'Domestic pickup registered — Aramex does not issue a reference number for domestic Oman pickups'}
                     </p>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => copyToClipboard(order.pickupReference!, 'reference')}
-                  >
-                    {copiedField === 'reference' ? (
-                      <>
-                        <CheckCircle className="h-4 w-4 text-green-600" />
-                        <span className="text-green-600 ml-2 text-xs">
-                          {isArabic ? 'تم النسخ!' : 'Copied!'}
-                        </span>
-                      </>
-                    ) : (
-                      <Copy className="h-4 w-4" />
-                    )}
-                  </Button>
-                </div>
+                ) : (
+                  <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-green-200">
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1">
+                        {isArabic ? 'رقم الاستلام' : 'Pickup Reference'}
+                      </p>
+                      <p className="font-mono font-bold text-lg text-green-700">
+                        {order.pickupReference}
+                      </p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => copyToClipboard(order.pickupReference!, 'reference')}
+                    >
+                      {copiedField === 'reference' ? (
+                        <>
+                          <CheckCircle className="h-4 w-4 text-green-600" />
+                          <span className="text-green-600 ml-2 text-xs">
+                            {isArabic ? 'تم النسخ!' : 'Copied!'}
+                          </span>
+                        </>
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                )}
 
                 {/* Pickup GUID (Admin Only) */}
                 {order.pickupGUID && (
