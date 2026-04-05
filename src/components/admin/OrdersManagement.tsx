@@ -184,6 +184,8 @@ export const OrdersManagement: React.FC = () => {
   };
 
   const [pickupDraft, setPickupDraft] = useState<PickupDraft | null>(null);
+  const [editingPickupRef, setEditingPickupRef] = useState(false);
+  const [editPickupRefValue, setEditPickupRefValue] = useState('');
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -525,12 +527,23 @@ export const OrdersManagement: React.FC = () => {
         return;
       }
 
-      // Persist pickup info onto the order — for Oman domestic, id/guid may be null/zero.
-      // Use sentinel 'DOM-PICKUP' when no reference is returned so the "Pickup Not Registered"
-      // warning clears (it checks !pickupReference, which would stay true for an empty string).
-      const rawPickupReference = String(processed?.id ?? '');
-      const pickupReference = rawPickupReference || (isDomesticOmanPickup ? 'DOM-PICKUP' : '');
-      const pickupGUID = String(processed?.guid ?? '');
+      // Persist pickup info onto the order.
+      // Aramex domestic API never returns a collection reference in the response —
+      // it only echoes back our own reference1/reference2. The actual collection
+      // reference (e.g. "D02EDEC") is sent by Aramex via email separately.
+      console.log('📦 Aramex pickup response:', JSON.stringify(createResponse, null, 2));
+
+      // For domestic pickups id=null and guid=zero-GUID are expected — use DOM-PICKUP sentinel.
+      // For international pickups id/guid will contain valid values.
+      const rawId   = String(processed?.id   ?? '').trim();
+      const rawGuid = String(processed?.guid  ?? '').trim();
+
+      const aramexRef =
+        (rawId   && !isZeroGuid(rawId)   ? rawId   : '') ||
+        (rawGuid && !isZeroGuid(rawGuid) ? rawGuid : '');
+
+      const pickupReference = aramexRef || (isDomesticOmanPickup ? 'DOM-PICKUP' : '');
+      const pickupGUID = rawGuid || rawId;
 
       // Cache pickup locally to avoid UI reverting due to stale/missing API fields
       upsertPickupCache(selectedOrder.id, pickupReference, pickupGUID);
@@ -616,8 +629,22 @@ export const OrdersManagement: React.FC = () => {
 
       await loadOrders({ silent: true });
       setShowRegisterPickupDialog(false);
+
+      // Show any Aramex warnings (e.g. ERR77 = non-working day)
+      if (createResponse?.hasWarnings && Array.isArray(createResponse.notifications)) {
+        createResponse.notifications.forEach((n) => {
+          const isNonWorkingDay = n.code === 'ERR77';
+          toast.warning(
+            isNonWorkingDay
+              ? (isArabic ? 'تحذير: لم يتمكن أرامكس من تأكيد الاستلام اليوم — قد يُحوَّل لأقرب موعد متاح' : `Warning: Aramex couldn't confirm same-day pickup — may be rescheduled to the next available slot (${n.code})`)
+              : `Aramex: [${n.code}] ${n.message}`,
+            { duration: 8000 }
+          );
+        });
+      }
+
       if (isDomesticOmanPickup && !hasValidId && !hasValidGuid) {
-        toast.success(isArabic ? 'تم تسجيل الاستلام (عُمان داخلي - بدون رقم مرجعي)' : 'Pickup registered (Oman domestic — no pickup reference returned)', { duration: 5000 });
+        toast.success(isArabic ? 'تم تسجيل الاستلام — ستتلقى رقم التجميع عبر البريد الإلكتروني من أرامكس' : 'Pickup registered — you will receive the collection reference by email from Aramex', { duration: 6000 });
       } else {
         toast.success(isArabic ? 'تم تسجيل الاستلام بنجاح' : 'Pickup registered successfully');
       }
@@ -1460,12 +1487,35 @@ export const OrdersManagement: React.FC = () => {
         };
         const consigneeCountry = normalizeToIso2(consigneeCountryRaw || 'OM');
 
-        const chargeableWeight = Math.max(1, Math.ceil(
-          (selectedOrder.items || []).reduce((sum, item) => {
-            const w = Number((item as any).weight ?? (item as any).unitWeight ?? 0);
-            return sum + w * (item.quantity || 1);
-          }, 0) || 1.5
-        ));
+        const chargeableWeight = await (async () => {
+          // Fetch variant data to get accurate weights (same approach as openRegisterPickupDialog)
+          const variantIds = Array.from(
+            new Set(
+              (selectedOrder.items || [])
+                .map((i) => i.productVariantId)
+                .filter((v): v is number => typeof v === 'number' && Number.isFinite(v))
+            )
+          );
+          const variantsById = new Map<number, { weight: number; weightUnit: string }>();
+          if (variantIds.length > 0) {
+            const results = await Promise.allSettled(variantIds.map((id) => productVariantService.getById(id)));
+            results.forEach((r, idx) => {
+              if (r.status !== 'fulfilled') return;
+              const v = r.value;
+              variantsById.set(variantIds[idx], {
+                weight: Number(v.weight ?? 0),
+                weightUnit: String(v.weightUnit ?? 'kg'),
+              });
+            });
+          }
+          const totalKg = (selectedOrder.items || []).reduce((sum, item) => {
+            const v = variantsById.get(item.productVariantId!);
+            if (!v) return sum;
+            return sum + normalizeWeightToKg(v.weight, v.weightUnit) * (item.quantity || 1);
+          }, 0);
+          // Use actual weight; minimum 0.5 KG (Aramex domestic minimum)
+          return Math.max(0.5, totalKg > 0 ? Number(totalKg.toFixed(3)) : 0.5);
+        })();
 
         const { createAramexShipment } = await import('../../services/aramexService');
         const shipmentPayload = {
@@ -2838,9 +2888,49 @@ export const OrdersManagement: React.FC = () => {
                             <Package className="h-4 w-4 text-green-600" />
                             {isArabic ? 'حالة الاستلام' : 'Pickup Status'}
                           </Label>
-                          <p className="mt-1 text-sm text-green-700 bg-green-50 px-3 py-2 rounded border border-green-200">
-                            {isArabic ? 'تم تسجيل الاستلام المحلي (عُمان) — لا يصدر أرامكس رقم مرجعي للشحنات الداخلية' : 'Domestic pickup registered — Aramex does not issue a reference number for domestic Oman pickups'}
-                          </p>
+                          {editingPickupRef ? (
+                            <div className="mt-1 flex items-center gap-2">
+                              <input
+                                className="font-mono text-sm border border-green-300 rounded px-3 py-2 flex-1 focus:outline-none focus:ring-2 focus:ring-green-400"
+                                placeholder="e.g. D02EDEC"
+                                value={editPickupRefValue}
+                                onChange={(e) => setEditPickupRefValue(e.target.value.trim().toUpperCase())}
+                                autoFocus
+                              />
+                              <Button
+                                size="sm"
+                                disabled={!editPickupRefValue}
+                                onClick={async () => {
+                                  await orderService.updateShipping(selectedOrder.id, {
+                                    shippingMethodId: selectedOrder.shippingMethod,
+                                    trackingNumber: selectedOrder.trackingNumber,
+                                    pickupReference: editPickupRefValue,
+                                    pickupGUID: selectedOrder.pickupGUID,
+                                  });
+                                  upsertPickupCache(selectedOrder.id, editPickupRefValue, selectedOrder.pickupGUID ?? '');
+                                  setSelectedOrder((prev) => prev ? { ...prev, pickupReference: editPickupRefValue } : prev);
+                                  setOrders((prev) => prev.map((o) => o.id === selectedOrder.id ? { ...o, pickupReference: editPickupRefValue } : o));
+                                  setEditingPickupRef(false);
+                                  setEditPickupRefValue('');
+                                  toast.success(isArabic ? 'تم تحديث رقم الاستلام' : 'Pickup reference updated');
+                                }}
+                              >
+                                {isArabic ? 'حفظ' : 'Save'}
+                              </Button>
+                              <Button size="sm" variant="ghost" onClick={() => { setEditingPickupRef(false); setEditPickupRefValue(''); }}>
+                                {isArabic ? 'إلغاء' : 'Cancel'}
+                              </Button>
+                            </div>
+                          ) : (
+                            <div className="mt-1 flex items-center gap-2">
+                              <p className="text-sm text-green-700 bg-green-50 px-3 py-2 rounded border border-green-200 flex-1">
+                                {isArabic ? 'تم تسجيل الاستلام — أدخل رقم التجميع من بريد أرامكس إن وجد' : 'Pickup registered — enter collection reference from Aramex email if available'}
+                              </p>
+                              <Button size="sm" variant="outline" onClick={() => { setEditingPickupRef(true); setEditPickupRefValue(''); }}>
+                                {isArabic ? 'تعديل' : 'Edit'}
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       )}
                       {selectedOrder.pickupGUID && (

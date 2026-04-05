@@ -428,6 +428,7 @@ export interface CreateAramexPickupResponse {
     guid: string;
     reference1?: string;
     reference2?: string;
+    collectionReference?: string; // Some Aramex accounts return the short reference here
   };
   notifications?: Array<{ code: string; message: string }>;
   errors?: string[];
