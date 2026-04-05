@@ -1416,8 +1416,9 @@ export const OrdersManagement: React.FC = () => {
     setShipmentLoading(selectedOrder.id);
     
     try {
-      // For DOMESTIC mode: build the full request on the frontend to guarantee DOM/ONP.
-      // The backend's create-shipment-for-order ignores shipmentMode and defaults to EXP/PPX.
+      // For DOMESTIC mode: build and send the full shipment payload directly from the frontend.
+      // Both backend create-shipment-for-order endpoints now correctly detect isDomestic → DOM/OND,
+      // but we keep the frontend path as an explicit override for full control over consignee data.
       if (shipmentMode === 'DOMESTIC') {
         const region = resolveRegionFromStorage();
         const regionInfo = REGION_INFO[region];
