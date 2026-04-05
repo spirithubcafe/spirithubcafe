@@ -2147,7 +2147,7 @@ export const OrdersManagement: React.FC = () => {
                       <div className="shrink-0 text-right">
                         <div className="font-semibold">OMR {order.totalAmount.toFixed(3)}</div>
                         <div className="mt-1 text-xs text-muted-foreground">
-                          {format(new Date(order.createdAt), 'MMM dd, yyyy')}
+                          {format(new Date(order.createdAt), 'MMM dd, yyyy HH:mm')}
                         </div>
                       </div>
                     </div>
@@ -2235,7 +2235,7 @@ export const OrdersManagement: React.FC = () => {
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          {format(new Date(order.createdAt), 'MMM dd, yyyy')}
+                          {format(new Date(order.createdAt), 'MMM dd, yyyy HH:mm')}
                         </TableCell>
                         <TableCell className="text-right">
                           <OrderActionsMenu order={order} triggerVariant="icon" />
@@ -2310,7 +2310,7 @@ export const OrdersManagement: React.FC = () => {
                             <div className="shrink-0 text-right">
                               <div className="font-semibold">OMR {order.totalAmount.toFixed(3)}</div>
                               <div className="mt-1 text-xs text-muted-foreground">
-                                {format(new Date(order.createdAt), 'MMM dd, yyyy')}
+                                {format(new Date(order.createdAt), 'MMM dd, yyyy HH:mm')}
                               </div>
                             </div>
                           </div>
@@ -2411,7 +2411,7 @@ export const OrdersManagement: React.FC = () => {
                               <TableCell>
                                 <Badge className={getPaymentStatusColor(order.paymentStatus)}>{order.paymentStatus}</Badge>
                               </TableCell>
-                              <TableCell>{format(new Date(order.createdAt), 'MMM dd, yyyy')}</TableCell>
+                              <TableCell>{format(new Date(order.createdAt), 'MMM dd, yyyy HH:mm')}</TableCell>
                               <TableCell className="text-right">
                                 <OrderActionsMenu order={order} triggerVariant="icon" />
                               </TableCell>
