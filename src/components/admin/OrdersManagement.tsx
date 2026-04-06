@@ -218,20 +218,20 @@ export const OrdersManagement: React.FC = () => {
       }
     }
 
-    const hasExplicitTimezone = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(raw);
-    const hasDateTimeWithoutTimezone =
-      /^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}(?::\d{2}(?:\.\d{1,6})?)?$/.test(raw);
-    const hasDateOnly = /^\d{4}-\d{2}-\d{2}$/.test(raw);
+    const normalized = raw.replace(' ', 'T');
+    const hasExplicitTimezone = /(?:Z|[+-]\d{2}(?::?\d{2})?)$/i.test(normalized);
+    const startsWithIsoDate = /^\d{4}-\d{2}-\d{2}/.test(normalized);
+    const hasTimePart = /T\d{2}:\d{2}/.test(normalized);
 
-    if (!hasExplicitTimezone && hasDateTimeWithoutTimezone) {
-      return new Date(`${raw.replace(' ', 'T')}Z`);
+    if (!hasExplicitTimezone && startsWithIsoDate && hasTimePart) {
+      return new Date(`${normalized}Z`);
     }
 
-    if (!hasExplicitTimezone && hasDateOnly) {
-      return new Date(`${raw}T00:00:00Z`);
+    if (!hasExplicitTimezone && /^\d{4}-\d{2}-\d{2}$/.test(normalized)) {
+      return new Date(`${normalized}T00:00:00Z`);
     }
 
-    return new Date(raw);
+    return new Date(normalized);
   };
 
   const toOrderTimestamp = (value: string | number | Date): number => {
