@@ -201,6 +201,63 @@ export const OrdersManagement: React.FC = () => {
   const [totalPages, setTotalPages] = useState(0);
 
   const isArabic = language === 'ar';
+  const OMAN_TIME_ZONE = 'Asia/Muscat';
+
+  const getOmanDateParts = (value: string | number | Date) => {
+    const date = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(date.getTime())) return null;
+
+    const numericParts = new Intl.DateTimeFormat('en-GB', {
+      timeZone: OMAN_TIME_ZONE,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+    }).formatToParts(date);
+
+    const values = numericParts.reduce<Record<string, string>>((acc, part) => {
+      if (part.type !== 'literal') {
+        acc[part.type] = part.value;
+      }
+      return acc;
+    }, {});
+
+    return {
+      year: values.year,
+      month: values.month,
+      day: values.day,
+      hour: values.hour,
+      minute: values.minute,
+      second: values.second,
+      monthLabel: new Intl.DateTimeFormat('en-US', {
+        timeZone: OMAN_TIME_ZONE,
+        month: 'short',
+      }).format(date),
+    };
+  };
+
+  const formatOrderDateTime = (
+    value: string | number | Date | undefined,
+    variant: 'display' | 'invoice' | 'csv' = 'display'
+  ) => {
+    if (!value) return variant === 'csv' ? '' : '-';
+
+    const parts = getOmanDateParts(value);
+    if (!parts) return variant === 'csv' ? '' : '-';
+
+    if (variant === 'invoice') {
+      return `${parts.day}/${parts.month}/${parts.year} ${parts.hour}:${parts.minute}`;
+    }
+
+    if (variant === 'csv') {
+      return `${parts.year}-${parts.month}-${parts.day} ${parts.hour}:${parts.minute}:${parts.second}`;
+    }
+
+    return `${parts.monthLabel} ${parts.day}, ${parts.year} ${parts.hour}:${parts.minute}`;
+  };
 
   const resolveRegionFromStorage = (): 'om' | 'sa' => {
     const regionFromPath = window.location.pathname.match(/^\/(om|sa)(\/|$)/)?.[1] as
@@ -1794,7 +1851,7 @@ export const OrdersManagement: React.FC = () => {
           </div>
           <h1>${isRTL ? 'فاتورة' : 'Invoice'}</h1>
           <h2>#${order.orderNumber}</h2>
-          <p>${isRTL ? 'تاريخ الطلب' : 'Order Date'}: ${format(new Date(order.createdAt), 'dd/MM/yyyy HH:mm')}</p>
+          <p>${isRTL ? 'تاريخ الطلب' : 'Order Date'}: ${formatOrderDateTime(order.createdAt, 'invoice')}</p>
         </div>
         
         <div class="info">
@@ -1969,7 +2026,7 @@ export const OrdersManagement: React.FC = () => {
           order.city,
           order.country,
           order.postalCode || '',
-          format(new Date(order.createdAt), 'yyyy-MM-dd HH:mm:ss'),
+          formatOrderDateTime(order.createdAt, 'csv'),
           itemsList,
           order.isGift ? 'Yes' : 'No',
           order.giftRecipientName || '',
@@ -2272,7 +2329,7 @@ export const OrdersManagement: React.FC = () => {
                       <div className="shrink-0 text-right">
                         <div className="font-semibold">OMR {order.totalAmount.toFixed(3)}</div>
                         <div className="mt-1 text-xs text-muted-foreground">
-                          {format(new Date(order.createdAt), 'MMM dd, yyyy HH:mm')}
+                          {formatOrderDateTime(order.createdAt)}
                         </div>
                       </div>
                     </div>
@@ -2360,7 +2417,7 @@ export const OrdersManagement: React.FC = () => {
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          {format(new Date(order.createdAt), 'MMM dd, yyyy HH:mm')}
+                          {formatOrderDateTime(order.createdAt)}
                         </TableCell>
                         <TableCell className="text-right">
                           <OrderActionsMenu order={order} triggerVariant="icon" />
@@ -2435,7 +2492,7 @@ export const OrdersManagement: React.FC = () => {
                             <div className="shrink-0 text-right">
                               <div className="font-semibold">OMR {order.totalAmount.toFixed(3)}</div>
                               <div className="mt-1 text-xs text-muted-foreground">
-                                {format(new Date(order.createdAt), 'MMM dd, yyyy HH:mm')}
+                                {formatOrderDateTime(order.createdAt)}
                               </div>
                             </div>
                           </div>
@@ -2536,7 +2593,7 @@ export const OrdersManagement: React.FC = () => {
                               <TableCell>
                                 <Badge className={getPaymentStatusColor(order.paymentStatus)}>{order.paymentStatus}</Badge>
                               </TableCell>
-                              <TableCell>{format(new Date(order.createdAt), 'MMM dd, yyyy HH:mm')}</TableCell>
+                              <TableCell>{formatOrderDateTime(order.createdAt)}</TableCell>
                               <TableCell className="text-right">
                                 <OrderActionsMenu order={order} triggerVariant="icon" />
                               </TableCell>
@@ -3587,7 +3644,7 @@ export const OrdersManagement: React.FC = () => {
                           {isArabic ? 'تاريخ الإنشاء' : 'Created Date'}
                         </span>
                         <span className="text-sm">
-                          {format(new Date(selectedOrder.createdAt), 'MMM dd, yyyy HH:mm')}
+                          {formatOrderDateTime(selectedOrder.createdAt)}
                         </span>
                       </div>
                       {selectedOrder.updatedAt && (
@@ -3596,7 +3653,7 @@ export const OrdersManagement: React.FC = () => {
                             {isArabic ? 'آخر تحديث' : 'Last Updated'}
                           </span>
                           <span className="text-sm">
-                            {format(new Date(selectedOrder.updatedAt), 'MMM dd, yyyy HH:mm')}
+                            {formatOrderDateTime(selectedOrder.updatedAt)}
                           </span>
                         </div>
                       )}

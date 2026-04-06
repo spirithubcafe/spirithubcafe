@@ -127,10 +127,20 @@ export default defineConfig(({ isSsrBuild }) => ({
     ssrManifest: true
   },
   ssr: {
-    // Externalize all React-related packages to use Node.js CommonJS versions
-    external: ['react', 'react-dom', 'react-router-dom', 'react-router', 'react/jsx-runtime', 'react/jsx-dev-runtime'],
-    // Don't try to bundle browser-only libraries
-    noExternal: /^(?!quill|react-quill|swiper|overlayscrollbars)/
+    // Externalize packages that rely on Node/CommonJS entrypoints during SSR.
+    external: [
+      'react',
+      'react-dom',
+      'react-router-dom',
+      'react-router',
+      'react/jsx-runtime',
+      'react/jsx-dev-runtime',
+      'react-i18next',
+      'use-sync-external-store',
+      'use-sync-external-store/shim',
+    ],
+    // Only bundle packages that need Vite transforms during SSR.
+    noExternal: /^(quill|react-quill|react-quill-new|swiper|overlayscrollbars|overlayscrollbars-react)(\/|$)/
   },
   optimizeDeps: {
     // Pre-bundle these dependencies
