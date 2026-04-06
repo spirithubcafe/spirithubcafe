@@ -156,6 +156,7 @@ export const OrdersManagement: React.FC = () => {
   // Shipment state
   const [shipmentResult, setShipmentResult] = useState<any>(null);
   const [shipmentError, setShipmentError] = useState<string>('');
+  const pendingShipmentOrderNumRef = useRef<string>('');
 
   // Pickup registration state (when shipment exists but pickup missing)
   const [registerPickupLoading, setRegisterPickupLoading] = useState(false);
@@ -243,6 +244,31 @@ export const OrdersManagement: React.FC = () => {
       normalized === 'عمان' ||
       normalized === 'سلطنة عمان'
     );
+  };
+
+  const isSaudiDestination = (country?: string | null): boolean => {
+    const raw = String(country ?? '').trim();
+    if (!raw) return false;
+
+    const normalized = raw
+      .toLowerCase()
+      .replace(/[()\[\]\-_,.]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    return (
+      normalized === 'sa' ||
+      normalized === 'sau' ||
+      normalized === 'ksa' ||
+      normalized === 'saudi arabia' ||
+      normalized === 'saudiarabia' ||
+      normalized === 'المملكة العربية السعودية' ||
+      normalized === 'السعودية'
+    );
+  };
+
+  const isDomesticForRegion = (region: 'om' | 'sa', country?: string | null): boolean => {
+    return region === 'sa' ? isSaudiDestination(country) : isOmanDestination(country);
   };
 
   /// <summary>
@@ -387,7 +413,7 @@ export const OrdersManagement: React.FC = () => {
     const { pickupDate, readyTime, lastPickupTime, closingTime } = buildDefaultPickupTimes();
 
     const destinationCountry = targetOrder.giftRecipientCountry || targetOrder.country;
-    const isDomesticOman = isOmanDestination(destinationCountry);
+    const isDomesticOrder = isDomesticForRegion(region, destinationCountry);
 
     setPickupDraft({
       pickupDate: toYmd(pickupDate),
@@ -400,8 +426,8 @@ export const OrdersManagement: React.FC = () => {
       status: 'Ready',
       comments: `Order ${targetOrder.orderNumber} (manual pickup registration)`,
 
-      productGroup: isDomesticOman ? 'DOM' : 'EXP',
-      productType: isDomesticOman ? 'OND' : 'PPX',
+      productGroup: isDomesticOrder ? 'DOM' : 'EXP',
+      productType: isDomesticOrder ? 'OND' : 'PPX',
       payment: 'P',
       packageType: 'Box',
       numberOfPieces: totalPieces,
@@ -489,8 +515,8 @@ export const OrdersManagement: React.FC = () => {
             numberOfPieces: Math.max(1, Number(pickupDraft.numberOfPieces || 1)),
             shipmentWeight: { unit: 'KG', value: Number(Number(pickupDraft.weightKg || 0).toFixed(3)) || 2.5 },
             shipmentVolume: { unit: 'CM3', value: Number(volumeCm3.toFixed(0)) },
-            cashAmount: { currencyCode: 'OMR', value: 0 },
-            extraCharges: { currencyCode: 'OMR', value: 0 },
+            cashAmount: { currencyCode: region === 'sa' ? 'SAR' : 'OMR', value: 0 },
+            extraCharges: { currencyCode: region === 'sa' ? 'SAR' : 'OMR', value: 0 },
             shipmentDimensions: {
               length: Math.max(1, Number(pickupDraft.lengthCm || 10)),
               width: Math.max(1, Number(pickupDraft.widthCm || 10)),
@@ -508,10 +534,10 @@ export const OrdersManagement: React.FC = () => {
       const hasValidId = Boolean(processed?.id && String(processed.id).trim().length > 0);
       const hasValidGuid = Boolean(processed?.guid && String(processed.guid).trim().length > 0 && !isZeroGuid(processed.guid));
 
-      // Aramex Oman domestic (DOM/ONP) returns success:true but with null id and zero GUID —
+      // Aramex domestic (DOM/OND) returns success:true but with null id and zero GUID —
       // treat as success if the API call itself succeeded, even without a pickup reference.
-      const isDomesticOmanPickup = pickupDraft?.productGroup === 'DOM';
-      const isAcceptableSuccess = createResponse?.success && (hasValidId || hasValidGuid || isDomesticOmanPickup);
+      const isDomesticPickup = pickupDraft?.productGroup === 'DOM';
+      const isAcceptableSuccess = createResponse?.success && (hasValidId || hasValidGuid || isDomesticPickup);
 
       if (!isAcceptableSuccess) {
         const notif = Array.isArray(createResponse?.notifications)
@@ -528,22 +554,43 @@ export const OrdersManagement: React.FC = () => {
       }
 
       // Persist pickup info onto the order.
-      // Aramex domestic API never returns a collection reference in the response —
-      // it only echoes back our own reference1/reference2. The actual collection
-      // reference (e.g. "D02EDEC") is sent by Aramex via email separately.
       console.log('📦 Aramex pickup response:', JSON.stringify(createResponse, null, 2));
 
-      // For domestic pickups id=null and guid=zero-GUID are expected — use DOM-PICKUP sentinel.
+      // For domestic pickups id=null and guid=zero-GUID are expected.
       // For international pickups id/guid will contain valid values.
-      const rawId   = String(processed?.id   ?? '').trim();
-      const rawGuid = String(processed?.guid  ?? '').trim();
+      const rawId             = String(processed?.id                  ?? '').trim();
+      const rawGuid           = String(processed?.guid                ?? '').trim();
+      // Note: processed.reference1 is our own order number that we sent — do NOT use it as the pickup reference.
+      const rawCollectionRef  = String(processed?.collectionReference ?? '').trim();
 
-      const aramexRef =
-        (rawId   && !isZeroGuid(rawId)   ? rawId   : '') ||
-        (rawGuid && !isZeroGuid(rawGuid) ? rawGuid : '');
+      // Prefer the short Aramex-assigned id (e.g. "D0667DE") first, then collectionReference, then guid.
+      let aramexRef =
+        (rawId            && !isZeroGuid(rawId)            ? rawId            : '') ||
+        (rawCollectionRef && !isZeroGuid(rawCollectionRef) ? rawCollectionRef : '') ||
+        (rawGuid          && !isZeroGuid(rawGuid)          ? rawGuid          : '');
 
-      const pickupReference = aramexRef || (isDomesticOmanPickup ? 'DOM-PICKUP' : '');
       const pickupGUID = rawGuid || rawId;
+
+      // For domestic pickups Aramex may not return the collection reference in the
+      // create-pickup response — try polling getPickupDetails once after a short delay.
+      if (!aramexRef && isDomesticPickup && pickupGUID && !isZeroGuid(pickupGUID)) {
+        try {
+          await new Promise((res) => setTimeout(res, 5000));
+          const { getPickupDetails } = await import('../../services/aramexService');
+          const details = await getPickupDetails(pickupGUID);
+          const p = details?.processedPickup;
+          const polledRef = String(
+            p?.id ?? p?.collectionReference ?? details?.reference1 ?? ''
+          ).trim();
+          if (polledRef && !isZeroGuid(polledRef)) {
+            aramexRef = polledRef;
+          }
+        } catch {
+          // Polling failed — fall back to sentinel below
+        }
+      }
+
+      const pickupReference = aramexRef || (isDomesticPickup ? 'DOM-PICKUP' : '');
 
       // Cache pickup locally to avoid UI reverting due to stale/missing API fields
       upsertPickupCache(selectedOrder.id, pickupReference, pickupGUID);
@@ -643,7 +690,7 @@ export const OrdersManagement: React.FC = () => {
         });
       }
 
-      if (isDomesticOmanPickup && !hasValidId && !hasValidGuid) {
+      if (isDomesticPickup && !hasValidId && !hasValidGuid) {
         toast.success(isArabic ? 'تم تسجيل الاستلام — ستتلقى رقم التجميع عبر البريد الإلكتروني من أرامكس' : 'Pickup registered — you will receive the collection reference by email from Aramex', { duration: 6000 });
       } else {
         toast.success(isArabic ? 'تم تسجيل الاستلام بنجاح' : 'Pickup registered successfully');
@@ -1434,6 +1481,7 @@ export const OrdersManagement: React.FC = () => {
       return;
     }
 
+    pendingShipmentOrderNumRef.current = order.orderNumber || '';
     setSelectedOrder(order);
     setShipmentMode('AUTO'); // Reset to AUTO
     setShowShipmentConfirmDialog(true);
@@ -1441,182 +1489,206 @@ export const OrdersManagement: React.FC = () => {
 
   const confirmCreateShipment = async () => {
     if (!selectedOrder) return;
+
+    // Capture before any async state changes
+    const orderSnapshot = selectedOrder;
     
     setShowShipmentConfirmDialog(false);
-    setShipmentLoading(selectedOrder.id);
+    setShipmentLoading(orderSnapshot.id);
     
     try {
-      // For DOMESTIC mode: build and send the full shipment payload directly from the frontend.
-      // Both backend create-shipment-for-order endpoints now correctly detect isDomestic → DOM/OND,
-      // but we keep the frontend path as an explicit override for full control over consignee data.
-      if (shipmentMode === 'DOMESTIC') {
-        const region = resolveRegionFromStorage();
-        const regionInfo = REGION_INFO[region];
+      const region = resolveRegionFromStorage();
+      const regionInfo = REGION_INFO[region];
 
-        const consigneeCountryRaw = selectedOrder.isGift && selectedOrder.giftRecipientCountry
-          ? selectedOrder.giftRecipientCountry
-          : selectedOrder.country;
-        const consigneeCity = (selectedOrder.isGift && selectedOrder.giftRecipientCity
-          ? selectedOrder.giftRecipientCity
-          : selectedOrder.city) || 'Muscat';
-        const consigneeName = (selectedOrder.isGift && selectedOrder.giftRecipientName
-          ? selectedOrder.giftRecipientName
-          : (selectedOrder.fullName || selectedOrder.customerName)) || 'Customer';
-        const consigneePhone = (selectedOrder.isGift && selectedOrder.giftRecipientPhone
-          ? selectedOrder.giftRecipientPhone
-          : selectedOrder.phone) || regionInfo.contact.phone;
-        const consigneePostal = selectedOrder.isGift && selectedOrder.giftRecipientPostalCode
-          ? selectedOrder.giftRecipientPostalCode
-          : (selectedOrder.postalCode || '111');
-        const consigneeAddress = (selectedOrder.isGift && selectedOrder.giftRecipientAddress
-          ? selectedOrder.giftRecipientAddress
-          : (selectedOrder.address || selectedOrder.addressLine1)) || consigneeCity;
+      // ── Consignee data ─────────────────────────────────────────────
+      const consigneeCountryRaw = orderSnapshot.isGift && orderSnapshot.giftRecipientCountry
+        ? orderSnapshot.giftRecipientCountry
+        : orderSnapshot.country;
+      const defaultCity = region === 'sa' ? 'Khobar' : 'Muscat';
+      const consigneeCity = (orderSnapshot.isGift && orderSnapshot.giftRecipientCity
+        ? orderSnapshot.giftRecipientCity
+        : orderSnapshot.city) || defaultCity;
+      const consigneeName = (orderSnapshot.isGift && orderSnapshot.giftRecipientName
+        ? orderSnapshot.giftRecipientName
+        : (orderSnapshot.fullName || orderSnapshot.customerName)) || 'Customer';
+      const consigneePhone = (orderSnapshot.isGift && orderSnapshot.giftRecipientPhone
+        ? orderSnapshot.giftRecipientPhone
+        : orderSnapshot.phone) || regionInfo.contact.phone;
+      // Fallback postcodes — use region as the reliable source, matching what the shipper uses.
+      // If the order has a country stored, try to be more specific; otherwise fall back to region.
+      const rawCountryForPostCode = String(consigneeCountryRaw ?? '').trim().toLowerCase().replace(/[^a-z]/g, '');
+      const isSADest = rawCountryForPostCode === 'sa' || rawCountryForPostCode === 'saudiarabia' || rawCountryForPostCode === 'ksa';
+      const isOMDest = rawCountryForPostCode === 'om' || rawCountryForPostCode === 'oman' || (!rawCountryForPostCode && region === 'om');
+      const defaultPostCode = isSADest ? '34422' : isOMDest ? '111' : '00000';
+      const consigneePostal = (orderSnapshot.isGift && orderSnapshot.giftRecipientPostalCode
+        ? orderSnapshot.giftRecipientPostalCode
+        : orderSnapshot.postalCode) || defaultPostCode;
+      const consigneeAddress = (orderSnapshot.isGift && orderSnapshot.giftRecipientAddress
+        ? orderSnapshot.giftRecipientAddress
+        : (orderSnapshot.address || (orderSnapshot as any).addressLine1)) ||
+        // Fallback: use the customer name + city so Line1 ≠ City and is non-trivially non-empty
+        `${consigneeName}, ${consigneeCity}`;
 
-        // Normalize country to ISO2 code — order.country may be a full name like "Oman"
-        const normalizeToIso2 = (c: string): string => {
-          const v = String(c ?? '').trim();
-          if (v.length === 2) return v.toUpperCase();
-          const lower = v.toLowerCase().replace(/[^a-z]/g, '');
-          const map: Record<string,string> = {
-            oman:'OM', om:'OM', uae:'AE', unitedarabemirates:'AE',
-            saudiarabia:'SA', ksa:'SA', kuwait:'KW', bahrain:'BH',
-            qatar:'QA', jordan:'JO', egypt:'EG', lebanon:'LB',
-            usa:'US', uk:'GB', unitedkingdom:'GB', unitedstates:'US',
-          };
-          return map[lower] ?? v.toUpperCase().slice(0, 2);
+      // Normalize country to ISO2 — order.country may be a full name like "Oman"
+      const normalizeToIso2 = (c: string): string => {
+        const v = String(c ?? '').trim();
+        if (v.length === 2) return v.toUpperCase();
+        const lower = v.toLowerCase().replace(/[^a-z]/g, '');
+        const map: Record<string, string> = {
+          oman: 'OM', om: 'OM', uae: 'AE', unitedarabemirates: 'AE',
+          saudiarabia: 'SA', ksa: 'SA', kuwait: 'KW', bahrain: 'BH',
+          qatar: 'QA', jordan: 'JO', egypt: 'EG', lebanon: 'LB',
+          usa: 'US', uk: 'GB', unitedkingdom: 'GB', unitedstates: 'US',
         };
-        const consigneeCountry = normalizeToIso2(consigneeCountryRaw || 'OM');
+        return map[lower] ?? v.toUpperCase().slice(0, 2);
+      };
+      const consigneeCountry = normalizeToIso2(consigneeCountryRaw || (region === 'sa' ? 'SA' : 'OM'));
 
-        const chargeableWeight = await (async () => {
-          // Fetch variant data to get accurate weights (same approach as openRegisterPickupDialog)
-          const variantIds = Array.from(
-            new Set(
-              (selectedOrder.items || [])
-                .map((i) => i.productVariantId)
-                .filter((v): v is number => typeof v === 'number' && Number.isFinite(v))
-            )
-          );
-          const variantsById = new Map<number, { weight: number; weightUnit: string }>();
-          if (variantIds.length > 0) {
-            const results = await Promise.allSettled(variantIds.map((id) => productVariantService.getById(id)));
-            results.forEach((r, idx) => {
-              if (r.status !== 'fulfilled') return;
-              const v = r.value;
-              variantsById.set(variantIds[idx], {
-                weight: Number(v.weight ?? 0),
-                weightUnit: String(v.weightUnit ?? 'kg'),
-              });
-            });
-          }
-          const totalKg = (selectedOrder.items || []).reduce((sum, item) => {
-            const v = variantsById.get(item.productVariantId!);
-            if (!v) return sum;
-            return sum + normalizeWeightToKg(v.weight, v.weightUnit) * (item.quantity || 1);
-          }, 0);
-          // Use actual weight; minimum 0.5 KG (Aramex domestic minimum)
-          return Math.max(0.5, totalKg > 0 ? Number(totalKg.toFixed(3)) : 0.5);
-        })();
-
-        const { createAramexShipment } = await import('../../services/aramexService');
-        const shipmentPayload = {
-          shipper: {
-            partyAddress: {
-              line1: regionInfo.contact.address.en,
-              city: region === 'sa' ? 'Khobar' : 'Muscat',
-              countryCode: region === 'sa' ? 'SA' : 'OM',
-              postCode: region === 'sa' ? '' : '111',
-            },
-            contact: {
-              personName: regionInfo.aboutContent.companyName.en,
-              companyName: regionInfo.aboutContent.companyName.en,
-              phoneNumber1: regionInfo.contact.phone,
-              emailAddress: regionInfo.contact.email,
-            },
-          },
-          consignee: {
-            partyAddress: {
-              line1: consigneeAddress,
-              city: consigneeCity,
-              countryCode: consigneeCountry,
-              postCode: consigneePostal,
-            },
-            contact: {
-              personName: consigneeName,
-              companyName: consigneeName,
-              phoneNumber1: consigneePhone,
-              emailAddress: selectedOrder.email,
-            },
-          },
-          details: {
-            actualWeight: { unit: 'KG', value: chargeableWeight },
-            chargeableWeight: { unit: 'KG', value: chargeableWeight },
-            numberOfPieces: Math.max(1, selectedOrder.items?.reduce((s, i) => s + (i.quantity || 1), 0) || 1),
-            productGroup: 'DOM',
-            productType: 'OND',
-            paymentType: 'P',
-            descriptionOfGoods: 'Coffee Products',
-            dimensions: { length: 20, width: 20, height: 20, unit: 'CM' },
-          },
-        };
-
-        const shipRes = await createAramexShipment(shipmentPayload);
-
-        if (!shipRes?.success || !shipRes?.awbNumber) {
-          const msg = shipRes?.errors?.join('\n') || shipRes?.error || 'Failed to create domestic shipment';
-          setShipmentError(msg);
-          setShipmentResult(null);
-          setShowShipmentResultDialog(true);
-          return;
-        }
-
-        // Save tracking number to the order
-        await orderService.updateShipping(selectedOrder.id, {
-          shippingMethodId: selectedOrder.shippingMethod,
-          trackingNumber: shipRes.awbNumber,
+      // ── Weight ── fetch from variant data for accuracy ─────────────
+      const variantIds = Array.from(
+        new Set(
+          (orderSnapshot.items || [])
+            .map((i) => i.productVariantId)
+            .filter((v): v is number => typeof v === 'number' && Number.isFinite(v))
+        )
+      );
+      const variantsById = new Map<number, { weight: number; weightUnit: string }>();
+      if (variantIds.length > 0) {
+        const results = await Promise.allSettled(variantIds.map((id) => productVariantService.getById(id)));
+        results.forEach((r, idx) => {
+          if (r.status !== 'fulfilled') return;
+          const v = r.value;
+          variantsById.set(variantIds[idx], {
+            weight: Number(v.weight ?? 0),
+            weightUnit: String(v.weightUnit ?? 'kg'),
+          });
         });
+      }
+      const totalKg = (orderSnapshot.items || []).reduce((sum, item) => {
+        const v = variantsById.get(item.productVariantId!);
+        if (!v) return sum;
+        return sum + normalizeWeightToKg(v.weight, v.weightUnit) * (item.quantity || 1);
+      }, 0);
 
-        setShipmentResult(shipRes);
-        setShipmentError('');
-        await loadOrders();
-        setShowShipmentResultDialog(true);
+      // ── Determine domestic vs international ────────────────────────
+      const isDomestic = shipmentMode === 'DOMESTIC' ||
+        (shipmentMode === 'AUTO' && isDomesticForRegion(region, consigneeCountryRaw));
+
+      // Aramex domestic minimum: 0.5 KG; international minimum: 0.1 KG
+      const minWeight = isDomestic ? 0.5 : 0.1;
+      const chargeableWeight = Math.max(minWeight, totalKg > 0 ? Number(totalKg.toFixed(3)) : minWeight);
+
+      // ── Build and send shipment payload ────────────────────────────
+      const { createAramexShipment } = await import('../../services/aramexService');
+
+      // Aramex rejects phone numbers with spaces — strip them, keep leading +
+      const sanitizePhone = (p: string) => p.replace(/(?!^\+)\s+/g, '').trim() || p.trim();
+
+      const shipmentPayload: Record<string, unknown> = {
+        shipper: {
+          partyAddress: {
+            line1: regionInfo.contact.address.en,
+            city: region === 'sa' ? 'Khobar' : 'Muscat',
+            countryCode: region === 'sa' ? 'SA' : 'OM',
+            postCode: region === 'sa' ? undefined : '111',
+          },
+          contact: {
+            personName: regionInfo.aboutContent.companyName.en,
+            companyName: regionInfo.aboutContent.companyName.en,
+            phoneNumber1: sanitizePhone(regionInfo.contact.phone),
+            emailAddress: regionInfo.contact.email,
+          },
+        },
+        consignee: {
+          partyAddress: {
+            line1: consigneeAddress,
+            city: consigneeCity,
+            countryCode: consigneeCountry,
+            postCode: consigneePostal || undefined,
+          },
+          contact: {
+            personName: consigneeName,
+            companyName: consigneeName,
+            phoneNumber1: sanitizePhone(consigneePhone),
+            emailAddress: orderSnapshot.email || undefined,
+          },
+        },
+        details: {
+          actualWeight: { unit: 'KG', value: chargeableWeight },
+          chargeableWeight: { unit: 'KG', value: chargeableWeight },
+          numberOfPieces: Math.max(1, orderSnapshot.items?.reduce((s, i) => s + (i.quantity || 1), 0) || 1),
+          productGroup: isDomestic ? 'DOM' : 'EXP',
+          productType: isDomestic ? 'OND' : 'PPX',
+          paymentType: 'P',
+          descriptionOfGoods: 'Coffee Products',
+          dimensions: { length: 20, width: 20, height: 20, unit: 'CM' },
+          reference1: orderSnapshot.orderNumber,
+          reference2: orderSnapshot.orderNumber,
+          // Customs declaration for international shipments only
+          ...(!isDomestic && {
+            customsValueAmount: {
+              currencyCode: region === 'sa' ? 'SAR' : 'OMR',
+              value: Number(Number(orderSnapshot.totalAmount ?? 0).toFixed(3)),
+            },
+          }),
+        },
+      };
+
+      console.log('📦 Aramex shipment payload:', JSON.stringify(shipmentPayload, null, 2));
+      const shipRes = await createAramexShipment(shipmentPayload);
+
+      if (!shipRes?.success || !shipRes?.awbNumber) {
+        const msg = shipRes?.errors?.join('\n') || shipRes?.error || 'Failed to create shipment';
+        setShipmentError(msg);
+        setShipmentResult(null);
         return;
       }
 
-      // AUTO / INTERNATIONAL: let the backend decide
-      const { createShipmentForOrder } = await import('../../services');
-      const response = await createShipmentForOrder(selectedOrder.id, shipmentMode);
-      
-      if (response.success) {
-        setShipmentResult(response);
-        setShipmentError('');
-        
-        // Reload orders to get updated tracking number
-        await loadOrders();
-      } else {
-        const errorMsg = response.error || response.errors?.join('\n') || 'Failed to create shipment';
-        setShipmentError(errorMsg);
-        setShipmentResult(null);
-      }
+      // Save tracking number to the order
+      await orderService.updateShipping(orderSnapshot.id, {
+        shippingMethodId: orderSnapshot.shippingMethod,
+        trackingNumber: shipRes.awbNumber,
+      });
+
+      setShipmentResult({ ...shipRes, orderNumber: orderSnapshot.orderNumber || pendingShipmentOrderNumRef.current });
+      setShipmentError('');
+      await loadOrders();
     } catch (error: any) {
       console.error('❌ Error creating Aramex shipment:', error);
+      if (error?.errors) {
+        console.error('📋 Aramex validation errors (expanded):', JSON.stringify(error.errors, null, 2));
+        // Log each field + message individually so nothing is hidden behind Array(n)
+        if (typeof error.errors === 'object' && !Array.isArray(error.errors)) {
+          Object.entries(error.errors).forEach(([field, msgs]) => {
+            const list = Array.isArray(msgs) ? msgs : [String(msgs)];
+            list.forEach((m) => console.error(`  ┃ ${field}: ${m}`));
+          });
+        }
+      }
 
-      // Extract validation errors from 400 responses (e.g. ASP.NET problem details)
-      const responseData = error?.response?.data;
+      // apiClient transforms the axios error into { message, statusCode, errors }.
+      // error.response is no longer available; work directly from the transformed shape.
       let errorMessage = error?.message || 'Unknown error';
-      if (responseData?.errors && typeof responseData.errors === 'object') {
-        errorMessage = Object.entries(responseData.errors)
-          .flatMap(([field, msgs]) => (msgs as string[]).map((m) => `${field}: ${m}`))
+      if (error?.errors && typeof error.errors === 'object' && !Array.isArray(error.errors)) {
+        // ASP.NET validation problem details: { "Field": ["msg", ...] }
+        errorMessage = Object.entries(error.errors)
+          .flatMap(([field, msgs]) =>
+            (Array.isArray(msgs) ? msgs : [String(msgs)]).map((m) => `${field}: ${m}`)
+          )
           .join('\n');
-      } else if (responseData?.title) {
-        errorMessage = responseData.title;
-      } else if (error?.errors && Array.isArray(error.errors) && error.errors.length > 0) {
+      } else if (Array.isArray(error?.errors) && error.errors.length > 0) {
         errorMessage = error.errors.join('\n');
-      } else if (error?.errors && typeof error.errors === 'string') {
+      } else if (typeof error?.errors === 'string') {
         errorMessage = error.errors;
       }
 
       setShipmentError(errorMessage);
       setShipmentResult(null);
+      // Also surface through toast so the exact messages are always visible
+      toast.error(errorMessage.split('\n')[0], {
+        description: errorMessage.split('\n').slice(1).join('\n') || undefined,
+        duration: 10000,
+      });
     } finally {
       setShipmentLoading(null);
       setShowShipmentResultDialog(true);
@@ -3061,8 +3133,8 @@ export const OrdersManagement: React.FC = () => {
                                 if (dayOfWeek === 5 || dayOfWeek === 6) {
                                   setRegisterPickupError(
                                     isArabic 
-                                      ? 'لا يمكن تحديد يوم الجمعة أو السبت (أيام عطلة في عمان). يرجى اختيار الأحد-الخميس.'
-                                      : 'Cannot select Friday or Saturday (non-working days in Oman). Please select Sunday-Thursday.'
+                                      ? 'لا يمكن تحديد يوم الجمعة أو السبت (أيام عطلة). يرجى اختيار الأحد-الخميس.'
+                                      : 'Cannot select Friday or Saturday (non-working days). Please select Sunday-Thursday.'
                                   );
                                   return;
                                 }
@@ -3724,11 +3796,11 @@ export const OrdersManagement: React.FC = () => {
                 </Select>
                 <p className="text-xs text-muted-foreground leading-relaxed">
                   {shipmentMode === 'AUTO' && (isArabic
-                    ? 'تلقائي حسب مقارنة بلد المرسل مع بلد المستلم (نفس البلد = DOM/ONP، غير ذلك = EXP/PPX)'
-                    : 'Auto-detect by comparing shipper vs consignee country (same country = DOM/ONP, otherwise = EXP/PPX)')}
+                    ? 'تلقائي حسب مقارنة بلد المرسل مع بلد المستلم (نفس البلد = DOM/OND، غير ذلك = EXP/PPX)'
+                    : 'Auto-detect by comparing shipper vs consignee country (same country = DOM/OND, otherwise = EXP/PPX)')}
                   {shipmentMode === 'DOMESTIC' && (isArabic
-                    ? 'إجباري: DOM / ONP (شحن داخل عُمان)'
-                    : 'Force: DOM / ONP (Domestic Oman)')}
+                    ? 'إجباري: DOM / OND (شحن داخلي)'
+                    : 'Force: DOM / OND (Domestic)')}
                   {shipmentMode === 'INTERNATIONAL' && (isArabic
                     ? 'إجباري: EXP / PPX (شحن دولي)'
                     : 'Force: EXP / PPX (International)')}
