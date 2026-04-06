@@ -203,8 +203,44 @@ export const OrdersManagement: React.FC = () => {
   const isArabic = language === 'ar';
   const OMAN_TIME_ZONE = 'Asia/Muscat';
 
+  const parseOrderDate = (value: string | number | Date): Date => {
+    if (value instanceof Date) return value;
+    if (typeof value === 'number') return new Date(value);
+
+    const raw = String(value ?? '').trim();
+    if (!raw) return new Date(NaN);
+
+    // Support unix timestamps represented as strings.
+    if (/^\d+$/.test(raw)) {
+      const asNumber = Number(raw);
+      if (Number.isFinite(asNumber)) {
+        return new Date(raw.length <= 10 ? asNumber * 1000 : asNumber);
+      }
+    }
+
+    const hasExplicitTimezone = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(raw);
+    const hasDateTimeWithoutTimezone =
+      /^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}(?::\d{2}(?:\.\d{1,6})?)?$/.test(raw);
+    const hasDateOnly = /^\d{4}-\d{2}-\d{2}$/.test(raw);
+
+    if (!hasExplicitTimezone && hasDateTimeWithoutTimezone) {
+      return new Date(`${raw.replace(' ', 'T')}Z`);
+    }
+
+    if (!hasExplicitTimezone && hasDateOnly) {
+      return new Date(`${raw}T00:00:00Z`);
+    }
+
+    return new Date(raw);
+  };
+
+  const toOrderTimestamp = (value: string | number | Date): number => {
+    const parsed = parseOrderDate(value);
+    return Number.isNaN(parsed.getTime()) ? 0 : parsed.getTime();
+  };
+
   const getOmanDateParts = (value: string | number | Date) => {
-    const date = value instanceof Date ? value : new Date(value);
+    const date = parseOrderDate(value);
     if (Number.isNaN(date.getTime())) return null;
 
     const numericParts = new Intl.DateTimeFormat('en-GB', {
@@ -786,7 +822,7 @@ export const OrdersManagement: React.FC = () => {
     const count = newOrders.length;
     const newest = newOrders
       .slice()
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
+      .sort((a, b) => toOrderTimestamp(b.createdAt) - toOrderTimestamp(a.createdAt))[0];
 
     toast(
       isArabic
@@ -892,7 +928,7 @@ export const OrdersManagement: React.FC = () => {
       
       // Detect and highlight new orders (orders created after last seen time AND not in known IDs)
       const newOrders = ordersWithItems.filter((o) => {
-        const orderTime = new Date(o.createdAt).getTime();
+        const orderTime = toOrderTimestamp(o.createdAt);
         return orderTime > lastSeenTime && !knownOrderIdsRef.current.has(o.id);
       });
       
@@ -969,7 +1005,7 @@ export const OrdersManagement: React.FC = () => {
   };
 
   const sortedOrders = useMemo(() => {
-    return [...orders].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return [...orders].sort((a, b) => toOrderTimestamp(b.createdAt) - toOrderTimestamp(a.createdAt));
   }, [orders]);
 
   const paidOrders = useMemo(() => {
