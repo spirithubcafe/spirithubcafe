@@ -44,6 +44,14 @@ function fmtPhone(raw: string | undefined): string {
   return raw; // fallback: return as-is
 }
 
+function fmtWeight(v: string | null | undefined): string {
+  if (!v) return '';
+  const m = v.match(/^(\d+(?:\.\d+)?)\s*g/i);
+  if (!m) return v;
+  const num = parseFloat(m[1]);
+  return `${Number.isInteger(num) ? num : num}g`;
+}
+
 function esc(s: string | null | undefined): string {
   return String(s ?? '')
     .replace(/&/g, '&amp;')
@@ -68,9 +76,10 @@ export function generatePremiumInvoiceHTML(order: Order, isArabic = false): stri
   /* ── item rows ─────────────────────────────────────────────────────── */
   const itemRows = (order.items ?? []).map((item, i) => {
     const bg = i % 2 === 0 ? '#f7f6f5' : '#edecea';
-    const variant = item.variantInfo
+    const weightLabel = fmtWeight(item.variantInfo);
+    const variant = weightLabel
       ? `<span style="display:inline-flex;align-items:center;gap:4px;margin-top:4px;padding:2px 8px;background:#ede3d5;color:#7a5c3a;font-size:10.5px;font-weight:500;border-radius:999px;">
-           <span style="color:#c8a97e;font-size:9px;">✓</span>${esc(item.variantInfo)}
+           <span style="color:#c8a97e;font-size:9px;">✓</span>${esc(weightLabel)}
          </span>`
       : '';
     const qtyLabel  = isArabic ? 'الكمية' : 'Qty';
@@ -127,7 +136,7 @@ export function generatePremiumInvoiceHTML(order: Order, isArabic = false): stri
 <html dir="${dir}" lang="${isArabic ? 'ar' : 'en'}">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <meta name="viewport" content="width=794"/>
   <title>${isArabic ? 'فاتورة' : 'INVOICE'} #${esc(order.orderNumber)}</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
@@ -166,39 +175,10 @@ export function generatePremiumInvoiceHTML(order: Order, isArabic = false): stri
       margin-bottom: 16px;
     }
     .info-card { background: #f7f6f5; border-radius: 12px; padding: 18px 20px; }
-    .table-wrapper { border-radius: 12px; overflow-x: auto; -webkit-overflow-scrolling: touch; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+    .table-wrapper { border-radius: 12px; overflow: hidden; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
     .summary-row { display: flex; justify-content: flex-end; margin-bottom: 16px; }
     .summary-box { min-width: 260px; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 6px rgba(0,0,0,0.07); }
     .invoice-footer-bar { background: #f7f6f5; border-radius: 12px; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; gap: 24px; page-break-inside: avoid; }
-    @media (max-width: 560px) {
-      body { padding: 12px 14px; font-size: 12px; }
-      .invoice-header { flex-direction: column; align-items: center; gap: 10px; }
-      .invoice-header-company { text-align: center; font-size: 11px; }
-      .invoice-header-title { order: -1; }
-      .invoice-header-logo { text-align: center; }
-      .info-cards { grid-template-columns: 1fr; }
-      .info-card { padding: 14px 16px; }
-      .summary-row { justify-content: stretch; }
-      .summary-box { min-width: 0; width: 100%; }
-      .invoice-footer-bar { flex-direction: column; align-items: flex-start; gap: 14px; }
-      /* ── product table → card layout ── */
-      .product-table thead { display: none; }
-      .product-row { display: block !important; border-radius: 10px; margin-bottom: 8px; overflow: hidden; border: 1px solid #e0d8cc; }
-      .col-product { display: block !important; padding: 10px 12px !important; border-bottom: 1px solid #e0d8cc !important; background: #ece9e6; }
-      .col-qty, .col-price, .col-total {
-        display: flex !important;
-        justify-content: space-between;
-        align-items: center;
-        padding: 7px 12px !important;
-        font-size: 12px !important;
-        text-align: left !important;
-        border-bottom: 1px solid #f0ebe0 !important;
-      }
-      .col-qty::before   { content: attr(data-label); color: #888; font-weight: 500; }
-      .col-price::before { content: attr(data-label); color: #888; font-weight: 500; }
-      .col-total { background: #fdf8f0; font-weight: 700 !important; }
-      .col-total::before { content: attr(data-label); color: #7a5c3a; font-weight: 600; }
-    }
   </style>
 </head>
 <body>

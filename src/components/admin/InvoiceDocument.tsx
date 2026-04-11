@@ -68,10 +68,18 @@ const BadgePaid: React.FC<{ status: string }> = ({ status }) => {
   );
 };
 
+function fmtWeight(v: string | null | undefined): string {
+  if (!v) return '';
+  const m = v.match(/^(\d+(?:\.\d+)?)\s*g/i);
+  if (!m) return v;
+  const num = parseFloat(m[1]);
+  return `${Number.isInteger(num) ? num : num}g`;
+}
+
 const VariantBadge: React.FC<{ text: string }> = ({ text }) => (
   <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[10.5px] font-medium bg-[#ede3d5] text-[#7a5c3a]">
     <span className="text-[#c8a97e] text-[9px]">✓</span>
-    {text}
+    {fmtWeight(text)}
   </span>
 );
 
