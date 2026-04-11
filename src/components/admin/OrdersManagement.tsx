@@ -47,6 +47,7 @@ import { format } from 'date-fns';
 import { createAramexPickup, emailService, orderService, productVariantService } from '../../services';
 import { REGION_INFO } from '../../config/regionInfo';
 import type { Order, OrderStatus, PaymentStatus } from '../../types/order';
+import { generatePremiumInvoiceHTML } from './InvoicePrint';
 
 export const OrdersManagement: React.FC = () => {
   const { language } = useApp();
@@ -156,8 +157,6 @@ export const OrdersManagement: React.FC = () => {
   // Shipment state
   const [shipmentResult, setShipmentResult] = useState<any>(null);
   const [shipmentError, setShipmentError] = useState<string>('');
-  const [shipmentRawDebug, setShipmentRawDebug] = useState<Record<string, unknown> | null>(null);
-  const [shipmentPickupDate, setShipmentPickupDate] = useState<string>(''); // yyyy-mm-dd, editable
   const pendingShipmentOrderNumRef = useRef<string>('');
 
   // Pickup registration state (when shipment exists but pickup missing)
@@ -1577,28 +1576,8 @@ export const OrdersManagement: React.FC = () => {
     }
 
     pendingShipmentOrderNumRef.current = order.orderNumber || '';
+    setSelectedOrder(order);
     setShipmentMode('AUTO'); // Reset to AUTO
-
-    // Compute default pickup date: skip weekends (Fri+Sat in GCC).
-    // Advance past cutoff hour (17:00) → next working day.
-    let defaultPickup = skipWeekends(new Date());
-    if (new Date().getHours() >= 17) {
-      const next = new Date(defaultPickup);
-      next.setDate(next.getDate() + 1);
-      defaultPickup = skipWeekends(next);
-    }
-    setShipmentPickupDate(toYmd(defaultPickup));
-
-    // Always fetch the full order so city/country/address are populated (list endpoint may omit them)
-    try {
-      const response = await orderService.getOrderById(order.id);
-      const fullOrder = mergePickupFromCache(response.data!) as Order;
-      setSelectedOrder(fullOrder);
-    } catch {
-      // Fall back to the list-row object if the fetch fails
-      setSelectedOrder(order);
-    }
-
     setShowShipmentConfirmDialog(true);
   };
 
@@ -1635,20 +1614,9 @@ export const OrdersManagement: React.FC = () => {
       const isSADest = rawCountryForPostCode === 'sa' || rawCountryForPostCode === 'saudiarabia' || rawCountryForPostCode === 'ksa';
       const isOMDest = rawCountryForPostCode === 'om' || rawCountryForPostCode === 'oman' || (!rawCountryForPostCode && region === 'om');
       const defaultPostCode = isSADest ? '34422' : isOMDest ? '111' : '00000';
-      const rawConsigneePostal = (orderSnapshot.isGift && orderSnapshot.giftRecipientPostalCode
+      const consigneePostal = (orderSnapshot.isGift && orderSnapshot.giftRecipientPostalCode
         ? orderSnapshot.giftRecipientPostalCode
         : orderSnapshot.postalCode) || defaultPostCode;
-      // Validate country-specific postal code format; fall back to default if invalid.
-      // SA: 5-digit numeric (e.g. 21955). OM: 3-digit numeric (e.g. 111).
-      const isValidPostCode = (code: string): boolean => {
-        const s = String(code ?? '').replace(/\s/g, '');
-        if (isSADest) return /^\d{5}$/.test(s);
-        if (isOMDest) return /^\d{3}$/.test(s);
-        return s.length > 0;
-      };
-      const consigneePostal = isValidPostCode(rawConsigneePostal)
-        ? rawConsigneePostal
-        : defaultPostCode;
       const consigneeAddress = (orderSnapshot.isGift && orderSnapshot.giftRecipientAddress
         ? orderSnapshot.giftRecipientAddress
         : (orderSnapshot.address || (orderSnapshot as any).addressLine1)) ||
@@ -1697,33 +1665,18 @@ export const OrdersManagement: React.FC = () => {
       }, 0);
 
       // ── Determine domestic vs international ────────────────────────
-      // Fall back to the region's own country when consigneeCountryRaw is missing,
-      // mirroring the normalizeToIso2 fallback used for countryCode below.
-      const effectiveCountryForDomestic = consigneeCountryRaw || (region === 'sa' ? 'SA' : 'OM');
       const isDomestic = shipmentMode === 'DOMESTIC' ||
-        (shipmentMode === 'AUTO' && isDomesticForRegion(region, effectiveCountryForDomestic));
+        (shipmentMode === 'AUTO' && isDomesticForRegion(region, consigneeCountryRaw));
 
       // Aramex domestic minimum: 0.5 KG; international minimum: 0.1 KG
       const minWeight = isDomestic ? 0.5 : 0.1;
       const chargeableWeight = Math.max(minWeight, totalKg > 0 ? Number(totalKg.toFixed(3)) : minWeight);
 
-      // ── Scheduled pickup date (next working day) ──────────────────
-      // Use the user-editable date from the confirm dialog (already skips weekends).
-      const scheduledPickupYmd = shipmentPickupDate || toYmd(skipWeekends(new Date()));
-
       // ── Build and send shipment payload ────────────────────────────
       const { createAramexShipment } = await import('../../services/aramexService');
 
       // Aramex rejects phone numbers with spaces — strip them, keep leading +
-      // Also normalize SA mobile numbers that are missing their leading 0:
-      // "560021299" (9 digits, starts with 5) → "0560021299" (10 digits)
-      const sanitizePhone = (p: string, destCountry?: string): string => {
-        let n = p.replace(/(?!^\+)\s+/g, '').trim() || p.trim();
-        if (destCountry === 'SA' && /^5\d{8}$/.test(n)) {
-          n = '0' + n; // prepend leading 0: 9-digit SA mobile → 10-digit local format
-        }
-        return n;
-      };
+      const sanitizePhone = (p: string) => p.replace(/(?!^\+)\s+/g, '').trim() || p.trim();
 
       const shipmentPayload: Record<string, unknown> = {
         shipper: {
@@ -1750,7 +1703,7 @@ export const OrdersManagement: React.FC = () => {
           contact: {
             personName: consigneeName,
             companyName: consigneeName,
-            phoneNumber1: sanitizePhone(consigneePhone, consigneeCountry),
+            phoneNumber1: sanitizePhone(consigneePhone),
             emailAddress: orderSnapshot.email || undefined,
           },
         },
@@ -1765,7 +1718,6 @@ export const OrdersManagement: React.FC = () => {
           dimensions: { length: 20, width: 20, height: 20, unit: 'CM' },
           reference1: orderSnapshot.orderNumber,
           reference2: orderSnapshot.orderNumber,
-          scheduledPickup: scheduledPickupYmd,
           // Customs declaration for international shipments only
           ...(!isDomestic && {
             customsValueAmount: {
@@ -1791,9 +1743,6 @@ export const OrdersManagement: React.FC = () => {
         shippingMethodId: orderSnapshot.shippingMethod,
         trackingNumber: shipRes.awbNumber,
       });
-
-      // Mark order as Shipped (matches what the server-side path does)
-      await orderService.updateOrderStatus(orderSnapshot.id, { status: 'Shipped' });
 
       setShipmentResult({ ...shipRes, orderNumber: orderSnapshot.orderNumber || pendingShipmentOrderNumRef.current });
       setShipmentError('');
@@ -1828,63 +1777,12 @@ export const OrdersManagement: React.FC = () => {
       }
 
       setShipmentError(errorMessage);
-      setShipmentRawDebug(error?.rawData ?? null);
       setShipmentResult(null);
       // Also surface through toast so the exact messages are always visible
       toast.error(errorMessage.split('\n')[0], {
         description: errorMessage.split('\n').slice(1).join('\n') || undefined,
         duration: 10000,
       });
-    } finally {
-      setShipmentLoading(null);
-      setShowShipmentResultDialog(true);
-    }
-  };
-
-  /**
-   * Alternative: ask the backend to build + send the Aramex payload itself.
-   * Uses /api/aramex/create-shipment-for-order which bypasses all client-side
-   * field-building and was confirmed working for EXP/PPX on 2026-04-06.
-   */
-  const confirmCreateShipmentViaServer = async () => {
-    if (!selectedOrder) return;
-    const orderSnapshot = selectedOrder;
-    setShowShipmentConfirmDialog(false);
-    setShipmentLoading(orderSnapshot.id);
-    try {
-      const { createShipmentForOrder } = await import('../../services/aramexService');
-      const shipRes = await createShipmentForOrder(orderSnapshot.id, shipmentMode, shipmentPickupDate || undefined);
-
-      if (!shipRes?.success || !shipRes?.awbNumber) {
-        const msg = shipRes?.errors?.join('\n') || shipRes?.error || 'Failed to create shipment (server mode)';
-        setShipmentError(msg);
-        setShipmentRawDebug(shipRes ?? null);
-        setShipmentResult(null);
-        return;
-      }
-
-      // Backend (create-shipment-for-order) already calls UpdateShippingInfoAsync and UpdateOrderStatusAsync
-      // internally, so no duplicate updateShipping/updateOrderStatus calls are needed here.
-      setShipmentResult({ ...shipRes, orderNumber: orderSnapshot.orderNumber || pendingShipmentOrderNumRef.current });
-      setShipmentError('');
-      setShipmentRawDebug(null);
-      await loadOrders();
-    } catch (error: any) {
-      console.error('❌ Error creating Aramex shipment (server mode):', error);
-      let errorMessage = error?.message || 'Unknown error';
-      if (error?.errors && typeof error.errors === 'object' && !Array.isArray(error.errors)) {
-        errorMessage = Object.entries(error.errors)
-          .flatMap(([field, msgs]) =>
-            (Array.isArray(msgs) ? msgs : [String(msgs)]).map((m) => `${field}: ${m}`)
-          )
-          .join('\n');
-      } else if (Array.isArray(error?.errors) && error.errors.length > 0) {
-        errorMessage = error.errors.join('\n');
-      }
-      setShipmentError(errorMessage);
-      setShipmentRawDebug(error?.rawData ?? null);
-      setShipmentResult(null);
-      toast.error('Server mode: ' + errorMessage.split('\n')[0], { duration: 10000 });
     } finally {
       setShipmentLoading(null);
       setShowShipmentResultDialog(true);
@@ -1925,161 +1823,14 @@ export const OrdersManagement: React.FC = () => {
   };
 
   const generateInvoicePDF = async (order: Order) => {
-    const invoiceContent = generateInvoiceHTML(order);
+    const invoiceContent = generatePremiumInvoiceHTML(order, isArabic);
     const printWindow = window.open('', '_blank');
     if (printWindow) {
       printWindow.document.write(invoiceContent);
       printWindow.document.close();
       printWindow.focus();
-      setTimeout(() => printWindow.print(), 500);
+      setTimeout(() => printWindow.print(), 600);
     }
-  };
-
-  const generateInvoiceHTML = (order: Order) => {
-    const isRTL = isArabic;
-    return `
-      <!DOCTYPE html>
-      <html dir="${isRTL ? 'rtl' : 'ltr'}" lang="${isRTL ? 'ar' : 'en'}">
-      <head>
-        <meta charset="UTF-8">
-        <title>${isRTL ? 'فاتورة' : 'Invoice'} #${order.orderNumber}</title>
-        <style>
-          @page { size: portrait; margin: 15mm; }
-          @media print {
-            body { margin: 0; }
-            .page-break { page-break-after: always; }
-          }
-          body { font-family: ${isRTL ? '"Arial", "Tahoma"' : 'Arial, sans-serif'}; margin: 20px; max-width: 210mm; }
-          .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 20px; position: relative; min-height: 120px; }
-          .header .logo { position: absolute; ${isRTL ? 'left' : 'right'}: 0; top: 0; width: 100px; height: auto; }
-          .header .company-info { position: absolute; ${isRTL ? 'right' : 'left'}: 0; top: 0; text-align: ${isRTL ? 'right' : 'left'}; font-size: 11px; line-height: 1.4; }
-          .header .company-info p { margin: 2px 0; }
-          .header .company-info strong { font-size: 13px; }
-          .header h1 { margin: 5px 0; font-size: 24px; }
-          .header h2 { margin: 5px 0; font-size: 20px; }
-          .header p { margin: 5px 0; font-size: 13px; }
-          .info { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
-          .info h3 { font-size: 14px; margin-bottom: 8px; }
-          .info p { font-size: 12px; margin: 4px 0; }
-          .items { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 12px; }
-          .items th, .items td { border: 1px solid #ddd; padding: 8px; text-align: ${isRTL ? 'right' : 'left'}; }
-          .items th { background-color: #f5f5f5; font-size: 13px; }
-          .total { text-align: ${isRTL ? 'left' : 'right'}; font-size: 14px; font-weight: bold; }
-          .total p { margin: 5px 0; }
-          .status { display: inline-block; padding: 5px 10px; border-radius: 5px; color: white; }
-          .status.paid { background-color: #10b981; }
-          .status.unpaid { background-color: #f59e0b; }
-          .status.failed { background-color: #ef4444; }
-          .gift-section { margin-bottom: 20px; padding: 15px; border: 2px solid #10b981; border-radius: 8px; background-color: #f0fdf4; }
-          .gift-section h3 { font-size: 14px; margin-bottom: 10px; }
-          .gift-section p { font-size: 12px; margin: 4px 0; }
-          .footer { margin-top: 30px; padding-top: 15px; border-top: 1px solid #ddd; text-align: center; font-size: 12px; }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <img src="/images/logo/logo-dark.png" alt="Spirit Hub Cafe Logo" class="logo" />
-          <div class="company-info">
-            <p><strong>AL JALSA AL RAQIA LLC</strong></p>
-            <p>Al Mouj st, Muscat, OM</p>
-            <p>info@spirithubcafe.com</p>
-            <p>${isRTL ? 'سجل تجاري' : 'CR'}: 1346354</p>
-            <p>+968 91900005</p>
-            <p>+968 72726999</p>
-            <p style="margin-top: 6px; margin-bottom: 18px;">${isRTL ? 'ضريبة' : 'VAT'}: OM110025057X</p>
-          </div>
-          <h1>${isRTL ? 'فاتورة' : 'Invoice'}</h1>
-          <h2>#${order.orderNumber}</h2>
-          <p>${isRTL ? 'تاريخ الطلب' : 'Order Date'}: ${formatOrderDateTime(order.createdAt, 'invoice')}</p>
-        </div>
-        
-        <div class="info">
-          <div>
-            <h3>${isRTL ? 'معلومات العميل' : 'Customer Information'}</h3>
-            <p><strong>${isRTL ? 'الاسم الكامل' : 'Full Name'}:</strong> ${order.fullName}</p>
-            <p><strong>${isRTL ? 'البريد الإلكتروني' : 'Email'}:</strong> ${order.email}</p>
-            <p><strong>${isRTL ? 'الهاتف' : 'Phone'}:</strong> ${order.phone}</p>
-            <p><strong>${isRTL ? 'المدينة' : 'City'}:</strong> ${order.city}</p>
-            <p><strong>${isRTL ? 'البلد' : 'Country'}:</strong> ${order.country}</p>
-            ${order.postalCode ? `<p><strong>${isRTL ? 'الرمز البريدي' : 'Postal Code'}:</strong> ${order.postalCode}</p>` : ''}
-            <p><strong>${isRTL ? 'العنوان الكامل' : 'Full Address'}:</strong><br/>
-               ${order.address}<br/>
-               ${order.city}, ${order.country}${order.postalCode ? ` - ${order.postalCode}` : ''}
-            </p>
-          </div>
-          <div>
-            <h3>${isRTL ? 'معلومات الطلب' : 'Order Information'}</h3>
-            <p><strong>${isRTL ? 'حالة الطلب' : 'Order Status'}:</strong> ${order.status}</p>
-            <p><strong>${isRTL ? 'حالة الدفع' : 'Payment Status'}:</strong> ${order.paymentStatus}</p>
-            <p><strong>${isRTL ? 'طريقة الشحن' : 'Shipping Method'}:</strong> <span style="background-color: #fef9c3; padding: 2px 6px; border-radius: 3px; color: #854d0e; font-weight: 500;">${order.shippingMethod === 1 ? (isRTL ? 'استلام من المتجر' : 'Store Pickup') : order.shippingMethod === 2 ? 'Nool Delivery' : 'Aramex Courier'}</span></p>
-            ${order.trackingNumber ? `<p><strong>${isRTL ? 'رقم التتبع' : 'Tracking Number'}:</strong> ${order.trackingNumber}</p>` : ''}
-          </div>
-        </div>
-
-        ${order.isGift ? `
-        <div class="gift-section">
-          <h3 style="color: #10b981;">${isRTL ? '🎁 معلومات الهدية' : '🎁 Gift Information'}</h3>
-          ${order.giftRecipientName ? `<p><strong>${isRTL ? 'اسم المستلم' : 'Recipient Name'}:</strong> ${order.giftRecipientName}</p>` : ''}
-          ${order.giftRecipientPhone ? `<p><strong>${isRTL ? 'هاتف المستلم' : 'Recipient Phone'}:</strong> ${order.giftRecipientPhone}</p>` : ''}
-          ${order.giftRecipientEmail ? `<p><strong>${isRTL ? 'بريد المستلم' : 'Recipient Email'}:</strong> ${order.giftRecipientEmail}</p>` : ''}
-          ${order.giftRecipientAddress ? `
-            <p><strong>${isRTL ? 'عنوان التسليم' : 'Delivery Address'}:</strong><br/>
-               ${order.giftRecipientAddress}<br/>
-               ${order.giftRecipientCity || order.city}, ${order.giftRecipientCountry || order.country}${order.giftRecipientPostalCode ? ` - ${order.giftRecipientPostalCode}` : ''}
-            </p>
-          ` : ''}
-          ${order.giftMessage ? `
-            <p><strong>${isRTL ? 'رسالة الهدية' : 'Gift Message'}:</strong></p>
-            <div style="padding: 8px; background-color: white; border-radius: 4px; font-style: italic; margin-top: 5px; font-size: 11px;">
-              "${order.giftMessage}"
-            </div>
-          ` : ''}
-        </div>
-        ` : ''}
-
-        <table class="items">
-          <thead>
-            <tr>
-              <th>${isRTL ? 'المنتج' : 'Product'}</th>
-              <th>${isRTL ? 'الكمية' : 'Quantity'}</th>
-              <th>${isRTL ? 'السعر' : 'Price'}</th>
-              <th>${isRTL ? 'المجموع' : 'Total'}</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${order.items?.map(item => `
-              <tr>
-                <td>
-                  ${item.productName || 'Product'}
-                  ${item.variantInfo ? `<br/><small style="background-color: #fef9c3; padding: 2px 6px; border-radius: 3px; color: #854d0e; font-weight: 500;">${item.variantInfo}</small>` : ''}
-                </td>
-                <td>${item.quantity}</td>
-                <td>${item.unitPrice?.toFixed(3) || '0.000'} ${isRTL ? 'ر.ع.' : 'OMR'}</td>
-                <td>${item.totalAmount?.toFixed(3) || '0.000'} ${isRTL ? 'ر.ع.' : 'OMR'}</td>
-              </tr>
-            `).join('') || ''}
-          </tbody>
-        </table>
-
-        <div class="total">
-          <p>${isRTL ? 'الشحن' : 'Shipping'}: ${order.shippingCost?.toFixed(3) || '0.000'} ${isRTL ? 'ر.ع.' : 'OMR'}</p>
-          <p><strong>${isRTL ? 'المجموع الإجمالي' : 'Total Amount'}: ${order.totalAmount.toFixed(3)} ${isRTL ? 'ر.ع.' : 'OMR'}</strong></p>
-        </div>
-
-        ${order.notes ? `
-          <div style="margin-top: 20px;">
-            <h3 style="font-size: 14px; margin-bottom: 8px;">${isRTL ? 'ملاحظات' : 'Notes'}</h3>
-            <p style="font-size: 12px; margin: 0;">${order.notes}</p>
-          </div>
-        ` : ''}
-        
-        <div class="footer">
-          <p style="font-size: 14px; margin-bottom: 5px; font-weight: 500;">${isRTL ? 'شكراً لطلبك!' : 'Thank you for your Order!'}</p>
-          <p style="margin: 0;"><a href="https://spirithubcafe.com" style="color: #333; text-decoration: none;">https://spirithubcafe.com</a></p>
-        </div>
-      </body>
-      </html>
-    `;
   };
 
   const getStatusColor = (status: string) => {
@@ -3971,24 +3722,6 @@ export const OrdersManagement: React.FC = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="shipmentPickupDate" className="text-sm font-semibold">
-                  {isArabic ? 'تاريخ الاستلام:' : 'Scheduled Pickup Date:'}
-                </Label>
-                <input
-                  id="shipmentPickupDate"
-                  type="date"
-                  value={shipmentPickupDate}
-                  onChange={(e) => setShipmentPickupDate(e.target.value)}
-                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                />
-                <p className="text-xs text-muted-foreground">
-                  {isArabic
-                    ? 'التاريخ الذي يُرسل لأرامكس كيوم الاستلام. تجنّب الجمعة والسبت.'
-                    : 'Date sent to Aramex as pickup day. Avoid Friday & Saturday.'}
-                </p>
-              </div>
-
-              <div className="space-y-2">
                 <Label htmlFor="shipmentMode" className="text-sm font-semibold">
                   {isArabic ? 'نوع الشحنة:' : 'Shipment Mode:'}
                 </Label>
@@ -4032,26 +3765,13 @@ export const OrdersManagement: React.FC = () => {
             </div>
           )}
 
-          <div className="flex justify-end gap-2 flex-wrap">
+          <div className="flex justify-end gap-3">
             <Button 
               variant="outline" 
               onClick={() => setShowShipmentConfirmDialog(false)}
               disabled={shipmentLoading !== null}
             >
               {isArabic ? 'إلغاء' : 'Cancel'}
-            </Button>
-            <Button
-              variant="outline"
-              onClick={confirmCreateShipmentViaServer}
-              disabled={shipmentLoading !== null}
-              title={isArabic ? 'يبني الخادم الطلب ويرسله لأرامكس مباشرة' : 'Backend builds & sends Aramex request directly'}
-            >
-              {shipmentLoading !== null ? (
-                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <PackagePlus className="h-4 w-4 mr-2" />
-              )}
-              {isArabic ? 'إنشاء (خادم)' : 'Create via Server'}
             </Button>
             <Button 
               onClick={confirmCreateShipment}
@@ -4240,20 +3960,10 @@ export const OrdersManagement: React.FC = () => {
                 )}
               </>
             ) : (
-              <div className="p-4 bg-red-50 border border-red-200 rounded-lg space-y-2">
+              <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
                 <p className="text-sm text-red-800 whitespace-pre-wrap">
                   {shipmentError}
                 </p>
-                {shipmentRawDebug && (
-                  <details className="mt-2">
-                    <summary className="text-xs text-red-600 cursor-pointer select-none">
-                      {isArabic ? 'تفاصيل الخطأ الخام (للمطور)' : 'Raw error details (developer)'}
-                    </summary>
-                    <pre className="mt-1 text-xs bg-white border border-red-200 rounded p-2 overflow-auto max-h-40 text-red-900 whitespace-pre-wrap break-all">
-                      {JSON.stringify(shipmentRawDebug, null, 2)}
-                    </pre>
-                  </details>
-                )}
               </div>
             )}
           </div>
