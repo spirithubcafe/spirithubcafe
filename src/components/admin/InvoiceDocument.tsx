@@ -29,7 +29,7 @@ function fmtDate(v: string | number | Date | undefined): string {
 }
 
 function shippingLabel(method: number, ar: boolean): string {
-  if (method === 1) return ar ? 'استلام من المتجر – شارع الموج' : 'Store Pickup – Al Mouj St, Branch';
+  if (method === 1) return ar ? 'استلام من المتجر' : 'Store Pickup';
   if (method === 2) return 'Nool Delivery';
   return 'Aramex Courier';
 }

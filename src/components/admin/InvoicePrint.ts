@@ -28,7 +28,7 @@ function fmtDate(v: string | number | Date | undefined): string {
 }
 
 function shippingLabel(method: number, ar: boolean): string {
-  if (method === 1) return ar ? 'استلام من المتجر – شارع الموج' : 'Store Pickup – Al Mouj St, Branch';
+  if (method === 1) return ar ? 'استلام من المتجر' : 'Store Pickup';
   if (method === 2) return 'Nool Delivery';
   return 'Aramex Courier';
 }
@@ -73,15 +73,18 @@ export function generatePremiumInvoiceHTML(order: Order, isArabic = false): stri
            <span style="color:#c8a97e;font-size:9px;">✓</span>${esc(item.variantInfo)}
          </span>`
       : '';
+    const qtyLabel  = isArabic ? 'الكمية' : 'Qty';
+    const priceLabel = isArabic ? 'السعر' : 'Price';
+    const totalLabel = isArabic ? 'المجموع' : 'Total';
     return `
-      <tr style="background:${bg};">
-        <td style="padding:10px 16px;border-bottom:1px solid #e0d8cc;text-align:${al};">
+      <tr class="product-row" style="background:${bg};">
+        <td class="col-product" style="padding:10px 16px;border-bottom:1px solid #e0d8cc;text-align:${al};">
           <div style="font-weight:600;font-size:13px;color:#2c2c2c;">${esc(item.productName || 'Product')}</div>
           ${variant}
         </td>
-        <td style="padding:10px 16px;border-bottom:1px solid #e0d8cc;text-align:center;font-size:13px;color:#555;">${item.quantity}</td>
-        <td style="padding:10px 16px;border-bottom:1px solid #e0d8cc;text-align:${ar};font-size:13px;color:#555;white-space:nowrap;">${(item.unitPrice ?? 0).toFixed(3)} ${currency}</td>
-        <td style="padding:10px 16px;border-bottom:1px solid #e0d8cc;text-align:${ar};font-size:13px;font-weight:600;color:#2c2c2c;white-space:nowrap;">${(item.totalAmount ?? 0).toFixed(3)} ${currency}</td>
+        <td class="col-qty" data-label="${qtyLabel}" style="padding:10px 16px;border-bottom:1px solid #e0d8cc;text-align:center;font-size:13px;color:#555;">${item.quantity}</td>
+        <td class="col-price" data-label="${priceLabel}" style="padding:10px 16px;border-bottom:1px solid #e0d8cc;text-align:${ar};font-size:13px;color:#555;white-space:nowrap;">${(item.unitPrice ?? 0).toFixed(3)} ${currency}</td>
+        <td class="col-total" data-label="${totalLabel}" style="padding:10px 16px;border-bottom:1px solid #e0d8cc;text-align:${ar};font-size:13px;font-weight:600;color:#2c2c2c;white-space:nowrap;">${(item.totalAmount ?? 0).toFixed(3)} ${currency}</td>
       </tr>`;
   }).join('');
 
@@ -144,15 +147,67 @@ export function generatePremiumInvoiceHTML(order: Order, isArabic = false): stri
       font-size: 13px;
       line-height: 1.5;
     }
+    .invoice-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      padding-bottom: 16px;
+      border-bottom: 2px solid #c8a97e;
+      margin-bottom: 18px;
+    }
+    .invoice-header-company { flex: 1; font-size: 12px; color: #555; line-height: 1.7; }
+    .invoice-header-title   { flex: 1; text-align: center; }
+    .invoice-header-logo    { flex: 1; text-align: ${ar}; }
+    .info-cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+    .info-card { background: #f7f6f5; border-radius: 12px; padding: 18px 20px; }
+    .table-wrapper { border-radius: 12px; overflow-x: auto; -webkit-overflow-scrolling: touch; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+    .summary-row { display: flex; justify-content: flex-end; margin-bottom: 16px; }
+    .summary-box { min-width: 260px; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 6px rgba(0,0,0,0.07); }
+    .invoice-footer-bar { background: #f7f6f5; border-radius: 12px; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; gap: 24px; page-break-inside: avoid; }
+    @media (max-width: 560px) {
+      body { padding: 12px 14px; font-size: 12px; }
+      .invoice-header { flex-direction: column; align-items: center; gap: 10px; }
+      .invoice-header-company { text-align: center; font-size: 11px; }
+      .invoice-header-title { order: -1; }
+      .invoice-header-logo { text-align: center; }
+      .info-cards { grid-template-columns: 1fr; }
+      .info-card { padding: 14px 16px; }
+      .summary-row { justify-content: stretch; }
+      .summary-box { min-width: 0; width: 100%; }
+      .invoice-footer-bar { flex-direction: column; align-items: flex-start; gap: 14px; }
+      /* ── product table → card layout ── */
+      .product-table thead { display: none; }
+      .product-row { display: block !important; border-radius: 10px; margin-bottom: 8px; overflow: hidden; border: 1px solid #e0d8cc; }
+      .col-product { display: block !important; padding: 10px 12px !important; border-bottom: 1px solid #e0d8cc !important; background: #ece9e6; }
+      .col-qty, .col-price, .col-total {
+        display: flex !important;
+        justify-content: space-between;
+        align-items: center;
+        padding: 7px 12px !important;
+        font-size: 12px !important;
+        text-align: left !important;
+        border-bottom: 1px solid #f0ebe0 !important;
+      }
+      .col-qty::before   { content: attr(data-label); color: #888; font-weight: 500; }
+      .col-price::before { content: attr(data-label); color: #888; font-weight: 500; }
+      .col-total { background: #fdf8f0; font-weight: 700 !important; }
+      .col-total::before { content: attr(data-label); color: #7a5c3a; font-weight: 600; }
+    }
   </style>
 </head>
 <body>
 
   <!-- ══════════ HEADER ══════════ -->
-  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding-bottom:16px;border-bottom:2px solid #c8a97e;margin-bottom:18px;">
+  <div class="invoice-header">
 
     <!-- Left: company -->
-    <div style="flex:1;font-size:12px;color:#555;line-height:1.7;">
+    <div class="invoice-header-company">
       <p style="font-size:13.5px;font-weight:700;color:#2c2c2c;margin-bottom:3px;">AL JALSA RAQIA LLC</p>
       <p>Al Mouj St, Muscat, OM</p>
       <p><span style="color:#c8a97e;">✉</span> info@spirithubcafe.com</p>
@@ -162,14 +217,14 @@ export function generatePremiumInvoiceHTML(order: Order, isArabic = false): stri
     </div>
 
     <!-- Center: title -->
-    <div style="flex:1;text-align:center;">
+    <div class="invoice-header-title">
       <h1 style="font-size:30px;font-weight:700;color:#2c2c2c;line-height:1.1;">${isArabic ? 'فاتورة' : 'INVOICE'}</h1>
       <p style="font-size:18px;font-weight:700;color:#c8a97e;margin:6px 0 4px;">ORDER ${esc(order.orderNumber)}</p>
       <p style="font-size:12px;color:#777;">${isArabic ? 'تاريخ الطلب' : 'Order Date'}: ${orderDate}</p>
     </div>
 
     <!-- Right: logo + CR/VAT -->
-    <div style="flex:1;text-align:${ar};">
+    <div class="invoice-header-logo">
       <img src="/images/logo/logo-dark.png" alt="SpiritHub Roastery" style="height:64px;width:auto;object-fit:contain;" onerror="this.style.display='none'"/>
       <p style="font-size:11px;color:#777;margin-top:6px;">CR: <strong style="color:#2c2c2c;">1346354</strong></p>
       <p style="font-size:11px;color:#777;">VAT: <strong style="color:#2c2c2c;">OM110025057X</strong></p>
@@ -177,10 +232,10 @@ export function generatePremiumInvoiceHTML(order: Order, isArabic = false): stri
   </div>
 
   <!-- ══════════ INFO CARDS ══════════ -->
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;">
+  <div class="info-cards">
 
     <!-- Customer -->
-    <div style="background:#f7f6f5;border-radius:12px;padding:18px 20px;">
+    <div class="info-card">
       <h3 style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:#2c2c2c;margin-bottom:12px;">${isArabic ? 'معلومات العميل' : 'Customer Information'}</h3>
       ${r(isArabic ? 'الاسم' : 'Full Name', esc(order.fullName))}
       ${r(isArabic ? 'البريد' : 'Email', esc(order.email))}
@@ -192,7 +247,7 @@ export function generatePremiumInvoiceHTML(order: Order, isArabic = false): stri
     </div>
 
     <!-- Order -->
-    <div style="background:#f7f6f5;border-radius:12px;padding:18px 20px;">
+    <div class="info-card">
       <h3 style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:#2c2c2c;margin-bottom:12px;">${isArabic ? 'معلومات الطلب' : 'Order Information'}</h3>
       ${r(isArabic ? 'حالة الطلب' : 'Order Status', esc(order.status))}
       <div style="display:flex;gap:6px;padding:3px 0;font-size:13px;line-height:1.4;">
@@ -211,14 +266,14 @@ export function generatePremiumInvoiceHTML(order: Order, isArabic = false): stri
   ${giftSection}
 
   <!-- ══════════ TABLE ══════════ -->
-  <div style="border-radius:12px;overflow:hidden;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,0.06);">
-    <table style="width:100%;border-collapse:collapse;">
+  <div class="table-wrapper">
+    <table class="product-table" style="width:100%;border-collapse:collapse;">
       <thead>
         <tr style="background:#ece9e6;">
           <th style="padding:11px 16px;text-align:${al};font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:#2c2c2c;">${isArabic ? 'المنتج' : 'Product'}</th>
-          <th style="padding:11px 16px;text-align:center;font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:#2c2c2c;width:90px;">${isArabic ? 'الكمية' : 'Quantity'}</th>
-          <th style="padding:11px 16px;text-align:${ar};font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:#2c2c2c;width:110px;">${isArabic ? 'السعر' : 'Price'}</th>
-          <th style="padding:11px 16px;text-align:${ar};font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:#2c2c2c;width:110px;">${isArabic ? 'المجموع' : 'Total'}</th>
+          <th style="padding:11px 16px;text-align:center;font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:#2c2c2c;width:70px;">${isArabic ? 'الكمية' : 'Qty'}</th>
+          <th style="padding:11px 16px;text-align:${ar};font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:#2c2c2c;width:100px;">${isArabic ? 'السعر' : 'Price'}</th>
+          <th style="padding:11px 16px;text-align:${ar};font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:#2c2c2c;width:100px;">${isArabic ? 'المجموع' : 'Total'}</th>
         </tr>
       </thead>
       <tbody>${itemRows}</tbody>
@@ -226,8 +281,8 @@ export function generatePremiumInvoiceHTML(order: Order, isArabic = false): stri
   </div>
 
   <!-- ══════════ SUMMARY ══════════ -->
-  <div style="display:flex;justify-content:flex-end;margin-bottom:16px;">
-    <div style="min-width:260px;background:white;border-radius:12px;overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,0.07);">
+  <div class="summary-row">
+    <div class="summary-box">
       <div style="padding:10px 20px;display:flex;justify-content:space-between;align-items:center;font-size:13px;border-bottom:1px solid #f0ebe0;">
         <span style="color:#777;">${isArabic ? 'المجموع الفرعي' : 'Subtotal'}:</span>
         <span style="font-weight:600;color:#2c2c2c;">${subtotal.toFixed(3)} ${currency}</span>
@@ -249,7 +304,7 @@ export function generatePremiumInvoiceHTML(order: Order, isArabic = false): stri
 
   <!-- ══════════ FOOTER ══════════ -->
   <hr style="border:none;border-top:1px dashed #d4c4b0;margin:12px 0 14px;"/>
-  <div class="invoice-footer" style="background:#f7f6f5;border-radius:12px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:24px;page-break-inside:avoid;">
+  <div class="invoice-footer invoice-footer-bar">
     <div>
       <p style="font-size:14px;font-weight:700;color:#2c2c2c;margin-bottom:6px;">${isArabic ? 'شكراً لاختيارك سبيريت هب' : 'Thank you for choosing SpiritHub'}</p>
       <p style="font-size:12px;color:#777;margin-bottom:2px;">${isArabic ? 'محمصة قهوة مختصة مميزة في عمان' : 'Premium Specialty Coffee Roasted in Oman'}</p>
