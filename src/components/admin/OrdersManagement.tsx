@@ -1792,6 +1792,9 @@ export const OrdersManagement: React.FC = () => {
         trackingNumber: shipRes.awbNumber,
       });
 
+      // Mark order as Shipped (matches what the server-side path does)
+      await orderService.updateOrderStatus(orderSnapshot.id, { status: 'Shipped' });
+
       setShipmentResult({ ...shipRes, orderNumber: orderSnapshot.orderNumber || pendingShipmentOrderNumRef.current });
       setShipmentError('');
       await loadOrders();
@@ -1860,10 +1863,8 @@ export const OrdersManagement: React.FC = () => {
         return;
       }
 
-      await orderService.updateShipping(orderSnapshot.id, {
-        shippingMethodId: orderSnapshot.shippingMethod,
-        trackingNumber: shipRes.awbNumber,
-      });
+      // Backend (create-shipment-for-order) already calls UpdateShippingInfoAsync and UpdateOrderStatusAsync
+      // internally, so no duplicate updateShipping/updateOrderStatus calls are needed here.
       setShipmentResult({ ...shipRes, orderNumber: orderSnapshot.orderNumber || pendingShipmentOrderNumRef.current });
       setShipmentError('');
       setShipmentRawDebug(null);
