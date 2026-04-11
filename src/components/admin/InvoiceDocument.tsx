@@ -108,7 +108,7 @@ export const InvoiceDocument: React.FC<InvoiceDocumentProps> = ({ order, isArabi
 
           {/* Left: Company info */}
           <div className="flex-1 text-[12px] leading-relaxed text-[#555]">
-            <p className="text-[13.5px] font-bold text-[#2c2c2c] mb-1">AL JALLAAL RAQIA LLC</p>
+            <p className="text-[13.5px] font-bold text-[#2c2c2c] mb-1">AL JALSA RAQIA LLC</p>
             <p>Al Mouj St, Muscat, OM</p>
             <p className="flex items-center gap-1 mt-1">
               <span className="text-[#c8a97e]">✉</span> info@spirithubcafe.com
@@ -128,7 +128,7 @@ export const InvoiceDocument: React.FC<InvoiceDocumentProps> = ({ order, isArabi
           {/* Center: Invoice title */}
           <div className="flex-1 text-center">
             <h1 className="text-[30px] font-bold text-[#2c2c2c] leading-tight">
-              {isArabic ? 'فاتورة' : 'Invoice'}
+              {isArabic ? 'فاتورة' : 'INVOICE'}
             </h1>
             <p className="text-[18px] font-bold text-[#c8a97e] mt-1">ORDER {order.orderNumber}</p>
             <p className="text-[12px] text-[#777] mt-1">

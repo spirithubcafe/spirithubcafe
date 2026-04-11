@@ -125,7 +125,7 @@ export function generatePremiumInvoiceHTML(order: Order, isArabic = false): stri
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>${isArabic ? 'فاتورة' : 'Invoice'} #${esc(order.orderNumber)}</title>
+  <title>${isArabic ? 'فاتورة' : 'INVOICE'} #${esc(order.orderNumber)}</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
     @page { size: A4 portrait; margin: 10mm 12mm; }
@@ -153,7 +153,7 @@ export function generatePremiumInvoiceHTML(order: Order, isArabic = false): stri
 
     <!-- Left: company -->
     <div style="flex:1;font-size:12px;color:#555;line-height:1.7;">
-      <p style="font-size:13.5px;font-weight:700;color:#2c2c2c;margin-bottom:3px;">AL JALLAAL RAQIA LLC</p>
+      <p style="font-size:13.5px;font-weight:700;color:#2c2c2c;margin-bottom:3px;">AL JALSA RAQIA LLC</p>
       <p>Al Mouj St, Muscat, OM</p>
       <p><span style="color:#c8a97e;">✉</span> info@spirithubcafe.com</p>
       <p><span style="color:#c8a97e;">☏</span> +968 9190 0005</p>
@@ -163,7 +163,7 @@ export function generatePremiumInvoiceHTML(order: Order, isArabic = false): stri
 
     <!-- Center: title -->
     <div style="flex:1;text-align:center;">
-      <h1 style="font-size:30px;font-weight:700;color:#2c2c2c;line-height:1.1;">${isArabic ? 'فاتورة' : 'Invoice'}</h1>
+      <h1 style="font-size:30px;font-weight:700;color:#2c2c2c;line-height:1.1;">${isArabic ? 'فاتورة' : 'INVOICE'}</h1>
       <p style="font-size:18px;font-weight:700;color:#c8a97e;margin:6px 0 4px;">ORDER ${esc(order.orderNumber)}</p>
       <p style="font-size:12px;color:#777;">${isArabic ? 'تاريخ الطلب' : 'Order Date'}: ${orderDate}</p>
     </div>
