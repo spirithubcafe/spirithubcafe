@@ -260,7 +260,22 @@ export async function createAramexShipment(shipmentData: any) {
     const response = await apiClient.post('/api/aramex/create-shipment', shipmentData);
     return response.data;
   } catch (error: any) {
-    console.error('Error creating Aramex shipment:', error);
+    // ── Full diagnostic dump ────────────────────────────────────────
+    console.error('❌ [Aramex] create-shipment failed');
+    console.error('  status  :', error?.statusCode);
+    console.error('  message :', error?.message);
+    console.error('  errors  :', JSON.stringify(error?.errors, null, 2));
+    console.error('  rawData :', JSON.stringify(error?.rawData, null, 2));
+    // Surface any nested Aramex notifications / error codes from the backend response
+    const raw = error?.rawData as any;
+    if (raw) {
+      if (raw.details)   console.error('  details       :', raw.details);
+      if (raw.aramexErrors) console.error('  aramexErrors  :', JSON.stringify(raw.aramexErrors, null, 2));
+      if (raw.notifications) console.error('  notifications :', JSON.stringify(raw.notifications, null, 2));
+      if (raw.Notifications) console.error('  Notifications :', JSON.stringify(raw.Notifications, null, 2));
+      if (raw.HasErrors !== undefined) console.error('  HasErrors     :', raw.HasErrors);
+      if (raw.transaction) console.error('  transaction   :', JSON.stringify(raw.transaction, null, 2));
+    }
     throw error;
   }
 }
@@ -283,9 +298,15 @@ export async function trackAramexShipment(awbNumber: string) {
  * @param orderId - The order ID
  * @param shipmentMode - 'AUTO' (default), 'DOMESTIC' (force DOM/OND), or 'INTERNATIONAL' (force EXP/PPX)
  */
-export async function createShipmentForOrder(orderId: number, shipmentMode: 'AUTO' | 'DOMESTIC' | 'INTERNATIONAL' = 'AUTO') {
+export async function createShipmentForOrder(
+  orderId: number,
+  shipmentMode: 'AUTO' | 'DOMESTIC' | 'INTERNATIONAL' = 'AUTO',
+  scheduledPickup?: string, // yyyy-mm-dd; lets caller override Aramex pickup date
+) {
   try {
-    const response = await apiClient.post('/api/aramex/create-shipment-for-order', { orderId, shipmentMode });
+    const body: Record<string, unknown> = { orderId, shipmentMode };
+    if (scheduledPickup) body.scheduledPickup = scheduledPickup;
+    const response = await apiClient.post('/api/aramex/create-shipment-for-order', body);
     
     return response.data;
   } catch (error: any) {

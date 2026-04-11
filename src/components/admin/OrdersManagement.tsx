@@ -156,6 +156,8 @@ export const OrdersManagement: React.FC = () => {
   // Shipment state
   const [shipmentResult, setShipmentResult] = useState<any>(null);
   const [shipmentError, setShipmentError] = useState<string>('');
+  const [shipmentRawDebug, setShipmentRawDebug] = useState<Record<string, unknown> | null>(null);
+  const [shipmentPickupDate, setShipmentPickupDate] = useState<string>(''); // yyyy-mm-dd, editable
   const pendingShipmentOrderNumRef = useRef<string>('');
 
   // Pickup registration state (when shipment exists but pickup missing)
@@ -1575,8 +1577,28 @@ export const OrdersManagement: React.FC = () => {
     }
 
     pendingShipmentOrderNumRef.current = order.orderNumber || '';
-    setSelectedOrder(order);
     setShipmentMode('AUTO'); // Reset to AUTO
+
+    // Compute default pickup date: skip weekends (Fri+Sat in GCC).
+    // Advance past cutoff hour (17:00) → next working day.
+    let defaultPickup = skipWeekends(new Date());
+    if (new Date().getHours() >= 17) {
+      const next = new Date(defaultPickup);
+      next.setDate(next.getDate() + 1);
+      defaultPickup = skipWeekends(next);
+    }
+    setShipmentPickupDate(toYmd(defaultPickup));
+
+    // Always fetch the full order so city/country/address are populated (list endpoint may omit them)
+    try {
+      const response = await orderService.getOrderById(order.id);
+      const fullOrder = mergePickupFromCache(response.data!) as Order;
+      setSelectedOrder(fullOrder);
+    } catch {
+      // Fall back to the list-row object if the fetch fails
+      setSelectedOrder(order);
+    }
+
     setShowShipmentConfirmDialog(true);
   };
 
@@ -1613,9 +1635,20 @@ export const OrdersManagement: React.FC = () => {
       const isSADest = rawCountryForPostCode === 'sa' || rawCountryForPostCode === 'saudiarabia' || rawCountryForPostCode === 'ksa';
       const isOMDest = rawCountryForPostCode === 'om' || rawCountryForPostCode === 'oman' || (!rawCountryForPostCode && region === 'om');
       const defaultPostCode = isSADest ? '34422' : isOMDest ? '111' : '00000';
-      const consigneePostal = (orderSnapshot.isGift && orderSnapshot.giftRecipientPostalCode
+      const rawConsigneePostal = (orderSnapshot.isGift && orderSnapshot.giftRecipientPostalCode
         ? orderSnapshot.giftRecipientPostalCode
         : orderSnapshot.postalCode) || defaultPostCode;
+      // Validate country-specific postal code format; fall back to default if invalid.
+      // SA: 5-digit numeric (e.g. 21955). OM: 3-digit numeric (e.g. 111).
+      const isValidPostCode = (code: string): boolean => {
+        const s = String(code ?? '').replace(/\s/g, '');
+        if (isSADest) return /^\d{5}$/.test(s);
+        if (isOMDest) return /^\d{3}$/.test(s);
+        return s.length > 0;
+      };
+      const consigneePostal = isValidPostCode(rawConsigneePostal)
+        ? rawConsigneePostal
+        : defaultPostCode;
       const consigneeAddress = (orderSnapshot.isGift && orderSnapshot.giftRecipientAddress
         ? orderSnapshot.giftRecipientAddress
         : (orderSnapshot.address || (orderSnapshot as any).addressLine1)) ||
@@ -1664,18 +1697,33 @@ export const OrdersManagement: React.FC = () => {
       }, 0);
 
       // ── Determine domestic vs international ────────────────────────
+      // Fall back to the region's own country when consigneeCountryRaw is missing,
+      // mirroring the normalizeToIso2 fallback used for countryCode below.
+      const effectiveCountryForDomestic = consigneeCountryRaw || (region === 'sa' ? 'SA' : 'OM');
       const isDomestic = shipmentMode === 'DOMESTIC' ||
-        (shipmentMode === 'AUTO' && isDomesticForRegion(region, consigneeCountryRaw));
+        (shipmentMode === 'AUTO' && isDomesticForRegion(region, effectiveCountryForDomestic));
 
       // Aramex domestic minimum: 0.5 KG; international minimum: 0.1 KG
       const minWeight = isDomestic ? 0.5 : 0.1;
       const chargeableWeight = Math.max(minWeight, totalKg > 0 ? Number(totalKg.toFixed(3)) : minWeight);
 
+      // ── Scheduled pickup date (next working day) ──────────────────
+      // Use the user-editable date from the confirm dialog (already skips weekends).
+      const scheduledPickupYmd = shipmentPickupDate || toYmd(skipWeekends(new Date()));
+
       // ── Build and send shipment payload ────────────────────────────
       const { createAramexShipment } = await import('../../services/aramexService');
 
       // Aramex rejects phone numbers with spaces — strip them, keep leading +
-      const sanitizePhone = (p: string) => p.replace(/(?!^\+)\s+/g, '').trim() || p.trim();
+      // Also normalize SA mobile numbers that are missing their leading 0:
+      // "560021299" (9 digits, starts with 5) → "0560021299" (10 digits)
+      const sanitizePhone = (p: string, destCountry?: string): string => {
+        let n = p.replace(/(?!^\+)\s+/g, '').trim() || p.trim();
+        if (destCountry === 'SA' && /^5\d{8}$/.test(n)) {
+          n = '0' + n; // prepend leading 0: 9-digit SA mobile → 10-digit local format
+        }
+        return n;
+      };
 
       const shipmentPayload: Record<string, unknown> = {
         shipper: {
@@ -1702,7 +1750,7 @@ export const OrdersManagement: React.FC = () => {
           contact: {
             personName: consigneeName,
             companyName: consigneeName,
-            phoneNumber1: sanitizePhone(consigneePhone),
+            phoneNumber1: sanitizePhone(consigneePhone, consigneeCountry),
             emailAddress: orderSnapshot.email || undefined,
           },
         },
@@ -1717,6 +1765,7 @@ export const OrdersManagement: React.FC = () => {
           dimensions: { length: 20, width: 20, height: 20, unit: 'CM' },
           reference1: orderSnapshot.orderNumber,
           reference2: orderSnapshot.orderNumber,
+          scheduledPickup: scheduledPickupYmd,
           // Customs declaration for international shipments only
           ...(!isDomestic && {
             customsValueAmount: {
@@ -1776,12 +1825,65 @@ export const OrdersManagement: React.FC = () => {
       }
 
       setShipmentError(errorMessage);
+      setShipmentRawDebug(error?.rawData ?? null);
       setShipmentResult(null);
       // Also surface through toast so the exact messages are always visible
       toast.error(errorMessage.split('\n')[0], {
         description: errorMessage.split('\n').slice(1).join('\n') || undefined,
         duration: 10000,
       });
+    } finally {
+      setShipmentLoading(null);
+      setShowShipmentResultDialog(true);
+    }
+  };
+
+  /**
+   * Alternative: ask the backend to build + send the Aramex payload itself.
+   * Uses /api/aramex/create-shipment-for-order which bypasses all client-side
+   * field-building and was confirmed working for EXP/PPX on 2026-04-06.
+   */
+  const confirmCreateShipmentViaServer = async () => {
+    if (!selectedOrder) return;
+    const orderSnapshot = selectedOrder;
+    setShowShipmentConfirmDialog(false);
+    setShipmentLoading(orderSnapshot.id);
+    try {
+      const { createShipmentForOrder } = await import('../../services/aramexService');
+      const shipRes = await createShipmentForOrder(orderSnapshot.id, shipmentMode, shipmentPickupDate || undefined);
+
+      if (!shipRes?.success || !shipRes?.awbNumber) {
+        const msg = shipRes?.errors?.join('\n') || shipRes?.error || 'Failed to create shipment (server mode)';
+        setShipmentError(msg);
+        setShipmentRawDebug(shipRes ?? null);
+        setShipmentResult(null);
+        return;
+      }
+
+      await orderService.updateShipping(orderSnapshot.id, {
+        shippingMethodId: orderSnapshot.shippingMethod,
+        trackingNumber: shipRes.awbNumber,
+      });
+      setShipmentResult({ ...shipRes, orderNumber: orderSnapshot.orderNumber || pendingShipmentOrderNumRef.current });
+      setShipmentError('');
+      setShipmentRawDebug(null);
+      await loadOrders();
+    } catch (error: any) {
+      console.error('❌ Error creating Aramex shipment (server mode):', error);
+      let errorMessage = error?.message || 'Unknown error';
+      if (error?.errors && typeof error.errors === 'object' && !Array.isArray(error.errors)) {
+        errorMessage = Object.entries(error.errors)
+          .flatMap(([field, msgs]) =>
+            (Array.isArray(msgs) ? msgs : [String(msgs)]).map((m) => `${field}: ${m}`)
+          )
+          .join('\n');
+      } else if (Array.isArray(error?.errors) && error.errors.length > 0) {
+        errorMessage = error.errors.join('\n');
+      }
+      setShipmentError(errorMessage);
+      setShipmentRawDebug(error?.rawData ?? null);
+      setShipmentResult(null);
+      toast.error('Server mode: ' + errorMessage.split('\n')[0], { duration: 10000 });
     } finally {
       setShipmentLoading(null);
       setShowShipmentResultDialog(true);
@@ -3868,6 +3970,24 @@ export const OrdersManagement: React.FC = () => {
               </div>
 
               <div className="space-y-2">
+                <Label htmlFor="shipmentPickupDate" className="text-sm font-semibold">
+                  {isArabic ? 'تاريخ الاستلام:' : 'Scheduled Pickup Date:'}
+                </Label>
+                <input
+                  id="shipmentPickupDate"
+                  type="date"
+                  value={shipmentPickupDate}
+                  onChange={(e) => setShipmentPickupDate(e.target.value)}
+                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                />
+                <p className="text-xs text-muted-foreground">
+                  {isArabic
+                    ? 'التاريخ الذي يُرسل لأرامكس كيوم الاستلام. تجنّب الجمعة والسبت.'
+                    : 'Date sent to Aramex as pickup day. Avoid Friday & Saturday.'}
+                </p>
+              </div>
+
+              <div className="space-y-2">
                 <Label htmlFor="shipmentMode" className="text-sm font-semibold">
                   {isArabic ? 'نوع الشحنة:' : 'Shipment Mode:'}
                 </Label>
@@ -3911,13 +4031,26 @@ export const OrdersManagement: React.FC = () => {
             </div>
           )}
 
-          <div className="flex justify-end gap-3">
+          <div className="flex justify-end gap-2 flex-wrap">
             <Button 
               variant="outline" 
               onClick={() => setShowShipmentConfirmDialog(false)}
               disabled={shipmentLoading !== null}
             >
               {isArabic ? 'إلغاء' : 'Cancel'}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={confirmCreateShipmentViaServer}
+              disabled={shipmentLoading !== null}
+              title={isArabic ? 'يبني الخادم الطلب ويرسله لأرامكس مباشرة' : 'Backend builds & sends Aramex request directly'}
+            >
+              {shipmentLoading !== null ? (
+                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <PackagePlus className="h-4 w-4 mr-2" />
+              )}
+              {isArabic ? 'إنشاء (خادم)' : 'Create via Server'}
             </Button>
             <Button 
               onClick={confirmCreateShipment}
@@ -4106,10 +4239,20 @@ export const OrdersManagement: React.FC = () => {
                 )}
               </>
             ) : (
-              <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+              <div className="p-4 bg-red-50 border border-red-200 rounded-lg space-y-2">
                 <p className="text-sm text-red-800 whitespace-pre-wrap">
                   {shipmentError}
                 </p>
+                {shipmentRawDebug && (
+                  <details className="mt-2">
+                    <summary className="text-xs text-red-600 cursor-pointer select-none">
+                      {isArabic ? 'تفاصيل الخطأ الخام (للمطور)' : 'Raw error details (developer)'}
+                    </summary>
+                    <pre className="mt-1 text-xs bg-white border border-red-200 rounded p-2 overflow-auto max-h-40 text-red-900 whitespace-pre-wrap break-all">
+                      {JSON.stringify(shipmentRawDebug, null, 2)}
+                    </pre>
+                  </details>
+                )}
               </div>
             )}
           </div>

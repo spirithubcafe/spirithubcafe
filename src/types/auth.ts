@@ -79,6 +79,8 @@ export interface ApiError {
   message: string;
   statusCode: number;
   errors?: { [key: string]: string[] };
+  /** Full raw response body from the backend — preserved for debugging */
+  rawData?: unknown;
 }
 
 // Registration Request (if needed)
