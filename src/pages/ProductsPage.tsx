@@ -1,17 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Coffee, Filter, Search } from 'lucide-react';
+import { Check, ChevronDown, Coffee, Filter, Search } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useApp } from '../hooks/useApp';
 import { ProductCard } from '../components/products/ProductCard';
 import { PageHeader } from '../components/layout/PageHeader';
-import { useSearchParams, useNavigate } from 'react-router-dom';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '../components/ui/select';
+import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
+import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
 import { Seo } from '../components/seo/Seo';
 import { siteMetadata } from '../config/siteMetadata';
 import { AnnouncementBar } from '../components/layout/AnnouncementBar';
@@ -27,9 +21,14 @@ export const ProductsPage = () => {
   const { products, allCategories, loading, language } = useApp();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  // Preserve the region prefix (/om or /sa) so navigate() stays on the same
+  // route instance and never causes a ProductsPage remount.
+  const regionPrefix = pathname.startsWith('/sa') ? '/sa' : '/om';
   const categoryFromUrl = searchParams.get('category');
   const [selectedCategory, setSelectedCategory] = useState<string>(categoryFromUrl || 'all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [categoryOpen, setCategoryOpen] = useState(false);
 
   const isArabic = i18n.language === 'ar';
 
@@ -47,10 +46,11 @@ export const ProductsPage = () => {
   const handleCategoryChange = (categoryId: string) => {
     setSelectedCategory(categoryId);
     if (categoryId === 'all') {
-      navigate('/products', { replace: true });
+      navigate(`${regionPrefix}/products`, { replace: true });
     } else {
-      navigate(`/products?category=${categoryId}`, { replace: true });
+      navigate(`${regionPrefix}/products?category=${categoryId}`, { replace: true });
     }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   // Scroll to top on page load or category change
@@ -65,8 +65,8 @@ export const ProductsPage = () => {
     } else {
       setSelectedCategory('all');
     }
-    // Scroll to top when category changes
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // NOTE: no scroll-to-top here — that would scroll the sticky filter bar
+    // off-screen whenever a category is selected.
   }, [categoryFromUrl]);
 
   // Normalize selected category to a known category ID when allCategories change
@@ -284,7 +284,7 @@ export const ProductsPage = () => {
       <div className="relative">
         {/* Filters Section - Compact & Professional */}
         <div 
-          className="sticky-filter-bar bg-gradient-to-r from-stone-900 via-neutral-900 to-stone-900 shadow-xl border-b border-stone-700/50 backdrop-blur-lg flex items-center"
+          className="sticky-filter-bar bg-gradient-to-r from-stone-900 via-neutral-900 to-stone-900 shadow-xl border-b border-stone-700/50 flex items-center"
         >
           <div className="container mx-auto px-4 h-full flex items-center">
             <div className="max-w-6xl mx-auto w-full">
@@ -305,25 +305,45 @@ export const ProductsPage = () => {
                 />
               </div>
 
-              {/* Category Select - Shadcn UI */}
+              {/* Category Dropdown - Popover-based, no scroll lock */}
               <div className="relative flex items-center gap-2 shrink-0">
                 <Filter className="w-4 h-4 text-stone-400 shrink-0" />
-                <Select value={selectedCategory} onValueChange={handleCategoryChange}>
-                  <SelectTrigger className="w-36 sm:w-48 h-9 bg-stone-800/80 border-0 text-stone-100 text-sm font-semibold shadow-sm hover:bg-stone-700/80 backdrop-blur-sm">
-                    <SelectValue placeholder={isArabic ? 'اختر الفئة' : 'Select category'} />
-                  </SelectTrigger>
-                  <SelectContent className="bg-stone-800 border-stone-700 text-white z-50">
+                <Popover open={categoryOpen} onOpenChange={setCategoryOpen}>
+                  <PopoverTrigger asChild>
+                    <button
+                      className={`flex items-center gap-2 h-9 w-auto min-w-[100px] max-w-[160px] xs:max-w-[180px] sm:max-w-[240px] rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-100 text-sm font-semibold px-3 border-0 shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-stone-600 ${isArabic ? 'flex-row-reverse' : ''}`}
+                      aria-label={isArabic ? 'فئة المنتج' : 'Product category'}
+                    >
+                      <span className={`flex-1 truncate ${isArabic ? 'text-right' : 'text-left'}`}>
+                        {categoryOptions.find(c => c.id === selectedCategory)?.name ?? (isArabic ? 'جميع المنتجات' : 'All Products')}
+                      </span>
+                      <ChevronDown className={`w-4 h-4 text-stone-400 shrink-0 transition-transform duration-200 ${categoryOpen ? 'rotate-180' : ''}`} />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    align={isArabic ? 'end' : 'start'}
+                    sideOffset={6}
+                    onCloseAutoFocus={(e) => e.preventDefault()}
+                    className="w-64 p-1 bg-stone-900 border border-stone-700 shadow-xl rounded-xl z-[200]"
+                  >
                     {categoryOptions.map((category) => (
-                      <SelectItem 
-                        key={category.id} 
-                        value={category.id}
-                        className="text-base font-medium text-white hover:bg-stone-600/50 focus:bg-stone-600/60 data-[state=checked]:bg-stone-600 cursor-pointer py-2.5 focus:outline-none focus-visible:outline-none focus-visible:ring-0"
+                      <button
+                        key={category.id}
+                        onPointerDown={(e) => { e.preventDefault(); handleCategoryChange(category.id); setCategoryOpen(false); }}
+                        className={`flex items-center gap-2 w-full rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+                          selectedCategory === category.id
+                            ? 'bg-stone-700 text-white'
+                            : 'text-stone-300 hover:bg-stone-800 hover:text-white'
+                        } ${isArabic ? 'flex-row-reverse' : ''}`}
                       >
-                        {category.name}
-                      </SelectItem>
+                        <span className={`flex-1 truncate ${isArabic ? 'text-right' : 'text-left'}`}>{category.name}</span>
+                        {selectedCategory === category.id && (
+                          <Check className="w-4 h-4 text-amber-400 shrink-0" />
+                        )}
+                      </button>
                     ))}
-                  </SelectContent>
-                </Select>
+                  </PopoverContent>
+                </Popover>
               </div>
               </div>
             </div>
