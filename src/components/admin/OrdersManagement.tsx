@@ -41,7 +41,8 @@ import {
   Download,
   ChevronLeft,
   ChevronRight,
-  AlertTriangle
+  AlertTriangle,
+  Server
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { createAramexPickup, emailService, orderService, productVariantService } from '../../services';
@@ -1575,10 +1576,61 @@ export const OrdersManagement: React.FC = () => {
       return;
     }
 
-    pendingShipmentOrderNumRef.current = order.orderNumber || '';
-    setSelectedOrder(order);
+    // Fetch full order so we have complete address/country data (list endpoint omits some fields)
+    let fullOrder = order;
+    try {
+      const resp = await orderService.getOrderById(order.id);
+      if (resp?.data) fullOrder = resp.data as Order;
+    } catch {
+      // continue with the lightweight list object
+    }
+
+    pendingShipmentOrderNumRef.current = fullOrder.orderNumber || '';
+    setSelectedOrder(fullOrder);
     setShipmentMode('AUTO'); // Reset to AUTO
     setShowShipmentConfirmDialog(true);
+  };
+
+  const confirmCreateShipmentViaServer = async () => {
+    if (!selectedOrder) return;
+    const orderSnapshot = selectedOrder;
+
+    setShowShipmentConfirmDialog(false);
+    setShipmentLoading(orderSnapshot.id);
+
+    try {
+      const { createShipmentForOrder } = await import('../../services/aramexService');
+      const today = new Date();
+      const pickup = new Date(today);
+      while (pickup.getDay() === 5 || pickup.getDay() === 6) pickup.setDate(pickup.getDate() + 1);
+      const scheduledPickup = toYmd(pickup);
+
+      const result = await createShipmentForOrder(orderSnapshot.id, shipmentMode, scheduledPickup);
+
+      if (!result?.success || !result?.trackingNumber) {
+        const msg = result?.errors?.join('\n') || result?.error || 'Server failed to create shipment';
+        setShipmentError(msg);
+        setShipmentResult(null);
+        return;
+      }
+
+      setShipmentResult({ ...result, awbNumber: result.trackingNumber, orderNumber: orderSnapshot.orderNumber });
+      setShipmentError('');
+      await loadOrders();
+    } catch (error: any) {
+      console.error('❌ Error creating shipment via server:', error);
+      const msgs: string[] = Array.isArray(error?.errors)
+        ? error.errors
+        : error?.message
+          ? [error.message]
+          : ['Unknown error'];
+      setShipmentError(msgs.join('\n'));
+      setShipmentResult(null);
+      toast.error(msgs[0], { description: msgs.slice(1).join('\n') || undefined, duration: 10000 });
+    } finally {
+      setShipmentLoading(null);
+      setShowShipmentResultDialog(true);
+    }
   };
 
   const confirmCreateShipment = async () => {
@@ -1665,8 +1717,9 @@ export const OrdersManagement: React.FC = () => {
       }, 0);
 
       // ── Determine domestic vs international ────────────────────────
+      // Use the normalized ISO2 country (with region fallback) — consigneeCountryRaw may be null/empty
       const isDomestic = shipmentMode === 'DOMESTIC' ||
-        (shipmentMode === 'AUTO' && isDomesticForRegion(region, consigneeCountryRaw));
+        (shipmentMode === 'AUTO' && isDomesticForRegion(region, consigneeCountry));
 
       // Aramex domestic minimum: 0.5 KG; international minimum: 0.1 KG
       const minWeight = isDomestic ? 0.5 : 0.1;
@@ -1675,8 +1728,14 @@ export const OrdersManagement: React.FC = () => {
       // ── Build and send shipment payload ────────────────────────────
       const { createAramexShipment } = await import('../../services/aramexService');
 
-      // Aramex rejects phone numbers with spaces — strip them, keep leading +
-      const sanitizePhone = (p: string) => p.replace(/(?!^\+)\s+/g, '').trim() || p.trim();
+      // Aramex rejects phone numbers with spaces or without leading 0 for 9-digit GCC mobiles
+      const sanitizePhone = (p: string): string => {
+        let phone = p.replace(/(?!^\+)\s+/g, '').trim();
+        if (!phone) return p.trim();
+        // 9-digit GCC mobile starting with 5 (SA/UAE/etc.) is missing leading 0 — add it
+        if (/^5\d{8}$/.test(phone)) phone = '0' + phone;
+        return phone;
+      };
 
       const shipmentPayload: Record<string, unknown> = {
         shipper: {
@@ -3772,6 +3831,19 @@ export const OrdersManagement: React.FC = () => {
               disabled={shipmentLoading !== null}
             >
               {isArabic ? 'إلغاء' : 'Cancel'}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={confirmCreateShipmentViaServer}
+              disabled={shipmentLoading !== null}
+              className="border-blue-600 text-blue-600 hover:bg-blue-50"
+            >
+              {shipmentLoading !== null ? (
+                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Server className="h-4 w-4 mr-2" />
+              )}
+              {isArabic ? 'إنشاء من الخادم' : 'Create from Server'}
             </Button>
             <Button 
               onClick={confirmCreateShipment}
