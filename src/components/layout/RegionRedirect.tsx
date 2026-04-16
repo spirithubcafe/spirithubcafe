@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useRegion } from '../../hooks/useRegion';
 import { safeStorage } from '../../lib/safeStorage';
@@ -14,12 +14,14 @@ import { X } from 'lucide-react';
 export const RegionRedirect: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { currentRegion, setRegion } = useRegion();
+  const { setRegion } = useRegion();
   const { language } = useApp();
 
   const isRTL = language === 'ar';
   const [showBanner, setShowBanner] = useState(false);
   const [selectedRegion, setSelectedRegion] = useState<RegionCode>('om');
+  // Guard so the one-time first-visit logic only runs once even if the effect re-fires.
+  const initialCheckDone = useRef(false);
 
   const pickerStrings = useMemo(
     () => ({
@@ -72,46 +74,71 @@ export const RegionRedirect: React.FC = () => {
   useEffect(() => {
     const path = location.pathname;
 
+    // Saudi Arabia is served from a separate domain — redirect immediately.
     if (path.startsWith('/sa')) {
-      const suffix = path.substring(3);
-      navigate(`/om${suffix}${location.search}`, { replace: true });
+      window.location.href = 'https://spirithub.sa/';
       return;
     }
-    
+
     // Skip admin and wholesale routes
     if (path.includes('/admin') || path.startsWith('/wholesale')) {
       return;
     }
-    
+
     // Check if path already has a region prefix
-    const hasRegionPrefix = path.startsWith('/om/') || path.startsWith('/om') || 
-                            path.startsWith('/sa/') || path.startsWith('/sa');
-    
-    // If no region prefix, redirect to current region
-    if (!hasRegionPrefix) {
-      safeStorage.setItem('spirithub-region', 'om');
-      setRegion('om');
+    const hasRegionPrefix = path.startsWith('/om/') || path === '/om' || path.startsWith('/om/') ||
+                            path.startsWith('/sa/') || path === '/sa';
 
-      if (REGION_SELECTION_ENABLED && typeof window !== 'undefined' && 'geolocation' in navigator) {
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            const inferred = regionFromCoordinates(pos.coords.latitude, pos.coords.longitude);
-            if (inferred) setSelectedRegion(inferred);
-          },
-          () => {
-            // Permission denied / unavailable: keep default.
-          },
-          { enableHighAccuracy: false, timeout: 4000, maximumAge: 60_000 }
-        );
-      }
+    if (hasRegionPrefix) {
+      // Already on a region-prefixed URL — nothing to do here.
+      return;
+    }
 
+    // Path has no region prefix. Only run the first-visit logic once.
+    if (initialCheckDone.current) return;
+    initialCheckDone.current = true;
+
+    const storedRegion = safeStorage.getItem('spirithub-region') as RegionCode | null;
+
+    if (storedRegion === 'sa') {
+      // Returning Saudi visitor — send straight to the SA domain.
+      window.location.href = 'https://spirithub.sa/';
+      return;
+    }
+
+    if (storedRegion === 'om') {
+      // Returning Oman visitor — navigate silently, no banner.
       const targetPath = path === '/' ? '/om' : `/om${path}`;
       navigate(`${targetPath}${location.search}`, { replace: true });
       return;
-    } else {
-      setShowBanner(false);
     }
-  }, [location.pathname, location.search, currentRegion.code, navigate]);
+
+    // ── First-time visitor (no stored preference) ──────────────────────────
+    // Navigate to /om as the default immediately.
+    const targetPath = path === '/' ? '/om' : `/om${path}`;
+    navigate(`${targetPath}${location.search}`, { replace: true });
+
+    if (!REGION_SELECTION_ENABLED) return;
+
+    // Show the banner right away so the user can pick their region.
+    // Default dropdown to 'om'; geo-detection will update it if possible.
+    setShowBanner(true);
+
+    if (typeof window !== 'undefined' && 'geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const inferred = regionFromCoordinates(pos.coords.latitude, pos.coords.longitude);
+          // Pre-select the detected region in the dropdown.
+          if (inferred) setSelectedRegion(inferred);
+        },
+        () => {
+          // Permission denied / unavailable — keep default 'om' selected.
+        },
+        { enableHighAccuracy: false, timeout: 4000, maximumAge: 60_000 }
+      );
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (!REGION_SELECTION_ENABLED) return null;
   if (!showBanner) return null;

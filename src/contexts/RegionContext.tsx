@@ -53,27 +53,37 @@ const detectRegionFromPath = (pathname?: string): RegionCode | null => {
 export const RegionProvider: React.FC<RegionProviderProps> = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const FORCED_REGION: RegionCode = 'om';
 
   const [currentRegion, setCurrentRegion] = useState<RegionConfig>(() => {
-    safeStorage.setItem('spirithub-region', FORCED_REGION);
-    return REGIONS[FORCED_REGION];
+    // Detect from URL first, then localStorage, then default to 'om'
+    const fromPath = detectRegionFromPath();
+    if (fromPath) return REGIONS[fromPath];
+    const stored = safeStorage.getItem('spirithub-region');
+    if (stored === 'om' || stored === 'sa') return REGIONS[stored];
+    return REGIONS['om'];
   });
 
   // Set region and update URL
-  const setRegion = useCallback((_regionCode: RegionCode) => {
-    const effectiveRegion: RegionCode = FORCED_REGION;
-    const newRegion = REGIONS[effectiveRegion];
+  const setRegion = useCallback((regionCode: RegionCode) => {
+    if (regionCode === 'sa') {
+      // Saudi Arabia is served from a separate domain.
+      if (typeof window !== 'undefined') {
+        window.location.href = 'https://spirithub.sa/';
+      }
+      return;
+    }
+
+    const newRegion = REGIONS[regionCode];
     setCurrentRegion(newRegion);
     
     // Save to localStorage
-    safeStorage.setItem('spirithub-region', effectiveRegion);
+    safeStorage.setItem('spirithub-region', regionCode);
     
     // Update URL if needed
     const currentPath = location.pathname;
     const currentRegionPrefix = detectRegionFromPath(currentPath);
     
-    if (currentRegionPrefix !== effectiveRegion) {
+    if (currentRegionPrefix !== regionCode) {
       let newPath = currentPath;
       
       // Remove existing region prefix
@@ -85,30 +95,25 @@ export const RegionProvider: React.FC<RegionProviderProps> = ({ children }) => {
       
       // Add new region prefix
       const suffix = newPath === '/' ? '' : newPath;
-      const targetPath = `/${effectiveRegion}${suffix}`;
+      const targetPath = `/${regionCode}${suffix}`;
 
       // Navigate via React Router so the whole app reacts to the change.
       navigate(`${targetPath}${location.search}${location.hash}`, { replace: true });
     }
-  }, [FORCED_REGION, location.hash, location.pathname, location.search, navigate]);
+  }, [location.hash, location.pathname, location.search, navigate]);
 
   // Keep region state in sync with the current URL.
   // This is crucial because React Router navigation does not trigger a native
   // `popstate` event for programmatic navigations.
   useEffect(() => {
     const path = location.pathname;
-    safeStorage.setItem('spirithub-region', FORCED_REGION);
+    const regionFromPath = detectRegionFromPath(path);
 
-    if (currentRegion.code !== FORCED_REGION) {
-      setCurrentRegion(REGIONS[FORCED_REGION]);
+    if (regionFromPath && currentRegion.code !== regionFromPath) {
+      setCurrentRegion(REGIONS[regionFromPath]);
+      safeStorage.setItem('spirithub-region', regionFromPath);
     }
-
-    if (path.startsWith('/sa')) {
-      const suffix = path.substring(3);
-      const targetPath = `/om${suffix}`;
-      navigate(`${targetPath}${location.search}${location.hash}`, { replace: true });
-    }
-  }, [FORCED_REGION, currentRegion.code, location.hash, location.pathname, location.search, navigate]);
+  }, [currentRegion.code, location.pathname]);
 
   // Also react to direct storage writes (same-tab + other tabs) to keep the UI fresh.
   // This helps when some code updates localStorage without calling `setRegion`.
@@ -116,11 +121,8 @@ export const RegionProvider: React.FC<RegionProviderProps> = ({ children }) => {
     if (typeof window === 'undefined') return;
 
     const applyRegion = (next: unknown) => {
-      if (next !== FORCED_REGION) {
-        safeStorage.setItem('spirithub-region', FORCED_REGION);
-      }
-      if (currentRegion.code !== FORCED_REGION) {
-        setCurrentRegion(REGIONS[FORCED_REGION]);
+      if ((next === 'om' || next === 'sa') && next !== currentRegion.code) {
+        setCurrentRegion(REGIONS[next]);
       }
     };
 
@@ -141,7 +143,7 @@ export const RegionProvider: React.FC<RegionProviderProps> = ({ children }) => {
       window.removeEventListener('storage', handleNativeStorage);
       window.removeEventListener('safeStorage:change', handleSafeStorageChange as EventListener);
     };
-  }, [FORCED_REGION, currentRegion.code]);
+  }, [currentRegion.code]);
 
   const value = {
     currentRegion,
