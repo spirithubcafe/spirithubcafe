@@ -60,6 +60,11 @@
   transform-origin: center;
 }
 
+.background-image--nitro {
+  transform: scale(1);
+  object-position: center;
+}
+
 .background-video {
   width: 100%;
   height: 100%;
@@ -85,6 +90,17 @@
   );
   -webkit-backdrop-filter: blur(1px);
   backdrop-filter: blur(1px);
+}
+
+.background-overlay--nitro {
+  background: linear-gradient(
+    135deg,
+    rgba(0, 0, 0, 0.12) 0%,
+    rgba(0, 0, 0, 0.08) 50%,
+    rgba(0, 0, 0, 0.14) 100%
+  );
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 
 /* Main Content Container */

@@ -7,6 +7,8 @@ import './ProfessionalHeroSlider.css';
 interface SlideData {
   id: string;
   image: string;
+  imageClassName?: string;
+  overlayClassName?: string;
   title: string;
   subtitle: string | string[];
   description: string;
@@ -210,34 +212,6 @@ export const ProfessionalHeroSlider: React.FC = () => {
       cta: language === 'ar' ? 'تسوق الآن' : 'SHOP NOW'
     },
     {
-      id: '5',
-      image: '/images/slides/rwanda-farm-spirithub-coffee.webp',
-      title: language === 'ar' ? 'من مصدرٍ مستدام وتحميصٍ يعكس الأصالة' : 'SUSTAINABLY SOURCED, AUTHENTICALLY ROASTED',
-      subtitle: language === 'ar' ? [
-        'من التلال الخضراء في رواندا إلى محمصة سبيريت هب، كل خطوة تكرم المزارعين والأرض،',
-        'رحلة من التفاني والاستدامة والحرفية',
-        'تحول الكرز المقطوف يدويًا إلى لحظات من الكمال.'
-      ] : [
-        'From the lush hills of Rwanda to SpiritHub Roastery, each step honors the farmers and the earth,',
-        'a journey of dedication, sustainability, and craftsmanship',
-        'that transforms hand-picked cherries into moments of pure coffee perfection.'
-      ],
-      description: language === 'ar'
-        ? 'قهوة مستدامة من أفضل المزارع حول العالم'
-        : 'Sustainable coffee from the best farms around the world',
-      stats: [
-        { value: '100%', label: language === 'ar' ? 'مستدام' : 'Sustainable' },
-        { value: '20+', label: language === 'ar' ? 'دولة منشأ' : 'Origin Countries' },
-        { value: 'AAA', label: language === 'ar' ? 'درجة الجودة' : 'Quality Grade' }
-      ],
-      features: [
-        language === 'ar' ? 'تجارة عادلة' : 'Fair Trade',
-        language === 'ar' ? 'عضوي معتمد' : 'Certified Organic',
-        language === 'ar' ? 'قابل للتتبع' : 'Traceable'
-      ],
-      cta: language === 'ar' ? 'تسوق الآن' : 'SHOP NOW'
-    },
-    {
       id: '6',
       image: '/images/slides/yemen-jabal-nabi-shuaib-spirithub-coffee.webp',
       title: language === 'ar' ? 'متجذرون في اليمن، محمص في سبيريت هب' : 'ROOTED IN YEMEN, ROASTED AT SPIRITHUB',
@@ -290,6 +264,64 @@ export const ProfessionalHeroSlider: React.FC = () => {
         language === 'ar' ? 'مناسب لكل مناسبة' : 'Perfect for Any Occasion'
       ],
       cta: language === 'ar' ? 'استكشف الباقات والهدايا' : 'EXPLORE BUNDLES & GIFTS'
+    },
+    {
+      id: '8',
+      image: '/images/slides/spirithub-cold-brew-specialty-coffee.webp',
+      imageClassName: 'background-image--nitro',
+      overlayClassName: 'background-overlay--nitro',
+      title: language === 'ar' ? 'حيث يلتقي الوقت بالمذاق' : 'Where Time Meets Taste',
+      subtitle: language === 'ar' ? [
+        'يتم تحضير الكولد برو لدينا بنقعٍ بطيء لساعات طويلة لاستخلاص نكهات عميقة،',
+        'وحموضة منخفضة، وقوامٍ ناعم',
+        'صُمم لعشّاق القهوة الحقيقيين.'
+      ] : [
+        'Our Cold Brew is patiently steeped for hours to unlock deep flavors,',
+        'low acidity, and a silky finish',
+        'designed for true coffee lovers.'
+      ],
+      description: language === 'ar'
+        ? 'كولد برو مختص مُحضَّر ببطء لنكهات عميقة وقوام استثنائي'
+        : 'Specialty cold brew slowly steeped for deep flavors and an exceptional finish',
+      stats: [
+        { value: '12H+', label: language === 'ar' ? 'وقت التحضير' : 'Steep Time' },
+        { value: '0%', label: language === 'ar' ? 'حموضة' : 'Acidity' },
+        { value: '100%', label: language === 'ar' ? 'قهوة مختصة' : 'Specialty Coffee' }
+      ],
+      features: [
+        language === 'ar' ? 'نقع بارد بطيء' : 'Slow Cold Steep',
+        language === 'ar' ? 'نكهات عميقة' : 'Deep Flavors',
+        language === 'ar' ? 'قوام ناعم' : 'Silky Finish'
+      ],
+      cta: language === 'ar' ? 'تسوق الآن' : 'SHOP NOW'
+    },
+    {
+      id: '9',
+      image: '/images/slides/spirithub-nitro-brew-barista-tap-specialty-coffee.webp',
+      imageClassName: 'background-image--nitro',
+      overlayClassName: 'background-overlay--nitro',
+      title: language === 'ar' ? 'نيترو كولد برو… بتجربة أرقى' : 'Nitro Cold Brew',
+      subtitle: language === 'ar' ? [
+        'مُعزز بالنيتروجين ليمنحك قوامًا كريميًا ناعمًا ونكهة غنية',
+        'تجربة قهوة مختصة منعشة لا مثيل لها.'
+      ] : [
+        'Infused with nitrogen for a smooth, creamy texture and rich flavor',
+        'a refreshing specialty coffee experience like no other.'
+      ],
+      description: language === 'ar'
+        ? 'نيترو كولد برو مُعزز بالنيتروجين لقوام كريمي ونكهة غنية لا مثيل لها'
+        : 'Nitrogen-infused nitro cold brew for a smooth, creamy texture and unmatched rich flavor',
+      stats: [
+        { value: 'N₂', label: language === 'ar' ? 'نيتروجين' : 'Nitrogen' },
+        { value: '100%', label: language === 'ar' ? 'كريمي' : 'Creamy' },
+        { value: '5★', label: language === 'ar' ? 'تجربة فريدة' : 'Unique Experience' }
+      ],
+      features: [
+        language === 'ar' ? 'مُعزز بالنيتروجين' : 'Nitrogen Infused',
+        language === 'ar' ? 'قوام كريمي' : 'Creamy Texture',
+        language === 'ar' ? 'نكهة غنية' : 'Rich Flavor'
+      ],
+      cta: language === 'ar' ? 'تسوق الآن' : 'SHOP NOW'
     }
   ];
 
@@ -376,7 +408,7 @@ export const ProfessionalHeroSlider: React.FC = () => {
               <img
                 src={currentSlideData.image}
                 alt={currentSlideData.title}
-                className="background-image"
+                className={`background-image ${currentSlideData.imageClassName ?? ''}`.trim()}
                 style={{ 
                   position: 'absolute',
                   top: 0,
@@ -402,7 +434,10 @@ export const ProfessionalHeroSlider: React.FC = () => {
               />
             )}
             
-            <div className="background-overlay" style={{ zIndex: 3 }} />
+            <div
+              className={`background-overlay ${currentSlideData.overlayClassName ?? ''}`.trim()}
+              style={{ zIndex: 3 }}
+            />
           </div>
         ) : (
           // Desktop: Show image backgrounds with fade effect
@@ -418,9 +453,9 @@ export const ProfessionalHeroSlider: React.FC = () => {
               <img
                 src={currentSlideData.image}
                 alt={currentSlideData.title}
-                className="background-image"
+                className={`background-image ${currentSlideData.imageClassName ?? ''}`.trim()}
               />
-              <div className="background-overlay" />
+              <div className={`background-overlay ${currentSlideData.overlayClassName ?? ''}`.trim()} />
             </motion.div>
           </AnimatePresence>
         )}
