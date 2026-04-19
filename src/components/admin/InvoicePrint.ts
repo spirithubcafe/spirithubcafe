@@ -9,7 +9,15 @@ function parseDate(v: string | number | Date): Date {
   if (typeof v === 'number') return new Date(v);
   const n = Number(v);
   if (!Number.isNaN(n) && String(n) === v) return new Date(n);
-  return new Date(v);
+  // Normalise: treat date-time strings with no explicit timezone as UTC (backend stores UTC without 'Z')
+  const normalized = String(v).trim().replace(' ', 'T');
+  const hasExplicitTimezone = /(?:Z|[+-]\d{2}(?::?\d{2})?)$/i.test(normalized);
+  const startsWithIsoDate = /^\d{4}-\d{2}-\d{2}/.test(normalized);
+  const hasTimePart = /T\d{2}:\d{2}/.test(normalized);
+  if (!hasExplicitTimezone && startsWithIsoDate && hasTimePart) {
+    return new Date(`${normalized}Z`);
+  }
+  return new Date(normalized);
 }
 
 function fmtDate(v: string | number | Date | undefined): string {
@@ -103,6 +111,8 @@ export function generatePremiumInvoiceHTML(order: Order, isArabic = false): stri
       <p style="font-size:13px;font-weight:700;color:#7a5c3a;margin:0 0 8px;">🎁 ${isArabic ? 'معلومات الهدية' : 'Gift Information'}</p>
       ${order.giftRecipientName ? `<div style="display:flex;gap:6px;font-size:12px;padding:3px 0;"><span style="color:#888;min-width:100px;">${isArabic ? 'المستلم' : 'Recipient'}:</span><span style="color:#2c2c2c;font-weight:500;">${esc(order.giftRecipientName)}</span></div>` : ''}
       ${order.giftRecipientPhone ? `<div style="display:flex;gap:6px;font-size:12px;padding:3px 0;"><span style="color:#888;min-width:100px;">${isArabic ? 'الهاتف' : 'Phone'}:</span><span style="color:#2c2c2c;font-weight:500;">${esc(order.giftRecipientPhone)}</span></div>` : ''}
+      ${order.giftRecipientEmail ? `<div style="display:flex;gap:6px;font-size:12px;padding:3px 0;"><span style="color:#888;min-width:100px;">${isArabic ? 'البريد' : 'Email'}:</span><span style="color:#2c2c2c;font-weight:500;">${esc(order.giftRecipientEmail)}</span></div>` : ''}
+      ${(order.giftRecipientAddress || order.giftRecipientCity || order.giftRecipientCountry) ? `<div style="display:flex;gap:6px;font-size:12px;padding:3px 0;"><span style="color:#888;min-width:100px;">${isArabic ? 'عنوان التسليم' : 'Delivery Address'}:</span><span style="color:#2c2c2c;font-weight:500;">${[order.giftRecipientAddress, order.giftRecipientCity, order.giftRecipientPostalCode, order.giftRecipientCountry].filter(Boolean).map(esc).join(', ')}</span></div>` : ''}
       ${order.giftMessage ? `<div style="margin-top:8px;padding:8px 12px;background:white;border-radius:8px;font-style:italic;font-size:12px;color:#5c4226;">"${esc(order.giftMessage)}"</div>` : ''}
     </div>` : '';
 
@@ -114,7 +124,8 @@ export function generatePremiumInvoiceHTML(order: Order, isArabic = false): stri
     </div>` : '';
 
   /* ── notes section ─────────────────────────────────────────────────── */
-  const notesSection = order.notes ? `
+  // Skip notes when it's a gift order — the gift message is already shown in giftSection
+  const notesSection = order.notes && !order.isGift ? `
     <div style="margin-bottom:20px;padding:12px 16px;background:white;border-radius:12px;border-left:4px solid #c8a97e;">
       <p style="font-size:11px;font-weight:700;color:#7a5c3a;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 6px;">${isArabic ? 'ملاحظات' : 'Notes'}</p>
       <p style="font-size:12px;color:#555;margin:0;">${esc(order.notes)}</p>
