@@ -255,36 +255,12 @@ app.use(async (req, res, next) => {
     // Replace the meta tags in the template
     let html = template.replace('<!--app-head-->', metaTags);
 
-    // ── Attempt SSR (inject rendered HTML into <div id="root">) ────
-    // Wrapped in try/catch so a render failure never breaks the site;
-    // users will just get the SPA shell (current behaviour) instead.
-    try {
-      let render;
-      if (!isProduction) {
-        // In dev, Vite compiles the module on the fly
-        const mod = await vite.ssrLoadModule('/src/entry-server.tsx');
-        render = mod.render;
-      } else {
-        // In production, import the pre-built SSR bundle
-        const ssrBundlePath = path.resolve(__dirname, 'dist/server/entry-server.js');
-        if (fs.existsSync(ssrBundlePath)) {
-          const mod = await import(ssrBundlePath);
-          render = mod.render;
-        }
-      }
-
-      if (typeof render === 'function') {
-        const { html: appHtml, error } = render(url);
-        if (appHtml && !error) {
-          // Inject the server-rendered markup inside <div id="root">
-          html = html.replace('<div id="root"></div>', `<div id="root">${appHtml}</div>`);
-        }
-        // If error, we just serve the SPA shell – no impact on users
-      }
-    } catch (ssrError) {
-      // SSR failed – serve the SPA shell as before.  Log for debugging.
-      console.warn('[SSR] render skipped:', ssrError?.message || ssrError);
-    }
+    // NOTE: We intentionally do NOT inject SSR-rendered React HTML into
+    // <div id="root">.  The app relies heavily on client-side state
+    // (localStorage language/region, auth, cart) which makes the server
+    // render differ from the client render, causing React hydration
+    // error #418.  The meta-tag injection above (<!--app-head-->) already
+    // gives crawlers everything they need for SEO / social previews.
 
     res.status(200).set({ 'Content-Type': 'text/html' }).send(html);
   } catch (e) {
