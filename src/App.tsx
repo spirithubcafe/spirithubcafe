@@ -67,6 +67,7 @@ import { PaymentSuccessPage } from './pages/PaymentSuccessPage';
 import { PaymentFailurePage } from './pages/PaymentFailurePage';
 import { PaymentCancelledPage } from './pages/PaymentCancelledPage';
 import { PaymentErrorPage } from './pages/PaymentErrorPage';
+import { InvoicePage } from './pages/InvoicePage';
 import { RequireAuth } from './components/auth/RequireAuth';
 import { RequireWholesale } from './components/auth/RequireWholesale';
 import { AdminRegionRedirect } from './components/admin/AdminRegionRedirect';
@@ -84,6 +85,7 @@ import WholesaleOrderDetailsPage from './pages/WholesaleOrderDetailsPage';
 function AppContent() {
   const location = useLocation();
   const isAdminPage = location.pathname.includes('/admin');
+  const isInvoicePage = location.pathname.startsWith('/invoice/');
 
   // Initialize visitor tracking on app load
   useEffect(() => {
@@ -107,14 +109,16 @@ function AppContent() {
 
   return (
     <div className="min-h-screen bg-white">
-      <RegionRedirect />
-      <Navigation />
-      <MobileBottomNav />
-      <CartDrawer />
-      <ScrollToTop />
-      <Toaster position="top-center" duration={2000} richColors />
+      {!isInvoicePage && <RegionRedirect />}
+      {!isInvoicePage && <Navigation />}
+      {!isInvoicePage && <MobileBottomNav />}
+      {!isInvoicePage && <CartDrawer />}
+      {!isInvoicePage && <ScrollToTop />}
+      {!isInvoicePage && <Toaster position="top-center" duration={2000} richColors />}
       <RouteErrorBoundary>
       <Routes>
+        <Route path="/invoice/:orderNumber" element={<InvoicePage />} />
+
         {/* Wholesale panel routes */}
         <Route path="/wholesale/login" element={<WholesaleLoginPage />} />
         <Route
@@ -336,7 +340,7 @@ function AppContent() {
       </Routes>
       </RouteErrorBoundary>
 
-      {!isAdminPage && <Footer />}
+      {!isAdminPage && !isInvoicePage && <Footer />}
     </div>
   );
 }

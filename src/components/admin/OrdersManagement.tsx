@@ -48,7 +48,6 @@ import { format } from 'date-fns';
 import { createAramexPickup, emailService, orderService, productVariantService } from '../../services';
 import { REGION_INFO } from '../../config/regionInfo';
 import type { Order, OrderStatus, PaymentStatus } from '../../types/order';
-import { generatePremiumInvoiceHTML } from './InvoicePrint';
 
 export const OrdersManagement: React.FC = () => {
   const { language } = useApp();
@@ -1532,7 +1531,7 @@ export const OrdersManagement: React.FC = () => {
       const response = await orderService.getOrderById(order.id);
       const orderDetails: Order = response.data!;
       
-      await generateInvoicePDF(orderDetails);
+      openInvoiceInNewTab(orderDetails.orderNumber);
     } catch (error: any) {
       console.error('Error generating invoice:', error);
       alert(isArabic ? 'فشل إنشاء الفاتورة' : 'Failed to generate invoice');
@@ -1881,15 +1880,9 @@ export const OrdersManagement: React.FC = () => {
     return btoa(`${order.id}-${order.orderNumber}-${Date.now()}`);
   };
 
-  const generateInvoicePDF = async (order: Order) => {
-    const invoiceContent = generatePremiumInvoiceHTML(order, isArabic);
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(invoiceContent);
-      printWindow.document.close();
-      printWindow.focus();
-      setTimeout(() => printWindow.print(), 600);
-    }
+  const openInvoiceInNewTab = (orderNumber: string) => {
+    const encodedOrderNumber = encodeURIComponent(orderNumber);
+    window.open(`/invoice/${encodedOrderNumber}?autoPrint=1`, '_blank', 'noopener,noreferrer');
   };
 
   const getStatusColor = (status: string) => {
