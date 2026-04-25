@@ -147,7 +147,7 @@ export function generatePremiumInvoiceHTML(order: Order, isArabic = false): stri
 <html dir="${dir}" lang="${isArabic ? 'ar' : 'en'}">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=794"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>${esc(order.orderNumber)}</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
@@ -155,6 +155,87 @@ export function generatePremiumInvoiceHTML(order: Order, isArabic = false): stri
     @media print {
       body { margin: 0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       .invoice-footer { page-break-before: avoid; page-break-inside: avoid; }
+    }
+    @media screen and (max-width: 820px) {
+      body {
+        max-width: 100%;
+        padding: 12px 10px;
+        font-size: 12px;
+      }
+      .invoice-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+        padding-bottom: 12px;
+        margin-bottom: 12px;
+      }
+      .invoice-header-company,
+      .invoice-header-title,
+      .invoice-header-logo {
+        flex: 0 0 auto;
+        text-align: ${al};
+      }
+      .info-cards {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+      .info-card {
+        padding: 14px;
+      }
+      .table-wrapper {
+        overflow: visible;
+        box-shadow: none;
+      }
+      .product-table thead {
+        display: none;
+      }
+      .product-table,
+      .product-table tbody,
+      .product-table tr,
+      .product-table td {
+        display: block;
+        width: 100%;
+      }
+      .product-table tr {
+        border: 1px solid #e0d8cc;
+        border-radius: 10px;
+        overflow: hidden;
+        margin-bottom: 10px;
+        background: #f7f6f5 !important;
+      }
+      .product-table td {
+        padding: 9px 12px !important;
+        text-align: ${al} !important;
+        border-bottom: 1px solid #e0d8cc !important;
+      }
+      .product-table td:last-child {
+        border-bottom: 0 !important;
+      }
+      .product-table td.col-product::before {
+        display: none;
+      }
+      .product-table td.col-qty::before,
+      .product-table td.col-price::before,
+      .product-table td.col-total::before {
+        content: attr(data-label) ": ";
+        color: #777;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+      }
+      .summary-row {
+        display: block;
+      }
+      .summary-box {
+        width: 100%;
+        min-width: 0;
+      }
+      .invoice-footer-bar {
+        flex-direction: column;
+        align-items: ${isArabic ? 'flex-end' : 'flex-start'};
+        gap: 12px;
+      }
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
