@@ -148,7 +148,7 @@ export function generatePremiumInvoiceHTML(order: Order, isArabic = false): stri
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=794"/>
-  <title>${isArabic ? 'فاتورة' : 'INVOICE'} #${esc(order.orderNumber)}</title>
+  <title>${esc(order.orderNumber)}</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
     @page { size: A4 portrait; margin: 10mm 12mm; }

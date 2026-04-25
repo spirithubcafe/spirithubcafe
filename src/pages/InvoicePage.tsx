@@ -68,6 +68,16 @@ export const InvoicePage: React.FC = () => {
   }, [order, isArabic]);
 
   useEffect(() => {
+    const previousTitle = document.title;
+    const titleOrderNumber = order?.orderNumber || safeOrderNumber;
+    document.title = titleOrderNumber || 'Invoice';
+
+    return () => {
+      document.title = previousTitle;
+    };
+  }, [order?.orderNumber, safeOrderNumber]);
+
+  useEffect(() => {
     if (!autoPrint || !frameLoaded || !invoiceHtml || hasTriggeredAutoPrint.current) {
       return;
     }
@@ -117,4 +127,3 @@ export const InvoicePage: React.FC = () => {
     </div>
   );
 };
-
