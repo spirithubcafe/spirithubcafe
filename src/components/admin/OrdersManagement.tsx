@@ -1178,10 +1178,12 @@ export const OrdersManagement: React.FC = () => {
   };
 
   const generateWhatsAppMessage = (order: Order): string => {
-    const customerName = order.customerName || order.fullName || (isArabic ? 'العميل' : 'Customer');
     const orderAmount = `${order.totalAmount.toFixed(3)} OMR`;
     const orderStatus = order.status.toLowerCase();
     const paymentStatus = order.paymentStatus.toLowerCase();
+    const invoiceLink = `${window.location.origin}/invoice/${encodeURIComponent(order.orderNumber)}?autoPrint=1`;
+    const paymentMethodLabel = order.paymentMethod || (isArabic ? 'تحويل بنكي' : 'Bank Transfer');
+    const paymentSummary = `${paymentMethodLabel} (${order.paymentStatus})`;
     
     // Get shipping method name
     const shippingMethod = 
@@ -1205,20 +1207,20 @@ export const OrdersManagement: React.FC = () => {
     let message = '';
     
     if (isArabic) {
-      message = `مرحباً ${customerName}،\n`;
+      message = '';
       
       // Status-based message body
       switch (orderStatus) {
         case 'pending':
           if (paymentStatus === 'unpaid') {
-            message += `تم استلام طلبك وننتظر التأكيد.\n\nرقم الطلب: ${order.orderNumber}\nالمبلغ: ${orderAmount}\nالشحن: ${shippingMethod}${itemsList}\n⚠️ يرجى إكمال الدفع\n\n💳 ادفع الآن:\n${window.location.origin}/payment?orderId=${order.id}&token=${btoa(`${order.id}-${order.orderNumber}-${Date.now()}`)}\n\nسيتواصل معك فريقنا قريباً.`;
+            message += `📦 *تم تأكيد طلب جديد*\n\n🧾 *رقم الطلب:* ${order.orderNumber}\n💰 *المبلغ:* ${orderAmount}\n💳 *الدفع:* ${paymentSummary}\n\n📊 *الحالة:* ${order.status}\n🚚 *الشحن:* ${shippingMethod}${itemsList}\n\n⚠️ يرجى إكمال الدفع\n\n💳 ادفع الآن:\n${window.location.origin}/payment?orderId=${order.id}&token=${btoa(`${order.id}-${order.orderNumber}-${Date.now()}`)}`;
           } else {
-            message += `تم استلام طلبك وهو قيد المراجعة.\n\nرقم الطلب: ${order.orderNumber}\nالمبلغ: ${orderAmount}\nالشحن: ${shippingMethod}\nالدفع: ✅ مدفوع${itemsList}\n\nسيتواصل معك فريقنا قريباً.`;
+            message += `📦 *تم تأكيد طلب جديد*\n\n🧾 *رقم الطلب:* ${order.orderNumber}\n💰 *المبلغ:* ${orderAmount}\n💳 *الدفع:* ${paymentSummary}\n\n📊 *الحالة:* ${order.status}\n🚚 *الشحن:* ${shippingMethod}${itemsList}`;
           }
           break;
           
         case 'processing':
-          message += `طلبك قيد التحضير.\n\nرقم الطلب: ${order.orderNumber}\nالمبلغ: ${orderAmount}\nالشحن: ${shippingMethod}${itemsList}`;
+          message += `📦 *تم تأكيد طلب جديد*\n\n🧾 *رقم الطلب:* ${order.orderNumber}\n💰 *المبلغ:* ${orderAmount}\n💳 *الدفع:* ${paymentSummary}\n\n📊 *الحالة:* ${order.status}\n🚚 *الشحن:* ${shippingMethod}${itemsList}`;
           if (order.shippingMethod === 1) {
             message += `\n\n📍 الاستلام من:\nAl Mouj st, Muscat\n🗺️ https://maps.app.goo.gl/Ef4okfTUbg1cKdyy6\n\n⏰ يومياً: 7 ص - 12 م\n\nسنخبرك عندما يكون جاهزاً.`;
           } else {
@@ -1259,24 +1261,26 @@ export const OrdersManagement: React.FC = () => {
       if (order.isGift && orderStatus !== 'cancelled' && order.giftRecipientName) {
         message += `\n\n🎁 هدية للمستلم: ${order.giftRecipientName}`;
       }
+
+      message += `\n\n📥 رابط الفاتورة:\n${invoiceLink}`;
       
       message += `\n\n📞 واتساب: +968 91900005\n\nشكراً لاختيارك SpiritHub Roastery.`;
       
     } else {
       // English messages
-      message = `Hello ${customerName},\n`;
+      message = '';
       
       switch (orderStatus) {
         case 'pending':
           if (paymentStatus === 'unpaid') {
-            message += `Your order has been received and is awaiting confirmation.\n\nOrder: ${order.orderNumber}\nTotal: ${orderAmount}\nShipping: ${shippingMethod}${itemsList}\n⚠️ Please complete payment\n\n💳 Pay now:\n${window.location.origin}/payment?orderId=${order.id}&token=${btoa(`${order.id}-${order.orderNumber}-${Date.now()}`)}\n\nOur team will be in touch shortly.`;
+            message += `📦 *New Order Confirmed*\n\n🧾 *Order:* ${order.orderNumber}\n💰 *Amount:* ${orderAmount}\n💳 *Payment:* ${paymentSummary}\n\n📊 *Status:* ${order.status}\n🚚 *Shipping:* ${shippingMethod}${itemsList}\n\n⚠️ Please complete payment\n\n💳 Pay now:\n${window.location.origin}/payment?orderId=${order.id}&token=${btoa(`${order.id}-${order.orderNumber}-${Date.now()}`)}`;
           } else {
-            message += `Your order has been received and is under review.\n\nOrder: ${order.orderNumber}\nTotal: ${orderAmount}\nShipping: ${shippingMethod}\nPayment: ✅ Paid${itemsList}\n\nOur team will be in touch shortly.`;
+            message += `📦 *New Order Confirmed*\n\n🧾 *Order:* ${order.orderNumber}\n💰 *Amount:* ${orderAmount}\n💳 *Payment:* ${paymentSummary}\n\n📊 *Status:* ${order.status}\n🚚 *Shipping:* ${shippingMethod}${itemsList}`;
           }
           break;
           
         case 'processing':
-          message += `Your order is being prepared.\n\nOrder: ${order.orderNumber}\nTotal: ${orderAmount}\nShipping: ${shippingMethod}${itemsList}`;
+          message += `📦 *New Order Confirmed*\n\n🧾 *Order:* ${order.orderNumber}\n💰 *Amount:* ${orderAmount}\n💳 *Payment:* ${paymentSummary}\n\n📊 *Status:* ${order.status}\n🚚 *Shipping:* ${shippingMethod}${itemsList}`;
           if (order.shippingMethod === 1) {
             message += `\n\n📍 Pickup from:\nAl Mouj st, Muscat\n🗺️ https://maps.app.goo.gl/Ef4okfTUbg1cKdyy6\n\n⏰ Daily: 7:00 AM - 12:00 AM\n\nWe'll notify you when ready.`;
           } else {
@@ -1317,6 +1321,8 @@ export const OrdersManagement: React.FC = () => {
       if (order.isGift && orderStatus !== 'cancelled' && order.giftRecipientName) {
         message += `\n\n🎁 Gift for: ${order.giftRecipientName}`;
       }
+
+      message += `\n\n📥 Download Invoice:\n${invoiceLink}`;
       
       message += `\n\n📞 WhatsApp: +968 91900005\n\nThank you for choosing SpiritHub Roastery.`;
     }
