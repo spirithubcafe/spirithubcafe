@@ -225,28 +225,41 @@ export const InvoicePage: React.FC = () => {
 
     try {
       const pdfFile = await generateInvoicePdfFile();
+      const openPdfForManualShare = () => {
+        const fallbackUrl = URL.createObjectURL(pdfFile);
+        const opened = window.open(fallbackUrl, '_blank', 'noopener,noreferrer');
+        if (!opened) {
+          setShareMessage('Unable to open PDF. Please allow popups and try again.');
+          return false;
+        }
+        window.setTimeout(() => URL.revokeObjectURL(fallbackUrl), 60000);
+        setShareMessage('Direct share is blocked by this browser. PDF opened for manual sharing.');
+        return true;
+      };
+
       const fileShareSupported =
         typeof navigator.canShare === 'function' &&
         navigator.canShare({ files: [pdfFile] });
 
       if (navigator.share && fileShareSupported) {
-        await navigator.share({
-          title: `Invoice ${order?.orderNumber || safeOrderNumber}`,
-          files: [pdfFile],
-        });
-        return;
+        try {
+          await navigator.share({
+            title: `Invoice ${order?.orderNumber || safeOrderNumber}`,
+            files: [pdfFile],
+          });
+          return;
+        } catch (shareErr: any) {
+          if (shareErr?.name === 'AbortError') return;
+          // Some browsers reject file-share in this context (transient activation/user-agent restrictions).
+          openPdfForManualShare();
+          return;
+        }
       }
 
-      const fallbackUrl = URL.createObjectURL(pdfFile);
-      const opened = window.open(fallbackUrl, '_blank', 'noopener,noreferrer');
-      if (!opened) {
-        setShareMessage('Unable to open PDF. Please allow popups and try again.');
-        return;
-      }
-      setShareMessage('PDF opened. You can now share it from your device.');
+      openPdfForManualShare();
     } catch (err: any) {
       if (err?.name === 'AbortError') return;
-      setShareMessage(err?.message || 'Unable to create PDF right now.');
+      setShareMessage('Unable to prepare PDF right now.');
     } finally {
       setIsPreparingPdf(false);
     }
@@ -275,8 +288,9 @@ export const InvoicePage: React.FC = () => {
           // If auto-print is blocked, user can print from the opened PDF viewer.
         }
       }, 700);
-    } catch (err: any) {
-      setShareMessage(err?.message || 'Unable to create PDF for printing.');
+      window.setTimeout(() => URL.revokeObjectURL(pdfUrl), 60000);
+    } catch (_err: any) {
+      setShareMessage('Unable to prepare PDF for printing.');
     } finally {
       setIsPreparingPdf(false);
     }
