@@ -20,7 +20,6 @@ export const InvoicePage: React.FC = () => {
   const [isPreparingPdf, setIsPreparingPdf] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const hasTriggeredAutoPrint = useRef(false);
-  const pdfFileCacheRef = useRef<{ orderNumber: string; file: File } | null>(null);
   const pdfLibsRef = useRef<{
     html2canvas: (typeof import('html2canvas'))['default'];
     jsPDF: (typeof import('jspdf'))['jsPDF'];
@@ -94,12 +93,6 @@ export const InvoicePage: React.FC = () => {
     setShowActionSheet(true);
   }, [autoPrint, frameLoaded, invoiceHtml]);
 
-  useEffect(() => {
-    return () => {
-      pdfFileCacheRef.current = null;
-    };
-  }, []);
-
   const waitForDocumentReady = async (doc: Document) => {
     const images = Array.from(doc.images || []);
     const pendingImages = images.filter((img) => !img.complete);
@@ -134,17 +127,26 @@ export const InvoicePage: React.FC = () => {
       throw new Error('Invoice is not ready yet.');
     }
 
-    if (pdfFileCacheRef.current?.orderNumber === order.orderNumber) {
-      return pdfFileCacheRef.current.file;
-    }
+    const pdfLibs = await (async () => {
+      if (pdfLibsRef.current) return pdfLibsRef.current;
+      const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
+        import('html2canvas'),
+        import('jspdf'),
+      ]);
+      const libs = { html2canvas, jsPDF };
+      pdfLibsRef.current = libs;
+      return libs;
+    })();
 
+    const desktopViewportWidth = 1200;
+    const desktopViewportHeight = 1800;
     const desktopFrame = document.createElement('iframe');
     desktopFrame.setAttribute('aria-hidden', 'true');
     desktopFrame.style.position = 'fixed';
     desktopFrame.style.top = '-99999px';
     desktopFrame.style.left = '-99999px';
-    desktopFrame.style.width = '1024px';
-    desktopFrame.style.height = '1600px';
+    desktopFrame.style.width = `${desktopViewportWidth}px`;
+    desktopFrame.style.height = `${desktopViewportHeight}px`;
     desktopFrame.style.opacity = '0';
     desktopFrame.style.pointerEvents = 'none';
     desktopFrame.srcdoc = invoiceHtml;
@@ -152,7 +154,10 @@ export const InvoicePage: React.FC = () => {
 
     try {
       await new Promise<void>((resolve, reject) => {
-        const timeoutId = window.setTimeout(() => reject(new Error('Invoice rendering timed out.')), 15000);
+        const timeoutId = window.setTimeout(
+          () => reject(new Error('Invoice rendering timed out.')),
+          15000,
+        );
         desktopFrame.onload = () => {
           window.clearTimeout(timeoutId);
           resolve();
@@ -160,32 +165,29 @@ export const InvoicePage: React.FC = () => {
       });
 
       const doc = desktopFrame.contentDocument;
-      if (!doc) throw new Error('Unable to load invoice document.');
+      if (!doc) {
+        throw new Error('Unable to load invoice document.');
+      }
 
       await waitForDocumentReady(doc);
-      const pdfLibs = await (async () => {
-        if (pdfLibsRef.current) return pdfLibsRef.current;
-        const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
-          import('html2canvas'),
-          import('jspdf'),
-        ]);
-        const libs = { html2canvas, jsPDF };
-        pdfLibsRef.current = libs;
-        return libs;
-      })();
 
-      const renderWidth = Math.max(doc.documentElement.scrollWidth, doc.body.scrollWidth, 1024);
-      const renderHeight = Math.max(doc.documentElement.scrollHeight, doc.body.scrollHeight, 1400);
+      const bodyRect = doc.body.getBoundingClientRect();
+      const captureX = Math.max(0, Math.floor(bodyRect.left));
+      const captureY = Math.max(0, Math.floor(bodyRect.top));
+      const renderWidth = Math.ceil(bodyRect.width);
+      const renderHeight = Math.ceil(Math.max(bodyRect.height, doc.body.scrollHeight));
 
       const canvas = await pdfLibs.html2canvas(doc.body, {
         scale: 2,
         useCORS: true,
         allowTaint: true,
         backgroundColor: '#fafafa',
+        x: captureX,
+        y: captureY,
         width: renderWidth,
         height: renderHeight,
-        windowWidth: renderWidth,
-        windowHeight: renderHeight,
+        windowWidth: desktopViewportWidth,
+        windowHeight: Math.ceil(Math.max(desktopViewportHeight, captureY + renderHeight)),
         scrollX: 0,
         scrollY: 0,
       });
@@ -211,9 +213,7 @@ export const InvoicePage: React.FC = () => {
       }
 
       const blob = pdf.output('blob');
-      const file = new File([blob], `${order.orderNumber}.pdf`, { type: 'application/pdf' });
-      pdfFileCacheRef.current = { orderNumber: order.orderNumber, file };
-      return file;
+      return new File([blob], `${order.orderNumber}.pdf`, { type: 'application/pdf' });
     } finally {
       desktopFrame.remove();
     }
@@ -225,15 +225,21 @@ export const InvoicePage: React.FC = () => {
 
     try {
       const pdfFile = await generateInvoicePdfFile();
+      const preferredFileName = `${order?.orderNumber || safeOrderNumber || 'invoice'}.pdf`;
       const openPdfForManualShare = () => {
         const fallbackUrl = URL.createObjectURL(pdfFile);
-        const opened = window.open(fallbackUrl, '_blank', 'noopener,noreferrer');
-        if (!opened) {
-          setShareMessage('Unable to open PDF. Please allow popups and try again.');
-          return false;
-        }
+
+        // Force a download with a deterministic filename instead of browser-generated blob UUID names.
+        const link = document.createElement('a');
+        link.href = fallbackUrl;
+        link.download = preferredFileName;
+        link.rel = 'noopener noreferrer';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+
         window.setTimeout(() => URL.revokeObjectURL(fallbackUrl), 60000);
-        setShareMessage('Direct share is blocked by this browser. PDF opened for manual sharing.');
+        setShareMessage(`Direct share is blocked by this browser. Downloaded as ${preferredFileName}.`);
         return true;
       };
 
@@ -271,11 +277,20 @@ export const InvoicePage: React.FC = () => {
 
     try {
       const pdfFile = await generateInvoicePdfFile();
+      const preferredFileName = `${order?.orderNumber || safeOrderNumber || 'invoice'}.pdf`;
       const pdfUrl = URL.createObjectURL(pdfFile);
       const printWindow = window.open(pdfUrl, '_blank', 'noopener,noreferrer');
 
       if (!printWindow) {
-        setShareMessage('Unable to open PDF. Please allow popups and try again.');
+        const link = document.createElement('a');
+        link.href = pdfUrl;
+        link.download = preferredFileName;
+        link.rel = 'noopener noreferrer';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setShareMessage(`Popup blocked. Downloaded as ${preferredFileName}.`);
+        window.setTimeout(() => URL.revokeObjectURL(pdfUrl), 60000);
         return;
       }
 
