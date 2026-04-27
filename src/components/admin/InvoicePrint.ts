@@ -79,6 +79,7 @@ export function generatePremiumInvoiceHTML(order: Order, isArabic = false): stri
   const shipping = order.shippingCost ?? 0;
   const total = order.totalAmount;
   const orderDate = fmtDate(order.createdAt);
+  const printedAt = fmtDate(new Date());
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=100x100&bgcolor=f5f1ea&color=4a3728&data=${encodeURIComponent('https://spirithubcafe.com')}`;
 
   /* â”€â”€ item rows â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
@@ -196,10 +197,22 @@ export function generatePremiumInvoiceHTML(order: Order, isArabic = false): stri
       grid-template-columns: 1fr 1fr;
       gap: 14px;
       margin-bottom: 16px;
+      position: relative;
+    }
+    .info-cards::after {
+      content: "";
+      position: absolute;
+      top: 10px;
+      bottom: 10px;
+      left: 50%;
+      width: 1px;
+      transform: translateX(-50%);
+      background: #e8ddcf;
+      pointer-events: none;
     }
     .info-card { background: #f7f6f5; border-radius: 12px; padding: 18px 20px; }
     .table-wrapper { border-radius: 12px; overflow: hidden; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
-    .summary-row { display: flex; justify-content: flex-end; margin-bottom: 16px; }
+    .summary-row { display: flex; justify-content: flex-end; margin-bottom: 10px; }
     .summary-box { min-width: 260px; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 6px rgba(0,0,0,0.07); }
     .invoice-footer-bar { background: #f7f6f5; border-radius: 12px; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; gap: 24px; page-break-inside: avoid; }
     @media screen and (max-width: 820px) {
@@ -244,6 +257,9 @@ export function generatePremiumInvoiceHTML(order: Order, isArabic = false): stri
         grid-template-columns: 1fr;
         gap: 12px;
         margin-bottom: 14px;
+      }
+      .info-cards::after {
+        display: none;
       }
       .info-card {
         padding: 14px;
@@ -378,11 +394,11 @@ export function generatePremiumInvoiceHTML(order: Order, isArabic = false): stri
   <div class="table-wrapper">
     <table class="product-table" style="width:100%;border-collapse:collapse;">
       <thead>
-        <tr style="background:#ece9e6;">
-          <th style="padding:11px 16px;text-align:${al};font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:#2c2c2c;">${isArabic ? 'Ø§Ù„Ù…Ù†ØªØ¬' : 'Product'}</th>
-          <th style="padding:11px 16px;text-align:center;font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:#2c2c2c;width:70px;">${isArabic ? 'Ø§Ù„ÙƒÙ…ÙŠØ©' : 'Qty'}</th>
-          <th style="padding:11px 16px;text-align:${ar};font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:#2c2c2c;width:100px;">${isArabic ? 'Ø§Ù„Ø³Ø¹Ø±' : 'Price'}</th>
-          <th style="padding:11px 16px;text-align:${ar};font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:#2c2c2c;width:100px;">${isArabic ? 'Ø§Ù„Ù…Ø¬Ù…ÙˆØ¹' : 'Total'}</th>
+        <tr style="background:#c8a97e;">
+          <th style="padding:11px 16px;text-align:${al};font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:0.75px;color:#ffffff;">${isArabic ? 'Ø§Ù„Ù…Ù†ØªØ¬' : 'Product'}</th>
+          <th style="padding:11px 16px;text-align:center;font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:0.75px;color:#ffffff;width:70px;">${isArabic ? 'Ø§Ù„ÙƒÙ…ÙŠØ©' : 'Qty'}</th>
+          <th style="padding:11px 16px;text-align:${ar};font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:0.75px;color:#ffffff;width:100px;">${isArabic ? 'Ø§Ù„Ø³Ø¹Ø±' : 'Price'}</th>
+          <th style="padding:11px 16px;text-align:${ar};font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:0.75px;color:#ffffff;width:100px;">${isArabic ? 'Ø§Ù„Ù…Ø¬Ù…ÙˆØ¹' : 'Total'}</th>
         </tr>
       </thead>
       <tbody>${itemRows}</tbody>
@@ -412,7 +428,7 @@ export function generatePremiumInvoiceHTML(order: Order, isArabic = false): stri
   ${notesSection}
 
   <!-- â•â•â•â•â•â•â•â•â•â• FOOTER â•â•â•â•â•â•â•â•â•â• -->
-  <hr style="border:none;border-top:1px dashed #d4c4b0;margin:12px 0 14px;"/>
+  <hr style="border:none;border-top:1px dashed #d4c4b0;margin:8px 0 10px;"/>
   <div class="invoice-footer invoice-footer-bar">
     <div>
       <p style="font-size:14px;font-weight:700;color:#2c2c2c;margin-bottom:6px;">${isArabic ? 'Ø´ÙƒØ±Ø§Ù‹ Ù„Ø§Ø®ØªÙŠØ§Ø±Ùƒ Ø³Ø¨ÙŠØ±ÙŠØª Ù‡Ø¨' : 'Thank you for choosing SpiritHub'}</p>
@@ -421,6 +437,7 @@ export function generatePremiumInvoiceHTML(order: Order, isArabic = false): stri
       <p style="font-size:12px;color:#555;margin-bottom:2px;">${isArabic ? 'ÙˆØ§ØªØ³Ø§Ø¨ Ù„Ø¥Ø¹Ø§Ø¯Ø© Ø§Ù„Ø·Ù„Ø¨' : 'Scan to reorder your favorite coffee'}</p>
       <p style="font-size:12px;font-weight:600;color:#2c2c2c;">WhatsApp: +968 7272 6999</p>
       <p style="font-size:10.5px;color:#aaa;margin-top:10px;">${isArabic ? 'Ø±Ù…Ø² Ø§Ù„Ù†Ø¸Ø§Ù… Ø§Ù„Ù…Ù†Ø³Ù‚' : 'HS Code'}: <span style="font-weight:600;color:#888;">0901.21</span> - ${isArabic ? 'Ù‚Ù‡ÙˆØ© Ù…Ø­Ù…ØµØ© (ØºÙŠØ± Ù…Ù†Ø²ÙˆØ¹Ø© Ø§Ù„ÙƒØ§ÙÙŠÙŠÙ†)' : 'Roasted coffee, not decaffeinated'}</p>
+      <p style="font-size:10.5px;color:#999;margin-top:6px;">Printed at: ${printedAt}</p>
     </div>
     <div style="text-align:center;flex-shrink:0;">
       <img src="${qrUrl}" alt="QR Code" style="width:96px;height:96px;border-radius:8px;border:1px solid #ddd;" onerror="this.style.display='none'"/>
