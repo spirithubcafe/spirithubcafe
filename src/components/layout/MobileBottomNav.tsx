@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Home, ShoppingBag, ShoppingCart, User, Gift } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useAuth } from '../../hooks/useAuth';
 import { useCart } from '../../hooks/useCart';
 
@@ -62,284 +62,114 @@ export const MobileBottomNav: React.FC = () => {
     if (path === '/') return location.pathname === '/';
     return location.pathname.startsWith(path);
   };
-  
-  // Hide on admin pages
+
   const isAdminPage = location.pathname.includes('/admin');
-  
   if (isAdminPage) {
     return null;
   }
 
-  return (
-    <>
-      {/* Main navigation */}
-      <motion.div 
-        initial={{ y: 100, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ type: "spring", stiffness: 260, damping: 20 }}
-        className="fixed bottom-0 left-0 right-0 z-40 md:hidden"
+  const renderNavInner = (item: typeof navItems[0], active: boolean) => {
+    const Icon = item.icon;
+    const isShop = item.key === 'shop';
+    const isGift = item.key === 'gift';
+
+    const accentClass = active
+      ? 'bg-white/[0.16] border-white/25'
+      : isGift
+      ? 'bg-rose-500/12 border-rose-300/20 hover:bg-rose-500/20'
+      : isShop
+      ? 'bg-amber-400/10 border-amber-200/20 hover:bg-amber-400/20'
+      : 'bg-white/[0.02] border-white/10 hover:bg-white/[0.08]';
+
+    const iconWrapClass = active
+      ? 'bg-white/15 text-white'
+      : isGift
+      ? 'bg-rose-500/20 text-rose-100'
+      : isShop
+      ? 'bg-amber-400/20 text-amber-100'
+      : 'bg-white/10 text-white/80';
+
+    const textClass = active
+      ? 'text-white'
+      : isGift
+      ? 'text-rose-100/90'
+      : isShop
+      ? 'text-amber-100/90'
+      : 'text-white/80';
+
+    return (
+      <div
+        className={`group relative flex h-15 w-full flex-col items-center justify-center rounded-2xl border transition-all duration-200 ${accentClass}`}
       >
-        {/* Navigation container - Dark matte glass style */}
-        <div className="mx-3 mb-3 bg-black/60 backdrop-blur-xl shadow-lg rounded-2xl overflow-hidden border border-white/10">
-          {/* Subtle inner shadow for depth */}
-          <div className="absolute inset-0 shadow-inner rounded-2xl pointer-events-none" />
-          
-          {/* Navigation content */}
-          <div className="relative flex items-center justify-around py-2 px-1">
-            {navItems.map((item, index) => {
-              const Icon = item.icon;
-              const active = isActive(item.path);
+        <motion.div
+          className={`relative flex h-6 w-6 items-center justify-center rounded-lg transition-colors duration-200 ${iconWrapClass}`}
+          animate={active ? { y: -0.5 } : { y: 0 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+        >
+          <Icon className="h-3.5 w-3.5" />
+          {item.badge && item.badge > 0 && (
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className="absolute -top-1.5 -right-1.5 min-w-4 h-4 px-1 bg-red-500 text-white text-[8px] rounded-full flex items-center justify-center font-semibold leading-none shadow-sm border border-white/30"
+            >
+              {item.badge > 99 ? '99+' : item.badge}
+            </motion.div>
+          )}
+        </motion.div>
 
-              if (item.action) {
-                // Cart button with action
-                return (
-                  <motion.button
-                    key={item.key}
-                    initial={{ scale: 0, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ 
-                      delay: index * 0.1,
-                      type: "spring",
-                      stiffness: 200,
-                      damping: 15
-                    }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => handleItemClick(item)}
-                    className="group relative flex flex-col items-center justify-center p-3 min-w-[68px] rounded-xl"
-                  >
-                    {/* Active background - white style */}
-                    <AnimatePresence>
-                      {active && (
-                        <motion.div 
-                          layoutId="activeTab"
-                          initial={{ opacity: 0, scale: 0.9 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          exit={{ opacity: 0, scale: 0.9 }}
-                          transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                          className="absolute inset-0 bg-white rounded-xl shadow-md"
-                        />
-                      )}
-                    </AnimatePresence>
-                    
-                    {/* Hover state */}
-                    <motion.div 
-                      className="absolute inset-0 rounded-xl bg-accent/0"
-                      whileHover={{ 
-                        backgroundColor: "rgba(255, 255, 255, 0.1)",
-                        transition: { duration: 0.2 }
-                      }}
-                    />
-                    
-                    <div className="relative flex flex-col items-center gap-1.5">
-                      <motion.div 
-                        className="relative"
-                        animate={active ? { scale: [1, 1.05, 1] } : {}}
-                        transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
-                      >
-                        <Icon className={`w-5 h-5 transition-colors duration-200 ${
-                          active ? 'text-gray-900' : 'text-white/70 group-hover:text-white'
-                        }`} />
-                        
-                        {/* Badge with red background */}
-                        <AnimatePresence>
-                          {item.badge && item.badge > 0 && (
-                            <motion.div 
-                              initial={{ scale: 0 }}
-                              animate={{ scale: 1 }}
-                              exit={{ scale: 0 }}
-                              className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center font-semibold shadow-sm"
-                            >
-                              {item.badge > 99 ? '9+' : item.badge}
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </motion.div>
-                      
-                      <span 
-                        className={`text-[10px] font-medium leading-none transition-colors duration-200 ${
-                          active ? 'text-gray-900' : 'text-white/70 group-hover:text-white'
-                        }`}
-                      >
-                        {item.label}
-                      </span>
-                    </div>
-                  </motion.button>
-                );
-              }
+        <span className={`mt-1 text-[9px] font-medium leading-none whitespace-nowrap transition-colors duration-200 ${textClass}`}>
+          {item.label}
+        </span>
 
-              // Special glossy "Our Coffee" item
-              if (item.key === 'shop') {
-                return (
-                  <motion.div
-                    key={item.key}
-                    initial={{ scale: 0, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{
-                      delay: index * 0.1,
-                      type: "spring",
-                      stiffness: 200,
-                      damping: 15,
-                    }}
-                    className="relative"
-                  >
-                    <Link
-                      to={item.path!}
-                      className="group relative flex flex-col items-center justify-center p-3 min-w-[68px] rounded-xl overflow-hidden"
-                    >
-                      <div className={`absolute inset-0 rounded-xl transition-opacity duration-300 ${
-                        active
-                          ? 'bg-gradient-to-br from-amber-300 via-orange-400 to-amber-600 opacity-100'
-                          : 'bg-gradient-to-br from-amber-200/90 via-orange-300/90 to-amber-500/95 opacity-90 group-hover:opacity-100'
-                      }`} />
+        {active && <div className="absolute bottom-1 h-1 w-1 rounded-full bg-white/90" />}
+      </div>
+    );
+  };
 
-                      {/* Glass gloss layer */}
-                      <div className="absolute inset-0 rounded-xl bg-gradient-to-b from-white/45 via-white/10 to-transparent pointer-events-none" />
+  return (
+    <motion.div
+      initial={{ y: 90, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ type: 'spring', stiffness: 260, damping: 24 }}
+      className="fixed bottom-0 left-0 right-0 z-40 md:hidden pb-[max(env(safe-area-inset-bottom),0.5rem)]"
+    >
+      <div className="mx-2.5 mb-2.5 rounded-3xl border border-white/15 bg-black/60 backdrop-blur-2xl shadow-[0_12px_40px_rgba(0,0,0,0.35)] overflow-hidden">
+        <div className="grid grid-cols-5 gap-1 p-1.5">
+          {navItems.map((item, index) => {
+            const active = isActive(item.path);
 
-                      {/* Soft highlight bubble */}
-                      <div className="absolute -top-5 -right-4 w-12 h-12 rounded-full bg-white/30 blur-md pointer-events-none" />
-
-                      {/* Animated diagonal shine */}
-                      <motion.div
-                        className="absolute top-0 -left-10 h-full w-6 bg-white/35 blur-[1px] rotate-12 pointer-events-none"
-                        animate={{ x: [-8, 86, -8] }}
-                        transition={{ repeat: Infinity, duration: 2.8, ease: "easeInOut" }}
-                      />
-
-                      <div className="relative flex flex-col items-center gap-1.5">
-                        <motion.div
-                          animate={active ? { y: [0, -1.5, 0], scale: [1, 1.06, 1] } : { y: [0, -1, 0] }}
-                          transition={{ repeat: Infinity, duration: 2.2, ease: "easeInOut" }}
-                        >
-                          <Icon className="w-5 h-5 text-[#3a2308] drop-shadow-sm" />
-                        </motion.div>
-
-                        <span className="text-[10px] font-semibold leading-none text-[#3a2308] drop-shadow-sm text-center w-full block">
-                          {item.label}
-                        </span>
-                      </div>
-                    </Link>
-                  </motion.div>
-                );
-              }
-
-              // Special "Send a Gift" item
-              if (item.key === 'gift') {
-                return (
-                  <motion.div
-                    key={item.key}
-                    initial={{ scale: 0, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{
-                      delay: index * 0.1,
-                      type: "spring",
-                      stiffness: 200,
-                      damping: 15,
-                    }}
-                    className="relative"
-                  >
-                    {/* Pulsing glow behind the button */}
-                    <motion.div
-                      className="absolute inset-0 rounded-xl"
-                      animate={{ boxShadow: ["0 0 0px 0px rgba(244,63,94,0)", "0 0 12px 4px rgba(244,63,94,0.55)", "0 0 0px 0px rgba(244,63,94,0)"] }}
-                      transition={{ repeat: Infinity, duration: 2.4, ease: "easeInOut" }}
-                    />
-
-                    <Link
-                      to={item.path!}
-                      className="group relative flex flex-col items-center justify-center p-3 min-w-[68px] rounded-xl overflow-hidden"
-                    >
-                      {/* Gradient background — always visible */}
-                      <div className={`absolute inset-0 rounded-xl transition-opacity duration-200 ${
-                        active
-                          ? 'bg-gradient-to-br from-rose-400 to-pink-600 opacity-100'
-                          : 'bg-gradient-to-br from-rose-500 to-pink-600 opacity-90 group-hover:opacity-100'
-                      }`} />
-
-                      {/* Shine overlay */}
-                      <div className="absolute inset-0 rounded-xl bg-gradient-to-b from-white/20 to-transparent pointer-events-none" />
-
-                      <div className="relative flex flex-col items-center gap-1.5">
-                        <motion.div
-                          animate={{ y: [0, -2, 0] }}
-                          transition={{ repeat: Infinity, duration: 1.8, ease: "easeInOut" }}
-                        >
-                          <Icon className="w-5 h-5 text-white drop-shadow-sm" />
-                        </motion.div>
-
-                        <span className="text-[10px] font-semibold leading-none text-white drop-shadow-sm text-center w-full block">
-                          {item.label}
-                        </span>
-                      </div>
-                    </Link>
-                  </motion.div>
-                );
-              }
-
-              // Navigation link
+            if (item.action) {
               return (
-                <motion.div
+                <motion.button
                   key={item.key}
-                  initial={{ scale: 0, opacity: 0 }}
+                  initial={{ scale: 0.92, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
-                  transition={{ 
-                    delay: index * 0.1,
-                    type: "spring",
-                    stiffness: 200,
-                    damping: 15
-                  }}
+                  transition={{ delay: index * 0.06, type: 'spring', stiffness: 220, damping: 20 }}
+                  whileTap={{ scale: 0.96 }}
+                  onClick={() => handleItemClick(item)}
+                  className="w-full"
                 >
-                  <Link
-                    to={item.path!}
-                    className="group relative flex flex-col items-center justify-center p-3 min-w-[68px] rounded-xl"
-                  >
-                    {/* Active background - white style */}
-                    <AnimatePresence>
-                      {active && (
-                        <motion.div 
-                          layoutId="activeTab"
-                          initial={{ opacity: 0, scale: 0.9 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          exit={{ opacity: 0, scale: 0.9 }}
-                          transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                          className="absolute inset-0 bg-white rounded-xl shadow-md"
-                        />
-                      )}
-                    </AnimatePresence>
-                    
-                    {/* Hover state */}
-                    <motion.div 
-                      className="absolute inset-0 rounded-xl bg-accent/0"
-                      whileHover={{ 
-                        backgroundColor: "rgba(255, 255, 255, 0.1)",
-                        transition: { duration: 0.2 }
-                      }}
-                    />
-                    
-                    <div className="relative flex flex-col items-center gap-1.5">
-                      <motion.div
-                        animate={active ? { scale: [1, 1.05, 1] } : {}}
-                        transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
-                      >
-                        <Icon className={`w-5 h-5 transition-colors duration-200 ${
-                          active ? 'text-gray-900' : 'text-white/70 group-hover:text-white'
-                        }`} />
-                      </motion.div>
-                      
-                      <span 
-                        className={`text-[10px] font-medium leading-none transition-colors duration-200 ${
-                          active ? 'text-gray-900' : 'text-white/70 group-hover:text-white'
-                        }`}
-                      >
-                        {item.label}
-                      </span>
-                    </div>
-                  </Link>
-                </motion.div>
+                  {renderNavInner(item, active)}
+                </motion.button>
               );
-            })}
-          </div>
+            }
+
+            return (
+              <motion.div
+                key={item.key}
+                initial={{ scale: 0.92, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: index * 0.06, type: 'spring', stiffness: 220, damping: 20 }}
+              >
+                <Link to={item.path!} className="block w-full">
+                  {renderNavInner(item, active)}
+                </Link>
+              </motion.div>
+            );
+          })}
         </div>
-      </motion.div>
-    </>
+      </div>
+    </motion.div>
   );
 };
