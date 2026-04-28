@@ -70,6 +70,11 @@ export interface Order {
   // Shipping Information
   shippingMethod: number; // 1=Pickup, 2=Nool, 3=Aramex
   trackingNumber?: string;
+
+  // Unpaid reminder tracking
+  unpaidReminderSent?: boolean;
+  unpaidReminderSentAt?: string;
+  unpaidReminderCount?: number;
   
   // Aramex Pickup Information (when shippingMethod = 3)
   pickupReference?: string; // Pickup ID/Reference number from Aramex

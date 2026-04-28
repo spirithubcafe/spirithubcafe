@@ -40,6 +40,13 @@ interface PaginationInfo {
   totalCount: number;
 }
 
+interface ReminderHistoryItem {
+  orderId: number;
+  unpaidReminderSent?: boolean;
+  unpaidReminderSentAt?: string;
+  unpaidReminderCount?: number;
+}
+
 interface OrderDetailsDto {
   id: number;
   orderNumber: string;
@@ -439,6 +446,24 @@ export const orderService = {
    */
   async deleteOrder(id: number): Promise<ApiResponse<void>> {
     const response = await apiClient.delete<ApiResponse<void>>(`/api/orders/${id}`);
+    return response.data;
+  },
+
+  /**
+   * Get reminder history for unpaid orders
+   * GET /api/orders/reminder-history
+   */
+  async getReminderHistory(): Promise<ApiResponse<ReminderHistoryItem[]>> {
+    const response = await apiClient.get<ApiResponse<ReminderHistoryItem[]>>('/api/orders/reminder-history');
+    return response.data;
+  },
+
+  /**
+   * Send payment reminder for a specific order
+   * POST /api/orders/{id}/send-payment-reminder
+   */
+  async sendPaymentReminder(id: number): Promise<ApiResponse<void>> {
+    const response = await apiClient.post<ApiResponse<void>>(`/api/orders/${id}/send-payment-reminder`);
     return response.data;
   },
 

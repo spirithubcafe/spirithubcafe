@@ -142,6 +142,7 @@ export const OrdersManagement: React.FC = () => {
   const [editLoading, setEditLoading] = useState(false);
   const [invoiceLoading, setInvoiceLoading] = useState(false);
   const [paymentLinkLoading, setPaymentLinkLoading] = useState(false);
+  const [sendingReminderOrderId, setSendingReminderOrderId] = useState<number | null>(null);
   const [shipmentLoading, setShipmentLoading] = useState<number | null>(null);
   const [printLabelLoading, setPrintLabelLoading] = useState<number | null>(null);
   
@@ -907,13 +908,38 @@ export const OrdersManagement: React.FC = () => {
       
       // Handle API response structure
       const ordersList = response?.data || [];
+      const reminderByOrderId = new Map<
+        number,
+        { unpaidReminderSent?: boolean; unpaidReminderSentAt?: string; unpaidReminderCount?: number }
+      >();
+      try {
+        const reminderHistoryResponse = await orderService.getReminderHistory();
+        const reminderHistoryRaw = reminderHistoryResponse?.data;
+        if (Array.isArray(reminderHistoryRaw)) {
+          for (const item of reminderHistoryRaw) {
+            const id = Number((item as any)?.orderId ?? (item as any)?.id ?? (item as any)?.order?.id);
+            if (!Number.isFinite(id)) continue;
+            reminderByOrderId.set(id, {
+              unpaidReminderSent: Boolean((item as any)?.unpaidReminderSent),
+              unpaidReminderSentAt: (item as any)?.unpaidReminderSentAt ?? (item as any)?.sentAt,
+              unpaidReminderCount: Number((item as any)?.unpaidReminderCount ?? (item as any)?.count ?? 0),
+            });
+          }
+        }
+      } catch {
+        // Reminder history is optional. Do not block order list rendering.
+      }
       
       // Ensure all orders have items array (handle null/undefined items)
       const ordersWithItems = Array.isArray(ordersList)
         ? ordersList.map((order) => {
+            const reminder = reminderByOrderId.get(order.id);
             const normalized = {
               ...order,
               items: Array.isArray(order.items) ? order.items : [],
+              unpaidReminderSent: order.unpaidReminderSent ?? reminder?.unpaidReminderSent ?? false,
+              unpaidReminderSentAt: order.unpaidReminderSentAt ?? reminder?.unpaidReminderSentAt,
+              unpaidReminderCount: order.unpaidReminderCount ?? reminder?.unpaidReminderCount ?? 0,
             };
 
             // Fill pickup fields from cache if API omitted them
@@ -993,7 +1019,7 @@ export const OrdersManagement: React.FC = () => {
       } else if (error.statusCode === 500) {
         errorMessage += isArabic 
           ? 'خطأ في الخادم. قد لا يكون جدول الطلبات موجوداً في قاعدة البيانات بعد.' 
-          : 'Server error. The orders table may not exist in the database yet.';
+          : 'Internal server error from API. Please try again later or check backend logs.';
       } else {
         errorMessage += error.message || (isArabic ? 'خطأ غير معروف' : 'Unknown error');
       }
@@ -1365,6 +1391,19 @@ export const OrdersManagement: React.FC = () => {
               {isArabic ? 'رابط دفع' : 'Pay link'}
             </DropdownMenuItem>
           )}
+          {String(order.paymentStatus).toLowerCase() !== 'paid' && (
+            <DropdownMenuItem
+              onSelect={() => handleSendPaymentReminder(order)}
+              disabled={sendingReminderOrderId === order.id}
+            >
+              {sendingReminderOrderId === order.id ? (
+                <RefreshCw className="h-4 w-4 animate-spin" />
+              ) : (
+                <Bell className="h-4 w-4" />
+              )}
+              {'Send Payment Reminder'}
+            </DropdownMenuItem>
+          )}
 
           {order.shippingMethod === 3 && !order.trackingNumber && (
             <DropdownMenuItem
@@ -1469,6 +1508,41 @@ export const OrdersManagement: React.FC = () => {
           ) : null}
         </DropdownMenuContent>
       </DropdownMenu>
+    );
+  };
+
+  const handleSendPaymentReminder = async (order: Order) => {
+    setSendingReminderOrderId(order.id);
+    try {
+      const result = await orderService.sendPaymentReminder(order.id);
+      toast.success(isArabic ? 'تم إرسال تذكير الدفع' : 'Payment reminder sent', {
+        description: result?.message || order.orderNumber,
+      });
+      await loadOrders({ silent: true });
+    } catch (error: any) {
+      toast.error(isArabic ? 'فشل إرسال تذكير الدفع' : 'Failed to send payment reminder', {
+        description: error?.message || order.orderNumber,
+      });
+    } finally {
+      setSendingReminderOrderId(null);
+    }
+  };
+
+  const renderReminderMeta = (order: Order) => {
+    if (!order.unpaidReminderSent) return null;
+
+    return (
+      <div className="mt-1 space-y-0.5">
+        <Badge variant="outline" className="border-amber-300 text-amber-700">
+          {isArabic ? 'تم إرسال تذكير' : 'Reminder Sent'}
+        </Badge>
+        <div className="text-xs text-muted-foreground">
+          {isArabic ? 'تاريخ التذكير:' : 'Reminder At:'} {formatOrderDateTime(order.unpaidReminderSentAt)}
+          {typeof order.unpaidReminderCount === 'number' && order.unpaidReminderCount > 0 && (
+            <span> ({isArabic ? 'العدد' : 'Count'}: {order.unpaidReminderCount})</span>
+          )}
+        </div>
+      </div>
     );
   };
 
@@ -2288,6 +2362,7 @@ export const OrdersManagement: React.FC = () => {
                         {order.paymentStatus}
                       </Badge>
                     </div>
+                    {renderReminderMeta(order)}
 
                           <div className="mt-3 flex items-center justify-end">
                             <OrderActionsMenu order={order} triggerVariant="button" />
@@ -2332,6 +2407,7 @@ export const OrdersManagement: React.FC = () => {
                             )}
                             <div>
                               <div>{order.orderNumber}</div>
+                              {renderReminderMeta(order)}
                               {order.trackingNumber && (
                                 <a 
                                   href={`https://www.aramex.com/om/en/track/shipments?ShipmentNumber=${order.trackingNumber}`}
@@ -2449,6 +2525,7 @@ export const OrdersManagement: React.FC = () => {
                             <Badge className={getStatusColor(order.status)}>{order.status}</Badge>
                             <Badge className={getPaymentStatusColor(order.paymentStatus)}>{order.paymentStatus}</Badge>
                           </div>
+                          {renderReminderMeta(order)}
 
                           <div className="mt-3 flex items-center justify-end">
                             <OrderActionsMenu order={order} triggerVariant="button" />
@@ -2489,6 +2566,7 @@ export const OrdersManagement: React.FC = () => {
                                   )}
                                   <div>
                                     <div>{order.orderNumber}</div>
+                                    {renderReminderMeta(order)}
                                     {order.trackingNumber && (
                                       <div className="mt-0.5 space-y-0.5">
                                         <a
@@ -4078,3 +4156,5 @@ export const OrdersManagement: React.FC = () => {
     </div>
   );
 };
+
+
