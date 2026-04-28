@@ -24,7 +24,11 @@ export const categoryService = {
         excludeShop: params?.excludeShop,
       },
     });
-    return response.data.data || (response.data as unknown as Category[]);
+    const apiResponse = response.data;
+    if (apiResponse?.success === false) {
+      throw new Error(apiResponse.message || 'Failed to load categories');
+    }
+    return apiResponse.data || (apiResponse as unknown as Category[]);
   },
 
   /**

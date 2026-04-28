@@ -32,6 +32,26 @@ const normalizeShopPage = (data: ShopPage): ShopPage => ({
   })),
 });
 
+const wait = (ms: number): Promise<void> =>
+  new Promise((resolve) => window.setTimeout(resolve, ms));
+
+const withRetry = async <T>(fn: () => Promise<T>, maxAttempts = 3): Promise<T> => {
+  let lastError: unknown;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error;
+      if (attempt < maxAttempts) {
+        await wait(300 * attempt);
+      }
+    }
+  }
+
+  throw lastError;
+};
+
 export const useShopPage = () => {
   const [shopData, setShopData] = useState<ShopPage | null>(null);
   const [loading, setLoading] = useState(true);
@@ -41,7 +61,7 @@ export const useShopPage = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await shopApi.getShopPage();
+      const response = await withRetry(() => shopApi.getShopPage(), 3);
       if (response.success) {
         setShopData(normalizeShopPage(response.data));
       } else {
@@ -71,7 +91,7 @@ export const useShopCategory = (slug?: string) => {
     try {
       setLoading(true);
       setError(null);
-      const response = await shopApi.getCategoryBySlug(slug);
+      const response = await withRetry(() => shopApi.getCategoryBySlug(slug), 3);
       if (response.success) {
         const cat = response.data;
         setCategory({
@@ -109,12 +129,16 @@ export const useCategoryProducts = (categoryId: number) => {
     try {
       setLoading(true);
       setError(null);
-      const response = await shopApi.getCategoryProducts(
-        categoryId,
-        page,
-        20,
-        sortBy,
-        ascending,
+      const response = await withRetry(
+        () =>
+          shopApi.getCategoryProducts(
+            categoryId,
+            page,
+            20,
+            sortBy,
+            ascending,
+          ),
+        3,
       );
       if (response.success) {
         setProducts(response.data.map(normalizeProductTags));

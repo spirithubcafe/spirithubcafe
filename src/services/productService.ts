@@ -60,6 +60,9 @@ export const productService = {
     
     // Backend returns {success, data, pagination}
     const apiResponse = response.data;
+    if (apiResponse?.success === false) {
+      throw new Error(apiResponse.message || 'Failed to load products');
+    }
     return {
       items: apiResponse.data || [],
       totalCount: apiResponse.pagination?.totalCount || 0,

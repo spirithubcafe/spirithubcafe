@@ -133,6 +133,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     return url.includes('default-product.webp');
   };
 
+  const wait = (ms: number): Promise<void> =>
+    new Promise((resolve) => window.setTimeout(resolve, ms));
+
   // Abort controller for image enrichment
   const imageEnrichmentAbortRef = React.useRef<AbortController | null>(null);
 
@@ -216,20 +219,37 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     }
     setError(null);
     
-    try {
-      // Fetch products from API using main endpoint with pagination
-      const response = await productService.getAll({
-        page: 1,
-        pageSize: 100, // Get all products
-        includeInactive: false,
-        excludeShop: true,
-      });
+    let fetchSucceeded = false;
 
-      // Handle response - it might be array or paginated response
-      const products = (Array.isArray(response) ? response : response.items || []) as ApiProduct[];
-      const activeProducts = products.filter(
-        (prod) => (prod as unknown as { isActive?: boolean }).isActive !== false,
-      );
+    try {
+      let activeProducts: ApiProduct[] = [];
+      const maxAttempts = usedCache ? 2 : 3;
+
+      // Retry transient failures and suspicious empty first-load responses.
+      for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+        if (!isMountedRef.current || requestId !== latestProductsRequestRef.current) {
+          return;
+        }
+
+        const response = await productService.getAll({
+          page: 1,
+          pageSize: 100, // Get all products
+          includeInactive: false,
+          excludeShop: true,
+        });
+
+        const products = (Array.isArray(response) ? response : response.items || []) as ApiProduct[];
+        activeProducts = products.filter(
+          (prod) => (prod as unknown as { isActive?: boolean }).isActive !== false,
+        );
+
+        if (!usedCache && activeProducts.length === 0 && attempt < maxAttempts) {
+          await wait(400 * attempt);
+          continue;
+        }
+
+        break;
+      }
 
       // IMPORTANT: Avoid N+1 calls (getById per product). Use list payload for initial rendering.
       type ApiProductExtended = ApiProduct & Record<string, unknown>;
@@ -376,6 +396,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 
       const mergedProducts = transformedProducts.map(preserveImageFromCache);
       setProducts(mergedProducts);
+      fetchSucceeded = true;
       
       // Cache the data
       cacheUtils.set(cacheKey, mergedProducts);
@@ -402,8 +423,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       if (ongoingProductsFetchRef.current === fetchKey) {
         ongoingProductsFetchRef.current = null;
       }
-      // Mark as successfully fetched (only if no error)
-      if (!error) {
+      // Mark as successfully fetched only when this request completed successfully.
+      if (fetchSucceeded) {
         lastSuccessfulFetchRef.current.products = fetchKey;
       }
       if (!usedCache) {
@@ -411,7 +432,6 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       }
     }
   // Stable callback - uses refs for current language/region values
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [beginLoading, endLoading, preloadImagesBestEffort]);
 
   const fetchCategories = useCallback(async (forceRefresh = false) => {
@@ -447,9 +467,24 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     beginLoading();
     setError(null);
     
+    let fetchSucceeded = false;
+
     try {
-      // Fetch categories from API
-      const apiCategories = await categoryService.getAll({ includeInactive: false, excludeShop: true });
+      let apiCategories: ApiCategory[] = [];
+      const maxAttempts = forceRefresh ? 3 : 2;
+
+      for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+        if (!isMountedRef.current || requestId !== latestCategoriesRequestRef.current) {
+          return;
+        }
+
+        apiCategories = await categoryService.getAll({ includeInactive: false, excludeShop: true });
+        if (apiCategories.length === 0 && attempt < maxAttempts) {
+          await wait(300 * attempt);
+          continue;
+        }
+        break;
+      }
       
       // Sort all categories by displayOrder
       const sortedCategories = apiCategories.sort((a, b) => a.displayOrder - b.displayOrder);
@@ -480,6 +515,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       
       setCategories(homepageCategories);
       setAllCategories(transformedAllCategories);
+      fetchSucceeded = true;
       
       // Cache both datasets
       cacheUtils.set(cacheKey, homepageCategories);
@@ -501,14 +537,13 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       if (ongoingCategoriesFetchRef.current === fetchKey) {
         ongoingCategoriesFetchRef.current = null;
       }
-      // Mark as successfully fetched (only if no error)
-      if (!error) {
+      // Mark as successfully fetched only when this request completed successfully.
+      if (fetchSucceeded) {
         lastSuccessfulFetchRef.current.categories = fetchKey;
       }
       endLoading();
     }
   // Stable callback - uses refs for current language/region values
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [beginLoading, endLoading, preloadImagesBestEffort]);
 
   // Initialize data and language settings - refetch when region changes
