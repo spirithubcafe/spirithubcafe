@@ -27,17 +27,35 @@ export const ProfessionalHeroSlider: React.FC = () => {
   const [videoLoaded, setVideoLoaded] = useState(false);
   const [videoProgress, setVideoProgress] = useState(0);
   const videoRef = React.useRef<HTMLVideoElement>(null);
+  const mobileHeroPoster = '/images/slides/slide1.webp';
 
   // Check if device is mobile
   useEffect(() => {
+    let rafId: number | null = null;
+
     const checkIsMobile = () => {
-      setIsMobile(window.innerWidth < 768);
+      const nextIsMobile = window.innerWidth < 768;
+      setIsMobile((prev) => (prev === nextIsMobile ? prev : nextIsMobile));
     };
-    
+
+    const onResize = () => {
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId);
+      }
+      rafId = requestAnimationFrame(() => {
+        checkIsMobile();
+      });
+    };
+
     checkIsMobile();
-    window.addEventListener('resize', checkIsMobile);
-    
-    return () => window.removeEventListener('resize', checkIsMobile);
+    window.addEventListener('resize', onResize, { passive: true });
+
+    return () => {
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId);
+      }
+      window.removeEventListener('resize', onResize);
+    };
   }, []);
 
   // Handle video playback for iOS - immediate loading with progress tracking
@@ -382,8 +400,8 @@ export const ProfessionalHeroSlider: React.FC = () => {
               loop
               muted
               playsInline
-              preload="auto"
-              poster={currentSlideData.image}
+              preload="metadata"
+              poster={mobileHeroPoster}
               onCanPlay={() => setVideoLoaded(true)}
               onError={() => {
                 console.warn('Video failed to load, using fallback image');
@@ -406,7 +424,7 @@ export const ProfessionalHeroSlider: React.FC = () => {
             {/* Fallback image shown until video loads */}
             {!videoLoaded && (
               <img
-                src={currentSlideData.image}
+                src={mobileHeroPoster}
                 alt={currentSlideData.title}
                 className={`background-image ${currentSlideData.imageClassName ?? ''}`.trim()}
                 style={{ 

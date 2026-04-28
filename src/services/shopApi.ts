@@ -1,4 +1,5 @@
 import { http, publicHttp } from './apiClient';
+import { getActiveRegionForApi } from '../lib/regionUtils';
 import type {
   ApiResponse,
   PaginatedResponse,
@@ -8,10 +9,49 @@ import type {
   SortBy,
 } from '../types/shop';
 
+const SHOP_PAGE_CACHE_TTL_MS = 60_000;
+type ShopPageCacheEntry = {
+  data: ApiResponse<ShopPage>;
+  expiresAt: number;
+};
+
+const shopPageCache = new Map<string, ShopPageCacheEntry>();
+const inflightShopPageRequests = new Map<string, Promise<ApiResponse<ShopPage>>>();
+
+const getShopPageCacheKey = (): string => getActiveRegionForApi();
+
 export const shopApi = {
-  getShopPage: async (): Promise<ApiResponse<ShopPage>> => {
-    const response = await publicHttp.get<ApiResponse<ShopPage>>('/api/shop');
-    return response.data;
+  getShopPage: async (forceRefresh = false): Promise<ApiResponse<ShopPage>> => {
+    const cacheKey = getShopPageCacheKey();
+    const now = Date.now();
+
+    if (!forceRefresh) {
+      const cached = shopPageCache.get(cacheKey);
+      if (cached && cached.expiresAt > now) {
+        return cached.data;
+      }
+
+      const inflight = inflightShopPageRequests.get(cacheKey);
+      if (inflight) {
+        return inflight;
+      }
+    }
+
+    const request = publicHttp
+      .get<ApiResponse<ShopPage>>('/api/shop')
+      .then((response) => {
+        shopPageCache.set(cacheKey, {
+          data: response.data,
+          expiresAt: Date.now() + SHOP_PAGE_CACHE_TTL_MS,
+        });
+        return response.data;
+      })
+      .finally(() => {
+        inflightShopPageRequests.delete(cacheKey);
+      });
+
+    inflightShopPageRequests.set(cacheKey, request);
+    return request;
   },
 
   getCategoryBySlug: async (slug: string): Promise<ApiResponse<ShopCategory>> => {

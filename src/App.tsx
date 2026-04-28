@@ -1,3 +1,4 @@
+import { lazy, Suspense, useEffect } from 'react';
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { Toaster } from './components/ui/sonner';
@@ -12,75 +13,74 @@ import { RegionRedirect } from './components/layout/RegionRedirect';
 import { Footer } from './components/layout/Footer';
 import { CartDrawer } from './components/cart/CartDrawer';
 import HomePage from './pages/HomePage';
-import ProfilePage from './pages/ProfilePage';
-import {
-  AdminLayout,
-  AdminDashboard,
-  CategoriesManagement,
-  ProductsManagement,
-  UsersManagement,
-  SeoManagement,
-  OrdersManagement,
-  WholesaleOrdersManagement,
-  ReportsManagement,
-  SystemSettings,
-  NewsletterManagement,
-  EmailSettingsManagement,
-  EmailNotificationSettingsManagement,
-  ReviewsManagement,
-  WhatsAppSendMessage,
-  WhatsAppNotificationSettingsManagement,
-  WhatsAppTemplatesManagement,
-  ProductTagsManagement,
-} from './components/admin';
-import { CategoryAddPage } from './pages/CategoryAddPage';
-import { CategoryEditPage } from './pages/CategoryEditPage';
-import { ProductAddPage } from './pages/ProductAddPage';
-import { ProductEditPage } from './pages/ProductEditPage';
-import { ProductAttributesPage } from './pages/ProductAttributesPage';
-import { FavoritesPage } from './pages/FavoritesPage';
-import { OrdersPage } from './pages/OrdersPage';
-import { OrderDetailPage } from './pages/OrderDetailPage';
-import { AboutPage } from './pages/AboutPage';
-import { ContactPage } from './pages/ContactPage';
-import { LoyaltyPage } from './pages/LoyaltyPage';
-import { LoyaltySignupPage } from './pages/LoyaltySignupPage';
-import { FAQPage } from './pages/FAQPage';
-import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage';
-import { TermsConditionsPage } from './pages/TermsConditionsPage';
-import { DeliveryPolicyPage } from './pages/DeliveryPolicyPage';
-import { RefundPolicyPage } from './pages/RefundPolicyPage';
 import { ProductsPage } from './pages/ProductsPage';
 import { ProductDetailPage } from './pages/ProductDetailPage';
 import ShopPage from './pages/Shop/ShopPage';
 import ShopCategoryPage from './pages/Shop/ShopCategoryPage';
-import { WholesaleOrderPage } from './pages/WholesaleOrderPage';
-import { LoginPage } from './pages/LoginPage';
-import { RegisterPage } from './pages/RegisterPage';
-import ForgotPasswordPage from './pages/ForgotPasswordPage';
-import ResetPasswordPage from './pages/ResetPasswordPage';
 import { NotFound } from './components/pages/NotFound';
 import { ErrorBoundary, RouteErrorBoundary } from './components/pages/ErrorBoundary';
-import { CheckoutPage } from './pages/CheckoutPage';
-import { PaymentPage } from './pages/PaymentPage';
-import { PaymentSuccessPage } from './pages/PaymentSuccessPage';
-import { PaymentFailurePage } from './pages/PaymentFailurePage';
-import { PaymentCancelledPage } from './pages/PaymentCancelledPage';
-import { PaymentErrorPage } from './pages/PaymentErrorPage';
-import { InvoicePage } from './pages/InvoicePage';
 import { RequireAuth } from './components/auth/RequireAuth';
 import { RequireWholesale } from './components/auth/RequireWholesale';
 import { AdminRegionRedirect } from './components/admin/AdminRegionRedirect';
 import { initVisitorTracking } from './lib/visitorTracking';
 import { migrateCartToRegionBased } from './lib/migrateCart';
 import { initGA4, trackPageView } from './lib/ga4';
-import { useEffect } from 'react';
 import './i18n';
 import './App.css';
-import WholesaleLoginPage from './pages/WholesaleLoginPage';
-import WholesaleDashboardPage from './pages/WholesaleDashboardPage';
-import WholesaleOrdersPage from './pages/WholesaleOrdersPage';
-import WholesaleOrderDetailsPage from './pages/WholesaleOrderDetailsPage';
+
+const ProfilePage = lazy(() => import('./pages/ProfilePage'));
+const FavoritesPage = lazy(() => import('./pages/FavoritesPage').then((m) => ({ default: m.FavoritesPage })));
+const OrdersPage = lazy(() => import('./pages/OrdersPage').then((m) => ({ default: m.OrdersPage })));
+const OrderDetailPage = lazy(() => import('./pages/OrderDetailPage').then((m) => ({ default: m.OrderDetailPage })));
+const AboutPage = lazy(() => import('./pages/AboutPage').then((m) => ({ default: m.AboutPage })));
+const ContactPage = lazy(() => import('./pages/ContactPage').then((m) => ({ default: m.ContactPage })));
+const LoyaltyPage = lazy(() => import('./pages/LoyaltyPage').then((m) => ({ default: m.LoyaltyPage })));
+const LoyaltySignupPage = lazy(() => import('./pages/LoyaltySignupPage').then((m) => ({ default: m.LoyaltySignupPage })));
+const FAQPage = lazy(() => import('./pages/FAQPage').then((m) => ({ default: m.FAQPage })));
+const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage').then((m) => ({ default: m.PrivacyPolicyPage })));
+const TermsConditionsPage = lazy(() => import('./pages/TermsConditionsPage').then((m) => ({ default: m.TermsConditionsPage })));
+const DeliveryPolicyPage = lazy(() => import('./pages/DeliveryPolicyPage').then((m) => ({ default: m.DeliveryPolicyPage })));
+const RefundPolicyPage = lazy(() => import('./pages/RefundPolicyPage').then((m) => ({ default: m.RefundPolicyPage })));
+const WholesaleOrderPage = lazy(() => import('./pages/WholesaleOrderPage').then((m) => ({ default: m.WholesaleOrderPage })));
+const LoginPage = lazy(() => import('./pages/LoginPage').then((m) => ({ default: m.LoginPage })));
+const RegisterPage = lazy(() => import('./pages/RegisterPage').then((m) => ({ default: m.RegisterPage })));
+const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'));
+const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
+const CheckoutPage = lazy(() => import('./pages/CheckoutPage').then((m) => ({ default: m.CheckoutPage })));
+const PaymentPage = lazy(() => import('./pages/PaymentPage').then((m) => ({ default: m.PaymentPage })));
+const PaymentSuccessPage = lazy(() => import('./pages/PaymentSuccessPage').then((m) => ({ default: m.PaymentSuccessPage })));
+const PaymentFailurePage = lazy(() => import('./pages/PaymentFailurePage').then((m) => ({ default: m.PaymentFailurePage })));
+const PaymentCancelledPage = lazy(() => import('./pages/PaymentCancelledPage').then((m) => ({ default: m.PaymentCancelledPage })));
+const PaymentErrorPage = lazy(() => import('./pages/PaymentErrorPage').then((m) => ({ default: m.PaymentErrorPage })));
+const InvoicePage = lazy(() => import('./pages/InvoicePage').then((m) => ({ default: m.InvoicePage })));
+const WholesaleLoginPage = lazy(() => import('./pages/WholesaleLoginPage'));
+const WholesaleDashboardPage = lazy(() => import('./pages/WholesaleDashboardPage'));
+const WholesaleOrdersPage = lazy(() => import('./pages/WholesaleOrdersPage'));
+const WholesaleOrderDetailsPage = lazy(() => import('./pages/WholesaleOrderDetailsPage'));
+const CategoryAddPage = lazy(() => import('./pages/CategoryAddPage').then((m) => ({ default: m.CategoryAddPage })));
+const CategoryEditPage = lazy(() => import('./pages/CategoryEditPage').then((m) => ({ default: m.CategoryEditPage })));
+const ProductAddPage = lazy(() => import('./pages/ProductAddPage').then((m) => ({ default: m.ProductAddPage })));
+const ProductEditPage = lazy(() => import('./pages/ProductEditPage').then((m) => ({ default: m.ProductEditPage })));
+const ProductAttributesPage = lazy(() => import('./pages/ProductAttributesPage').then((m) => ({ default: m.ProductAttributesPage })));
+
+const AdminLayout = lazy(() => import('./components/admin/AdminLayout').then((m) => ({ default: m.AdminLayout })));
+const AdminDashboard = lazy(() => import('./components/admin/AdminDashboard').then((m) => ({ default: m.AdminDashboard })));
+const CategoriesManagement = lazy(() => import('./components/admin/CategoriesManagement').then((m) => ({ default: m.CategoriesManagement })));
+const ProductsManagement = lazy(() => import('./components/admin/ProductsManagement').then((m) => ({ default: m.ProductsManagement })));
+const UsersManagement = lazy(() => import('./components/admin/UsersManagement').then((m) => ({ default: m.UsersManagement })));
+const SeoManagement = lazy(() => import('./components/admin/SeoManagement').then((m) => ({ default: m.SeoManagement })));
+const OrdersManagement = lazy(() => import('./components/admin/OrdersManagement').then((m) => ({ default: m.OrdersManagement })));
+const WholesaleOrdersManagement = lazy(() => import('./components/admin/WholesaleOrdersManagement').then((m) => ({ default: m.WholesaleOrdersManagement })));
+const ReportsManagement = lazy(() => import('./components/admin/ReportsManagement').then((m) => ({ default: m.ReportsManagement })));
+const SystemSettings = lazy(() => import('./components/admin/SystemSettings').then((m) => ({ default: m.SystemSettings })));
+const NewsletterManagement = lazy(() => import('./components/admin/NewsletterManagement').then((m) => ({ default: m.NewsletterManagement })));
+const EmailSettingsManagement = lazy(() => import('./components/admin/EmailSettingsManagement').then((m) => ({ default: m.EmailSettingsManagement })));
+const EmailNotificationSettingsManagement = lazy(() => import('./components/admin/EmailNotificationSettingsManagement').then((m) => ({ default: m.EmailNotificationSettingsManagement })));
+const ReviewsManagement = lazy(() => import('./components/admin/ReviewsManagement').then((m) => ({ default: m.ReviewsManagement })));
+const WhatsAppSendMessage = lazy(() => import('./components/admin/WhatsAppSendMessage').then((m) => ({ default: m.WhatsAppSendMessage })));
+const WhatsAppNotificationSettingsManagement = lazy(() => import('./components/admin/WhatsAppNotificationSettingsManagement').then((m) => ({ default: m.WhatsAppNotificationSettingsManagement })));
+const WhatsAppTemplatesManagement = lazy(() => import('./components/admin/WhatsAppTemplatesManagement').then((m) => ({ default: m.WhatsAppTemplatesManagement })));
+const ProductTagsManagement = lazy(() => import('./components/admin/ProductTagsManagement').then((m) => ({ default: m.ProductTagsManagement })));
 
 function AppContent() {
   const location = useLocation();
@@ -116,6 +116,7 @@ function AppContent() {
       {!isInvoicePage && <ScrollToTop />}
       {!isInvoicePage && <Toaster position="top-center" duration={2000} richColors />}
       <RouteErrorBoundary>
+      <Suspense fallback={<div className="min-h-screen bg-white" />}>
       <Routes>
         <Route path="/invoice/:orderNumber" element={<InvoicePage />} />
 
@@ -338,6 +339,7 @@ function AppContent() {
         
         <Route path="*" element={<NotFound />} />
       </Routes>
+      </Suspense>
       </RouteErrorBoundary>
 
       {!isAdminPage && !isInvoicePage && <Footer />}

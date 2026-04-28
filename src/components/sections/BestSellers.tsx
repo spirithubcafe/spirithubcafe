@@ -12,10 +12,38 @@ export const BestSellers: React.FC = () => {
   const [bestSellerProducts, setBestSellerProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const wait = (ms: number): Promise<void> =>
+    new Promise((resolve) => window.setTimeout(resolve, ms));
+
   const fetchBestSellers = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await productService.getBestSellers(6);
+      let data: unknown[] = [];
+      let lastError: unknown = null;
+
+      for (let attempt = 1; attempt <= 3; attempt += 1) {
+        try {
+          const response = await productService.getBestSellers(6);
+          data = Array.isArray(response) ? response : [];
+          // Retry once more if we got a suspicious empty payload.
+          if (data.length === 0 && attempt < 3) {
+            await wait(250 * attempt);
+            continue;
+          }
+          lastError = null;
+          break;
+        } catch (error) {
+          lastError = error;
+          if (attempt < 3) {
+            await wait(300 * attempt);
+          }
+        }
+      }
+
+      if (lastError) {
+        throw lastError;
+      }
+
       const mapped: Product[] = (Array.isArray(data) ? data : []).map((p) => {
         const record = p as unknown as Record<string, unknown>;
         const minPrice = typeof record.minPrice === 'number' ? record.minPrice : 0;

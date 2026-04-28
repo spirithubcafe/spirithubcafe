@@ -8,9 +8,11 @@ export const useScrollDirection = () => {
   useEffect(() => {
     let lastScrollY = window.pageYOffset;
     let ticking = false;
+    let resizeRaf: number | null = null;
 
     const checkIsMobile = () => {
-      setIsMobile(window.innerWidth < 768);
+      const nextIsMobile = window.innerWidth < 768;
+      setIsMobile((prev) => (prev === nextIsMobile ? prev : nextIsMobile));
     };
 
     const updateScrollDirection = () => {
@@ -36,16 +38,24 @@ export const useScrollDirection = () => {
     };
 
     const onResize = () => {
-      checkIsMobile();
+      if (resizeRaf !== null) {
+        cancelAnimationFrame(resizeRaf);
+      }
+      resizeRaf = requestAnimationFrame(() => {
+        checkIsMobile();
+      });
     };
 
     // Initial check
     checkIsMobile();
 
     window.addEventListener('scroll', onScroll);
-    window.addEventListener('resize', onResize);
+    window.addEventListener('resize', onResize, { passive: true });
 
     return () => {
+      if (resizeRaf !== null) {
+        cancelAnimationFrame(resizeRaf);
+      }
       window.removeEventListener('scroll', onScroll);
       window.removeEventListener('resize', onResize);
     };

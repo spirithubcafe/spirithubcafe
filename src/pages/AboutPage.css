@@ -1,9 +1,8 @@
 .hero-background {
-  background-image: url(/images/back.jpg);
+  background-image: url(/images/header.webp);
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  background-attachment: fixed;
 }
 
 .glass-overlay {

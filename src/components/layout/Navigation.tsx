@@ -83,6 +83,9 @@ export const Navigation: React.FC = () => {
 
   useEffect(() => {
     let isMounted = true;
+    let timeoutId: number | null = null;
+    let idleId: number | null = null;
+
     const loadNavCategories = async () => {
       try {
         // Load shop categories
@@ -113,9 +116,35 @@ export const Navigation: React.FC = () => {
       }
     };
 
-    loadNavCategories();
+    const scheduleLoad = () => {
+      // Defer non-critical nav data out of the initial critical path.
+      // This keeps the menu functionality but lets above-the-fold content load first.
+      timeoutId = window.setTimeout(() => {
+        loadNavCategories();
+      }, 1500);
+    };
+
+    if ('requestIdleCallback' in window) {
+      const idleCb = window.requestIdleCallback as (cb: IdleRequestCallback, opts?: IdleRequestOptions) => number;
+      idleId = idleCb(
+        () => {
+          loadNavCategories();
+        },
+        { timeout: 2500 },
+      );
+    } else {
+      scheduleLoad();
+    }
+
     return () => {
       isMounted = false;
+      if (timeoutId !== null) {
+        window.clearTimeout(timeoutId);
+      }
+      if (idleId !== null && 'cancelIdleCallback' in window) {
+        const cancelIdleCb = window.cancelIdleCallback as (id: number) => void;
+        cancelIdleCb(idleId);
+      }
     };
   }, []);
   

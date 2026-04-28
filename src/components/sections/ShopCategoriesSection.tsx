@@ -77,6 +77,8 @@ export const ShopCategoriesSection: React.FC = () => {
                       alt={name}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                       loading="lazy"
+                      decoding="async"
+                      fetchPriority="low"
                       onError={(e) => handleImageError(e, '/images/slides/slide1.webp')}
                     />
                     

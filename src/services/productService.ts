@@ -82,6 +82,9 @@ export const productService = {
       params: { count },
     });
     const apiResponse = response.data;
+    if (apiResponse?.success === false) {
+      throw new Error(apiResponse.message || 'Failed to load featured products');
+    }
     return apiResponse.data || [];
   },
 
@@ -95,6 +98,9 @@ export const productService = {
       params: { count },
     });
     const apiResponse = response.data;
+    if (apiResponse?.success === false) {
+      throw new Error(apiResponse.message || 'Failed to load latest products');
+    }
     return apiResponse.data || [];
   },
 
@@ -108,6 +114,9 @@ export const productService = {
       params: { count },
     });
     const apiResponse = response.data;
+    if (apiResponse?.success === false) {
+      throw new Error(apiResponse.message || 'Failed to load best seller products');
+    }
     return apiResponse.data || [];
   },
 

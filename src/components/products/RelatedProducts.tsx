@@ -181,6 +181,7 @@ const RelatedProductsInner = ({ currentProduct, shopData }: Props) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
+  const arrowStateRef = useRef({ left: false, right: false });
 
   const { recommendations, onCartAdd, onProductCardClick } = useProductRecommendations(currentProduct, shopData);
 
@@ -197,13 +198,51 @@ const RelatedProductsInner = ({ currentProduct, shopData }: Props) => {
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
-    const id = requestAnimationFrame(syncArrows);
-    el.addEventListener('scroll', syncArrows, { passive: true });
-    window.addEventListener('resize', syncArrows, { passive: true });
+    let rafId: number | null = requestAnimationFrame(syncArrows);
+
+    const scheduleSync = () => {
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId);
+      }
+      rafId = requestAnimationFrame(syncArrows);
+    };
+
+    const syncArrowsOptimized = () => {
+      const track = scrollRef.current;
+      if (!track) return;
+      const scrollPos = Math.abs(track.scrollLeft);
+      const maxScroll = track.scrollWidth - track.clientWidth;
+      const nextLeft = scrollPos > 4;
+      const nextRight = scrollPos < maxScroll - 4;
+      const prev = arrowStateRef.current;
+
+      if (prev.left !== nextLeft) {
+        setCanScrollLeft(nextLeft);
+      }
+      if (prev.right !== nextRight) {
+        setCanScrollRight(nextRight);
+      }
+
+      arrowStateRef.current = { left: nextLeft, right: nextRight };
+    };
+
+    const scheduleOptimizedSync = () => {
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId);
+      }
+      rafId = requestAnimationFrame(syncArrowsOptimized);
+    };
+
+    // Initial pass after mount/content update.
+    scheduleOptimizedSync();
+    el.addEventListener('scroll', scheduleOptimizedSync, { passive: true });
+    window.addEventListener('resize', scheduleSync, { passive: true });
     return () => {
-      cancelAnimationFrame(id);
-      el.removeEventListener('scroll', syncArrows);
-      window.removeEventListener('resize', syncArrows);
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId);
+      }
+      el.removeEventListener('scroll', scheduleOptimizedSync);
+      window.removeEventListener('resize', scheduleSync);
     };
   }, [recommendations, syncArrows]);
 

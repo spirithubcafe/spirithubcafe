@@ -95,7 +95,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
         <Button
           type="button"
           variant={loginMethod === 'phone' ? 'default' : 'outline'}
-          className={`flex-1 ${loginMethod === 'phone' ? 'bg-green-600 hover:bg-green-700' : ''}`}
+          className="flex-1 bg-green-600 hover:bg-green-700 text-white border-green-600"
           onClick={() => setLoginMethod('phone')}
         >
           <Phone className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
