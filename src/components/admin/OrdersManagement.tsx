@@ -193,6 +193,8 @@ export const OrdersManagement: React.FC = () => {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
+  const currentPageRef = useRef(1);
+  const pageSizeRef = useRef(20);
 
   // Initialize pickup cache from storage once
   useEffect(() => {
@@ -879,18 +881,26 @@ export const OrdersManagement: React.FC = () => {
   useEffect(() => {
     if (!autoRefreshEnabled) return;
     const intervalId = window.setInterval(() => {
-      loadOrders({ silent: true });
+      loadOrders({ silent: true, page: currentPageRef.current, size: pageSizeRef.current });
     }, 30_000);
     return () => window.clearInterval(intervalId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoRefreshEnabled]);
 
+  useEffect(() => {
+    currentPageRef.current = currentPage;
+  }, [currentPage]);
+
+  useEffect(() => {
+    pageSizeRef.current = pageSize;
+  }, [pageSize]);
+
   const loadOrders = async ({ silent = false, page, size }: { silent?: boolean; page?: number; size?: number } = {}) => {
     if (!silent) setLoading(true);
     setError(null);
     
-    const targetPage = page ?? currentPage;
-    const targetSize = size ?? pageSize;
+    const targetPage = page ?? currentPageRef.current;
+    const targetSize = size ?? pageSizeRef.current;
     
     try {
       const response = await orderService.getOrders({
@@ -910,7 +920,14 @@ export const OrdersManagement: React.FC = () => {
       const ordersList = response?.data || [];
       const reminderByOrderId = new Map<
         number,
-        { unpaidReminderSent?: boolean; unpaidReminderSentAt?: string; unpaidReminderCount?: number }
+        {
+          unpaidReminderSent?: boolean;
+          unpaidReminderSentAt?: string;
+          unpaidReminderCount?: number;
+          unpaidReminderStatus?: string;
+          unpaidReminderLastAttemptAt?: string;
+          unpaidReminderError?: string;
+        }
       >();
       try {
         const reminderHistoryResponse = await orderService.getReminderHistory();
@@ -919,10 +936,18 @@ export const OrdersManagement: React.FC = () => {
           for (const item of reminderHistoryRaw) {
             const id = Number((item as any)?.orderId ?? (item as any)?.id ?? (item as any)?.order?.id);
             if (!Number.isFinite(id)) continue;
+            const sentAt = (item as any)?.unpaidReminderSentAt ?? (item as any)?.sentAt;
+            const failedAt = (item as any)?.failedAt;
+            const lastAttemptAt = (item as any)?.unpaidReminderLastAttemptAt ?? (item as any)?.lastAttemptAt;
+            const explicitStatus = String((item as any)?.unpaidReminderStatus ?? (item as any)?.status ?? '').trim();
+            const sentFlag = Boolean((item as any)?.unpaidReminderSent);
             reminderByOrderId.set(id, {
-              unpaidReminderSent: Boolean((item as any)?.unpaidReminderSent),
-              unpaidReminderSentAt: (item as any)?.unpaidReminderSentAt ?? (item as any)?.sentAt,
+              unpaidReminderSent: sentFlag,
+              unpaidReminderSentAt: sentAt,
               unpaidReminderCount: Number((item as any)?.unpaidReminderCount ?? (item as any)?.count ?? 0),
+              unpaidReminderStatus: sentFlag ? 'Sent' : (explicitStatus || undefined),
+              unpaidReminderLastAttemptAt: sentAt ?? failedAt ?? lastAttemptAt,
+              unpaidReminderError: (item as any)?.unpaidReminderError ?? (item as any)?.error ?? (item as any)?.errorMessage,
             });
           }
         }
@@ -940,6 +965,9 @@ export const OrdersManagement: React.FC = () => {
               unpaidReminderSent: order.unpaidReminderSent ?? reminder?.unpaidReminderSent ?? false,
               unpaidReminderSentAt: order.unpaidReminderSentAt ?? reminder?.unpaidReminderSentAt,
               unpaidReminderCount: order.unpaidReminderCount ?? reminder?.unpaidReminderCount ?? 0,
+              unpaidReminderStatus: (order as any).unpaidReminderStatus ?? reminder?.unpaidReminderStatus,
+              unpaidReminderLastAttemptAt: (order as any).unpaidReminderLastAttemptAt ?? reminder?.unpaidReminderLastAttemptAt,
+              unpaidReminderError: (order as any).unpaidReminderError ?? reminder?.unpaidReminderError,
             };
 
             // Fill pickup fields from cache if API omitted them
@@ -1529,22 +1557,57 @@ export const OrdersManagement: React.FC = () => {
   };
 
   const renderReminderMeta = (order: Order) => {
-    if (!order.unpaidReminderSent) return null;
+    const statusRaw = String(order.unpaidReminderStatus ?? '').trim().toLowerCase();
+    const isSent = Boolean(order.unpaidReminderSent) || statusRaw === 'sent' || statusRaw === 'success' || statusRaw === 'succeeded';
+    const isFailed = statusRaw.includes('fail') || statusRaw === 'error';
+    const isUnpaid = String(order.paymentStatus).toLowerCase() === 'unpaid';
+
+    if (!isSent && !isFailed && !isUnpaid && !(order.unpaidReminderCount && order.unpaidReminderCount > 0)) return null;
+
+    const badgeClass = isSent
+      ? 'border-amber-300 text-amber-700'
+      : isFailed
+        ? 'border-red-300 text-red-700'
+        : 'border-slate-300 text-slate-700';
+
+    const badgeLabel = isSent
+      ? (isArabic ? 'تم إرسال تذكير' : 'Reminder Sent')
+      : isFailed
+        ? (isArabic ? 'فشل التذكير' : 'Reminder Failed')
+        : (isArabic ? 'لم يرسل بعد' : 'Not Sent Yet');
+
+    const tsLabel = isSent
+      ? (isArabic ? 'تاريخ التذكير:' : 'Reminder At:')
+      : (isArabic ? 'آخر محاولة:' : 'Last Attempt:');
+
+    const tsValue = order.unpaidReminderSentAt || order.unpaidReminderLastAttemptAt;
 
     return (
       <div className="mt-1 space-y-0.5">
-        <Badge variant="outline" className="border-amber-300 text-amber-700">
-          {isArabic ? 'تم إرسال تذكير' : 'Reminder Sent'}
+        <Badge variant="outline" className={badgeClass}>
+          {badgeLabel}
         </Badge>
-        <div className="text-xs text-muted-foreground">
-          {isArabic ? 'تاريخ التذكير:' : 'Reminder At:'} {formatOrderDateTime(order.unpaidReminderSentAt)}
-          {typeof order.unpaidReminderCount === 'number' && order.unpaidReminderCount > 0 && (
-            <span> ({isArabic ? 'العدد' : 'Count'}: {order.unpaidReminderCount})</span>
-          )}
-        </div>
+        {(tsValue || (typeof order.unpaidReminderCount === 'number' && order.unpaidReminderCount > 0)) && (
+          <div className="text-xs text-muted-foreground">
+            {tsValue && (
+              <span>
+                {tsLabel} {formatOrderDateTime(tsValue)}
+              </span>
+            )}
+            {typeof order.unpaidReminderCount === 'number' && order.unpaidReminderCount > 0 && (
+              <span>{tsValue ? ' ' : ''}({isArabic ? 'العدد' : 'Count'}: {order.unpaidReminderCount})</span>
+            )}
+          </div>
+        )}
+        {isFailed && order.unpaidReminderError && (
+          <div className="text-xs text-red-600">
+            {isArabic ? 'السبب:' : 'Reason:'} {order.unpaidReminderError}
+          </div>
+        )}
       </div>
     );
   };
+
 
   const handleEditOrder = (order: Order) => {
     setSelectedOrder(order);

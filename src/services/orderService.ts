@@ -45,6 +45,15 @@ interface ReminderHistoryItem {
   unpaidReminderSent?: boolean;
   unpaidReminderSentAt?: string;
   unpaidReminderCount?: number;
+  unpaidReminderStatus?: string;
+  unpaidReminderLastAttemptAt?: string;
+  unpaidReminderError?: string;
+  status?: string;
+  sentAt?: string;
+  failedAt?: string;
+  lastAttemptAt?: string;
+  error?: string;
+  errorMessage?: string;
 }
 
 interface OrderDetailsDto {

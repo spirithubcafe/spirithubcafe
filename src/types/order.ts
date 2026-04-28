@@ -75,6 +75,9 @@ export interface Order {
   unpaidReminderSent?: boolean;
   unpaidReminderSentAt?: string;
   unpaidReminderCount?: number;
+  unpaidReminderStatus?: string;
+  unpaidReminderLastAttemptAt?: string;
+  unpaidReminderError?: string;
   
   // Aramex Pickup Information (when shippingMethod = 3)
   pickupReference?: string; // Pickup ID/Reference number from Aramex
