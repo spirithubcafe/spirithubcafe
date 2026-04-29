@@ -12,7 +12,7 @@ export const AnnouncementBar: React.FC = () => {
 
   return (
     <div
-      className="fixed left-0 right-0 z-[55] w-full overflow-hidden bg-[#681e15] group"
+      className="fixed left-0 right-0 z-[45] w-full overflow-hidden bg-[#681e15] group"
       style={{ top: 'var(--region-banner-height, 0px)', height: `${ANNOUNCEMENT_BAR_HEIGHT_PX}px` }}
       dir="ltr"
     >
