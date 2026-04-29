@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useShopPage } from '../../hooks/useShop';
 import { useApp } from '../../hooks/useApp';
 import { useRegion } from '../../hooks/useRegion';
-import { getCategoryImageUrl, handleImageError } from '../../lib/imageUtils';
+import { buildResponsiveSrcSet, getCategoryImageUrl, handleImageError } from '../../lib/imageUtils';
 
 export const ShopCategoriesSection: React.FC = () => {
   const { shopData, loading } = useShopPage();
@@ -74,11 +74,12 @@ export const ShopCategoriesSection: React.FC = () => {
                   <div className="relative overflow-hidden aspect-square">
                     <img
                       src={imageUrl}
+                      srcSet={buildResponsiveSrcSet(imageUrl, [160, 240, 320, 480])}
+                      sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, (max-width: 1280px) 25vw, 220px"
                       alt={name}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                       loading="lazy"
                       decoding="async"
-                      fetchPriority="low"
                       onError={(e) => handleImageError(e, '/images/slides/slide1.webp')}
                     />
                     

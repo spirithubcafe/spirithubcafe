@@ -10,7 +10,7 @@ import { useFavorites } from '../../hooks/useFavorites';
 import { useRegion } from '../../hooks/useRegion';
 import { formatPrice } from '../../lib/regionUtils';
 import type { Product } from '../../contexts/AppContextDefinition';
-import { getProductImageUrl, handleImageError } from '../../lib/imageUtils';
+import { buildResponsiveSrcSet, getProductImageUrl, handleImageError } from '../../lib/imageUtils';
 import { ProductQuickView } from './ProductQuickView';
 import { ProductTagBadge } from '../shop/ProductTagBadge';
 
@@ -33,6 +33,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   // Variants are only fetched when user opens ProductQuickView or ProductDetailPage
 
   const isWishlisted = isFavorite(product.id);
+  const productImage = product.image || getProductImageUrl(undefined);
+  const productImageSrcSet = buildResponsiveSrcSet(productImage, [240, 320, 480, 640]);
 
   const handleToggleWishlist = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent navigation when clicking wishlist
@@ -138,9 +140,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       {/* Product Image - Square aspect ratio */}
       <div className="relative overflow-hidden aspect-square bg-[#fbf8f3]">
         <img
-          src={product.image || getProductImageUrl(undefined)}
+          src={productImage}
+          srcSet={productImageSrcSet}
+          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 319px"
           alt={product.name}
           className="w-full h-full object-cover"
+          loading="lazy"
+          decoding="async"
           onError={(e) => handleImageError(e, '/images/products/default-product.webp')}
         />
         
@@ -166,7 +172,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         {/* Animated clone for cart animation */}
         {isAnimating && (
           <motion.img
-            src={product.image || getProductImageUrl(undefined)}
+            src={productImage}
             alt={product.name}
             className="absolute inset-0 w-full h-full object-cover pointer-events-none"
             initial={{ scale: 1, opacity: 1, y: 0, x: 0 }}

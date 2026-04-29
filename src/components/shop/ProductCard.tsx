@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { ShoppingCart } from 'lucide-react';
 import type { ShopProduct } from '../../types/shop';
-import { getProductImageUrl, handleImageError } from '../../lib/imageUtils';
+import { buildResponsiveSrcSet, getProductImageUrl, handleImageError } from '../../lib/imageUtils';
 import { ProductBadges } from './ProductBadges';
 import { ProductTagBadge } from './ProductTagBadge';
 import { PriceDisplay } from './PriceDisplay';
@@ -19,6 +19,8 @@ export const ProductCard = ({ product }: Props) => {
   const { currentRegion } = useRegion();
   const { addToCart, openCart } = useCart();
   const isArabic = language === 'ar';
+  const productImage = getProductImageUrl(product.mainImagePath);
+  const productImageSrcSet = buildResponsiveSrcSet(productImage, [240, 320, 480, 640]);
 
   const name = isArabic ? product.nameAr || product.name : product.name;
   const tasting = isArabic ? product.tastingNotesAr || product.tastingNotes : product.tastingNotes;
@@ -56,10 +58,13 @@ export const ProductCard = ({ product }: Props) => {
         <ProductBadges product={product} />
         <Link to={productUrl} className="block overflow-hidden">
           <img
-            src={getProductImageUrl(product.mainImagePath)}
+            src={productImage}
+            srcSet={productImageSrcSet}
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 319px"
             alt={name}
             className="h-56 w-full object-cover transition duration-300 group-hover:scale-105"
             loading="lazy"
+            decoding="async"
             onError={(event) => handleImageError(event, '/images/products/default-product.webp')}
           />
         </Link>

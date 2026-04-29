@@ -3,23 +3,13 @@ import { createRoot, hydrateRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 
 // Import fonts
-import '@fontsource/inter/400.css';
-import '@fontsource/inter/500.css';
-import '@fontsource/inter/600.css';
-import '@fontsource/inter/700.css';
+import '@fontsource-variable/inter/index.css';
 import '@fontsource/cairo/400.css';
-import '@fontsource/cairo/500.css';
-import '@fontsource/cairo/600.css';
 import '@fontsource/cairo/700.css';
 
 import './index.css'
 import './styles/color-overrides.css'
 import App from './App.tsx'
-
-// Overlayscrollbars: import styles and init globally so all scrollable areas get styled
-import 'overlayscrollbars/styles/overlayscrollbars.css'
-import { OverlayScrollbars } from 'overlayscrollbars'
-import { initScrollbars } from './lib/scrollbars'
 
 const rootElement = document.getElementById('root')!;
 
@@ -49,39 +39,72 @@ if (rootElement.hasChildNodes()) {
 // We keep this outside the render so it runs once on load. Use a custom theme class so we can
 // style it with CSS variables in `src/index.css`.
 if (typeof window !== 'undefined') {
-  try {
-    // @ts-ignore - overlayscrollbars type checks can be strict; cast options to any to avoid errors
-    OverlayScrollbars(document.body, {
-      className: 'os-theme-custom',
-      scrollbars: {
-        autoHide: 'leave',
-        clickScroll: true,
-        dragScroll: true
+  const scheduleLowPriorityWork = (task: () => void, timeout = 2000) => {
+    if ('requestIdleCallback' in window) {
+      (window as Window & { requestIdleCallback: (cb: () => void, options?: { timeout: number }) => number })
+        .requestIdleCallback(task, { timeout });
+      return;
+    }
+    globalThis.setTimeout(task, timeout);
+  };
+
+  const initDeferredEnhancements = () => {
+    scheduleLowPriorityWork(async () => {
+      try {
+        await import('overlayscrollbars/styles/overlayscrollbars.css');
+        const [{ OverlayScrollbars }, { initScrollbars }] = await Promise.all([
+          import('overlayscrollbars'),
+          import('./lib/scrollbars')
+        ]);
+
+        // @ts-ignore - overlayscrollbars type checks can be strict; cast options to any to avoid errors
+        OverlayScrollbars(document.body, {
+          className: 'os-theme-custom',
+          scrollbars: {
+            autoHide: 'leave',
+            clickScroll: true,
+            dragScroll: true
+          }
+        } as any);
+
+        initScrollbars();
+      } catch {
+        // Ignore enhancement failures so first paint is never blocked.
       }
-    } as any)
-  } catch (e) {
-    // initialization failed (edge-case). We silently ignore so app still works with native scrollbars.
-    // console.warn('OverlayScrollbars init failed', e)
-  }
-}
-
-// Also attach Overlayscrollbars to all modals, drawers and overflow containers dynamically
-initScrollbars()
-
-// Unregister any existing service workers and clear caches (PWA removed)
-if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-  navigator.serviceWorker.getRegistrations().then((registrations) => {
-    registrations.forEach((registration) => {
-      registration.unregister();
     });
-  });
-  
-  // Clear all caches
-  if ('caches' in window) {
-    caches.keys().then((names) => {
-      names.forEach((name) => {
-        caches.delete(name);
+
+    scheduleLowPriorityWork(() => {
+      const migrationKey = 'spirithub_sw_cleanup_v1';
+      if (window.localStorage.getItem(migrationKey) === 'done') {
+        return;
+      }
+
+      if (!('serviceWorker' in navigator)) {
+        window.localStorage.setItem(migrationKey, 'done');
+        return;
+      }
+
+      navigator.serviceWorker.getRegistrations().then((registrations) => {
+        registrations.forEach((registration) => {
+          registration.unregister();
+        });
       });
-    });
+
+      if ('caches' in window) {
+        caches.keys().then((names) => {
+          names.forEach((name) => {
+            caches.delete(name);
+          });
+        });
+      }
+
+      window.localStorage.setItem(migrationKey, 'done');
+    }, 3000);
+  };
+
+  if (document.readyState === 'complete') {
+    initDeferredEnhancements();
+  } else {
+    window.addEventListener('load', initDeferredEnhancements, { once: true });
   }
 }

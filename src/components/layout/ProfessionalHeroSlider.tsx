@@ -25,7 +25,7 @@ export const ProfessionalHeroSlider: React.FC = () => {
   const [isHovered, setIsHovered] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [videoLoaded, setVideoLoaded] = useState(false);
-  const [videoProgress, setVideoProgress] = useState(0);
+  const [deferVideoLoad, setDeferVideoLoad] = useState(true);
   const videoRef = React.useRef<HTMLVideoElement>(null);
   const mobileHeroPoster = '/images/slides/slide1.webp';
 
@@ -58,34 +58,43 @@ export const ProfessionalHeroSlider: React.FC = () => {
     };
   }, []);
 
-  // Handle video playback for iOS - immediate loading with progress tracking
+  // Defer mobile video work so first paint/LCP can use the poster image.
   useEffect(() => {
-    if (isMobile && videoRef.current) {
-      const video = videoRef.current;
-      
-      // Track loading progress
-      const handleProgress = () => {
-        if (video.buffered.length > 0) {
-          const bufferedEnd = video.buffered.end(video.buffered.length - 1);
-          const duration = video.duration;
-          if (duration > 0) {
-            setVideoProgress((bufferedEnd / duration) * 100);
-          }
-        }
-      };
+    if (!isMobile) {
+      setDeferVideoLoad(true);
+      return;
+    }
 
-      video.addEventListener('progress', handleProgress);
-      
-      // Force play for iOS immediately - no waiting for page load
+    const startVideo = () => setDeferVideoLoad(false);
+    let idleId: number | null = null;
+    const timeoutId = window.setTimeout(startVideo, 2500);
+
+    if ('requestIdleCallback' in window) {
+      idleId = (window as Window & { requestIdleCallback: (cb: () => void, options?: { timeout: number }) => number })
+        .requestIdleCallback(startVideo, { timeout: 3000 });
+    }
+
+    return () => {
+      window.clearTimeout(timeoutId);
+      if (idleId !== null && 'cancelIdleCallback' in window) {
+        (window as Window & { cancelIdleCallback: (id: number) => void }).cancelIdleCallback(idleId);
+      }
+    };
+  }, [isMobile]);
+
+  // Handle video playback for iOS once deferred loading is enabled.
+  useEffect(() => {
+    if (isMobile && !deferVideoLoad && videoRef.current) {
+      const video = videoRef.current;
+
       const attemptPlay = async () => {
         try {
-          video.muted = true; // Ensure muted for autoplay
-          video.load(); // Start loading immediately
+          video.muted = true;
+          video.load();
           await video.play();
           setVideoLoaded(true);
         } catch (error) {
           console.warn('Video autoplay failed:', error);
-          // Fallback: try again on user interaction
           const playOnInteraction = async () => {
             try {
               await video.play();
@@ -101,15 +110,13 @@ export const ProfessionalHeroSlider: React.FC = () => {
         }
       };
 
-      // Start immediately, don't wait for full page load
-      const timer = setTimeout(attemptPlay, 50); // Faster initialization
+      const timer = setTimeout(attemptPlay, 50);
       
       return () => {
         clearTimeout(timer);
-        video.removeEventListener('progress', handleProgress);
       };
     }
-  }, [isMobile]);
+  }, [isMobile, deferVideoLoad]);
 
   // Professional slide data with rich content
   const allSlides: SlideData[] = [
@@ -391,63 +398,50 @@ export const ProfessionalHeroSlider: React.FC = () => {
       {/* Background Images/Video with Fade Effect */}
       <div className="slider-backgrounds">
         {isMobile ? (
-          // Mobile: Show video background with optimized loading
+          // Mobile: start with poster image and load video after idle.
           <div className="slide-background">
-            <video
-              ref={videoRef}
-              className="background-video"
-              autoPlay
-              loop
-              muted
-              playsInline
-              preload="metadata"
-              poster={mobileHeroPoster}
-              onCanPlay={() => setVideoLoaded(true)}
-              onError={() => {
-                console.warn('Video failed to load, using fallback image');
-                setVideoLoaded(false);
-              }}
-              style={{ 
-                opacity: videoLoaded ? 1 : 0,
-                transition: 'opacity 0.8s ease-out',
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                zIndex: 1
-              }}
-              webkit-playsinline="true"
-              x-webkit-airplay="allow"
-            >
-              <source src="/video/spirithub-specialty-coffee-roastery-mobile-banner.mp4" type="video/mp4" />
-            </video>
+            {!deferVideoLoad && (
+              <video
+                ref={videoRef}
+                className="background-video"
+                autoPlay
+                loop
+                muted
+                playsInline
+                preload="none"
+                poster={mobileHeroPoster}
+                onCanPlay={() => setVideoLoaded(true)}
+                onError={() => {
+                  console.warn('Video failed to load, using fallback image');
+                  setVideoLoaded(false);
+                }}
+                style={{ 
+                  opacity: videoLoaded ? 1 : 0,
+                  transition: 'opacity 0.8s ease-out',
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  zIndex: 1
+                }}
+              >
+                <source src="/video/spirithub-specialty-coffee-roastery-mobile-banner.mp4" type="video/mp4" />
+              </video>
+            )}
             
             {/* Fallback image shown until video loads */}
-            {!videoLoaded && (
+            {(deferVideoLoad || !videoLoaded) && (
               <img
                 src={mobileHeroPoster}
                 alt={currentSlideData.title}
                 className={`background-image ${currentSlideData.imageClassName ?? ''}`.trim()}
+                fetchPriority="high"
+                loading="eager"
+                decoding="async"
                 style={{ 
                   position: 'absolute',
                   top: 0,
                   left: 0,
                   zIndex: 2
-                }}
-              />
-            )}
-            
-            {/* Loading progress indicator */}
-            {!videoLoaded && videoProgress > 0 && (
-              <div 
-                style={{
-                  position: 'absolute',
-                  bottom: 0,
-                  left: 0,
-                  height: '3px',
-                  backgroundColor: 'rgba(239, 68, 68, 0.8)',
-                  width: `${videoProgress}%`,
-                  transition: 'width 0.3s ease',
-                  zIndex: 6
                 }}
               />
             )}
@@ -472,6 +466,9 @@ export const ProfessionalHeroSlider: React.FC = () => {
                 src={currentSlideData.image}
                 alt={currentSlideData.title}
                 className={`background-image ${currentSlideData.imageClassName ?? ''}`.trim()}
+                fetchPriority={currentSlide === 0 ? 'high' : 'auto'}
+                loading={currentSlide === 0 ? 'eager' : 'lazy'}
+                decoding="async"
               />
               <div className={`background-overlay ${currentSlideData.overlayClassName ?? ''}`.trim()} />
             </motion.div>

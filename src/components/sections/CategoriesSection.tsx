@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../hooks/useApp';
 import { useRegion } from '../../hooks/useRegion';
-import { handleImageError } from '../../lib/imageUtils';
+import { buildResponsiveSrcSet, handleImageError } from '../../lib/imageUtils';
 import { Package } from 'lucide-react';
 
 export const CategoriesSection: React.FC = () => {
@@ -91,12 +91,13 @@ export const CategoriesSection: React.FC = () => {
                 <div className="relative overflow-hidden aspect-square">
                   <img
                     src={category.image || '/images/slides/slide1.webp'}
+                    srcSet={buildResponsiveSrcSet(category.image || '/images/slides/slide1.webp', [160, 240, 320, 480])}
+                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, (max-width: 1280px) 25vw, 240px"
                     alt={category.name}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                     onError={(e) => handleImageError(e, '/images/slides/slide1.webp')}
-                    loading="eager"
-                    decoding="sync"
-                    fetchPriority="high"
+                    loading="lazy"
+                    decoding="async"
                   />
                   
                   {/* Subtle Overlay */}

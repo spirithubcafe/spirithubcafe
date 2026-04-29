@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ProfessionalHeroSlider } from '../components/layout/ProfessionalHeroSlider';
 import { AnnouncementBar } from '../components/layout/AnnouncementBar';
 import { SustainabilitySection } from '../components/sections/SustainabilitySection';
@@ -13,6 +13,30 @@ import { BestSellers } from '@/components/sections/BestSellers';
 
 const HomePage: React.FC = () => {
   const { language } = useApp();
+  const [showDeferredSections, setShowDeferredSections] = useState(false);
+
+  useEffect(() => {
+    const revealSections = () => setShowDeferredSections(true);
+
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    let idleId: number | null = null;
+    const timeoutId = window.setTimeout(revealSections, 1200);
+
+    if ('requestIdleCallback' in window) {
+      idleId = (window as Window & { requestIdleCallback: (cb: () => void, options?: { timeout: number }) => number })
+        .requestIdleCallback(revealSections, { timeout: 1500 });
+    }
+
+    return () => {
+      window.clearTimeout(timeoutId);
+      if (idleId !== null && 'cancelIdleCallback' in window) {
+        (window as Window & { cancelIdleCallback: (id: number) => void }).cancelIdleCallback(idleId);
+      }
+    };
+  }, []);
 
   const seoCopy = useMemo(
     () =>
@@ -147,13 +171,18 @@ const HomePage: React.FC = () => {
       <h1 className="sr-only">{seoCopy.title}</h1>
       <AnnouncementBar />
       <ProfessionalHeroSlider />
-      <BestSellers />
-      <SustainabilitySection />
-
-      <FeaturedProducts /> 
-      <CoffeeSelectionSection />
-      <CategoriesSection />
-      <ShopCategoriesSection />
+      {showDeferredSections ? (
+        <>
+          <BestSellers />
+          <SustainabilitySection />
+          <FeaturedProducts />
+          <CoffeeSelectionSection />
+          <CategoriesSection />
+          <ShopCategoriesSection />
+        </>
+      ) : (
+        <div className="min-h-[60vh]" aria-hidden="true" />
+      )}
      
     </>
   );

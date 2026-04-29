@@ -83,6 +83,34 @@ export const getCategoryImageUrl = (imagePath?: string | null): string => {
   return getImageUrl(imagePath, '/images/header.webp');
 };
 
+const RESPONSIVE_WIDTHS = [160, 240, 320, 480, 640] as const;
+const isImageResizingEnabled = String(import.meta.env.VITE_ENABLE_IMAGE_RESIZING || '').toLowerCase() === 'true';
+
+const withImageWidthParam = (imageUrl: string, width: number): string => {
+  // Keep public fallback assets untouched; only ask backend-hosted assets for resized variants.
+  const apiBaseUrl = getApiBaseUrl();
+  if (!isImageResizingEnabled || !imageUrl.startsWith(apiBaseUrl)) {
+    return imageUrl;
+  }
+
+  try {
+    const url = new URL(imageUrl);
+    url.searchParams.set('w', String(width));
+    // Common quality hint for image CDNs/backends; ignored safely if unsupported.
+    url.searchParams.set('q', '75');
+    return url.toString();
+  } catch {
+    return imageUrl;
+  }
+};
+
+export const buildResponsiveSrcSet = (
+  imageUrl: string,
+  widths: readonly number[] = RESPONSIVE_WIDTHS,
+): string => {
+  return widths.map((width) => `${withImageWidthParam(imageUrl, width)} ${width}w`).join(', ');
+};
+
 /**
  * Handle image loading error
  * Sets fallback image on error

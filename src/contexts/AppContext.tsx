@@ -20,6 +20,36 @@ interface AppProviderProps {
   children: ReactNode;
 }
 
+interface SessionCacheEntry<T> {
+  data: T;
+  timestamp: number;
+  expiresAt: number;
+}
+
+const SESSION_CACHE_DURATION_MS = 30 * 60 * 1000;
+
+const getSessionCache = <T,>(key: string): T | null => {
+  const entry = safeStorage.getJson<SessionCacheEntry<T>>(key, 'session');
+  if (!entry) return null;
+  if (Date.now() > entry.expiresAt) {
+    safeStorage.removeItem(key, 'session');
+    return null;
+  }
+  return entry.data;
+};
+
+const setSessionCache = <T,>(key: string, data: T, durationMs = SESSION_CACHE_DURATION_MS): void => {
+  safeStorage.setJson(
+    key,
+    {
+      data,
+      timestamp: Date.now(),
+      expiresAt: Date.now() + durationMs,
+    } satisfies SessionCacheEntry<T>,
+    'session',
+  );
+};
+
 export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const { i18n, t } = useTranslation();
   const regionContext = React.useContext(RegionContext);
@@ -187,9 +217,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     ongoingProductsFetchRef.current = fetchKey;
     const requestId = ++latestProductsRequestRef.current;
 
-    // Check cache first - include region in cache key
-    const cacheKey = `spirithub_cache_products_${regionCode}_${lang}`;
-    const cachedData = cacheUtils.get<Product[]>(cacheKey);
+    // Check session cache first - include region in cache key
+    const cacheKey = `spirithub_session_products_${regionCode}_${lang}`;
+    const cachedData = getSessionCache<Product[]>(cacheKey);
 
     // If we loaded from cache, keep a reference so we can preserve non-default images
     // when the fresh list payload doesn't include image paths.
@@ -200,7 +230,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     if (cachedData) {
       // Check if cache has slug field, if not, clear cache and refetch
       if (cachedData.length > 0 && !cachedData[0].slug) {
-        cacheUtils.remove(cacheKey);
+        safeStorage.removeItem(cacheKey, 'session');
         // Continue to fetch fresh data
       } else {
         // If we have isActive persisted, filter defensively.
@@ -244,7 +274,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         );
 
         if (!usedCache && activeProducts.length === 0 && attempt < maxAttempts) {
-          await wait(400 * attempt);
+          await wait(350 * attempt);
           continue;
         }
 
@@ -399,7 +429,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       fetchSucceeded = true;
       
       // Cache the data
-      cacheUtils.set(cacheKey, mergedProducts);
+      setSessionCache(cacheKey, mergedProducts);
 
       // NOTE: Background enrichment disabled - list API now returns all needed data:
       // - mainImagePath for images
@@ -414,8 +444,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       );
     } catch (err) {
       console.error('❌ Error fetching products:', err);
-      setError('Failed to fetch products');
       if (!usedCache) {
+        setError('Failed to fetch products');
         setProducts([]);
       }
     } finally {
@@ -452,19 +482,21 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     ongoingCategoriesFetchRef.current = fetchKey;
     const requestId = ++latestCategoriesRequestRef.current;
 
-    // Check cache first for both categories and allCategories - include region in cache key
-    const cacheKey = `spirithub_cache_categories_${regionCode}_${lang}`;
-    const allCategoriesCacheKey = `spirithub_cache_all_categories_${regionCode}_${lang}`;
-    const cachedData = cacheUtils.get<Category[]>(cacheKey);
-    const cachedAllCategories = cacheUtils.get<Category[]>(allCategoriesCacheKey);
-    
+    // Check session cache first for both categories and allCategories - include region in cache key
+    const cacheKey = `spirithub_session_categories_${regionCode}_${lang}`;
+    const allCategoriesCacheKey = `spirithub_session_all_categories_${regionCode}_${lang}`;
+    const cachedData = getSessionCache<Category[]>(cacheKey);
+    const cachedAllCategories = getSessionCache<Category[]>(allCategoriesCacheKey);
+    const hasCachedCategories = !!(cachedData && cachedAllCategories);
+
     if (!forceRefresh && cachedData && cachedAllCategories) {
       setCategories(cachedData);
       setAllCategories(cachedAllCategories);
-      return;
     }
 
-    beginLoading();
+    if (!hasCachedCategories || forceRefresh) {
+      beginLoading();
+    }
     setError(null);
     
     let fetchSucceeded = false;
@@ -518,8 +550,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       fetchSucceeded = true;
       
       // Cache both datasets
-      cacheUtils.set(cacheKey, homepageCategories);
-      cacheUtils.set(allCategoriesCacheKey, transformedAllCategories);
+      setSessionCache(cacheKey, homepageCategories);
+      setSessionCache(allCategoriesCacheKey, transformedAllCategories);
       
       // Preload a small, safe subset of images in background.
       // Reduced from 24 to 8 to prevent resource exhaustion
@@ -529,9 +561,11 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       );
     } catch (err) {
       console.error('❌ Error fetching categories:', err);
-      setError('Failed to fetch categories');
-      setCategories([]);
-      setAllCategories([]);
+      if (!hasCachedCategories) {
+        setError('Failed to fetch categories');
+        setCategories([]);
+        setAllCategories([]);
+      }
     } finally {
       // Clear ongoing fetch marker
       if (ongoingCategoriesFetchRef.current === fetchKey) {
@@ -541,7 +575,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       if (fetchSucceeded) {
         lastSuccessfulFetchRef.current.categories = fetchKey;
       }
-      endLoading();
+      if (!hasCachedCategories || forceRefresh) {
+        endLoading();
+      }
     }
   // Stable callback - uses refs for current language/region values
   }, [beginLoading, endLoading, preloadImagesBestEffort]);

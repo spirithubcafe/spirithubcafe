@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { shopApi } from '../services/shopApi';
 import type { Pagination, ShopCategory, ShopPage, ShopProduct, SortBy } from '../types/shop';
+import { safeStorage } from '../lib/safeStorage';
+import { getActiveRegionForApi } from '../lib/regionUtils';
 
 /** Unwrap .NET $values wrapper if present */
 const unwrapValues = (val: unknown): unknown[] | undefined => {
@@ -35,6 +37,36 @@ const normalizeShopPage = (data: ShopPage): ShopPage => ({
 const wait = (ms: number): Promise<void> =>
   new Promise((resolve) => window.setTimeout(resolve, ms));
 
+interface SessionCacheEntry<T> {
+  data: T;
+  timestamp: number;
+  expiresAt: number;
+}
+
+const SHOP_SESSION_CACHE_MS = 15 * 60 * 1000;
+
+const getSessionCache = <T,>(key: string): T | null => {
+  const entry = safeStorage.getJson<SessionCacheEntry<T>>(key, 'session');
+  if (!entry) return null;
+  if (Date.now() > entry.expiresAt) {
+    safeStorage.removeItem(key, 'session');
+    return null;
+  }
+  return entry.data;
+};
+
+const setSessionCache = <T,>(key: string, data: T, durationMs = SHOP_SESSION_CACHE_MS): void => {
+  safeStorage.setJson(
+    key,
+    {
+      data,
+      timestamp: Date.now(),
+      expiresAt: Date.now() + durationMs,
+    } satisfies SessionCacheEntry<T>,
+    'session',
+  );
+};
+
 const withRetry = async <T>(fn: () => Promise<T>, maxAttempts = 3): Promise<T> => {
   let lastError: unknown;
 
@@ -58,17 +90,34 @@ export const useShopPage = () => {
   const [error, setError] = useState<string | null>(null);
 
   const fetchShopPage = useCallback(async () => {
-    try {
+    const regionCode = getActiveRegionForApi();
+    const cacheKey = `spirithub_session_shop_page_${regionCode}`;
+    const cached = getSessionCache<ShopPage>(cacheKey);
+    const hasCache = !!cached;
+
+    if (cached) {
+      setShopData(normalizeShopPage(cached));
+      setLoading(false);
+    } else {
       setLoading(true);
+    }
+
+    try {
       setError(null);
       const response = await withRetry(() => shopApi.getShopPage(), 3);
       if (response.success) {
-        setShopData(normalizeShopPage(response.data));
+        const normalized = normalizeShopPage(response.data);
+        setShopData(normalized);
+        setSessionCache(cacheKey, normalized);
       } else {
-        setError('Failed to load shop page');
+        if (!hasCache) {
+          setError('Failed to load shop page');
+        }
       }
     } catch (err: any) {
-      setError(err?.message || 'An error occurred');
+      if (!hasCache) {
+        setError(err?.message || 'An error occurred');
+      }
     } finally {
       setLoading(false);
     }
@@ -88,21 +137,41 @@ export const useShopCategory = (slug?: string) => {
 
   const fetchCategory = useCallback(async () => {
     if (!slug) return;
-    try {
+    const regionCode = getActiveRegionForApi();
+    const cacheKey = `spirithub_session_shop_category_${regionCode}_${slug}`;
+    const cached = getSessionCache<ShopCategory>(cacheKey);
+    const hasCache = !!cached;
+
+    if (cached) {
+      setCategory({
+        ...cached,
+        products: cached.products.map(normalizeProductTags),
+      });
+      setLoading(false);
+    } else {
       setLoading(true);
+    }
+
+    try {
       setError(null);
       const response = await withRetry(() => shopApi.getCategoryBySlug(slug), 3);
       if (response.success) {
         const cat = response.data;
-        setCategory({
+        const normalized = {
           ...cat,
           products: cat.products.map(normalizeProductTags),
-        });
+        };
+        setCategory(normalized);
+        setSessionCache(cacheKey, normalized);
       } else {
-        setError('Failed to load category');
+        if (!hasCache) {
+          setError('Failed to load category');
+        }
       }
     } catch (err: any) {
-      setError(err?.message || 'An error occurred');
+      if (!hasCache) {
+        setError(err?.message || 'An error occurred');
+      }
     } finally {
       setLoading(false);
     }
@@ -126,8 +195,20 @@ export const useCategoryProducts = (categoryId: number) => {
 
   const fetchProducts = useCallback(async () => {
     if (!categoryId || categoryId <= 0) return;
-    try {
+    const regionCode = getActiveRegionForApi();
+    const cacheKey = `spirithub_session_shop_category_products_${regionCode}_${categoryId}_${page}_${sortBy || 'default'}_${ascending ? 'asc' : 'desc'}`;
+    const cached = getSessionCache<{ products: ShopProduct[]; pagination: Pagination | null }>(cacheKey);
+    const hasCache = !!cached;
+
+    if (cached) {
+      setProducts(cached.products.map(normalizeProductTags));
+      setPagination(cached.pagination);
+      setLoading(false);
+    } else {
       setLoading(true);
+    }
+
+    try {
       setError(null);
       const response = await withRetry(
         () =>
@@ -141,13 +222,19 @@ export const useCategoryProducts = (categoryId: number) => {
         3,
       );
       if (response.success) {
-        setProducts(response.data.map(normalizeProductTags));
+        const normalizedProducts = response.data.map(normalizeProductTags);
+        setProducts(normalizedProducts);
         setPagination(response.pagination);
+        setSessionCache(cacheKey, { products: normalizedProducts, pagination: response.pagination });
       } else {
-        setError('Failed to load products');
+        if (!hasCache) {
+          setError('Failed to load products');
+        }
       }
     } catch (err: any) {
-      setError(err?.message || 'An error occurred');
+      if (!hasCache) {
+        setError(err?.message || 'An error occurred');
+      }
     } finally {
       setLoading(false);
     }
