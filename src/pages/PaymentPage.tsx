@@ -20,6 +20,28 @@ import { getProductImageUrl } from '../lib/imageUtils';
 const PENDING_ORDER_STORAGE_KEY = 'spirithub_pending_checkout';
 const LAST_SUCCESS_STORAGE_KEY = 'spirithub_last_success_order';
 const ORDER_ID_KEY = 'spirithub_server_order_id';
+const PAYMENT_DEBUG_ENABLED = String(import.meta.env.VITE_PAYMENT_DEBUG || '').toLowerCase() === 'true';
+
+type PaymentDebugPayload = Record<string, unknown>;
+
+const paymentDebug = (event: string, payload: PaymentDebugPayload = {}) => {
+  if (!PAYMENT_DEBUG_ENABLED) return;
+
+  const redactedPayload = Object.fromEntries(
+    Object.entries(payload).filter(([key]) => {
+      const k = key.toLowerCase();
+      return !(
+        k.includes('encrypted') ||
+        k.includes('accesscode') ||
+        k.includes('access_code') ||
+        k.includes('token') ||
+        k.includes('card')
+      );
+    }),
+  );
+
+  console.info(`[payment-debug] ${event}`, redactedPayload);
+};
 
 interface PaymentLocationState {
   order?: CheckoutOrder;
@@ -42,6 +64,14 @@ export const PaymentPage: React.FC = () => {
   const [paymentProgress, setPaymentProgress] = useState('');
   const paymentTimer = useRef<number | null>(null);
   const shippingMethodsLoaded = useRef(false);
+
+  useEffect(() => {
+    paymentDebug('page-init', {
+      origin: typeof window !== 'undefined' ? window.location.origin : 'server',
+      path: typeof window !== 'undefined' ? window.location.pathname : 'unknown',
+      paymentDebugEnabled: PAYMENT_DEBUG_ENABLED,
+    });
+  }, []);
 
   // Load order from payment link (orderId + token)
   const loadOrderFromPaymentLink = useCallback(async (orderId: number, token: string) => {
@@ -227,10 +257,14 @@ export const PaymentPage: React.FC = () => {
 
     const loadShippingMethods = async () => {
       try {
+        paymentDebug('shipping-methods-fetch-start');
         const methods = await shippingService.getShippingMethods();
         setShippingMethods(methods);
+        paymentDebug('shipping-methods-fetch-success', { methodsCount: methods.length });
       } catch (error) {
-        // Failed to load shipping methods
+        paymentDebug('shipping-methods-fetch-failed', {
+          message: error instanceof Error ? error.message : 'unknown-error',
+        });
       }
     };
 
@@ -259,6 +293,14 @@ export const PaymentPage: React.FC = () => {
     setIsProcessing(true);
     setPaymentStep('creating');
     setPaymentProgress(isArabic ? 'جاري إنشاء الطلب...' : 'Creating order...');
+    paymentDebug('payment-start', {
+      orderId: order.id,
+      isAuthenticated,
+      hasUserId: Boolean(user?.id),
+      shippingMethodLocalId: order.shippingMethod.id,
+      total: order.totals.total,
+      currency: 'OMR',
+    });
 
     try {
       // Check if this is a payment for an existing order (from payment link)
@@ -287,6 +329,12 @@ export const PaymentPage: React.FC = () => {
         
         orderNumber = orderDetails.orderNumber;
         totalAmount = orderDetails.totalAmount;
+        paymentDebug('existing-order-loaded', {
+          orderNumber,
+          totalAmount,
+          paymentStatus: orderDetails.paymentStatus,
+          shippingMethod: orderDetails.shippingMethod,
+        });
       } else {
         // This is a new order - create it first
         
@@ -306,6 +354,11 @@ export const PaymentPage: React.FC = () => {
                 : 1;
               return methodId;
             })();
+        paymentDebug('shipping-method-mapped', {
+          shippingMethodLocalId: order.shippingMethod.id,
+          shippingMethodApiId: shippingMethodId,
+          usedApiMethodsList: shippingMethods.length > 0,
+        });
 
         // Ensure user is authenticated before creating order
         if (!isAuthenticated || !user?.id) {
@@ -430,6 +483,12 @@ export const PaymentPage: React.FC = () => {
         
         orderNumber = orderResponse.orderNumber;
         totalAmount = orderResponse.totalAmount || order.totals.total;
+        paymentDebug('order-created', {
+          orderNumber,
+          totalAmount,
+          itemsCount: createOrderDto.items.length,
+          shippingMethodApiId: createOrderDto.shippingMethod,
+        });
       }
 
       // Store server order number
@@ -477,6 +536,13 @@ export const PaymentPage: React.FC = () => {
       };
 
       const paymentResponse = await paymentService.initiatePayment(paymentRequest);
+      paymentDebug('payment-initiate-response', {
+        orderNumber,
+        success: paymentResponse.success,
+        hasPaymentUrl: Boolean(paymentResponse.paymentUrl),
+        paymentUrlHost: paymentResponse.paymentUrl ? new URL(paymentResponse.paymentUrl).host : null,
+        errorMessage: paymentResponse.errorMessage || null,
+      });
 
       if (!paymentResponse.success || !paymentResponse.paymentUrl) {
         throw new Error(paymentResponse.errorMessage || 'Failed to initiate payment');
@@ -502,9 +568,21 @@ export const PaymentPage: React.FC = () => {
         paymentResponse.encryptedRequest!,
         paymentResponse.accessCode!
       );
+      paymentDebug('payment-redirect-submitted', {
+        orderNumber,
+        paymentUrlHost: new URL(paymentResponse.paymentUrl).host,
+      });
 
     } catch (error: any) {
       console.error('Payment error:', error);
+      paymentDebug('payment-failed', {
+        orderId: order.id,
+        orderNumber: sessionStorage.getItem(ORDER_ID_KEY),
+        message: error?.message || 'unknown-error',
+        status: error?.response?.status || null,
+        apiMessage: error?.response?.data?.message || null,
+        apiTitle: error?.response?.data?.title || null,
+      });
       
       setIsProcessing(false);
       
