@@ -382,6 +382,9 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0 bg-white shadow-2xl border border-gray-200/80" showCloseButton={false}>
+          <DialogHeader className="sr-only">
+            <DialogTitle>{isArabic ? 'عرض سريع للمنتج' : 'Product Quick View'}</DialogTitle>
+          </DialogHeader>
           {loading ? (
             <div className="flex justify-center py-16">
               <Loader2 className="w-10 h-10 animate-spin text-amber-600" />

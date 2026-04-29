@@ -1,6 +1,7 @@
 /* Professional Hero Slider - Ultra Modern Design */
 .professional-hero-slider {
   position: relative;
+  height: 100svh;
   height: 100vh;
   min-height: 800px; /* Increased for better Arabic text display */
   width: 100%;
@@ -591,8 +592,8 @@
 
 @media (max-width: 768px) {
   .professional-hero-slider {
-    height: 100vh;
-    min-height: 600px;
+    height: 100svh;
+    min-height: 520px;
   }
   
   .slider-content-container .grid {

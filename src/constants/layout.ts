@@ -1,0 +1,1 @@
+export const ANNOUNCEMENT_BAR_HEIGHT_PX = 40;

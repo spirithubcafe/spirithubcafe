@@ -1,22 +1,19 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
-
-const ANNOUNCEMENT_BAR_HEIGHT = 40; // px
+import { ANNOUNCEMENT_BAR_HEIGHT_PX } from '../../constants/layout';
 
 export const AnnouncementBar: React.FC = () => {
-  // Push the fixed navigation down while the announcement bar is visible
-  useEffect(() => {
-    const root = document.documentElement;
-    root.style.setProperty('--announcement-bar-height', `${ANNOUNCEMENT_BAR_HEIGHT}px`);
+  React.useEffect(() => {
+    document.documentElement.style.setProperty('--announcement-bar-height', `${ANNOUNCEMENT_BAR_HEIGHT_PX}px`);
     return () => {
-      root.style.setProperty('--announcement-bar-height', '0px');
+      document.documentElement.style.setProperty('--announcement-bar-height', '0px');
     };
   }, []);
 
   return (
     <div
       className="fixed left-0 right-0 z-[55] w-full overflow-hidden bg-[#681e15] group"
-      style={{ top: 'var(--region-banner-height, 0px)', height: `${ANNOUNCEMENT_BAR_HEIGHT}px` }}
+      style={{ top: 'var(--region-banner-height, 0px)', height: `${ANNOUNCEMENT_BAR_HEIGHT_PX}px` }}
       dir="ltr"
     >
       <div className="flex h-full items-center">

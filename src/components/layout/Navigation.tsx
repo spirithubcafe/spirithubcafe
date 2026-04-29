@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Globe, ShoppingCart, Menu, ChevronDown, User, Heart, ShoppingBag, Shield, Coffee, Gift, Star, Home as HomeIcon, Package, Info, Mail, LogOut, LogIn, UserPlus } from 'lucide-react';
 import { Button } from '../ui/button';
-import { Sheet, SheetContent, SheetTrigger, SheetClose } from '../ui/sheet';
+import { Sheet, SheetContent, SheetTrigger, SheetClose, SheetTitle, SheetDescription } from '../ui/sheet';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -370,6 +370,8 @@ export const Navigation: React.FC = () => {
             <img 
               src={isHomePage ? "/images/logo/logo-light.png" : "/images/logo/logo-dark.png"}
               alt="Spirit Hub Cafe"
+              width={180}
+              height={48}
               className="h-9 sm:h-10 md:h-11 lg:h-12 w-auto"
             />
           </Link>
@@ -563,6 +565,12 @@ export const Navigation: React.FC = () => {
                 dir={language === 'ar' ? 'rtl' : 'ltr'}
                 className="bg-[#120804] p-0 text-white flex flex-col"
               >
+                <SheetTitle className="sr-only">
+                  {language === 'ar' ? 'القائمة الرئيسية' : 'Main menu'}
+                </SheetTitle>
+                <SheetDescription className="sr-only">
+                  {language === 'ar' ? 'استخدم هذه القائمة للتنقل في الموقع.' : 'Use this menu to navigate the site.'}
+                </SheetDescription>
                 <div className="flex h-full flex-col">
                   {/* Compact Profile Header */}
                   <div className="border-b border-white/[0.03] px-4 py-2 flex-shrink-0">

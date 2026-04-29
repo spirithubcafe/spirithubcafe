@@ -41,6 +41,7 @@ export const PaymentPage: React.FC = () => {
   const [paymentStep, setPaymentStep] = useState<'ready' | 'creating' | 'initiating' | 'redirecting'>('ready');
   const [paymentProgress, setPaymentProgress] = useState('');
   const paymentTimer = useRef<number | null>(null);
+  const shippingMethodsLoaded = useRef(false);
 
   // Load order from payment link (orderId + token)
   const loadOrderFromPaymentLink = useCallback(async (orderId: number, token: string) => {
@@ -219,6 +220,11 @@ export const PaymentPage: React.FC = () => {
 
   // Load shipping methods from API
   useEffect(() => {
+    if (shippingMethodsLoaded.current) {
+      return;
+    }
+    shippingMethodsLoaded.current = true;
+
     const loadShippingMethods = async () => {
       try {
         const methods = await shippingService.getShippingMethods();

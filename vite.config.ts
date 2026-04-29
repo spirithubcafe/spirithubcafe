@@ -102,15 +102,62 @@ export default defineConfig(({ isSsrBuild }) => ({
       output: {
         // Only apply manualChunks for client builds; SSR externalizes these
         ...(!isSsrBuild && {
-          manualChunks: {
+          manualChunks(id: string) {
+            // Keep all admin/reporting code out of the storefront critical path.
+            if (
+              id.includes('/src/components/admin/') ||
+              id.includes('/src/pages/CategoryAddPage') ||
+              id.includes('/src/pages/CategoryEditPage') ||
+              id.includes('/src/pages/ProductAddPage') ||
+              id.includes('/src/pages/ProductEditPage') ||
+              id.includes('/src/pages/ProductAttributesPage') ||
+              id.includes('/src/pages/InvoicePage') ||
+              id.includes('/src/pages/WholesaleDashboardPage') ||
+              id.includes('/src/pages/WholesaleOrdersPage') ||
+              id.includes('/src/pages/WholesaleOrderDetailsPage')
+            ) {
+              return 'admin';
+            }
+
+            // Heavy reporting/export libraries should remain outside storefront bundles.
+            if (
+              id.includes('/node_modules/jspdf/') ||
+              id.includes('/node_modules/html2canvas/') ||
+              id.includes('/node_modules/recharts/')
+            ) {
+              return 'admin-vendors';
+            }
+
             // React and core libraries
-            vendor: ['react', 'react-dom'],
+            if (
+              id.includes('/node_modules/react/') ||
+              id.includes('/node_modules/react-dom/')
+            ) {
+              return 'vendor';
+            }
+
             // Icons and UI
-            ui: ['lucide-react'],
+            if (id.includes('/node_modules/lucide-react/')) {
+              return 'ui';
+            }
+
             // i18n
-            i18n: ['react-i18next', 'i18next'],
+            if (
+              id.includes('/node_modules/react-i18next/') ||
+              id.includes('/node_modules/i18next/')
+            ) {
+              return 'i18n';
+            }
+
             // Router
-            router: ['react-router-dom']
+            if (
+              id.includes('/node_modules/react-router-dom/') ||
+              id.includes('/node_modules/react-router/')
+            ) {
+              return 'router';
+            }
+
+            return undefined;
           }
         })
       }
