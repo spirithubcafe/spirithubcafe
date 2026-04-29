@@ -12,6 +12,56 @@ import './styles/color-overrides.css'
 import App from './App.tsx'
 
 const rootElement = document.getElementById('root')!;
+const CHUNK_RELOAD_GUARD_KEY = 'spirithub_chunk_reload_once';
+
+if (typeof window !== 'undefined') {
+  const isChunkLoadError = (error: unknown): boolean => {
+    const message =
+      error instanceof Error
+        ? error.message
+        : typeof error === 'string'
+          ? error
+          : '';
+
+    return (
+      message.includes('Failed to fetch dynamically imported module') ||
+      message.includes('ChunkLoadError') ||
+      message.includes('Loading chunk') ||
+      message.includes('Importing a module script failed')
+    );
+  };
+
+  const recoverFromChunkError = (error: unknown) => {
+    if (!isChunkLoadError(error)) return;
+
+    const alreadyReloaded = window.sessionStorage.getItem(CHUNK_RELOAD_GUARD_KEY) === '1';
+    if (alreadyReloaded) {
+      console.error('[chunk-recovery] chunk load failed after one auto-reload; showing fallback UI.', error);
+      return;
+    }
+
+    window.sessionStorage.setItem(CHUNK_RELOAD_GUARD_KEY, '1');
+    console.warn('[chunk-recovery] chunk load failure detected; reloading once to recover from stale assets.');
+    window.location.reload();
+  };
+
+  window.addEventListener('error', (event) => {
+    recoverFromChunkError(event.error ?? event.message);
+  });
+
+  window.addEventListener('unhandledrejection', (event) => {
+    recoverFromChunkError(event.reason);
+  });
+
+  // Reset guard after a successful page load cycle so future deployments can recover once again.
+  window.addEventListener(
+    'pageshow',
+    () => {
+      window.sessionStorage.removeItem(CHUNK_RELOAD_GUARD_KEY);
+    },
+    { once: true },
+  );
+}
 
 // Check if the app was server-rendered
 if (rootElement.hasChildNodes()) {
