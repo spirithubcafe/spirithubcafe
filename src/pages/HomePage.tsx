@@ -3,8 +3,7 @@ import { ProfessionalHeroSlider } from '../components/layout/ProfessionalHeroSli
 import { AnnouncementBar } from '../components/layout/AnnouncementBar';
 import { SustainabilitySection } from '../components/sections/SustainabilitySection';
 import { FeaturedProducts } from '../components/sections/FeaturedProducts';
-import { CategoriesSection } from '../components/sections/CategoriesSection';
-import { ShopCategoriesSection } from '../components/sections/ShopCategoriesSection';
+import { UnifiedCategoriesSection } from '../components/sections/UnifiedCategoriesSection';
 import { CoffeeSelectionSection } from '../components/sections/CoffeeSelectionSection';
 import { Seo } from '../components/seo/Seo';
 import { useApp } from '../hooks/useApp';
@@ -177,8 +176,7 @@ const HomePage: React.FC = () => {
           <SustainabilitySection />
           <FeaturedProducts />
           <CoffeeSelectionSection />
-          <CategoriesSection />
-          <ShopCategoriesSection />
+          <UnifiedCategoriesSection />
         </>
       ) : (
         <div className="min-h-[60vh]" aria-hidden="true" />

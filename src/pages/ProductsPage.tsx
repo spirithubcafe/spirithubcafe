@@ -1,14 +1,18 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Check, ChevronDown, Coffee, Filter, Search } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Check, ChevronDown, ChevronLeft, ChevronRight, Coffee, Filter, Search } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useApp } from '../hooks/useApp';
 import { ProductCard } from '../components/products/ProductCard';
 import { PageHeader } from '../components/layout/PageHeader';
 import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
 import { Seo } from '../components/seo/Seo';
 import { siteMetadata } from '../config/siteMetadata';
 import { AnnouncementBar } from '../components/layout/AnnouncementBar';
+import { useShopPage } from '../hooks/useShop';
+import { useRegion } from '../hooks/useRegion';
+import { getCategoryImageUrl } from '../lib/imageUtils';
 
 type CategoryOption = {
   id: string;
@@ -16,9 +20,38 @@ type CategoryOption = {
   slug?: string;
 };
 
+const GIFT_HINT_EN = '❤️ Gift Someone Special';
+const GIFT_HINT_AR = '❤️ أهدي شخص مميز';
+const LIMITED_HINT_EN = '✨ Limited Release';
+const LIMITED_HINT_AR = '✨ إصدار محدود';
+
+const isGiftOrBundleCategory = (name: string, hrefOrSlug: string): boolean => {
+  const haystack = `${name} ${hrefOrSlug}`.toLowerCase();
+  return (
+    haystack.includes('bundle') ||
+    haystack.includes('gift') ||
+    haystack.includes('هدية') ||
+    haystack.includes('هدايا') ||
+    haystack.includes('أهدي')
+  );
+};
+
+const isCompetitionPremiumCategory = (name: string, hrefOrSlug: string): boolean => {
+  const haystack = `${name} ${hrefOrSlug}`.toLowerCase();
+  return (
+    haystack.includes('competition premium') ||
+    haystack.includes('premium series') ||
+    haystack.includes('series') ||
+    haystack.includes('منافسة') ||
+    haystack.includes('محدود')
+  );
+};
+
 export const ProductsPage = () => {
   const { i18n } = useTranslation();
   const { products, allCategories, loading, language } = useApp();
+  const { shopData } = useShopPage();
+  const { currentRegion } = useRegion();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { pathname } = useLocation();
@@ -29,6 +62,9 @@ export const ProductsPage = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>(categoryFromUrl || 'all');
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryOpen, setCategoryOpen] = useState(false);
+  const categoryScrollRef = useRef<HTMLDivElement | null>(null);
+  const [canScrollCategoriesLeft, setCanScrollCategoriesLeft] = useState(false);
+  const [canScrollCategoriesRight, setCanScrollCategoriesRight] = useState(false);
 
   const isArabic = i18n.language === 'ar';
 
@@ -235,6 +271,73 @@ export const ProductsPage = () => {
 
     return [allOption, ...mappedCategories];
   }, [coffeeCategories, isArabic]);
+
+  const browseCategories = useMemo(() => {
+    const coffeeItems = coffeeCategories.map((category) => ({
+      id: `coffee-${category.id}`,
+      name: category.name,
+      image: category.image || '/images/slides/slide1.webp',
+      kind: 'coffee' as const,
+      categoryId: category.id,
+      categorySlug: category.slug,
+      href: '',
+    }));
+
+    const shopItems = (shopData?.categories ?? []).map((category) => ({
+      id: `shop-${category.id}`,
+      name: isArabic ? category.nameAr || category.name : category.name,
+      image: getCategoryImageUrl(category.imagePath),
+      kind: 'shop' as const,
+      categoryId: String(category.id),
+      categorySlug: category.slug,
+      href: `/${currentRegion.code}/shop/${category.slug}`,
+    }));
+
+    return [...coffeeItems, ...shopItems];
+  }, [coffeeCategories, currentRegion.code, isArabic, shopData?.categories]);
+
+  const renderedBrowseCategories = useMemo(
+    () => (isArabic ? [...browseCategories].reverse() : browseCategories),
+    [browseCategories, isArabic],
+  );
+
+  const updateBrowseCategoryArrows = useCallback(() => {
+    const el = categoryScrollRef.current;
+    if (!el) return;
+
+    const maxScrollLeft = Math.max(0, el.scrollWidth - el.clientWidth);
+    const threshold = 2;
+    setCanScrollCategoriesLeft(el.scrollLeft > threshold);
+    setCanScrollCategoriesRight(el.scrollLeft < maxScrollLeft - threshold);
+  }, []);
+
+  useEffect(() => {
+    updateBrowseCategoryArrows();
+  }, [renderedBrowseCategories.length, updateBrowseCategoryArrows]);
+
+  useEffect(() => {
+    const el = categoryScrollRef.current;
+    if (!el) return;
+
+    const onScroll = () => updateBrowseCategoryArrows();
+    const onResize = () => updateBrowseCategoryArrows();
+    el.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onResize);
+
+    return () => {
+      el.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onResize);
+    };
+  }, [updateBrowseCategoryArrows]);
+
+  const scrollBrowseCategories = useCallback((direction: 'left' | 'right') => {
+    const el = categoryScrollRef.current;
+    if (!el) return;
+    el.scrollBy({
+      left: direction === 'left' ? -300 : 300,
+      behavior: 'smooth',
+    });
+  }, []);
 
   return (
     <div className={`min-h-screen bg-gray-50 ${isArabic ? 'rtl' : 'ltr'}`}>
@@ -482,63 +585,120 @@ export const ProductsPage = () => {
             </h2>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 max-w-7xl mx-auto items-stretch">
-            {coffeeCategories.map((category) => {
-              const isActive = selectedCategory === category.id || selectedCategory === category.slug;
+          <div className="relative max-w-7xl mx-auto">
+            <div className="pointer-events-none absolute left-0 top-0 z-10 hidden h-full w-10 bg-gradient-to-r from-white via-white/75 to-transparent md:block" />
+            <div className="pointer-events-none absolute right-0 top-0 z-10 hidden h-full w-10 bg-gradient-to-l from-white via-white/75 to-transparent md:block" />
+
+            <button
+              type="button"
+              aria-label={isArabic ? 'التمرير لليسار' : 'Scroll left'}
+              onClick={() => scrollBrowseCategories('left')}
+              disabled={!canScrollCategoriesLeft}
+              className="hidden md:flex absolute left-2 top-1/2 z-20 -translate-y-1/2 border border-gray-200/70 bg-white/90 backdrop-blur-md shadow-md rounded-full w-10 h-10 items-center justify-center text-gray-700 transition hover:scale-105 hover:shadow-lg disabled:opacity-40 disabled:hover:scale-100"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              aria-label={isArabic ? 'التمرير لليمين' : 'Scroll right'}
+              onClick={() => scrollBrowseCategories('right')}
+              disabled={!canScrollCategoriesRight}
+              className="hidden md:flex absolute right-2 top-1/2 z-20 -translate-y-1/2 border border-gray-200/70 bg-white/90 backdrop-blur-md shadow-md rounded-full w-10 h-10 items-center justify-center text-gray-700 transition hover:scale-105 hover:shadow-lg disabled:opacity-40 disabled:hover:scale-100"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+
+            <div
+              ref={categoryScrollRef}
+              dir="ltr"
+              className="scrollbar-hide flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth pb-2 [touch-action:pan-x_pan-y]"
+            >
+            {renderedBrowseCategories.map((category) => {
+              const isActive = category.kind === 'coffee' && (selectedCategory === category.categoryId || selectedCategory === category.categorySlug);
+              const cardClassName = 'group block shrink-0 snap-start h-full cursor-pointer text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/60';
+              const cardBody = (
+                <div className={`h-full overflow-hidden rounded-2xl border bg-white/95 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-all duration-300 flex flex-col hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(0,0,0,0.08)] ${
+                  isActive
+                    ? 'border-amber-500 shadow-md'
+                    : 'border-gray-200/70 group-hover:border-gray-300/80'
+                }`}>
+                  <div className="relative overflow-hidden aspect-[4/5]">
+                    <img
+                      src={category.image}
+                      alt={category.name}
+                      width={200}
+                      height={200}
+                      loading="lazy"
+                      decoding="async"
+                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = '/images/slides/slide1.webp';
+                      }}
+                    />
+
+                    <div className={`absolute inset-0 transition-all duration-300 ${
+                      isActive
+                        ? 'bg-amber-500/10'
+                        : 'bg-black/0 group-hover:bg-black/5'
+                    }`} />
+                  </div>
+
+                  <div className="flex min-h-[84px] flex-col justify-center bg-gray-50 px-3.5 py-3">
+                    <h3
+                      dir={isArabic ? 'rtl' : 'ltr'}
+                      className={`w-full truncate whitespace-nowrap text-[0.98rem] font-semibold leading-7 tracking-tight transition-colors duration-200 ${isArabic ? 'text-right pe-1' : 'text-center'} ${
+                      isActive
+                        ? 'text-amber-600'
+                        : 'text-gray-900 group-hover:text-amber-600'
+                      }`}
+                    >
+                      {category.name}
+                    </h3>
+                    {isCompetitionPremiumCategory(category.name, category.href || category.categorySlug || '') ? (
+                      <p
+                        dir={isArabic ? 'rtl' : 'ltr'}
+                        className={`mt-1 w-full truncate whitespace-nowrap text-[0.72rem] font-semibold leading-4 text-rose-600 ${isArabic ? 'text-right pe-1' : 'text-center'}`}
+                      >
+                        {isArabic ? LIMITED_HINT_AR : LIMITED_HINT_EN}
+                      </p>
+                    ) : null}
+                    {!isCompetitionPremiumCategory(category.name, category.href || category.categorySlug || '') &&
+                    isGiftOrBundleCategory(category.name, category.href || category.categorySlug || '') ? (
+                      <p
+                        dir={isArabic ? 'rtl' : 'ltr'}
+                        className={`mt-1 w-full truncate whitespace-nowrap text-[0.72rem] font-semibold leading-4 text-rose-600 ${isArabic ? 'text-right pe-1' : 'text-center'}`}
+                      >
+                        {isArabic ? GIFT_HINT_AR : GIFT_HINT_EN}
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
+              );
               
+              if (category.kind === 'shop') {
+                return (
+                  <Link key={category.id} to={category.href} className={cardClassName} style={{ width: '212px' }}>
+                    {cardBody}
+                  </Link>
+                );
+              }
+
               return (
                 <button
                   key={category.id}
-                  onClick={() => handleCategoryChange(category.id)}
-                  className="group w-full h-full cursor-pointer text-left transition-all"
+                  onClick={() => handleCategoryChange(category.categoryId)}
+                  className={cardClassName}
+                  style={{ width: '212px' }}
                 >
-                  <div className={`h-full overflow-hidden rounded-2xl border bg-white transition-all duration-300 flex flex-col ${
-                    isActive
-                      ? 'border-amber-500 shadow-md'
-                      : 'border-gray-200 group-hover:border-gray-300'
-                  }`}>
-                    {/* Category Image */}
-                    <div className="relative overflow-hidden aspect-square">
-                      <img
-                        src={category.image || '/images/slides/slide1.webp'}
-                        alt={category.name}
-                        width={200}
-                        height={200}
-                        loading="eager"
-                        decoding="sync"
-                        fetchPriority="high"
-                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.src = '/images/slides/slide1.webp';
-                        }}
-                      />
-
-                      {/* Overlay on Hover */}
-                      <div className={`absolute inset-0 transition-all duration-300 ${
-                        isActive
-                          ? 'bg-amber-500/10'
-                          : 'bg-black/0 group-hover:bg-black/5'
-                      }`} />
-                    </div>
-
-                    {/* Category Name */}
-                    <div className="flex min-h-[86px] items-center bg-gray-50 px-4 py-4 sm:px-5">
-                      <h3 className={`text-[1.05rem] font-semibold leading-6 transition-colors duration-200 ${
-                        isActive
-                          ? 'text-amber-600'
-                          : 'text-gray-900 group-hover:text-amber-600'
-                      }`}>
-                        {category.name}
-                      </h3>
-                    </div>
-                  </div>
+                  {cardBody}
                 </button>
               );
             })}
             </div>
           </div>
         </div>
+      </div>
       </div> {/* End Content Container */}
     </div>
   );
