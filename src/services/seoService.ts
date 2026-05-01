@@ -328,6 +328,15 @@ const buildSitemapXml = (
 };
 
 const buildFeedXml = (baseUrl: string, products: Product[]): { xml: string; entries: number } => {
+  const escapeXml = (value: string | number | null | undefined): string => {
+    return String(value ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&apos;');
+  };
+
   const items: string[] = [];
   
   products.forEach((product) => {
@@ -366,17 +375,17 @@ const buildFeedXml = (baseUrl: string, products: Product[]): { xml: string; entr
       const mpn = product.sku || productId;
       
       items.push(`<item>
-      <g:id>${productId}</g:id>
-      <g:title>${product.name}</g:title>
-      <g:description>${description}</g:description>
-      <g:link>${link}</g:link>
-      ${imageUrl ? `<g:image_link>${imageUrl}</g:image_link>` : ''}
+      <g:id>${escapeXml(productId)}</g:id>
+      <g:title>${escapeXml(product.name)}</g:title>
+      <g:description>${escapeXml(description)}</g:description>
+      <g:link>${escapeXml(link)}</g:link>
+      ${imageUrl ? `<g:image_link>${escapeXml(imageUrl)}</g:image_link>` : ''}
       <g:price>0.000 OMR</g:price>
       <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
-      <g:brand>${brand}</g:brand>
-      <g:google_product_category>${googleCategory}</g:google_product_category>
-      <g:mpn>${mpn}</g:mpn>
+      <g:brand>${escapeXml(brand)}</g:brand>
+      <g:google_product_category>${escapeXml(googleCategory)}</g:google_product_category>
+      <g:mpn>${escapeXml(mpn)}</g:mpn>
     </item>`);
       return;
     }
@@ -407,18 +416,18 @@ const buildFeedXml = (baseUrl: string, products: Product[]): { xml: string; entr
       
       // Build item with item_group_id for grouping
       items.push(`<item>
-      <g:id>${variantId}</g:id>
-      <g:title>${variantTitle}</g:title>
-      <g:description>${description}</g:description>
-      <g:link>${link}</g:link>
-      ${imageUrl ? `<g:image_link>${imageUrl}</g:image_link>` : ''}
-      <g:price>${formattedPrice}</g:price>
-      <g:availability>${availability}</g:availability>
+      <g:id>${escapeXml(variantId)}</g:id>
+      <g:title>${escapeXml(variantTitle)}</g:title>
+      <g:description>${escapeXml(description)}</g:description>
+      <g:link>${escapeXml(link)}</g:link>
+      ${imageUrl ? `<g:image_link>${escapeXml(imageUrl)}</g:image_link>` : ''}
+      <g:price>${escapeXml(formattedPrice)}</g:price>
+      <g:availability>${escapeXml(availability)}</g:availability>
       <g:condition>new</g:condition>
-      <g:brand>${brand}</g:brand>
-      <g:google_product_category>${googleCategory}</g:google_product_category>
-      <g:mpn>${mpn}</g:mpn>
-      <g:item_group_id>${baseProductId}</g:item_group_id>
+      <g:brand>${escapeXml(brand)}</g:brand>
+      <g:google_product_category>${escapeXml(googleCategory)}</g:google_product_category>
+      <g:mpn>${escapeXml(mpn)}</g:mpn>
+      <g:item_group_id>${escapeXml(baseProductId)}</g:item_group_id>
     </item>`);
     });
   });
@@ -426,9 +435,9 @@ const buildFeedXml = (baseUrl: string, products: Product[]): { xml: string; entr
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">
   <channel>
-    <title>Spirit Hub Cafe Product Feed</title>
-    <link>${baseUrl}</link>
-    <description>Latest active products from Spirit Hub Cafe</description>
+    <title>${escapeXml('Spirit Hub Cafe Product Feed')}</title>
+    <link>${escapeXml(baseUrl)}</link>
+    <description>${escapeXml('Latest active products from Spirit Hub Cafe')}</description>
 ${items.join('\n')}
   </channel>
 </rss>`;
