@@ -21,17 +21,17 @@ const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
 
 // ── Static pages (always included) ──────────────────────────────────
 const STATIC_PAGES = [
-  { loc: '/',            changefreq: 'daily',   priority: '1.0' },
-  { loc: '/products',    changefreq: 'daily',   priority: '0.9' },
-  { loc: '/about',       changefreq: 'monthly', priority: '0.7' },
-  { loc: '/contact',     changefreq: 'monthly', priority: '0.6' },
-  { loc: '/faq',         changefreq: 'monthly', priority: '0.5' },
-  { loc: '/shop',        changefreq: 'daily',   priority: '0.8' },
-  { loc: '/privacy',     changefreq: 'yearly',  priority: '0.3' },
-  { loc: '/terms',       changefreq: 'yearly',  priority: '0.3' },
-  { loc: '/delivery',    changefreq: 'monthly', priority: '0.4' },
-  { loc: '/refund',      changefreq: 'monthly', priority: '0.4' },
-  { loc: '/loyalty',     changefreq: 'monthly', priority: '0.5' },
+  { loc: '/om',             changefreq: 'daily',   priority: '1.0' },
+  { loc: '/om/products',    changefreq: 'daily',   priority: '0.9' },
+  { loc: '/om/about',       changefreq: 'monthly', priority: '0.7' },
+  { loc: '/om/contact',     changefreq: 'monthly', priority: '0.6' },
+  { loc: '/om/faq',         changefreq: 'monthly', priority: '0.5' },
+  { loc: '/om/shop',        changefreq: 'daily',   priority: '0.8' },
+  { loc: '/om/privacy',     changefreq: 'yearly',  priority: '0.3' },
+  { loc: '/om/terms',       changefreq: 'yearly',  priority: '0.3' },
+  { loc: '/om/delivery',    changefreq: 'monthly', priority: '0.4' },
+  { loc: '/om/refund',      changefreq: 'monthly', priority: '0.4' },
+  { loc: '/om/loyalty',     changefreq: 'monthly', priority: '0.5' },
 ];
 
 // ── Helpers ─────────────────────────────────────────────────────────
@@ -158,7 +158,7 @@ async function buildSitemap() {
       const slug = cat.slug || cat.categorySlug;
       if (!slug) continue;
       xml += `  <url>\n`;
-      xml += `    <loc>${escapeXml(SITE_URL + '/products?category=' + slug)}</loc>\n`;
+      xml += `    <loc>${escapeXml(SITE_URL + '/om/shop/' + slug)}</loc>\n`;
       xml += `    <lastmod>${todayStr}</lastmod>\n`;
       xml += `    <changefreq>weekly</changefreq>\n`;
       xml += `    <priority>0.8</priority>\n`;
@@ -185,7 +185,7 @@ async function buildSitemap() {
       }
 
       xml += `  <url>\n`;
-      xml += `    <loc>${escapeXml(SITE_URL + '/products/' + slug)}</loc>\n`;
+      xml += `    <loc>${escapeXml(SITE_URL + '/om/products/' + slug)}</loc>\n`;
       xml += `    <lastmod>${lastmod}</lastmod>\n`;
       xml += `    <changefreq>weekly</changefreq>\n`;
       xml += `    <priority>0.7</priority>\n`;

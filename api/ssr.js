@@ -3,6 +3,10 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const SEO_HOSTS = {
+  om: 'https://spirithubcafe.com',
+  sa: 'https://spirithub.sa',
+};
 
 // API base URL
 const API_BASE_URL = process.env.VITE_API_URL || 'https://api.spirithubcafe.com/api';
@@ -233,7 +237,10 @@ async function getMetaTagsForRoute(url, baseUrl) {
     <meta property="og:image:width" content="1080" />
     <meta property="og:image:height" content="1080" />` : '';
 
-  const canonicalUrl = `${resolvedBaseUrl}${cleanUrl}`;
+  const normalizedPath = cleanUrl || '/';
+  const omUrl = normalizedPath === '/' ? `${SEO_HOSTS.om}/om` : `${SEO_HOSTS.om}/om${normalizedPath}`;
+  const saUrl = normalizedPath === '/' ? SEO_HOSTS.sa : `${SEO_HOSTS.sa}${normalizedPath}`;
+  const canonicalUrl = region === 'sa' ? saUrl : omUrl;
 
   // Build product-specific meta tags if it's a product page
   let productMetaTags = '';
@@ -249,9 +256,11 @@ async function getMetaTagsForRoute(url, baseUrl) {
     <title>${title}</title>
     <meta name="description" content="${description}" />
     <link rel="canonical" href="${canonicalUrl}" />
-    <link rel="alternate" hreflang="en" href="${canonicalUrl}" />
-    <link rel="alternate" hreflang="ar" href="${canonicalUrl}?lang=ar" />
-    <link rel="alternate" hreflang="x-default" href="${canonicalUrl}" />
+    <link rel="alternate" hreflang="en-OM" href="${omUrl}" />
+    <link rel="alternate" hreflang="ar-OM" href="${omUrl}" />
+    <link rel="alternate" hreflang="en-SA" href="${saUrl}" />
+    <link rel="alternate" hreflang="ar-SA" href="${saUrl}" />
+    <link rel="alternate" hreflang="x-default" href="${omUrl}" />
     <meta property="og:type" content="${ogType}" />
     <meta property="og:title" content="${title}" />
     <meta property="og:description" content="${description}" />

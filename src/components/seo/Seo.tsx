@@ -19,6 +19,69 @@ export interface SeoProps {
   locale?: string;
 }
 
+const REGION_HOSTS = {
+  om: 'https://spirithubcafe.com',
+  sa: 'https://spirithub.sa',
+} as const;
+
+type RegionCode = keyof typeof REGION_HOSTS;
+
+const detectRegionFromPath = (pathname: string): RegionCode => {
+  if (pathname === '/sa' || pathname.startsWith('/sa/')) return 'sa';
+  return 'om';
+};
+
+const stripRegionPrefix = (pathname: string): string => {
+  if (pathname === '/om' || pathname === '/sa') return '/';
+  if (pathname.startsWith('/om/')) return pathname.slice(3) || '/';
+  if (pathname.startsWith('/sa/')) return pathname.slice(3) || '/';
+  return pathname || '/';
+};
+
+const ensureLeadingSlash = (pathname: string): string => (pathname.startsWith('/') ? pathname : `/${pathname}`);
+
+const buildRegionalUrl = (region: RegionCode, normalizedPath: string): string => {
+  const host = REGION_HOSTS[region];
+  if (region === 'om') {
+    return normalizedPath === '/' ? `${host}/om` : `${host}/om${normalizedPath}`;
+  }
+  return normalizedPath === '/' ? host : `${host}${normalizedPath}`;
+};
+
+const isSameHost = (value: string, expected: string): boolean => {
+  try {
+    return new URL(value).host === new URL(expected).host;
+  } catch {
+    return false;
+  }
+};
+
+const normalizeCanonicalForRegion = (
+  canonicalUrl: string,
+  pathname: string,
+  region: RegionCode
+): string => {
+  try {
+    const parsed = new URL(canonicalUrl);
+    const hasRegionPrefix = parsed.pathname === '/om' || parsed.pathname === '/sa' || parsed.pathname.startsWith('/om/') || parsed.pathname.startsWith('/sa/');
+    const isOmanHost = isSameHost(canonicalUrl, REGION_HOSTS.om);
+    const isSaudiHost = isSameHost(canonicalUrl, REGION_HOSTS.sa);
+
+    if (hasRegionPrefix || isSaudiHost) {
+      return canonicalUrl;
+    }
+
+    if (isOmanHost && (pathname === '/om' || pathname === '/sa' || pathname.startsWith('/om/') || pathname.startsWith('/sa/'))) {
+      const normalizedPath = stripRegionPrefix(pathname);
+      return buildRegionalUrl(region, ensureLeadingSlash(normalizedPath));
+    }
+
+    return canonicalUrl;
+  } catch {
+    return canonicalUrl;
+  }
+};
+
 const ensureMeta = (selector: string, attributes: Record<string, string>, content: string) => {
   if (typeof document === 'undefined') return;
   let element = document.head.querySelector(selector) as HTMLMetaElement | null;
@@ -88,7 +151,11 @@ export const Seo: React.FC<SeoProps> = ({
   }, [canonical, location.pathname, location.search]);
 
   const resolvedLocale = locale ?? (language === 'ar' ? 'ar-OM' : 'en-OM');
-  const alternateLocale = resolvedLocale.startsWith('ar') ? 'en-OM' : 'ar-OM';
+  const region = detectRegionFromPath(location.pathname);
+  const normalizedPath = ensureLeadingSlash(stripRegionPrefix(location.pathname));
+  const canonicalForRegion = normalizeCanonicalForRegion(resolvedCanonical, location.pathname, region);
+  const omUrl = buildRegionalUrl('om', normalizedPath);
+  const saUrl = buildRegionalUrl('sa', normalizedPath);
   const keywordsContent = Array.isArray(keywords)
     ? keywords.join(', ')
     : keywords ?? siteMetadata.defaultKeywords.join(', ');
@@ -124,7 +191,7 @@ export const Seo: React.FC<SeoProps> = ({
     ensureMeta('meta[property="og:title"]', { property: 'og:title' }, resolvedTitle);
     ensureMeta('meta[property="og:description"]', { property: 'og:description' }, finalOgDesc);
     ensureMeta('meta[property="og:type"]', { property: 'og:type' }, type);
-    ensureMeta('meta[property="og:url"]', { property: 'og:url' }, resolvedCanonical);
+    ensureMeta('meta[property="og:url"]', { property: 'og:url' }, canonicalForRegion);
     ensureMeta('meta[property="og:site_name"]', { property: 'og:site_name' }, siteMetadata.siteName);
     
     // Ensure Open Graph image is set, with fallback
@@ -137,11 +204,7 @@ export const Seo: React.FC<SeoProps> = ({
     }
     
     ensureMeta('meta[property="og:locale"]', { property: 'og:locale' }, resolvedLocale);
-    ensureMeta(
-      'meta[property="og:locale:alternate"]',
-      { property: 'og:locale:alternate' },
-      alternateLocale
-    );
+    ensureMeta('meta[property="og:locale:alternate"]', { property: 'og:locale:alternate' }, 'en-OM');
     ensureMeta('meta[name="twitter:card"]', { name: 'twitter:card' }, 'summary_large_image');
     ensureMeta('meta[name="twitter:title"]', { name: 'twitter:title' }, resolvedTitle);
     ensureMeta('meta[name="twitter:description"]', { name: 'twitter:description' }, finalOgDesc);
@@ -163,26 +226,27 @@ export const Seo: React.FC<SeoProps> = ({
       removeMeta('meta[name="robots"]');
     }
 
-    ensureLink('canonical', resolvedCanonical);
+    ensureLink('canonical', canonicalForRegion);
     
-    // Language alternates
-    const baseUrl = siteMetadata.baseUrl || window.location.origin;
-    const pathname = location.pathname;
-    ensureLink('alternate', `${baseUrl}${pathname}`, 'en');
-    ensureLink('alternate', `${baseUrl}${pathname}?lang=ar`, 'ar');
-    ensureLink('alternate', `${baseUrl}${pathname}`, 'x-default');
+    // Language/market alternates
+    ensureLink('alternate', omUrl, 'en-OM');
+    ensureLink('alternate', omUrl, 'ar-OM');
+    ensureLink('alternate', saUrl, 'en-SA');
+    ensureLink('alternate', saUrl, 'ar-SA');
+    ensureLink('alternate', omUrl, 'x-default');
   }, [
+    canonicalForRegion,
     keywordsContent,
     noindex,
     ogDescription,
-    resolvedCanonical,
     resolvedDescription,
     resolvedImage,
     resolvedLocale,
     resolvedTitle,
     robots,
+    omUrl,
+    saUrl,
     type,
-    alternateLocale,
   ]);
 
   useEffect(() => {

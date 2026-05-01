@@ -130,6 +130,11 @@ const resolveAbsoluteImageUrl = (apiBase, imagePath) => {
   return `${apiBase}${trimmed.startsWith('/') ? trimmed : `/${trimmed}`}`;
 };
 
+const SEO_HOSTS = {
+  om: 'https://spirithubcafe.com',
+  sa: 'https://spirithub.sa',
+};
+
 // Create http server
 const app = express();
 // Respect reverse-proxy headers (e.g., Vercel/NGINX) when constructing absolute URLs.
@@ -409,15 +414,20 @@ async function getMetaTagsForRoute(url, requestBaseUrl) {
     <meta property="og:image:width" content="1080" />
     <meta property="og:image:height" content="1080" />` : '';
 
-  const canonicalUrl = `${baseUrl}${cleanUrl}`;
+  const normalizedPath = cleanUrl || '/';
+  const omUrl = normalizedPath === '/' ? `${SEO_HOSTS.om}/om` : `${SEO_HOSTS.om}/om${normalizedPath}`;
+  const saUrl = normalizedPath === '/' ? SEO_HOSTS.sa : `${SEO_HOSTS.sa}${normalizedPath}`;
+  const canonicalUrl = region === 'sa' ? saUrl : omUrl;
 
   return `
     <title>${title}</title>
     <meta name="description" content="${description}" />
     <link rel="canonical" href="${canonicalUrl}" />
-    <link rel="alternate" hreflang="en" href="${canonicalUrl}" />
-    <link rel="alternate" hreflang="ar" href="${canonicalUrl}?lang=ar" />
-    <link rel="alternate" hreflang="x-default" href="${canonicalUrl}" />
+    <link rel="alternate" hreflang="en-OM" href="${omUrl}" />
+    <link rel="alternate" hreflang="ar-OM" href="${omUrl}" />
+    <link rel="alternate" hreflang="en-SA" href="${saUrl}" />
+    <link rel="alternate" hreflang="ar-SA" href="${saUrl}" />
+    <link rel="alternate" hreflang="x-default" href="${omUrl}" />
     <meta property="og:type" content="${ogType}" />
     <meta property="og:title" content="${title}" />
     <meta property="og:description" content="${description}" />
