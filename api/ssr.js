@@ -237,9 +237,9 @@ async function getMetaTagsForRoute(url, baseUrl) {
     <meta property="og:image:width" content="1080" />
     <meta property="og:image:height" content="1080" />` : '';
 
-  const normalizedPath = cleanUrl || '/';
-  const omUrl = normalizedPath === '/' ? `${SEO_HOSTS.om}/om` : `${SEO_HOSTS.om}/om${normalizedPath}`;
-  const saUrl = normalizedPath === '/' ? SEO_HOSTS.sa : `${SEO_HOSTS.sa}${normalizedPath}`;
+  const canonicalPath = cleanUrl || '/';
+  const omUrl = canonicalPath === '/' ? `${SEO_HOSTS.om}/om` : `${SEO_HOSTS.om}/om${canonicalPath}`;
+  const saUrl = canonicalPath === '/' ? SEO_HOSTS.sa : `${SEO_HOSTS.sa}${canonicalPath}`;
   const canonicalUrl = region === 'sa' ? saUrl : omUrl;
 
   // Build product-specific meta tags if it's a product page
