@@ -24,6 +24,7 @@ import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { Alert, AlertDescription } from '../ui/alert';
+import { fileUploadService } from '../../services/fileUploadService';
 
 type SendType = 'text' | 'image';
 
@@ -38,6 +39,8 @@ export const WhatsAppSendMessage: React.FC = () => {
   const [imageUrl, setImageUrl] = useState('');
   const [caption, setCaption] = useState('');
   const [imageError, setImageError] = useState(false);
+  const [pastedImagePreviewUrl, setPastedImagePreviewUrl] = useState('');
+  const [uploadingPastedImage, setUploadingPastedImage] = useState(false);
 
   const { loading, error, success, sendText, sendImage, reset, formatPhone, isValidPhone } = useWhatsApp();
 
@@ -166,7 +169,67 @@ export const WhatsAppSendMessage: React.FC = () => {
   const handleImageUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setImageUrl(e.target.value);
     setImageError(false);
+    setPastedImagePreviewUrl('');
     reset();
+  };
+
+  const handleImagePasteUpload = async (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      toast.error(isArabic ? 'الملف الملصق ليس صورة' : 'Pasted file is not an image');
+      return;
+    }
+
+    const validation = fileUploadService.validateFile(file, 8, [
+      '.jpg',
+      '.jpeg',
+      '.png',
+      '.gif',
+      '.webp',
+    ]);
+
+    if (!validation.valid) {
+      toast.error(validation.error || (isArabic ? 'ملف الصورة غير صالح' : 'Invalid image file'));
+      return;
+    }
+
+    setUploadingPastedImage(true);
+    setImageError(false);
+    reset();
+
+    try {
+      const localPreview = await fileUploadService.createPreviewUrl(file);
+      setPastedImagePreviewUrl(localPreview);
+
+      const uploadResult = await fileUploadService.uploadFile(file, 'temp', 'image', 'whatsapp');
+      if (!uploadResult.success || !uploadResult.fileUrl) {
+        throw new Error(uploadResult.message || 'Failed to upload image');
+      }
+
+      setImageUrl(uploadResult.fileUrl);
+      toast.success(
+        isArabic ? 'تم لصق الصورة ورفعها بنجاح' : 'Image pasted and uploaded successfully'
+      );
+    } catch {
+      setImageUrl('');
+      setPastedImagePreviewUrl('');
+      toast.error(isArabic ? 'فشل رفع الصورة الملصقة' : 'Failed to upload pasted image');
+    } finally {
+      setUploadingPastedImage(false);
+    }
+  };
+
+  const handleImagePaste = async (e: React.ClipboardEvent<HTMLDivElement | HTMLInputElement>) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    const imageItem = Array.from(items).find((item) => item.type.startsWith('image/'));
+    if (!imageItem) return;
+
+    const file = imageItem.getAsFile();
+    if (!file) return;
+
+    e.preventDefault();
+    await handleImagePasteUpload(file);
   };
 
   const texts = {
@@ -186,10 +249,14 @@ export const WhatsAppSendMessage: React.FC = () => {
       charCount: 'characters',
       imageUrlLabel: 'Image URL',
       imageUrlPlaceholder: 'https://example.com/image.jpg',
+      pasteHint: 'You can also paste an image directly here (Ctrl+V)',
       captionLabel: 'Caption (optional)',
       captionPlaceholder: 'Add a caption for the image...',
       preview: 'Preview',
+      combinedPreview: 'Live WhatsApp Preview',
       invalidUrl: 'Invalid image URL',
+      uploadingImage: 'Uploading image...',
+      removeImage: 'Remove image',
       send: 'Send via WhatsApp',
       sending: 'Sending...',
       sent: 'Message sent!',
@@ -221,6 +288,12 @@ export const WhatsAppSendMessage: React.FC = () => {
   };
 
   const copy = isArabic ? texts.ar : texts.en;
+  const pasteHint = isArabic
+    ? 'يمكنك أيضًا لصق صورة مباشرة هنا (Ctrl+V)'
+    : texts.en.pasteHint;
+  const combinedPreviewTitle = isArabic ? 'معاينة واتساب مباشرة' : texts.en.combinedPreview;
+  const uploadingImageText = isArabic ? 'جارٍ رفع الصورة...' : texts.en.uploadingImage;
+  const removeImageLabel = isArabic ? 'حذف الصورة' : texts.en.removeImage;
 
   return (
     <div className="space-y-6">
@@ -365,7 +438,7 @@ export const WhatsAppSendMessage: React.FC = () => {
               </form>
             </TabsContent>
 
-            <TabsContent value="image" className="mt-0">
+            <TabsContent value="image" className="mt-0" onPaste={handleImagePaste}>
               <form onSubmit={handleSendImage} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="imageUrl">{copy.imageUrlLabel}</Label>
@@ -374,12 +447,14 @@ export const WhatsAppSendMessage: React.FC = () => {
                     type="url"
                     value={imageUrl}
                     onChange={handleImageUrlChange}
+                    onPaste={handleImagePaste}
                     placeholder={copy.imageUrlPlaceholder}
                     dir="ltr"
                   />
+                  <p className="text-xs text-muted-foreground">{pasteHint}</p>
                 </div>
 
-                {imageUrl && (
+                {(imageUrl || pastedImagePreviewUrl || uploadingPastedImage) && (
                   <div className="space-y-2">
                     <Label>{copy.preview}</Label>
                     <div className="relative border rounded-lg p-2 bg-gray-50">
@@ -390,12 +465,18 @@ export const WhatsAppSendMessage: React.FC = () => {
                         </div>
                       ) : (
                         <img
-                          src={imageUrl}
+                          src={pastedImagePreviewUrl || imageUrl}
                           alt="Preview"
                           className="max-h-48 mx-auto rounded-lg object-contain"
                           onError={() => setImageError(true)}
                           onLoad={() => setImageError(false)}
                         />
+                      )}
+                      {uploadingPastedImage && (
+                        <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-black/40 text-sm text-white">
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          {uploadingImageText}
+                        </div>
                       )}
                       <Button
                         type="button"
@@ -404,8 +485,10 @@ export const WhatsAppSendMessage: React.FC = () => {
                         className="absolute top-1 right-1 h-6 w-6"
                         onClick={() => {
                           setImageUrl('');
+                          setPastedImagePreviewUrl('');
                           setImageError(false);
                         }}
+                        aria-label={removeImageLabel}
                       >
                         <X className="h-4 w-4" />
                       </Button>
@@ -423,13 +506,42 @@ export const WhatsAppSendMessage: React.FC = () => {
                     rows={3}
                     maxLength={1000}
                     className="resize-none"
+                    dir="ltr"
                   />
                 </div>
+
+                {(imageUrl || pastedImagePreviewUrl || caption.trim()) && (
+                  <div className="space-y-2">
+                    <Label>{combinedPreviewTitle}</Label>
+                    <div className="rounded-xl border bg-[#efeae2] p-3">
+                      <div className="mx-auto max-w-xs overflow-hidden rounded-lg bg-white shadow-sm">
+                        {(imageUrl || pastedImagePreviewUrl) && (
+                          <img
+                            src={pastedImagePreviewUrl || imageUrl}
+                            alt="WhatsApp preview"
+                            className="max-h-64 w-full object-cover"
+                          />
+                        )}
+                        {caption.trim() && (
+                          <div className="p-3">
+                            <p
+                              className="whitespace-pre-wrap break-words text-sm text-gray-800"
+                              dir="ltr"
+                            >
+                              {caption}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 <Button
                   type="submit"
                   disabled={
                     loading ||
+                    uploadingPastedImage ||
                     validRecipientNumbers.length === 0 ||
                     invalidRecipientNumbers.length > 0 ||
                     !imageUrl.trim() ||
