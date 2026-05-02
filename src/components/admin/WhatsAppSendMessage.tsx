@@ -9,6 +9,7 @@ import {
   CheckCircle2,
   AlertCircle,
   X,
+  Upload,
 } from 'lucide-react';
 import { useWhatsApp } from '../../hooks/useWhatsApp';
 import { useApp } from '../../hooks/useApp';
@@ -34,6 +35,7 @@ export const WhatsAppSendMessage: React.FC = () => {
 
   const [sendType, setSendType] = useState<SendType>('text');
   const [recipientInput, setRecipientInput] = useState('');
+  const [isImportingCsv, setIsImportingCsv] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState<Country>(getDefaultCountry);
   const [message, setMessage] = useState('');
   const [imageUrl, setImageUrl] = useState('');
@@ -52,6 +54,71 @@ export const WhatsAppSendMessage: React.FC = () => {
   const handleCountryChange = (country: Country) => {
     setSelectedCountry(country);
     reset();
+  };
+
+  const normalizePhoneForCountry = (digitsOnly: string): string => {
+    if (!digitsOnly) return '';
+
+    let value = digitsOnly.replace(/\D/g, '');
+    const dialCode = selectedCountry.dialCode.replace(/\D/g, '');
+
+    if (value.startsWith('00')) {
+      value = value.slice(2);
+    }
+
+    if (dialCode && value.startsWith(dialCode) && value.length > selectedCountry.maxDigits) {
+      value = value.slice(dialCode.length);
+    }
+
+    if (value.startsWith('0') && value.length === selectedCountry.maxDigits + 1) {
+      value = value.slice(1);
+    }
+
+    return value;
+  };
+
+  const parsePhonesFromText = (text: string): string[] => {
+    const rawTokens = text.match(/(\+?\d[\d\s().-]{4,}\d|\d{6,})/g) ?? [];
+    return rawTokens
+      .map((token) => normalizePhoneForCountry(token))
+      .filter(Boolean);
+  };
+
+  const handleImportContactsCsv = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsImportingCsv(true);
+    reset();
+    try {
+      const fileText = await file.text();
+      const importedPhones = parsePhonesFromText(fileText);
+
+      if (!importedPhones.length) {
+        toast.error(isArabic ? 'لم يتم العثور على أرقام هاتف في الملف' : 'No phone numbers found in file');
+        return;
+      }
+
+      const existingPhones = recipientInput
+        .split(/[\n,;]+/)
+        .map((entry) => normalizePhoneForCountry(entry))
+        .filter(Boolean);
+
+      const mergedUnique = Array.from(new Set([...existingPhones, ...importedPhones]));
+      const addedCount = mergedUnique.length - existingPhones.length;
+      setRecipientInput(mergedUnique.join('\n'));
+
+      toast.success(
+        isArabic
+          ? `تم استيراد ${addedCount} رقم (${importedPhones.length} تم قراءته)`
+          : `Imported ${addedCount} contact(s) (${importedPhones.length} parsed)`
+      );
+    } catch {
+      toast.error(isArabic ? 'فشل استيراد ملف CSV' : 'Failed to import CSV file');
+    } finally {
+      setIsImportingCsv(false);
+      e.target.value = '';
+    }
   };
 
   const recipientNumbers = useMemo(() => {
@@ -242,6 +309,9 @@ export const WhatsAppSendMessage: React.FC = () => {
       phonePlaceholder:
         selectedCountry.code === 'OM' ? '92506030, 90123456' : '5XXXXXXXX, 6XXXXXXXX',
       recipientsHint: 'Separate multiple numbers with comma or new line',
+      importCsv: 'Import contacts CSV',
+      importingCsv: 'Importing...',
+      importCsvHint: 'Upload CSV/TXT with phone column. Existing recipients are kept.',
       validRecipients: 'valid recipient(s)',
       invalidRecipients: 'invalid recipient(s)',
       messageLabel: 'Message',
@@ -288,6 +358,11 @@ export const WhatsAppSendMessage: React.FC = () => {
   };
 
   const copy = isArabic ? texts.ar : texts.en;
+  const importCsvLabel = isArabic ? 'استيراد جهات الاتصال CSV' : texts.en.importCsv;
+  const importingCsvLabel = isArabic ? 'جارٍ الاستيراد...' : texts.en.importingCsv;
+  const importCsvHint = isArabic
+    ? 'ارفع ملف CSV أو TXT يحتوي على عمود أرقام. سيتم الاحتفاظ بالأرقام الحالية.'
+    : texts.en.importCsvHint;
   const pasteHint = isArabic
     ? 'يمكنك أيضًا لصق صورة مباشرة هنا (Ctrl+V)'
     : texts.en.pasteHint;
@@ -330,6 +405,36 @@ export const WhatsAppSendMessage: React.FC = () => {
               <Phone className="h-4 w-4" />
               {copy.phoneLabel}
             </Label>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={isImportingCsv}
+                className="text-xs"
+                onClick={() => document.getElementById('whatsapp-contacts-csv')?.click()}
+              >
+                {isImportingCsv ? (
+                  <>
+                    <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+                    {importingCsvLabel}
+                  </>
+                ) : (
+                  <>
+                    <Upload className="mr-2 h-3.5 w-3.5" />
+                    {importCsvLabel}
+                  </>
+                )}
+              </Button>
+              <input
+                id="whatsapp-contacts-csv"
+                type="file"
+                accept=".csv,text/csv,.txt,text/plain"
+                className="hidden"
+                onChange={handleImportContactsCsv}
+              />
+              <p className="text-xs text-muted-foreground">{importCsvHint}</p>
+            </div>
             <div className="flex gap-2" dir="ltr">
               <CountryCodePicker
                 value={selectedCountry}
