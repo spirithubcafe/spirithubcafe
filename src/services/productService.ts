@@ -41,6 +41,36 @@ const unwrapApiResponse = <T>(payload: ApiResponse<T> | T | undefined): T | unde
  */
 export const productService = {
   /**
+   * Fetch product by numeric ID or slug and include raw response metadata
+   * for diagnostics/retry logic at the page layer.
+   */
+  getByIdentifierRaw: async (identifier: number | string): Promise<{
+    product: Product | null;
+    status: number;
+    body: unknown;
+    apiUrl: string;
+    endpoint: string;
+  }> => {
+    const isNumeric = typeof identifier === 'number' || /^\d+$/.test(String(identifier));
+    const endpoint = isNumeric
+      ? `/api/Products/${Number(identifier)}`
+      : `/api/Products/slug/${encodeURIComponent(String(identifier))}`;
+
+    const response = await http.get<ApiResponse<Product> | Product>(endpoint);
+    const body = response.data;
+    const product = unwrapApiResponse<Product>(body as ApiResponse<Product> | Product | undefined) ?? null;
+    const apiUrl = `${response.config.baseURL ?? ''}${response.config.url ?? endpoint}`;
+
+    return {
+      product,
+      status: response.status,
+      body,
+      apiUrl,
+      endpoint,
+    };
+  },
+
+  /**
    * Get all products with pagination
    * @param params Query parameters
    * @returns Promise with paginated products

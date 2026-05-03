@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+﻿import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useRegion } from '../../hooks/useRegion';
 import { safeStorage } from '../../lib/safeStorage';
@@ -25,10 +25,10 @@ export const RegionRedirect: React.FC = () => {
 
   const pickerStrings = useMemo(
     () => ({
-      title: isRTL ? 'اختر بلدك' : 'Choose your country',
+      title: isRTL ? 'اختر الدولة' : 'Choose your country',
       description: isRTL
-        ? 'اختر بلدًا أو منطقة لعرض محتوى مناسب لموقعك.'
-        : 'Choose another country or region to see content specific to your location.',
+        ? 'اختر بلدًا أو منطقة لعرض المنتجات.'
+        : 'Choose your country to see coffee list',
       useOman: isRTL ? 'عُمان' : 'Oman',
       useSaudi: isRTL ? 'السعودية' : 'Saudi Arabia',
       continue: isRTL ? 'متابعة' : 'Continue',
@@ -64,7 +64,7 @@ export const RegionRedirect: React.FC = () => {
   // Push the fixed navigation below the banner when visible.
   useEffect(() => {
     const root = document.documentElement;
-    root.style.setProperty('--region-banner-height', showBanner ? '44px' : '0px');
+    root.style.setProperty('--region-banner-height', showBanner ? '52px' : '0px');
     return () => {
       // Ensure we never leave the banner offset behind on unmount.
       root.style.setProperty('--region-banner-height', '0px');
@@ -74,7 +74,7 @@ export const RegionRedirect: React.FC = () => {
   useEffect(() => {
     const path = location.pathname;
 
-    // Saudi Arabia is served from a separate domain — redirect immediately.
+    // Saudi Arabia is served from a separate domain â€” redirect immediately.
     if (path.startsWith('/sa')) {
       window.location.href = 'https://spirithub.sa/';
       return;
@@ -90,7 +90,7 @@ export const RegionRedirect: React.FC = () => {
                             path.startsWith('/sa/') || path === '/sa';
 
     if (hasRegionPrefix) {
-      // Already on a region-prefixed URL — nothing to do here.
+      // Already on a region-prefixed URL â€” nothing to do here.
       return;
     }
 
@@ -101,19 +101,19 @@ export const RegionRedirect: React.FC = () => {
     const storedRegion = safeStorage.getItem('spirithub-region') as RegionCode | null;
 
     if (storedRegion === 'sa') {
-      // Returning Saudi visitor — send straight to the SA domain.
+      // Returning Saudi visitor â€” send straight to the SA domain.
       window.location.href = 'https://spirithub.sa/';
       return;
     }
 
     if (storedRegion === 'om') {
-      // Returning Oman visitor — navigate silently, no banner.
+      // Returning Oman visitor â€” navigate silently, no banner.
       const targetPath = path === '/' ? '/om' : `/om${path}`;
       navigate(`${targetPath}${location.search}`, { replace: true });
       return;
     }
 
-    // ── First-time visitor (no stored preference) ──────────────────────────
+    // â”€â”€ First-time visitor (no stored preference) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     // Navigate to /om as the default immediately.
     const targetPath = path === '/' ? '/om' : `/om${path}`;
     navigate(`${targetPath}${location.search}`, { replace: true });
@@ -132,7 +132,7 @@ export const RegionRedirect: React.FC = () => {
           if (inferred) setSelectedRegion(inferred);
         },
         () => {
-          // Permission denied / unavailable — keep default 'om' selected.
+          // Permission denied / unavailable â€” keep default 'om' selected.
         },
         { enableHighAccuracy: false, timeout: 4000, maximumAge: 60_000 }
       );
@@ -145,20 +145,21 @@ export const RegionRedirect: React.FC = () => {
 
   return (
     <div
-      className="fixed top-0 left-0 right-0 z-60 h-11 w-full border-b bg-white/95 backdrop-blur supports-backdrop-filter:bg-white/70"
+      className="fixed top-0 left-0 right-0 z-60 w-full border-b bg-white/95 backdrop-blur supports-backdrop-filter:bg-white/70"
       dir={isRTL ? 'rtl' : 'ltr'}
     >
-      <div className="mx-auto flex h-full max-w-6xl items-center gap-3 px-3">
+      <div className="mx-auto flex min-h-[52px] max-w-6xl items-center justify-center sm:justify-between gap-2 px-2 sm:px-3">
         <div className={`flex-1 text-xs sm:text-sm text-gray-700 ${isRTL ? 'text-right font-cairo' : 'text-left'}`}>
-          {pickerStrings.description}
+          <span className="sm:hidden">{pickerStrings.title}</span>
+          <span className="hidden sm:inline">{pickerStrings.description}</span>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-center gap-1.5 sm:gap-2">
           <div className="relative">
             <select
               value={selectedRegion}
               onChange={(e) => setSelectedRegion(e.target.value as RegionCode)}
-              className="h-9 rounded-md border border-gray-300 bg-white px-3 pr-8 text-sm text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+              className="h-8 sm:h-9 min-w-[98px] sm:min-w-[120px] rounded-md border border-gray-300 bg-white px-2 sm:px-3 pr-6 sm:pr-8 text-xs sm:text-sm text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
               aria-label={pickerStrings.title}
             >
               <option value="om">{pickerStrings.useOman}</option>
@@ -168,7 +169,7 @@ export const RegionRedirect: React.FC = () => {
 
           <Button
             type="button"
-            className="h-9 bg-amber-600 hover:bg-amber-700 text-white"
+            className="h-8 sm:h-9 px-2.5 sm:px-3 text-xs sm:text-sm bg-amber-600 hover:bg-amber-700 text-white whitespace-nowrap"
             onClick={() => goToRegion(selectedRegion)}
           >
             {pickerStrings.continue}
@@ -178,7 +179,7 @@ export const RegionRedirect: React.FC = () => {
             type="button"
             onClick={dismissBanner}
             aria-label={isRTL ? 'إغلاق' : 'Close'}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-transparent text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+            className="inline-flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-md border border-transparent text-gray-600 hover:bg-gray-100 hover:text-gray-900"
           >
             <X className="h-4 w-4" />
           </button>
@@ -187,3 +188,4 @@ export const RegionRedirect: React.FC = () => {
     </div>
   );
 };
+

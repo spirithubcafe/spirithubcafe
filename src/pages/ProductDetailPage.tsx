@@ -44,6 +44,8 @@ import { ProductTagBadge } from '../components/shop/ProductTagBadge';
 import { ProductViewers } from '../components/ui/LiveVisitors';
 import { toast } from 'sonner';
 import { getVariantStock, clampQuantity } from '../lib/stockUtils';
+import { safeStorage } from '../lib/safeStorage';
+import { getRegionFromPath } from '../lib/regionUtils';
 
 type LoadState = 'idle' | 'loading' | 'ready' | 'error';
 
@@ -123,6 +125,14 @@ const resolvePrice = (product: ApiProduct, variant?: ProductVariant): number => 
 
   const extras = product as unknown as { price?: number; minPrice?: number; basePrice?: number };
   return extras.price ?? extras.minPrice ?? extras.basePrice ?? 0;
+};
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const isEmptyProductPayload = (value: unknown): boolean => {
+  if (!value || typeof value !== 'object') return true;
+  const record = value as Record<string, unknown>;
+  return !record.id && !record.slug && !record.name;
 };
 
 export const ProductDetailPage = () => {
@@ -255,10 +265,80 @@ export const ProductDetailPage = () => {
       setErrorMessage('');
 
       try {
-        const isNumeric = /^\d+$/.test(productId);
-        const result = isNumeric
-          ? await productService.getById(Number(productId))
-          : await productService.getBySlug(productId);
+        const regionFromPath = getRegionFromPath(location.pathname);
+        const storedRegion = safeStorage.getItem('spirithub-region');
+        const hasStoredRegion = storedRegion === 'om' || storedRegion === 'sa';
+        if (!regionFromPath && !hasStoredRegion && !location.pathname.startsWith('/om') && !location.pathname.startsWith('/sa')) {
+          console.info('[ProductDetailPage] Waiting for region resolution before product fetch', {
+            path: location.pathname,
+            productSlug: productId,
+          });
+          return;
+        }
+        const resolvedRegion = regionFromPath ?? (hasStoredRegion ? storedRegion : currentRegion.code);
+
+        const productSlug = productId;
+        const countryCode = resolvedRegion === 'sa' ? 'SA' : 'OM';
+        const maxAttempts = 3;
+        let result: ApiProduct | null = null;
+        let lastApiError: unknown = null;
+        let lastApiUrl: string | null = null;
+        let emptyResponseSeen = false;
+
+        for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+          try {
+            const raw = await productService.getByIdentifierRaw(productSlug);
+            lastApiUrl = raw.apiUrl;
+            console.info('[ProductDetailPage] Product fetch attempt', {
+              attempt,
+              region: resolvedRegion,
+              countryCode,
+              productSlug,
+              apiUrl: raw.apiUrl,
+              status: raw.status,
+              body: raw.body,
+            });
+
+            if (isEmptyProductPayload(raw.product)) {
+              if (!emptyResponseSeen) {
+                emptyResponseSeen = true;
+                if (attempt < maxAttempts) {
+                  await sleep(250 * attempt);
+                  continue;
+                }
+              }
+              throw { statusCode: raw.status, message: 'Empty product payload', rawData: raw.body };
+            }
+
+            result = raw.product as ApiProduct;
+            break;
+          } catch (err) {
+            lastApiError = err;
+            const apiErr = err as { statusCode?: number; message?: string; rawData?: unknown };
+            console.warn('[ProductDetailPage] Product fetch failed', {
+              attempt,
+              region: resolvedRegion,
+              countryCode,
+              productSlug,
+              apiUrl: lastApiUrl,
+              status: apiErr?.statusCode,
+              body: apiErr?.rawData,
+              message: apiErr?.message,
+            });
+
+            if (apiErr?.statusCode === 404) {
+              break;
+            }
+
+            if (attempt < maxAttempts) {
+              await sleep(300 * attempt);
+            }
+          }
+        }
+
+        if (!result) {
+          throw lastApiError ?? new Error('Product load failed');
+        }
 
         if (!isMounted) {
           return;
@@ -281,6 +361,8 @@ export const ProductDetailPage = () => {
           variants: activeVariants,
         };
 
+        const cacheKey = `spirithub_session_product_${resolvedRegion}_${language}_${String(productSlug)}`;
+        safeStorage.setItem(cacheKey, JSON.stringify(sanitized), 'session');
         setProduct(sanitized);
 
         // Enrich with all tags (backend may only embed a subset)
@@ -328,6 +410,29 @@ export const ProductDetailPage = () => {
           return;
         }
 
+        const regionFromPath = getRegionFromPath(location.pathname);
+        const resolvedRegion = regionFromPath ?? currentRegion.code;
+        const cacheKey = `spirithub_session_product_${resolvedRegion}_${language}_${String(productId)}`;
+        const cached = safeStorage.getItem(cacheKey, 'session');
+        if (cached) {
+          try {
+            const cachedProduct = JSON.parse(cached) as ApiProduct;
+            if (!isEmptyProductPayload(cachedProduct)) {
+              console.info('[ProductDetailPage] Using cached product fallback', {
+                region: resolvedRegion,
+                countryCode: resolvedRegion === 'sa' ? 'SA' : 'OM',
+                productSlug: productId,
+                cacheKey,
+              });
+              setProduct(cachedProduct);
+              setState('ready');
+              return;
+            }
+          } catch {
+            // ignore malformed cache
+          }
+        }
+
         // Check if it's a 404 error (product not found)
         const apiError = error as { statusCode?: number };
         const is404 = apiError?.statusCode === 404;
@@ -349,7 +454,7 @@ export const ProductDetailPage = () => {
     return () => {
       isMounted = false;
     };
-  }, [language, productId, currentRegion.code]);
+  }, [language, productId, currentRegion.code, location.pathname]);
 
   useEffect(() => {
     let cancelled = false;
