@@ -139,7 +139,13 @@ export const whatsappService = {
   isValidPhone: (phone: string, maxDigits: number = 8, startsWith?: string): boolean => {
     const digits = phone.replace(/\D/g, '');
     if (digits.length !== maxDigits) return false;
-    if (startsWith && !digits.startsWith(startsWith)) return false;
+    if (startsWith) {
+      const prefixes = startsWith
+        .split(/[|,/\s]+/)
+        .map((part) => part.replace(/\D/g, ''))
+        .filter(Boolean);
+      if (prefixes.length > 0 && !prefixes.some((prefix) => digits.startsWith(prefix))) return false;
+    }
     return true;
   },
 

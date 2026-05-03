@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { whatsappService } from '../services/whatsappService';
+import { getActiveRegionForApi } from '../lib/regionUtils';
 import type {
   WhatsAppSendDto,
   WhatsAppSendImageDto,
@@ -72,9 +73,10 @@ export const useWhatsApp = (): UseWhatsAppReturn => {
       return false;
     }
 
-    // Basic URL validation
+    // Accept both absolute and relative URLs, normalize to absolute API URL
+    let normalizedImageUrl = params.imageUrl.trim();
     try {
-      new URL(params.imageUrl);
+      normalizedImageUrl = new URL(normalizedImageUrl, getMediaBaseUrl()).toString();
     } catch {
       setError('Please enter a valid image URL');
       return false;
@@ -88,6 +90,7 @@ export const useWhatsApp = (): UseWhatsAppReturn => {
       const { countryDialCode, ...sendParams } = params;
       const response = await whatsappService.sendImage({
         ...sendParams,
+        imageUrl: normalizedImageUrl,
         phoneNumber: whatsappService.normalizePhoneNumber(params.phoneNumber, countryDialCode),
       });
 
@@ -130,3 +133,14 @@ export const useWhatsApp = (): UseWhatsAppReturn => {
     isValidPhone,
   };
 };
+  const getMediaBaseUrl = (): string => {
+    const region = getActiveRegionForApi();
+    if (region === 'sa') {
+      return import.meta.env.VITE_API_BASE_URL_SA || 'https://api.spirithubcafe.com';
+    }
+    return (
+      import.meta.env.VITE_API_BASE_URL_OM ||
+      import.meta.env.VITE_API_BASE_URL ||
+      'https://api.spirithubcafe.com'
+    );
+  };

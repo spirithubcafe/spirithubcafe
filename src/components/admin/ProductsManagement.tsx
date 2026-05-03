@@ -15,7 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../ui/alert-dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '../ui/dropdown-menu';
-import { Package, Plus, Edit, Trash2, Eye, EyeOff, Search, Loader2, Star, Coffee, Layers, Image as ImageIcon, Crown, Sparkles, Upload, X, ChevronLeft, ChevronRight, MoreHorizontal } from 'lucide-react';
+import { Package, Plus, Edit, Trash2, Eye, EyeOff, Search, Loader2, Star, Coffee, Layers, Image as ImageIcon, Crown, Sparkles, Upload, X, ChevronLeft, ChevronRight, MoreHorizontal, Copy } from 'lucide-react';
 import { productService, productVariantService, productImageService } from '../../services/productService';
 import { fileUploadService } from '../../services/fileUploadService';
 import { categoryService } from '../../services/categoryService';
@@ -74,6 +74,7 @@ export const ProductsManagement: React.FC = () => {
   const [slugAvailable, setSlugAvailable] = useState<boolean | null>(null);
   const [checkingSlug, setCheckingSlug] = useState(false);
   const [slugMessage, setSlugMessage] = useState<string | null>(null);
+  const [duplicatingProductId, setDuplicatingProductId] = useState<number | null>(null);
   const [isVariantsDialogOpen, setIsVariantsDialogOpen] = useState(false);
   const [variantLoading, setVariantLoading] = useState(false);
   const [variantSubmitting, setVariantSubmitting] = useState(false);
@@ -337,6 +338,136 @@ export const ProductsManagement: React.FC = () => {
 
   const handleEditProduct = (product: Product) => {
     navigate(`/admin/products/edit/${product.id}`);
+  };
+
+  const getDuplicatedSku = (sku: string) =>
+    `${sku}-COPY-${Date.now().toString().slice(-6)}`;
+
+  const getDuplicatedSlug = (slug: string) => {
+    const safeBase = (slug || 'product-copy').trim() || 'product-copy';
+    return `${safeBase}-copy-${Date.now().toString().slice(-6)}`;
+  };
+
+  const handleDuplicateProduct = async (product: Product) => {
+    if (duplicatingProductId !== null) {
+      return;
+    }
+
+    setDuplicatingProductId(product.id);
+    try {
+      const sourceProduct = await productService.getById(product.id);
+
+      const duplicatePayload: ProductCreateUpdateDto = {
+        sku: getDuplicatedSku(sourceProduct.sku || product.sku || 'SKU'),
+        name: `${sourceProduct.name || product.name} (Copy)`,
+        nameAr: sourceProduct.nameAr || '',
+        description: sourceProduct.description || '',
+        descriptionAr: sourceProduct.descriptionAr || '',
+        notes: sourceProduct.notes || '',
+        notesAr: sourceProduct.notesAr || '',
+        aromaticProfile: sourceProduct.aromaticProfile || '',
+        aromaticProfileAr: sourceProduct.aromaticProfileAr || '',
+        intensity: sourceProduct.intensity ?? 1,
+        compatibility: sourceProduct.compatibility || '',
+        compatibilityAr: sourceProduct.compatibilityAr || '',
+        uses: sourceProduct.uses || '',
+        usesAr: sourceProduct.usesAr || '',
+        isActive: sourceProduct.isActive,
+        isDigital: sourceProduct.isDigital,
+        isFeatured: sourceProduct.isFeatured,
+        isLimited: sourceProduct.isLimited ?? false,
+        isPremium: sourceProduct.isPremium ?? false,
+        isOrganic: sourceProduct.isOrganic,
+        isFairTrade: sourceProduct.isFairTrade,
+        imageAlt: sourceProduct.imageAlt || '',
+        imageAltAr: sourceProduct.imageAltAr || '',
+        launchDate: sourceProduct.launchDate,
+        expiryDate: sourceProduct.expiryDate,
+        displayOrder: sourceProduct.displayOrder ?? 0,
+        origin: sourceProduct.origin || '',
+        tastingNotes: sourceProduct.tastingNotes || '',
+        tastingNotesAr: sourceProduct.tastingNotesAr || '',
+        brewingInstructions: sourceProduct.brewingInstructions || '',
+        brewingInstructionsAr: sourceProduct.brewingInstructionsAr || '',
+        roastLevel: sourceProduct.roastLevel || '',
+        roastLevelAr: sourceProduct.roastLevelAr || '',
+        process: sourceProduct.process || '',
+        processAr: sourceProduct.processAr || '',
+        variety: sourceProduct.variety || '',
+        varietyAr: sourceProduct.varietyAr || '',
+        altitude: sourceProduct.altitude,
+        farm: sourceProduct.farm || '',
+        farmAr: sourceProduct.farmAr || '',
+        metaTitle: sourceProduct.metaTitle || '',
+        metaDescription: sourceProduct.metaDescription || '',
+        metaKeywords: sourceProduct.metaKeywords || '',
+        tags: sourceProduct.tags || '',
+        slug: getDuplicatedSlug(sourceProduct.slug || product.slug || ''),
+        categoryId: sourceProduct.categoryId || product.categoryId,
+        mainImageId: undefined,
+        tagIds: [
+          ...(sourceProduct.topTags || []).map((tag) => tag.id),
+          ...(sourceProduct.bottomTags || []).map((tag) => tag.id),
+        ],
+      };
+
+      const duplicatedProduct = await productService.create(duplicatePayload);
+
+      const [sourceVariants, sourceImages] = await Promise.all([
+        productVariantService.getByProduct(sourceProduct.id),
+        productImageService.getByProduct(sourceProduct.id),
+      ]);
+
+      if (sourceVariants.length > 0) {
+        await Promise.all(
+          sourceVariants.map((variant, index) =>
+            productVariantService.create(duplicatedProduct.id, {
+              productId: duplicatedProduct.id,
+              variantSku: `${variant.variantSku}-COPY-${Date.now().toString().slice(-6)}-${index + 1}`,
+              weight: variant.weight,
+              weightUnit: variant.weightUnit,
+              price: variant.price,
+              discountPrice: variant.discountPrice,
+              length: variant.length,
+              width: variant.width,
+              height: variant.height,
+              stockQuantity: variant.stockQuantity,
+              lowStockThreshold: variant.lowStockThreshold,
+              isActive: variant.isActive,
+              isDefault: variant.isDefault,
+              displayOrder: variant.displayOrder,
+            })
+          )
+        );
+      }
+
+      if (sourceImages.length > 0) {
+        await Promise.all(
+          sourceImages.map((image) =>
+            productImageService.create(duplicatedProduct.id, {
+              productId: duplicatedProduct.id,
+              fileName: image.fileName || `image-${Date.now()}`,
+              imagePath: image.imagePath,
+              altText: image.altText || undefined,
+              altTextAr: image.altTextAr || undefined,
+              displayOrder: image.displayOrder ?? 0,
+              isMain: image.isMain,
+              fileSize: image.fileSize || 0,
+              width: image.width,
+              height: image.height,
+            })
+          )
+        );
+      }
+
+      toast.success('Product duplicated with details, variants, and images.');
+      await loadData();
+    } catch (error) {
+      console.error('Error duplicating product:', error);
+      toast.error('Failed to duplicate product.');
+    } finally {
+      setDuplicatingProductId(null);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -977,6 +1108,17 @@ export const ProductsManagement: React.FC = () => {
                           <Edit className="h-4 w-4" />
                           {t('common.edit')}
                         </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onSelect={() => handleDuplicateProduct(product)}
+                          disabled={duplicatingProductId === product.id}
+                        >
+                          {duplicatingProductId === product.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Copy className="h-4 w-4" />
+                          )}
+                          Duplicate
+                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onSelect={() => handleOpenAttributes(product)}>
                           <Coffee className="h-4 w-4 text-amber-600" />
@@ -1115,6 +1257,17 @@ export const ProductsManagement: React.FC = () => {
                           <DropdownMenuItem onSelect={() => handleEditProduct(product)}>
                             <Edit className="h-4 w-4" />
                             {t('common.edit')}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onSelect={() => handleDuplicateProduct(product)}
+                            disabled={duplicatingProductId === product.id}
+                          >
+                            {duplicatingProductId === product.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Copy className="h-4 w-4" />
+                            )}
+                            Duplicate
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem onSelect={() => handleOpenAttributes(product)}>

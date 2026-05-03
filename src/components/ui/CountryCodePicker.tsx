@@ -19,7 +19,7 @@ export interface Country {
 }
 
 const GCC_COUNTRIES: Country[] = [
-  { code: 'OM', name: 'Oman',                  nameAr: 'عُمان',               dialCode: '+968', flag: '🇴🇲', maxDigits: 8,  startsWith: '9', isGCC: true },
+  { code: 'OM', name: 'Oman',                  nameAr: 'عُمان',               dialCode: '+968', flag: '🇴🇲', maxDigits: 8,  startsWith: '7|9', isGCC: true },
   { code: 'AE', name: 'United Arab Emirates',   nameAr: 'الإمارات',            dialCode: '+971', flag: '🇦🇪', maxDigits: 9,  startsWith: '5', isGCC: true },
   { code: 'SA', name: 'Saudi Arabia',           nameAr: 'السعودية',            dialCode: '+966', flag: '🇸🇦', maxDigits: 9,  startsWith: '5', isGCC: true },
   { code: 'QA', name: 'Qatar',                  nameAr: 'قطر',                 dialCode: '+974', flag: '🇶🇦', maxDigits: 8,  isGCC: true },

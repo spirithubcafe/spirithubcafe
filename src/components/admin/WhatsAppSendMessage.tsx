@@ -41,13 +41,98 @@ export const WhatsAppSendMessage: React.FC = () => {
   const [imageUrl, setImageUrl] = useState('');
   const [caption, setCaption] = useState('');
   const [imageError, setImageError] = useState(false);
+  const [failedRecipients, setFailedRecipients] = useState<string[]>([]);
   const [pastedImagePreviewUrl, setPastedImagePreviewUrl] = useState('');
   const [uploadingPastedImage, setUploadingPastedImage] = useState(false);
 
   const { loading, error, success, sendText, sendImage, reset, formatPhone, isValidPhone } = useWhatsApp();
 
+  const normalizeRecipientNumber = (rawValue: string): string => {
+    let digits = rawValue.replace(/\D/g, '').trim();
+    if (!digits) return '';
+
+    const dialCodeDigits = selectedCountry.dialCode.replace(/\D/g, '');
+
+    // Handle international prefixes
+    if (digits.startsWith('00')) {
+      digits = digits.slice(2);
+    }
+
+    // Remove country code when user pastes full international number
+    if (
+      dialCodeDigits &&
+      digits.startsWith(dialCodeDigits) &&
+      digits.length > selectedCountry.maxDigits
+    ) {
+      digits = digits.slice(dialCodeDigits.length);
+    }
+
+    // Remove one leading zero for local format if needed
+    if (digits.startsWith('0') && digits.length === selectedCountry.maxDigits + 1) {
+      digits = digits.slice(1);
+    }
+
+    return digits;
+  };
+
+  const normalizeRecipientsText = (value: string): string => {
+    const candidates: string[] = [];
+
+    // 1) Country-aware extraction from raw digit stream (handles concatenated numbers)
+    const digitsOnlyStream = value.replace(/\D/g, '');
+    if (
+      selectedCountry.startsWith &&
+      selectedCountry.maxDigits > 1 &&
+      digitsOnlyStream.length >= selectedCountry.maxDigits
+    ) {
+      const prefixes = selectedCountry.startsWith
+        .split(/[|,/\s]+/)
+        .map((part) => part.replace(/\D/g, ''))
+        .filter(Boolean);
+      for (const prefix of prefixes) {
+        const localPattern = new RegExp(
+          `${prefix}\\d{${Math.max(0, selectedCountry.maxDigits - prefix.length)}}`,
+          'g'
+        );
+        const localMatches = digitsOnlyStream.match(localPattern) ?? [];
+        candidates.push(...localMatches);
+      }
+    }
+
+    // 2) Generic extraction from free-form pasted text (lines, csv rows, mixed separators)
+    const genericMatches = value.match(/(\+?\d[\d\s().-]{4,}\d|\d{6,})/g) ?? [];
+    candidates.push(...genericMatches);
+
+    const normalized = candidates
+      .map((entry) => normalizeRecipientNumber(entry))
+      .filter((entry) => entry.length === selectedCountry.maxDigits)
+      .filter(Boolean);
+
+    return Array.from(new Set(normalized)).join('\n');
+  };
+
   const handleRecipientsChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    // Keep typing natural; normalize on paste/blur.
     setRecipientInput(e.target.value);
+    reset();
+  };
+
+  const handleRecipientsBlur = () => {
+    const normalized = normalizeRecipientsText(recipientInput);
+    if (normalized !== recipientInput.trim()) {
+      setRecipientInput(normalized);
+    }
+  };
+
+  const handleRecipientsPaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const pastedText = e.clipboardData.getData('text');
+    if (!pastedText) return;
+
+    e.preventDefault();
+    const mergedValue = recipientInput
+      ? `${recipientInput}\n${pastedText}`
+      : pastedText;
+    setRecipientInput(normalizeRecipientsText(mergedValue));
     reset();
   };
 
@@ -149,12 +234,14 @@ export const WhatsAppSendMessage: React.FC = () => {
   const handleSendText = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!validRecipientNumbers.length || invalidRecipientNumbers.length > 0) {
+    if (!validRecipientNumbers.length) {
       return;
     }
 
+    setFailedRecipients([]);
     let successCount = 0;
     let failedCount = 0;
+    const failedLocalRecipients: string[] = [];
 
     for (const phoneNumber of validRecipientNumbers) {
       const result = await sendText({
@@ -167,23 +254,21 @@ export const WhatsAppSendMessage: React.FC = () => {
         successCount += 1;
       } else {
         failedCount += 1;
+        failedLocalRecipients.push(formatPhone(phoneNumber, selectedCountry.dialCode));
       }
     }
 
     if (successCount > 0) {
       toast.success(
-        isArabic
-          ? `تم إرسال ${successCount} رسالة بنجاح`
-          : `Sent successfully to ${successCount} recipient${successCount > 1 ? 's' : ''}`
+        `Sent successfully to ${successCount} recipient${successCount > 1 ? 's' : ''}`
       );
       setMessage('');
     }
 
     if (failedCount > 0) {
+      setFailedRecipients(failedLocalRecipients);
       toast.error(
-        isArabic
-          ? `فشل الإرسال إلى ${failedCount} مستلم`
-          : `Failed to send to ${failedCount} recipient${failedCount > 1 ? 's' : ''}`
+        `Failed to send to ${failedCount} recipient${failedCount > 1 ? 's' : ''}`
       );
     }
   };
@@ -191,18 +276,37 @@ export const WhatsAppSendMessage: React.FC = () => {
   const handleSendImage = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!validRecipientNumbers.length || invalidRecipientNumbers.length > 0) {
+    if (!validRecipientNumbers.length) {
       return;
     }
 
+    setFailedRecipients([]);
     let successCount = 0;
     let failedCount = 0;
+    const failedLocalRecipients: string[] = [];
+    const sanitizedCaption = caption
+      .replace(/\r\n/g, '\n')
+      .split('\n')
+      .map((line) => line.replace(/^\s*['"“”‘’`]+(?=\S)/, '').trimEnd())
+      .map((line) => {
+        const hasArabic = /[\u0600-\u06FF]/.test(line);
+        const isStandaloneUrl = /^https?:\/\/\S+$/i.test(line.trim());
+        if (isStandaloneUrl && isArabic) {
+          return `\u200Fالرابط: ${line.trim()}`;
+        }
+        if (!hasArabic && !isStandaloneUrl) return line;
+        // Force RTL rendering for Arabic lines and standalone URLs in Arabic captions
+        return `\u200F${line}`;
+      })
+      .join('\n')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
 
     for (const phoneNumber of validRecipientNumbers) {
       const result = await sendImage({
         phoneNumber,
         imageUrl,
-        caption: caption || undefined,
+        caption: sanitizedCaption || undefined,
         countryDialCode: selectedCountry.dialCode,
       });
 
@@ -210,14 +314,13 @@ export const WhatsAppSendMessage: React.FC = () => {
         successCount += 1;
       } else {
         failedCount += 1;
+        failedLocalRecipients.push(formatPhone(phoneNumber, selectedCountry.dialCode));
       }
     }
 
     if (successCount > 0) {
       toast.success(
-        isArabic
-          ? `تم إرسال ${successCount} صورة بنجاح`
-          : `Image sent successfully to ${successCount} recipient${successCount > 1 ? 's' : ''}`
+        `Image sent successfully to ${successCount} recipient${successCount > 1 ? 's' : ''}`
       );
       setImageUrl('');
       setCaption('');
@@ -225,14 +328,12 @@ export const WhatsAppSendMessage: React.FC = () => {
     }
 
     if (failedCount > 0) {
+      setFailedRecipients(failedLocalRecipients);
       toast.error(
-        isArabic
-          ? `فشل الإرسال إلى ${failedCount} مستلم`
-          : `Failed to send to ${failedCount} recipient${failedCount > 1 ? 's' : ''}`
+        `Failed to send to ${failedCount} recipient${failedCount > 1 ? 's' : ''}`
       );
     }
   };
-
   const handleImageUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setImageUrl(e.target.value);
     setImageError(false);
@@ -369,6 +470,9 @@ export const WhatsAppSendMessage: React.FC = () => {
   const combinedPreviewTitle = isArabic ? 'معاينة واتساب مباشرة' : texts.en.combinedPreview;
   const uploadingImageText = isArabic ? 'جارٍ رفع الصورة...' : texts.en.uploadingImage;
   const removeImageLabel = isArabic ? 'حذف الصورة' : texts.en.removeImage;
+  const startsWithDisplay = selectedCountry.startsWith
+    ? selectedCountry.startsWith.replace(/[|,/]+/g, isArabic ? ' أو ' : ' or ')
+    : '';
 
   return (
     <div className="space-y-6">
@@ -446,6 +550,8 @@ export const WhatsAppSendMessage: React.FC = () => {
                 id="phone"
                 value={recipientInput}
                 onChange={handleRecipientsChange}
+                onBlur={handleRecipientsBlur}
+                onPaste={handleRecipientsPaste}
                 placeholder={copy.phonePlaceholder}
                 rows={2}
                 className="flex-1 resize-none"
@@ -464,8 +570,8 @@ export const WhatsAppSendMessage: React.FC = () => {
                   <p className="text-xs text-amber-600">
                     {invalidRecipientNumbers.length} {copy.invalidRecipients} (
                     {isArabic
-                      ? `أدخل ${selectedCountry.maxDigits} أرقام${selectedCountry.startsWith ? ` تبدأ بـ ${selectedCountry.startsWith}` : ''}`
-                      : `Use ${selectedCountry.maxDigits} digits${selectedCountry.startsWith ? ` starting with ${selectedCountry.startsWith}` : ''}`}
+                      ? `أدخل ${selectedCountry.maxDigits} أرقام${startsWithDisplay ? ` تبدأ بـ ${startsWithDisplay}` : ''}`
+                      : `Use ${selectedCountry.maxDigits} digits${startsWithDisplay ? ` starting with ${startsWithDisplay}` : ''}`}
                     )
                   </p>
                 )}
@@ -477,6 +583,16 @@ export const WhatsAppSendMessage: React.FC = () => {
                       .join(' | ')}
                     {validRecipientNumbers.length > 3 ? ' ...' : ''}
                   </p>
+                )}
+                {failedRecipients.length > 0 && (
+                  <div className="rounded-md border border-red-200 bg-red-50 p-2">
+                    <p className="text-xs font-medium text-red-700">
+                      {isArabic ? 'أرقام فشل إرسالها:' : 'Failed recipient numbers:'}
+                    </p>
+                    <p className="mt-1 text-xs text-red-600 break-all">
+                      {failedRecipients.join(' | ')}
+                    </p>
+                  </div>
                 )}
               </div>
             )}
@@ -523,7 +639,6 @@ export const WhatsAppSendMessage: React.FC = () => {
                   disabled={
                     loading ||
                     validRecipientNumbers.length === 0 ||
-                    invalidRecipientNumbers.length > 0 ||
                     !message.trim()
                   }
                   className="w-full bg-green-600 hover:bg-green-700"
@@ -549,7 +664,7 @@ export const WhatsAppSendMessage: React.FC = () => {
                   <Label htmlFor="imageUrl">{copy.imageUrlLabel}</Label>
                   <Input
                     id="imageUrl"
-                    type="url"
+                    type="text"
                     value={imageUrl}
                     onChange={handleImageUrlChange}
                     onPaste={handleImagePaste}
@@ -648,7 +763,6 @@ export const WhatsAppSendMessage: React.FC = () => {
                     loading ||
                     uploadingPastedImage ||
                     validRecipientNumbers.length === 0 ||
-                    invalidRecipientNumbers.length > 0 ||
                     !imageUrl.trim() ||
                     imageError
                   }
@@ -696,3 +810,6 @@ export const WhatsAppSendMessage: React.FC = () => {
     </div>
   );
 };
+
+
+
