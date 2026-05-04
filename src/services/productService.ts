@@ -63,6 +63,7 @@ export const productService = {
     body: unknown;
     apiUrl: string;
     endpoint: string;
+    source: 'network' | 'inflight' | 'recent';
   }> => {
     const isNumeric = typeof identifier === 'number' || /^\d+$/.test(String(identifier));
     const endpoint = isNumeric
