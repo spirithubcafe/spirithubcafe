@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -172,6 +172,7 @@ export const ProductDetailPage = () => {
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const [isReviewsDialogOpen, setIsReviewsDialogOpen] = useState(false);
   const [approvedReviewStatsRemote, setApprovedReviewStatsRemote] = useState<ApprovedReviewStats | null>(null);
+  const lastSuccessfulRequestKeyRef = useRef<string | null>(null);
   const [reviewForm, setReviewForm] = useState<ProductReviewCreateDto>({
     productId: 0,
     rating: 5,
@@ -252,6 +253,7 @@ export const ProductDetailPage = () => {
     let isMounted = true;
 
     const fetchProduct = async () => {
+      const startedAt = performance.now();
       if (!productId) {
         setProduct(null);
         setState('error');
@@ -268,14 +270,30 @@ export const ProductDetailPage = () => {
         const regionFromPath = getRegionFromPath(location.pathname);
         const storedRegion = safeStorage.getItem('spirithub-region');
         const hasStoredRegion = storedRegion === 'om' || storedRegion === 'sa';
+        console.info('[ProductDetailPage][debug] bootstrap', {
+          path: location.pathname,
+          productSlug: productId,
+          language,
+          regionFromPath,
+          storedRegion,
+          hasStoredRegion,
+          currentRegion: currentRegion.code,
+        });
+
         if (!regionFromPath && !hasStoredRegion && !location.pathname.startsWith('/om') && !location.pathname.startsWith('/sa')) {
           console.info('[ProductDetailPage] Waiting for region resolution before product fetch', {
             path: location.pathname,
             productSlug: productId,
+            elapsedMs: Math.round(performance.now() - startedAt),
           });
           return;
         }
         const resolvedRegion = regionFromPath ?? (hasStoredRegion ? storedRegion : currentRegion.code);
+        const requestKey = `${resolvedRegion}_${language}_${String(productId)}`;
+        if (lastSuccessfulRequestKeyRef.current === requestKey && state === 'ready' && product) {
+          console.info('[ProductDetailPage][debug] skip duplicate already-ready request', { requestKey });
+          return;
+        }
 
         const productSlug = productId;
         const countryCode = resolvedRegion === 'sa' ? 'SA' : 'OM';
@@ -286,6 +304,7 @@ export const ProductDetailPage = () => {
         let emptyResponseSeen = false;
 
         for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+          const attemptStartedAt = performance.now();
           try {
             const raw = await productService.getByIdentifierRaw(productSlug);
             lastApiUrl = raw.apiUrl;
@@ -295,8 +314,11 @@ export const ProductDetailPage = () => {
               countryCode,
               productSlug,
               apiUrl: raw.apiUrl,
+              source: raw.source,
               status: raw.status,
               body: raw.body,
+              attemptDurationMs: Math.round(performance.now() - attemptStartedAt),
+              totalElapsedMs: Math.round(performance.now() - startedAt),
             });
 
             if (isEmptyProductPayload(raw.product)) {
@@ -324,6 +346,8 @@ export const ProductDetailPage = () => {
               status: apiErr?.statusCode,
               body: apiErr?.rawData,
               message: apiErr?.message,
+              attemptDurationMs: Math.round(performance.now() - attemptStartedAt),
+              totalElapsedMs: Math.round(performance.now() - startedAt),
             });
 
             if (apiErr?.statusCode === 404) {
@@ -363,6 +387,13 @@ export const ProductDetailPage = () => {
 
         const cacheKey = `spirithub_session_product_${resolvedRegion}_${language}_${String(productSlug)}`;
         safeStorage.setItem(cacheKey, JSON.stringify(sanitized), 'session');
+        lastSuccessfulRequestKeyRef.current = requestKey;
+        console.info('[ProductDetailPage][debug] product ready', {
+          region: resolvedRegion,
+          productSlug,
+          cacheKey,
+          totalElapsedMs: Math.round(performance.now() - startedAt),
+        });
         setProduct(sanitized);
 
         // Enrich with all tags (backend may only embed a subset)
@@ -414,6 +445,13 @@ export const ProductDetailPage = () => {
         const resolvedRegion = regionFromPath ?? currentRegion.code;
         const cacheKey = `spirithub_session_product_${resolvedRegion}_${language}_${String(productId)}`;
         const cached = safeStorage.getItem(cacheKey, 'session');
+        console.warn('[ProductDetailPage][debug] entering fallback path', {
+          region: resolvedRegion,
+          productSlug: productId,
+          cacheKey,
+          hasCached: !!cached,
+          totalElapsedMs: Math.round(performance.now() - startedAt),
+        });
         if (cached) {
           try {
             const cachedProduct = JSON.parse(cached) as ApiProduct;
@@ -423,9 +461,11 @@ export const ProductDetailPage = () => {
                 countryCode: resolvedRegion === 'sa' ? 'SA' : 'OM',
                 productSlug: productId,
                 cacheKey,
+                totalElapsedMs: Math.round(performance.now() - startedAt),
               });
               setProduct(cachedProduct);
               setState('ready');
+              lastSuccessfulRequestKeyRef.current = `${resolvedRegion}_${language}_${String(productId)}`;
               return;
             }
           } catch {

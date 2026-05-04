@@ -35,6 +35,19 @@ const unwrapApiResponse = <T>(payload: ApiResponse<T> | T | undefined): T | unde
   return payload as T;
 };
 
+type ProductRawFetchResult = {
+  product: Product | null;
+  status: number;
+  body: unknown;
+  apiUrl: string;
+  endpoint: string;
+  source: 'network' | 'inflight' | 'recent';
+};
+
+const inFlightProductRawRequests = new Map<string, Promise<ProductRawFetchResult>>();
+const recentProductRawResults = new Map<string, { value: ProductRawFetchResult; expiresAt: number }>();
+const PRODUCT_RAW_RESULT_DEDUPE_MS = 2000;
+
 /**
  * Product Service
  * Handles all product-related API operations
@@ -55,19 +68,47 @@ export const productService = {
     const endpoint = isNumeric
       ? `/api/Products/${Number(identifier)}`
       : `/api/Products/slug/${encodeURIComponent(String(identifier))}`;
+    const dedupeKey = endpoint;
 
-    const response = await http.get<ApiResponse<Product> | Product>(endpoint);
-    const body = response.data;
-    const product = unwrapApiResponse<Product>(body as ApiResponse<Product> | Product | undefined) ?? null;
-    const apiUrl = `${response.config.baseURL ?? ''}${response.config.url ?? endpoint}`;
+    const recent = recentProductRawResults.get(dedupeKey);
+    if (recent && Date.now() < recent.expiresAt) {
+      return { ...recent.value, source: 'recent' };
+    }
 
-    return {
-      product,
-      status: response.status,
-      body,
-      apiUrl,
-      endpoint,
-    };
+    const existing = inFlightProductRawRequests.get(dedupeKey);
+    if (existing) {
+      const resolved = await existing;
+      return { ...resolved, source: 'inflight' };
+    }
+
+    const requestPromise = (async (): Promise<ProductRawFetchResult> => {
+      const response = await http.get<ApiResponse<Product> | Product>(endpoint);
+      const body = response.data;
+      const product = unwrapApiResponse<Product>(body as ApiResponse<Product> | Product | undefined) ?? null;
+      const apiUrl = `${response.config.baseURL ?? ''}${response.config.url ?? endpoint}`;
+
+      return {
+        product,
+        status: response.status,
+        body,
+        apiUrl,
+        endpoint,
+        source: 'network',
+      };
+    })();
+
+    inFlightProductRawRequests.set(dedupeKey, requestPromise);
+
+    try {
+      const resolved = await requestPromise;
+      recentProductRawResults.set(dedupeKey, {
+        value: resolved,
+        expiresAt: Date.now() + PRODUCT_RAW_RESULT_DEDUPE_MS,
+      });
+      return resolved;
+    } finally {
+      inFlightProductRawRequests.delete(dedupeKey);
+    }
   },
 
   /**

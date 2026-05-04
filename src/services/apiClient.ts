@@ -3,6 +3,7 @@ import type { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import type { ApiError } from '../types/auth';
 import { safeStorage } from '../lib/safeStorage';
 import { getActiveRegionForApi } from '../lib/regionUtils';
+import { resolveCurrentLocaleForApi } from '../lib/locale';
 
 const getLoginRedirectUrl = (): string => {
   const path = window.location.pathname;
@@ -38,6 +39,7 @@ const createApiClient = (): AxiosInstance => {
     headers: {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
+      'Accept-Language': resolveCurrentLocaleForApi(),
     },
   });
 
@@ -51,6 +53,7 @@ const createApiClient = (): AxiosInstance => {
       const currentRegion = getActiveRegionForApi();
       if (config.headers) {
         config.headers['X-Branch'] = currentRegion;
+        config.headers['Accept-Language'] = resolveCurrentLocaleForApi();
       }
       
       const token = safeStorage.getItem('accessToken');
@@ -170,6 +173,7 @@ const createPublicApiClient = (): AxiosInstance => {
     headers: {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
+      'Accept-Language': resolveCurrentLocaleForApi(),
     },
   });
 
@@ -179,6 +183,7 @@ const createPublicApiClient = (): AxiosInstance => {
       const currentRegion = getActiveRegionForApi();
       if (config.headers) {
         config.headers['X-Branch'] = currentRegion;
+        config.headers['Accept-Language'] = resolveCurrentLocaleForApi();
       }
       return config;
     },

@@ -40,6 +40,22 @@ const getApiBaseUrlForRegion = (region) => {
   );
 };
 
+const normalizeLocaleToApiLanguage = (locale) => {
+  if (!locale || typeof locale !== 'string') return 'en';
+  const normalized = locale.trim().toLowerCase();
+  if (normalized === 'ar' || normalized.startsWith('ar-') || normalized.startsWith('ar_')) {
+    return 'ar';
+  }
+  return 'en';
+};
+
+const getRequestApiLanguage = (req) => {
+  const raw = req?.headers?.['accept-language'];
+  if (!raw) return 'en';
+  const first = String(raw).split(',')[0]?.trim() || '';
+  return normalizeLocaleToApiLanguage(first);
+};
+
 const unwrapApiResponse = (payload) => {
   if (!payload) return null;
   if (typeof payload === 'object' && payload !== null && 'success' in payload && 'data' in payload) {
@@ -63,7 +79,7 @@ const fetchJsonWithTimeout = async (url, options = {}, timeoutMs = 6500) => {
   }
 };
 
-const fetchProductDetails = async (identifier, region) => {
+const fetchProductDetails = async (identifier, region, language = 'en') => {
   const cacheKey = `${region}:product:${identifier}`;
   const cached = productMetaCache.get(cacheKey);
   if (cached && Date.now() - cached.timestamp < PRODUCT_META_TTL) {
@@ -74,6 +90,7 @@ const fetchProductDetails = async (identifier, region) => {
   const headers = {
     Accept: 'application/json',
     'X-Branch': region,
+    'Accept-Language': normalizeLocaleToApiLanguage(language),
   };
 
   // Try numeric ID endpoint first when applicable.
@@ -255,7 +272,8 @@ app.use(async (req, res, next) => {
     }
 
     // Get meta tags based on route (async because product routes may call the API)
-    const metaTags = await getMetaTagsForRoute(url, requestBaseUrl);
+    const requestLanguage = getRequestApiLanguage(req);
+    const metaTags = await getMetaTagsForRoute(url, requestBaseUrl, requestLanguage);
     
     // Replace the meta tags in the template
     let html = template.replace('<!--app-head-->', metaTags);
@@ -302,7 +320,7 @@ app.use(async (req, res, next) => {
 });
 
 // Helper function to generate meta tags based on route
-async function getMetaTagsForRoute(url, requestBaseUrl) {
+async function getMetaTagsForRoute(url, requestBaseUrl, requestLanguage = 'en') {
   const baseUrl = (requestBaseUrl || process.env.VITE_SITE_URL || process.env.SITE_URL || 'https://spirithubcafe.com')
     .toString()
     .replace(/\/+$/, '');
@@ -341,7 +359,7 @@ async function getMetaTagsForRoute(url, requestBaseUrl) {
     description = `View our premium coffee products at Spirit Hub Cafe`;
     ogType = 'product';
 
-    const product = await fetchProductDetails(identifier, region);
+    const product = await fetchProductDetails(identifier, region, requestLanguage);
     if (product) {
       const productName = product.name || 'Product';
       title = `${productName} | Spirit Hub Cafe`;
