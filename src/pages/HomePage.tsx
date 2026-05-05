@@ -46,9 +46,9 @@ const HomePage: React.FC = () => {
               'اطلب قهوة مختصة فاخرة، كبسولات، وقهوة فلتر. محمصة بعناية في مسقط عمان • الآن نخدم الخبر، السعودية. اشتري حبوب قهوة مختصة محمصة طازجة يومياً.',
           }
         : {
-            title: 'SpiritHub Roastery | Specialty Coffee & Capsules in Oman & Saudi',
+            title: 'SpiritHub Roastery | Specialty Coffee Roasted in Oman & Saudi Arabia',
             description:
-              'Premium specialty coffee, capsules, and filter brews. Roasted with care in Oman • Now serving Khobar, Saudi Arabia. Buy specialty coffee beans, order capsules online, expert roastery.',
+              'Premium specialty coffee roasted in Oman and Saudi Arabia. Explore capsules and filter brews, and shop expertly roasted coffee beans online.',
           },
     [language]
   );
@@ -167,7 +167,7 @@ const HomePage: React.FC = () => {
         ]}
         structuredData={structuredData}
       />
-      <h1 className="sr-only">{seoCopy.title}</h1>
+      <p className="sr-only">{seoCopy.title}</p>
       <AnnouncementBar />
       <ProfessionalHeroSlider />
       {showDeferredSections ? (

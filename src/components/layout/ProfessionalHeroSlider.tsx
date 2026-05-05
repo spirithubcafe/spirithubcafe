@@ -26,10 +26,15 @@ export const ProfessionalHeroSlider: React.FC = () => {
   const [isMobile, setIsMobile] = useState(() =>
     typeof window !== 'undefined' ? window.innerWidth < 768 : false,
   );
-  const [enableMobileVideo, setEnableMobileVideo] = useState(false);
-  const [mobileVideoLoaded, setMobileVideoLoaded] = useState(false);
-  const mobileVideoRef = React.useRef<HTMLVideoElement>(null);
-  const mobileHeroPoster = '/images/slides/slide1.webp';
+  const mobileHeroImages = [
+    '/images/slides/spirithub-nitro-cold-brew-creamy-texture.webp',
+    '/images/slides/spirithub-cold-brew-smooth-nitro.webp',
+    '/images/slides/spirithub-cold-brew-smooth-low-acidity.webp',
+  ];
+  // Kept for future re-enable of mobile hero video without changing current image-only behavior.
+  const mobileHeroVideoSrc = '/video/spirithub-specialty-coffee-roastery-mobile-banner.mp4';
+  const useMobileHeroVideo = false;
+  const [mobileImageIndex, setMobileImageIndex] = useState(0);
 
   // Check if device is mobile
   useEffect(() => {
@@ -60,70 +65,27 @@ export const ProfessionalHeroSlider: React.FC = () => {
     };
   }, []);
 
-  // Re-enable mobile hero video as a progressive enhancement.
-  // Poster is always first paint; video starts only on capable connections after idle/timeout.
   useEffect(() => {
-    if (!isMobile || typeof window === 'undefined') {
-      setEnableMobileVideo(false);
+    if (!isMobile || useMobileHeroVideo || mobileHeroImages.length <= 1) {
       return;
     }
 
-    const connection = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const slowConnection = /(^|\b)(slow-2g|2g)(\b|$)/.test(connection?.effectiveType || '');
-    const shouldSkipVideo = !!connection?.saveData || prefersReducedMotion || slowConnection;
-
-    if (shouldSkipVideo) {
-      setEnableMobileVideo(false);
-      return;
-    }
-
-    const activateVideo = () => setEnableMobileVideo(true);
-    let idleId: number | null = null;
-    const timeoutId = window.setTimeout(activateVideo, 4500);
-
-    if ('requestIdleCallback' in window) {
-      idleId = (window as Window & { requestIdleCallback: (cb: () => void, options?: { timeout: number }) => number })
-        .requestIdleCallback(activateVideo, { timeout: 5000 });
-    }
+    const intervalId = window.setInterval(() => {
+      setMobileImageIndex((prev) => (prev + 1) % mobileHeroImages.length);
+    }, 5000);
 
     return () => {
-      window.clearTimeout(timeoutId);
-      if (idleId !== null && 'cancelIdleCallback' in window) {
-        (window as Window & { cancelIdleCallback: (id: number) => void }).cancelIdleCallback(idleId);
-      }
+      window.clearInterval(intervalId);
     };
-  }, [isMobile]);
-
-  useEffect(() => {
-    if (!isMobile || !enableMobileVideo || !mobileVideoRef.current) {
-      return;
-    }
-
-    const video = mobileVideoRef.current;
-    const playVideo = async () => {
-      try {
-        video.muted = true;
-        await video.play();
-      } catch {
-        // Autoplay can fail on some devices; poster remains visible.
-      }
-    };
-
-    playVideo();
-  }, [isMobile, enableMobileVideo]);
+  }, [isMobile, useMobileHeroVideo, mobileHeroImages.length]);
 
   // Professional slide data with rich content
   const allSlides: SlideData[] = [
     {
       id: '1',
       image: '/images/slides/premium-specialty-coffee-roasted-in-oman.webp',
-      title: language === 'ar' ? 'قهوة مختصة فاخرة محمصة في عُمان' : 'PREMIUM SPECIALTY COFFEE ROASTED IN OMAN',
-      subtitle: language === 'ar' ? [
-        'محاصيل محدودة مختارة • مصادر مستدامة • شحن خلال 24 ساعة'
-      ] : [
-        'LIMITED MICRO-LOTS • ETHICALLY SOURCED • SHIPPED WITHIN 24 HOURS'
-      ],
+      title: language === 'ar' ? 'قهوة مختصة تُحمّص بإتقان في عُمان والسعودية' : 'PREMIUM SPECIALTY COFFEE ROASTED IN OMAN AND SAUDI ARABIA',
+      subtitle: '',
       description: language === 'ar'
         ? 'قهوة مختصة فاخرة محمصة بعناية في عُمان'
         : 'Premium specialty coffee carefully roasted in Oman',
@@ -137,7 +99,7 @@ export const ProfessionalHeroSlider: React.FC = () => {
         language === 'ar' ? 'مصادر أخلاقية' : 'Ethically Sourced',
         language === 'ar' ? 'شحن خلال 24 ساعة' : 'Ships in 24 Hours'
       ],
-      cta: language === 'ar' ? 'تسوّق الأكثر مبيعًا' : 'SHOP BEST SELLERS'
+      cta: language === 'ar' ? 'تسوّق القهوة' : 'OUR COFFEE'
     },
     {
       id: '2',
@@ -366,6 +328,14 @@ export const ProfessionalHeroSlider: React.FC = () => {
   }, [slides.length, currentSlide]);
 
   const currentSlideData = slides[currentSlide];
+  const isEnglishOmanSaudiTitle =
+    language !== 'ar' &&
+    currentSlideData?.id === '1' &&
+    currentSlideData?.title === 'PREMIUM SPECIALTY COFFEE ROASTED IN OMAN AND SAUDI ARABIA';
+  const isArabicOmanSaudiTitle =
+    language === 'ar' &&
+    currentSlideData?.id === '1' &&
+    currentSlideData?.title === 'قهوة مختصة تُحمّص بإتقان في عُمان والسعودية';
 
   // Function to go to next slide - only on desktop
   const nextSlide = () => {
@@ -393,51 +363,41 @@ export const ProfessionalHeroSlider: React.FC = () => {
       {/* Background Images/Video with Fade Effect */}
       <div className="slider-backgrounds">
         {isMobile ? (
-          // Mobile: poster first; video fades in later as progressive enhancement.
+          // Mobile: use photos only (no video) and rotate through the three assets.
           <div className="slide-background">
-            {enableMobileVideo && (
+            {useMobileHeroVideo ? (
               <video
-                ref={mobileVideoRef}
                 className="background-video"
                 autoPlay
                 loop
                 muted
                 playsInline
                 preload="metadata"
-                poster={mobileHeroPoster}
-                onCanPlay={() => setMobileVideoLoaded(true)}
-                onError={() => setMobileVideoLoaded(false)}
-                style={{
-                  opacity: mobileVideoLoaded ? 1 : 0,
-                  transition: 'opacity 0.6s ease-out',
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  zIndex: 1
-                }}
+                poster={mobileHeroImages[0]}
               >
-                <source src="/video/spirithub-specialty-coffee-roastery-mobile-banner.mp4" type="video/mp4" />
+                <source src={mobileHeroVideoSrc} type="video/mp4" />
               </video>
+            ) : (
+              <AnimatePresence initial={false} mode="sync">
+                <motion.img
+                  key={mobileHeroImages[mobileImageIndex]}
+                  src={mobileHeroImages[mobileImageIndex]}
+                  alt={currentSlideData.title}
+                  className={`background-image ${currentSlideData.imageClassName ?? ''}`.trim()}
+                  fetchPriority="high"
+                  loading="eager"
+                  sizes="100vw"
+                  decoding="async"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 1 }}
+                  transition={{ duration: 0.7, ease: 'easeInOut' }}
+                />
+              </AnimatePresence>
             )}
-
-            <img
-              src={mobileHeroPoster}
-              alt={currentSlideData.title}
-              className={`background-image ${currentSlideData.imageClassName ?? ''}`.trim()}
-              fetchPriority="high"
-              loading="eager"
-              decoding="async"
-              style={{ 
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                zIndex: mobileVideoLoaded ? 0 : 2
-              }}
-            />
             
             <div
               className={`background-overlay ${currentSlideData.overlayClassName ?? ''}`.trim()}
-              style={{ zIndex: 3 }}
             />
           </div>
         ) : (
@@ -457,6 +417,7 @@ export const ProfessionalHeroSlider: React.FC = () => {
                 className={`background-image ${currentSlideData.imageClassName ?? ''}`.trim()}
                 fetchPriority={currentSlide === 0 ? 'high' : 'auto'}
                 loading={currentSlide === 0 ? 'eager' : 'lazy'}
+                sizes="100vw"
                 decoding="async"
               />
               <div className={`background-overlay ${currentSlideData.overlayClassName ?? ''}`.trim()} />
@@ -486,8 +447,44 @@ export const ProfessionalHeroSlider: React.FC = () => {
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.8, delay: 0.3 }}
               >
-                {currentSlideData.title}
+                {isEnglishOmanSaudiTitle ? (
+                  <>
+                    PREMIUM SPECIALTY COFFEE ROASTED IN{' '}
+                    <span className="title-underline-red">OMAN</span>
+                    {' '}AND{' '}
+                    <span className="title-underline-green">SAUDI ARABIA</span>
+                  </>
+                ) : isArabicOmanSaudiTitle ? (
+                  <>
+                    قهوة مختصة تُحمّص بإتقان في{' '}
+                    <span className="title-underline-red">عُمان</span>
+                    {' '}و
+                    <span className="title-underline-green">السعودية</span>
+                  </>
+                ) : (
+                  currentSlideData.title
+                )}
               </motion.h1>
+
+              {/* CTA Button */}
+              <motion.div
+                className="slide-cta flex justify-center"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.8, delay: 0.5 }}
+              >
+                <Link
+                  to="/products"
+                  className={`hero-cta-button inline-block text-white font-semibold px-6 py-3 rounded-md transition-all duration-300 text-base uppercase tracking-wide ${
+                    isMobile
+                      ? 'bg-red-500/60 hover:bg-red-500/70 backdrop-blur-[1px] border border-white/15'
+                      : 'bg-red-500 hover:bg-red-600'
+                  }`}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {currentSlideData.cta}
+                </Link>
+              </motion.div>
 
               {/* Subtitle */}
               <motion.div
@@ -507,39 +504,6 @@ export const ProfessionalHeroSlider: React.FC = () => {
                 )}
               </motion.div>
 
-              {/* CTA Button */}
-              <motion.div
-                className="slide-cta flex justify-center"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.8, delay: 0.5 }}
-              >
-                <Link
-                  to="/products"
-                  className="inline-block bg-red-500 hover:bg-red-600 text-white font-semibold px-6 py-3 rounded-md transition-all duration-300 text-base uppercase tracking-wide"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {currentSlideData.cta}
-                </Link>
-              </motion.div>
-
-              {/* Additional text below button - only for slide 1 */}
-              {currentSlide === 0 && (
-                <motion.div
-                  className="text-center mt-4"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.8, delay: 0.6 }}
-                  style={{
-                    fontSize: '0.95rem',
-                    color: 'rgba(255, 255, 255, 0.85)',
-                    letterSpacing: '0.1em',
-                    fontWeight: 500
-                  }}
-                >
-                  {language === 'ar' ? 'محمص طازجًا • توصيل سريع في جميع أنحاء عُمان' : 'ROASTED FRESH • FAST DELIVERY ACROSS OMAN'}
-                </motion.div>
-              )}
             </motion.div>
           </div>
         </div>
