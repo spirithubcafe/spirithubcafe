@@ -199,18 +199,18 @@
 
 .title-underline-red,
 .title-underline-green {
-  text-decoration-line: underline;
-  text-decoration-thickness: 3px;
-  text-underline-offset: 6px;
-  text-decoration-skip-ink: auto;
+  display: inline-block;
+  padding-bottom: 2px;
+  border-bottom-width: 3px;
+  border-bottom-style: solid;
 }
 
 .title-underline-red {
-  text-decoration-color: rgba(239, 68, 68, 0.9);
+  border-bottom-color: rgba(239, 68, 68, 0.95);
 }
 
 .title-underline-green {
-  text-decoration-color: rgba(34, 197, 94, 0.9);
+  border-bottom-color: rgba(34, 197, 94, 0.95);
 }
 
 .slide-subtitle {

@@ -35,8 +35,6 @@ export const ProfessionalHeroSlider: React.FC = () => {
   const mobileHeroVideoSrc = '/video/spirithub-specialty-coffee-roastery-mobile-banner.mp4';
   const useMobileHeroVideo = false;
   const [mobileImageIndex, setMobileImageIndex] = useState(0);
-  const [mobilePrevImageIndex, setMobilePrevImageIndex] = useState<number | null>(null);
-  const [mobileIsTransitioning, setMobileIsTransitioning] = useState(false);
 
   // Check if device is mobile
   useEffect(() => {
@@ -73,26 +71,13 @@ export const ProfessionalHeroSlider: React.FC = () => {
     }
 
     const intervalId = window.setInterval(() => {
-      setMobileImageIndex((prev) => {
-        const next = (prev + 1) % mobileHeroImages.length;
-        setMobilePrevImageIndex(prev);
-        setMobileIsTransitioning(true);
-        return next;
-      });
+      setMobileImageIndex((prev) => (prev + 1) % mobileHeroImages.length);
     }, 5000);
 
     return () => {
       window.clearInterval(intervalId);
     };
   }, [isMobile, useMobileHeroVideo, mobileHeroImages.length]);
-
-  useEffect(() => {
-    const timeoutId = window.setTimeout(() => {
-      setMobileIsTransitioning(false);
-      setMobilePrevImageIndex(null);
-    }, 750);
-    return () => window.clearTimeout(timeoutId);
-  }, [mobileImageIndex]);
 
   useEffect(() => {
     // Preload hero mobile images once to avoid flicker during first cycle.
@@ -394,19 +379,9 @@ export const ProfessionalHeroSlider: React.FC = () => {
                 <source src={mobileHeroVideoSrc} type="video/mp4" />
               </video>
             ) : (
-              <>
-                {mobilePrevImageIndex !== null && (
-                  <img
-                    src={mobileHeroImages[mobilePrevImageIndex]}
-                    alt={currentSlideData.title}
-                    className={`background-image ${currentSlideData.imageClassName ?? ''}`.trim()}
-                    loading="eager"
-                    sizes="100vw"
-                    decoding="async"
-                    style={{ opacity: mobileIsTransitioning ? 1 : 0, position: 'absolute', inset: 0 }}
-                  />
-                )}
-                <img
+              <AnimatePresence initial={false} mode="sync">
+                <motion.img
+                  key={mobileHeroImages[mobileImageIndex]}
                   src={mobileHeroImages[mobileImageIndex]}
                   alt={currentSlideData.title}
                   className={`background-image ${currentSlideData.imageClassName ?? ''}`.trim()}
@@ -414,14 +389,13 @@ export const ProfessionalHeroSlider: React.FC = () => {
                   loading="eager"
                   sizes="100vw"
                   decoding="async"
-                  style={{
-                    opacity: mobileIsTransitioning && mobilePrevImageIndex !== null ? 0 : 1,
-                    transition: 'opacity 0.7s ease-in-out',
-                    position: 'absolute',
-                    inset: 0
-                  }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.55, ease: 'easeInOut' }}
+                  style={{ position: 'absolute', inset: 0 }}
                 />
-              </>
+              </AnimatePresence>
             )}
             
             <div
