@@ -35,6 +35,8 @@ export const ProfessionalHeroSlider: React.FC = () => {
   const mobileHeroVideoSrc = '/video/spirithub-specialty-coffee-roastery-mobile-banner.mp4';
   const useMobileHeroVideo = false;
   const [mobileImageIndex, setMobileImageIndex] = useState(0);
+  const [mobilePrevImageIndex, setMobilePrevImageIndex] = useState<number | null>(null);
+  const [mobileIsTransitioning, setMobileIsTransitioning] = useState(false);
 
   // Check if device is mobile
   useEffect(() => {
@@ -71,13 +73,34 @@ export const ProfessionalHeroSlider: React.FC = () => {
     }
 
     const intervalId = window.setInterval(() => {
-      setMobileImageIndex((prev) => (prev + 1) % mobileHeroImages.length);
+      setMobileImageIndex((prev) => {
+        const next = (prev + 1) % mobileHeroImages.length;
+        setMobilePrevImageIndex(prev);
+        setMobileIsTransitioning(true);
+        return next;
+      });
     }, 5000);
 
     return () => {
       window.clearInterval(intervalId);
     };
   }, [isMobile, useMobileHeroVideo, mobileHeroImages.length]);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setMobileIsTransitioning(false);
+      setMobilePrevImageIndex(null);
+    }, 750);
+    return () => window.clearTimeout(timeoutId);
+  }, [mobileImageIndex]);
+
+  useEffect(() => {
+    // Preload hero mobile images once to avoid flicker during first cycle.
+    mobileHeroImages.forEach((src) => {
+      const img = new Image();
+      img.src = src;
+    });
+  }, []);
 
   // Professional slide data with rich content
   const allSlides: SlideData[] = [
@@ -328,14 +351,7 @@ export const ProfessionalHeroSlider: React.FC = () => {
   }, [slides.length, currentSlide]);
 
   const currentSlideData = slides[currentSlide];
-  const isEnglishOmanSaudiTitle =
-    language !== 'ar' &&
-    currentSlideData?.id === '1' &&
-    currentSlideData?.title === 'PREMIUM SPECIALTY COFFEE ROASTED IN OMAN AND SAUDI ARABIA';
-  const isArabicOmanSaudiTitle =
-    language === 'ar' &&
-    currentSlideData?.id === '1' &&
-    currentSlideData?.title === 'قهوة مختصة تُحمّص بإتقان في عُمان والسعودية';
+  const isHeroPrimaryTitle = currentSlideData?.id === '1';
 
   // Function to go to next slide - only on desktop
   const nextSlide = () => {
@@ -378,9 +394,19 @@ export const ProfessionalHeroSlider: React.FC = () => {
                 <source src={mobileHeroVideoSrc} type="video/mp4" />
               </video>
             ) : (
-              <AnimatePresence initial={false} mode="sync">
-                <motion.img
-                  key={mobileHeroImages[mobileImageIndex]}
+              <>
+                {mobilePrevImageIndex !== null && (
+                  <img
+                    src={mobileHeroImages[mobilePrevImageIndex]}
+                    alt={currentSlideData.title}
+                    className={`background-image ${currentSlideData.imageClassName ?? ''}`.trim()}
+                    loading="eager"
+                    sizes="100vw"
+                    decoding="async"
+                    style={{ opacity: mobileIsTransitioning ? 1 : 0, position: 'absolute', inset: 0 }}
+                  />
+                )}
+                <img
                   src={mobileHeroImages[mobileImageIndex]}
                   alt={currentSlideData.title}
                   className={`background-image ${currentSlideData.imageClassName ?? ''}`.trim()}
@@ -388,12 +414,14 @@ export const ProfessionalHeroSlider: React.FC = () => {
                   loading="eager"
                   sizes="100vw"
                   decoding="async"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 1 }}
-                  transition={{ duration: 0.7, ease: 'easeInOut' }}
+                  style={{
+                    opacity: mobileIsTransitioning && mobilePrevImageIndex !== null ? 0 : 1,
+                    transition: 'opacity 0.7s ease-in-out',
+                    position: 'absolute',
+                    inset: 0
+                  }}
                 />
-              </AnimatePresence>
+              </>
             )}
             
             <div
@@ -447,19 +475,19 @@ export const ProfessionalHeroSlider: React.FC = () => {
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.8, delay: 0.3 }}
               >
-                {isEnglishOmanSaudiTitle ? (
+                {isHeroPrimaryTitle && language !== 'ar' ? (
                   <>
                     PREMIUM SPECIALTY COFFEE ROASTED IN{' '}
                     <span className="title-underline-red">OMAN</span>
                     {' '}AND{' '}
                     <span className="title-underline-green">SAUDI ARABIA</span>
                   </>
-                ) : isArabicOmanSaudiTitle ? (
+                ) : isHeroPrimaryTitle && language === 'ar' ? (
                   <>
-                    قهوة مختصة تُحمّص بإتقان في{' '}
-                    <span className="title-underline-red">عُمان</span>
-                    {' '}و
-                    <span className="title-underline-green">السعودية</span>
+                    {`\u0642\u0647\u0648\u0629 \u0645\u062e\u062a\u0635\u0629 \u062a\u064f\u062d\u0645\u0651\u0635 \u0628\u0625\u062a\u0642\u0627\u0646 \u0641\u064a `}
+                    <span className="title-underline-red">{`\u0639\u064f\u0645\u0627\u0646`}</span>
+                    {` \u0648`}
+                    <span className="title-underline-green">{`\u0627\u0644\u0633\u0639\u0648\u062f\u064a\u0629`}</span>
                   </>
                 ) : (
                   currentSlideData.title
@@ -540,3 +568,5 @@ export const ProfessionalHeroSlider: React.FC = () => {
     </section>
   );
 };
+
+
