@@ -9,6 +9,7 @@ import { Seo } from '../components/seo/Seo';
 import { useApp } from '../hooks/useApp';
 import { siteMetadata } from '../config/siteMetadata';
 import { BestSellers } from '@/components/sections/BestSellers';
+import { InstagramSection } from '@/components/sections/InstagramSection';
 
 const HomePage: React.FC = () => {
   const { language } = useApp();
@@ -177,6 +178,7 @@ const HomePage: React.FC = () => {
           <FeaturedProducts />
           <CoffeeSelectionSection />
           <UnifiedCategoriesSection />
+          <InstagramSection />
         </>
       ) : (
         <div className="min-h-[60vh]" aria-hidden="true" />
