@@ -153,8 +153,8 @@ export const InstagramSection: React.FC = () => {
     <section className="bg-[#fbfbf9] py-12 sm:py-14 lg:py-16">
       <div className="mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:px-8">
         <div className="mb-8 text-center sm:mb-10">
-          <h2 className="text-sm font-medium uppercase tracking-[0.22em] text-[#475352] sm:text-base">
-            {isArabic ? 'زوروا إنستغرامنا' : 'Visit Our Instagram'}
+          <h2 className="text-2xl font-semibold tracking-[1px] text-[#2E2E2E] md:text-3xl">
+            {isArabic ? 'زوروا إنستغرامنا' : 'VISIT OUR INSTAGRAM'}
           </h2>
           <div className="mx-auto mt-4 h-px w-12 bg-[#b9b8b2]" />
         </div>

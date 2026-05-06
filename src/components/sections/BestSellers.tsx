@@ -140,7 +140,7 @@ export const BestSellers: React.FC = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold text-gray-900 mb-4 uppercase">
+          <h2 className="text-2xl font-semibold tracking-[1px] text-[#2E2E2E] mb-4 uppercase md:text-3xl">
             {t('sections.bestSellers')}
           </h2>
           

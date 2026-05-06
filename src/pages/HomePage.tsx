@@ -10,6 +10,7 @@ import { useApp } from '../hooks/useApp';
 import { siteMetadata } from '../config/siteMetadata';
 import { BestSellers } from '@/components/sections/BestSellers';
 import { InstagramSection } from '@/components/sections/InstagramSection';
+import { GoogleReviewsSection } from '@/components/sections/GoogleReviewsSection';
 
 const HomePage: React.FC = () => {
   const { language } = useApp();
@@ -178,6 +179,7 @@ const HomePage: React.FC = () => {
           <FeaturedProducts />
           <CoffeeSelectionSection />
           <UnifiedCategoriesSection />
+          <GoogleReviewsSection />
           <InstagramSection />
         </>
       ) : (
