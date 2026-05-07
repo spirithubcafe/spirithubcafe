@@ -2,6 +2,7 @@ import { publicHttp } from './apiClient';
 
 export type GoogleReview = {
   authorName: string;
+  profilePhotoUrl?: string;
   rating: number;
   relativeTimeDescription: string;
   text: string;
@@ -30,7 +31,15 @@ export const googleReviewsService = {
       return null;
     }
 
-    return payload.data;
+    return {
+      ...payload.data,
+      reviews: (payload.data.reviews ?? []).map((review) => {
+        const raw = review as typeof review & { profile_photo_url?: string };
+        return {
+          ...review,
+          profilePhotoUrl: review.profilePhotoUrl ?? raw.profile_photo_url,
+        };
+      }),
+    };
   },
 };
-
