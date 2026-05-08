@@ -6,6 +6,7 @@ import compression from 'compression';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const isProduction = process.env.NODE_ENV === 'production';
+const enableDevSsr = process.env.VITE_DEV_SSR === 'true';
 const port = process.env.PORT || 5173;
 const base = process.env.BASE || '/';
 
@@ -283,11 +284,11 @@ app.use(async (req, res, next) => {
     // users will just get the SPA shell (current behaviour) instead.
     try {
       let render;
-      if (!isProduction) {
+      if (!isProduction && enableDevSsr) {
         // In dev, Vite compiles the module on the fly
         const mod = await vite.ssrLoadModule('/src/entry-server.tsx');
         render = mod.render;
-      } else {
+      } else if (isProduction) {
         // In production, import the pre-built SSR bundle
         const ssrBundlePath = path.resolve(__dirname, 'dist/server/entry-server.js');
         if (fs.existsSync(ssrBundlePath)) {
