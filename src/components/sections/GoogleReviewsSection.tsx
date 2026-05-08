@@ -1,5 +1,6 @@
 ﻿import React, { useEffect, useMemo, useState } from 'react';
 import { BadgeCheck, ChevronLeft, ChevronRight, ShieldCheck, Star } from 'lucide-react';
+import useEmblaCarousel from 'embla-carousel-react';
 import { googleReviewsService, type GoogleReviewsData } from '@/services/googleReviewsService';
 import { Spinner } from '@/components/ui/spinner';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -90,26 +91,31 @@ export const GoogleReviewsSection: React.FC = () => {
   const [isError, setIsError] = useState(false);
   const [canScrollPrev, setCanScrollPrev] = useState(false);
   const [canScrollNext, setCanScrollNext] = useState(false);
-  const railRef = React.useRef<HTMLDivElement | null>(null);
+  const [emblaRef, emblaApi] = useEmblaCarousel({
+    align: 'start',
+    containScroll: 'trimSnaps',
+    dragFree: false,
+    skipSnaps: false,
+  });
 
   const isArabic =
     typeof document !== 'undefined' &&
     (document.documentElement.dir === 'rtl' || document.documentElement.lang?.toLowerCase().startsWith('ar'));
 
   const updateScrollState = React.useCallback(() => {
-    const el = railRef.current;
-    if (!el) return;
-    const max = Math.max(0, el.scrollWidth - el.clientWidth);
-    setCanScrollPrev(el.scrollLeft > 2);
-    setCanScrollNext(el.scrollLeft < max - 2);
-  }, []);
+    if (!emblaApi) return;
+    setCanScrollPrev(emblaApi.canScrollPrev());
+    setCanScrollNext(emblaApi.canScrollNext());
+  }, [emblaApi]);
 
-  const scrollByPage = (direction: 'left' | 'right') => {
-    const el = railRef.current;
-    if (!el) return;
-    const delta = Math.max(220, Math.round(el.clientWidth * 0.85));
-    el.scrollBy({ left: direction === 'left' ? -delta : delta, behavior: 'smooth' });
-  };
+  const scrollByPage = React.useCallback((direction: 'left' | 'right') => {
+    if (!emblaApi) return;
+    if (direction === 'left') {
+      emblaApi.scrollPrev();
+      return;
+    }
+    emblaApi.scrollNext();
+  }, [emblaApi]);
 
   useEffect(() => {
     let mounted = true;
@@ -133,32 +139,36 @@ export const GoogleReviewsSection: React.FC = () => {
     };
   }, []);
 
-  const cards = useMemo(() => (payload?.reviews ?? []).filter((review) => review.rating === 5), [payload]);
+  const cards = useMemo(() => payload?.reviews ?? [], [payload]);
 
   useEffect(() => {
+    if (!emblaApi) return;
     updateScrollState();
-    const el = railRef.current;
-    if (!el) return;
-
-    const max = Math.max(0, el.scrollWidth - el.clientWidth);
-    el.scrollLeft = isArabic ? max : 0;
-
-    const onScroll = () => updateScrollState();
-    const onResize = () => updateScrollState();
-    el.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onResize);
+    emblaApi.on('select', updateScrollState);
+    emblaApi.on('reInit', updateScrollState);
 
     return () => {
-      el.removeEventListener('scroll', onScroll);
-      window.removeEventListener('resize', onResize);
+      emblaApi.off('select', updateScrollState);
+      emblaApi.off('reInit', updateScrollState);
     };
-  }, [cards, isArabic, isLoading, updateScrollState]);
+  }, [emblaApi, updateScrollState]);
+
+  useEffect(() => {
+    emblaApi?.reInit();
+    updateScrollState();
+  }, [cards.length, emblaApi, updateScrollState]);
+
+  useEffect(() => {
+    if (!emblaApi || !isArabic || cards.length === 0) return;
+    emblaApi.scrollTo(emblaApi.scrollSnapList().length - 1, true);
+    updateScrollState();
+  }, [cards.length, emblaApi, isArabic, updateScrollState]);
 
   if (!isLoading && (!payload || cards.length === 0)) return null;
 
   return (
     <section className="bg-[#fbfbf9] pt-10 pb-0 sm:pt-12 sm:pb-0 lg:pt-14 lg:pb-0" dir={isArabic ? 'rtl' : 'ltr'}>
-      <div className="mx-auto w-full max-w-[1160px] px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:px-8">
         <div className="mb-6 text-center sm:mb-7">
           <h2 className="text-2xl font-semibold tracking-[1px] text-[#2E2E2E] md:text-3xl">
             {isArabic ? 'ماذا يقول عملاؤنا' : 'WHAT OUR FRIENDS ARE SAYING'}
@@ -185,7 +195,7 @@ export const GoogleReviewsSection: React.FC = () => {
           </div>
         ) : (
           <>
-            <div className="mb-2 rounded-2xl bg-[#FFFDF9] p-4 sm:mb-3 sm:p-5" style={{ boxShadow: '0 10px 30px rgba(0,0,0,0.04)', border: '1px solid rgba(77, 91, 84, 0.12)' }}>
+            <div className="mb-4 rounded-2xl bg-[#FFFDF9] p-4 sm:mb-5 sm:p-5 lg:mx-auto lg:max-w-[1320px]" style={{ boxShadow: '0 16px 42px rgba(0,0,0,0.06)', border: '1px solid rgba(77, 91, 84, 0.12)' }}>
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className={isArabic ? 'order-2 sm:order-2 sm:text-right' : 'order-2 sm:order-1'}>
                   <div dir="ltr" className={`mb-1.5 flex items-center gap-2.5 ${isArabic ? 'justify-end' : ''}`}>
@@ -219,7 +229,9 @@ export const GoogleReviewsSection: React.FC = () => {
               </div>
             </div>
 
-            <div className="relative px-10 md:px-12">
+            <div className="relative mx-auto max-w-[1320px] px-10 md:px-12">
+              <div className="review-edge review-edge-left" />
+              <div className="review-edge review-edge-right" />
               <button type="button" onClick={() => scrollByPage('left')} disabled={!canScrollPrev} aria-label="Scroll left" className="gr-nav gr-nav-left">
                 <ChevronLeft className="h-4 w-4" />
               </button>
@@ -227,12 +239,12 @@ export const GoogleReviewsSection: React.FC = () => {
                 <ChevronRight className="h-4 w-4" />
               </button>
 
-              <div className="overflow-hidden">
-                <div ref={railRef} className="reviews-rail flex snap-x snap-mandatory gap-4 overflow-x-auto pb-1">
+              <div ref={emblaRef} className="reviews-viewport overflow-hidden">
+                <div className="reviews-rail flex pb-1">
                   {cards.map((review, index) => (
                     <article
                       key={`${review.authorName}-${review.time}-${index}`}
-                      className={`flex h-full w-full min-w-full shrink-0 snap-start flex-col rounded-2xl bg-[#FFFDF9] p-4 md:w-[calc((100%-1rem)/2)] md:min-w-[calc((100%-1rem)/2)] md:max-w-[calc((100%-1rem)/2)] md:p-5 ${isArabic ? 'text-right' : 'text-left'}`}
+                      className={`reviews-slide flex h-full min-w-0 shrink-0 flex-col rounded-2xl bg-[#FFFDF9] p-4 md:p-5 ${isArabic ? 'text-right' : 'text-left'}`}
                       style={{ boxShadow: '0 10px 30px rgba(0,0,0,0.04)', border: '1px solid rgba(77, 91, 84, 0.12)' }}
                     >
                       <div className={`mb-2.5 flex items-center gap-2.5 ${isArabic ? 'flex-row-reverse justify-start' : 'justify-start'}`}>
@@ -260,16 +272,43 @@ export const GoogleReviewsSection: React.FC = () => {
       </div>
 
       <style>{`
-        .reviews-rail {
-          direction: ltr;
-          scrollbar-width: none;
-          -webkit-overflow-scrolling: touch;
-          scroll-behavior: smooth;
-          scroll-snap-type: x mandatory;
+        .reviews-viewport {
+          cursor: grab;
         }
 
-        .reviews-rail::-webkit-scrollbar {
+        .reviews-viewport:active {
+          cursor: grabbing;
+        }
+
+        .reviews-rail {
+          direction: ltr;
+          margin-left: -16px;
+        }
+
+        .reviews-slide {
+          flex: 0 0 100%;
+          margin-left: 16px;
+          min-height: 220px;
+        }
+
+        .review-edge {
+          pointer-events: none;
+          position: absolute;
+          top: 0;
+          z-index: 10;
           display: none;
+          height: 100%;
+          width: 26px;
+        }
+
+        .review-edge-left {
+          left: 40px;
+          background: linear-gradient(90deg, rgba(251, 251, 249, 0.78), rgba(251, 251, 249, 0));
+        }
+
+        .review-edge-right {
+          right: 40px;
+          background: linear-gradient(270deg, rgba(251, 251, 249, 0.78), rgba(251, 251, 249, 0));
         }
 
         .gr-nav {
@@ -277,16 +316,17 @@ export const GoogleReviewsSection: React.FC = () => {
           top: 50%;
           transform: translateY(-50%);
           z-index: 20;
-          height: 32px;
-          width: 32px;
-          border: 0;
+          height: 36px;
+          width: 36px;
+          border: 1px solid rgba(77, 91, 84, 0.14);
           border-radius: 999px;
-          background: rgba(255, 255, 255, 0.45);
+          background: rgba(255, 253, 249, 0.88);
           color: #4b5a58;
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+          box-shadow: 0 10px 24px rgba(0, 0, 0, 0.1);
+          backdrop-filter: blur(10px);
           transition: all 0.2s ease;
         }
 
@@ -296,8 +336,9 @@ export const GoogleReviewsSection: React.FC = () => {
         }
 
         .gr-nav:not(:disabled):hover {
-          background: rgba(255, 255, 255, 0.72);
+          background: #fffdf9;
           color: #2f3b38;
+          transform: translateY(-50%) scale(1.04);
         }
 
         .gr-nav-left {
@@ -309,12 +350,30 @@ export const GoogleReviewsSection: React.FC = () => {
         }
 
         @media (max-width: 768px) {
+          .reviews-rail {
+            margin-left: -12px;
+          }
+
+          .reviews-slide {
+            margin-left: 12px;
+          }
+
           .gr-nav-left {
             left: 6px;
           }
 
           .gr-nav-right {
             right: 6px;
+          }
+        }
+
+        @media (min-width: 768px) {
+          .review-edge {
+            display: block;
+          }
+
+          .reviews-slide {
+            flex-basis: calc(50% - 8px);
           }
         }
       `}</style>

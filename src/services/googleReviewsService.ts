@@ -24,7 +24,9 @@ type GoogleReviewsApiResponse = {
 
 export const googleReviewsService = {
   async getReviews(): Promise<GoogleReviewsData | null> {
-    const response = await publicHttp.get<GoogleReviewsApiResponse>('/api/google/reviews');
+    const response = await publicHttp.get<GoogleReviewsApiResponse>('/api/google/reviews', {
+      params: { reviews_sort: 'newest' },
+    });
     const payload = response.data;
 
     if (!payload?.success || !payload.data) {
@@ -33,13 +35,15 @@ export const googleReviewsService = {
 
     return {
       ...payload.data,
-      reviews: (payload.data.reviews ?? []).map((review) => {
-        const raw = review as typeof review & { profile_photo_url?: string };
-        return {
-          ...review,
-          profilePhotoUrl: review.profilePhotoUrl ?? raw.profile_photo_url,
-        };
-      }),
+      reviews: (payload.data.reviews ?? [])
+        .map((review) => {
+          const raw = review as typeof review & { profile_photo_url?: string };
+          return {
+            ...review,
+            profilePhotoUrl: review.profilePhotoUrl ?? raw.profile_photo_url,
+          };
+        })
+        .sort((a, b) => (b.time ?? 0) - (a.time ?? 0)),
     };
   },
 };

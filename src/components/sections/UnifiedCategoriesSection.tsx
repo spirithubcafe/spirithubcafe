@@ -1,6 +1,7 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import useEmblaCarousel from 'embla-carousel-react';
 import { useApp } from '../../hooks/useApp';
 import { useShopPage } from '../../hooks/useShop';
 import { useRegion } from '../../hooks/useRegion';
@@ -15,7 +16,6 @@ type UnifiedCategoryItem = {
 };
 
 const CARD_WIDTH = 212;
-const SCROLL_STEP = 300;
 
 const GIFT_HINT_EN = '❤️ Gift Someone Special';
 const GIFT_HINT_AR = '❤️ أهدي شخص مميز';
@@ -50,9 +50,14 @@ export const UnifiedCategoriesSection: React.FC = () => {
   const { currentRegion } = useRegion();
 
   const isArabic = language === 'ar';
-  const scrollRef = useRef<HTMLDivElement | null>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
+  const [emblaRef, emblaApi] = useEmblaCarousel({
+    align: 'start',
+    containScroll: 'trimSnaps',
+    dragFree: false,
+    skipSnaps: false,
+  });
 
   const allItems = useMemo<UnifiedCategoryItem[]>(() => {
     const coffeeItems = categories.map((category) => ({
@@ -80,49 +85,47 @@ export const UnifiedCategoriesSection: React.FC = () => {
   );
 
   const updateArrows = useCallback(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-
-    const maxScrollLeft = Math.max(0, el.scrollWidth - el.clientWidth);
-    const threshold = 2;
-    setCanScrollLeft(el.scrollLeft > threshold);
-    setCanScrollRight(el.scrollLeft < maxScrollLeft - threshold);
-  }, []);
+    if (!emblaApi) return;
+    setCanScrollLeft(emblaApi.canScrollPrev());
+    setCanScrollRight(emblaApi.canScrollNext());
+  }, [emblaApi]);
 
   useEffect(() => {
+    emblaApi?.reInit();
     updateArrows();
-  }, [renderItems.length, updateArrows]);
+  }, [renderItems.length, emblaApi, updateArrows]);
 
   useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-
-    const onScroll = () => updateArrows();
-    const onResize = () => updateArrows();
-
-    el.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onResize);
+    if (!emblaApi) return;
+    updateArrows();
+    emblaApi.on('select', updateArrows);
+    emblaApi.on('reInit', updateArrows);
 
     return () => {
-      el.removeEventListener('scroll', onScroll);
-      window.removeEventListener('resize', onResize);
+      emblaApi.off('select', updateArrows);
+      emblaApi.off('reInit', updateArrows);
     };
-  }, [updateArrows]);
+  }, [emblaApi, updateArrows]);
+
+  useEffect(() => {
+    if (!emblaApi || !isArabic || renderItems.length === 0) return;
+    emblaApi.scrollTo(emblaApi.scrollSnapList().length - 1, true);
+    updateArrows();
+  }, [emblaApi, isArabic, renderItems.length, updateArrows]);
 
   const scrollByAmount = useCallback((direction: 'left' | 'right') => {
-    const el = scrollRef.current;
-    if (!el) return;
-
-    el.scrollBy({
-      left: direction === 'left' ? -SCROLL_STEP : SCROLL_STEP,
-      behavior: 'smooth',
-    });
-  }, []);
+    if (!emblaApi) return;
+    if (direction === 'left') {
+      emblaApi.scrollPrev();
+      return;
+    }
+    emblaApi.scrollNext();
+  }, [emblaApi]);
 
   if (appLoading && shopLoading) {
     return (
       <section className="py-12 bg-white">
-        <div className="container mx-auto px-4 max-w-6xl">
+        <div className="mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8">
             <div className="h-8 w-56 mx-auto animate-pulse rounded-lg bg-gray-200" />
           </div>
@@ -150,24 +153,24 @@ export const UnifiedCategoriesSection: React.FC = () => {
   }
 
   return (
-    <section className="py-10 bg-white">
-      <div className="container mx-auto px-4 max-w-6xl">
+    <section className="bg-[#fbfbf9] py-10">
+      <div className="mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-6">
           <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-gray-900">
             {(t('sections.categories') || 'Categories').toUpperCase()}
           </h2>
         </div>
 
-        <div className="relative">
-          <div className="pointer-events-none absolute left-0 top-0 z-10 hidden h-full w-10 bg-gradient-to-r from-white via-white/75 to-transparent md:block" />
-          <div className="pointer-events-none absolute right-0 top-0 z-10 hidden h-full w-10 bg-gradient-to-l from-white via-white/75 to-transparent md:block" />
+        <div className="relative mx-auto max-w-[1320px]">
+          <div className="category-edge category-edge-left" />
+          <div className="category-edge category-edge-right" />
 
           <button
             type="button"
             aria-label={isArabic ? 'التمرير لليسار' : 'Scroll left'}
             onClick={() => scrollByAmount('left')}
             disabled={!canScrollLeft}
-            className="hidden md:flex absolute left-2 top-1/2 z-20 -translate-y-1/2 border border-gray-200/70 bg-white/90 backdrop-blur-md shadow-md rounded-full w-10 h-10 items-center justify-center text-gray-700 transition hover:scale-105 hover:shadow-lg disabled:opacity-40 disabled:hover:scale-100"
+            className="category-nav category-nav-left"
           >
             <ChevronLeft className="h-5 w-5" />
           </button>
@@ -176,24 +179,20 @@ export const UnifiedCategoriesSection: React.FC = () => {
             aria-label={isArabic ? 'التمرير لليمين' : 'Scroll right'}
             onClick={() => scrollByAmount('right')}
             disabled={!canScrollRight}
-            className="hidden md:flex absolute right-2 top-1/2 z-20 -translate-y-1/2 border border-gray-200/70 bg-white/90 backdrop-blur-md shadow-md rounded-full w-10 h-10 items-center justify-center text-gray-700 transition hover:scale-105 hover:shadow-lg disabled:opacity-40 disabled:hover:scale-100"
+            className="category-nav category-nav-right"
           >
             <ChevronRight className="h-5 w-5" />
           </button>
 
-          <div
-            ref={scrollRef}
-            dir="ltr"
-            className="scrollbar-hide flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth pb-2 [touch-action:pan-x_pan-y]"
-          >
-            {renderItems.map((item) => (
-              <Link
-                key={item.id}
-                to={item.href}
-                className="group block shrink-0 snap-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/60"
-                style={{ width: `${CARD_WIDTH}px` }}
-              >
-                <div className="h-full overflow-hidden rounded-2xl border border-gray-200/70 bg-white/95 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(0,0,0,0.08)] hover:border-gray-300/80 flex flex-col">
+          <div ref={emblaRef} dir="ltr" className="categories-viewport overflow-hidden">
+            <div className="categories-track flex pb-2">
+              {renderItems.map((item) => (
+                <Link
+                  key={item.id}
+                  to={item.href}
+                  className="categories-slide group block min-w-0 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/60"
+                >
+                <div className="h-full overflow-hidden rounded-2xl border border-[#dfe4dd] bg-[#fffdf9] shadow-[0_10px_30px_rgba(0,0,0,0.035)] transition-all duration-300 hover:-translate-y-1 hover:border-[#d2d8d1] hover:shadow-[0_16px_34px_rgba(0,0,0,0.075)] flex flex-col">
                   <div className="relative overflow-hidden aspect-[4/5]">
                     <img
                       src={item.image}
@@ -223,11 +222,106 @@ export const UnifiedCategoriesSection: React.FC = () => {
                     ) : null}
                   </div>
                 </div>
-              </Link>
-            ))}
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
       </div>
+      <style>{`
+        .categories-viewport {
+          cursor: grab;
+        }
+
+        .categories-viewport:active {
+          cursor: grabbing;
+        }
+
+        .categories-track {
+          direction: ltr;
+          margin-left: -12px;
+        }
+
+        .categories-slide {
+          flex: 0 0 min(58vw, ${CARD_WIDTH}px);
+          margin-left: 12px;
+        }
+
+        .category-edge {
+          pointer-events: none;
+          position: absolute;
+          top: 0;
+          z-index: 10;
+          display: none;
+          height: 100%;
+          width: 26px;
+        }
+
+        .category-edge-left {
+          left: 0;
+          background: linear-gradient(90deg, rgba(251, 251, 249, 0.78), rgba(251, 251, 249, 0));
+        }
+
+        .category-edge-right {
+          right: 0;
+          background: linear-gradient(270deg, rgba(251, 251, 249, 0.78), rgba(251, 251, 249, 0));
+        }
+
+        .category-nav {
+          position: absolute;
+          top: 50%;
+          z-index: 20;
+          display: none;
+          height: 36px;
+          width: 36px;
+          transform: translateY(-50%);
+          align-items: center;
+          justify-content: center;
+          border: 1px solid rgba(77, 91, 84, 0.14);
+          border-radius: 999px;
+          background: rgba(255, 253, 249, 0.88);
+          color: #4b5a58;
+          box-shadow: 0 10px 24px rgba(0, 0, 0, 0.1);
+          backdrop-filter: blur(10px);
+          transition: transform 0.2s ease, background 0.2s ease, opacity 0.2s ease;
+        }
+
+        .category-nav:not(:disabled):hover {
+          background: #fffdf9;
+          transform: translateY(-50%) scale(1.04);
+        }
+
+        .category-nav:disabled {
+          opacity: 0.34;
+          cursor: not-allowed;
+        }
+
+        .category-nav-left {
+          left: 8px;
+        }
+
+        .category-nav-right {
+          right: 8px;
+        }
+
+        @media (min-width: 640px) {
+          .categories-track {
+            margin-left: -14px;
+          }
+
+          .categories-slide {
+            flex-basis: ${CARD_WIDTH}px;
+            margin-left: 14px;
+          }
+        }
+
+        @media (min-width: 768px) {
+          .category-edge,
+          .category-nav {
+            display: flex;
+          }
+        }
+      `}</style>
     </section>
   );
 };

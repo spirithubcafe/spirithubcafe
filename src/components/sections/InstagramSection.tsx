@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight, Play } from 'lucide-react';
+import useEmblaCarousel from 'embla-carousel-react';
 
 type InstagramMediaType = 'IMAGE' | 'VIDEO' | 'CAROUSEL_ALBUM';
 
@@ -67,28 +68,26 @@ export const InstagramSection: React.FC = () => {
   const [hasError, setHasError] = useState(false);
   const [canScrollPrev, setCanScrollPrev] = useState(false);
   const [canScrollNext, setCanScrollNext] = useState(false);
-  const stripRef = React.useRef<HTMLDivElement | null>(null);
+  const [emblaRef, emblaApi] = useEmblaCarousel({
+    align: 'start',
+    containScroll: 'trimSnaps',
+    dragFree: true,
+  });
 
   const updateScrollState = React.useCallback(() => {
-    const el = stripRef.current;
-    if (!el) return;
-    const max = Math.max(0, el.scrollWidth - el.clientWidth);
-    const left = el.scrollLeft;
-    setCanScrollPrev(left > 2);
-    setCanScrollNext(left < max - 2);
-  }, []);
+    if (!emblaApi) return;
+    setCanScrollPrev(emblaApi.canScrollPrev());
+    setCanScrollNext(emblaApi.canScrollNext());
+  }, [emblaApi]);
 
-  const scrollByPage = (direction: 'prev' | 'next') => {
-    const el = stripRef.current;
-    if (!el) return;
-
-    const delta = Math.max(220, Math.round(el.clientWidth * 0.75));
-
-    el.scrollBy({
-      left: direction === 'next' ? delta : -delta,
-      behavior: 'smooth',
-    });
-  };
+  const scrollByPage = React.useCallback((direction: 'prev' | 'next') => {
+    if (!emblaApi) return;
+    if (direction === 'prev') {
+      emblaApi.scrollPrev();
+      return;
+    }
+    emblaApi.scrollNext();
+  }, [emblaApi]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -126,21 +125,21 @@ export const InstagramSection: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    if (!emblaApi) return;
     updateScrollState();
-    const el = stripRef.current;
-    if (!el) return;
-
-    const onScroll = () => updateScrollState();
-    const onResize = () => updateScrollState();
-
-    el.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onResize);
+    emblaApi.on('select', updateScrollState);
+    emblaApi.on('reInit', updateScrollState);
 
     return () => {
-      el.removeEventListener('scroll', onScroll);
-      window.removeEventListener('resize', onResize);
+      emblaApi.off('select', updateScrollState);
+      emblaApi.off('reInit', updateScrollState);
     };
-  }, [posts, isLoading, updateScrollState]);
+  }, [emblaApi, updateScrollState]);
+
+  useEffect(() => {
+    emblaApi?.reInit();
+    updateScrollState();
+  }, [posts.length, isLoading, emblaApi, updateScrollState]);
 
   const showFallback = hasError || (!isLoading && posts.length === 0);
 
@@ -161,6 +160,8 @@ export const InstagramSection: React.FC = () => {
 
         <div className="mx-auto w-full max-w-[1320px]">
           <div className="relative">
+            <div className="ig-edge ig-edge-left" />
+            <div className="ig-edge ig-edge-right" />
             <button
               type="button"
               onClick={() => scrollByPage('prev')}
@@ -180,15 +181,13 @@ export const InstagramSection: React.FC = () => {
               <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5" />
             </button>
 
-            <div
-              ref={stripRef}
-              className="instagram-strip flex gap-1.5 overflow-x-auto pb-2 sm:gap-2 md:gap-2.5"
-            >
+            <div ref={emblaRef} className="instagram-viewport overflow-hidden">
+              <div className="instagram-strip flex pb-2">
             {isLoading &&
               skeletonCards.map((_, index) => (
                 <div
                   key={`instagram-skeleton-${index}`}
-                  className="instagram-card relative shrink-0 overflow-hidden rounded-md bg-[#dfddd8] animate-pulse"
+                  className="instagram-card relative min-w-0 shrink-0 overflow-hidden rounded-xl bg-[#dfddd8] animate-pulse"
                   aria-hidden="true"
                 />
               ))}
@@ -206,7 +205,7 @@ export const InstagramSection: React.FC = () => {
                     href={post.permalink}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="instagram-card group relative shrink-0 overflow-hidden rounded-md bg-[#dedbd5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#69736f] focus-visible:ring-offset-2 focus-visible:ring-offset-[#fbfbf9]"
+                    className="instagram-card group relative min-w-0 shrink-0 overflow-hidden rounded-xl bg-[#dedbd5] shadow-[0_10px_30px_rgba(0,0,0,0.04)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#69736f] focus-visible:ring-offset-2 focus-visible:ring-offset-[#fbfbf9]"
                     aria-label="Open Instagram post"
                   >
                     <img
@@ -228,6 +227,7 @@ export const InstagramSection: React.FC = () => {
                   </a>
                 );
               })}
+              </div>
             </div>
           </div>
 
@@ -252,21 +252,43 @@ export const InstagramSection: React.FC = () => {
       </div>
 
       <style>{`
-        .instagram-strip {
-          direction: ltr;
-          scrollbar-width: none;
-          -webkit-overflow-scrolling: touch;
-          scroll-snap-type: x proximity;
+        .instagram-viewport {
+          cursor: grab;
         }
 
-        .instagram-strip::-webkit-scrollbar {
-          display: none;
+        .instagram-viewport:active {
+          cursor: grabbing;
+        }
+
+        .instagram-strip {
+          direction: ltr;
+          margin-left: -8px;
         }
 
         .instagram-card {
-          width: clamp(140px, 17.2vw, 208px);
+          flex: 0 0 clamp(140px, 17.2vw, 208px);
+          margin-left: 8px;
           aspect-ratio: 3 / 5;
-          scroll-snap-align: start;
+        }
+
+        .ig-edge {
+          pointer-events: none;
+          position: absolute;
+          top: 0;
+          z-index: 10;
+          display: none;
+          height: 100%;
+          width: 26px;
+        }
+
+        .ig-edge-left {
+          left: 0;
+          background: linear-gradient(90deg, rgba(251, 251, 249, 0.78), rgba(251, 251, 249, 0));
+        }
+
+        .ig-edge-right {
+          right: 0;
+          background: linear-gradient(270deg, rgba(251, 251, 249, 0.78), rgba(251, 251, 249, 0));
         }
 
         .ig-nav {
@@ -276,19 +298,20 @@ export const InstagramSection: React.FC = () => {
           z-index: 20;
           height: 36px;
           width: 36px;
-          border: 0;
+          border: 1px solid rgba(77, 91, 84, 0.14);
           border-radius: 999px;
-          background: rgba(255, 255, 255, 0.92);
+          background: rgba(255, 253, 249, 0.88);
           color: #4b5a58;
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+          box-shadow: 0 10px 24px rgba(0, 0, 0, 0.1);
+          backdrop-filter: blur(10px);
           transition: all 0.2s ease;
         }
 
         .ig-nav:hover:not(:disabled) {
-          background: #ffffff;
+          background: #fffdf9;
           transform: translateY(-50%) scale(1.03);
         }
 
@@ -307,7 +330,7 @@ export const InstagramSection: React.FC = () => {
 
         @media (max-width: 640px) {
           .instagram-card {
-            width: min(40vw, 170px);
+            flex-basis: min(40vw, 170px);
           }
 
           .ig-nav {
@@ -321,6 +344,12 @@ export const InstagramSection: React.FC = () => {
 
           .ig-nav-right {
             right: 2px;
+          }
+        }
+
+        @media (min-width: 768px) {
+          .ig-edge {
+            display: block;
           }
         }
       `}</style>
