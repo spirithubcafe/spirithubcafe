@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Check, ChevronDown, ChevronLeft, ChevronRight, Coffee, Filter, Search } from 'lucide-react';
+import useEmblaCarousel from 'embla-carousel-react';
 import { useTranslation } from 'react-i18next';
 import { useApp } from '../hooks/useApp';
 import { ProductCard } from '../components/products/ProductCard';
@@ -62,9 +63,14 @@ export const ProductsPage = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>(categoryFromUrl || 'all');
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryOpen, setCategoryOpen] = useState(false);
-  const categoryScrollRef = useRef<HTMLDivElement | null>(null);
   const [canScrollCategoriesLeft, setCanScrollCategoriesLeft] = useState(false);
   const [canScrollCategoriesRight, setCanScrollCategoriesRight] = useState(false);
+  const [browseCategoriesRef, browseCategoriesApi] = useEmblaCarousel({
+    align: 'start',
+    containScroll: 'trimSnaps',
+    dragFree: false,
+    skipSnaps: false,
+  });
 
   const isArabic = i18n.language === 'ar';
 
@@ -302,42 +308,42 @@ export const ProductsPage = () => {
   );
 
   const updateBrowseCategoryArrows = useCallback(() => {
-    const el = categoryScrollRef.current;
-    if (!el) return;
-
-    const maxScrollLeft = Math.max(0, el.scrollWidth - el.clientWidth);
-    const threshold = 2;
-    setCanScrollCategoriesLeft(el.scrollLeft > threshold);
-    setCanScrollCategoriesRight(el.scrollLeft < maxScrollLeft - threshold);
-  }, []);
+    if (!browseCategoriesApi) return;
+    setCanScrollCategoriesLeft(browseCategoriesApi.canScrollPrev());
+    setCanScrollCategoriesRight(browseCategoriesApi.canScrollNext());
+  }, [browseCategoriesApi]);
 
   useEffect(() => {
+    browseCategoriesApi?.reInit();
     updateBrowseCategoryArrows();
-  }, [renderedBrowseCategories.length, updateBrowseCategoryArrows]);
+  }, [renderedBrowseCategories.length, browseCategoriesApi, updateBrowseCategoryArrows]);
 
   useEffect(() => {
-    const el = categoryScrollRef.current;
-    if (!el) return;
-
-    const onScroll = () => updateBrowseCategoryArrows();
-    const onResize = () => updateBrowseCategoryArrows();
-    el.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onResize);
+    if (!browseCategoriesApi) return;
+    updateBrowseCategoryArrows();
+    browseCategoriesApi.on('select', updateBrowseCategoryArrows);
+    browseCategoriesApi.on('reInit', updateBrowseCategoryArrows);
 
     return () => {
-      el.removeEventListener('scroll', onScroll);
-      window.removeEventListener('resize', onResize);
+      browseCategoriesApi.off('select', updateBrowseCategoryArrows);
+      browseCategoriesApi.off('reInit', updateBrowseCategoryArrows);
     };
-  }, [updateBrowseCategoryArrows]);
+  }, [browseCategoriesApi, updateBrowseCategoryArrows]);
+
+  useEffect(() => {
+    if (!browseCategoriesApi || !isArabic || renderedBrowseCategories.length === 0) return;
+    browseCategoriesApi.scrollTo(browseCategoriesApi.scrollSnapList().length - 1, true);
+    updateBrowseCategoryArrows();
+  }, [browseCategoriesApi, isArabic, renderedBrowseCategories.length, updateBrowseCategoryArrows]);
 
   const scrollBrowseCategories = useCallback((direction: 'left' | 'right') => {
-    const el = categoryScrollRef.current;
-    if (!el) return;
-    el.scrollBy({
-      left: direction === 'left' ? -300 : 300,
-      behavior: 'smooth',
-    });
-  }, []);
+    if (!browseCategoriesApi) return;
+    if (direction === 'left') {
+      browseCategoriesApi.scrollPrev();
+      return;
+    }
+    browseCategoriesApi.scrollNext();
+  }, [browseCategoriesApi]);
 
   return (
     <div className={`min-h-screen bg-gray-50 ${isArabic ? 'rtl' : 'ltr'}`}>
@@ -577,24 +583,24 @@ export const ProductsPage = () => {
         </div>
 
       {/* All Categories Section */}
-      <div className="py-8 bg-white">
-        <div className="container mx-auto px-4">
+      <div className="bg-[#fbfbf9] py-8">
+        <div className="mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-6">
             <h2 className="text-2xl font-bold text-gray-900">
               {isArabic ? 'تصفح جميع الفئات' : 'BROWSE ALL CATEGORIES'}
             </h2>
           </div>
 
-          <div className="relative max-w-7xl mx-auto">
-            <div className="pointer-events-none absolute left-0 top-0 z-10 hidden h-full w-10 bg-gradient-to-r from-white via-white/75 to-transparent md:block" />
-            <div className="pointer-events-none absolute right-0 top-0 z-10 hidden h-full w-10 bg-gradient-to-l from-white via-white/75 to-transparent md:block" />
+          <div className="relative mx-auto max-w-[1320px]">
+            <div className="products-category-edge products-category-edge-left" />
+            <div className="products-category-edge products-category-edge-right" />
 
             <button
               type="button"
               aria-label={isArabic ? 'التمرير لليسار' : 'Scroll left'}
               onClick={() => scrollBrowseCategories('left')}
               disabled={!canScrollCategoriesLeft}
-              className="hidden md:flex absolute left-2 top-1/2 z-20 -translate-y-1/2 border border-gray-200/70 bg-white/90 backdrop-blur-md shadow-md rounded-full w-10 h-10 items-center justify-center text-gray-700 transition hover:scale-105 hover:shadow-lg disabled:opacity-40 disabled:hover:scale-100"
+              className="products-category-nav products-category-nav-left"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
@@ -603,24 +609,21 @@ export const ProductsPage = () => {
               aria-label={isArabic ? 'التمرير لليمين' : 'Scroll right'}
               onClick={() => scrollBrowseCategories('right')}
               disabled={!canScrollCategoriesRight}
-              className="hidden md:flex absolute right-2 top-1/2 z-20 -translate-y-1/2 border border-gray-200/70 bg-white/90 backdrop-blur-md shadow-md rounded-full w-10 h-10 items-center justify-center text-gray-700 transition hover:scale-105 hover:shadow-lg disabled:opacity-40 disabled:hover:scale-100"
+              className="products-category-nav products-category-nav-right"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
 
-            <div
-              ref={categoryScrollRef}
-              dir="ltr"
-              className="scrollbar-hide flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth pb-2 [touch-action:pan-x_pan-y]"
-            >
+            <div ref={browseCategoriesRef} dir="ltr" className="products-category-viewport overflow-hidden">
+              <div className="products-category-track flex pb-2">
             {renderedBrowseCategories.map((category) => {
               const isActive = category.kind === 'coffee' && (selectedCategory === category.categoryId || selectedCategory === category.categorySlug);
-              const cardClassName = 'group block shrink-0 snap-start h-full cursor-pointer text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/60';
+              const cardClassName = 'products-category-slide group block min-w-0 shrink-0 h-full cursor-pointer text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/60';
               const cardBody = (
-                <div className={`h-full overflow-hidden rounded-2xl border bg-white/95 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-all duration-300 flex flex-col hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(0,0,0,0.08)] ${
+                <div className={`h-full overflow-hidden rounded-2xl border bg-[#fffdf9] shadow-[0_10px_30px_rgba(0,0,0,0.035)] transition-all duration-300 flex flex-col hover:-translate-y-1 hover:shadow-[0_16px_34px_rgba(0,0,0,0.075)] ${
                   isActive
                     ? 'border-amber-500 shadow-md'
-                    : 'border-gray-200/70 group-hover:border-gray-300/80'
+                    : 'border-[#dfe4dd] group-hover:border-[#d2d8d1]'
                 }`}>
                   <div className="relative overflow-hidden aspect-[4/5]">
                     <img
@@ -644,7 +647,7 @@ export const ProductsPage = () => {
                     }`} />
                   </div>
 
-                  <div className="flex min-h-[84px] flex-col justify-center bg-gray-50 px-3.5 py-3">
+                  <div className="flex min-h-[84px] flex-col justify-center bg-[#fffdf9] px-3.5 py-3">
                     <h3
                       dir={isArabic ? 'rtl' : 'ltr'}
                       className={`w-full truncate whitespace-nowrap text-[0.98rem] font-semibold leading-7 tracking-tight transition-colors duration-200 ${isArabic ? 'text-right pe-1' : 'text-center'} ${
@@ -678,7 +681,7 @@ export const ProductsPage = () => {
               
               if (category.kind === 'shop') {
                 return (
-                  <Link key={category.id} to={category.href} className={cardClassName} style={{ width: '212px' }}>
+                  <Link key={category.id} to={category.href} className={cardClassName}>
                     {cardBody}
                   </Link>
                 );
@@ -689,16 +692,110 @@ export const ProductsPage = () => {
                   key={category.id}
                   onClick={() => handleCategoryChange(category.categoryId)}
                   className={cardClassName}
-                  style={{ width: '212px' }}
                 >
                   {cardBody}
                 </button>
               );
             })}
+              </div>
             </div>
           </div>
         </div>
       </div>
+      <style>{`
+        .products-category-viewport {
+          cursor: grab;
+        }
+
+        .products-category-viewport:active {
+          cursor: grabbing;
+        }
+
+        .products-category-track {
+          direction: ltr;
+          margin-left: -12px;
+        }
+
+        .products-category-slide {
+          flex: 0 0 min(58vw, 212px);
+          margin-left: 12px;
+        }
+
+        .products-category-edge {
+          pointer-events: none;
+          position: absolute;
+          top: 0;
+          z-index: 10;
+          display: none;
+          height: 100%;
+          width: 26px;
+        }
+
+        .products-category-edge-left {
+          left: 0;
+          background: linear-gradient(90deg, rgba(251, 251, 249, 0.78), rgba(251, 251, 249, 0));
+        }
+
+        .products-category-edge-right {
+          right: 0;
+          background: linear-gradient(270deg, rgba(251, 251, 249, 0.78), rgba(251, 251, 249, 0));
+        }
+
+        .products-category-nav {
+          position: absolute;
+          top: 50%;
+          z-index: 20;
+          display: none;
+          height: 36px;
+          width: 36px;
+          transform: translateY(-50%);
+          align-items: center;
+          justify-content: center;
+          border: 1px solid rgba(77, 91, 84, 0.14);
+          border-radius: 999px;
+          background: rgba(255, 253, 249, 0.88);
+          color: #4b5a58;
+          box-shadow: 0 10px 24px rgba(0, 0, 0, 0.1);
+          backdrop-filter: blur(10px);
+          transition: transform 0.2s ease, background 0.2s ease, opacity 0.2s ease;
+        }
+
+        .products-category-nav:not(:disabled):hover {
+          background: #fffdf9;
+          transform: translateY(-50%) scale(1.04);
+        }
+
+        .products-category-nav:disabled {
+          opacity: 0.34;
+          cursor: not-allowed;
+        }
+
+        .products-category-nav-left {
+          left: 8px;
+        }
+
+        .products-category-nav-right {
+          right: 8px;
+        }
+
+        @media (min-width: 640px) {
+          .products-category-track {
+            margin-left: -14px;
+          }
+
+          .products-category-slide {
+            flex-basis: 212px;
+            margin-left: 14px;
+          }
+        }
+
+        @media (min-width: 768px) {
+          .products-category-edge,
+          .products-category-nav {
+            display: flex;
+          }
+        }
+      `}</style>
       </div> {/* End Content Container */}
     </div>
   );
