@@ -156,9 +156,10 @@ export const UnifiedCategoriesSection: React.FC = () => {
     <section className="bg-[#fbfbf9] py-10">
       <div className="mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-6">
-          <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-gray-900">
+          <h2 className="text-[22px] md:text-[28px] font-bold tracking-tight text-gray-900">
             {(t('sections.categories') || 'Categories').toUpperCase()}
           </h2>
+          <div className="mx-auto mt-3 h-px w-12 bg-[#b9b8b2]" />
         </div>
 
         <div className="relative mx-auto max-w-[1320px]">

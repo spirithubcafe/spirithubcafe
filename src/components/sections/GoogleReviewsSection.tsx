@@ -7,6 +7,29 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 const MAX_PREVIEW_LENGTH = 160;
 
+const formatReviewDateTime = (timeValue: number | undefined, isArabic: boolean): string | null => {
+  if (typeof timeValue !== 'number' || Number.isNaN(timeValue) || timeValue <= 0) {
+    return null;
+  }
+
+  // Google APIs may return epoch seconds; convert to ms when needed.
+  const epochMs = timeValue < 1_000_000_000_000 ? timeValue * 1000 : timeValue;
+  const date = new Date(epochMs);
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  // Use a digits-only LTR date format in Arabic UI to avoid bidi reordering issues.
+  const locale = isArabic ? 'en-GB' : 'en-US';
+  return new Intl.DateTimeFormat(locale, {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: 'numeric',
+    minute: '2-digit',
+  }).format(date);
+};
+
 const GoogleGIcon: React.FC<{ className?: string }> = ({ className }) => (
   <svg viewBox="0 0 24 24" aria-hidden="true" className={className}>
     <path fill="#4285F4" d="M21.805 12.24c0-.71-.064-1.39-.182-2.04H12v3.86h5.5a4.7 4.7 0 0 1-2.04 3.08v2.56h3.3c1.94-1.78 3.045-4.41 3.045-7.46Z" />
@@ -76,7 +99,7 @@ const ReviewText: React.FC<{ text: string; isArabic: boolean }> = ({ text, isAra
         <button
           type="button"
           onClick={() => setExpanded((prev) => !prev)}
-          className={`mt-2 text-xs font-semibold tracking-[0.04em] text-[#3f4d4c] underline underline-offset-4 transition-colors hover:text-[#2e3b3b] ${isArabic ? 'text-right' : 'uppercase'}`}
+          className={`mt-2 text-xs font-semibold tracking-[0.02em] text-[#3f4d4c] underline underline-offset-4 transition-colors hover:text-[#2e3b3b] ${isArabic ? 'text-right' : 'uppercase'}`}
         >
           {expanded ? (isArabic ? 'عرض أقل' : 'Read Less') : (isArabic ? 'اقرأ المزيد' : 'Read More')}
         </button>
@@ -140,6 +163,11 @@ export const GoogleReviewsSection: React.FC = () => {
   }, []);
 
   const cards = useMemo(() => payload?.reviews ?? [], [payload]);
+  const formattedRatingsCount = useMemo(() => {
+    const count = payload?.userRatingsTotal ?? 0;
+    if (!isArabic) return String(count);
+    return new Intl.NumberFormat('ar').format(count);
+  }, [isArabic, payload?.userRatingsTotal]);
 
   useEffect(() => {
     if (!emblaApi) return;
@@ -159,10 +187,11 @@ export const GoogleReviewsSection: React.FC = () => {
   }, [cards.length, emblaApi, updateScrollState]);
 
   useEffect(() => {
-    if (!emblaApi || !isArabic || cards.length === 0) return;
-    emblaApi.scrollTo(emblaApi.scrollSnapList().length - 1, true);
+    if (!emblaApi || cards.length === 0) return;
+    // Keep initial position consistent across locales: start at first (newest) card.
+    emblaApi.scrollTo(0, true);
     updateScrollState();
-  }, [cards.length, emblaApi, isArabic, updateScrollState]);
+  }, [cards.length, emblaApi, updateScrollState]);
 
   if (!isLoading && (!payload || cards.length === 0)) return null;
 
@@ -170,7 +199,7 @@ export const GoogleReviewsSection: React.FC = () => {
     <section className="bg-[#fbfbf9] pt-10 pb-0 sm:pt-12 sm:pb-0 lg:pt-14 lg:pb-0" dir={isArabic ? 'rtl' : 'ltr'}>
       <div className="mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:px-8">
         <div className="mb-6 text-center sm:mb-7">
-          <h2 className="text-2xl font-semibold tracking-[1px] text-[#2E2E2E] md:text-3xl">
+          <h2 className="text-[22px] font-semibold tracking-[1px] text-[#2E2E2E] md:text-[28px]">
             {isArabic ? 'ماذا يقول عملاؤنا' : 'WHAT OUR FRIENDS ARE SAYING'}
           </h2>
           <p className="mt-2 text-sm text-[#5f6a65]">
@@ -207,7 +236,7 @@ export const GoogleReviewsSection: React.FC = () => {
                     <StarRow rating={payload?.rating ?? 0} size={14} />
                     {isArabic ? (
                       <span dir="rtl" className="text-xs text-[#65706d] whitespace-nowrap" style={{ unicodeBidi: 'plaintext' }}>
-                        (<bdi>{payload?.userRatingsTotal ?? 0}</bdi>)
+                        (<bdi>{formattedRatingsCount}</bdi>)
                       </span>
                     ) : (
                       <span className="text-xs text-[#65706d] whitespace-nowrap">({payload?.userRatingsTotal ?? 0} reviews)</span>
@@ -220,7 +249,7 @@ export const GoogleReviewsSection: React.FC = () => {
                     href={payload.reviewWriteUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`inline-flex min-h-[40px] items-center justify-center gap-2 rounded-full bg-[#cf4a35] px-5 py-2 text-xs font-semibold tracking-[0.04em] text-white transition-colors hover:bg-[#b63f2d] ${isArabic ? 'order-1 w-full sm:order-1 sm:w-auto' : 'order-1 w-full sm:w-auto uppercase tracking-[0.08em]'}`}
+                    className={`inline-flex min-h-[38px] items-center justify-center gap-2 rounded-full bg-[#cf4a35] px-5 py-1.5 text-xs font-semibold tracking-[0.04em] text-white transition-colors hover:bg-[#b63f2d] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b63f2d] focus-visible:ring-offset-2 focus-visible:ring-offset-[#fbfbf9] ${isArabic ? 'order-1 w-full sm:order-1 sm:w-auto' : 'order-1 w-full sm:w-auto uppercase tracking-[0.08em]'}`}
                   >
                     <GoogleGIcon className="h-4 w-4 shrink-0" />
                     {isArabic ? 'قيّمنا على Google' : 'Review us on Google'}
@@ -241,7 +270,12 @@ export const GoogleReviewsSection: React.FC = () => {
 
               <div ref={emblaRef} className="reviews-viewport overflow-hidden">
                 <div className="reviews-rail flex pb-1">
-                  {cards.map((review, index) => (
+                  {cards.map((review, index) => {
+                    const displayTime =
+                      formatReviewDateTime(review.time, isArabic) ||
+                      `${review.relativeTimeDescription} on Google`;
+
+                    return (
                     <article
                       key={`${review.authorName}-${review.time}-${index}`}
                       className={`reviews-slide flex h-full min-w-0 shrink-0 flex-col rounded-2xl bg-[#FFFDF9] p-4 md:p-5 ${isArabic ? 'text-right' : 'text-left'}`}
@@ -250,18 +284,25 @@ export const GoogleReviewsSection: React.FC = () => {
                       <div className={`mb-2.5 flex items-center gap-2.5 ${isArabic ? 'flex-row-reverse justify-start' : 'justify-start'}`}>
                         <ReviewAvatar name={review.authorName} src={review.profilePhotoUrl} />
                         <div className={isArabic ? 'min-h-[40px] text-right' : 'min-h-[40px] text-left'}>
-                          <h3 className="truncate text-[15px] font-semibold leading-5 text-[#2e3b3b]">{review.authorName}</h3>
-                          <p dir="ltr" className="mt-1 text-[11px] uppercase tracking-[0.08em] text-[#7a847f]">{review.relativeTimeDescription} on Google</p>
+                          <h3 className="truncate text-[15px] font-medium leading-5 text-[#2e3b3b]">{review.authorName}</h3>
+                          <p
+                            dir="ltr"
+                            className="mt-1 text-[11px] tracking-[0.02em] text-[#5f6b66]"
+                            style={{ unicodeBidi: 'plaintext' }}
+                          >
+                            <bdi>{displayTime}</bdi>
+                          </p>
                         </div>
                       </div>
                       <div className={`mb-3 ${isArabic ? 'flex justify-end' : ''}`}>
                         <StarRow rating={review.rating} size={13} />
                       </div>
-                      <div className="mt-auto px-1 sm:px-0">
+                      <div className="mt-auto">
                         <ReviewText text={review.text || ''} isArabic={isArabic} />
                       </div>
                     </article>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -342,11 +383,11 @@ export const GoogleReviewsSection: React.FC = () => {
         }
 
         .gr-nav-left {
-          left: 8px;
+          left: 10px;
         }
 
         .gr-nav-right {
-          right: 8px;
+          right: 10px;
         }
 
         @media (max-width: 768px) {
@@ -358,12 +399,17 @@ export const GoogleReviewsSection: React.FC = () => {
             margin-left: 12px;
           }
 
+          .gr-nav {
+            height: 30px;
+            width: 30px;
+          }
+
           .gr-nav-left {
-            left: 6px;
+            left: 12px;
           }
 
           .gr-nav-right {
-            right: 6px;
+            right: 12px;
           }
         }
 

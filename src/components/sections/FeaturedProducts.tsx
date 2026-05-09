@@ -56,7 +56,7 @@ export const FeaturedProducts: React.FC = () => {
       <section id="products" className="py-16 bg-gray-50">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-2xl font-semibold tracking-[1px] text-[#2E2E2E] mb-4 uppercase md:text-3xl">
+            <h2 className="text-[22px] font-semibold tracking-[1px] text-[#2E2E2E] mb-4 uppercase md:text-[28px]">
               {t('sections.featuredProducts')}
             </h2>
           </div>
@@ -85,9 +85,10 @@ export const FeaturedProducts: React.FC = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center mb-12">
-          <h2 className="text-2xl font-semibold tracking-[1px] text-[#2E2E2E] mb-4 uppercase md:text-3xl">
+          <h2 className="text-[22px] font-semibold tracking-[1px] text-[#2E2E2E] mb-4 uppercase md:text-[28px]">
             {t('sections.featuredProducts')}
           </h2>
+          <div className="mx-auto mt-3 h-px w-12 bg-[#b9b8b2]" />
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 sm:gap-6">

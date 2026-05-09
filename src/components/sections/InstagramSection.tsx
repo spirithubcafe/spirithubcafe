@@ -11,6 +11,8 @@ type InstagramPost = {
   thumbnailUrl?: string;
   permalink: string;
   caption?: string;
+  timestamp?: string;
+  isPinned?: boolean;
 };
 
 type FeedResponse = {
@@ -22,7 +24,21 @@ type FeedResponse = {
   message?: string;
 };
 
-const MAX_POSTS = 10;
+const MAX_POSTS = 12;
+const FETCH_POSTS = 25;
+
+const getPinnedPermalinkSet = (): Set<string> => {
+  const configured = import.meta.env.VITE_INSTAGRAM_PINNED_PERMALINKS;
+  if (typeof configured !== 'string' || configured.trim().length === 0) {
+    return new Set();
+  }
+  return new Set(
+    configured
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean),
+  );
+};
 
 const getApiBaseUrl = (): string =>
   import.meta.env.VITE_API_BASE_URL_OM ||
@@ -35,31 +51,66 @@ const isValidMediaType = (value: unknown): value is InstagramMediaType =>
 
 const normalizePosts = (payload: unknown): InstagramPost[] => {
   const items: unknown[] = Array.isArray(payload) ? payload : [];
+  const skipped: Array<{ id: string; reason: string }> = [];
 
-  return items
+  const normalized = items
     .map((raw) => {
       if (!raw || typeof raw !== 'object') {
+        skipped.push({ id: 'unknown', reason: 'invalid item shape' });
         return null;
       }
       const item = raw as Record<string, unknown>;
       const mediaType = item.mediaType;
       const permalink = typeof item.permalink === 'string' ? item.permalink : '';
+      const id = String(item.id ?? permalink ?? 'unknown');
 
       if (!isValidMediaType(mediaType) || !permalink) {
+        skipped.push({
+          id,
+          reason: !isValidMediaType(mediaType) ? `unsupported mediaType: ${String(mediaType)}` : 'missing permalink',
+        });
         return null;
       }
 
       return {
-        id: String(item.id ?? permalink),
+        id,
         mediaType,
         mediaUrl: typeof item.mediaUrl === 'string' ? item.mediaUrl : undefined,
         thumbnailUrl: typeof item.thumbnailUrl === 'string' ? item.thumbnailUrl : undefined,
         permalink,
         caption: typeof item.caption === 'string' ? item.caption : undefined,
+        timestamp: typeof item.timestamp === 'string' ? item.timestamp : undefined,
+        isPinned: typeof item.isPinned === 'boolean' ? item.isPinned : undefined,
       } as InstagramPost;
     })
-    .filter((post): post is InstagramPost => post !== null)
-    .slice(0, MAX_POSTS);
+    .filter((post): post is InstagramPost => post !== null);
+
+  if (skipped.length > 0) {
+    console.info('[InstagramSection] Skipped posts during normalize', skipped);
+  }
+
+  const configuredPinnedPermalinks = getPinnedPermalinkSet();
+  const sorted = normalized
+    .sort((a, b) => {
+      const aPinned = Boolean(a.isPinned) || configuredPinnedPermalinks.has(a.permalink);
+      const bPinned = Boolean(b.isPinned) || configuredPinnedPermalinks.has(b.permalink);
+      if (aPinned !== bPinned) {
+        return aPinned ? -1 : 1;
+      }
+      const aTs = a.timestamp ? Date.parse(a.timestamp) : 0;
+      const bTs = b.timestamp ? Date.parse(b.timestamp) : 0;
+      return bTs - aTs;
+    });
+
+  if (configuredPinnedPermalinks.size > 0) {
+    const matchedConfiguredPins = sorted.filter((post) => configuredPinnedPermalinks.has(post.permalink)).length;
+    console.info('[InstagramSection] Pinned post matching', {
+      configuredCount: configuredPinnedPermalinks.size,
+      matchedConfiguredPins,
+    });
+  }
+
+  return sorted.slice(0, MAX_POSTS);
 };
 
 export const InstagramSection: React.FC = () => {
@@ -94,7 +145,7 @@ export const InstagramSection: React.FC = () => {
 
     const loadFeed = async () => {
       try {
-        const response = await fetch(`${getApiBaseUrl()}/api/instagram/feed`, {
+        const response = await fetch(`${getApiBaseUrl()}/api/instagram/feed?postLimit=${FETCH_POSTS}`, {
           method: 'GET',
           headers: { Accept: 'application/json' },
           signal: controller.signal,
@@ -106,6 +157,8 @@ export const InstagramSection: React.FC = () => {
 
         const payload = (await response.json()) as FeedResponse;
         const parsedPosts = normalizePosts(payload?.data?.posts);
+        const apiCount = Array.isArray(payload?.data?.posts) ? payload.data.posts.length : 0;
+        console.info('[InstagramSection] API count', { apiCount });
         setPosts(parsedPosts);
         setHasError(payload?.success === false);
       } catch (error) {
@@ -141,6 +194,15 @@ export const InstagramSection: React.FC = () => {
     updateScrollState();
   }, [posts.length, isLoading, emblaApi, updateScrollState]);
 
+  useEffect(() => {
+    if (isLoading) return;
+    const renderedCount = posts.filter((post) => {
+      const imageUrl = post.mediaType === 'VIDEO' ? (post.thumbnailUrl || post.mediaUrl) : post.mediaUrl;
+      return Boolean(imageUrl);
+    }).length;
+    console.info('[InstagramSection] Rendered count', { renderedCount, totalNormalized: posts.length });
+  }, [posts, isLoading]);
+
   const showFallback = hasError || (!isLoading && posts.length === 0);
 
   const skeletonCards = useMemo(() => Array.from({ length: 7 }), []);
@@ -152,7 +214,7 @@ export const InstagramSection: React.FC = () => {
     <section className="bg-[#fbfbf9] py-12 sm:py-14 lg:py-16">
       <div className="mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:px-8">
         <div className="mb-8 text-center sm:mb-10">
-          <h2 className="text-2xl font-semibold tracking-[1px] text-[#2E2E2E] md:text-3xl">
+          <h2 className="text-[22px] font-semibold tracking-[1px] text-[#2E2E2E] md:text-[28px]">
             {isArabic ? 'زوروا إنستغرامنا' : 'VISIT OUR INSTAGRAM'}
           </h2>
           <div className="mx-auto mt-4 h-px w-12 bg-[#b9b8b2]" />
@@ -194,8 +256,15 @@ export const InstagramSection: React.FC = () => {
 
             {!isLoading &&
               posts.map((post) => {
-                const imageUrl = post.mediaType === 'VIDEO' ? post.thumbnailUrl : post.mediaUrl;
+                const imageUrl = post.mediaType === 'VIDEO'
+                  ? (post.thumbnailUrl || post.mediaUrl)
+                  : post.mediaUrl;
                 if (!imageUrl) {
+                  console.info('[InstagramSection] Skipped post during render', {
+                    id: post.id,
+                    mediaType: post.mediaType,
+                    reason: 'missing image source (mediaUrl/thumbnailUrl)',
+                  });
                   return null;
                 }
 
