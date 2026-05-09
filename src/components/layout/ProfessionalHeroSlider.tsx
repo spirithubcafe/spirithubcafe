@@ -27,7 +27,7 @@ export const ProfessionalHeroSlider: React.FC = () => {
     typeof window !== 'undefined' ? window.innerWidth < 768 : false,
   );
   const mobileHeroImages = [
-    '/images/slides/spirithub-nitro-cold-brew-creamy-texture.webp',
+    '/images/slides/spirithub-cold-brew-oman-muscat.webp',
     '/images/slides/spirithub-cold-brew-smooth-nitro.webp',
     '/images/slides/spirithub-cold-brew-smooth-low-acidity.webp',
   ];
@@ -546,5 +546,6 @@ export const ProfessionalHeroSlider: React.FC = () => {
     </section>
   );
 };
+
 
 
