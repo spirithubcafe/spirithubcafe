@@ -2550,7 +2550,7 @@ export const OrdersManagement: React.FC = () => {
         </CardHeader>
         <CardContent className="space-y-8">
           <div className="rounded-lg border bg-muted/30 p-3 sm:p-4">
-            <div className="grid grid-cols-2 max-[420px]:grid-cols-1 md:grid-cols-5 gap-3">
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-3">
               <div className="space-y-1 col-span-1 min-w-0">
                 <Label className="text-xs text-muted-foreground">{isArabic ? 'من تاريخ' : 'From date'}</Label>
                 <Input type="date" value={filterFromDate} onChange={(e) => setFilterFromDate(e.target.value)} className="h-10 w-full min-w-0 text-sm px-2" />
@@ -2559,7 +2559,7 @@ export const OrdersManagement: React.FC = () => {
                 <Label className="text-xs text-muted-foreground">{isArabic ? 'إلى تاريخ' : 'To date'}</Label>
                 <Input type="date" value={filterToDate} onChange={(e) => setFilterToDate(e.target.value)} className="h-10 w-full min-w-0 text-sm px-2" />
               </div>
-              <div className="space-y-1 col-span-2 md:col-span-1">
+              <div className="space-y-1 col-span-1 lg:col-span-1">
                 <Label className="text-xs text-muted-foreground">{isArabic ? 'شركة الشحن' : 'Shipping company'}</Label>
                 <Select value={filterShippingCompany} onValueChange={(value: 'all' | 'pickup' | 'nool' | 'aramex' | 'free') => setFilterShippingCompany(value)}>
                   <SelectTrigger className="h-10 w-full">
@@ -2574,17 +2574,17 @@ export const OrdersManagement: React.FC = () => {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="col-span-2 md:col-span-2 grid grid-cols-2 md:flex md:flex-wrap items-end gap-2">
-                <Button type="button" variant="outline" className="h-10 w-full md:w-auto" onClick={() => setQuickDateRange(1)}>
+              <div className="col-span-1 lg:col-span-2 grid grid-cols-2 lg:flex lg:flex-wrap items-end gap-2">
+                <Button type="button" variant="outline" className="h-10 w-full lg:w-auto" onClick={() => setQuickDateRange(1)}>
                   {isArabic ? 'اليوم' : 'Today'}
                 </Button>
-                <Button type="button" variant="outline" className="h-10 w-full md:w-auto" onClick={() => setQuickDateRange(7)}>
+                <Button type="button" variant="outline" className="h-10 w-full lg:w-auto" onClick={() => setQuickDateRange(7)}>
                   {isArabic ? 'آخر 7 أيام' : 'Last 7 days'}
                 </Button>
-                <Button type="button" variant="outline" className="h-10 w-full md:w-auto col-span-2 md:col-span-1" onClick={() => setQuickDateRange(30)}>
+                <Button type="button" variant="outline" className="h-10 w-full lg:w-auto col-span-2 lg:col-span-1" onClick={() => setQuickDateRange(30)}>
                   {isArabic ? 'آخر 30 يوم' : 'Last 30 days'}
                 </Button>
-                <Button type="button" variant="ghost" className="h-10 w-full md:w-auto col-span-2 md:col-span-1" onClick={clearFilters}>
+                <Button type="button" variant="ghost" className="h-10 w-full lg:w-auto col-span-2 lg:col-span-1" onClick={clearFilters}>
                   {isArabic ? 'مسح الفلاتر' : 'Clear filters'}
                 </Button>
               </div>
