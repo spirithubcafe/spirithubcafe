@@ -197,6 +197,9 @@ export const OrdersManagement: React.FC = () => {
   const pageSizeRef = useRef(20);
   const [filterFromDate, setFilterFromDate] = useState('');
   const [filterToDate, setFilterToDate] = useState('');
+  const [fromDateInputType, setFromDateInputType] = useState<'text' | 'date'>('text');
+  const [toDateInputType, setToDateInputType] = useState<'text' | 'date'>('text');
+  const [activeQuickRange, setActiveQuickRange] = useState<'today' | '7d' | '30d' | null>(null);
   const [filterShippingCompany, setFilterShippingCompany] = useState<'all' | 'pickup' | 'nool' | 'aramex' | 'free'>('all');
   const [resolvedShippingMethodByOrderId, setResolvedShippingMethodByOrderId] = useState<Record<number, number>>({});
   const [allOrdersForFiltering, setAllOrdersForFiltering] = useState<Order[] | null>(null);
@@ -1249,12 +1252,14 @@ export const OrdersManagement: React.FC = () => {
 
     setFilterFromDate(format(start, 'yyyy-MM-dd'));
     setFilterToDate(format(end, 'yyyy-MM-dd'));
+    setActiveQuickRange(days === 1 ? 'today' : days === 7 ? '7d' : '30d');
   };
 
   const clearFilters = () => {
     setFilterFromDate('');
     setFilterToDate('');
     setFilterShippingCompany('all');
+    setActiveQuickRange(null);
   };
 
   const newOrdersCount = highlightedOrderIds.size;
@@ -2380,7 +2385,7 @@ export const OrdersManagement: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 bg-[#f6f7f9] p-2 sm:p-3 rounded-2xl">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-100">
@@ -2420,13 +2425,13 @@ export const OrdersManagement: React.FC = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-3 grid-cols-2 md:grid-cols-4">
+      <div className="grid gap-2.5 grid-cols-2 md:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1.5">
             <CardTitle className="text-xs font-medium">
               {isArabic ? 'إجمالي الطلبات' : 'Total Orders'}
             </CardTitle>
-            <Package className="h-3.5 w-3.5 text-muted-foreground" />
+            <Package className="h-3.5 w-3.5 text-[#147a48]" />
           </CardHeader>
           <CardContent className="pb-3">
             <div className="text-xl font-bold">{orders.length}</div>
@@ -2438,7 +2443,7 @@ export const OrdersManagement: React.FC = () => {
             <CardTitle className="text-xs font-medium">
               {isArabic ? 'طلبات جديدة' : 'New Orders'}
             </CardTitle>
-            <Bell className="h-3.5 w-3.5 text-muted-foreground" />
+            <Bell className="h-3.5 w-3.5 text-[#147a48]" />
           </CardHeader>
           <CardContent className="pb-3">
             <div className="text-xl font-bold">
@@ -2474,12 +2479,12 @@ export const OrdersManagement: React.FC = () => {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1.5">
             <CardTitle className="text-xs font-medium">
-              {isArabic ? 'إجمالي الإيرادات' : 'Total Revenue'}
+              {isArabic ? 'إجمالي الإيرادات' : 'Total Amount'}
             </CardTitle>
-            <DollarSign className="h-3.5 w-3.5 text-muted-foreground" />
+            <DollarSign className="h-3.5 w-3.5 text-[#147a48]" />
           </CardHeader>
           <CardContent className="pb-3">
-            <div className="text-lg font-bold">
+            <div className="text-lg font-extrabold text-[#147a48]">
               OMR {totalRevenue.toFixed(2)}
             </div>
           </CardContent>
@@ -2549,50 +2554,95 @@ export const OrdersManagement: React.FC = () => {
           ) : null}
         </CardHeader>
         <CardContent className="space-y-8">
-          <div className="rounded-lg border bg-muted/30 p-3 sm:p-4">
+          <div className="sticky top-2 z-20 rounded-3xl border border-[#eaeaea] bg-white/95 p-3 sm:p-4 shadow-[0_8px_22px_rgba(15,23,42,0.05)]">
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-3">
               <div className="space-y-1 col-span-1 min-w-0">
-                <Label className="text-xs text-muted-foreground">{isArabic ? 'من تاريخ' : 'From date'}</Label>
-                <Input type="date" value={filterFromDate} onChange={(e) => setFilterFromDate(e.target.value)} className="h-10 w-full min-w-0 text-sm px-2" />
+                <Label className="text-sm font-semibold">From date</Label>
+                <div className="relative">
+                  <Calendar className="h-4 w-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <Input
+                    type={filterFromDate ? 'date' : fromDateInputType}
+                    placeholder="Select from date"
+                    value={filterFromDate}
+                    onFocus={() => setFromDateInputType('date')}
+                    onBlur={() => {
+                      if (!filterFromDate) setFromDateInputType('text');
+                    }}
+                    onChange={(e) => {
+                      setFilterFromDate(e.target.value);
+                      setActiveQuickRange(null);
+                    }}
+                    className="h-11 w-full min-w-0 text-sm rounded-2xl border-[#eaeaea] pl-10"
+                  />
+                </div>
               </div>
               <div className="space-y-1 col-span-1 min-w-0">
-                <Label className="text-xs text-muted-foreground">{isArabic ? 'إلى تاريخ' : 'To date'}</Label>
-                <Input type="date" value={filterToDate} onChange={(e) => setFilterToDate(e.target.value)} className="h-10 w-full min-w-0 text-sm px-2" />
+                <Label className="text-sm font-semibold">To date</Label>
+                <div className="relative">
+                  <Calendar className="h-4 w-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <Input
+                    type={filterToDate ? 'date' : toDateInputType}
+                    placeholder="Select to date"
+                    value={filterToDate}
+                    onFocus={() => setToDateInputType('date')}
+                    onBlur={() => {
+                      if (!filterToDate) setToDateInputType('text');
+                    }}
+                    onChange={(e) => {
+                      setFilterToDate(e.target.value);
+                      setActiveQuickRange(null);
+                    }}
+                    className="h-11 w-full min-w-0 text-sm rounded-2xl border-[#eaeaea] pl-10"
+                  />
+                </div>
               </div>
               <div className="space-y-1 col-span-1 lg:col-span-1">
-                <Label className="text-xs text-muted-foreground">{isArabic ? 'شركة الشحن' : 'Shipping company'}</Label>
-                <Select value={filterShippingCompany} onValueChange={(value: 'all' | 'pickup' | 'nool' | 'aramex' | 'free') => setFilterShippingCompany(value)}>
-                  <SelectTrigger className="h-10 w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">{isArabic ? 'الكل' : 'All'}</SelectItem>
-                    <SelectItem value="pickup">{isArabic ? 'استلام' : 'Pickup'}</SelectItem>
-                    <SelectItem value="nool">Nool</SelectItem>
-                    <SelectItem value="aramex">Aramex</SelectItem>
-                    <SelectItem value="free">{isArabic ? 'مجاني' : 'Free'}</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label className="text-sm font-semibold">Shipping company</Label>
+                <div className="relative">
+                  <Truck className="h-4 w-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none z-10" />
+                  <Select value={filterShippingCompany} onValueChange={(value: 'all' | 'pickup' | 'nool' | 'aramex' | 'free') => setFilterShippingCompany(value)}>
+                    <SelectTrigger className="h-11 w-full rounded-2xl border-[#eaeaea] pl-10">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All</SelectItem>
+                      <SelectItem value="pickup">Pickup</SelectItem>
+                      <SelectItem value="nool">Nool</SelectItem>
+                      <SelectItem value="aramex">Aramex</SelectItem>
+                      <SelectItem value="free">Free</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               <div className="col-span-1 lg:col-span-2 grid grid-cols-2 lg:flex lg:flex-wrap items-end gap-2">
-                <Button type="button" variant="outline" className="h-10 w-full lg:w-auto" onClick={() => setQuickDateRange(1)}>
-                  {isArabic ? 'اليوم' : 'Today'}
+                <Button
+                  type="button"
+                  variant="outline"
+                  className={cn('h-11 w-full lg:w-auto rounded-2xl border-[#eaeaea] transition-all duration-200', activeQuickRange === 'today' ? 'bg-[#147a48] text-white border-[#147a48] hover:bg-[#147a48] hover:text-white shadow-[0_8px_18px_rgba(20,122,72,0.28)]' : 'bg-white')}
+                  onClick={() => setQuickDateRange(1)}
+                >
+                  Today
                 </Button>
-                <Button type="button" variant="outline" className="h-10 w-full lg:w-auto" onClick={() => setQuickDateRange(7)}>
-                  {isArabic ? 'آخر 7 أيام' : 'Last 7 days'}
+                <Button
+                  type="button"
+                  variant="outline"
+                  className={cn('h-11 w-full lg:w-auto rounded-2xl border-[#eaeaea] transition-all duration-200', activeQuickRange === '7d' ? 'bg-[#147a48] text-white border-[#147a48] hover:bg-[#147a48] hover:text-white shadow-[0_8px_18px_rgba(20,122,72,0.28)]' : 'bg-white')}
+                  onClick={() => setQuickDateRange(7)}
+                >
+                  Last 7 days
                 </Button>
-                <Button type="button" variant="outline" className="h-10 w-full lg:w-auto col-span-2 lg:col-span-1" onClick={() => setQuickDateRange(30)}>
-                  {isArabic ? 'آخر 30 يوم' : 'Last 30 days'}
+                <Button
+                  type="button"
+                  variant="outline"
+                  className={cn('h-11 w-full lg:w-auto col-span-2 lg:col-span-1 rounded-2xl border-[#eaeaea] transition-all duration-200', activeQuickRange === '30d' ? 'bg-[#147a48] text-white border-[#147a48] hover:bg-[#147a48] hover:text-white shadow-[0_8px_18px_rgba(20,122,72,0.28)]' : 'bg-white')}
+                  onClick={() => setQuickDateRange(30)}
+                >
+                  Last 30 days
                 </Button>
-                <Button type="button" variant="ghost" className="h-10 w-full lg:w-auto col-span-2 lg:col-span-1" onClick={clearFilters}>
-                  {isArabic ? 'مسح الفلاتر' : 'Clear filters'}
+                <Button type="button" variant="ghost" className="h-11 w-full lg:w-auto col-span-2 lg:col-span-1 text-[#147a48] hover:text-[#10653b] rounded-2xl hover:bg-[#f1f8f4]" onClick={clearFilters}>
+                  Clear filters
                 </Button>
               </div>
-            </div>
-            <div className="mt-2 text-xs text-muted-foreground">
-              {isArabic
-                ? `النتائج: ${filteredOrders.length} من ${sourceOrders.length}${loadingAllOrdersForFiltering ? ' (تحميل كل الطلبات...)' : ''}`
-                : `Results: ${filteredOrders.length} of ${sourceOrders.length}${loadingAllOrdersForFiltering ? ' (loading all orders...)' : ''}`}
             </div>
           </div>
 
@@ -2637,12 +2687,12 @@ export const OrdersManagement: React.FC = () => {
                 ) : (
                   <>
                     {/* Mobile list */}
-                    <div className="md:hidden space-y-3">
+                    <div className="md:hidden space-y-2.5">
                       {paidOrders.map((order) => (
                         <div
                           key={order.id}
                           className={cn(
-                            'rounded-lg border bg-card p-4',
+                            'rounded-3xl border border-[#eaeaea] bg-white/95 p-4 shadow-[0_8px_20px_rgba(15,23,42,0.06)] transition-all duration-300',
                             highlightedOrderIds.has(order.id) && 'border-amber-300 bg-amber-50/60',
                           )}
                         >
@@ -2802,12 +2852,12 @@ export const OrdersManagement: React.FC = () => {
                   </div>
                 ) : (
                   <>
-                    <div className="md:hidden space-y-3">
+                    <div className="md:hidden space-y-2.5">
                       {otherOrders.map((order) => (
                         <div
                           key={order.id}
                           className={cn(
-                            'rounded-lg border bg-card p-4',
+                            'rounded-3xl border border-[#eaeaea] bg-white/95 p-4 shadow-[0_8px_20px_rgba(15,23,42,0.06)] transition-all duration-300',
                             highlightedOrderIds.has(order.id) && 'border-amber-300 bg-amber-50/60',
                           )}
                         >
@@ -3176,7 +3226,7 @@ export const OrdersManagement: React.FC = () => {
           
           {selectedOrder && (
             <ScrollArea className="max-h-[70vh] pr-4">
-              <div className="space-y-6">
+              <div className="space-y-4 bg-[#f6f7f9] p-2 sm:p-3 rounded-2xl">
                 {/* Order Status Summary */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <Card>
@@ -4484,5 +4534,9 @@ export const OrdersManagement: React.FC = () => {
     </div>
   );
 };
+
+
+
+
 
 
