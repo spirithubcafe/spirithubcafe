@@ -197,9 +197,9 @@ export const OrdersManagement: React.FC = () => {
   const pageSizeRef = useRef(20);
   const [filterFromDate, setFilterFromDate] = useState('');
   const [filterToDate, setFilterToDate] = useState('');
-  const [fromDateInputType, setFromDateInputType] = useState<'text' | 'date'>('text');
-  const [toDateInputType, setToDateInputType] = useState<'text' | 'date'>('text');
   const [activeQuickRange, setActiveQuickRange] = useState<'today' | '7d' | '30d' | null>(null);
+  const fromDateNativeInputRef = useRef<HTMLInputElement | null>(null);
+  const toDateNativeInputRef = useRef<HTMLInputElement | null>(null);
   const [filterShippingCompany, setFilterShippingCompany] = useState<'all' | 'pickup' | 'nool' | 'aramex' | 'free'>('all');
   const [resolvedShippingMethodByOrderId, setResolvedShippingMethodByOrderId] = useState<Record<number, number>>({});
   const [allOrdersForFiltering, setAllOrdersForFiltering] = useState<Order[] | null>(null);
@@ -1260,6 +1260,13 @@ export const OrdersManagement: React.FC = () => {
     setFilterToDate('');
     setFilterShippingCompany('all');
     setActiveQuickRange(null);
+  };
+
+  const formatFilterDateLabel = (value: string): string => {
+    if (!value) return '';
+    const parsed = new Date(`${value}T00:00:00`);
+    if (Number.isNaN(parsed.getTime())) return value;
+    return format(parsed, 'MMM d, yyyy');
   };
 
   const newOrdersCount = highlightedOrderIds.size;
@@ -2561,18 +2568,28 @@ export const OrdersManagement: React.FC = () => {
                 <div className="relative">
                   <Calendar className="h-4 w-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                   <Input
-                    type={filterFromDate ? 'date' : fromDateInputType}
+                    type="text"
+                    readOnly
                     placeholder="Select from date"
+                    value={formatFilterDateLabel(filterFromDate)}
+                    className="h-11 w-full min-w-0 text-sm rounded-2xl border-[#eaeaea] pl-10 pointer-events-none"
+                  />
+                  <input
+                    ref={fromDateNativeInputRef}
+                    type="date"
                     value={filterFromDate}
-                    onFocus={() => setFromDateInputType('date')}
-                    onBlur={() => {
-                      if (!filterFromDate) setFromDateInputType('text');
-                    }}
                     onChange={(e) => {
                       setFilterFromDate(e.target.value);
                       setActiveQuickRange(null);
                     }}
-                    className="h-11 w-full min-w-0 text-sm rounded-2xl border-[#eaeaea] pl-10"
+                    aria-label="From date"
+                    onFocus={() => {
+                      const el = fromDateNativeInputRef.current as any;
+                      if (el && typeof el.showPicker === 'function') {
+                        try { el.showPicker(); } catch {}
+                      }
+                    }}
+                    className="absolute inset-0 z-20 opacity-0 cursor-pointer"
                   />
                 </div>
               </div>
@@ -2581,18 +2598,28 @@ export const OrdersManagement: React.FC = () => {
                 <div className="relative">
                   <Calendar className="h-4 w-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                   <Input
-                    type={filterToDate ? 'date' : toDateInputType}
+                    type="text"
+                    readOnly
                     placeholder="Select to date"
+                    value={formatFilterDateLabel(filterToDate)}
+                    className="h-11 w-full min-w-0 text-sm rounded-2xl border-[#eaeaea] pl-10 pointer-events-none"
+                  />
+                  <input
+                    ref={toDateNativeInputRef}
+                    type="date"
                     value={filterToDate}
-                    onFocus={() => setToDateInputType('date')}
-                    onBlur={() => {
-                      if (!filterToDate) setToDateInputType('text');
-                    }}
                     onChange={(e) => {
                       setFilterToDate(e.target.value);
                       setActiveQuickRange(null);
                     }}
-                    className="h-11 w-full min-w-0 text-sm rounded-2xl border-[#eaeaea] pl-10"
+                    aria-label="To date"
+                    onFocus={() => {
+                      const el = toDateNativeInputRef.current as any;
+                      if (el && typeof el.showPicker === 'function') {
+                        try { el.showPicker(); } catch {}
+                      }
+                    }}
+                    className="absolute inset-0 z-20 opacity-0 cursor-pointer"
                   />
                 </div>
               </div>
