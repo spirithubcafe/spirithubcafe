@@ -61,6 +61,7 @@ import {
   User,
   Globe,
   Mail,
+  Smartphone,
   Tag,
 } from 'lucide-react';
 
@@ -290,6 +291,17 @@ export const AdminLayout: React.FC = () => {
       roles: ['Admin'],
     },
     {
+      id: 'whatsappActivation',
+      label: isArabic ? 'تفعيل واتساب' : 'WhatsApp Activation',
+      description: isArabic
+        ? 'تفعيل الجلسات عبر QR ومراقبة الشاشة الحية من خلال الخادم'
+        : 'Activate sessions with QR and monitor the live screenshot through the backend',
+      icon: Smartphone,
+      path: '/admin/whatsapp-activation',
+      roles: ['Admin'],
+      badge: 'QR',
+    },
+    {
       id: 'whatsappSend',
       label: isArabic ? 'إرسال رسالة واتساب' : 'WhatsApp Message',
       description: isArabic
@@ -374,7 +386,7 @@ export const AdminLayout: React.FC = () => {
       id: 'operations',
       label: t('admin.navGroups.operations'),
       items: availableNavItems.filter((item) =>
-        ['orders', 'wholesaleOrders', 'newsletter', 'emailSettings', 'emailNotificationSettings', 'whatsappSend', 'whatsappNotificationSettings', 'whatsappTemplates', 'reports', 'system', 'seo'].includes(item.id)
+        ['orders', 'wholesaleOrders', 'newsletter', 'emailSettings', 'emailNotificationSettings', 'whatsappActivation', 'whatsappSend', 'whatsappNotificationSettings', 'whatsappTemplates', 'reports', 'system', 'seo'].includes(item.id)
       ),
     },
   ].filter((group) => group.items.length > 0);

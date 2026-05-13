@@ -3,11 +3,55 @@ import type {
   PhoneOtpRequestDto,
   PhoneOtpVerifyDto,
   PhoneOtpRequestResponse,
+  WhatsAppActivationAssetResult,
+  WhatsAppActivationAssetType,
+  WhatsAppActivationLoadResult,
   PhoneOtpVerifyResponse,
   WhatsAppSendDto,
   WhatsAppSendImageDto,
   WhatsAppSendResponse,
 } from '../types/whatsapp';
+
+const parseBlobError = async (blob: Blob): Promise<{ message?: string; error?: string } | null> => {
+  try {
+    const text = await blob.text();
+    if (!text) {
+      return null;
+    }
+
+    return JSON.parse(text) as { message?: string; error?: string };
+  } catch {
+    return null;
+  }
+};
+
+const getSessionPath = (session?: string | null): string => {
+  const value = session?.trim();
+  return value ? `/api/WhatsApp/${encodeURIComponent(value)}` : '/api/WhatsApp';
+};
+
+const getActivationMessage = (
+  assetType: WhatsAppActivationAssetType,
+  isArabic: boolean,
+): string => {
+  if (assetType === 'qr') {
+    return isArabic
+      ? 'امسح رمز QR من واتساب على الهاتف لإكمال التفعيل.'
+      : 'Scan the QR code with WhatsApp on the phone to complete activation.';
+  }
+
+  return isArabic
+    ? 'جلسة واتساب مفعلة بالفعل. هذه لقطة حية من WhatsApp Web.'
+    : 'The WhatsApp session is already active. This is a live WhatsApp Web screenshot.';
+};
+
+const getActivationErrorMessage = (
+  fallback: string,
+  isArabic: boolean,
+  error: { message?: string; error?: string } | null,
+): string => {
+  return error?.message || error?.error || fallback || (isArabic ? 'حدث خطأ غير متوقع.' : 'An unexpected error occurred.');
+};
 
 /**
  * WhatsApp Service
@@ -90,6 +134,91 @@ export const whatsappService = {
       }
       throw error;
     }
+  },
+
+  fetchActivationAsset: async (
+    assetType: WhatsAppActivationAssetType,
+    session?: string | null,
+  ): Promise<WhatsAppActivationAssetResult> => {
+    const response = await http.get<Blob>(
+      `${getSessionPath(session)}/${assetType === 'qr' ? 'auth/qr' : 'screenshot'}`,
+      {
+        headers: {
+          Accept: assetType === 'qr' ? 'image/png' : 'image/jpeg',
+        },
+        responseType: 'blob',
+        validateStatus: () => true,
+      },
+    );
+
+    const contentType = String(response.headers['content-type'] || '');
+    if (response.status >= 200 && response.status < 300 && contentType.startsWith('image/')) {
+      return {
+        ok: true,
+        status: response.status,
+        imageUrl: URL.createObjectURL(response.data),
+        contentType,
+      };
+    }
+
+    return {
+      ok: false,
+      status: response.status,
+      error: await parseBlobError(response.data),
+    };
+  },
+
+  loadActivationImage: async (
+    session: string | null | undefined,
+    isArabic = false,
+  ): Promise<WhatsAppActivationLoadResult> => {
+    const normalizedSession = session?.trim() || null;
+    const qrResult = await whatsappService.fetchActivationAsset('qr', normalizedSession);
+
+    if (qrResult.ok) {
+      return {
+        type: 'qr',
+        imageUrl: qrResult.imageUrl,
+        message: getActivationMessage('qr', isArabic),
+        session: normalizedSession,
+        status: qrResult.status,
+      };
+    }
+
+    if (qrResult.status !== 422) {
+      return {
+        type: 'error',
+        message: getActivationErrorMessage(
+          isArabic ? 'بارگذاری QR واتس‌اپ انجام نشد.' : 'Unable to load the WhatsApp QR code.',
+          isArabic,
+          qrResult.error,
+        ),
+        session: normalizedSession,
+        status: qrResult.status,
+      };
+    }
+
+    const screenshotResult = await whatsappService.fetchActivationAsset('screenshot', normalizedSession);
+    if (!screenshotResult.ok) {
+      return {
+        type: 'error',
+        message: getActivationErrorMessage(
+          isArabic ? 'بارگذاری اسکرین‌شات جلسه واتس‌اپ انجام نشد.' : 'Unable to load the WhatsApp session screenshot.',
+          isArabic,
+          screenshotResult.error,
+        ),
+        session: normalizedSession,
+        status: screenshotResult.status,
+      };
+    }
+
+    return {
+      type: 'screenshot',
+      imageUrl: screenshotResult.imageUrl,
+      message: getActivationMessage('screenshot', isArabic),
+      session: normalizedSession,
+      status: screenshotResult.status,
+    };
   },
 
   /**

@@ -53,6 +53,36 @@ export interface WhatsAppSendResponse {
   message: string;
 }
 
+export type WhatsAppActivationAssetType = 'qr' | 'screenshot';
+
+export interface WhatsAppActivationAssetSuccess {
+  ok: true;
+  status: number;
+  imageUrl: string;
+  contentType: string;
+}
+
+export interface WhatsAppActivationAssetError {
+  ok: false;
+  status: number;
+  error: {
+    message?: string;
+    error?: string;
+  } | null;
+}
+
+export type WhatsAppActivationAssetResult =
+  | WhatsAppActivationAssetSuccess
+  | WhatsAppActivationAssetError;
+
+export interface WhatsAppActivationLoadResult {
+  type: WhatsAppActivationAssetType | 'error';
+  imageUrl?: string;
+  message: string;
+  session: string | null;
+  status: number;
+}
+
 // ==================== WhatsApp Notification Settings Types ====================
 
 export interface WhatsAppNotificationSettingsDto {
