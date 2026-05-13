@@ -649,9 +649,6 @@ export const UsersManagement: React.FC = () => {
                     <TableHead className="cursor-pointer hover:bg-muted/60 select-none" onClick={() => handleColumnClick('roles')}>
                       Roles {getSortIcon('roles')}
                     </TableHead>
-                    <TableHead className="text-center cursor-pointer hover:bg-muted/60 select-none" onClick={() => handleColumnClick('status')}>
-                      Status {getSortIcon('status')}
-                    </TableHead>
                     <TableHead className="cursor-pointer hover:bg-muted/60 select-none" onClick={() => handleColumnClick('memberSince')}>
                       <div className="flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5" /> Joined {getSortIcon('memberSince')}</div>
                     </TableHead>
@@ -664,7 +661,7 @@ export const UsersManagement: React.FC = () => {
                 <TableBody>
                   {sortedUsers.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={9} className="text-center py-12 text-muted-foreground">
+                      <TableCell colSpan={8} className="text-center py-12 text-muted-foreground">
                         <Users className="h-10 w-10 mx-auto mb-3 opacity-30" />
                         <p className="font-medium">No users found</p>
                         <p className="text-xs mt-1">Try adjusting your search or filters</p>
@@ -741,11 +738,6 @@ export const UsersManagement: React.FC = () => {
                               <span className="text-xs text-muted-foreground/60">Member</span>
                             )}
                           </div>
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Badge variant="outline" className={`font-medium text-[11px] ${user.isActive ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-gray-50 text-gray-500 border-gray-200'}`}>
-                            {user.isActive ? 'Active' : 'Inactive'}
-                          </Badge>
                         </TableCell>
                         <TableCell>
                           {user.memberSince ? (

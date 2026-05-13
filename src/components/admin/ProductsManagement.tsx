@@ -53,6 +53,11 @@ interface ProductFilters {
   isActive?: boolean;
 }
 
+const getProductStatusDotClassName = (isActive: boolean) =>
+  isActive
+    ? 'bg-emerald-500 shadow-[0_0_0_4px_rgba(16,185,129,0.14)]'
+    : 'bg-slate-300 shadow-[0_0_0_4px_rgba(148,163,184,0.16)] dark:bg-slate-500 dark:shadow-[0_0_0_4px_rgba(100,116,139,0.18)]';
+
 export const ProductsManagement: React.FC = () => {
   const { t } = useApp();
   const navigate = useNavigate();
@@ -1042,31 +1047,24 @@ export const ProductsManagement: React.FC = () => {
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <div className="font-semibold line-clamp-2 wrap-anywhere">
-                        {product.name}
-                      </div>
-                      <div className="mt-1 flex flex-wrap items-center gap-2 min-w-0 text-xs text-muted-foreground">
-                        <span className="font-mono break-all">{product.sku}</span>
-                        <span>•</span>
-                        <span className="min-w-0 max-w-full wrap-anywhere">{categoryName}</span>
-                      </div>
-                    </div>
-                    <div className="shrink-0 flex flex-col items-end gap-2">
                       <div
-                        className="flex items-center justify-end"
+                        className="flex items-start gap-3 font-semibold"
                         aria-label={product.isActive ? t('admin.products.active') : t('admin.products.inactive')}
                         title={product.isActive ? t('admin.products.active') : t('admin.products.inactive')}
                       >
                         <span
                           className={cn(
-                            'inline-block h-2.5 w-2.5 rounded-full',
-                            product.isActive ? 'bg-emerald-500' : 'bg-zinc-400'
+                            'mt-1.5 inline-block h-2.5 w-2.5 shrink-0 rounded-full',
+                            getProductStatusDotClassName(product.isActive)
                           )}
                         />
-                        <span className="sr-only">
-                          {product.isActive ? t('admin.products.active') : t('admin.products.inactive')}
-                        </span>
+                        <span className="line-clamp-2 wrap-anywhere">{product.name}</span>
                       </div>
+                      <div className="mt-1 flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
+                        <span className="truncate">{categoryName}</span>
+                      </div>
+                    </div>
+                    <div className="shrink-0 flex flex-col items-end gap-2">
                       {product.isFeatured ? (
                         <Badge variant="outline" className="border-yellow-500/40 text-yellow-600">
                           <Star className="h-3 w-3 sm:mr-1 fill-current" />
@@ -1195,17 +1193,15 @@ export const ProductsManagement: React.FC = () => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>{t('admin.products.name')}</TableHead>
-                <TableHead>{t('admin.products.sku')}</TableHead>
-                <TableHead>{t('admin.products.category')}</TableHead>
-                <TableHead className="text-center">{t('admin.products.status')}</TableHead>
-                <TableHead className="text-center">{t('admin.products.actions')}</TableHead>
+                <TableHead className="w-[58%] min-w-[340px]">{t('admin.products.name')}</TableHead>
+                <TableHead className="w-[32%]">{t('admin.products.category')}</TableHead>
+                <TableHead className="w-24 text-center">{t('admin.products.actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {!products || products.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
                     {t('admin.products.noProducts')}
                   </TableCell>
                 </TableRow>
@@ -1216,32 +1212,26 @@ export const ProductsManagement: React.FC = () => {
                     className={cn(!product.isActive && 'bg-muted/30 text-muted-foreground')}
                   >
                     <TableCell>
-                      <div className="font-medium line-clamp-2 wrap-anywhere max-w-full">
-                        {product.name}
-                      </div>
-                    </TableCell>
-                    <TableCell className="font-mono text-sm">{product.sku}</TableCell>
-                    <TableCell>
-                      {categories.find(c => c.id === product.categoryId)?.name || '-'}
-                    </TableCell>
-                    <TableCell className="text-center">
                       <div
-                        className="inline-flex items-center justify-center"
+                        className="flex items-start gap-3 font-medium max-w-full pr-4"
                         aria-label={product.isActive ? t('admin.products.active') : t('admin.products.inactive')}
                         title={product.isActive ? t('admin.products.active') : t('admin.products.inactive')}
                       >
                         <span
                           className={cn(
-                            'inline-block h-2.5 w-2.5 rounded-full',
-                            product.isActive ? 'bg-emerald-500' : 'bg-zinc-400'
+                            'mt-1.5 inline-block h-2.5 w-2.5 shrink-0 rounded-full',
+                            getProductStatusDotClassName(product.isActive)
                           )}
                         />
-                        <span className="sr-only">
-                          {product.isActive ? t('admin.products.active') : t('admin.products.inactive')}
-                        </span>
+                        <span className="line-clamp-2 wrap-anywhere">{product.name}</span>
                       </div>
                     </TableCell>
-                    <TableCell className="text-center">
+                    <TableCell className="text-muted-foreground">
+                      <span className="block truncate">
+                        {categories.find(c => c.id === product.categoryId)?.name || '-'}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-center align-middle">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button

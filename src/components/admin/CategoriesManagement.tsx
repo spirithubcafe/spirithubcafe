@@ -1,10 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../hooks/useApp';
+import { cn } from '../../lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
-import { Badge } from '../ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../ui/alert-dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '../ui/dropdown-menu';
@@ -24,6 +24,11 @@ import {
 } from 'lucide-react';
 import { categoryService } from '../../services/categoryService';
 import type { Category } from '../../types/product';
+
+const getCategoryStatusDotClassName = (isActive: boolean) =>
+  isActive
+    ? 'bg-emerald-500 shadow-[0_0_0_4px_rgba(16,185,129,0.14)]'
+    : 'bg-slate-300 shadow-[0_0_0_4px_rgba(148,163,184,0.16)] dark:bg-slate-500 dark:shadow-[0_0_0_4px_rgba(100,116,139,0.18)]';
 
 export const CategoriesManagement: React.FC = () => {
   const { t } = useApp();
@@ -196,20 +201,24 @@ export const CategoriesManagement: React.FC = () => {
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <div className="font-semibold truncate">{category.name}</div>
+                    <div
+                      className="flex items-start gap-3 font-semibold"
+                      aria-label={category.isActive ? t('admin.categories.active') : t('admin.categories.inactive')}
+                      title={category.isActive ? t('admin.categories.active') : t('admin.categories.inactive')}
+                    >
+                      <span
+                        className={cn(
+                          'mt-1.5 inline-block h-2.5 w-2.5 shrink-0 rounded-full',
+                          getCategoryStatusDotClassName(category.isActive)
+                        )}
+                      />
+                      <span className="truncate">{category.name}</span>
+                    </div>
                     <div className="text-xs text-muted-foreground truncate">
                       {category.nameAr || '-'}
                     </div>
-                    <div className="mt-1 font-mono text-xs text-muted-foreground truncate">
-                      {category.slug}
-                    </div>
                   </div>
                   <div className="shrink-0 flex flex-col items-end gap-2">
-                    <Badge variant={category.isActive ? 'default' : 'secondary'}>
-                      {category.isActive
-                        ? t('admin.categories.active')
-                        : t('admin.categories.inactive')}
-                    </Badge>
                     {category.isDisplayedOnHomepage ? (
                       <div className="flex items-center gap-1 text-xs text-green-700">
                         <Eye className="h-4 w-4" />
@@ -319,20 +328,18 @@ export const CategoriesManagement: React.FC = () => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>{t('admin.categories.name')}</TableHead>
+                <TableHead className="w-[28%] min-w-[220px]">{t('admin.categories.name')}</TableHead>
                 <TableHead>{t('admin.categories.nameAr')}</TableHead>
-                <TableHead>{t('admin.categories.slug')}</TableHead>
-                <TableHead className="text-center">{t('admin.categories.status')}</TableHead>
                 <TableHead className="text-center">{t('admin.categories.homepage')}</TableHead>
                 <TableHead className="text-center">{t('admin.categories.products')}</TableHead>
                 <TableHead className="text-center">{t('admin.categories.order')}</TableHead>
-                <TableHead className="text-center">{t('admin.categories.actions')}</TableHead>
+                <TableHead className="w-24 text-center">{t('admin.categories.actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {sortedCategories.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                     {t('admin.categories.noCategories')}
                   </TableCell>
                 </TableRow>
@@ -342,15 +349,23 @@ export const CategoriesManagement: React.FC = () => {
                     key={category.id}
                     className={category.isActive ? '' : 'bg-muted/30 text-muted-foreground'}
                   >
-                    <TableCell className="font-medium">{category.name}</TableCell>
+                    <TableCell>
+                      <div
+                        className="flex items-start gap-3 font-medium pr-4"
+                        aria-label={category.isActive ? t('admin.categories.active') : t('admin.categories.inactive')}
+                        title={category.isActive ? t('admin.categories.active') : t('admin.categories.inactive')}
+                      >
+                        <span
+                          className={cn(
+                            'mt-1.5 inline-block h-2.5 w-2.5 shrink-0 rounded-full',
+                            getCategoryStatusDotClassName(category.isActive)
+                          )}
+                        />
+                        <span className="truncate">{category.name}</span>
+                      </div>
+                    </TableCell>
                     <TableCell className="text-muted-foreground">
                       {category.nameAr || '-'}
-                    </TableCell>
-                    <TableCell className="font-mono text-sm">{category.slug}</TableCell>
-                    <TableCell className="text-center">
-                      <Badge variant={category.isActive ? "default" : "secondary"}>
-                        {category.isActive ? t('admin.categories.active') : t('admin.categories.inactive')}
-                      </Badge>
                     </TableCell>
                     <TableCell className="text-center">
                       {category.isDisplayedOnHomepage ? (

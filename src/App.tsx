@@ -114,7 +114,7 @@ function AppContent() {
       {!isInvoicePage && <Navigation />}
       {!isInvoicePage && <MobileBottomNav />}
       {!isInvoicePage && <CartDrawer />}
-      {!isInvoicePage && <ScrollToTop />}
+      {!isInvoicePage && !isAdminPage && <ScrollToTop />}
       {!isInvoicePage && <Toaster position="top-center" duration={2000} richColors />}
       <RouteErrorBoundary>
       <Suspense fallback={<div className="min-h-screen bg-white" />}>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link, Outlet, useLocation, Navigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { useApp } from '../../hooks/useApp';
@@ -17,7 +17,6 @@ import { getProfilePictureUrl } from '../../lib/profileUtils';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Separator } from '../ui/separator';
-import { ScrollArea } from '../ui/scroll-area';
 import {
   Tooltip,
   TooltipContent,
@@ -84,6 +83,8 @@ interface AdminNavGroup {
 
 const SIDEBAR_STORAGE_KEY = 'admin.sidebar.collapsed';
 const THEME_STORAGE_KEY = 'admin.theme.preference';
+const ADMIN_MAIN_SCROLL_STORAGE_KEY = 'admin.layout.main-scroll';
+const ADMIN_SIDEBAR_SCROLL_STORAGE_KEY = 'admin.layout.sidebar-scroll';
 
 const getAdminRegionFromPath = (_pathname: string): RegionCode => {
   return FORCED_REGION_CODE;
@@ -110,6 +111,8 @@ export const AdminLayout: React.FC = () => {
   const [moduleSearch, setModuleSearch] = useState('');
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
+  const desktopSidebarScrollRef = useRef<HTMLDivElement | null>(null);
+  const mainScrollRef = useRef<HTMLElement | null>(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {
     if (typeof window === 'undefined') {
       return false;
@@ -179,6 +182,65 @@ export const AdminLayout: React.FC = () => {
 
   useEffect(() => {
     setIsMobileSidebarOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    const mainElement = mainScrollRef.current;
+    const sidebarElement = desktopSidebarScrollRef.current;
+
+    if (mainElement) {
+      const scrollPositions =
+        safeStorage.getJson<Record<string, number>>(ADMIN_MAIN_SCROLL_STORAGE_KEY, 'session') ?? {};
+      const nextScrollTop = scrollPositions[location.pathname] ?? 0;
+      mainElement.scrollTo({ top: nextScrollTop, behavior: 'auto' });
+    }
+
+    if (sidebarElement) {
+      const sidebarScrollTop = Number(
+        safeStorage.getItem(ADMIN_SIDEBAR_SCROLL_STORAGE_KEY, 'session') ?? '0'
+      );
+      sidebarElement.scrollTo({ top: Number.isFinite(sidebarScrollTop) ? sidebarScrollTop : 0, behavior: 'auto' });
+    }
+  }, [location.pathname]);
+
+  useEffect(() => {
+    const mainElement = mainScrollRef.current;
+    const sidebarElement = desktopSidebarScrollRef.current;
+
+    if (!mainElement) {
+      return;
+    }
+
+    const persistMainScroll = () => {
+      const scrollPositions =
+        safeStorage.getJson<Record<string, number>>(ADMIN_MAIN_SCROLL_STORAGE_KEY, 'session') ?? {};
+      scrollPositions[location.pathname] = mainElement.scrollTop;
+      safeStorage.setJson(ADMIN_MAIN_SCROLL_STORAGE_KEY, scrollPositions, 'session');
+    };
+
+    const persistSidebarScroll = () => {
+      if (!sidebarElement) {
+        return;
+      }
+      safeStorage.setItem(
+        ADMIN_SIDEBAR_SCROLL_STORAGE_KEY,
+        String(sidebarElement.scrollTop),
+        'session'
+      );
+    };
+
+    persistMainScroll();
+    persistSidebarScroll();
+
+    mainElement.addEventListener('scroll', persistMainScroll, { passive: true });
+    sidebarElement?.addEventListener('scroll', persistSidebarScroll, { passive: true });
+
+    return () => {
+      persistMainScroll();
+      persistSidebarScroll();
+      mainElement.removeEventListener('scroll', persistMainScroll);
+      sidebarElement?.removeEventListener('scroll', persistSidebarScroll);
+    };
   }, [location.pathname]);
 
   if (isLoading) {
@@ -601,10 +663,11 @@ export const AdminLayout: React.FC = () => {
             )}
           </Link>
         </div>
-        <div className="flex-1 overflow-hidden">
-          <ScrollArea className="h-full">
-            <div className="flex flex-col gap-6 px-2 py-4">{navContent}</div>
-          </ScrollArea>
+        <div
+          ref={desktopSidebarScrollRef}
+          className="admin-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain px-2 py-4"
+        >
+          <div className="flex flex-col gap-6">{navContent}</div>
         </div>
         <div className="border-t border-border/60 px-3 py-4">
           <div
@@ -646,10 +709,10 @@ export const AdminLayout: React.FC = () => {
   return (
     <TooltipProvider delayDuration={80}>
       <Sheet open={isMobileSidebarOpen} onOpenChange={setIsMobileSidebarOpen}>
-        <div className="flex min-h-screen bg-muted/30 text-sm text-foreground">
+        <div className="flex h-screen overflow-hidden bg-[linear-gradient(180deg,rgba(248,250,252,0.96),rgba(241,245,249,0.92))] text-sm text-foreground">
           <aside
             className={cn(
-              'relative hidden border-r border-border/60 bg-card/95 text-card-foreground shadow-[0_18px_45px_-15px_rgba(15,23,42,0.4)] backdrop-blur supports-backdrop-filter:backdrop-blur-lg transition-all duration-300 ease-in-out md:flex md:flex-col',
+              'sticky top-0 hidden h-screen shrink-0 overflow-hidden border-r border-border/60 bg-card/95 text-card-foreground shadow-[0_18px_45px_-15px_rgba(15,23,42,0.18)] backdrop-blur supports-backdrop-filter:backdrop-blur-lg transition-all duration-300 ease-in-out md:flex md:flex-col',
               isSidebarCollapsed ? 'w-20' : 'w-72'
             )}
           >
@@ -658,16 +721,17 @@ export const AdminLayout: React.FC = () => {
 
           <SheetContent
             side="left"
-            className="w-72 border-border/40 p-0 md:hidden"
+            className="w-[88vw] max-w-80 border-border/40 p-0 md:hidden"
           >
-            <div className="flex h-full flex-col bg-background">
+            <div className="flex h-full min-h-0 flex-col bg-background">
               {renderSidebar(false, () => setIsMobileSidebarOpen(false))}
             </div>
           </SheetContent>
 
-          <div className="flex flex-1 flex-col">
+          <div className="relative flex h-screen min-w-0 flex-1 flex-col overflow-hidden">
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(14,165,233,0.08),transparent_24%),radial-gradient(circle_at_top_left,rgba(16,185,129,0.08),transparent_28%)]" />
             <header className="sticky top-0 z-30 border-b border-border/60 bg-background/85 backdrop-blur supports-backdrop-filter:backdrop-blur-md">
-              <div className="flex h-16 w-full items-center gap-3 px-4 md:px-6">
+              <div className="flex h-16 w-full items-center gap-3 px-4 md:px-6 xl:px-8">
                 <div className="flex items-center gap-2">
                   <Button
                     variant="ghost"
@@ -933,8 +997,11 @@ export const AdminLayout: React.FC = () => {
               </DialogContent>
             </Dialog>
 
-            <main className="flex-1 min-w-0 overflow-y-auto">
-              <div className="mx-auto flex w-full min-w-0 flex-col gap-6 px-4 py-6 md:px-8 lg:px-10">
+            <main
+              ref={mainScrollRef}
+              className="admin-scrollbar relative min-h-0 flex-1 overflow-y-auto overflow-x-hidden"
+            >
+              <div className="mx-auto flex w-full min-w-0 max-w-[1680px] flex-col gap-6 px-4 py-5 md:px-6 lg:px-8 xl:px-10 xl:py-6">
                 <Outlet />
               </div>
             </main>

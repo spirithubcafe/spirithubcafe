@@ -85,9 +85,9 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
-  --scrollbar-track: rgba(23, 11, 6, 0.08);
-  --scrollbar-thumb: rgba(190, 120, 55, 0.6);
-  --scrollbar-thumb-hover: rgba(214, 143, 70, 0.85);
+  --scrollbar-track: rgba(15, 23, 42, 0.06);
+  --scrollbar-thumb: rgba(100, 116, 139, 0.38);
+  --scrollbar-thumb-hover: rgba(71, 85, 105, 0.56);
 }
 
 .dark {
@@ -123,8 +123,8 @@
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
   --scrollbar-track: rgba(255, 255, 255, 0.05);
-  --scrollbar-thumb: rgba(224, 155, 76, 0.5);
-  --scrollbar-thumb-hover: rgba(242, 187, 115, 0.75);
+  --scrollbar-thumb: rgba(148, 163, 184, 0.42);
+  --scrollbar-thumb-hover: rgba(203, 213, 225, 0.62);
 }
 
 @layer base {
@@ -269,7 +269,7 @@ pre {
   border-radius: 9999px;
   border: 2px solid transparent;
   background-clip: padding-box;
-  transition: background 0.2s ease;
+  transition: background 0.2s ease, opacity 0.2s ease;
 }
 
 *::-webkit-scrollbar-thumb:hover {
@@ -297,6 +297,43 @@ pre {
 .os-theme-custom .os-scrollbar {
   width: 10px !important;
   height: 10px !important;
+}
+
+.admin-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(100, 116, 139, 0.34) transparent;
+}
+
+.admin-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.admin-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.admin-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.34);
+  border: 2px solid transparent;
+  border-radius: 9999px;
+  background-clip: padding-box;
+}
+
+.admin-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(71, 85, 105, 0.5);
+}
+
+.dark .admin-scrollbar {
+  scrollbar-color: rgba(148, 163, 184, 0.36) transparent;
+}
+
+.dark .admin-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.36);
+}
+
+.dark .admin-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(203, 213, 225, 0.52);
 }
 
 /* Text clamp utility for product descriptions */
