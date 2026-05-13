@@ -195,6 +195,12 @@ export const OrdersManagement: React.FC = () => {
   const [pageSize, setPageSize] = useState(20);
   const currentPageRef = useRef(1);
   const pageSizeRef = useRef(20);
+  const [filterFromDate, setFilterFromDate] = useState('');
+  const [filterToDate, setFilterToDate] = useState('');
+  const [filterShippingCompany, setFilterShippingCompany] = useState<'all' | 'pickup' | 'nool' | 'aramex' | 'free'>('all');
+  const [resolvedShippingMethodByOrderId, setResolvedShippingMethodByOrderId] = useState<Record<number, number>>({});
+  const [allOrdersForFiltering, setAllOrdersForFiltering] = useState<Order[] | null>(null);
+  const [loadingAllOrdersForFiltering, setLoadingAllOrdersForFiltering] = useState(false);
 
   // Initialize pickup cache from storage once
   useEffect(() => {
@@ -1059,17 +1065,197 @@ export const OrdersManagement: React.FC = () => {
     }
   };
 
+  const hasActiveFilters = Boolean(filterFromDate || filterToDate || filterShippingCompany !== 'all');
+  const sourceOrders = hasActiveFilters && allOrdersForFiltering ? allOrdersForFiltering : orders;
+
   const sortedOrders = useMemo(() => {
-    return [...orders].sort((a, b) => toOrderTimestamp(b.createdAt) - toOrderTimestamp(a.createdAt));
-  }, [orders]);
+    return [...sourceOrders].sort((a, b) => toOrderTimestamp(b.createdAt) - toOrderTimestamp(a.createdAt));
+  }, [sourceOrders]);
+
+  useEffect(() => {
+    let active = true;
+
+    if (!hasActiveFilters) {
+      setAllOrdersForFiltering(null);
+      return;
+    }
+
+    if (loadingAllOrdersForFiltering) return;
+    if (allOrdersForFiltering && allOrdersForFiltering.length >= totalCount) return;
+    if (orders.length === 0) return;
+
+    (async () => {
+      try {
+        setLoadingAllOrdersForFiltering(true);
+        const batchSize = Math.max(orders.length, 20);
+        const first = await orderService.getOrders({ page: 1, pageSize: batchSize });
+        const firstList = Array.isArray(first?.data) ? first.data : [];
+        const serverPageSize = Number(first?.pagination?.pageSize ?? batchSize) || batchSize;
+        const computedTotalCount = Number(first?.pagination?.totalCount ?? totalCount ?? firstList.length);
+        const computedTotalPages = Math.max(1, Math.ceil(computedTotalCount / serverPageSize));
+
+        const all = [...firstList];
+        if (computedTotalPages > 1) {
+          for (let p = 2; p <= computedTotalPages; p += 1) {
+            try {
+              const r = await orderService.getOrders({ page: p, pageSize: serverPageSize });
+              if (Array.isArray(r?.data) && r.data.length > 0) {
+                all.push(...r.data);
+              }
+            } catch {
+              // Skip failing pages to avoid aborting the full fetch.
+            }
+          }
+        }
+
+        // Deduplicate by id in case backend page windows overlap.
+        const byId = new Map<number, Order>();
+        for (const o of all) {
+          byId.set(o.id, o);
+        }
+
+        const normalized = Array.from(byId.values()).map((order) => ({
+          ...order,
+          items: Array.isArray(order.items) ? order.items : [],
+        }));
+        if (!active) return;
+        setAllOrdersForFiltering(normalized);
+      } catch {
+        // Keep filtering on current page if full-list fetch fails.
+      } finally {
+        if (active) setLoadingAllOrdersForFiltering(false);
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [hasActiveFilters, totalCount, orders, allOrdersForFiltering, loadingAllOrdersForFiltering]);
+
+  const parseFilterDateToTimestamp = (value: string, endOfDay = false): number | null => {
+    const raw = String(value ?? '').trim();
+    if (!raw) return null;
+
+    // Support ISO date input first: yyyy-MM-dd
+    if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+      const ts = new Date(`${raw}${endOfDay ? 'T23:59:59.999' : 'T00:00:00'}`).getTime();
+      return Number.isFinite(ts) ? ts : null;
+    }
+
+    // Support localized/manual input like "13/05/2026" (and extra punctuation)
+    const cleaned = raw.replace(/[^0-9/.-]/g, '');
+    const match = cleaned.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
+    if (match) {
+      const [, dd, mm, yyyy] = match;
+      const iso = `${yyyy}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`;
+      const ts = new Date(`${iso}${endOfDay ? 'T23:59:59.999' : 'T00:00:00'}`).getTime();
+      return Number.isFinite(ts) ? ts : null;
+    }
+
+    return null;
+  };
+
+  // Keep filter logic aligned with the on-screen legend dots:
+  // 1 = Store Pickup, 2 = Nool Delivery, 3 = Aramex Courier
+  const resolveShippingMethodCode = (order: Order): number => {
+    const direct = Number((order as any).shippingMethod);
+    if (direct === 1 || direct === 2 || direct === 3) return direct;
+
+    const resolved = resolvedShippingMethodByOrderId[order.id];
+    if (resolved === 1 || resolved === 2 || resolved === 3) return resolved;
+
+    const alt = Number((order as any).shippingMethodId);
+    if (alt === 1 || alt === 2 || alt === 3) return alt;
+
+    return 0;
+  };
+
+  const filteredOrders = useMemo(() => {
+    const fromDateTs = parseFilterDateToTimestamp(filterFromDate, false);
+    const toDateTs = parseFilterDateToTimestamp(filterToDate, true);
+
+    return sortedOrders.filter((order) => {
+      const orderTs = toOrderTimestamp(order.createdAt);
+      if (fromDateTs !== null && orderTs < fromDateTs) return false;
+      if (toDateTs !== null && orderTs > toDateTs) return false;
+
+      const shippingCode = resolveShippingMethodCode(order);
+      const shippingFilter = String(filterShippingCompany ?? 'all').toLowerCase().trim();
+      if (shippingFilter === 'all') return true;
+      if (shippingFilter === 'pickup') return shippingCode === 1;
+      if (shippingFilter === 'nool') return shippingCode === 2;
+      if (shippingFilter === 'aramex') return shippingCode === 3;
+      if (shippingFilter === 'free') return Number(order.shippingCost ?? 0) <= 0;
+
+      return true;
+    });
+  }, [sortedOrders, filterFromDate, filterToDate, filterShippingCompany]);
+
+
+  useEffect(() => {
+    let active = true;
+    const needsResolution = filterShippingCompany === 'aramex' || filterShippingCompany === 'nool' || filterShippingCompany === 'pickup';
+    if (!needsResolution || sortedOrders.length === 0) return;
+
+    const candidates = sortedOrders
+      .filter((o) => !resolvedShippingMethodByOrderId[o.id])
+      .filter((o) => {
+        const code = Number((o as any).shippingMethod);
+        const codeAlt = Number((o as any).shippingMethodId);
+        return !(Number.isFinite(code) && code > 0) && !(Number.isFinite(codeAlt) && codeAlt > 0);
+      })
+      .slice(0, 30);
+
+    if (candidates.length === 0) return;
+
+    (async () => {
+      const updates: Record<number, number> = {};
+      await Promise.all(
+        candidates.map(async (order) => {
+          try {
+            const response = await orderService.getOrderById(order.id);
+            const detail = response?.data;
+            const code = Number((detail as any)?.shippingMethod ?? (detail as any)?.shippingMethodId ?? 0);
+            if (Number.isFinite(code) && code > 0) {
+              updates[order.id] = code;
+            }
+          } catch {
+            // Ignore individual failures; filter will still use best available data.
+          }
+        })
+      );
+
+      if (!active || Object.keys(updates).length === 0) return;
+      setResolvedShippingMethodByOrderId((prev) => ({ ...prev, ...updates }));
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [filterShippingCompany, sortedOrders, resolvedShippingMethodByOrderId]);
 
   const paidOrders = useMemo(() => {
-    return sortedOrders.filter((o) => String(o.paymentStatus).toLowerCase() === 'paid');
-  }, [sortedOrders]);
+    return filteredOrders.filter((o) => String(o.paymentStatus).toLowerCase() === 'paid');
+  }, [filteredOrders]);
 
   const otherOrders = useMemo(() => {
-    return sortedOrders.filter((o) => String(o.paymentStatus).toLowerCase() !== 'paid');
-  }, [sortedOrders]);
+    return filteredOrders.filter((o) => String(o.paymentStatus).toLowerCase() !== 'paid');
+  }, [filteredOrders]);
+
+  const setQuickDateRange = (days: number) => {
+    const end = new Date();
+    const start = new Date();
+    start.setDate(end.getDate() - days + 1);
+
+    setFilterFromDate(format(start, 'yyyy-MM-dd'));
+    setFilterToDate(format(end, 'yyyy-MM-dd'));
+  };
+
+  const clearFilters = () => {
+    setFilterFromDate('');
+    setFilterToDate('');
+    setFilterShippingCompany('all');
+  };
 
   const newOrdersCount = highlightedOrderIds.size;
 
@@ -2062,8 +2248,23 @@ export const OrdersManagement: React.FC = () => {
     }
   };
 
-  const exportToExcel = () => {
+  const exportToExcel = async () => {
     try {
+      // Hydrate each order from details endpoint so shipping cost matches Order Details view.
+      const orderDetailsById = new Map<number, Order>();
+      await Promise.all(
+        filteredOrders.map(async (order) => {
+          try {
+            const response = await orderService.getOrderById(order.id);
+            if (response?.data) {
+              orderDetailsById.set(order.id, response.data);
+            }
+          } catch {
+            // Keep export resilient; we'll fall back to list data for this row.
+          }
+        })
+      );
+
       // Create CSV content
       const headers = [
         'Order #',
@@ -2074,6 +2275,8 @@ export const OrdersManagement: React.FC = () => {
         'Status',
         'Payment Status',
         'Shipping Method',
+        'Shipping Rate',
+        'Shipping Cost (OMR)',
         'Tracking Number',
         'Address',
         'City',
@@ -2087,11 +2290,24 @@ export const OrdersManagement: React.FC = () => {
         'Notes'
       ];
 
-      const rows = sortedOrders.map(order => {
+      const rows = filteredOrders.map(order => {
+        const detailedOrder = orderDetailsById.get(order.id);
         const shippingMethod = 
           order.shippingMethod === 1 ? 'Store Pickup' :
           order.shippingMethod === 2 ? 'Nool Delivery' :
           order.shippingMethod === 3 ? 'Aramex Courier' : 'Unknown';
+        const shippingCost = Number(detailedOrder?.shippingCost ?? order.shippingCost ?? 0);
+
+        const shippingRate =
+          order.shippingMethod === 1
+            ? 'Pickup'
+            : shippingCost <= 0
+              ? 'Free'
+              : order.shippingMethod === 2
+                ? `Nool (${shippingCost.toFixed(3)} OMR)`
+                : order.shippingMethod === 3
+                  ? `Aramex (${shippingCost.toFixed(3)} OMR)`
+                  : `${shippingCost.toFixed(3)} OMR`;
         
         const itemsList = order.items?.map(item => 
           `${item.productName}${item.variantInfo ? ` (${item.variantInfo})` : ''} x${item.quantity}`
@@ -2106,6 +2322,8 @@ export const OrdersManagement: React.FC = () => {
           order.status,
           order.paymentStatus,
           shippingMethod,
+          shippingRate,
+          shippingCost.toFixed(3),
           order.trackingNumber || '',
           order.address,
           order.city,
@@ -2149,7 +2367,7 @@ export const OrdersManagement: React.FC = () => {
       document.body.removeChild(link);
 
       toast(isArabic ? 'تم التصدير بنجاح' : 'Export successful', {
-        description: isArabic ? `تم تصدير ${orders.length} طلب` : `Exported ${orders.length} orders`,
+        description: isArabic ? `تم تصدير ${filteredOrders.length} طلب` : `Exported ${filteredOrders.length} orders`,
         duration: 3000,
       });
     } catch (error) {
@@ -2190,7 +2408,7 @@ export const OrdersManagement: React.FC = () => {
               <span className="text-xs text-muted-foreground">{isArabic ? 'تنبيه' : 'Notify'}</span>
             </div>
           </div>
-          <Button onClick={exportToExcel} disabled={loading || orders.length === 0} variant="outline" className="w-full sm:w-auto">
+          <Button onClick={exportToExcel} disabled={loading || filteredOrders.length === 0} variant="outline" className="w-full sm:w-auto">
             <Download className="h-4 w-4 mr-2" />
             {isArabic ? 'تصدير إلى Excel' : 'Export to Excel'}
           </Button>
@@ -2331,6 +2549,53 @@ export const OrdersManagement: React.FC = () => {
           ) : null}
         </CardHeader>
         <CardContent className="space-y-8">
+          <div className="rounded-lg border bg-muted/30 p-3 sm:p-4">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+              <div className="space-y-1 col-span-1">
+                <Label className="text-xs text-muted-foreground">{isArabic ? 'من تاريخ' : 'From date'}</Label>
+                <Input type="date" value={filterFromDate} onChange={(e) => setFilterFromDate(e.target.value)} className="h-10" />
+              </div>
+              <div className="space-y-1 col-span-1">
+                <Label className="text-xs text-muted-foreground">{isArabic ? 'إلى تاريخ' : 'To date'}</Label>
+                <Input type="date" value={filterToDate} onChange={(e) => setFilterToDate(e.target.value)} className="h-10" />
+              </div>
+              <div className="space-y-1 col-span-2 md:col-span-1">
+                <Label className="text-xs text-muted-foreground">{isArabic ? 'شركة الشحن' : 'Shipping company'}</Label>
+                <Select value={filterShippingCompany} onValueChange={(value: 'all' | 'pickup' | 'nool' | 'aramex' | 'free') => setFilterShippingCompany(value)}>
+                  <SelectTrigger className="h-10 w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{isArabic ? 'الكل' : 'All'}</SelectItem>
+                    <SelectItem value="pickup">{isArabic ? 'استلام' : 'Pickup'}</SelectItem>
+                    <SelectItem value="nool">Nool</SelectItem>
+                    <SelectItem value="aramex">Aramex</SelectItem>
+                    <SelectItem value="free">{isArabic ? 'مجاني' : 'Free'}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="col-span-2 md:col-span-2 grid grid-cols-2 md:flex md:flex-wrap items-end gap-2">
+                <Button type="button" variant="outline" className="h-10 w-full md:w-auto" onClick={() => setQuickDateRange(1)}>
+                  {isArabic ? 'اليوم' : 'Today'}
+                </Button>
+                <Button type="button" variant="outline" className="h-10 w-full md:w-auto" onClick={() => setQuickDateRange(7)}>
+                  {isArabic ? 'آخر 7 أيام' : 'Last 7 days'}
+                </Button>
+                <Button type="button" variant="outline" className="h-10 w-full md:w-auto col-span-2 md:col-span-1" onClick={() => setQuickDateRange(30)}>
+                  {isArabic ? 'آخر 30 يوم' : 'Last 30 days'}
+                </Button>
+                <Button type="button" variant="ghost" className="h-10 w-full md:w-auto col-span-2 md:col-span-1" onClick={clearFilters}>
+                  {isArabic ? 'مسح الفلاتر' : 'Clear filters'}
+                </Button>
+              </div>
+            </div>
+            <div className="mt-2 text-xs text-muted-foreground">
+              {isArabic
+                ? `النتائج: ${filteredOrders.length} من ${sourceOrders.length}${loadingAllOrdersForFiltering ? ' (تحميل كل الطلبات...)' : ''}`
+                : `Results: ${filteredOrders.length} of ${sourceOrders.length}${loadingAllOrdersForFiltering ? ' (loading all orders...)' : ''}`}
+            </div>
+          </div>
+
           {loading ? (
             <div className="text-center py-8">
               <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-2 text-muted-foreground" />
@@ -2345,11 +2610,11 @@ export const OrdersManagement: React.FC = () => {
                 {isArabic ? 'تعذر تحميل الطلبات' : 'Could not load orders'}
               </p>
             </div>
-          ) : orders.length === 0 ? (
+          ) : filteredOrders.length === 0 ? (
             <div className="text-center py-8">
               <Package className="h-12 w-12 mx-auto mb-2 text-muted-foreground" />
               <p className="text-sm text-muted-foreground">
-                {isArabic ? 'لا توجد طلبات' : 'No orders found'}
+                {isArabic ? 'لا توجد طلبات مطابقة للفلاتر' : 'No orders match the selected filters'}
               </p>
             </div>
           ) : (
@@ -2695,7 +2960,7 @@ export const OrdersManagement: React.FC = () => {
                 )}
 
                 {/* Shipping Method Legend */}
-                {orders.length > 0 && (
+                {filteredOrders.length > 0 && (
                   <div className="mt-4 p-4 bg-muted/50 rounded-lg border">
                     <div className="text-sm font-medium mb-2">
                       {isArabic ? 'دليل طرق الشحن:' : 'Shipping Method Legend:'}
@@ -2723,7 +2988,7 @@ export const OrdersManagement: React.FC = () => {
               </div>
 
               {/* Pagination Controls */}
-              {!loading && orders.length > 0 && (
+              {!loading && filteredOrders.length > 0 && (
                 <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 border-t pt-4">
                   <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">
