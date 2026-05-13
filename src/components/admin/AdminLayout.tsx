@@ -353,6 +353,16 @@ export const AdminLayout: React.FC = () => {
       roles: ['Admin'],
     },
     {
+      id: 'emailTemplates',
+      label: isArabic ? 'قوالب البريد الإلكتروني' : 'Email Templates',
+      description: isArabic
+        ? 'إدارة قوالب رسائل البريد الإلكتروني'
+        : 'Manage email template content',
+      icon: FileText,
+      path: '/admin/email-templates',
+      roles: ['Admin'],
+    },
+    {
       id: 'whatsappActivation',
       label: isArabic ? 'تفعيل واتساب' : 'WhatsApp Activation',
       description: isArabic
@@ -448,7 +458,7 @@ export const AdminLayout: React.FC = () => {
       id: 'operations',
       label: t('admin.navGroups.operations'),
       items: availableNavItems.filter((item) =>
-        ['orders', 'wholesaleOrders', 'newsletter', 'emailSettings', 'emailNotificationSettings', 'whatsappActivation', 'whatsappSend', 'whatsappNotificationSettings', 'whatsappTemplates', 'reports', 'system', 'seo'].includes(item.id)
+        ['orders', 'wholesaleOrders', 'newsletter', 'emailSettings', 'emailNotificationSettings', 'emailTemplates', 'whatsappActivation', 'whatsappSend', 'whatsappNotificationSettings', 'whatsappTemplates', 'reports', 'system', 'seo'].includes(item.id)
       ),
     },
   ].filter((group) => group.items.length > 0);

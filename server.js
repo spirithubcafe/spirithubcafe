@@ -191,6 +191,17 @@ app.get('/sa/sitemap.xml', async (req, res) => {
   res.redirect(301, '/sitemap.xml');
 });
 
+// Legacy email templates HTML endpoints -> native admin console page
+app.get('/email-templates.html', (_req, res) => {
+  res.redirect(302, '/admin/email-templates');
+});
+app.get('/om/email-templates.html', (_req, res) => {
+  res.redirect(302, '/om/admin/email-templates');
+});
+app.get('/sa/email-templates.html', (_req, res) => {
+  res.redirect(302, '/sa/admin/email-templates');
+});
+
 // Add Vite or respective production middlewares
 let vite;
 if (!isProduction) {

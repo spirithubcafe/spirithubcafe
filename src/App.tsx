@@ -76,6 +76,7 @@ const SystemSettings = lazy(() => import('./components/admin/SystemSettings').th
 const NewsletterManagement = lazy(() => import('./components/admin/NewsletterManagement').then((m) => ({ default: m.NewsletterManagement })));
 const EmailSettingsManagement = lazy(() => import('./components/admin/EmailSettingsManagement').then((m) => ({ default: m.EmailSettingsManagement })));
 const EmailNotificationSettingsManagement = lazy(() => import('./components/admin/EmailNotificationSettingsManagement').then((m) => ({ default: m.EmailNotificationSettingsManagement })));
+const EmailTemplatesManagement = lazy(() => import('./components/admin/EmailTemplatesManagement').then((m) => ({ default: m.EmailTemplatesManagement })));
 const ReviewsManagement = lazy(() => import('./components/admin/ReviewsManagement').then((m) => ({ default: m.ReviewsManagement })));
 const WhatsAppSendMessage = lazy(() => import('./components/admin/WhatsAppSendMessage').then((m) => ({ default: m.WhatsAppSendMessage })));
 const WhatsAppActivationManagement = lazy(() => import('./components/admin/WhatsAppActivationManagement').then((m) => ({ default: m.WhatsAppActivationManagement })));
@@ -266,6 +267,7 @@ function AppContent() {
           <Route path="newsletter" element={<NewsletterManagement />} />
           <Route path="email-settings" element={<EmailSettingsManagement />} />
           <Route path="email-notification-settings" element={<EmailNotificationSettingsManagement />} />
+          <Route path="email-templates" element={<EmailTemplatesManagement />} />
           <Route path="whatsapp-activation" element={<WhatsAppActivationManagement />} />
           <Route path="whatsapp-send" element={<WhatsAppSendMessage />} />
           <Route path="whatsapp-notification-settings" element={<WhatsAppNotificationSettingsManagement />} />
@@ -293,6 +295,7 @@ function AppContent() {
           <Route path="newsletter" element={<NewsletterManagement />} />
           <Route path="email-settings" element={<EmailSettingsManagement />} />
           <Route path="email-notification-settings" element={<EmailNotificationSettingsManagement />} />
+          <Route path="email-templates" element={<EmailTemplatesManagement />} />
           <Route path="whatsapp-activation" element={<WhatsAppActivationManagement />} />
           <Route path="whatsapp-send" element={<WhatsAppSendMessage />} />
           <Route path="whatsapp-notification-settings" element={<WhatsAppNotificationSettingsManagement />} />
@@ -307,6 +310,9 @@ function AppContent() {
         <Route path="/orders" element={<OrdersPage />} />
         <Route path="/order/:orderId" element={<OrderDetailPage />} />
         <Route path="/admin/*" element={<AdminRegionRedirect />} />
+        <Route path="/email-templates.html" element={<Navigate to="/admin/email-templates" replace />} />
+        <Route path="/om/email-templates.html" element={<Navigate to="/om/admin/email-templates" replace />} />
+        <Route path="/sa/email-templates.html" element={<Navigate to="/sa/admin/email-templates" replace />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/loyalty" element={<LoyaltyPage />} />
