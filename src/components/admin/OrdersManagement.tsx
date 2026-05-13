@@ -2392,7 +2392,7 @@ export const OrdersManagement: React.FC = () => {
   };
 
   return (
-    <div className="space-y-4 bg-[#f6f7f9] p-2 sm:p-3 rounded-2xl">
+    <div className="w-full max-w-full overflow-x-hidden space-y-4 bg-[#f6f7f9] p-2 sm:p-3 rounded-2xl">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-100">
@@ -2432,7 +2432,7 @@ export const OrdersManagement: React.FC = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-2.5 grid-cols-2 md:grid-cols-4">
+      <div className="w-full max-w-full grid gap-2.5 grid-cols-2 md:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1.5">
             <CardTitle className="text-xs font-medium">
@@ -2560,7 +2560,7 @@ export const OrdersManagement: React.FC = () => {
             </Badge>
           ) : null}
         </CardHeader>
-        <CardContent className="space-y-8">
+        <CardContent className="w-full max-w-full overflow-x-hidden space-y-8">
           <div className="sticky top-2 z-20 rounded-3xl border border-[#eaeaea] bg-white/95 p-3 sm:p-4 shadow-[0_8px_22px_rgba(15,23,42,0.05)]">
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-3">
               <div className="space-y-1 col-span-1 min-w-0">
