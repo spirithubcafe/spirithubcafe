@@ -135,6 +135,29 @@ const isEmptyProductPayload = (value: unknown): boolean => {
   return !record.id && !record.slug && !record.name;
 };
 
+const readSsrProductBootstrap = (productId?: string): ApiProduct | null => {
+  if (!productId) return null;
+
+  const ssrGlobal = globalThis as typeof globalThis & {
+    __SSR_PRODUCT__?: unknown;
+    __SSR_PRODUCT_ID__?: unknown;
+  };
+
+  const ssrProductId = typeof ssrGlobal.__SSR_PRODUCT_ID__ === 'string'
+    ? ssrGlobal.__SSR_PRODUCT_ID__
+    : undefined;
+
+  if (ssrProductId && ssrProductId !== productId) {
+    return null;
+  }
+
+  if (isEmptyProductPayload(ssrGlobal.__SSR_PRODUCT__)) {
+    return null;
+  }
+
+  return ssrGlobal.__SSR_PRODUCT__ as ApiProduct;
+};
+
 export const ProductDetailPage = () => {
   const { productId } = useParams<{ productId: string }>();
   const location = useLocation();
@@ -144,10 +167,18 @@ export const ProductDetailPage = () => {
   const isShopRoute = location.pathname.includes('/shop/');
   const { isAuthenticated, user } = useAuth();
   const cart = useCart();
+  const initialSsrProductRef = useRef<ApiProduct | null>(readSsrProductBootstrap(productId));
 
-  const [state, setState] = useState<LoadState>('idle');
-  const [product, setProduct] = useState<ApiProduct | null>(null);
-  const [selectedVariantId, setSelectedVariantId] = useState<number | null>(null);
+  const [state, setState] = useState<LoadState>(() => (initialSsrProductRef.current ? 'ready' : 'idle'));
+  const [product, setProduct] = useState<ApiProduct | null>(() => initialSsrProductRef.current);
+  const [selectedVariantId, setSelectedVariantId] = useState<number | null>(() => {
+    const initialProduct = initialSsrProductRef.current;
+    if (!initialProduct?.variants?.length) return null;
+
+    const activeVariants = initialProduct.variants.filter((variant) => variant.isActive !== false);
+    const defaultVariant = activeVariants.find((variant) => variant.isDefault) ?? activeVariants[0] ?? null;
+    return defaultVariant ? defaultVariant.id : null;
+  });
   const [quantity, setQuantity] = useState(1);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [errorMessage, setErrorMessage] = useState('');

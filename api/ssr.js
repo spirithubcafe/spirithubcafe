@@ -68,8 +68,27 @@ async function fetchProductDetails(identifier) {
   }
 }
 
+function getProductIdentifierFromUrl(url) {
+  const originalPath = (url || '/').split('?')[0].split('#')[0];
+  let cleanUrl = originalPath.startsWith('/') ? originalPath : `/${originalPath}`;
+
+  if (cleanUrl === '/om' || cleanUrl.startsWith('/om/')) {
+    cleanUrl = cleanUrl.slice(3) || '/';
+  } else if (cleanUrl === '/sa' || cleanUrl.startsWith('/sa/')) {
+    cleanUrl = cleanUrl.slice(3) || '/';
+  }
+
+  if (!cleanUrl.startsWith('/products/') || cleanUrl.length <= 10) {
+    return null;
+  }
+
+  return cleanUrl.split('/products/')[1].split('/')[0] || null;
+}
+
+const serializeForInlineScript = (value) => JSON.stringify(value).replace(/</g, '\\u003c');
+
 // Helper function to generate meta tags based on route
-async function getMetaTagsForRoute(url, baseUrl) {
+async function getMetaTagsForRoute(url, baseUrl, preloadedProduct = null) {
   const resolvedBaseUrl = (baseUrl || process.env.VITE_SITE_URL || process.env.SITE_URL || 'https://spirithubcafe.com')
     .toString()
     .replace(/\/+$/, '');
@@ -113,7 +132,7 @@ async function getMetaTagsForRoute(url, baseUrl) {
     const identifier = normalizedPath.split('/products/')[1].split('/')[0];
     
     // Fetch product details (works with both ID and slug)
-    const product = await fetchProductDetails(identifier);
+    const product = preloadedProduct || await fetchProductDetails(identifier);
     
     if (product) {
       // Get product name
@@ -282,6 +301,8 @@ export default async function handler(req, res) {
   try {
     const url = req.url || '/';
     const urlPathOnly = url.split('?')[0].split('#')[0];
+    const productIdentifier = getProductIdentifierFromUrl(urlPathOnly);
+    const ssrProduct = productIdentifier ? await fetchProductDetails(productIdentifier) : null;
 
     const forwardedProto = (req.headers?.['x-forwarded-proto'] || '').toString().split(',')[0].trim();
     const forwardedHost = (req.headers?.['x-forwarded-host'] || '').toString().split(',')[0].trim();
@@ -340,14 +361,17 @@ export default async function handler(req, res) {
     let html = fs.readFileSync(indexPath, 'utf-8');
     
     // Get meta tags based on route (async)
-    const metaTags = await getMetaTagsForRoute(url, requestBaseUrl);
+    const metaTags = await getMetaTagsForRoute(url, requestBaseUrl, ssrProduct);
+    const ssrBootstrapScript = ssrProduct
+      ? `<script>window.__SSR_PRODUCT__=${serializeForInlineScript(ssrProduct)};window.__SSR_PRODUCT_ID__=${serializeForInlineScript(productIdentifier)};</script>`
+      : '';
     
     // Replace the meta tags placeholder (only in head)
     if (html.includes('<!--app-head-->')) {
-      html = html.replace('<!--app-head-->', metaTags);
+      html = html.replace('<!--app-head-->', `${ssrBootstrapScript}${metaTags}`);
     } else {
       // If placeholder not found, inject before </head>
-      html = html.replace('</head>', `${metaTags}\n  </head>`);
+      html = html.replace('</head>', `${ssrBootstrapScript}${metaTags}\n  </head>`);
     }
 
     // ── Attempt SSR (inject rendered HTML into <div id="root">) ────
@@ -357,7 +381,33 @@ export default async function handler(req, res) {
       if (fs.existsSync(ssrBundlePath)) {
         const { render } = await import(ssrBundlePath);
         if (typeof render === 'function') {
-          const { html: appHtml, error } = render(url);
+          const acceptLanguage = (req.headers?.['accept-language'] || '').toString().split(',')[0].trim().toLowerCase();
+          const requestLanguage = acceptLanguage.startsWith('ar') ? 'ar' : 'en';
+          const previousProduct = globalThis.__SSR_PRODUCT__;
+          const previousProductId = globalThis.__SSR_PRODUCT_ID__;
+
+          if (ssrProduct) {
+            globalThis.__SSR_PRODUCT__ = ssrProduct;
+            globalThis.__SSR_PRODUCT_ID__ = productIdentifier;
+          } else {
+            delete globalThis.__SSR_PRODUCT__;
+            delete globalThis.__SSR_PRODUCT_ID__;
+          }
+
+          const { html: appHtml, error } = await render(url, requestLanguage);
+
+          if (typeof previousProduct === 'undefined') {
+            delete globalThis.__SSR_PRODUCT__;
+          } else {
+            globalThis.__SSR_PRODUCT__ = previousProduct;
+          }
+
+          if (typeof previousProductId === 'undefined') {
+            delete globalThis.__SSR_PRODUCT_ID__;
+          } else {
+            globalThis.__SSR_PRODUCT_ID__ = previousProductId;
+          }
+
           if (appHtml && !error) {
             html = html.replace('<div id="root"></div>', `<div id="root" data-ssr="true">${appHtml}</div>`);
           }
