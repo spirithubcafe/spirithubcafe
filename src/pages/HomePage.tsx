@@ -48,14 +48,14 @@ const HomePage: React.FC = () => {
     () =>
       language === 'ar'
         ? {
-            title: 'قهوة مختصة في عمان والسعودية',
+            title: 'قهوة مختصة طازجة في عمان والسعودية',
             description:
-              'اطلب قهوة مختصة طازجة من سبيريت هب. حبوب محمصة بعناية، قهوة فلتر، وكبسولات مع توصيل سريع في عمان والسعودية.',
+              'اطلب قهوة مختصة طازجة من سبيريت هب روستري، مع حبوب محمصة بعناية، قهوة فلتر، وكبسولات مختارة وتوصيل سريع في عمان والسعودية.',
           }
         : {
-            title: 'Specialty Coffee in Oman & Saudi Arabia',
+            title: 'Fresh Specialty Coffee in Oman & Saudi Arabia',
             description:
-              'Shop fresh specialty coffee from SpiritHub Roastery. Explore roasted beans, filter coffee, and capsules with fast delivery across Oman and Saudi Arabia.',
+              'Shop fresh specialty coffee from SpiritHub Roastery, including roasted beans, filter coffee, and capsules with fast delivery across Oman and Saudi Arabia.',
           },
     [language]
   );
