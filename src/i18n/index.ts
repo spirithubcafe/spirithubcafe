@@ -5,6 +5,17 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 import ar from './locales/ar.json';
 import en from './locales/en.json';
 
+const getInitialLanguage = (): 'ar' | 'en' => {
+  if (typeof window !== 'undefined') {
+    const ssrLang = (window as unknown as Record<string, unknown>).__SSR_LANGUAGE__;
+    if (ssrLang === 'ar' || ssrLang === 'en') {
+      return ssrLang;
+    }
+  }
+
+  return 'ar';
+};
+
 const resources = {
   ar: {
     translation: ar
@@ -19,7 +30,7 @@ i18n
   .use(initReactI18next)
   .init({
     resources,
-    lng: 'ar', // Arabic as default language
+    lng: getInitialLanguage(),
     fallbackLng: 'ar',
     
     interpolation: {

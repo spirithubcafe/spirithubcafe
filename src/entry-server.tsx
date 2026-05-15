@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOMServer from 'react-dom/server';
 import { StaticRouter } from 'react-router';
 import App from './App';
+import i18n from './i18n';
 
 /**
  * Server-side render the application for the given URL.
@@ -11,8 +12,9 @@ import App from './App';
  * should fall back to serving the SPA shell on error so nothing
  * breaks for the end user.
  */
-export function render(url: string): { html: string; error?: string } {
+export async function render(url: string, language: 'ar' | 'en' = 'ar'): Promise<{ html: string; error?: string }> {
   try {
+    await i18n.changeLanguage(language);
     const html = ReactDOMServer.renderToString(
       React.createElement(StaticRouter, { location: url },
         React.createElement(App)

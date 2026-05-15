@@ -55,17 +55,27 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
   const activeRegionRef = useRef<string>(currentRegionCode);
   // Track what was last saved to prevent duplicate saves
   const lastSavedRef = useRef<{ region: string; itemsHash: string }>({ region: '', itemsHash: '' });
+  const hasHydratedCartRef = useRef(false);
   
-  const [items, setItems] = useState<CartItem[]>(() => {
-    // On initial render, load from the URL region
-    activeRegionRef.current = currentRegionCode;
-    return loadCartFromStorage(currentRegionCode);
-  });
+  const [items, setItems] = useState<CartItem[]>([]);
   
   const [isOpen, setIsOpen] = useState(false);
 
+  useEffect(() => {
+    const loadedItems = loadCartFromStorage(currentRegionCode);
+    activeRegionRef.current = currentRegionCode;
+    const itemsHash = JSON.stringify(loadedItems);
+    lastSavedRef.current = { region: currentRegionCode, itemsHash };
+    hasHydratedCartRef.current = true;
+    setItems(loadedItems);
+  }, []);
+
   // Handle region changes - load cart for new region
   useEffect(() => {
+    if (!hasHydratedCartRef.current) {
+      return;
+    }
+
     // Skip if region hasn't actually changed
     if (activeRegionRef.current === currentRegionCode) {
       return;
@@ -86,6 +96,10 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
 
   // Save cart to localStorage whenever items change
   useEffect(() => {
+    if (!hasHydratedCartRef.current) {
+      return;
+    }
+
     // Critical: only save if active region matches current region
     if (activeRegionRef.current !== currentRegionCode) {
       return;

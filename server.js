@@ -323,7 +323,7 @@ app.use(async (req, res, next) => {
       }
 
       if (typeof render === 'function') {
-        const { html: appHtml, error } = render(url);
+        const { html: appHtml, error } = await render(url, requestLanguage === 'ar' ? 'ar' : 'en');
         if (appHtml && !error) {
           // Inject the server-rendered markup inside <div id="root">
           html = html.replace('<div id="root"></div>', `<div id="root">${appHtml}</div>`);
