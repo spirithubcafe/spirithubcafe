@@ -58,17 +58,19 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const currentRegionCode = regionContext?.currentRegion?.code || 'om';
   
   // Initialize language with a value consistent between SSR and client to avoid
-  // React hydration error #418. Priority: user's saved preference → server-injected
-  // language (written by server.js into window.__SSR_LANGUAGE__) → i18n default.
+  // React hydration error #418. Priority during the first render must favor the
+  // server-injected snapshot so hydration sees the same text on both sides.
   const [language, setLanguage] = useState(() => {
-    const savedLanguage = safeStorage.getItem('spirithub-language');
-    if (savedLanguage === 'ar' || savedLanguage === 'en') return savedLanguage;
     // window.__SSR_LANGUAGE__ is injected by server.js so client and server
     // start with the same detected language (no hydration text-node mismatch).
     const ssrLang = typeof window !== 'undefined'
       ? (window as unknown as Record<string, unknown>).__SSR_LANGUAGE__
       : undefined;
     if (ssrLang === 'ar' || ssrLang === 'en') return ssrLang as string;
+
+    const savedLanguage = safeStorage.getItem('spirithub-language');
+    if (savedLanguage === 'ar' || savedLanguage === 'en') return savedLanguage;
+
     return (i18n.language === 'ar' || i18n.language === 'en') ? i18n.language : 'ar';
   });
   
@@ -199,6 +201,13 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
     document.documentElement.lang = language;
   }, [i18n, language]); // Include dependencies
+
+  useEffect(() => {
+    const savedLanguage = safeStorage.getItem('spirithub-language');
+    if ((savedLanguage === 'ar' || savedLanguage === 'en') && savedLanguage !== language) {
+      setLanguage(savedLanguage);
+    }
+  }, [language]);
 
   useEffect(() => {
     isMountedRef.current = true;
