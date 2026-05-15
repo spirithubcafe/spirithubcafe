@@ -118,8 +118,12 @@ async function getMetaTagsForRoute(url, baseUrl, preloadedProduct = null) {
   const regionName = region === 'sa' ? 'Saudi Arabia' : 'Oman';
   const regionNameAr = region === 'sa' ? 'السعودية' : 'عمان';
   
-  let title = `Spirit Hub Cafe | Specialty Coffee in ${regionName} | سبيريت هب`;
-  let description = `Spirit Hub Cafe roasts specialty coffee in ${regionName}. Discover premium beans, artisanal brews, and a vibrant community experience at سبيريت هب ${regionNameAr}.`;
+  let title = region === 'sa'
+    ? 'Specialty Coffee in Saudi Arabia | Spirit Hub Cafe'
+    : 'Specialty Coffee in Oman & Saudi Arabia | Spirit Hub Cafe';
+  let description = region === 'sa'
+    ? 'Shop fresh specialty coffee from SpiritHub Roastery with roasted beans, filter coffee, and capsules available across Saudi Arabia.'
+    : 'Shop fresh specialty coffee from SpiritHub Roastery. Explore roasted beans, filter coffee, and capsules with fast delivery across Oman and Saudi Arabia.';
   let image = `${resolvedBaseUrl}/images/icon-512x512.png`;
   let ogType = 'website';
   let productPrice = null;

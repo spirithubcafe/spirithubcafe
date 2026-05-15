@@ -393,11 +393,11 @@ async function getMetaTagsForRoute(url, requestBaseUrl, requestLanguage = 'en') 
 
   // Default meta tags
   let title = isAr
-    ? `سبيريت هب | قهوة مختصة محمصة في ${regionLabel} | SpiritHub Roastery`
-    : `SpiritHub Roastery | Specialty Coffee Roasted in ${regionLabel} | سبيريت هب`;
+    ? 'قهوة مختصة في عمان والسعودية | Spirit Hub Cafe'
+    : 'Specialty Coffee in Oman & Saudi Arabia | Spirit Hub Cafe';
   let description = isAr
-    ? `اطلب قهوة مختصة فاخرة، كبسولات، وقهوة فلتر. محمصة بعناية في ${cityLabel}. شراء حبوب قهوة مختصة محمصة طازجة يومياً.`
-    : `Premium specialty coffee roasted in ${regionLabel}. Shop capsules, filter brews, and freshly roasted coffee beans online. Fast delivery in ${cityLabel}.`;
+    ? `اطلب قهوة مختصة طازجة من سبيريت هب. حبوب محمصة بعناية، قهوة فلتر، وكبسولات مع توصيل سريع في ${cityLabel} وخدمة تمتد إلى السعودية.`
+    : `Shop fresh specialty coffee from SpiritHub Roastery. Explore roasted beans, filter coffee, and capsules with fast delivery in ${cityLabel} and across Saudi Arabia.`;
   let image = `${baseUrl}/images/slides/premium-specialty-coffee-roasted-in-oman.webp`;
   let ogType = 'website';
   let structuredDataJson = null;
