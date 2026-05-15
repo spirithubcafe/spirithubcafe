@@ -5,7 +5,11 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <!-- Default SEO (overridden by SSR <!--app-head--> injection per-route) -->
+    <!--app-head-->
+
+    <!-- Static fallback OG tags — only shown when SSR produces no output.
+         Social crawlers use the FIRST occurrence of each OG tag, so the
+         SSR-injected product image (above) always wins over these defaults. -->
     <title>SpiritHub Roastery | Specialty Coffee Roasted in Oman &amp; Saudi Arabia</title>
     <meta name="description" content="Premium specialty coffee roasted in Oman and Saudi Arabia. Shop capsules, filter brews, and freshly roasted coffee beans online. Fast delivery." />
     <meta property="og:title" content="SpiritHub Roastery | Specialty Coffee Roasted in Oman &amp; Saudi Arabia" />
@@ -24,8 +28,6 @@
     />
     <meta name="author" content="Spirit Hub Cafe" />
     <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
-    
-    <!--app-head-->
 
     <!-- Favicons -->
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />

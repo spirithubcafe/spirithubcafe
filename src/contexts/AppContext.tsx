@@ -57,10 +57,19 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   // Get current region code from context (om or sa)
   const currentRegionCode = regionContext?.currentRegion?.code || 'om';
   
-  // Initialize language from localStorage or default to browser language
+  // Initialize language with a value consistent between SSR and client to avoid
+  // React hydration error #418. Priority: user's saved preference → server-injected
+  // language (written by server.js into window.__SSR_LANGUAGE__) → i18n default.
   const [language, setLanguage] = useState(() => {
     const savedLanguage = safeStorage.getItem('spirithub-language');
-    return savedLanguage || i18n.language;
+    if (savedLanguage === 'ar' || savedLanguage === 'en') return savedLanguage;
+    // window.__SSR_LANGUAGE__ is injected by server.js so client and server
+    // start with the same detected language (no hydration text-node mismatch).
+    const ssrLang = typeof window !== 'undefined'
+      ? (window as unknown as Record<string, unknown>).__SSR_LANGUAGE__
+      : undefined;
+    if (ssrLang === 'ar' || ssrLang === 'en') return ssrLang as string;
+    return (i18n.language === 'ar' || i18n.language === 'en') ? i18n.language : 'ar';
   });
   
   const [products, setProducts] = useState<Product[]>([]);

@@ -122,11 +122,15 @@ const fetchProductDetails = async (identifier, region, language = 'en') => {
         productMetaCache.set(cacheKey, { data, timestamp: Date.now() });
         return data;
       }
+      console.warn(`[SEO] Slug endpoint returned ok but empty data for: ${bySlugUrl}`);
+    } else {
+      console.warn(`[SEO] Slug endpoint returned ${res.status} for: ${bySlugUrl}`);
     }
-  } catch {
-    // ignore
+  } catch (err) {
+    console.warn(`[SEO] Slug endpoint fetch failed for ${bySlugUrl}:`, err?.message || err);
   }
 
+  console.warn(`[SEO] fetchProductDetails: could not resolve product "${identifier}" (region=${region})`);
   return null;
 };
 
@@ -189,6 +193,12 @@ app.get('/om/sitemap.xml', async (req, res) => {
 });
 app.get('/sa/sitemap.xml', async (req, res) => {
   res.redirect(301, '/sitemap.xml');
+});
+
+// Redirect bare domain root to the Oman region so the client-side
+// RegionRedirect component never fires and no "choose your region" banner appears.
+app.get('/', (req, res) => {
+  res.redirect(301, '/om');
 });
 
 // Legacy email templates HTML endpoints -> native admin console page
@@ -286,9 +296,13 @@ app.use(async (req, res, next) => {
     // Get meta tags based on route (async because product routes may call the API)
     const requestLanguage = getRequestApiLanguage(req);
     const metaTags = await getMetaTagsForRoute(url, requestBaseUrl, requestLanguage);
-    
+
+    // Inject the server-detected language as a global so the React client can
+    // initialize with the same value and avoid a React #418 hydration mismatch.
+    const ssrLanguageScript = `<script>window.__SSR_LANGUAGE__="${requestLanguage === 'ar' ? 'ar' : 'en'}";</script>`;
+
     // Replace the meta tags in the template
-    let html = template.replace('<!--app-head-->', metaTags);
+    let html = template.replace('<!--app-head-->', `${ssrLanguageScript}${metaTags}`);
 
     // ── Attempt SSR (inject rendered HTML into <div id="root">) ────
     // Wrapped in try/catch so a render failure never breaks the site;
@@ -429,15 +443,22 @@ async function getMetaTagsForRoute(url, requestBaseUrl, requestLanguage = 'en') 
       }
 
       const apiBase = getApiBaseUrlForRegion(region);
+      // API returns mainImagePath as a flat string on the product object (may be null
+      // on the detail endpoint), and the real image lives in images[].imagePath.
       const mainImagePath =
+        product?.mainImagePath ||
         product?.mainImage?.imagePath ||
         product?.images?.find?.((img) => img?.isMain)?.imagePath ||
         product?.images?.[0]?.imagePath ||
+        product?.thumbnail ||
+        product?.imageUrl ||
         null;
 
       const resolvedImage = resolveAbsoluteImageUrl(apiBase, mainImagePath);
       if (resolvedImage) {
         image = resolvedImage;
+      } else {
+        console.warn(`[SEO] No image found for product "${identifier}" (region=${region}). Fields checked: mainImagePath=${product?.mainImagePath}, images count=${product?.images?.length ?? 0}`);
       }
 
       // Build Product JSON-LD for crawlers
