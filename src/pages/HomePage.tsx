@@ -307,8 +307,8 @@ const HomePage: React.FC = () => {
                     animate={{ y: [0, -12, 0], x: [0, -8, 0] }}
                     transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
                   />
-                  <div className="relative flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-                    <div className="max-w-3xl space-y-4">
+                  <div className="relative">
+                    <div className="w-full space-y-4">
                       <div className="flex items-center">
                         <img
                           src="/logo.png"
@@ -317,24 +317,9 @@ const HomePage: React.FC = () => {
                           loading="lazy"
                         />
                       </div>
-                      <p className="max-w-3xl text-base leading-8 text-white/90 md:text-lg">
+                      <p className="w-full text-base leading-8 text-white/90 md:text-lg">
                         {editorialCopy.intro}
                       </p>
-                    </div>
-
-                    <div className="grid w-full max-w-xl gap-3 text-sm text-white/90 lg:min-w-[320px] lg:max-w-[360px]">
-                      <div className="rounded-2xl border border-white/12 bg-white/10 px-4 py-3 backdrop-blur-sm">
-                        <div className="text-[10px] uppercase tracking-[0.24em] text-white/60">Roasted</div>
-                        <div className="mt-2 text-base font-semibold text-white">Fresh weekly</div>
-                      </div>
-                      <div className="rounded-2xl border border-white/12 bg-white/10 px-4 py-3 backdrop-blur-sm">
-                        <div className="text-[10px] uppercase tracking-[0.24em] text-white/60">Coverage</div>
-                        <div className="mt-2 text-base font-semibold text-white">Oman + Saudi</div>
-                      </div>
-                      <div className="rounded-2xl border border-white/12 bg-white/10 px-4 py-3 backdrop-blur-sm">
-                        <div className="text-[10px] uppercase tracking-[0.24em] text-white/60">Formats</div>
-                        <div className="mt-2 text-base font-semibold text-white">Beans, filter, capsules</div>
-                      </div>
                     </div>
                   </div>
                 </div>
