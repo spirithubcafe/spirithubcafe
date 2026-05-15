@@ -59,6 +59,43 @@ export const ShopCategoryPage = () => {
     return products.some((product) => shopCategoryIds.has(product.categoryId));
   }, [products, shopCategoryIds]);
 
+  const name = category
+    ? (isArabic ? category.nameAr || category.name : category.name)
+    : (isArabic ? '\u0627\u0644\u0645\u062a\u062c\u0631' : 'Shop');
+  const description = category
+    ? (isArabic ? category.descriptionAr || category.description : category.description)
+    : '';
+
+  const regionPath = currentRegion.code === 'sa' ? '' : '/om';
+  const shopBaseUrl = currentRegion.code === 'sa' ? 'https://spirithub.sa' : siteMetadata.baseUrl;
+  const categorySlug = category?.slug ?? slug ?? '';
+  const categoryCanonical = `${shopBaseUrl}${regionPath}/shop/${categorySlug}`;
+  const shopUrl = `${shopBaseUrl}${regionPath}/shop`;
+  const homeUrl = `${shopBaseUrl}${regionPath}`;
+
+  const structuredData = useMemo(() => [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: isArabic ? '\u0627\u0644\u0631\u0626\u064a\u0633\u064a\u0629' : 'Home', item: homeUrl },
+        { '@type': 'ListItem', position: 2, name: isArabic ? '\u0627\u0644\u0645\u062a\u062c\u0631' : 'Shop', item: shopUrl },
+        { '@type': 'ListItem', position: 3, name, item: categoryCanonical },
+      ],
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'CollectionPage',
+      url: categoryCanonical,
+      name,
+      description: description || name,
+      inLanguage: isArabic ? 'ar' : 'en',
+      numberOfItems: products.length,
+      publisher: { '@type': 'Organization', name: 'Spirit Hub Cafe', url: siteMetadata.baseUrl },
+    },
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  ], [categoryCanonical, shopUrl, homeUrl, name, description, isArabic, products.length]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-stone-50">
@@ -128,38 +165,6 @@ export const ShopCategoryPage = () => {
       </div>
     );
   }
-
-  const name = isArabic ? category.nameAr || category.name : category.name;
-  const description = isArabic ? category.descriptionAr || category.description : category.description;
-
-  const regionPath = currentRegion.code === 'sa' ? '' : '/om';
-  const shopBaseUrl = currentRegion.code === 'sa' ? 'https://spirithub.sa' : siteMetadata.baseUrl;
-  const categoryCanonical = `${shopBaseUrl}${regionPath}/shop/${category.slug}`;
-  const shopUrl = `${shopBaseUrl}${regionPath}/shop`;
-  const homeUrl = `${shopBaseUrl}${regionPath}`;
-
-  const structuredData = useMemo(() => [
-    {
-      '@context': 'https://schema.org',
-      '@type': 'BreadcrumbList',
-      itemListElement: [
-        { '@type': 'ListItem', position: 1, name: isArabic ? 'الرئيسية' : 'Home', item: homeUrl },
-        { '@type': 'ListItem', position: 2, name: isArabic ? 'المتجر' : 'Shop', item: shopUrl },
-        { '@type': 'ListItem', position: 3, name, item: categoryCanonical },
-      ],
-    },
-    {
-      '@context': 'https://schema.org',
-      '@type': 'CollectionPage',
-      url: categoryCanonical,
-      name,
-      description: description || name,
-      inLanguage: isArabic ? 'ar' : 'en',
-      numberOfItems: products.length,
-      publisher: { '@type': 'Organization', name: 'Spirit Hub Cafe', url: siteMetadata.baseUrl },
-    },
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  ], [categoryCanonical, shopUrl, homeUrl, name, description, isArabic, products.length]);
 
   const seoDescription = description ||
     (isArabic
