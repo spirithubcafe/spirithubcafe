@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { motion } from 'framer-motion';
-import { ArrowUpRight, Compass, Coffee, Truck } from 'lucide-react';
+import { Compass, Coffee, Truck } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { ProfessionalHeroSlider } from '../components/layout/ProfessionalHeroSlider';
 import { AnnouncementBar } from '../components/layout/AnnouncementBar';
@@ -273,140 +272,36 @@ const HomePage: React.FC = () => {
           <UnifiedCategoriesSection />
           <GoogleReviewsSection />
           <InstagramSection />
-          <section className="relative overflow-hidden border-y border-stone-200 bg-white py-12 md:py-16">
-            <motion.div
-              aria-hidden="true"
-              className="pointer-events-none absolute -right-12 top-12 h-56 w-56 rounded-full bg-stone-300/35 blur-2xl"
-              initial={{ opacity: 0, y: 32, scale: 0.92 }}
-              whileInView={{ opacity: 1, y: -20, scale: 1 }}
-              viewport={{ once: true, amount: 0.15 }}
-              transition={{ duration: 1.2, ease: 'easeOut' }}
-            />
-            <motion.div
-              aria-hidden="true"
-              className="pointer-events-none absolute -left-16 bottom-6 h-64 w-64 rounded-full bg-white/70 blur-3xl"
-              initial={{ opacity: 0, y: -24, scale: 0.9 }}
-              whileInView={{ opacity: 1, y: 18, scale: 1.04 }}
-              viewport={{ once: true, amount: 0.15 }}
-              transition={{ duration: 1.25, ease: 'easeOut' }}
-            />
+          <section className="sr-only" aria-label={seoCopy.title}>
+            <h2>{seoCopy.title}</h2>
+            <p>{editorialCopy.intro}</p>
 
-            <div className="container relative mx-auto px-4">
-              <motion.div
-                className="mx-auto max-w-6xl rounded-[2rem] border border-white/70 bg-white/90 p-5 shadow-[0_24px_80px_rgba(78,52,35,0.12)] backdrop-blur-xl md:p-8 lg:p-10"
-                initial={{ opacity: 0, y: 36 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.2 }}
-                transition={{ duration: 0.7, ease: 'easeOut' }}
-              >
-                <div className="relative overflow-hidden rounded-[1.6rem] border border-stone-200 bg-stone-900 px-5 py-6 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] md:px-7 md:py-8">
-                  <div className="pointer-events-none absolute inset-0 opacity-30 [background-image:linear-gradient(rgba(255,255,255,0.06)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.06)_1px,transparent_1px)] [background-size:28px_28px]" />
-                  <motion.div
-                    aria-hidden="true"
-                    className="absolute right-0 top-0 h-40 w-40 rounded-full bg-white/10 blur-3xl"
-                    animate={{ y: [0, -12, 0], x: [0, -8, 0] }}
-                    transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
-                  />
-                  <div className="relative">
-                    <div className="w-full space-y-4">
-                      <div className="flex items-center">
-                        <img
-                          src="/logo.png"
-                          alt="Spirit Hub Cafe"
-                          className="h-10 w-auto rounded-xl border border-white/12 bg-white/8 p-1.5 shadow-[0_12px_30px_rgba(0,0,0,0.18)] backdrop-blur-sm"
-                          loading="lazy"
-                        />
-                      </div>
-                      <p className="w-full text-base leading-8 text-white/90 md:text-lg">
-                        {editorialCopy.intro}
-                      </p>
-                    </div>
-                  </div>
-                </div>
+            {editorialSections.map(({ title, body }) => (
+              <article key={title}>
+                <h3>{title}</h3>
+                <p>{body}</p>
+              </article>
+            ))}
 
-                <div className="mt-6 grid gap-5">
-                  {editorialSections.map(({ title, body, Icon }, index) => (
-                    <motion.article
-                      key={title}
-                      className="group relative overflow-hidden rounded-[1.6rem] border border-stone-200/80 bg-white/90 p-5 shadow-[0_18px_45px_rgba(97,66,42,0.08)] transition-transform duration-300 hover:-translate-y-1 md:p-6"
-                      initial={{ opacity: 0, y: 28 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true, amount: 0.25 }}
-                      transition={{ duration: 0.55, delay: index * 0.08, ease: 'easeOut' }}
-                    >
-                      <div className="absolute inset-x-6 top-0 h-px bg-stone-200" />
-                      <div className="flex flex-col gap-4 md:flex-row md:items-start">
-                        <div className="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-stone-900 text-white shadow-lg shadow-stone-900/10">
-                          <Icon className="h-5 w-5" />
-                        </div>
-                        <div className="min-w-0 space-y-3">
-                          <h2 className="text-xl font-semibold tracking-tight text-stone-950 md:text-[1.6rem]">
-                            {title}
-                          </h2>
-                          <p className="max-w-none text-sm leading-7 text-stone-700 md:text-base">
-                            {body}
-                          </p>
-                        </div>
-                      </div>
-                    </motion.article>
-                  ))}
-                </div>
-
-                <motion.div
-                  className="mt-6 grid gap-6 rounded-[1.7rem] border border-stone-200/80 bg-white p-6 shadow-[0_18px_50px_rgba(97,66,42,0.08)] md:grid-cols-1 md:p-8"
-                  initial={{ opacity: 0, y: 28 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, amount: 0.2 }}
-                  transition={{ duration: 0.6, delay: 0.15, ease: 'easeOut' }}
-                >
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold text-stone-950 md:text-[1.45rem]">
-                      {editorialCopy.whyTitle}
-                    </h3>
-                    <ul className="grid gap-3 text-sm leading-7 text-stone-700 md:text-base">
-                      {editorialCopy.whyPoints.map((point, index) => (
-                        <motion.li
-                          key={point}
-                          className="flex gap-3 rounded-2xl border border-stone-200/70 bg-white/80 px-4 py-3"
-                          initial={{ opacity: 0, x: -14 }}
-                          whileInView={{ opacity: 1, x: 0 }}
-                          viewport={{ once: true, amount: 0.3 }}
-                          transition={{ duration: 0.45, delay: 0.08 * index, ease: 'easeOut' }}
-                        >
-                          <span className="mt-2 h-2.5 w-2.5 shrink-0 rounded-full bg-amber-600 shadow-[0_0_0_5px_rgba(217,119,6,0.12)]" aria-hidden="true" />
-                          <span>{point}</span>
-                        </motion.li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <nav aria-label={editorialCopy.linksTitle} className="space-y-4">
-                    <h3 className="text-lg font-semibold text-stone-950 md:text-[1.45rem]">
-                      {editorialCopy.linksTitle}
-                    </h3>
-                    <div className="grid gap-3">
-                      {editorialCopy.links.map((link, index) => (
-                        <motion.div
-                          key={link.to}
-                          initial={{ opacity: 0, x: 14 }}
-                          whileInView={{ opacity: 1, x: 0 }}
-                          viewport={{ once: true, amount: 0.3 }}
-                          transition={{ duration: 0.45, delay: 0.06 * index, ease: 'easeOut' }}
-                        >
-                          <Link
-                            to={link.to}
-                            className="group flex items-center justify-between rounded-2xl border border-stone-200/80 bg-white px-4 py-3.5 text-sm font-medium text-stone-800 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-amber-300 hover:bg-amber-50/70 hover:text-stone-950 md:text-base"
-                          >
-                            <span>{link.label}</span>
-                            <ArrowUpRight className="h-4 w-4 text-stone-400 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-amber-700" />
-                          </Link>
-                        </motion.div>
-                      ))}
-                    </div>
-                  </nav>
-                </motion.div>
-              </motion.div>
+            <div>
+              <h3>{editorialCopy.whyTitle}</h3>
+              <ul>
+                {editorialCopy.whyPoints.map((point) => (
+                  <li key={point}>{point}</li>
+                ))}
+              </ul>
             </div>
+
+            <nav aria-label={editorialCopy.linksTitle}>
+              <h3>{editorialCopy.linksTitle}</h3>
+              <ul>
+                {editorialCopy.links.map((link) => (
+                  <li key={link.to}>
+                    <Link to={link.to}>{link.label}</Link>
+                  </li>
+                ))}
+              </ul>
+            </nav>
           </section>
         </>
       ) : (
