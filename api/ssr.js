@@ -319,7 +319,7 @@ export default async function handler(req, res) {
     const requestBaseUrl = host ? `${proto}://${host}`.replace(/\/+$/, '') : undefined;
     
     // For static assets, try to serve from dist folder
-    if (urlPathOnly.match(/\.(js|css|png|jpg|jpeg|gif|ico|svg|webp|woff|woff2|ttf|eot|json|xml|txt|webmanifest)$/)) {
+    if (urlPathOnly.match(/\.(js|css|png|jpg|jpeg|gif|ico|svg|webp|mp4|webm|ogg|woff|woff2|ttf|eot|json|xml|txt|webmanifest)$/)) {
       try {
         // IMPORTANT: `url` starts with `/` (absolute path). Using `path.join(dist, url)`
         // would ignore `dist` on Node.js. Normalize to a safe relative path.
@@ -344,6 +344,9 @@ export default async function handler(req, res) {
             '.gif': 'image/gif',
             '.svg': 'image/svg+xml',
             '.webp': 'image/webp',
+            '.mp4': 'video/mp4',
+            '.webm': 'video/webm',
+            '.ogg': 'video/ogg',
             '.ico': 'image/x-icon',
             '.json': 'application/json',
             '.xml': 'application/xml',

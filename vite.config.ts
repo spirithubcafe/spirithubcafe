@@ -134,6 +134,10 @@ export default defineConfig(({ isSsrBuild }) => ({
               ) {
                 return 'i18n-vendor';
               }
+
+              if (id.includes('/@radix-ui/')) {
+                return 'radix-vendor';
+              }
             }
 
             // Keep admin/reporting page code out of the storefront critical path.

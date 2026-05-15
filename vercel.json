@@ -7,7 +7,7 @@
     { "src": "/(om|sa)/products-feed.xml", "dest": "/products-feed.xml" },
     { "src": "/(om|sa)/robots.txt", "dest": "/robots.txt" },
     { "src": "/(om|sa)/manifest.webmanifest", "dest": "/manifest.webmanifest" },
-    { "src": "/(.*\\.(?:js|css|png|jpg|jpeg|gif|ico|svg|webp|woff|woff2|ttf|eot|json|xml|txt|webmanifest))", "dest": "/$1" },
+    { "src": "/(.*\\.(?:js|css|png|jpg|jpeg|gif|ico|svg|webp|mp4|webm|ogg|woff|woff2|ttf|eot|json|xml|txt|webmanifest))", "dest": "/$1" },
     { "src": "/(.*)", "dest": "/api/ssr" }
   ]
 }
