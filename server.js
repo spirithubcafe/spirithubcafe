@@ -301,13 +301,8 @@ app.use(async (req, res, next) => {
     // initialize with the same value and avoid a React #418 hydration mismatch.
     const ssrLanguageScript = `<script>window.__SSR_LANGUAGE__="${requestLanguage === 'ar' ? 'ar' : 'en'}";</script>`;
 
-    const templateWithoutStaticSeoFallback = template.replace(
-      /\s*<!--seo-fallback-start-->[\s\S]*?<!--seo-fallback-end-->/,
-      '\n'
-    );
-
     // Replace the meta tags in the template
-    let html = templateWithoutStaticSeoFallback.replace('<!--app-head-->', `${ssrLanguageScript}${metaTags}`);
+    let html = template.replace('<!--app-head-->', `${ssrLanguageScript}${metaTags}`);
 
     // ── Attempt SSR (inject rendered HTML into <div id="root">) ────
     // Wrapped in try/catch so a render failure never breaks the site;
