@@ -55,8 +55,10 @@ export const RegionProvider: React.FC<RegionProviderProps> = ({ children }) => {
   const navigate = useNavigate();
 
   const [currentRegion, setCurrentRegion] = useState<RegionConfig>(() => {
-    // Detect from URL first, then localStorage, then default to 'om'
-    const fromPath = detectRegionFromPath();
+    // Detect from the current React Router location first so SSR and client
+    // hydrate from the same route-derived region. Only fall back to persisted
+    // storage when the URL is regionless.
+    const fromPath = detectRegionFromPath(location.pathname);
     if (fromPath) return REGIONS[fromPath];
     const stored = safeStorage.getItem('spirithub-region');
     if (stored === 'om' || stored === 'sa') return REGIONS[stored];
