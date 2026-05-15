@@ -116,13 +116,6 @@ export default defineConfig(({ isSsrBuild }) => ({
                 return 'react-vendor';
               }
 
-              if (
-                id.includes('/framer-motion/') ||
-                id.includes('/motion/')
-              ) {
-                return 'motion-vendor';
-              }
-
               if (id.includes('/lucide-react/')) {
                 return 'icons-vendor';
               }

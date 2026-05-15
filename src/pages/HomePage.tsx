@@ -309,6 +309,14 @@ const HomePage: React.FC = () => {
                   />
                   <div className="relative flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
                     <div className="max-w-3xl space-y-4">
+                      <div className="flex items-center">
+                        <img
+                          src="/logo.png"
+                          alt="Spirit Hub Cafe"
+                          className="h-10 w-auto rounded-xl border border-white/12 bg-white/8 p-1.5 shadow-[0_12px_30px_rgba(0,0,0,0.18)] backdrop-blur-sm"
+                          loading="lazy"
+                        />
+                      </div>
                       <p className="max-w-3xl text-base leading-8 text-white/90 md:text-lg">
                         {editorialCopy.intro}
                       </p>
