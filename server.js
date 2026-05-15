@@ -566,12 +566,13 @@ async function getMetaTagsForRoute(url, requestBaseUrl, requestLanguage = 'en') 
       : 'Complete your order from Spirit Hub Cafe - Oman\'s premier specialty coffee roastery.';
   }
 
-  // WhatsApp doesn't support WebP - convert to JPEG
-  const isWebp = (image || '').toLowerCase().endsWith('.webp');
-  const ogImage = isWebp && image
-    ? `https://wsrv.nl/?url=${encodeURIComponent(image)}&output=jpg&q=90&w=1200&h=630&fit=cover`
+  // Always proxy through wsrv.nl: enforces 1200×630, converts any format to JPEG,
+  // and uses attention-based smart crop so the product stays centred in the frame.
+  // WhatsApp, Facebook, and Twitter all require JPEG and a minimum of 200×200.
+  const ogImage = image
+    ? `https://wsrv.nl/?url=${encodeURIComponent(image)}&output=jpg&q=85&w=1200&h=630&fit=cover&a=attention`
     : image;
-  const ogImageType = isWebp ? 'image/jpeg' : guessMimeType(image);
+  const ogImageType = image ? 'image/jpeg' : guessMimeType(image);
 
   const ogImageTags = ogImage ? `
     <meta property="og:image" content="${escapeHtmlAttr(ogImage)}" />

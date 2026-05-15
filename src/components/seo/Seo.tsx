@@ -198,11 +198,9 @@ export const Seo: React.FC<SeoProps> = ({
     
     // Ensure Open Graph image is set, with fallback
     if (resolvedImage) {
-      // WhatsApp doesn't support WebP — proxy via wsrv.nl for JPEG conversion
-      const isWebp = resolvedImage.toLowerCase().endsWith('.webp');
-      const socialImage = isWebp
-        ? `https://wsrv.nl/?url=${encodeURIComponent(resolvedImage)}&output=jpg&q=90&w=1200&h=630&fit=cover`
-        : resolvedImage;
+      // Always proxy through wsrv.nl: enforces 1200×630 JPEG for all social platforms.
+      // Attention-based crop keeps the product centred regardless of original aspect ratio.
+      const socialImage = `https://wsrv.nl/?url=${encodeURIComponent(resolvedImage)}&output=jpg&q=85&w=1200&h=630&fit=cover&a=attention`;
       ensureMeta('meta[property="og:image"]', { property: 'og:image' }, socialImage);
       ensureMeta('meta[property="og:image:secure_url"]', { property: 'og:image:secure_url' }, socialImage);
       ensureMeta('meta[property="og:image:width"]', { property: 'og:image:width' }, '1200');
