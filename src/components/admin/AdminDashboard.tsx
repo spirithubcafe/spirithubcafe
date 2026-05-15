@@ -5,7 +5,6 @@ import { adminService, type AdminDashboardStats } from '../../services/adminServ
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
-import './AdminDashboard.css';
 import {
   Users,
   Package,
@@ -56,6 +55,24 @@ interface WeatherSnapshot {
 
 const MUSCAT_WEATHER_URL =
   'https://api.open-meteo.com/v1/forecast?latitude=23.5880&longitude=58.3829&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,relative_humidity_2m,is_day&timezone=Asia%2FMuscat';
+
+const ADMIN_DASHBOARD_STYLES = `
+@keyframes adminFadeIn{from{opacity:0}to{opacity:1}}
+@keyframes adminSlideInFromTop{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
+.animate-in{animation-duration:.5s;animation-fill-mode:both}
+.fade-in{animation-name:adminFadeIn}
+.slide-in-from-top{animation-name:adminSlideInFromTop}
+.weather-hero-card{background:radial-gradient(circle at 16% 18%,rgba(245,158,11,.16),transparent 20%),radial-gradient(circle at 84% 24%,rgba(14,165,233,.12),transparent 24%),linear-gradient(135deg,#0f172a 0%,#13253e 36%,#16344c 68%,#1c4859 100%)}
+.weather-grid-pattern{background-image:linear-gradient(rgba(255,255,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.05) 1px,transparent 1px);background-size:28px 28px;mask-image:linear-gradient(180deg,rgba(0,0,0,.5),transparent 88%);opacity:.24}
+.weather-ambient-glow{position:absolute;border-radius:9999px;filter:blur(26px);opacity:.72}
+.weather-ambient-glow-left{left:-40px;top:22px;height:180px;width:180px;background:rgba(245,158,11,.1)}
+.weather-ambient-glow-right{right:8%;bottom:-32px;height:220px;width:220px;background:rgba(14,165,233,.08)}
+.weather-temperature{text-shadow:0 12px 30px rgba(15,23,42,.38)}
+.weather-stat-card{box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}
+.weather-hero-icon-shell{position:relative;display:flex;align-items:center;justify-content:center;min-height:6.5rem;min-width:6.5rem;border:1px solid rgba(255,255,255,.14);border-radius:9999px;background-color:rgba(255,255,255,.07);backdrop-filter:blur(8px);box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 22px 40px -28px rgba(15,23,42,.95)}
+.weather-icon-panel{box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}
+@media (max-width:639px){.weather-hero-icon-shell{min-height:5.75rem;min-width:5.75rem}}
+`;
 
 const getWeatherPresentation = (weatherCode: number, isDay: boolean, isArabic: boolean) => {
   if (weatherCode === 0) {
@@ -359,7 +376,9 @@ export const AdminDashboard: React.FC = () => {
   ];
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
+    <>
+      <style>{ADMIN_DASHBOARD_STYLES}</style>
+      <div className="space-y-6 animate-in fade-in duration-500">
       <section className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="space-y-1.5">
           <h2 className="text-2xl font-semibold tracking-tight text-slate-950">{t('admin.dashboard')}</h2>
@@ -633,7 +652,8 @@ export const AdminDashboard: React.FC = () => {
           </CardContent>
         </Card>
       </section>
-    </div>
+      </div>
+    </>
   );
 };
 

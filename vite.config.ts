@@ -98,6 +98,7 @@ export default defineConfig(({ isSsrBuild }) => ({
   },
   publicDir: 'public',
   build: {
+    modulePreload: false,
     rollupOptions: {
       output: {
         // Only apply manualChunks for client builds; SSR externalizes these

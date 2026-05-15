@@ -20,7 +20,7 @@ import { NotFound } from './components/pages/NotFound';
 import { ErrorBoundary, RouteErrorBoundary } from './components/pages/ErrorBoundary';
 import { RequireAuth } from './components/auth/RequireAuth';
 import { RequireWholesale } from './components/auth/RequireWholesale';
-import { AdminRegionRedirect } from './components/admin/AdminRegionRedirect';
+import { AdminRegionRedirect } from './components/layout/AdminRegionRedirect';
 import { initVisitorTracking } from './lib/visitorTracking';
 import { migrateCartToRegionBased } from './lib/migrateCart';
 import { initGA4, trackPageView } from './lib/ga4';
@@ -56,32 +56,7 @@ const WholesaleLoginPage = lazy(() => import('./pages/WholesaleLoginPage'));
 const WholesaleDashboardPage = lazy(() => import('./pages/WholesaleDashboardPage'));
 const WholesaleOrdersPage = lazy(() => import('./pages/WholesaleOrdersPage'));
 const WholesaleOrderDetailsPage = lazy(() => import('./pages/WholesaleOrderDetailsPage'));
-const CategoryAddPage = lazy(() => import('./pages/CategoryAddPage').then((m) => ({ default: m.CategoryAddPage })));
-const CategoryEditPage = lazy(() => import('./pages/CategoryEditPage').then((m) => ({ default: m.CategoryEditPage })));
-const ProductAddPage = lazy(() => import('./pages/ProductAddPage').then((m) => ({ default: m.ProductAddPage })));
-const ProductEditPage = lazy(() => import('./pages/ProductEditPage').then((m) => ({ default: m.ProductEditPage })));
-const ProductAttributesPage = lazy(() => import('./pages/ProductAttributesPage').then((m) => ({ default: m.ProductAttributesPage })));
-
-const AdminLayout = lazy(() => import('./components/admin/AdminLayout').then((m) => ({ default: m.AdminLayout })));
-const AdminDashboard = lazy(() => import('./components/admin/AdminDashboard').then((m) => ({ default: m.AdminDashboard })));
-const CategoriesManagement = lazy(() => import('./components/admin/CategoriesManagement').then((m) => ({ default: m.CategoriesManagement })));
-const ProductsManagement = lazy(() => import('./components/admin/ProductsManagement').then((m) => ({ default: m.ProductsManagement })));
-const UsersManagement = lazy(() => import('./components/admin/UsersManagement').then((m) => ({ default: m.UsersManagement })));
-const SeoManagement = lazy(() => import('./components/admin/SeoManagement').then((m) => ({ default: m.SeoManagement })));
-const OrdersManagement = lazy(() => import('./components/admin/OrdersManagement').then((m) => ({ default: m.OrdersManagement })));
-const WholesaleOrdersManagement = lazy(() => import('./components/admin/WholesaleOrdersManagement').then((m) => ({ default: m.WholesaleOrdersManagement })));
-const ReportsManagement = lazy(() => import('./components/admin/ReportsManagement').then((m) => ({ default: m.ReportsManagement })));
-const SystemSettings = lazy(() => import('./components/admin/SystemSettings').then((m) => ({ default: m.SystemSettings })));
-const NewsletterManagement = lazy(() => import('./components/admin/NewsletterManagement').then((m) => ({ default: m.NewsletterManagement })));
-const EmailSettingsManagement = lazy(() => import('./components/admin/EmailSettingsManagement').then((m) => ({ default: m.EmailSettingsManagement })));
-const EmailNotificationSettingsManagement = lazy(() => import('./components/admin/EmailNotificationSettingsManagement').then((m) => ({ default: m.EmailNotificationSettingsManagement })));
-const EmailTemplatesManagement = lazy(() => import('./components/admin/EmailTemplatesManagement').then((m) => ({ default: m.EmailTemplatesManagement })));
-const ReviewsManagement = lazy(() => import('./components/admin/ReviewsManagement').then((m) => ({ default: m.ReviewsManagement })));
-const WhatsAppSendMessage = lazy(() => import('./components/admin/WhatsAppSendMessage').then((m) => ({ default: m.WhatsAppSendMessage })));
-const WhatsAppActivationManagement = lazy(() => import('./components/admin/WhatsAppActivationManagement').then((m) => ({ default: m.WhatsAppActivationManagement })));
-const WhatsAppNotificationSettingsManagement = lazy(() => import('./components/admin/WhatsAppNotificationSettingsManagement').then((m) => ({ default: m.WhatsAppNotificationSettingsManagement })));
-const WhatsAppTemplatesManagement = lazy(() => import('./components/admin/WhatsAppTemplatesManagement').then((m) => ({ default: m.WhatsAppTemplatesManagement })));
-const ProductTagsManagement = lazy(() => import('./components/admin/ProductTagsManagement').then((m) => ({ default: m.ProductTagsManagement })));
+const AdminRoutes = lazy(() => import('./components/admin/AdminRoutes'));
 
 function AppContent() {
   const location = useLocation();
@@ -247,61 +222,9 @@ function AppContent() {
         <Route path="/sa/payment/failure" element={<PaymentFailurePage />} />
         <Route path="/sa/payment/cancelled" element={<PaymentCancelledPage />} />
         
-        {/* Admin routes for Oman */}
-        <Route path="/om/admin/*" element={<AdminLayout />}>
-          <Route index element={<AdminDashboard />} />
-          <Route path="categories" element={<CategoriesManagement />} />
-          <Route path="categories/add" element={<CategoryAddPage />} />
-          <Route path="categories/edit/:id" element={<CategoryEditPage />} />
-          <Route path="products" element={<ProductsManagement />} />
-          <Route path="products/add" element={<ProductAddPage />} />
-          <Route path="products/edit/:productId" element={<ProductEditPage />} />
-          <Route path="products/:id/attributes" element={<ProductAttributesPage />} />
-          <Route path="product-tags" element={<ProductTagsManagement />} />
-          <Route path="seo" element={<SeoManagement />} />
-          <Route path="users" element={<UsersManagement />} />
-          <Route path="orders" element={<OrdersManagement />} />
-            <Route path="reviews" element={<ReviewsManagement />} />
-          <Route path="wholesale-orders" element={<WholesaleOrdersManagement />} />
-          <Route path="newsletter" element={<NewsletterManagement />} />
-          <Route path="email-settings" element={<EmailSettingsManagement />} />
-          <Route path="email-notification-settings" element={<EmailNotificationSettingsManagement />} />
-          <Route path="email-templates" element={<EmailTemplatesManagement />} />
-          <Route path="whatsapp-activation" element={<WhatsAppActivationManagement />} />
-          <Route path="whatsapp-send" element={<WhatsAppSendMessage />} />
-          <Route path="whatsapp-notification-settings" element={<WhatsAppNotificationSettingsManagement />} />
-          <Route path="whatsapp-templates" element={<WhatsAppTemplatesManagement />} />
-          <Route path="reports" element={<ReportsManagement />} />
-          <Route path="settings" element={<SystemSettings />} />
-        </Route>
-        
-        {/* Admin routes for Saudi Arabia */}
-        <Route path="/sa/admin/*" element={<AdminLayout />}>
-          <Route index element={<AdminDashboard />} />
-          <Route path="categories" element={<CategoriesManagement />} />
-          <Route path="categories/add" element={<CategoryAddPage />} />
-          <Route path="categories/edit/:id" element={<CategoryEditPage />} />
-          <Route path="products" element={<ProductsManagement />} />
-          <Route path="products/add" element={<ProductAddPage />} />
-          <Route path="products/edit/:productId" element={<ProductEditPage />} />
-          <Route path="products/:id/attributes" element={<ProductAttributesPage />} />
-          <Route path="product-tags" element={<ProductTagsManagement />} />
-          <Route path="seo" element={<SeoManagement />} />
-          <Route path="users" element={<UsersManagement />} />
-          <Route path="orders" element={<OrdersManagement />} />
-            <Route path="reviews" element={<ReviewsManagement />} />
-          <Route path="wholesale-orders" element={<WholesaleOrdersManagement />} />
-          <Route path="newsletter" element={<NewsletterManagement />} />
-          <Route path="email-settings" element={<EmailSettingsManagement />} />
-          <Route path="email-notification-settings" element={<EmailNotificationSettingsManagement />} />
-          <Route path="email-templates" element={<EmailTemplatesManagement />} />
-          <Route path="whatsapp-activation" element={<WhatsAppActivationManagement />} />
-          <Route path="whatsapp-send" element={<WhatsAppSendMessage />} />
-          <Route path="whatsapp-notification-settings" element={<WhatsAppNotificationSettingsManagement />} />
-          <Route path="whatsapp-templates" element={<WhatsAppTemplatesManagement />} />
-          <Route path="reports" element={<ReportsManagement />} />
-          <Route path="settings" element={<SystemSettings />} />
-        </Route>
+        {/* Admin routes */}
+        <Route path="/om/admin/*" element={<AdminRoutes />} />
+        <Route path="/sa/admin/*" element={<AdminRoutes />} />
         
         {/* Legacy routes for backward compatibility */}
         <Route path="/profile" element={<ProfilePage />} />

@@ -4,7 +4,7 @@ import { buildAdminPathForRegion, FORCED_REGION_CODE } from '../../lib/regionUti
 
 /**
  * Redirect legacy /admin/* routes to a region-scoped admin route: /om/admin/* or /sa/admin/*
- * based on the last selected admin region.
+ * based on the forced admin region.
  */
 export const AdminRegionRedirect: React.FC = () => {
   const location = useLocation();
