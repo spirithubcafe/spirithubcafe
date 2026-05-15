@@ -130,6 +130,10 @@ async function getMetaTagsForRoute(url, baseUrl, preloadedProduct = null) {
   let productCurrency = region === 'sa' ? 'SAR' : 'OMR';
   let productAvailability = 'in stock';
 
+  if (normalizedPath === '/' || normalizedPath === '') {
+    image = `${resolvedBaseUrl}/logo.png`;
+  }
+
   // Customize based on route
   if (normalizedPath.startsWith('/products/') && normalizedPath.length > 10) {
     // Extract product identifier (can be ID or slug)
@@ -378,6 +382,8 @@ export default async function handler(req, res) {
       html = html.replace('</head>', `${ssrBootstrapScript}${metaTags}\n  </head>`);
     }
 
+    let responseStatus = 200;
+
     // ── Attempt SSR (inject rendered HTML into <div id="root">) ────
     // Wrapped in try/catch so a render failure never breaks the site.
     try {
@@ -413,6 +419,9 @@ export default async function handler(req, res) {
           }
 
           if (appHtml && !error) {
+            if (appHtml.includes('data-not-found-page="true"')) {
+              responseStatus = 404;
+            }
             html = html.replace('<div id="root"></div>', `<div id="root" data-ssr="true">${appHtml}</div>`);
           }
         }
@@ -427,7 +436,7 @@ export default async function handler(req, res) {
     res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
     
     // Send response
-    res.status(200).send(html);
+    res.status(responseStatus).send(html);
   } catch (error) {
     console.error('SSR Error:', error);
     console.error('Error details:', error.message);

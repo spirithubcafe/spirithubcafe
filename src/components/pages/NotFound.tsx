@@ -3,13 +3,19 @@ import { Link } from 'react-router-dom';
 import { useApp } from '../../hooks/useApp';
 import { Button } from '../ui/button';
 import { Home, Coffee, ArrowLeft, ArrowRight } from 'lucide-react';
+import { Seo } from '../seo/Seo';
 
 export const NotFound: React.FC = () => {
   const { language } = useApp();
   const isRTL = language === 'ar';
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100 flex items-center justify-center px-4 py-16">
+    <div data-not-found-page="true" className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100 flex items-center justify-center px-4 py-16">
+      <Seo
+        title={language === 'ar' ? 'الصفحة غير موجودة' : 'Page Not Found'}
+        description={language === 'ar' ? 'الصفحة المطلوبة غير متوفرة حالياً.' : 'The requested page could not be found.'}
+        noindex
+      />
       <div className="max-w-2xl mx-auto text-center">
         {/* 404 Number */}
         <div className="mb-8">

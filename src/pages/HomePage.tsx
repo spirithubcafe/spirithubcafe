@@ -138,7 +138,6 @@ const HomePage: React.FC = () => {
         logo: `${siteMetadata.baseUrl}/images/logo/logo-light.png`,
         description: seoCopy.description,
         telephone: '+96891900005',
-        email: 'info@spirithubcafe.com',
         sameAs: [
           'https://instagram.com/spirithubcafe',
           'https://facebook.com/spirithubcafe',
@@ -252,6 +251,7 @@ const HomePage: React.FC = () => {
       <Seo
         title={seoCopy.title}
         description={seoCopy.description}
+        image="/logo.png"
         keywords={[
           'specialty coffee Oman',
           'coffee roastery Muscat',

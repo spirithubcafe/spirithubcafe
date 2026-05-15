@@ -1,5 +1,5 @@
 import React from 'react';
-import { GoogleLogin } from '@react-oauth/google';
+import { GoogleLogin, GoogleOAuthProvider } from '@react-oauth/google';
 import type { CredentialResponse } from '@react-oauth/google';
 import { useAuth } from '../../hooks/useAuth';
 import { useApp } from '../../hooks/useApp';
@@ -80,20 +80,32 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({ mode = 'lo
   }
 
   return (
-    <div className="w-full flex justify-center">
-      <div className="w-full max-w-sm">
-        <GoogleLogin
-          onSuccess={handleGoogleSuccess}
-          onError={handleGoogleError}
-          useOneTap={false}
-          text={mode === 'login' ? 'signin_with' : 'signup_with'}
-          shape="rectangular"
-          theme="outline"
-          size="large"
-          width="100%"
-          locale={isArabic ? 'ar' : 'en'}
-        />
+    <GoogleOAuthProvider
+      clientId={googleClientId}
+      onScriptLoadSuccess={() => {
+        console.info('[auth] Google OAuth script loaded');
+      }}
+      onScriptLoadError={() => {
+        console.error(
+          '[auth] Failed to load Google OAuth script. Check ad-blockers/CSP and Authorized JavaScript origins in Google Cloud Console.'
+        );
+      }}
+    >
+      <div className="w-full flex justify-center">
+        <div className="w-full max-w-sm">
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={handleGoogleError}
+            useOneTap={false}
+            text={mode === 'login' ? 'signin_with' : 'signup_with'}
+            shape="rectangular"
+            theme="outline"
+            size="large"
+            width="100%"
+            locale={isArabic ? 'ar' : 'en'}
+          />
+        </div>
       </div>
-    </div>
+    </GoogleOAuthProvider>
   );
 };

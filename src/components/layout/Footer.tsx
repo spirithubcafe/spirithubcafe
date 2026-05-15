@@ -52,6 +52,20 @@ export const Footer: React.FC = () => {
     return `/${currentRegion.code}${path}`;
   };
 
+  const normalizeEmailAddress = (value: string) => value.replace(/^mailto:/i, '').trim();
+  const obfuscateEmailAddress = (value: string) => {
+    const normalized = normalizeEmailAddress(value);
+    return normalized.replace('@', ' [at] ');
+  };
+  const openEmailClient = (value: string) => {
+    if (typeof window === 'undefined') return;
+    const normalized = normalizeEmailAddress(value);
+    window.location.href = `mailto:${normalized}`;
+  };
+
+  const contactEmail = normalizeEmailAddress(regionInfo.contact.email);
+  const contactEmailLabel = obfuscateEmailAddress(regionInfo.contact.email);
+
   const quickLinks = [
     { label: language === 'ar' ? 'الرئيسية' : 'Home', href: getRegionalUrl('/') },
     { label: language === 'ar' ? 'المتجر' : 'Shop', href: getRegionalUrl('/products') },
@@ -69,10 +83,10 @@ export const Footer: React.FC = () => {
   ];
 
   const socialLinks = [
-    ...(regionInfo.social.facebook ? [{ icon: Facebook, href: regionInfo.social.facebook, label: 'Facebook' }] : []),
-    ...(regionInfo.social.instagram ? [{ icon: Instagram, href: regionInfo.social.instagram, label: 'Instagram' }] : []),
-    { icon: MessageCircle, href: regionInfo.social.whatsapp, label: 'WhatsApp' },
-    { icon: Mail, href: regionInfo.social.email, label: 'Email' }
+    ...(regionInfo.social.facebook ? [{ icon: Facebook, href: regionInfo.social.facebook, label: 'Facebook', isEmail: false }] : []),
+    ...(regionInfo.social.instagram ? [{ icon: Instagram, href: regionInfo.social.instagram, label: 'Instagram', isEmail: false }] : []),
+    { icon: MessageCircle, href: regionInfo.social.whatsapp, label: 'WhatsApp', isEmail: false },
+    { icon: Mail, href: regionInfo.social.email, label: 'Email', isEmail: true }
   ];
 
   return (
@@ -197,12 +211,14 @@ export const Footer: React.FC = () => {
                       </li>
                     )}
                   </ul>
-                  <a
-                    href={`mailto:${regionInfo.contact.email}`}
+                  <button
+                    type="button"
+                    onClick={() => openEmailClient(contactEmail)}
                     className="text-gray-300 hover:text-amber-200 transition-colors"
+                    aria-label={language === 'ar' ? 'إرسال بريد إلكتروني إلى سبيريت هب' : 'Send an email to Spirit Hub'}
                   >
-                    {regionInfo.contact.email}
-                  </a>
+                    {contactEmailLabel}
+                  </button>
                   <p className="text-gray-300 font-medium whitespace-pre-line">
                     {language === 'ar' ? regionInfo.contact.workingHours.ar : regionInfo.contact.workingHours.en}
                   </p>
@@ -221,16 +237,28 @@ export const Footer: React.FC = () => {
                 </h4>
                 <div className="flex gap-3 md:gap-4 mb-4 md:mb-6 flex-wrap">
                   {socialLinks.map((social) => (
-                    <a
-                      key={social.label}
-                      href={social.href}
-                      target={social.label !== 'Email' ? '_blank' : undefined}
-                      rel={social.label !== 'Email' ? 'noopener noreferrer' : undefined}
-                      className="w-10 h-10 md:w-12 md:h-12 bg-white/10 hover:bg-amber-600 rounded-full flex items-center justify-center transition-all duration-300 backdrop-blur-sm"
-                      aria-label={social.label}
-                    >
-                      <social.icon className="w-4 h-4 md:w-5 md:h-5" />
-                    </a>
+                    social.isEmail ? (
+                      <button
+                        key={social.label}
+                        type="button"
+                        onClick={() => openEmailClient(social.href)}
+                        className="w-10 h-10 md:w-12 md:h-12 bg-white/10 hover:bg-amber-600 rounded-full flex items-center justify-center transition-all duration-300 backdrop-blur-sm"
+                        aria-label={social.label}
+                      >
+                        <social.icon className="w-4 h-4 md:w-5 md:h-5" />
+                      </button>
+                    ) : (
+                      <a
+                        key={social.label}
+                        href={social.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-10 h-10 md:w-12 md:h-12 bg-white/10 hover:bg-amber-600 rounded-full flex items-center justify-center transition-all duration-300 backdrop-blur-sm"
+                        aria-label={social.label}
+                      >
+                        <social.icon className="w-4 h-4 md:w-5 md:h-5" />
+                      </a>
+                    )
                   ))}
                 </div>
                 <p className="text-gray-400 text-xs md:text-sm">

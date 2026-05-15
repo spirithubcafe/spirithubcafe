@@ -102,9 +102,12 @@ export default defineConfig(({ isSsrBuild }) => ({
       output: {
         // Only apply manualChunks for client builds; SSR externalizes these
         ...(!isSsrBuild && {
+          onlyExplicitManualChunks: true,
           manualChunks(id: string) {
             // Keep admin/reporting page code out of the storefront critical path.
-            // Stability-first: avoid splitting core/vendor runtime libraries here.
+            // Only place the matched route modules themselves into the admin chunk.
+            // Shared dependencies stay in their natural chunks so the homepage does
+            // not inherit an unnecessary dependency on the admin bundle.
             if (
               id.includes('/src/components/admin/') ||
               id.includes('/src/pages/CategoryAddPage') ||

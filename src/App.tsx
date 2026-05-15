@@ -1,6 +1,5 @@
 import { lazy, Suspense, useEffect } from 'react';
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
-import { GoogleOAuthProvider } from '@react-oauth/google';
 import { Toaster } from './components/ui/sonner';
 import { AppProvider } from './contexts/AppContext';
 import { AuthProvider } from './contexts/AuthContext';
@@ -384,23 +383,7 @@ function App() {
     </ErrorBoundary>
   );
 
-  return googleClientId ? (
-    <GoogleOAuthProvider
-      clientId={googleClientId}
-      onScriptLoadSuccess={() => {
-        console.info('[auth] Google OAuth script loaded');
-      }}
-      onScriptLoadError={() => {
-        console.error(
-          '[auth] Failed to load Google OAuth script. Check ad-blockers/CSP and Authorized JavaScript origins in Google Cloud Console.'
-        );
-      }}
-    >
-      {app}
-    </GoogleOAuthProvider>
-  ) : (
-    app
-  );
+  return app;
 }
 
 export default App;

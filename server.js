@@ -304,6 +304,8 @@ app.use(async (req, res, next) => {
     // Replace the meta tags in the template
     let html = template.replace('<!--app-head-->', `${ssrLanguageScript}${metaTags}`);
 
+    let responseStatus = 200;
+
     // ── Attempt SSR (inject rendered HTML into <div id="root">) ────
     // Wrapped in try/catch so a render failure never breaks the site;
     // users will just get the SPA shell (current behaviour) instead.
@@ -325,6 +327,9 @@ app.use(async (req, res, next) => {
       if (typeof render === 'function') {
          const { html: appHtml, error } = await render(url, requestLanguage === 'ar' ? 'ar' : 'en');
         if (appHtml && !error) {
+          if (appHtml.includes('data-not-found-page="true"')) {
+            responseStatus = 404;
+          }
           // Inject the server-rendered markup inside <div id="root">
           html = html.replace('<div id="root"></div>', `<div id="root">${appHtml}</div>`);
         }
@@ -335,7 +340,7 @@ app.use(async (req, res, next) => {
       console.warn('[SSR] render skipped:', ssrError?.message || ssrError);
     }
 
-    res.status(200).set({ 'Content-Type': 'text/html' }).send(html);
+    res.status(responseStatus).set({ 'Content-Type': 'text/html' }).send(html);
   } catch (e) {
     if (!isProduction && vite) {
       vite.ssrFixStacktrace(e);
@@ -404,6 +409,10 @@ async function getMetaTagsForRoute(url, requestBaseUrl, requestLanguage = 'en') 
 
   // Normalize path for matching (strip trailing slash)
   const pathKey = cleanUrl.replace(/\/$/, '') || '/';
+
+  if (pathKey === '/') {
+    image = `${baseUrl}/logo.png`;
+  }
 
   // Customize based on route
   if (pathKey.startsWith('/products/') && pathKey.length > 10) {
