@@ -12,11 +12,6 @@ import { RegionRedirect } from './components/layout/RegionRedirect';
 import { Footer } from './components/layout/Footer';
 import { CartDrawer } from './components/cart/CartDrawer';
 import HomePage from './pages/HomePage';
-import { ProductsPage } from './pages/ProductsPage';
-import { ProductDetailPage } from './pages/ProductDetailPage';
-import ShopPage from './pages/Shop/ShopPage';
-import ShopCategoryPage from './pages/Shop/ShopCategoryPage';
-import { NotFound } from './components/pages/NotFound';
 import { ErrorBoundary, RouteErrorBoundary } from './components/pages/ErrorBoundary';
 import { RequireAuth } from './components/auth/RequireAuth';
 import { RequireWholesale } from './components/auth/RequireWholesale';
@@ -57,6 +52,11 @@ const WholesaleDashboardPage = lazy(() => import('./pages/WholesaleDashboardPage
 const WholesaleOrdersPage = lazy(() => import('./pages/WholesaleOrdersPage'));
 const WholesaleOrderDetailsPage = lazy(() => import('./pages/WholesaleOrderDetailsPage'));
 const AdminRoutes = lazy(() => import('./components/admin/AdminRoutes'));
+const ProductsPage = lazy(() => import('./pages/ProductsPage').then((m) => ({ default: m.ProductsPage })));
+const ProductDetailPage = lazy(() => import('./pages/ProductDetailPage').then((m) => ({ default: m.ProductDetailPage })));
+const ShopPage = lazy(() => import('./pages/Shop/ShopPage'));
+const ShopCategoryPage = lazy(() => import('./pages/Shop/ShopCategoryPage'));
+const NotFound = lazy(() => import('./components/pages/NotFound').then((m) => ({ default: m.NotFound })));
 
 function AppContent() {
   const location = useLocation();

@@ -1,24 +1,21 @@
 "use client"
 
 import * as React from "react"
-import { OverlayScrollbarsComponent } from "overlayscrollbars-react"
 import { cn } from "@/lib/utils"
 
-type Props = React.ComponentProps<typeof OverlayScrollbarsComponent>
+type Props = React.HTMLAttributes<HTMLDivElement> & {
+  options?: unknown
+}
 
-function ScrollArea({ className, options, children, ...props }: Props) {
+function ScrollArea({ className, children, ...props }: Props) {
   return (
-    <OverlayScrollbarsComponent
+    <div
       data-slot="scroll-area"
-      className={cn("os-theme-custom", className)}
-      options={{
-        scrollbars: { autoHide: 'leave', clickScroll: true, dragScroll: true },
-        ...options
-      } as any}
+      className={cn("os-theme-custom overflow-auto", className)}
       {...props}
     >
       {children}
-    </OverlayScrollbarsComponent>
+    </div>
   )
 }
 

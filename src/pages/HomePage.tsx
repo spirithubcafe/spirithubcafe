@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowUpRight, Compass, Coffee, Sparkles, Truck } from 'lucide-react';
+import { ArrowUpRight, Compass, Coffee, Truck } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { ProfessionalHeroSlider } from '../components/layout/ProfessionalHeroSlider';
 import { AnnouncementBar } from '../components/layout/AnnouncementBar';
@@ -273,15 +273,7 @@ const HomePage: React.FC = () => {
           <UnifiedCategoriesSection />
           <GoogleReviewsSection />
           <InstagramSection />
-          <section className="relative overflow-hidden border-y border-stone-200 bg-stone-100 py-12 md:py-16">
-            <motion.div
-              aria-hidden="true"
-              className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-stone-200/60"
-              initial={{ opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: -12 }}
-              viewport={{ once: true, amount: 0.2 }}
-              transition={{ duration: 1.1, ease: 'easeOut' }}
-            />
+          <section className="relative overflow-hidden border-y border-stone-200 bg-white py-12 md:py-16">
             <motion.div
               aria-hidden="true"
               className="pointer-events-none absolute -right-12 top-12 h-56 w-56 rounded-full bg-stone-300/35 blur-2xl"
@@ -317,10 +309,6 @@ const HomePage: React.FC = () => {
                   />
                   <div className="relative flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
                     <div className="max-w-3xl space-y-4">
-                      <div className="inline-flex w-fit items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-white/80">
-                        <Sparkles className="h-3.5 w-3.5" />
-                        SpiritHub Editorial
-                      </div>
                       <p className="max-w-3xl text-base leading-8 text-white/90 md:text-lg">
                         {editorialCopy.intro}
                       </p>
