@@ -99,6 +99,8 @@ export const RegisterPage: React.FC = () => {
         description={activeCopy.subtitle}
         canonical={`${siteMetadata.baseUrl}/register`}
         structuredData={structuredData}
+        noindex
+        robots="noindex, nofollow"
       />
       <PageHeader
         title="Register"

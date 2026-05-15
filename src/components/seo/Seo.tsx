@@ -145,10 +145,12 @@ export const Seo: React.FC<SeoProps> = ({
     if (canonical) {
       return canonical;
     }
-
-    const base = siteMetadata.baseUrl || window.location.origin;
-    return `${base}${location.pathname}${location.search}`;
-  }, [canonical, location.pathname, location.search]);
+    // Use siteMetadata.baseUrl (never window.location.origin) so SSR stays consistent
+    const base = siteMetadata.baseUrl;
+    // Strip query params from canonical (product listing pages with ?category= are handled separately)
+    const cleanPath = location.pathname;
+    return `${base}${cleanPath}`;
+  }, [canonical, location.pathname]);
 
   const resolvedLocale = locale ?? (language === 'ar' ? 'ar-OM' : 'en-OM');
   const region = detectRegionFromPath(location.pathname);
@@ -196,25 +198,30 @@ export const Seo: React.FC<SeoProps> = ({
     
     // Ensure Open Graph image is set, with fallback
     if (resolvedImage) {
-      ensureMeta('meta[property="og:image"]', { property: 'og:image' }, resolvedImage);
-      ensureMeta('meta[property="og:image:secure_url"]', { property: 'og:image:secure_url' }, resolvedImage);
+      // WhatsApp doesn't support WebP — proxy via wsrv.nl for JPEG conversion
+      const isWebp = resolvedImage.toLowerCase().endsWith('.webp');
+      const socialImage = isWebp
+        ? `https://wsrv.nl/?url=${encodeURIComponent(resolvedImage)}&output=jpg&q=90&w=1200&h=630&fit=cover`
+        : resolvedImage;
+      ensureMeta('meta[property="og:image"]', { property: 'og:image' }, socialImage);
+      ensureMeta('meta[property="og:image:secure_url"]', { property: 'og:image:secure_url' }, socialImage);
       ensureMeta('meta[property="og:image:width"]', { property: 'og:image:width' }, '1200');
       ensureMeta('meta[property="og:image:height"]', { property: 'og:image:height' }, '630');
       ensureMeta('meta[property="og:image:alt"]', { property: 'og:image:alt' }, resolvedTitle);
+      ensureMeta('meta[name="twitter:image"]', { name: 'twitter:image' }, socialImage);
+      ensureMeta('meta[name="twitter:image:alt"]', { name: 'twitter:image:alt' }, resolvedTitle);
     }
-    
-    ensureMeta('meta[property="og:locale"]', { property: 'og:locale' }, resolvedLocale);
-    ensureMeta('meta[property="og:locale:alternate"]', { property: 'og:locale:alternate' }, 'en-OM');
+
+    // Locale: reflect actual region + language, not always en-OM
+    const ogLocaleCode = resolvedLocale.replace('-', '_');
+    const ogLocaleAlt = region === 'sa'
+      ? (resolvedLocale.startsWith('ar') ? 'en_SA' : 'ar_SA')
+      : (resolvedLocale.startsWith('ar') ? 'en_OM' : 'ar_OM');
+    ensureMeta('meta[property="og:locale"]', { property: 'og:locale' }, ogLocaleCode);
+    ensureMeta('meta[property="og:locale:alternate"]', { property: 'og:locale:alternate' }, ogLocaleAlt);
     ensureMeta('meta[name="twitter:card"]', { name: 'twitter:card' }, 'summary_large_image');
     ensureMeta('meta[name="twitter:title"]', { name: 'twitter:title' }, resolvedTitle);
     ensureMeta('meta[name="twitter:description"]', { name: 'twitter:description' }, finalOgDesc);
-    
-    // Ensure Twitter image is set, with fallback
-    if (resolvedImage) {
-      ensureMeta('meta[name="twitter:image"]', { name: 'twitter:image' }, resolvedImage);
-      ensureMeta('meta[name="twitter:image:alt"]', { name: 'twitter:image:alt' }, resolvedTitle);
-    }
-    
     ensureMeta('meta[name="twitter:site"]', { name: 'twitter:site' }, siteMetadata.twitterHandle);
     ensureMeta('meta[name="twitter:creator"]', { name: 'twitter:creator' }, siteMetadata.twitterHandle);
 

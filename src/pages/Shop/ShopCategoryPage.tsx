@@ -132,13 +132,53 @@ export const ShopCategoryPage = () => {
   const name = isArabic ? category.nameAr || category.name : category.name;
   const description = isArabic ? category.descriptionAr || category.description : category.description;
 
+  const regionPath = currentRegion.code === 'sa' ? '' : '/om';
+  const shopBaseUrl = currentRegion.code === 'sa' ? 'https://spirithub.sa' : siteMetadata.baseUrl;
+  const categoryCanonical = `${shopBaseUrl}${regionPath}/shop/${category.slug}`;
+  const shopUrl = `${shopBaseUrl}${regionPath}/shop`;
+  const homeUrl = `${shopBaseUrl}${regionPath}`;
+
+  const structuredData = useMemo(() => [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: isArabic ? 'الرئيسية' : 'Home', item: homeUrl },
+        { '@type': 'ListItem', position: 2, name: isArabic ? 'المتجر' : 'Shop', item: shopUrl },
+        { '@type': 'ListItem', position: 3, name, item: categoryCanonical },
+      ],
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'CollectionPage',
+      url: categoryCanonical,
+      name,
+      description: description || name,
+      inLanguage: isArabic ? 'ar' : 'en',
+      numberOfItems: products.length,
+      publisher: { '@type': 'Organization', name: 'Spirit Hub Cafe', url: siteMetadata.baseUrl },
+    },
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  ], [categoryCanonical, shopUrl, homeUrl, name, description, isArabic, products.length]);
+
+  const seoDescription = description ||
+    (isArabic
+      ? `تصفح منتجات ${name} من سبيريت هب كافيه. قهوة مختصة محمصة طازجة وأدوات تحضير.`
+      : `Browse ${name} products at Spirit Hub Cafe. Specialty coffee, capsules and brewing equipment.`);
+
+  const seoKeywords = isArabic
+    ? [`${name}`, 'سبيريت هب', 'قهوة مختصة', 'محمصة قهوة عمان']
+    : [`${name}`, 'Spirit Hub Cafe', 'specialty coffee Oman', 'coffee shop online'];
+
   return (
     <div className={`min-h-screen bg-stone-50 ${isArabic ? 'rtl' : 'ltr'}`}>
       <Seo
         title={pageTitle}
-        description={description || ''}
-        canonical={`${siteMetadata.baseUrl}/shop/${category.slug}`}
+        description={seoDescription}
+        keywords={seoKeywords}
+        canonical={categoryCanonical}
         type="website"
+        structuredData={structuredData}
       />
 
       <PageHeader

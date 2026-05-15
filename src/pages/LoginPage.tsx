@@ -117,6 +117,8 @@ export const LoginPage: React.FC = () => {
         description={activeCopy.subtitle}
         canonical={`${siteMetadata.baseUrl}/login`}
         structuredData={structuredData}
+        noindex
+        robots="noindex, nofollow"
       />
       <PageHeader
         title="Login"

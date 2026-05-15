@@ -164,6 +164,28 @@ export const FAQPage: React.FC = () => {
     }
   ];
 
+  // Flatten an answer list to plain text — JSX nodes cannot be serialized into JSON-LD
+  const flattenAnswer = (items: (string | React.ReactNode)[]): string =>
+    items
+      .map((item) => {
+        if (typeof item === 'string') return item;
+        // Extract text content from React elements (shallow)
+        try {
+          const el = item as React.ReactElement;
+          const children = (el?.props as { children?: unknown })?.children;
+          if (Array.isArray(children)) {
+            return children
+              .map((c: unknown) => (typeof c === 'string' ? c : ''))
+              .join('');
+          }
+          return typeof children === 'string' ? children : '';
+        } catch {
+          return '';
+        }
+      })
+      .filter(Boolean)
+      .join(' ');
+
   const structuredData = useMemo(
     () => ({
       '@context': 'https://schema.org',
@@ -173,10 +195,11 @@ export const FAQPage: React.FC = () => {
         name: language === 'ar' ? faq.questionAr : faq.question,
         acceptedAnswer: {
           '@type': 'Answer',
-          text: (language === 'ar' ? faq.answerAr : faq.answer).join('\n'),
+          text: flattenAnswer(language === 'ar' ? faq.answerAr : faq.answer),
         },
       })),
     }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [faqs, language]
   );
 

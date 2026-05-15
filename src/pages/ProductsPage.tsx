@@ -80,9 +80,11 @@ export const ProductsPage = () => {
   const coffeeProducts = products;
 
   const canonicalUrl = useMemo(() => {
-    const suffix = categoryFromUrl ? `?category=${categoryFromUrl}` : '';
-    return `${siteMetadata.baseUrl}/products${suffix}`;
-  }, [categoryFromUrl]);
+    // Use region-prefixed URL: /om for Oman (canonical), no prefix for SA
+    const regionPath = regionPrefix === '/sa' ? '' : '/om';
+    // Canonical URL never includes category query params (avoid duplicate content)
+    return `${siteMetadata.baseUrl}${regionPath}/products`;
+  }, [regionPrefix]);
 
   // Handle category change and update URL
   const handleCategoryChange = (categoryId: string) => {
@@ -249,18 +251,37 @@ export const ProductsPage = () => {
         };
   }, [currentCategory, language, selectedCategory]);
 
-  const structuredData = useMemo(
-    () => ({
-      '@context': 'https://schema.org',
-      '@type': 'CollectionPage',
-      url: canonicalUrl,
-      name: seoContent.title,
-      description: seoContent.description,
-      inLanguage: language === 'ar' ? 'ar' : 'en',
-      numberOfItems: filteredProducts.length,
-    }),
-    [canonicalUrl, filteredProducts.length, language, seoContent.description, seoContent.title]
-  );
+  const structuredData = useMemo(() => {
+    const regionPath = regionPrefix === '/sa' ? '' : '/om';
+    const homeUrl = `${siteMetadata.baseUrl}${regionPath}`;
+    return [
+      {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: language === 'ar' ? 'الرئيسية' : 'Home', item: homeUrl },
+          { '@type': 'ListItem', position: 2, name: language === 'ar' ? 'المنتجات' : 'Products', item: canonicalUrl },
+          ...(currentCategory?.name
+            ? [{ '@type': 'ListItem' as const, position: 3, name: currentCategory.name, item: canonicalUrl }]
+            : []),
+        ],
+      },
+      {
+        '@context': 'https://schema.org',
+        '@type': 'CollectionPage',
+        url: canonicalUrl,
+        name: seoContent.title,
+        description: seoContent.description,
+        inLanguage: language === 'ar' ? 'ar' : 'en',
+        numberOfItems: filteredProducts.length,
+        publisher: {
+          '@type': 'Organization',
+          name: 'Spirit Hub Cafe',
+          url: siteMetadata.baseUrl,
+        },
+      },
+    ];
+  }, [canonicalUrl, filteredProducts.length, language, seoContent.description, seoContent.title, regionPrefix, currentCategory]);
 
   // Category options
   const categoryOptions = useMemo<CategoryOption[]>(() => {

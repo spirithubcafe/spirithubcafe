@@ -20,19 +20,38 @@ let cacheTimestamp = 0;
 const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
 
 // ── Static pages (always included) ──────────────────────────────────
-const STATIC_PAGES = [
+// Oman pages (canonical region)
+const STATIC_PAGES_OM = [
   { loc: '/om',             changefreq: 'daily',   priority: '1.0' },
   { loc: '/om/products',    changefreq: 'daily',   priority: '0.9' },
+  { loc: '/om/shop',        changefreq: 'daily',   priority: '0.8' },
   { loc: '/om/about',       changefreq: 'monthly', priority: '0.7' },
   { loc: '/om/contact',     changefreq: 'monthly', priority: '0.6' },
   { loc: '/om/faq',         changefreq: 'monthly', priority: '0.5' },
-  { loc: '/om/shop',        changefreq: 'daily',   priority: '0.8' },
-  { loc: '/om/privacy',     changefreq: 'yearly',  priority: '0.3' },
-  { loc: '/om/terms',       changefreq: 'yearly',  priority: '0.3' },
+  { loc: '/om/loyalty',     changefreq: 'monthly', priority: '0.5' },
   { loc: '/om/delivery',    changefreq: 'monthly', priority: '0.4' },
   { loc: '/om/refund',      changefreq: 'monthly', priority: '0.4' },
-  { loc: '/om/loyalty',     changefreq: 'monthly', priority: '0.5' },
+  { loc: '/om/privacy',     changefreq: 'yearly',  priority: '0.3' },
+  { loc: '/om/terms',       changefreq: 'yearly',  priority: '0.3' },
 ];
+
+// Saudi Arabia pages
+const STATIC_PAGES_SA = [
+  { loc: '',                changefreq: 'daily',   priority: '1.0' }, // spirithub.sa/
+  { loc: '/products',       changefreq: 'daily',   priority: '0.9' },
+  { loc: '/shop',           changefreq: 'daily',   priority: '0.8' },
+  { loc: '/about',          changefreq: 'monthly', priority: '0.7' },
+  { loc: '/contact',        changefreq: 'monthly', priority: '0.6' },
+  { loc: '/faq',            changefreq: 'monthly', priority: '0.5' },
+  { loc: '/loyalty',        changefreq: 'monthly', priority: '0.5' },
+  { loc: '/delivery',       changefreq: 'monthly', priority: '0.4' },
+  { loc: '/refund',         changefreq: 'monthly', priority: '0.4' },
+  { loc: '/privacy',        changefreq: 'yearly',  priority: '0.3' },
+  { loc: '/terms',          changefreq: 'yearly',  priority: '0.3' },
+];
+
+// Merged list (OM is canonical, SA added for completeness)
+const STATIC_PAGES = STATIC_PAGES_OM;
 
 // ── Helpers ─────────────────────────────────────────────────────────
 
@@ -135,61 +154,79 @@ async function buildSitemap() {
     fetchAllCategories(),
   ]);
 
+  const SA_SITE_URL = 'https://spirithub.sa';
+
+  const buildUrl = (loc, lastmod, changefreq, priority) => {
+    return `  <url>\n    <loc>${escapeXml(loc)}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <changefreq>${changefreq}</changefreq>\n    <priority>${priority}</priority>\n  </url>\n`;
+  };
+
   let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
   xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"\n`;
   xml += `        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"\n`;
   xml += `        xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9\n`;
   xml += `        http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">\n\n`;
 
-  // ── Static pages ────────────────────────────────────────────────
-  for (const page of STATIC_PAGES) {
-    xml += `  <url>\n`;
-    xml += `    <loc>${escapeXml(SITE_URL + page.loc)}</loc>\n`;
-    xml += `    <lastmod>${todayStr}</lastmod>\n`;
-    xml += `    <changefreq>${page.changefreq}</changefreq>\n`;
-    xml += `    <priority>${page.priority}</priority>\n`;
-    xml += `  </url>\n`;
+  // ── Static Oman pages (canonical) ───────────────────────────────
+  xml += `  <!-- Oman static pages -->\n`;
+  for (const page of STATIC_PAGES_OM) {
+    xml += buildUrl(SITE_URL + page.loc, todayStr, page.changefreq, page.priority);
   }
 
-  // ── Category pages ──────────────────────────────────────────────
+  // ── Static Saudi Arabia pages ───────────────────────────────────
+  xml += `\n  <!-- Saudi Arabia static pages -->\n`;
+  for (const page of STATIC_PAGES_SA) {
+    xml += buildUrl(SA_SITE_URL + page.loc, todayStr, page.changefreq, page.priority);
+  }
+
+  // ── Category pages (Oman) ───────────────────────────────────────
   if (categories.length > 0) {
-    xml += `\n  <!-- Categories -->\n`;
+    xml += `\n  <!-- Shop categories (Oman) -->\n`;
     for (const cat of categories) {
       const slug = cat.slug || cat.categorySlug;
       if (!slug) continue;
-      xml += `  <url>\n`;
-      xml += `    <loc>${escapeXml(SITE_URL + '/om/shop/' + slug)}</loc>\n`;
-      xml += `    <lastmod>${todayStr}</lastmod>\n`;
-      xml += `    <changefreq>weekly</changefreq>\n`;
-      xml += `    <priority>0.8</priority>\n`;
-      xml += `  </url>\n`;
+      xml += buildUrl(SITE_URL + '/om/shop/' + slug, todayStr, 'weekly', '0.8');
+    }
+
+    xml += `\n  <!-- Shop categories (Saudi Arabia) -->\n`;
+    for (const cat of categories) {
+      const slug = cat.slug || cat.categorySlug;
+      if (!slug) continue;
+      xml += buildUrl(SA_SITE_URL + '/shop/' + slug, todayStr, 'weekly', '0.8');
     }
   }
 
   // ── Product pages ───────────────────────────────────────────────
   if (products.length > 0) {
-    xml += `\n  <!-- Products -->\n`;
+    xml += `\n  <!-- Products (Oman) -->\n`;
     for (const product of products) {
       const slug = product.slug || product.productSlug;
       if (!slug) continue;
 
-      // Use product's updatedAt/modifiedDate if available
       let lastmod = todayStr;
       const updatedAt = product.updatedAt || product.modifiedDate || product.createdAt;
       if (updatedAt) {
         try {
           lastmod = new Date(updatedAt).toISOString().split('T')[0];
-        } catch {
-          // keep todayStr
-        }
+        } catch { /* keep todayStr */ }
       }
 
-      xml += `  <url>\n`;
-      xml += `    <loc>${escapeXml(SITE_URL + '/om/products/' + slug)}</loc>\n`;
-      xml += `    <lastmod>${lastmod}</lastmod>\n`;
-      xml += `    <changefreq>weekly</changefreq>\n`;
-      xml += `    <priority>0.7</priority>\n`;
-      xml += `  </url>\n`;
+      xml += buildUrl(SITE_URL + '/om/products/' + slug, lastmod, 'weekly', '0.7');
+    }
+
+    xml += `\n  <!-- Products (Saudi Arabia) -->\n`;
+    for (const product of products) {
+      const slug = product.slug || product.productSlug;
+      if (!slug) continue;
+
+      let lastmod = todayStr;
+      const updatedAt = product.updatedAt || product.modifiedDate || product.createdAt;
+      if (updatedAt) {
+        try {
+          lastmod = new Date(updatedAt).toISOString().split('T')[0];
+        } catch { /* keep todayStr */ }
+      }
+
+      xml += buildUrl(SA_SITE_URL + '/products/' + slug, lastmod, 'weekly', '0.7');
     }
   }
 

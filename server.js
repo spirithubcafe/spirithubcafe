@@ -331,16 +331,38 @@ app.use(async (req, res, next) => {
   }
 });
 
+// Escape HTML special characters to prevent XSS / broken meta tags
+const escapeHtmlAttr = (str) => {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+};
+
+// Build JSON-LD structured data for a page (injected into SSR HTML)
+const buildStructuredDataTag = (data) => {
+  try {
+    const payload = Array.isArray(data) ? data : [data];
+    const json = JSON.stringify(payload);
+    return `<script type="application/ld+json" data-generated="seo">${json}</script>`;
+  } catch {
+    return '';
+  }
+};
+
 // Helper function to generate meta tags based on route
 async function getMetaTagsForRoute(url, requestBaseUrl, requestLanguage = 'en') {
   const baseUrl = (requestBaseUrl || process.env.VITE_SITE_URL || process.env.SITE_URL || 'https://spirithubcafe.com')
     .toString()
     .replace(/\/+$/, '');
-  
+
   // Clean URL (remove query params and hash)
   let cleanUrl = url.split('?')[0].split('#')[0];
   if (!cleanUrl.startsWith('/')) cleanUrl = `/${cleanUrl}`;
-  
+
   // Extract region from URL and normalize path
   let region = 'om'; // default
   if (cleanUrl.startsWith('/om/') || cleanUrl === '/om') {
@@ -350,46 +372,60 @@ async function getMetaTagsForRoute(url, requestBaseUrl, requestLanguage = 'en') 
     region = 'sa';
     cleanUrl = cleanUrl.substring(3) || '/';
   }
-  
+
+  const isAr = requestLanguage === 'ar';
+  const regionLabel = region === 'sa' ? (isAr ? 'السعودية' : 'Saudi Arabia') : (isAr ? 'عُمان' : 'Oman');
+  const cityLabel = region === 'sa' ? (isAr ? 'الخبر' : 'Khobar') : (isAr ? 'مسقط' : 'Muscat');
+
   // Default meta tags
-  let title = 'Spirit Hub Cafe | Specialty Coffee in Oman | سبيريت هب';
-  let description = 'Spirit Hub Cafe roasts specialty coffee in Oman. Discover premium beans, artisanal brews, and a vibrant community experience at سبيريت هب.';
-  let image = `${baseUrl}/images/icon-512x512.png`;
+  let title = isAr
+    ? `سبيريت هب | قهوة مختصة محمصة في ${regionLabel} | SpiritHub Roastery`
+    : `SpiritHub Roastery | Specialty Coffee Roasted in ${regionLabel} | سبيريت هب`;
+  let description = isAr
+    ? `اطلب قهوة مختصة فاخرة، كبسولات، وقهوة فلتر. محمصة بعناية في ${cityLabel}. شراء حبوب قهوة مختصة محمصة طازجة يومياً.`
+    : `Premium specialty coffee roasted in ${regionLabel}. Shop capsules, filter brews, and freshly roasted coffee beans online. Fast delivery in ${cityLabel}.`;
+  let image = `${baseUrl}/images/slides/premium-specialty-coffee-roasted-in-oman.webp`;
   let ogType = 'website';
-  
-  // Update titles based on region
-  if (region === 'sa') {
-    title = 'Spirit Hub Cafe | Specialty Coffee in Saudi Arabia | سبيريت هب';
-    description = 'Spirit Hub Cafe roasts specialty coffee in Saudi Arabia. Discover premium beans, artisanal brews, and a vibrant community experience at سبيريت هب.';
-  }
+  let structuredDataJson = null;
+
+  // Normalize path for matching (strip trailing slash)
+  const pathKey = cleanUrl.replace(/\/$/, '') || '/';
 
   // Customize based on route
-  if (cleanUrl.startsWith('/products/') && cleanUrl.length > 10) {
-    const identifier = cleanUrl.split('/products/')[1].split('/')[0];
+  if (pathKey.startsWith('/products/') && pathKey.length > 10) {
+    const identifier = pathKey.split('/products/')[1].split('/')[0];
 
-    title = `Product Details | Spirit Hub Cafe`;
-    description = `View our premium coffee products at Spirit Hub Cafe`;
+    title = isAr ? `تفاصيل المنتج | سبيريت هب` : `Product Details | Spirit Hub Cafe`;
+    description = isAr
+      ? `عرض منتجات القهوة المختصة الفاخرة في سبيريت هب`
+      : `View our premium specialty coffee products at Spirit Hub Cafe`;
     ogType = 'product';
 
     const product = await fetchProductDetails(identifier, region, requestLanguage);
     if (product) {
-      const productName = product.name || 'Product';
-      title = `${productName} | Spirit Hub Cafe`;
+      const productName = (isAr && product.nameAr) ? product.nameAr : (product.name || 'Product');
+      title = isAr ? `${productName} | سبيريت هب` : `${productName} | Spirit Hub Cafe`;
 
-      let productDesc = product.description || '';
+      const rawDesc = (isAr && product.descriptionAr) ? product.descriptionAr : (product.description || '');
+      let productDesc = String(rawDesc)
+        .replace(/<[^>]*>/g, ' ')
+        .replace(/&[^;]+;/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
       if (productDesc) {
-        productDesc = String(productDesc)
-          .replace(/<[^>]*>/g, '')
-          .replace(/&[^;]+;/g, '')
-          .trim();
-        description = productDesc.length > 160 ? `${productDesc.substring(0, 157)}...` : productDesc;
+        description = productDesc.length > 155 ? `${productDesc.substring(0, 152)}...` : productDesc;
       }
 
-      if (!description && product.tastingNotes) {
-        description = `${productName} - ${product.tastingNotes}`;
+      const tastingNotes = (isAr && product.tastingNotesAr) ? product.tastingNotesAr : product.tastingNotes;
+      if (!description && tastingNotes) {
+        description = isAr
+          ? `${productName} - نكهات: ${tastingNotes}`
+          : `${productName} - Tasting notes: ${tastingNotes}`;
       }
       if (!description) {
-        description = `Buy ${productName} from Spirit Hub Cafe`;
+        description = isAr
+          ? `اشتري ${productName} من سبيريت هب كافيه. قهوة مختصة محمصة طازجة في ${cityLabel}.`
+          : `Buy ${productName} from Spirit Hub Cafe. Fresh roasted specialty coffee in ${cityLabel}, ${regionLabel}.`;
       }
 
       const apiBase = getApiBaseUrlForRegion(region);
@@ -403,73 +439,187 @@ async function getMetaTagsForRoute(url, requestBaseUrl, requestLanguage = 'en') 
       if (resolvedImage) {
         image = resolvedImage;
       }
+
+      // Build Product JSON-LD for crawlers
+      const normalizedPath = pathKey || '/';
+      const omProductUrl = `${SEO_HOSTS.om}/om${normalizedPath}`;
+      const saProductUrl = `${SEO_HOSTS.sa}${normalizedPath}`;
+      const productUrl = region === 'sa' ? saProductUrl : omProductUrl;
+      const priceValue = product.price || product.minPrice || product.basePrice || null;
+      const currency = region === 'sa' ? 'SAR' : 'OMR';
+
+      structuredDataJson = [
+        {
+          '@context': 'https://schema.org',
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: isAr ? 'الرئيسية' : 'Home', item: region === 'sa' ? SEO_HOSTS.sa : `${SEO_HOSTS.om}/om` },
+            { '@type': 'ListItem', position: 2, name: isAr ? 'المنتجات' : 'Products', item: region === 'sa' ? `${SEO_HOSTS.sa}/products` : `${SEO_HOSTS.om}/om/products` },
+            { '@type': 'ListItem', position: 3, name: productName, item: productUrl },
+          ],
+        },
+        {
+          '@context': 'https://schema.org',
+          '@type': 'Product',
+          name: productName,
+          description: description,
+          sku: product.sku || undefined,
+          image: resolvedImage ? [resolvedImage] : undefined,
+          brand: { '@type': 'Brand', name: 'Spirit Hub Cafe' },
+          url: productUrl,
+          category: product.category?.name || undefined,
+          ...(priceValue ? {
+            offers: {
+              '@type': 'Offer',
+              priceCurrency: currency,
+              price: String(Number(priceValue).toFixed(3)),
+              availability: product.isActive ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+              url: productUrl,
+              seller: { '@type': 'Organization', name: 'Spirit Hub Cafe' },
+            },
+          } : {}),
+        },
+      ];
     }
-  } else if (cleanUrl === '/products' || cleanUrl === '/products/') {
-    title = 'Our Products | Spirit Hub Cafe | سبيريت هب';
-    description = 'Browse our selection of specialty coffee beans, brewing equipment, and premium merchandise from Spirit Hub Cafe';
-  } else if (cleanUrl === '/about' || cleanUrl === '/about/') {
-    title = 'About Us | Spirit Hub Cafe | سبيريت هب';
-    description = 'Learn about Spirit Hub Cafe - our story, mission, and passion for roasting the finest specialty coffee in Oman';
-  } else if (cleanUrl === '/contact' || cleanUrl === '/contact/') {
-    title = 'Contact Us | Spirit Hub Cafe | سبيريت هب';
-    description = 'Get in touch with Spirit Hub Cafe in Muscat, Oman - visit us, call us, or send us a message';
-  } else if (cleanUrl === '/favorites' || cleanUrl === '/favorites/') {
-    title = 'My Favorites | Spirit Hub Cafe';
-    description = 'View your favorite products from Spirit Hub Cafe';
-  } else if (cleanUrl === '/orders' || cleanUrl === '/orders/') {
-    title = 'My Orders | Spirit Hub Cafe';
-    description = 'Track and manage your orders from Spirit Hub Cafe';
-  } else if (cleanUrl === '/checkout' || cleanUrl === '/checkout/') {
-    title = 'Checkout | Spirit Hub Cafe';
-    description = 'Complete your order from Spirit Hub Cafe - Oman\'s premier specialty coffee roastery';
-  } else if (cleanUrl === '/login' || cleanUrl === '/login/') {
-    title = 'Login | Spirit Hub Cafe';
-    description = 'Sign in to your Spirit Hub Cafe account';
-  } else if (cleanUrl === '/register' || cleanUrl === '/register/') {
-    title = 'Create Account | Spirit Hub Cafe';
-    description = 'Join Spirit Hub Cafe community and enjoy exclusive benefits';
+  } else if (pathKey === '/products') {
+    title = isAr
+      ? 'منتجاتنا | سبيريت هب | قهوة مختصة وكبسولات وأدوات تحضير'
+      : 'Our Products | Spirit Hub Cafe | Specialty Coffee, Capsules & Brewing Equipment';
+    description = isAr
+      ? 'تصفح مجموعتنا من حبوب القهوة المختصة والكبسولات ومعدات التحضير من سبيريت هب كافيه. محمصة طازجة يومياً في عمان.'
+      : 'Browse our specialty coffee beans, capsules, and brewing equipment. Freshly roasted daily at Spirit Hub Cafe in Oman.';
+  } else if (pathKey === '/about') {
+    title = isAr
+      ? 'عن محمصة SpiritHub | خبراء قهوة مختصة في عمان والسعودية'
+      : 'About SpiritHub Roastery | Specialty Coffee Experts in Oman & Saudi Arabia';
+    description = isAr
+      ? 'محمصة قهوة مختصة رائدة في مسقط والخبر. خبراء Q Graders معتمدين، حبوب قهوة فاخرة، تحميص يومي.'
+      : 'Leading specialty coffee roastery in Muscat & Khobar. Q Grader certified experts, premium beans, daily roasting.';
+  } else if (pathKey === '/contact') {
+    title = isAr
+      ? `اتصل بنا | محمصة SpiritHub ${cityLabel}`
+      : `Contact Us | SpiritHub Roastery ${cityLabel}`;
+    description = isAr
+      ? `تواصل معنا للطلبات وشراء القهوة المختصة. هاتف، واتساب، أو زيارة محمصتنا في ${cityLabel}.`
+      : `Reach us for orders and specialty coffee. Call, WhatsApp, or visit our roastery in ${cityLabel}, ${regionLabel}.`;
+  } else if (pathKey === '/faq') {
+    title = isAr
+      ? 'الأسئلة الشائعة | سبيريت هب كافيه'
+      : 'FAQ | Spirit Hub Cafe - Frequently Asked Questions';
+    description = isAr
+      ? 'إجابات على أكثر الأسئلة شيوعاً حول الطلبات والشحن والقهوة المختصة في سبيريت هب.'
+      : 'Answers to the most common questions about orders, shipping, and specialty coffee at Spirit Hub Cafe.';
+  } else if (pathKey === '/loyalty' || pathKey.startsWith('/loyalty')) {
+    title = isAr
+      ? 'برنامج الولاء | سبيريت هب - اكسب نقاط مع كل طلب'
+      : 'Loyalty Program | Spirit Hub Cafe - Earn Points With Every Order';
+    description = isAr
+      ? 'انضم لبرنامج الولاء في سبيريت هب واكسب نقاط مع كل عملية شراء. استبدل نقاطك بمنتجات مجانية وخصومات.'
+      : 'Join Spirit Hub Cafe loyalty program and earn points with every purchase. Redeem for free products and discounts.';
+  } else if (pathKey === '/shop' || pathKey.startsWith('/shop')) {
+    title = isAr
+      ? 'متجر القهوة | سبيريت هب - تصفح جميع الأصناف'
+      : 'Coffee Shop | Spirit Hub Cafe - Browse All Collections';
+    description = isAr
+      ? 'تسوق قهوة مختصة، كبسولات، معدات تحضير وهدايا من سبيريت هب. توصيل سريع في عمان والسعودية.'
+      : 'Shop specialty coffee, capsules, brewing equipment and gifts at Spirit Hub Cafe. Fast delivery in Oman and Saudi Arabia.';
+  } else if (pathKey === '/privacy') {
+    title = isAr
+      ? 'سياسة الخصوصية | سبيريت هب كافيه'
+      : 'Privacy Policy | Spirit Hub Cafe';
+    description = isAr
+      ? 'سياسة الخصوصية لموقع سبيريت هب كافيه. تعرف على كيفية جمع واستخدام بياناتك.'
+      : 'Spirit Hub Cafe Privacy Policy. Learn how we collect and use your data to protect your privacy.';
+  } else if (pathKey === '/terms') {
+    title = isAr
+      ? 'الشروط والأحكام | سبيريت هب كافيه'
+      : 'Terms & Conditions | Spirit Hub Cafe';
+    description = isAr
+      ? 'شروط وأحكام الاستخدام والشراء في سبيريت هب كافيه.'
+      : 'Spirit Hub Cafe Terms and Conditions for using the website and making purchases.';
+  } else if (pathKey === '/delivery') {
+    title = isAr
+      ? 'سياسة التوصيل والشحن | سبيريت هب كافيه'
+      : 'Delivery & Shipping Policy | Spirit Hub Cafe';
+    description = isAr
+      ? 'معلومات الشحن والتوصيل: المناطق المخدومة، التكاليف، ومواعيد التسليم في سبيريت هب.'
+      : 'Shipping and delivery information: service areas, costs, and estimated delivery times at Spirit Hub Cafe.';
+  } else if (pathKey === '/refund') {
+    title = isAr
+      ? 'سياسة الاسترجاع والاسترداد | سبيريت هب كافيه'
+      : 'Refund & Return Policy | Spirit Hub Cafe';
+    description = isAr
+      ? 'سياسة الاسترجاع والاسترداد في سبيريت هب. تعرف على حقوقك كعميل.'
+      : 'Spirit Hub Cafe Refund and Return Policy. Know your rights as a customer for returns and refunds.';
+  } else if (pathKey === '/login') {
+    title = isAr ? 'تسجيل الدخول | سبيريت هب كافيه' : 'Login | Spirit Hub Cafe';
+    description = isAr ? 'سجّل دخولك إلى حسابك في سبيريت هب كافيه.' : 'Sign in to your Spirit Hub Cafe account.';
+  } else if (pathKey === '/register') {
+    title = isAr ? 'إنشاء حساب | سبيريت هب كافيه' : 'Create Account | Spirit Hub Cafe';
+    description = isAr
+      ? 'انضم إلى مجتمع سبيريت هب واستمتع بمزايا حصرية وعروض خاصة.'
+      : 'Join the Spirit Hub Cafe community and enjoy exclusive benefits and special offers.';
+  } else if (pathKey === '/checkout') {
+    title = isAr ? 'إتمام الطلب | سبيريت هب كافيه' : 'Checkout | Spirit Hub Cafe';
+    description = isAr
+      ? 'أتمم طلبك من سبيريت هب كافيه - محمصة القهوة المختصة الرائدة في عمان.'
+      : 'Complete your order from Spirit Hub Cafe - Oman\'s premier specialty coffee roastery.';
   }
 
   // WhatsApp doesn't support WebP - convert to JPEG
   const isWebp = (image || '').toLowerCase().endsWith('.webp');
-  const ogImage = isWebp && image 
-    ? `https://wsrv.nl/?url=${encodeURIComponent(image)}&output=jpg&q=90` 
+  const ogImage = isWebp && image
+    ? `https://wsrv.nl/?url=${encodeURIComponent(image)}&output=jpg&q=90&w=1200&h=630&fit=cover`
     : image;
   const ogImageType = isWebp ? 'image/jpeg' : guessMimeType(image);
 
   const ogImageTags = ogImage ? `
-    <meta property="og:image" content="${ogImage}" />
-    <meta property="og:image:secure_url" content="${ogImage}" />
+    <meta property="og:image" content="${escapeHtmlAttr(ogImage)}" />
+    <meta property="og:image:secure_url" content="${escapeHtmlAttr(ogImage)}" />
     <meta property="og:image:type" content="${ogImageType}" />
-    <meta property="og:image:width" content="1080" />
-    <meta property="og:image:height" content="1080" />` : '';
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="${escapeHtmlAttr(title)}" />` : '';
 
   const normalizedPath = cleanUrl || '/';
   const omUrl = normalizedPath === '/' ? `${SEO_HOSTS.om}/om` : `${SEO_HOSTS.om}/om${normalizedPath}`;
   const saUrl = normalizedPath === '/' ? SEO_HOSTS.sa : `${SEO_HOSTS.sa}${normalizedPath}`;
   const canonicalUrl = region === 'sa' ? saUrl : omUrl;
+  const ogLocale = isAr ? (region === 'sa' ? 'ar_SA' : 'ar_OM') : (region === 'sa' ? 'en_SA' : 'en_OM');
+  const ogLocaleAlt = isAr ? (region === 'sa' ? 'en_SA' : 'en_OM') : (region === 'sa' ? 'ar_SA' : 'ar_OM');
+
+  const safeTitle = escapeHtmlAttr(title);
+  const safeDesc = escapeHtmlAttr(description);
+  const safeCanonical = escapeHtmlAttr(canonicalUrl);
+  const safeOmUrl = escapeHtmlAttr(omUrl);
+  const safeSaUrl = escapeHtmlAttr(saUrl);
+
+  const structuredDataTag = structuredDataJson ? buildStructuredDataTag(structuredDataJson) : '';
 
   return `
-    <title>${title}</title>
-    <meta name="description" content="${description}" />
-    <link rel="canonical" href="${canonicalUrl}" />
-    <link rel="alternate" hreflang="en-OM" href="${omUrl}" />
-    <link rel="alternate" hreflang="ar-OM" href="${omUrl}" />
-    <link rel="alternate" hreflang="en-SA" href="${saUrl}" />
-    <link rel="alternate" hreflang="ar-SA" href="${saUrl}" />
-    <link rel="alternate" hreflang="x-default" href="${omUrl}" />
+    <title>${safeTitle}</title>
+    <meta name="description" content="${safeDesc}" />
+    <link rel="canonical" href="${safeCanonical}" />
+    <link rel="alternate" hreflang="en-OM" href="${safeOmUrl}" />
+    <link rel="alternate" hreflang="ar-OM" href="${safeOmUrl}" />
+    <link rel="alternate" hreflang="en-SA" href="${safeSaUrl}" />
+    <link rel="alternate" hreflang="ar-SA" href="${safeSaUrl}" />
+    <link rel="alternate" hreflang="x-default" href="${safeOmUrl}" />
     <meta property="og:type" content="${ogType}" />
-    <meta property="og:title" content="${title}" />
-    <meta property="og:description" content="${description}" />
-    <meta property="og:url" content="${canonicalUrl}" />
-    <meta property="og:locale" content="en-OM" />
-    <meta property="og:locale:alternate" content="ar-OM" />
+    <meta property="og:title" content="${safeTitle}" />
+    <meta property="og:description" content="${safeDesc}" />
+    <meta property="og:url" content="${safeCanonical}" />
+    <meta property="og:locale" content="${ogLocale}" />
+    <meta property="og:locale:alternate" content="${ogLocaleAlt}" />
     ${ogImageTags}
     <meta property="og:site_name" content="Spirit Hub Cafe" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="${title}" />
-    <meta name="twitter:description" content="${description}" />
-    <meta name="twitter:image" content="${ogImage}" />
+    <meta name="twitter:site" content="@spirithubcafe" />
+    <meta name="twitter:title" content="${safeTitle}" />
+    <meta name="twitter:description" content="${safeDesc}" />
+    <meta name="twitter:image" content="${escapeHtmlAttr(ogImage)}" />
+    <meta name="twitter:image:alt" content="${safeTitle}" />
+    ${structuredDataTag}
   `;
 }
 

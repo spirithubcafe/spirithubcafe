@@ -1,21 +1,64 @@
 # Spirit Hub Cafe - Robots.txt
-# Updated: 2025-11-19
+# Updated: 2026-05-15
 
 User-agent: *
 Allow: /
+# Private / user-specific pages
 Disallow: /admin/
-Disallow: /checkout/
-Disallow: /payment/
+Disallow: /om/admin/
+Disallow: /sa/admin/
+Disallow: /profile
+Disallow: /om/profile
+Disallow: /sa/profile
+Disallow: /orders
+Disallow: /om/orders
+Disallow: /sa/orders
+Disallow: /order/
+Disallow: /om/order/
+Disallow: /sa/order/
+Disallow: /favorites
+Disallow: /om/favorites
+Disallow: /sa/favorites
+# Checkout & payment flows (no crawl value)
+Disallow: /checkout
+Disallow: /om/checkout
+Disallow: /sa/checkout
+Disallow: /payment
+Disallow: /om/payment
+Disallow: /sa/payment
+# Auth pages
+Disallow: /login
+Disallow: /om/login
+Disallow: /sa/login
+Disallow: /register
+Disallow: /om/register
+Disallow: /sa/register
+Disallow: /forgot-password
+Disallow: /om/forgot-password
+Disallow: /sa/forgot-password
+Disallow: /reset-password
+Disallow: /om/reset-password
+Disallow: /sa/reset-password
+# Wholesale / B2B
+Disallow: /wholesale/
+Disallow: /om/wholesale/
+Disallow: /sa/wholesale/
+# Internal API and raw JSON
 Disallow: /api/
 Disallow: /*.json$
-Disallow: /profile
-Disallow: /orders
-Disallow: /favorites
+# Loyalty signup form (keep parent /loyalty indexable)
+Disallow: /loyalty/signup
+Disallow: /om/loyalty/signup
+Disallow: /sa/loyalty/signup
 
-# Crawl-delay for specific bots (optional)
+# Google: no crawl delay
 User-agent: Googlebot
 Allow: /
 Crawl-delay: 0
+
+User-agent: Googlebot-Image
+Allow: /images/
+Allow: /
 
 User-agent: Bingbot
 Allow: /

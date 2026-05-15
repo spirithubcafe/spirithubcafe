@@ -1,29 +1,34 @@
 export const siteMetadata = {
   siteName: 'Spirit Hub Cafe',
   baseUrl: (import.meta.env.VITE_SITE_URL as string | undefined)?.replace(/\/+$/, '') || 'https://spirithubcafe.com',
-  defaultTitle: 'SpiritHub Roastery | Specialty Coffee & Capsules in Oman & Saudi',
+  defaultTitle: 'SpiritHub Roastery | Specialty Coffee Roasted in Oman & Saudi Arabia',
   defaultDescription:
-    'Premium specialty coffee, capsules, and filter brews. Roasted with care in Oman • Now serving Khobar, Saudi Arabia. Buy specialty coffee beans, order capsules online, expert roastery.',
+    'Premium specialty coffee roasted in Oman and Saudi Arabia. Shop capsules, filter brews, and freshly roasted coffee beans online. Fast delivery in Muscat and Khobar.',
   defaultDescriptionAr:
-    'سبيريت هب كافيه - أفضل محمصة قهوة مختصة في مسقط. حبوب قهوة طازجة محمصة، خلطات قهوة حرفية، معدات تحضير القهوة، واشتراكات القهوة. خبراء معتمدون وضيافة عربية أصيلة في عمان.',
+    'اطلب قهوة مختصة فاخرة، كبسولات، وقهوة فلتر. محمصة بعناية في مسقط عمان • نخدم الآن الخبر، السعودية. اشتري حبوب قهوة مختصة محمصة طازجة يومياً.',
   defaultKeywords: [
     'Spirit Hub Cafe',
+    'SpiritHub Roastery',
     'specialty coffee Oman',
     'coffee roastery Muscat',
     'fresh roasted coffee beans',
     'single origin coffee Oman',
-    'Arabic coffee Muscat',
-    'coffee subscription Oman',
+    'coffee capsules Oman',
+    'filter coffee Oman',
     'brewing equipment',
     'Q Grader certified',
-    'سبيريت هب كافيه',
+    'specialty coffee Saudi Arabia',
+    'coffee Khobar',
+    'سبيريت هب',
     'قهوة مختصة مسقط',
     'محمصة قهوة عمان',
     'حبوب قهوة طازجة',
-    'قهوة عربية مسقط',
+    'كبسولات قهوة',
+    'قهوة فلتر',
   ],
   twitterHandle: '@spirithubcafe',
-  defaultImage: '/images/icon-512x512.png',
+  // Use a proper 1200x630 banner image for social sharing (not the square app icon)
+  defaultImage: '/images/slides/premium-specialty-coffee-roasted-in-oman.webp',
 };
 
 export const resolveAbsoluteUrl = (relativeOrAbsolute?: string): string | undefined => {

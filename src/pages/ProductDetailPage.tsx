@@ -635,12 +635,13 @@ export const ProductDetailPage = () => {
   };
 
   const canonicalUrl = useMemo(() => {
+    const regionPath = currentRegion.code === 'sa' ? '' : '/om';
     if (!product) {
-      return `${siteMetadata.baseUrl}/products`;
+      return `${siteMetadata.baseUrl}${regionPath}/products`;
     }
     const slugOrId = (product.slug && product.slug.trim()) || String(product.id);
-    return `${siteMetadata.baseUrl}/products/${slugOrId}`;
-  }, [product]);
+    return `${siteMetadata.baseUrl}${regionPath}/products/${slugOrId}`;
+  }, [product, currentRegion.code]);
 
   // Use custom metaTitle if available, otherwise fallback to product name
   const seoTitle = product?.metaTitle || (product ? displayName : language === 'ar' ? 'تفاصيل المنتج' : 'Product details');
@@ -693,6 +694,10 @@ export const ProductDetailPage = () => {
         }
       : undefined;
 
+    const regionPrefix = currentRegion.code === 'sa' ? '' : '/om';
+    const homeUrl = `${siteMetadata.baseUrl}${regionPrefix}`;
+    const productsUrl = `${siteMetadata.baseUrl}${regionPrefix}/products`;
+
     // Breadcrumb structured data
     const breadcrumbList = {
       '@context': 'https://schema.org',
@@ -702,17 +707,25 @@ export const ProductDetailPage = () => {
           '@type': 'ListItem',
           position: 1,
           name: language === 'ar' ? 'الرئيسية' : 'Home',
-          item: `${siteMetadata.baseUrl}/`,
+          item: homeUrl,
         },
         {
           '@type': 'ListItem',
           position: 2,
           name: language === 'ar' ? 'المنتجات' : 'Products',
-          item: `${siteMetadata.baseUrl}/products`,
+          item: productsUrl,
         },
+        ...(product.category?.name
+          ? [{
+              '@type': 'ListItem' as const,
+              position: 3,
+              name: product.category.name,
+              item: `${productsUrl}?category=${product.category.slug || product.category.name}`,
+            }]
+          : []),
         {
           '@type': 'ListItem',
-          position: 3,
+          position: product.category?.name ? 4 : 3,
           name: displayName,
           item: canonicalUrl,
         },
@@ -725,12 +738,14 @@ export const ProductDetailPage = () => {
       '@type': 'Product',
       name: displayName,
       description: seoDescription,
-      sku: product.sku,
+      sku: product.sku || undefined,
+      url: canonicalUrl,
       image: imageList,
       brand: {
         '@type': 'Brand',
         name: siteMetadata.siteName,
       },
+      category: product.category?.name || undefined,
       offers: offerPrice
         ? {
             '@type': 'Offer',
@@ -739,20 +754,21 @@ export const ProductDetailPage = () => {
             availability: product.isActive
               ? 'https://schema.org/InStock'
               : 'https://schema.org/OutOfStock',
+            itemCondition: 'https://schema.org/NewCondition',
             url: canonicalUrl,
             seller: {
               '@type': 'Organization',
               name: siteMetadata.siteName,
+              url: siteMetadata.baseUrl,
             },
           }
         : undefined,
       aggregateRating: aggregate,
-      category: product.category?.name,
     };
 
     // Return both schemas as array
     return [breadcrumbList, productSchema];
-  }, [canonicalUrl, displayName, images, price, product, seoDescription, language, approvedReviewStatsLocal, approvedReviewStatsRemote]);
+  }, [canonicalUrl, displayName, images, price, product, seoDescription, language, currentRegion.code, approvedReviewStatsLocal, approvedReviewStatsRemote]);
 
   const isAvailable = product?.isActive ?? false;
   // Top badge: consider selected variant stock (if variant exists), otherwise fall back to product availability
