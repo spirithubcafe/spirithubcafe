@@ -11,6 +11,14 @@
     />
     <meta name="author" content="Spirit Hub Cafe" />
     <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+
+    <script>
+      (function () {
+        var style = document.createElement('style');
+        style.textContent = '[data-nav-desktop],[data-nav-tablet],[data-nav-mobile],[data-mobile-bottom-nav]{display:none}@media (max-width:767.98px){[data-nav-mobile]{display:flex}[data-mobile-bottom-nav]{display:block}}@media (min-width:768px) and (max-width:1023.98px){[data-nav-tablet]{display:flex}}@media (min-width:1024px){[data-nav-desktop]{display:flex}}';
+        document.head.appendChild(style);
+      })();
+    </script>
     
     <!--app-head-->
 

@@ -377,7 +377,7 @@ export const Navigation: React.FC = () => {
           </Link>
 
           {/* Desktop Navigation - Hidden on tablet and below */}
-          <div className="hidden lg:flex items-center space-x-6 xl:space-x-8">
+          <div data-nav-desktop className="hidden lg:flex items-center space-x-6 xl:space-x-8">
             {renderNavItems()}
             
             {/* Region Switcher */}
@@ -434,7 +434,7 @@ export const Navigation: React.FC = () => {
           </div>
 
           {/* Tablet Navigation - Show on medium screens */}
-          <div className="hidden md:flex lg:hidden items-center space-x-3">
+          <div data-nav-tablet className="hidden md:flex lg:hidden items-center space-x-3">
             <div className="flex items-center space-x-4">
               {renderNavItems()}
             </div>
@@ -481,7 +481,7 @@ export const Navigation: React.FC = () => {
           </div>
 
           {/* Mobile Navigation */}
-          <div className="flex md:hidden items-center space-x-2">
+          <div data-nav-mobile className="flex md:hidden items-center space-x-2">
             {/* Region Switcher - Mobile */}
             <RegionSwitcher isHomePage={isHomePage} />
             

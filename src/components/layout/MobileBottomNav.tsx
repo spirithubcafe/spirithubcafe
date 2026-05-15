@@ -74,6 +74,7 @@ export const MobileBottomNav: React.FC = () => {
     <>
       {/* Main navigation */}
       <motion.div 
+        data-mobile-bottom-nav
         initial={{ y: 100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ type: "spring", stiffness: 260, damping: 20 }}
@@ -248,7 +249,7 @@ export const MobileBottomNav: React.FC = () => {
                       to={item.path!}
                       className="group relative flex flex-col items-center justify-center p-3 min-w-[68px] rounded-xl overflow-hidden"
                     >
-                      {/* Gradient background — always visible */}
+                      {/* Gradient background ï¿½ always visible */}
                       <div className={`absolute inset-0 rounded-xl transition-opacity duration-200 ${
                         active
                           ? 'bg-gradient-to-br from-rose-400 to-pink-600 opacity-100'
