@@ -24,8 +24,8 @@ export const SustainabilitySection: React.FC = () => {
           {/* Description */}
           <p className="text-lg md:text-xl leading-relaxed mb-10 text-gray-100">
             {language === 'ar'
-              ? 'في سبيرت هب روستري، فلسفتنا مبنية على ثلاث ركائز: الاستدامة والجودة والالتزام. نؤمن بخلق تجربة قهوة تدعم الناس وتحافظ على الطبيعة وتحتفي بالحرفية. من الحصول على حبوب منزرعة أخلاقياً إلى تقليل النفايات في عملية التحميص والتعبئة، كل خطوة تعكس مسؤوليتنا تجاه الكوكب والمجتمعات التي نعمل معها. '
-              : "At SpiritHub Roastery, our philosophy is built on three pillars: Sustainability, Quality, and Commitment. We believe in creating a coffee experience that supports people, preserves nature, and celebrates craftsmanship. From sourcing ethically grown beans to minimizing waste in our roasting and packaging process, every step reflects our responsibility toward the planet and the communities we work with. "
+              ? 'في سبيرت هب، نؤمن بأن القهوة المختصة تتجاوز مجرد فنجان قهوة، فهي تجربة متكاملة تجمع بين الجودة والاستدامة والحرفية. نحرص على اختيار حبوب قهوة مختصة مزروعة بمسؤولية، مع تطبيق ممارسات تحميص وتعبئة مدروسة تعكس التزامنا تجاه البيئة والمجتمعات التي نتعامل معها، لنقدّم تجربة قهوة استثنائية في كل فنجان.'
+              : "At SpiritHub Roastery, we believe specialty coffee should create a meaningful impact beyond the cup. Our philosophy is built on sustainability, quality, and craftsmanship, from ethically sourced coffee beans and responsible roasting practices to carefully crafted coffee experiences that celebrate farmers, communities, and exceptional flavor in every roast."
             }
             <Link to="/about" className="text-amber-400 hover:text-amber-300 underline underline-offset-4 transition-colors">
               {language === 'ar' ? 'اعرف المزيد عن قصتنا' : 'Learn more about our story'}

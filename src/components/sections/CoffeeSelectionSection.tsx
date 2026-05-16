@@ -37,7 +37,7 @@ export const CoffeeSelectionSection: React.FC = () => {
           <p className="text-lg md:text-xl leading-relaxed mb-10 text-gray-100">
             {language === 'ar'
               ? 'مهمتنا هي إثراء يوم كل عميل بتجربة قهوة مصنوعة يدويًا. من خلال سبيرت هب روستري، نضمن جودة ونكهة استثنائية في كل كوب، من الحبوب المختارة بعناية إلى التحميص الخبير. أينما نخدم، تتألق شغفنا وتفانينا، مما يجعل كل رشفة لا تُنسى.'
-              : "Our mission is to enrich each customer's day with a hand-crafted coffee experience. Through SpiritHub Roastery, we guarantee exceptional quality and flavor in every cup, from carefully selected beans to expert roasting. Wherever we serve, our passion and dedication shine through, making every sip unforgettable."
+              : "Explore SpiritHub Roastery’s curated world of specialty coffee, from espresso blends and pour-over selections to premium coffee capsules and curated gift bundles. Freshly roasted in Oman and Saudi Arabia, each coffee is carefully selected for exceptional quality, distinctive character, and an unforgettable coffee experience."
             }
           </p>
 
