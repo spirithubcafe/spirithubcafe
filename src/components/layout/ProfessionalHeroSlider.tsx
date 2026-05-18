@@ -28,7 +28,7 @@ export const ProfessionalHeroSlider: React.FC = () => {
   );
   const mobileHeroImages = [
     '/images/slides/spirithub-cold-brew-oman-muscat.webp',
-    '/images/slides/spirithub-cold-brew-smooth-nitro.webp',
+    '/images/slides/spirithub-nitro-cascara.webp',
     '/images/slides/spirithub-cold-brew-smooth-low-acidity.webp',
   ];
   // Kept for future re-enable of mobile hero video without changing current image-only behavior.
