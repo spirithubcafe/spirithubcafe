@@ -357,7 +357,7 @@ async function getMetaTagsForRoute(url, baseUrl, preloadedProduct = null) {
     <meta property="og:image:width" content="1080" />
     <meta property="og:image:height" content="1080" />` : '';
 
-  const canonicalPath = cleanUrl || '/';
+  const canonicalPath = normalizedPath || '/';
   const omUrl = canonicalPath === '/' ? `${SEO_HOSTS.om}/om` : `${SEO_HOSTS.om}/om${canonicalPath}`;
   const saUrl = canonicalPath === '/' ? SEO_HOSTS.sa : `${SEO_HOSTS.sa}${canonicalPath}`;
   const canonicalUrl = region === 'sa' ? saUrl : omUrl;
