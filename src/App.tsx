@@ -9,6 +9,7 @@ import { Navigation } from './components/layout/Navigation';
 import { MobileBottomNav } from './components/layout/MobileBottomNav';
 import { ScrollToTop } from './components/layout/ScrollToTop';
 import { RegionRedirect } from './components/layout/RegionRedirect';
+import { ChatBot } from './components/chatbot/ChatBot';
 import { Footer } from './components/layout/Footer';
 import { CartDrawer } from './components/cart/CartDrawer';
 import HomePage from './pages/HomePage';
@@ -90,6 +91,7 @@ function AppContent() {
       {!isInvoicePage && <MobileBottomNav />}
       {!isInvoicePage && <CartDrawer />}
       {!isInvoicePage && !isAdminPage && <ScrollToTop />}
+      {!isInvoicePage && !isAdminPage && <ChatBot />}
       {!isInvoicePage && <Toaster position="top-center" duration={2000} richColors />}
       <RouteErrorBoundary>
       <Suspense fallback={<div className="min-h-screen bg-white" />}>
