@@ -117,6 +117,67 @@ const buildOfferReturnPolicy = () => ({
 const buildStructuredDataTag = (data) =>
   `<script type="application/ld+json" data-generated="seo">${serializeForInlineScript(data)}</script>`;
 
+const toFiniteNumber = (value) => {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
+};
+
+const getApprovedProductReviews = (product) =>
+  Array.isArray(product?.reviews)
+    ? product.reviews.filter((review) => review?.isApproved === true)
+    : [];
+
+const toProductReviewSchema = (review) => {
+  const rating = toFiniteNumber(review?.rating);
+  const authorName = String(review?.customerName || '').trim();
+  const reviewBody = String(review?.content || '').trim();
+
+  if (!rating || rating < 1 || rating > 5 || !authorName || !reviewBody) {
+    return null;
+  }
+
+  return {
+    '@type': 'Review',
+    author: { '@type': 'Person', name: authorName },
+    datePublished: review.createdAt || undefined,
+    name: String(review.title || '').trim() || undefined,
+    reviewBody,
+    reviewRating: {
+      '@type': 'Rating',
+      ratingValue: rating,
+      bestRating: 5,
+      worstRating: 1,
+    },
+  };
+};
+
+const buildProductAggregateRating = (product, approvedReviews) => {
+  const approvedRatings = approvedReviews
+    .map((review) => toFiniteNumber(review?.rating))
+    .filter((rating) => rating !== null && rating >= 1 && rating <= 5);
+
+  if (approvedRatings.length > 0) {
+    const ratingValue = approvedRatings.reduce((sum, rating) => sum + rating, 0) / approvedRatings.length;
+    return {
+      '@type': 'AggregateRating',
+      ratingValue,
+      reviewCount: approvedRatings.length,
+    };
+  }
+
+  const ratingValue = toFiniteNumber(product?.averageRating);
+  const reviewCount = toFiniteNumber(product?.reviewCount);
+  if (ratingValue && ratingValue >= 1 && ratingValue <= 5 && reviewCount && reviewCount > 0) {
+    return {
+      '@type': 'AggregateRating',
+      ratingValue,
+      reviewCount,
+    };
+  }
+
+  return undefined;
+};
+
 // Helper function to generate meta tags based on route
 async function getMetaTagsForRoute(url, baseUrl, preloadedProduct = null) {
   const resolvedBaseUrl = (baseUrl || process.env.VITE_SITE_URL || process.env.SITE_URL || 'https://spirithubcafe.com')
@@ -311,6 +372,13 @@ async function getMetaTagsForRoute(url, baseUrl, preloadedProduct = null) {
     <meta property="og:availability" content="${productAvailability}" />`;
   }
 
+  const approvedReviews = getApprovedProductReviews(productForStructuredData);
+  const productReviews = approvedReviews
+    .map(toProductReviewSchema)
+    .filter(Boolean)
+    .slice(0, 5);
+  const aggregateRating = buildProductAggregateRating(productForStructuredData, approvedReviews);
+
   const productStructuredDataTag = productForStructuredData && productPrice
     ? buildStructuredDataTag({
         '@context': 'https://schema.org',
@@ -321,6 +389,8 @@ async function getMetaTagsForRoute(url, baseUrl, preloadedProduct = null) {
         image,
         brand: { '@type': 'Brand', name: 'Spirit Hub Cafe' },
         url: canonicalUrl,
+        aggregateRating,
+        review: productReviews.length ? productReviews : undefined,
         offers: {
           '@type': 'Offer',
           priceCurrency: productCurrency,
