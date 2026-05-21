@@ -372,6 +372,117 @@ const buildStructuredDataTag = (data) => {
   }
 };
 
+const toFiniteNumber = (value) => {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
+};
+
+const getApprovedProductReviews = (product) =>
+  Array.isArray(product?.reviews)
+    ? product.reviews.filter((review) => review?.isApproved === true)
+    : [];
+
+const toProductReviewSchema = (review) => {
+  const rating = toFiniteNumber(review?.rating);
+  const authorName = String(review?.customerName || '').trim();
+  const reviewBody = String(review?.content || '').trim();
+
+  if (!rating || rating < 1 || rating > 5 || !authorName || !reviewBody) {
+    return null;
+  }
+
+  return {
+    '@type': 'Review',
+    author: { '@type': 'Person', name: authorName },
+    datePublished: review.createdAt || undefined,
+    name: String(review.title || '').trim() || undefined,
+    reviewBody,
+    reviewRating: {
+      '@type': 'Rating',
+      ratingValue: rating,
+      bestRating: 5,
+      worstRating: 1,
+    },
+  };
+};
+
+const buildProductAggregateRating = (product, approvedReviews) => {
+  const approvedRatings = approvedReviews
+    .map((review) => toFiniteNumber(review?.rating))
+    .filter((rating) => rating !== null && rating >= 1 && rating <= 5);
+
+  if (approvedRatings.length > 0) {
+    const ratingValue = approvedRatings.reduce((sum, rating) => sum + rating, 0) / approvedRatings.length;
+    return {
+      '@type': 'AggregateRating',
+      ratingValue,
+      reviewCount: approvedRatings.length,
+    };
+  }
+
+  const ratingValue = toFiniteNumber(product?.averageRating);
+  const reviewCount = toFiniteNumber(product?.reviewCount);
+  if (ratingValue && ratingValue >= 1 && ratingValue <= 5 && reviewCount && reviewCount > 0) {
+    return {
+      '@type': 'AggregateRating',
+      ratingValue,
+      reviewCount,
+    };
+  }
+
+  return undefined;
+};
+
+const GCC_COUNTRY_CODES = ['OM', 'SA', 'AE', 'KW', 'QA', 'BH'];
+
+const buildMerchantPolicySchema = (siteUrl) => {
+  const normalizedSiteUrl = String(siteUrl || '').replace(/\/$/, '');
+  const shippingPolicyId = `${normalizedSiteUrl}/delivery#shipping-policy`;
+  const returnPolicyId = `${normalizedSiteUrl}/refund#return-policy`;
+
+  return {
+    shippingPolicyId,
+    returnPolicyId,
+    organization: {
+      '@context': 'https://schema.org',
+      '@type': 'OnlineStore',
+      '@id': `${normalizedSiteUrl}/#organization`,
+      name: 'Spirit Hub Cafe',
+      url: normalizedSiteUrl,
+      hasShippingService: {
+        '@type': 'ShippingService',
+        '@id': shippingPolicyId,
+        name: 'GCC checkout delivery',
+        description: 'Delivery options and shipping costs are calculated at checkout for GCC destinations.',
+        fulfillmentType: 'https://schema.org/FulfillmentTypeDelivery',
+        shippingConditions: GCC_COUNTRY_CODES.map((countryCode) => ({
+          '@type': 'ShippingConditions',
+          shippingDestination: {
+            '@type': 'DefinedRegion',
+            addressCountry: countryCode,
+          },
+          transitTime: {
+            '@type': 'QuantitativeValue',
+            minValue: 1,
+            maxValue: 5,
+            unitCode: 'DAY',
+          },
+        })),
+      },
+      hasMerchantReturnPolicy: {
+        '@type': 'MerchantReturnPolicy',
+        '@id': returnPolicyId,
+        applicableCountry: GCC_COUNTRY_CODES,
+        returnPolicyCountry: 'OM',
+        returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow',
+        merchantReturnDays: 30,
+        returnMethod: 'https://schema.org/ReturnByMail',
+        refundType: 'https://schema.org/FullRefund',
+      },
+    },
+  };
+};
+
 // Helper function to generate meta tags based on route
 async function getMetaTagsForRoute(url, requestBaseUrl, requestLanguage = 'en') {
   const baseUrl = (requestBaseUrl || process.env.VITE_SITE_URL || process.env.SITE_URL || 'https://spirithubcafe.com')
@@ -477,6 +588,13 @@ async function getMetaTagsForRoute(url, requestBaseUrl, requestLanguage = 'en') 
       const productUrl = region === 'sa' ? saProductUrl : omProductUrl;
       const priceValue = product.price || product.minPrice || product.basePrice || null;
       const currency = region === 'sa' ? 'SAR' : 'OMR';
+      const approvedReviews = getApprovedProductReviews(product);
+      const productReviews = approvedReviews
+        .map(toProductReviewSchema)
+        .filter(Boolean)
+        .slice(0, 5);
+      const aggregateRating = buildProductAggregateRating(product, approvedReviews);
+      const merchantPolicies = buildMerchantPolicySchema(region === 'sa' ? SEO_HOSTS.sa : SEO_HOSTS.om);
 
       structuredDataJson = [
         {
@@ -498,6 +616,8 @@ async function getMetaTagsForRoute(url, requestBaseUrl, requestLanguage = 'en') 
           brand: { '@type': 'Brand', name: 'Spirit Hub Cafe' },
           url: productUrl,
           category: product.category?.name || undefined,
+          aggregateRating,
+          review: productReviews.length ? productReviews : undefined,
           ...(priceValue ? {
             offers: {
               '@type': 'Offer',
@@ -506,9 +626,15 @@ async function getMetaTagsForRoute(url, requestBaseUrl, requestLanguage = 'en') 
               availability: product.isActive ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
               url: productUrl,
               seller: { '@type': 'Organization', name: 'Spirit Hub Cafe' },
+              shippingDetails: {
+                '@type': 'OfferShippingDetails',
+                hasShippingService: { '@id': merchantPolicies.shippingPolicyId },
+              },
+              hasMerchantReturnPolicy: { '@id': merchantPolicies.returnPolicyId },
             },
           } : {}),
         },
+        merchantPolicies.organization,
       ];
     }
   } else if (pathKey === '/products') {

@@ -1,5 +1,3 @@
-import { fileURLToPath } from 'url';
-
 /**
  * Dynamic sitemap generator.
  *
@@ -34,24 +32,6 @@ const STATIC_PAGES_OM = [
   { loc: '/om/privacy',     changefreq: 'yearly',  priority: '0.3' },
   { loc: '/om/terms',       changefreq: 'yearly',  priority: '0.3' },
 ];
-
-// Saudi Arabia pages
-const STATIC_PAGES_SA = [
-  { loc: '',                changefreq: 'daily',   priority: '1.0' }, // spirithub.sa/
-  { loc: '/products',       changefreq: 'daily',   priority: '0.9' },
-  { loc: '/shop',           changefreq: 'daily',   priority: '0.8' },
-  { loc: '/about',          changefreq: 'monthly', priority: '0.7' },
-  { loc: '/contact',        changefreq: 'monthly', priority: '0.6' },
-  { loc: '/faq',            changefreq: 'monthly', priority: '0.5' },
-  { loc: '/loyalty',        changefreq: 'monthly', priority: '0.5' },
-  { loc: '/delivery',       changefreq: 'monthly', priority: '0.4' },
-  { loc: '/refund',         changefreq: 'monthly', priority: '0.4' },
-  { loc: '/privacy',        changefreq: 'yearly',  priority: '0.3' },
-  { loc: '/terms',          changefreq: 'yearly',  priority: '0.3' },
-];
-
-// Merged list (OM is canonical, SA added for completeness)
-const STATIC_PAGES = STATIC_PAGES_OM;
 
 // ── Helpers ─────────────────────────────────────────────────────────
 
@@ -154,8 +134,6 @@ async function buildSitemap() {
     fetchAllCategories(),
   ]);
 
-  const SA_SITE_URL = 'https://spirithub.sa';
-
   const buildUrl = (loc, lastmod, changefreq, priority) => {
     return `  <url>\n    <loc>${escapeXml(loc)}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <changefreq>${changefreq}</changefreq>\n    <priority>${priority}</priority>\n  </url>\n`;
   };
@@ -172,12 +150,6 @@ async function buildSitemap() {
     xml += buildUrl(SITE_URL + page.loc, todayStr, page.changefreq, page.priority);
   }
 
-  // ── Static Saudi Arabia pages ───────────────────────────────────
-  xml += `\n  <!-- Saudi Arabia static pages -->\n`;
-  for (const page of STATIC_PAGES_SA) {
-    xml += buildUrl(SA_SITE_URL + page.loc, todayStr, page.changefreq, page.priority);
-  }
-
   // ── Category pages (Oman) ───────────────────────────────────────
   if (categories.length > 0) {
     xml += `\n  <!-- Shop categories (Oman) -->\n`;
@@ -187,12 +159,6 @@ async function buildSitemap() {
       xml += buildUrl(SITE_URL + '/om/shop/' + slug, todayStr, 'weekly', '0.8');
     }
 
-    xml += `\n  <!-- Shop categories (Saudi Arabia) -->\n`;
-    for (const cat of categories) {
-      const slug = cat.slug || cat.categorySlug;
-      if (!slug) continue;
-      xml += buildUrl(SA_SITE_URL + '/shop/' + slug, todayStr, 'weekly', '0.8');
-    }
   }
 
   // ── Product pages ───────────────────────────────────────────────
@@ -213,21 +179,6 @@ async function buildSitemap() {
       xml += buildUrl(SITE_URL + '/om/products/' + slug, lastmod, 'weekly', '0.7');
     }
 
-    xml += `\n  <!-- Products (Saudi Arabia) -->\n`;
-    for (const product of products) {
-      const slug = product.slug || product.productSlug;
-      if (!slug) continue;
-
-      let lastmod = todayStr;
-      const updatedAt = product.updatedAt || product.modifiedDate || product.createdAt;
-      if (updatedAt) {
-        try {
-          lastmod = new Date(updatedAt).toISOString().split('T')[0];
-        } catch { /* keep todayStr */ }
-      }
-
-      xml += buildUrl(SA_SITE_URL + '/products/' + slug, lastmod, 'weekly', '0.7');
-    }
   }
 
   xml += `\n</urlset>\n`;

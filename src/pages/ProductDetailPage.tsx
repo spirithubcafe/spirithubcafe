@@ -52,6 +52,7 @@ type LoadState = 'idle' | 'loading' | 'ready' | 'error';
 type ApprovedReviewStats = {
   averageRating: number;
   totalReviews: number;
+  reviews: ProductReview[];
 };
 
 const toNumber = (value: unknown): number | undefined => {
@@ -65,6 +66,83 @@ const toNumber = (value: unknown): number | undefined => {
   }
 
   return undefined;
+};
+
+const toProductReviewSchema = (review: ProductReview): Record<string, unknown> | null => {
+  const rating = toNumber(review.rating);
+  const authorName = review.customerName?.trim();
+  const reviewBody = review.content?.trim();
+
+  if (!review.isApproved || !rating || rating < 1 || rating > 5 || !authorName || !reviewBody) {
+    return null;
+  }
+
+  return {
+    '@type': 'Review',
+    author: {
+      '@type': 'Person',
+      name: authorName,
+    },
+    datePublished: review.createdAt || undefined,
+    name: review.title?.trim() || undefined,
+    reviewBody,
+    reviewRating: {
+      '@type': 'Rating',
+      ratingValue: rating,
+      bestRating: 5,
+      worstRating: 1,
+    },
+  };
+};
+
+const GCC_COUNTRY_CODES = ['OM', 'SA', 'AE', 'KW', 'QA', 'BH'];
+
+const buildMerchantPolicySchema = (siteUrl: string) => {
+  const normalizedSiteUrl = siteUrl.replace(/\/$/, '');
+  const shippingPolicyId = `${normalizedSiteUrl}/delivery#shipping-policy`;
+  const returnPolicyId = `${normalizedSiteUrl}/refund#return-policy`;
+
+  return {
+    shippingPolicyId,
+    returnPolicyId,
+    organization: {
+      '@context': 'https://schema.org',
+      '@type': 'OnlineStore',
+      '@id': `${normalizedSiteUrl}/#organization`,
+      name: siteMetadata.siteName,
+      url: normalizedSiteUrl,
+      hasShippingService: {
+        '@type': 'ShippingService',
+        '@id': shippingPolicyId,
+        name: 'GCC checkout delivery',
+        description: 'Delivery options and shipping costs are calculated at checkout for GCC destinations.',
+        fulfillmentType: 'https://schema.org/FulfillmentTypeDelivery',
+        shippingConditions: GCC_COUNTRY_CODES.map((countryCode) => ({
+          '@type': 'ShippingConditions',
+          shippingDestination: {
+            '@type': 'DefinedRegion',
+            addressCountry: countryCode,
+          },
+          transitTime: {
+            '@type': 'QuantitativeValue',
+            minValue: 1,
+            maxValue: 5,
+            unitCode: 'DAY',
+          },
+        })),
+      },
+      hasMerchantReturnPolicy: {
+        '@type': 'MerchantReturnPolicy',
+        '@id': returnPolicyId,
+        applicableCountry: GCC_COUNTRY_CODES,
+        returnPolicyCountry: 'OM',
+        returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow',
+        merchantReturnDays: 30,
+        returnMethod: 'https://schema.org/ReturnByMail',
+        refundType: 'https://schema.org/FullRefund',
+      },
+    },
+  };
 };
 
 const isUfoDripProduct = (product?: ApiProduct | null): boolean => {
@@ -219,12 +297,13 @@ export const ProductDetailPage = () => {
 
     const approved = reviews.filter((review) => review.isApproved);
     if (!approved.length) {
-      return { averageRating: 0, totalReviews: 0 };
+      return { averageRating: 0, totalReviews: 0, reviews: [] };
     }
     const sum = approved.reduce((acc, r) => acc + (Number(r.rating) || 0), 0);
     return {
       averageRating: sum / approved.length,
       totalReviews: approved.length,
+      reviews: approved.slice(0, 5),
     };
   }, [product?.reviews]);
 
@@ -259,13 +338,14 @@ export const ProductDetailPage = () => {
         const stats: ApprovedReviewStats = {
           averageRating: approved.length ? sum / approved.length : 0,
           totalReviews: approved.length,
+          reviews: approved.slice(0, 5),
         };
 
         if (!cancelled) setApprovedReviewStatsRemote(stats);
       } catch (err) {
         console.error('Failed to load approved review stats', err);
         // Be conservative: on error, avoid using product.averageRating/reviewCount (may include pending).
-        if (!cancelled) setApprovedReviewStatsRemote({ averageRating: 0, totalReviews: 0 });
+        if (!cancelled) setApprovedReviewStatsRemote({ averageRating: 0, totalReviews: 0, reviews: [] });
       }
     };
 
@@ -701,7 +781,7 @@ export const ProductDetailPage = () => {
     return language === 'ar'
       ? 'قهوة مختصة محمصة طازجة من سبيريت هب كافيه في مسقط، عمان.'
       : 'Fresh roasted specialty coffee from Spirit Hub Cafe in Muscat, Oman.';
-  }, [displayName, language, plainDescription, product, price]);
+  }, [displayName, language, plainDescription, product, price, currentRegion.currency]);
 
   const structuredData = useMemo(() => {
     if (!product) {
@@ -724,10 +804,15 @@ export const ProductDetailPage = () => {
           reviewCount: approvedCount,
         }
       : undefined;
+    const reviews = reviewStats?.reviews
+      .map(toProductReviewSchema)
+      .filter((review): review is Record<string, unknown> => Boolean(review))
+      .slice(0, 5);
 
     const regionPrefix = currentRegion.code === 'sa' ? '' : '/om';
     const homeUrl = `${siteMetadata.baseUrl}${regionPrefix}`;
     const productsUrl = `${siteMetadata.baseUrl}${regionPrefix}/products`;
+    const merchantPolicies = buildMerchantPolicySchema(siteMetadata.baseUrl);
 
     // Breadcrumb structured data
     const breadcrumbList = {
@@ -792,14 +877,20 @@ export const ProductDetailPage = () => {
               name: siteMetadata.siteName,
               url: siteMetadata.baseUrl,
             },
+            shippingDetails: {
+              '@type': 'OfferShippingDetails',
+              hasShippingService: { '@id': merchantPolicies.shippingPolicyId },
+            },
+            hasMerchantReturnPolicy: { '@id': merchantPolicies.returnPolicyId },
           }
         : undefined,
       aggregateRating: aggregate,
+      review: reviews?.length ? reviews : undefined,
     };
 
     // Return both schemas as array
-    return [breadcrumbList, productSchema];
-  }, [canonicalUrl, displayName, images, price, product, seoDescription, language, currentRegion.code, approvedReviewStatsLocal, approvedReviewStatsRemote]);
+    return [breadcrumbList, productSchema, merchantPolicies.organization];
+  }, [canonicalUrl, displayName, images, price, product, seoDescription, language, currentRegion.code, currentRegion.currency, approvedReviewStatsLocal, approvedReviewStatsRemote]);
 
   const isAvailable = product?.isActive ?? false;
   // Top badge: consider selected variant stock (if variant exists), otherwise fall back to product availability
@@ -814,6 +905,12 @@ export const ProductDetailPage = () => {
     return product.isActive;
   })();
   const averageRating = (approvedReviewStatsLocal ?? approvedReviewStatsRemote)?.averageRating ?? 0;
+  const visibleApprovedReviews = useMemo(() => {
+    const reviewStats = approvedReviewStatsLocal ?? approvedReviewStatsRemote;
+    return (reviewStats?.reviews ?? [])
+      .filter((review) => Boolean(toProductReviewSchema(review)))
+      .slice(0, 5);
+  }, [approvedReviewStatsLocal, approvedReviewStatsRemote]);
   const tastingNotes = language === 'ar' 
     ? (product?.tastingNotesAr ?? product?.notesAr ?? '') 
     : (product?.tastingNotes ?? product?.notes ?? '');
@@ -2391,6 +2488,36 @@ export const ProductDetailPage = () => {
 
               {/* You might also like */}
               <RelatedProducts currentProduct={product} shopData={shopData ?? null} />
+
+              {visibleApprovedReviews.length ? (
+                <section className="mt-8">
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <h2 className="text-base font-bold text-gray-900">Customer reviews</h2>
+                    <span className="text-xs font-semibold text-amber-900/70">
+                      {visibleApprovedReviews.length} reviews
+                    </span>
+                  </div>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    {visibleApprovedReviews.map((review) => (
+                      <article key={review.id} className="rounded-lg border border-amber-100 bg-white p-4 shadow-sm">
+                        <div className="mb-2 flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-0.5" aria-label={`${review.rating} out of 5`}>
+                            {[1, 2, 3, 4, 5].map((value) => (
+                              <Star
+                                key={value}
+                                className={`h-3.5 w-3.5 ${value <= review.rating ? 'fill-amber-400 text-amber-400' : 'text-stone-200'}`}
+                              />
+                            ))}
+                          </div>
+                          <span className="text-xs font-medium text-gray-500">{review.customerName}</span>
+                        </div>
+                        {review.title ? <h3 className="mb-1 text-sm font-semibold text-gray-900">{review.title}</h3> : null}
+                        <p className="text-sm leading-6 text-gray-700">{review.content}</p>
+                      </article>
+                    ))}
+                  </div>
+                </section>
+              ) : null}
 
               {/* Reviews Popup */}
               <Dialog open={isReviewsDialogOpen} onOpenChange={setIsReviewsDialogOpen}>
