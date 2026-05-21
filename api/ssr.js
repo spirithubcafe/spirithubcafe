@@ -1,8 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SEO_HOSTS = {
   om: 'https://spirithubcafe.com',
   sa: 'https://spirithub.sa',
@@ -87,6 +85,38 @@ function getProductIdentifierFromUrl(url) {
 
 const serializeForInlineScript = (value) => JSON.stringify(value).replace(/</g, '\\u003c');
 
+const GCC_COUNTRY_CODES = ['OM', 'SA', 'AE', 'KW', 'QA', 'BH'];
+
+const buildOfferShippingDetails = () =>
+  GCC_COUNTRY_CODES.map((countryCode) => ({
+    '@type': 'OfferShippingDetails',
+    shippingDestination: {
+      '@type': 'DefinedRegion',
+      addressCountry: countryCode,
+    },
+    deliveryTime: {
+      '@type': 'ShippingDeliveryTime',
+      transitTime: {
+        '@type': 'QuantitativeValue',
+        minValue: 1,
+        maxValue: 5,
+        unitCode: 'DAY',
+      },
+    },
+  }));
+
+const buildOfferReturnPolicy = () => ({
+  '@type': 'MerchantReturnPolicy',
+  applicableCountry: GCC_COUNTRY_CODES,
+  returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow',
+  merchantReturnDays: 30,
+  returnMethod: 'https://schema.org/ReturnByMail',
+  refundType: 'https://schema.org/FullRefund',
+});
+
+const buildStructuredDataTag = (data) =>
+  `<script type="application/ld+json" data-generated="seo">${serializeForInlineScript(data)}</script>`;
+
 // Helper function to generate meta tags based on route
 async function getMetaTagsForRoute(url, baseUrl, preloadedProduct = null) {
   const resolvedBaseUrl = (baseUrl || process.env.VITE_SITE_URL || process.env.SITE_URL || 'https://spirithubcafe.com')
@@ -116,8 +146,6 @@ async function getMetaTagsForRoute(url, baseUrl, preloadedProduct = null) {
   
   // Default meta tags
   const regionName = region === 'sa' ? 'Saudi Arabia' : 'Oman';
-  const regionNameAr = region === 'sa' ? 'السعودية' : 'عمان';
-  
   let title = region === 'sa'
     ? 'Specialty Coffee in Saudi Arabia | Spirit Hub Cafe'
     : 'Specialty Coffee in Oman & Saudi Arabia | Spirit Hub Cafe';
@@ -127,8 +155,9 @@ async function getMetaTagsForRoute(url, baseUrl, preloadedProduct = null) {
   let image = `${resolvedBaseUrl}/images/icon-512x512.png`;
   let ogType = 'website';
   let productPrice = null;
-  let productCurrency = region === 'sa' ? 'SAR' : 'OMR';
+  const productCurrency = region === 'sa' ? 'SAR' : 'OMR';
   let productAvailability = 'in stock';
+  let productForStructuredData = null;
 
   if (normalizedPath === '/' || normalizedPath === '') {
     image = `${resolvedBaseUrl}/logo.png`;
@@ -143,6 +172,8 @@ async function getMetaTagsForRoute(url, baseUrl, preloadedProduct = null) {
     const product = preloadedProduct || await fetchProductDetails(identifier);
     
     if (product) {
+      productForStructuredData = product;
+
       // Get product name
       const productName = product.name || 'Product';
       const regionSuffix = region ? ` | ${regionName}` : '';
@@ -174,8 +205,9 @@ async function getMetaTagsForRoute(url, baseUrl, preloadedProduct = null) {
       }
       
       // Get product price for structured data
-      if (product.price) {
-        productPrice = product.price;
+      const availablePrice = product.price || product.minPrice || product.basePrice;
+      if (availablePrice) {
+        productPrice = availablePrice;
       }
       
       // Check product availability
@@ -279,6 +311,36 @@ async function getMetaTagsForRoute(url, baseUrl, preloadedProduct = null) {
     <meta property="og:availability" content="${productAvailability}" />`;
   }
 
+  const productStructuredDataTag = productForStructuredData && productPrice
+    ? buildStructuredDataTag({
+        '@context': 'https://schema.org',
+        '@type': 'Product',
+        name: productForStructuredData.name || 'Product',
+        description,
+        sku: productForStructuredData.sku || undefined,
+        image,
+        brand: { '@type': 'Brand', name: 'Spirit Hub Cafe' },
+        url: canonicalUrl,
+        offers: {
+          '@type': 'Offer',
+          priceCurrency: productCurrency,
+          price: String(productPrice),
+          availability: productAvailability === 'out of stock'
+            ? 'https://schema.org/OutOfStock'
+            : 'https://schema.org/InStock',
+          itemCondition: 'https://schema.org/NewCondition',
+          url: canonicalUrl,
+          seller: {
+            '@type': 'Organization',
+            name: 'Spirit Hub Cafe',
+            url: resolvedBaseUrl,
+          },
+          shippingDetails: buildOfferShippingDetails(),
+          hasMerchantReturnPolicy: buildOfferReturnPolicy(),
+        },
+      })
+    : '';
+
   return `
     <title>${title}</title>
     <meta name="description" content="${description}" />
@@ -297,6 +359,7 @@ async function getMetaTagsForRoute(url, baseUrl, preloadedProduct = null) {
     ${ogImageTags}
     <meta property="og:site_name" content="Spirit Hub Cafe" />
     ${productMetaTags}
+    ${productStructuredDataTag}
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="${title}" />
     <meta name="twitter:description" content="${description}" />
