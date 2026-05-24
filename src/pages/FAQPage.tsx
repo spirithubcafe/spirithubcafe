@@ -47,8 +47,8 @@ export const FAQPage: React.FC = () => {
     {
       id: '1',
       icon: ShoppingCart,
-      question: 'How to Place an Order',
-      questionAr: 'كيفية تقديم طلب',
+      question: 'How Do I Place an Order?',
+      questionAr: 'كيف يمكنني تقديم طلب؟',
       answer: [
         <>Visit our website and browse through our delightful selection of{' '}
           <Link to="/products" className="text-amber-600 hover:text-amber-700 underline">
@@ -70,8 +70,8 @@ export const FAQPage: React.FC = () => {
     {
       id: '2',
       icon: Package,
-      question: 'How to Check Order Status',
-      questionAr: 'كيفية التحقق من حالة الطلب',
+      question: 'How Do I Check My Order Status?',
+      questionAr: 'كيف أتحقق من حالة طلبي؟',
       answer: [
         <>Log in to your{' '}
           <Link to="/profile" className="text-amber-600 hover:text-amber-700 underline">
@@ -91,8 +91,8 @@ export const FAQPage: React.FC = () => {
     {
       id: '3',
       icon: RefreshCw,
-      question: 'How to Claim a Refund',
-      questionAr: 'كيفية المطالبة باسترداد المبلغ',
+      question: 'How Do I Claim a Refund?',
+      questionAr: 'كيف أطالب باسترداد المبلغ؟',
       answer: [
         <>In case of any issues with your order,{' '}
           <Link to="/contact" className="text-amber-600 hover:text-amber-700 underline">
@@ -117,8 +117,8 @@ export const FAQPage: React.FC = () => {
     {
       id: '4',
       icon: LogIn,
-      question: 'How to Login',
-      questionAr: 'كيفية تسجيل الدخول',
+      question: 'How Do I Log In?',
+      questionAr: 'كيف أسجّل الدخول؟',
       answer: [
         'Click on the "Login" or "Account" button on the top right corner of our website.',
         'Enter your registered email address and password.',
@@ -133,8 +133,8 @@ export const FAQPage: React.FC = () => {
     {
       id: '5',
       icon: Key,
-      question: 'How to Reset Password',
-      questionAr: 'كيفية إعادة تعيين كلمة المرور',
+      question: 'How Do I Reset My Password?',
+      questionAr: 'كيف أعيد تعيين كلمة المرور؟',
       answer: [
         'On the login page, click on the "Forgot Password" or "Reset Password" link.',
         'Enter the email address associated with your account.',
@@ -149,8 +149,8 @@ export const FAQPage: React.FC = () => {
     {
       id: '6',
       icon: CreditCard,
-      question: 'Card Was Debited, But User Didn\'t Receive Order Receipt',
-      questionAr: 'تم خصم المبلغ من البطاقة، لكن المستخدم لم يستلم إيصال الطلب',
+      question: 'My Card Was Charged But I Did Not Receive an Order Receipt — What Should I Do?',
+      questionAr: 'تم خصم المبلغ من بطاقتي ولم أستلم إيصال الطلب — ماذا أفعل؟',
       answer: [
         'Check your email, including the spam folder, for the order confirmation and receipt.',
         'Log in to your account and navigate to the "Order History" section to confirm the status and details of your order.',

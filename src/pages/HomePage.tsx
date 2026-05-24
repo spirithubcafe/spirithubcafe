@@ -125,6 +125,64 @@ const HomePage: React.FC = () => {
     [language, regionPrefix]
   );
 
+  const homeFaqs = useMemo(
+    () =>
+      language === 'ar'
+        ? [
+            {
+              id: 'hq1',
+              question: 'ما أنواع القهوة المختصة التي تقدمها سبيريت هب روستري؟',
+              answer:
+                'تقدم سبيريت هب روستري مجموعة واسعة تشمل الحبوب المحمصة الطازجة، خلطات الإسبريسو، محاصيل السنجل أوريجن، أكياس الدريب، والكبسولات المتوافقة. جميع القهوات مختارة بعناية من مزارع موثوقة ومحمصة في عُمان للحصول على أقصى قدر من النضارة.',
+            },
+            {
+              id: 'hq2',
+              question: 'إلى أين توصل سبيريت هب القهوة المختصة؟',
+              answer:
+                'نوصل في جميع أنحاء عُمان بما في ذلك مسقط والمحافظات المجاورة، وكذلك إلى المملكة العربية السعودية. شحننا السريع يضمن وصول قهوتك طازجة تمامًا.',
+            },
+            {
+              id: 'hq3',
+              question: 'ما مدى نضارة قهوة سبيريت هب؟',
+              answer:
+                'تُحمَّص قهوتنا محلياً في عُمان وتُشحن عادةً خلال أيام من التحميص. نحمص بكميات صغيرة لضمان أفضل نكهة وعطر. نوصي بالتخمير خلال أربعة إلى ستة أسابيع من تاريخ التحميص.',
+            },
+            {
+              id: 'hq4',
+              question: 'ما أساليب التخمير المتاحة في سبيريت هب؟',
+              answer:
+                'نوفر قهوة لجميع طرق التخمير: ماكينات الإسبريسو، في-60 بور أوفر، إيروبريس، فرنش بريس، ماكينات الدريب، وأنظمة الكبسولات. تتضمن كل صفحة منتج أدلة التخمير الموصى بها.',
+            },
+          ]
+        : [
+            {
+              id: 'hq1',
+              question: 'What specialty coffee does SpiritHub Roastery offer?',
+              answer:
+                'SpiritHub Roastery offers freshly roasted whole beans, espresso blends, single-origin releases, drip bags, and compatible capsules. All coffees are carefully sourced from reputable farms and roasted in Oman for maximum freshness.',
+            },
+            {
+              id: 'hq2',
+              question: 'Where does SpiritHub deliver specialty coffee?',
+              answer:
+                'We deliver across Oman — including Muscat and all governorates — and to Saudi Arabia. Our fast shipping ensures your coffee arrives at peak freshness.',
+            },
+            {
+              id: 'hq3',
+              question: 'How fresh is the coffee from SpiritHub?',
+              answer:
+                'Coffee is roasted locally in Oman and typically shipped within days of roasting. We roast in small batches for the best possible flavour and aroma. We recommend brewing within four to six weeks of the roast date.',
+            },
+            {
+              id: 'hq4',
+              question: 'What brewing formats are available at SpiritHub?',
+              answer:
+                'We carry coffee for all major brewing methods: espresso machines, V60 pour-over, AeroPress, French press, drip machines, and capsule systems. Every product page includes recommended brew guides.',
+            },
+          ],
+    [language]
+  );
+
   const structuredData = useMemo(
     () => [
       // Organization Schema
@@ -137,6 +195,7 @@ const HomePage: React.FC = () => {
         logo: `${siteMetadata.baseUrl}/images/logo/logo-light.png`,
         description: seoCopy.description,
         telephone: '+96891900005',
+        dateModified: '2026-05-24',
         sameAs: [
           'https://instagram.com/spirithubcafe',
           'https://facebook.com/spirithubcafe',
@@ -169,6 +228,7 @@ const HomePage: React.FC = () => {
         description: seoCopy.description,
         telephone: '+96891900005',
         image: `${siteMetadata.baseUrl}/images/icon-512x512.png`,
+        dateModified: '2026-05-24',
         address: {
           '@type': 'PostalAddress',
           streetAddress: 'Al Mouj Street',
@@ -207,6 +267,7 @@ const HomePage: React.FC = () => {
         url: siteMetadata.baseUrl,
         name: siteMetadata.siteName,
         description: seoCopy.description,
+        dateModified: '2026-05-24',
         publisher: {
           '@id': `${siteMetadata.baseUrl}/#organization`,
         },
@@ -220,8 +281,22 @@ const HomePage: React.FC = () => {
           'query-input': 'required name=search_term_string',
         },
       },
+      // FAQPage Schema for homepage quick-answer FAQs
+      {
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        dateModified: '2026-05-24',
+        mainEntity: homeFaqs.map((faq) => ({
+          '@type': 'Question',
+          name: faq.question,
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: faq.answer,
+          },
+        })),
+      },
     ],
-    [seoCopy.description]
+    [seoCopy.description, homeFaqs]
   );
 
   const editorialSections = useMemo(
@@ -260,7 +335,6 @@ const HomePage: React.FC = () => {
         ]}
         structuredData={structuredData}
       />
-      <p className="sr-only">{seoCopy.title}</p>
       <AnnouncementBar />
       <ProfessionalHeroSlider />
       {showDeferredSections ? (
@@ -272,41 +346,84 @@ const HomePage: React.FC = () => {
           <UnifiedCategoriesSection />
           <GoogleReviewsSection />
           <InstagramSection />
-          <section className="sr-only" aria-label={seoCopy.title}>
-            <h2>{seoCopy.title}</h2>
-            <p>{editorialCopy.intro}</p>
-
-            {editorialSections.map(({ title, body }) => (
-              <article key={title}>
-                <h3>{title}</h3>
-                <p>{body}</p>
-              </article>
-            ))}
-
-            <div>
-              <h3>{editorialCopy.whyTitle}</h3>
-              <ul>
-                {editorialCopy.whyPoints.map((point) => (
-                  <li key={point}>{point}</li>
-                ))}
-              </ul>
-            </div>
-
-            <nav aria-label={editorialCopy.linksTitle}>
-              <h3>{editorialCopy.linksTitle}</h3>
-              <ul>
-                {editorialCopy.links.map((link) => (
-                  <li key={link.to}>
-                    <Link to={link.to}>{link.label}</Link>
-                  </li>
-                ))}
-              </ul>
-            </nav>
-          </section>
         </>
       ) : (
         <div className="min-h-[60vh]" aria-hidden="true" />
       )}
+
+      {/* Editorial + FAQ — sr-only: invisible to users, always in DOM for AI/SEO crawlers */}
+      <section className="sr-only" aria-label={editorialCopy.sections.aboutTitle}>
+        <h2>{editorialCopy.sections.aboutTitle}</h2>
+        <p>{editorialCopy.intro}</p>
+
+        {editorialSections.map(({ title, body }) => (
+          <article key={title}>
+            <h3>{title}</h3>
+            <p>{body}</p>
+          </article>
+        ))}
+
+        <div>
+          <h3>{editorialCopy.whyTitle}</h3>
+          <ul>
+            {editorialCopy.whyPoints.map((point) => (
+              <li key={point}>{point}</li>
+            ))}
+          </ul>
+        </div>
+
+        <p>
+          {language === 'ar' ? (
+            <>
+              {'قهوتنا محمصة وفق معايير '}
+              <a href="https://sca.coffee" target="_blank" rel="noopener noreferrer">
+                رابطة القهوة المختصة (SCA)
+              </a>
+              {'، مع تقييم دقيق للجودة باستخدام '}
+              <a href="https://sca.coffee/research/protocols-best-practices" target="_blank" rel="noopener noreferrer">
+                بروتوكولات التذوق المعتمدة
+              </a>
+              {'.'}
+            </>
+          ) : (
+            <>
+              {'Our coffees are roasted to '}
+              <a href="https://sca.coffee" target="_blank" rel="noopener noreferrer">
+                Specialty Coffee Association (SCA)
+              </a>
+              {' standards, with quality-graded lots assessed by our certified '}
+              <a href="https://sca.coffee/research/protocols-best-practices" target="_blank" rel="noopener noreferrer">
+                Q Graders
+              </a>
+              {' using SCA cupping protocols.'}
+            </>
+          )}
+        </p>
+
+        <nav aria-label={editorialCopy.linksTitle}>
+          <h3>{editorialCopy.linksTitle}</h3>
+          <ul>
+            {editorialCopy.links.map((link) => (
+              <li key={link.to}>
+                <Link to={link.to}>{link.label}</Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+
+        <section aria-label={language === 'ar' ? 'الأسئلة الشائعة' : 'Frequently Asked Questions'}>
+          <h2>{language === 'ar' ? 'الأسئلة الشائعة' : 'Frequently Asked Questions'}</h2>
+          {homeFaqs.map((faq) => (
+            <article key={faq.id}>
+              <h3>{faq.question}</h3>
+              <p>{faq.answer}</p>
+            </article>
+          ))}
+          <Link to={`${regionPrefix}/faq`}>
+            {language === 'ar' ? 'عرض جميع الأسئلة الشائعة' : 'View all FAQs'}
+          </Link>
+        </section>
+      </section>
      
     </>
   );

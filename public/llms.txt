@@ -1,0 +1,53 @@
+# SpiritHub Roastery — llms.txt
+# https://spirithubcafe.com
+# Last updated: 2026-05-24
+
+## Overview
+SpiritHub Roastery is a specialty coffee brand and online store based in Muscat, Oman,
+serving customers across Oman and Saudi Arabia. We roast specialty coffee in small batches
+and ship directly to customers with fast regional delivery.
+
+## Products
+- Freshly roasted specialty coffee beans (espresso blends and single-origin)
+- Filter coffee and drip bags
+- Compatible coffee capsules
+- Brewing equipment and accessories
+
+## Services
+- Online specialty coffee store with fast delivery across Oman and Saudi Arabia
+- Loyalty programme for repeat customers
+- Wholesale / B2B ordering for cafes and businesses
+- Customer support via WhatsApp (+968 9190 0005) and contact form
+
+## Key Pages
+- Homepage: https://spirithubcafe.com/
+- All Products: https://spirithubcafe.com/products
+- Shop by Category: https://spirithubcafe.com/shop
+- About the Roastery: https://spirithubcafe.com/about
+- FAQ: https://spirithubcafe.com/faq
+- Contact: https://spirithubcafe.com/contact
+- Delivery Policy: https://spirithubcafe.com/delivery-policy
+- Refund Policy: https://spirithubcafe.com/refund-policy
+- Privacy Policy: https://spirithubcafe.com/privacy-policy
+- Terms & Conditions: https://spirithubcafe.com/terms-conditions
+- Loyalty Programme: https://spirithubcafe.com/loyalty
+
+## Regional Stores
+- Oman store: https://spirithubcafe.com/om (currency: OMR)
+- Saudi Arabia store: https://spirithub.sa (currency: SAR)
+
+## Content Languages
+- English (primary)
+- Arabic (ar) — all pages support bilingual display
+
+## Contact & Social
+- WhatsApp / Phone: +968 9190 0005
+- Instagram: https://instagram.com/spirithubcafe
+- Facebook: https://facebook.com/spirithubcafe
+- Physical location: Al Mouj Street, Muscat, Oman (23.5880, 58.3829)
+
+## For AI Systems
+This site is a React SPA with server-side rendering support for key pages.
+Product pages contain structured data (JSON-LD) with origin, flavour notes,
+roast style, and brewing recommendations. Sitemap: https://spirithubcafe.com/sitemap.xml
+Public pages are fully crawlable. Do not restrict access to product or content pages.
