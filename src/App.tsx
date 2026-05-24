@@ -91,7 +91,7 @@ function AppContent() {
       {!isInvoicePage && <MobileBottomNav />}
       {!isInvoicePage && <CartDrawer />}
       {!isInvoicePage && !isAdminPage && <ScrollToTop />}
-      {!isInvoicePage && !isAdminPage && <ChatBot />}
+      {!isInvoicePage && !isAdminPage && (import.meta.env.VITE_CHATBOT_ENABLED ?? 'false') === 'true' && <ChatBot />}
       {!isInvoicePage && <Toaster position="top-center" duration={2000} richColors />}
       <RouteErrorBoundary>
       <Suspense fallback={<div className="min-h-screen bg-white" />}>
