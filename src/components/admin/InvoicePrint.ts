@@ -107,7 +107,7 @@ export function generatePremiumInvoiceHTML(order: Order, isArabic = false): stri
   /* â”€â”€ gift section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   const giftSection = order.isGift ? `
     <div style="margin-bottom:20px;padding:16px 20px;border:1.5px solid #c8a97e;border-radius:12px;background:#fdf8f0;">
-      <p style="font-size:13px;font-weight:700;color:#7a5c3a;margin:0 0 8px;">ðŸŽ ${isArabic ? 'Ù…Ø¹Ù„ÙˆÙ…Ø§Øª Ø§Ù„Ù‡Ø¯ÙŠØ©' : 'Gift Information'}</p>
+      <p style="font-size:13px;font-weight:700;color:#7a5c3a;margin:0 0 8px;"><span style="font-family:'Segoe UI Emoji','Apple Color Emoji','Noto Color Emoji',sans-serif;">&#127873;</span> ${isArabic ? 'Ù…Ø¹Ù„ÙˆÙ…Ø§Øª Ø§Ù„Ù‡Ø¯ÙŠØ©' : 'Gift Information'}</p>
       ${order.giftRecipientName ? `<div style="display:flex;gap:6px;font-size:12px;padding:3px 0;"><span style="color:#888;min-width:100px;">${isArabic ? 'Ø§Ù„Ù…Ø³ØªÙ„Ù…' : 'Recipient'}:</span><span style="color:#2c2c2c;font-weight:500;">${esc(order.giftRecipientName)}</span></div>` : ''}
       ${order.giftRecipientPhone ? `<div style="display:flex;gap:6px;font-size:12px;padding:3px 0;"><span style="color:#888;min-width:100px;">${isArabic ? 'Ø§Ù„Ù‡Ø§ØªÙ' : 'Phone'}:</span><span style="color:#2c2c2c;font-weight:500;">${esc(order.giftRecipientPhone)}</span></div>` : ''}
       ${order.giftRecipientEmail ? `<div style="display:flex;gap:6px;font-size:12px;padding:3px 0;"><span style="color:#888;min-width:100px;">${isArabic ? 'Ø§Ù„Ø¨Ø±ÙŠØ¯' : 'Email'}:</span><span style="color:#2c2c2c;font-weight:500;">${esc(order.giftRecipientEmail)}</span></div>` : ''}
