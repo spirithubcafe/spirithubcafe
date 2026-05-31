@@ -905,12 +905,6 @@ export const ProductDetailPage = () => {
     return product.isActive;
   })();
   const averageRating = (approvedReviewStatsLocal ?? approvedReviewStatsRemote)?.averageRating ?? 0;
-  const visibleApprovedReviews = useMemo(() => {
-    const reviewStats = approvedReviewStatsLocal ?? approvedReviewStatsRemote;
-    return (reviewStats?.reviews ?? [])
-      .filter((review) => Boolean(toProductReviewSchema(review)))
-      .slice(0, 5);
-  }, [approvedReviewStatsLocal, approvedReviewStatsRemote]);
   const tastingNotes = language === 'ar' 
     ? (product?.tastingNotesAr ?? product?.notesAr ?? '') 
     : (product?.tastingNotes ?? product?.notes ?? '');
