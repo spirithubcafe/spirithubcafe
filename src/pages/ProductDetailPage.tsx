@@ -2489,36 +2489,6 @@ export const ProductDetailPage = () => {
               {/* You might also like */}
               <RelatedProducts currentProduct={product} shopData={shopData ?? null} />
 
-              {visibleApprovedReviews.length ? (
-                <section className="mt-8">
-                  <div className="mb-3 flex items-center justify-between gap-3">
-                    <h2 className="text-base font-bold text-gray-900">Customer reviews</h2>
-                    <span className="text-xs font-semibold text-amber-900/70">
-                      {visibleApprovedReviews.length} reviews
-                    </span>
-                  </div>
-                  <div className="grid gap-3 md:grid-cols-2">
-                    {visibleApprovedReviews.map((review) => (
-                      <article key={review.id} className="rounded-lg border border-amber-100 bg-white p-4 shadow-sm">
-                        <div className="mb-2 flex items-center justify-between gap-3">
-                          <div className="flex items-center gap-0.5" aria-label={`${review.rating} out of 5`}>
-                            {[1, 2, 3, 4, 5].map((value) => (
-                              <Star
-                                key={value}
-                                className={`h-3.5 w-3.5 ${value <= review.rating ? 'fill-amber-400 text-amber-400' : 'text-stone-200'}`}
-                              />
-                            ))}
-                          </div>
-                          <span className="text-xs font-medium text-gray-500">{review.customerName}</span>
-                        </div>
-                        {review.title ? <h3 className="mb-1 text-sm font-semibold text-gray-900">{review.title}</h3> : null}
-                        <p className="text-sm leading-6 text-gray-700">{review.content}</p>
-                      </article>
-                    ))}
-                  </div>
-                </section>
-              ) : null}
-
               {/* Reviews Popup */}
               <Dialog open={isReviewsDialogOpen} onOpenChange={setIsReviewsDialogOpen}>
                 <DialogContent className="max-w-md p-0 overflow-hidden">
