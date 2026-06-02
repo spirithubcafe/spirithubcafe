@@ -99,7 +99,10 @@ export const categoryService = {
    * @returns Promise
    */
   delete: async (id: number): Promise<void> => {
-    await http.delete(`/api/Categories/${id}`);
+    const response = await http.delete<ApiResponse<void>>(`/api/Categories/${id}`);
+    if (response.data?.success === false) {
+      throw new Error(response.data.message || 'Failed to delete category');
+    }
   },
 
   /**

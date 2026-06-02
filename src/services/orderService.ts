@@ -455,6 +455,9 @@ export const orderService = {
    */
   async deleteOrder(id: number): Promise<ApiResponse<void>> {
     const response = await apiClient.delete<ApiResponse<void>>(`/api/orders/${id}`);
+    if (response.data?.success === false) {
+      throw new Error(response.data.message || 'Failed to delete order');
+    }
     return response.data;
   },
 

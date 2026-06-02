@@ -315,7 +315,10 @@ export const productService = {
    * @returns Promise
    */
   delete: async (id: number): Promise<void> => {
-    await http.delete(`/api/Products/${id}`);
+    const response = await http.delete<ApiResponse<void>>(`/api/Products/${id}`);
+    if (response.data?.success === false) {
+      throw new Error(response.data.message || 'Failed to delete product');
+    }
   },
 
   /**

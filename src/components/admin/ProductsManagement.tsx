@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useApp } from '../../hooks/useApp';
 import { cn } from '../../lib/utils';
@@ -58,15 +58,40 @@ const getProductStatusDotClassName = (isActive: boolean) =>
     ? 'bg-emerald-500 shadow-[0_0_0_4px_rgba(16,185,129,0.14)]'
     : 'bg-slate-300 shadow-[0_0_0_4px_rgba(148,163,184,0.16)] dark:bg-slate-500 dark:shadow-[0_0_0_4px_rgba(100,116,139,0.18)]';
 
+const getErrorMessage = (error: unknown, fallback: string) => {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  if (error && typeof error === 'object' && 'message' in error) {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === 'string' && message.trim()) {
+      return message;
+    }
+  }
+
+  return fallback;
+};
+
+const productHasExistingOrdersMessage = (message: string) =>
+  message.toLowerCase().includes('existing orders');
+
 export const ProductsManagement: React.FC = () => {
   const { t } = useApp();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [selectedCategory, setSelectedCategory] = useState<string>(() => {
+    const categoryId = searchParams.get('categoryId');
+    return categoryId && /^\d+$/.test(categoryId) ? categoryId : 'all';
+  });
+  const [statusFilter, setStatusFilter] = useState<string>(() => {
+    const status = searchParams.get('status');
+    return status === 'active' || status === 'inactive' ? status : 'all';
+  });
   const [editingProduct] = useState<Product | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -180,7 +205,7 @@ export const ProductsManagement: React.FC = () => {
         setLoading(true);
         
         // Load categories
-        const categoriesData = await categoryService.getAll({ includeInactive: false });
+        const categoriesData = await categoryService.getAll({ includeInactive: true });
         setCategories(categoriesData);
 
         // Build filters
@@ -209,6 +234,26 @@ export const ProductsManagement: React.FC = () => {
 
     loadDataAsync();
   }, [currentPage, searchTerm, selectedCategory, statusFilter, pageSize]);
+
+  useEffect(() => {
+    const nextParams = new URLSearchParams(searchParams);
+
+    if (selectedCategory === 'all') {
+      nextParams.delete('categoryId');
+    } else {
+      nextParams.set('categoryId', selectedCategory);
+    }
+
+    if (statusFilter === 'all') {
+      nextParams.delete('status');
+    } else {
+      nextParams.set('status', statusFilter);
+    }
+
+    if (nextParams.toString() !== searchParams.toString()) {
+      setSearchParams(nextParams, { replace: true });
+    }
+  }, [searchParams, selectedCategory, setSearchParams, statusFilter]);
 
   useEffect(() => {
     if (!isDialogOpen) {
@@ -310,7 +355,7 @@ export const ProductsManagement: React.FC = () => {
       setLoading(true);
       
       // Load categories
-      const categoriesData = await categoryService.getAll({ includeInactive: false });
+      const categoriesData = await categoryService.getAll({ includeInactive: true });
       setCategories(categoriesData);
 
       // Build filters
@@ -508,13 +553,64 @@ export const ProductsManagement: React.FC = () => {
     }
   };
 
+  const updateProductActiveStatus = async (productId: number, isActive: boolean) => {
+    const product = products.find(p => p.id === productId);
+    if (!product) {
+      return;
+    }
+
+    const updateData: ProductCreateUpdateDto = {
+      sku: product.sku,
+      name: product.name,
+      nameAr: product.nameAr,
+      slug: product.slug,
+      categoryId: product.categoryId,
+      isActive,
+      isDigital: product.isDigital,
+      isFeatured: product.isFeatured,
+      isLimited: product.isLimited ?? false,
+      isPremium: product.isPremium ?? false,
+      isOrganic: product.isOrganic,
+      isFairTrade: product.isFairTrade,
+      displayOrder: product.displayOrder,
+      description: product.description,
+      descriptionAr: product.descriptionAr,
+      notes: product.notes,
+      notesAr: product.notesAr,
+      intensity: product.intensity || 1,
+    };
+
+    await productService.update(productId, updateData);
+    await loadData();
+  };
+
+  const handleDeactivateProduct = async (productId: number) => {
+    try {
+      await updateProductActiveStatus(productId, false);
+      toast.success('Product deactivated');
+    } catch (error) {
+      console.error('Error deactivating product:', error);
+      toast.error(getErrorMessage(error, 'Failed to deactivate product'));
+    }
+  };
+
   const handleDeleteProduct = async (productId: number) => {
     try {
       // DELETE /api/Products/{id}
       await productService.delete(productId);
-      loadData();
+      toast.success('Product deleted');
+      await loadData();
     } catch (error) {
       console.error('Error deleting product:', error);
+      const message = getErrorMessage(error, 'Failed to delete product');
+      toast.error(message, productHasExistingOrdersMessage(message)
+        ? {
+            action: {
+              label: 'Deactivate',
+              onClick: () => handleDeactivateProduct(productId),
+            },
+          }
+        : undefined);
     }
   };
 
@@ -522,32 +618,11 @@ export const ProductsManagement: React.FC = () => {
     try {
       const product = products.find(p => p.id === productId);
       if (!product) return;
-      
-      const updateData: any = {
-        sku: product.sku,
-        name: product.name,
-        nameAr: product.nameAr,
-        slug: product.slug,
-        categoryId: product.categoryId,
-        isActive: !product.isActive,
-        isDigital: product.isDigital,
-        isFeatured: product.isFeatured,
-        isLimited: product.isLimited ?? false,
-        isPremium: product.isPremium ?? false,
-        isOrganic: product.isOrganic,
-        isFairTrade: product.isFairTrade,
-        displayOrder: product.displayOrder,
-        description: product.description,
-        descriptionAr: product.descriptionAr,
-        notes: product.notes,
-        notesAr: product.notesAr,
-        intensity: product.intensity || 1,
-      };
-      
-      await productService.update(productId, updateData);
-      loadData();
+
+      await updateProductActiveStatus(productId, !product.isActive);
     } catch (error) {
       console.error('Error toggling product status:', error);
+      toast.error(getErrorMessage(error, 'Failed to update product status'));
     }
   };
 
@@ -987,11 +1062,20 @@ export const ProductsManagement: React.FC = () => {
               <Input
                 placeholder={t('admin.products.search')}
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1);
+                }}
                 className="w-full"
               />
             </div>
-            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+            <Select
+              value={selectedCategory}
+              onValueChange={(value) => {
+                setSelectedCategory(value);
+                setCurrentPage(1);
+              }}
+            >
               <SelectTrigger className="w-full sm:w-48">
                 <SelectValue placeholder={t('admin.products.selectCategory')} />
               </SelectTrigger>
@@ -1004,7 +1088,13 @@ export const ProductsManagement: React.FC = () => {
                 ))}
               </SelectContent>
             </Select>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <Select
+              value={statusFilter}
+              onValueChange={(value) => {
+                setStatusFilter(value);
+                setCurrentPage(1);
+              }}
+            >
               <SelectTrigger className="w-full sm:w-40">
                 <SelectValue placeholder={t('admin.products.selectStatus')} />
               </SelectTrigger>
@@ -1154,7 +1244,10 @@ export const ProductsManagement: React.FC = () => {
                         <DropdownMenuSeparator />
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
-                            <DropdownMenuItem className="text-destructive focus:text-destructive">
+                            <DropdownMenuItem
+                              className="text-destructive focus:text-destructive"
+                              onSelect={(event) => event.preventDefault()}
+                            >
                               <Trash2 className="h-4 w-4" />
                               {t('common.delete')}
                             </DropdownMenuItem>
@@ -1296,7 +1389,10 @@ export const ProductsManagement: React.FC = () => {
                           <DropdownMenuSeparator />
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
-                              <DropdownMenuItem className="text-destructive focus:text-destructive">
+                              <DropdownMenuItem
+                                className="text-destructive focus:text-destructive"
+                                onSelect={(event) => event.preventDefault()}
+                              >
                                 <Trash2 className="h-4 w-4" />
                                 {t('common.delete')}
                               </DropdownMenuItem>

@@ -8,6 +8,7 @@ import { Badge } from '../ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { Switch } from '../ui/switch';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '../ui/dropdown-menu';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../ui/alert-dialog';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Label } from '../ui/label';
 import { Input } from '../ui/input';
@@ -42,7 +43,8 @@ import {
   ChevronLeft,
   ChevronRight,
   AlertTriangle,
-  Server
+  Server,
+  Trash2
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { createAramexPickup, emailService, orderService, productVariantService } from '../../services';
@@ -1732,6 +1734,39 @@ export const OrdersManagement: React.FC = () => {
               {isArabic ? 'نسخ رقم التتبع' : 'Copy tracking'}
             </DropdownMenuItem>
           ) : null}
+          <DropdownMenuSeparator />
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive"
+                onSelect={(event) => event.preventDefault()}
+              >
+                <Trash2 className="h-4 w-4" />
+                {isArabic ? 'حذف الطلب' : 'Delete order'}
+              </DropdownMenuItem>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>
+                  {isArabic ? 'حذف الطلب' : 'Delete order'}
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                  {isArabic
+                    ? `هل تريد حذف الطلب ${order.orderNumber}؟ سيؤدي هذا إلى إزالة ارتباط المنتجات بهذا الطلب.`
+                    : `Delete order ${order.orderNumber}? This removes the order record and releases its product references.`}
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>{isArabic ? 'إلغاء' : 'Cancel'}</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => handleDeleteOrder(order)}
+                  className="bg-red-600 hover:bg-red-700"
+                >
+                  {isArabic ? 'حذف' : 'Delete'}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </DropdownMenuContent>
       </DropdownMenu>
     );
@@ -1751,6 +1786,20 @@ export const OrdersManagement: React.FC = () => {
       });
     } finally {
       setSendingReminderOrderId(null);
+    }
+  };
+
+  const handleDeleteOrder = async (order: Order) => {
+    try {
+      await orderService.deleteOrder(order.id);
+      toast.success(isArabic ? 'تم حذف الطلب' : 'Order deleted', {
+        description: order.orderNumber,
+      });
+      await loadOrders({ silent: true });
+    } catch (error: any) {
+      toast.error(isArabic ? 'تعذر حذف الطلب' : 'Failed to delete order', {
+        description: error?.message || order.orderNumber,
+      });
     }
   };
 

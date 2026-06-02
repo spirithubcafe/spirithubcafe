@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { useApp } from '../../hooks/useApp';
 import { cn } from '../../lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
@@ -29,6 +30,21 @@ const getCategoryStatusDotClassName = (isActive: boolean) =>
   isActive
     ? 'bg-emerald-500 shadow-[0_0_0_4px_rgba(16,185,129,0.14)]'
     : 'bg-slate-300 shadow-[0_0_0_4px_rgba(148,163,184,0.16)] dark:bg-slate-500 dark:shadow-[0_0_0_4px_rgba(100,116,139,0.18)]';
+
+const getErrorMessage = (error: unknown, fallback: string) => {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  if (error && typeof error === 'object' && 'message' in error) {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === 'string' && message.trim()) {
+      return message;
+    }
+  }
+
+  return fallback;
+};
 
 export const CategoriesManagement: React.FC = () => {
   const { t } = useApp();
@@ -69,12 +85,23 @@ export const CategoriesManagement: React.FC = () => {
     navigate(`/admin/categories/edit/${categoryId}`);
   };
 
+  const handleViewCategoryProducts = (categoryId: number) => {
+    navigate(`/admin/products?categoryId=${categoryId}&status=all`);
+  };
+
   const handleDeleteCategory = async (categoryId: number) => {
     try {
       await categoryService.delete(categoryId);
-      loadCategories();
+      toast.success('Category deleted');
+      await loadCategories();
     } catch (error) {
       console.error('Error deleting category:', error);
+      toast.error(getErrorMessage(error, 'Failed to delete category'), {
+        action: {
+          label: 'View products',
+          onClick: () => handleViewCategoryProducts(categoryId),
+        },
+      });
     }
   };
 
@@ -280,6 +307,10 @@ export const CategoriesManagement: React.FC = () => {
                         <Edit className="h-4 w-4" />
                         {t('common.edit')}
                       </DropdownMenuItem>
+                      <DropdownMenuItem onSelect={() => handleViewCategoryProducts(category.id)}>
+                        <Package className="h-4 w-4" />
+                        View products
+                      </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onSelect={() => handleToggleActive(category.id)}>
                         {category.isActive ? (
@@ -292,7 +323,10 @@ export const CategoriesManagement: React.FC = () => {
                       <DropdownMenuSeparator />
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <DropdownMenuItem className="text-destructive focus:text-destructive">
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive"
+                            onSelect={(event) => event.preventDefault()}
+                          >
                             <Trash2 className="h-4 w-4" />
                             {t('common.delete')}
                           </DropdownMenuItem>
@@ -422,6 +456,10 @@ export const CategoriesManagement: React.FC = () => {
                             <Edit className="h-4 w-4" />
                             {t('common.edit')}
                           </DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => handleViewCategoryProducts(category.id)}>
+                            <Package className="h-4 w-4" />
+                            View products
+                          </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem onSelect={() => handleToggleActive(category.id)}>
                             {category.isActive ? (
@@ -434,7 +472,10 @@ export const CategoriesManagement: React.FC = () => {
                           <DropdownMenuSeparator />
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
-                              <DropdownMenuItem className="text-destructive focus:text-destructive">
+                              <DropdownMenuItem
+                                className="text-destructive focus:text-destructive"
+                                onSelect={(event) => event.preventDefault()}
+                              >
                                 <Trash2 className="h-4 w-4" />
                                 {t('common.delete')}
                               </DropdownMenuItem>
