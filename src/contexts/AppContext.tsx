@@ -50,6 +50,13 @@ const setSessionCache = <T,>(key: string, data: T, durationMs = SESSION_CACHE_DU
   );
 };
 
+const getSessionArrayCache = <T,>(key: string): T[] | null => {
+  const cached = getSessionCache<unknown>(key);
+  return Array.isArray(cached) ? (cached as T[]) : null;
+};
+
+const hasValue = (value: unknown): boolean => value !== null && value !== undefined && value !== '';
+
 export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const { i18n, t } = useTranslation();
   const regionContext = React.useContext(RegionContext);
@@ -237,7 +244,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 
     // Check session cache first - include region in cache key
     const cacheKey = `spirithub_session_products_${regionCode}_${lang}`;
-    const cachedData = getSessionCache<Product[]>(cacheKey);
+    const cachedData = getSessionArrayCache<Product>(cacheKey);
 
     // If we loaded from cache, keep a reference so we can preserve non-default images
     // when the fresh list payload doesn't include image paths.
@@ -304,7 +311,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       type ProductPricing = { minPrice?: number; maxPrice?: number; price?: number };
 
       const transformedProducts: Product[] = activeProducts
-        .map((prod) => {
+        .map<Product | null>((prod) => {
           const p = prod as ApiProductExtended;
           const pricing = p as ProductPricing;
           
@@ -366,26 +373,30 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
                 ? ((p as unknown as { IsPremium: boolean }).IsPremium as boolean)
                 : undefined;
 
+          if (!hasValue(p.id)) {
+            return null;
+          }
+
           return {
-            id: p.id.toString(),
-            slug: p.slug,
+            id: String(p.id),
+            slug: typeof p.slug === 'string' ? p.slug : undefined,
             isActive: (p as unknown as { isActive?: boolean }).isActive,
             isOrderable,
             isLimited,
             isPremium,
-            name: lang === 'ar' && p.nameAr ? p.nameAr : p.name,
-            nameAr: p.nameAr,
+            name: lang === 'ar' && p.nameAr ? String(p.nameAr) : String(p.name || ''),
+            nameAr: p.nameAr ? String(p.nameAr) : undefined,
             description:
-              lang === 'ar' && p.descriptionAr ? p.descriptionAr : p.description || '',
-            descriptionAr: p.descriptionAr,
+              lang === 'ar' && p.descriptionAr ? String(p.descriptionAr) : String(p.description || ''),
+            descriptionAr: p.descriptionAr ? String(p.descriptionAr) : undefined,
             price,
             image: imageUrl,
             categoryId: categoryIdString,
             categorySlug,
-            category: categoryName,
+            category: categoryName ? String(categoryName) : '',
             tastingNotes:
-              lang === 'ar' && p.tastingNotesAr ? p.tastingNotesAr : p.tastingNotes,
-            tastingNotesAr: p.tastingNotesAr,
+              lang === 'ar' && p.tastingNotesAr ? String(p.tastingNotesAr) : (p.tastingNotes ? String(p.tastingNotes) : undefined),
+            tastingNotesAr: p.tastingNotesAr ? String(p.tastingNotesAr) : undefined,
             featured: p.isFeatured,
             topTags: (() => {
               const raw = (p as Record<string, unknown>).topTags;
@@ -405,8 +416,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
               }
               return undefined;
             })(),
-          };
+          } satisfies Product;
         })
+        .filter((p): p is Product => p !== null)
         .filter((p) => (p as unknown as { isActive?: boolean }).isActive !== false);
 
       // Ignore stale responses (region/language switched while request in flight).
@@ -503,8 +515,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     // Check session cache first for both categories and allCategories - include region in cache key
     const cacheKey = `spirithub_session_categories_${regionCode}_${lang}`;
     const allCategoriesCacheKey = `spirithub_session_all_categories_${regionCode}_${lang}`;
-    const cachedData = getSessionCache<Category[]>(cacheKey);
-    const cachedAllCategories = getSessionCache<Category[]>(allCategoriesCacheKey);
+    const cachedData = getSessionArrayCache<Category>(cacheKey);
+    const cachedAllCategories = getSessionArrayCache<Category>(allCategoriesCacheKey);
     const hasCachedCategories = !!(cachedData && cachedAllCategories);
 
     if (!forceRefresh && cachedData && cachedAllCategories) {
@@ -537,18 +549,20 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       }
       
       // Sort all categories by displayOrder
-      const sortedCategories = apiCategories.sort((a, b) => a.displayOrder - b.displayOrder);
+      const sortedCategories = apiCategories
+        .filter((cat) => hasValue(cat.id))
+        .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
       
       // Transform all categories
       const transformedAllCategories: Category[] = sortedCategories.map((cat: ApiCategory) => {
         const imageUrl = getCategoryImageUrl(cat.imagePath);
         return {
-          id: cat.id.toString(),
-          slug: cat.slug,
-          name: lang === 'ar' && cat.nameAr ? cat.nameAr : cat.name,
-          description: lang === 'ar' && cat.descriptionAr ? cat.descriptionAr : cat.description || '',
+          id: String(cat.id),
+          slug: typeof cat.slug === 'string' ? cat.slug : undefined,
+          name: lang === 'ar' && cat.nameAr ? String(cat.nameAr) : String(cat.name || ''),
+          description: lang === 'ar' && cat.descriptionAr ? String(cat.descriptionAr) : String(cat.description || ''),
           image: imageUrl,
-          displayOrder: cat.displayOrder
+          displayOrder: typeof cat.displayOrder === 'number' ? cat.displayOrder : 0,
         };
       });
       

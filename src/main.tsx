@@ -34,13 +34,23 @@ if (typeof window !== 'undefined') {
   const recoverFromChunkError = (error: unknown) => {
     if (!isChunkLoadError(error)) return;
 
-    const alreadyReloaded = window.sessionStorage.getItem(CHUNK_RELOAD_GUARD_KEY) === '1';
+    let alreadyReloaded = false;
+    try {
+      alreadyReloaded = window.sessionStorage.getItem(CHUNK_RELOAD_GUARD_KEY) === '1';
+    } catch {
+      alreadyReloaded = false;
+    }
+
     if (alreadyReloaded) {
       console.error('[chunk-recovery] chunk load failed after one auto-reload; showing fallback UI.', error);
       return;
     }
 
-    window.sessionStorage.setItem(CHUNK_RELOAD_GUARD_KEY, '1');
+    try {
+      window.sessionStorage.setItem(CHUNK_RELOAD_GUARD_KEY, '1');
+    } catch {
+      // Storage can be blocked in some mobile browsers. Reload once anyway.
+    }
     console.warn('[chunk-recovery] chunk load failure detected; reloading once to recover from stale assets.');
     window.location.reload();
   };
@@ -57,7 +67,11 @@ if (typeof window !== 'undefined') {
   window.addEventListener(
     'pageshow',
     () => {
-      window.sessionStorage.removeItem(CHUNK_RELOAD_GUARD_KEY);
+      try {
+        window.sessionStorage.removeItem(CHUNK_RELOAD_GUARD_KEY);
+      } catch {
+        // ignore
+      }
     },
     { once: true },
   );
