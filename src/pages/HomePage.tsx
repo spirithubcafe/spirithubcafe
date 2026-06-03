@@ -20,6 +20,7 @@ const HomePage: React.FC = () => {
   const location = useLocation();
   const [showProductSections, setShowProductSections] = useState(false);
   const [showCarouselSections, setShowCarouselSections] = useState(false);
+  const productLoadRef = useRef<HTMLDivElement | null>(null);
   const carouselLoadRef = useRef<HTMLDivElement | null>(null);
   const regionPrefix = location.pathname.startsWith('/sa') ? '/sa' : '/om';
 
@@ -31,15 +32,37 @@ const HomePage: React.FC = () => {
     }
 
     let idleId: number | null = null;
-    const timeoutId = window.setTimeout(revealSections, 2500);
+    const timeoutId = window.setTimeout(revealSections, 10000);
+    const target = productLoadRef.current;
+
+    let observer: IntersectionObserver | null = null;
+    if (target && 'IntersectionObserver' in window) {
+      observer = new IntersectionObserver(
+        (entries) => {
+          if (entries.some((entry) => entry.isIntersecting)) {
+            revealSections();
+            observer?.disconnect();
+            window.clearTimeout(timeoutId);
+          }
+        },
+        { rootMargin: '0px 0px 200px 0px' }
+      );
+
+      observer.observe(target);
+    }
 
     if ('requestIdleCallback' in window) {
       idleId = (window as Window & { requestIdleCallback: (cb: () => void, options?: { timeout: number }) => number })
-        .requestIdleCallback(revealSections, { timeout: 3000 });
+        .requestIdleCallback(() => {
+          if (window.scrollY > 120) {
+            revealSections();
+          }
+        }, { timeout: 8000 });
     }
 
     return () => {
       window.clearTimeout(timeoutId);
+      observer?.disconnect();
       if (idleId !== null && 'cancelIdleCallback' in window) {
         (window as Window & { cancelIdleCallback: (id: number) => void }).cancelIdleCallback(idleId);
       }
@@ -52,7 +75,7 @@ const HomePage: React.FC = () => {
     }
 
     const revealCarousels = () => setShowCarouselSections(true);
-    const timeoutId = window.setTimeout(revealCarousels, 15000);
+    const timeoutId = window.setTimeout(revealCarousels, 30000);
     const target = carouselLoadRef.current;
 
     if (!target || !('IntersectionObserver' in window)) {
@@ -388,16 +411,18 @@ const HomePage: React.FC = () => {
         </ul>
       </div>
 
-      {showProductSections ? (
-        <Suspense fallback={<div className="min-h-[60vh]" aria-hidden="true" />}>
-          <BestSellers />
-          <SustainabilitySection />
-          <FeaturedProducts />
-          <CoffeeSelectionSection />
-        </Suspense>
-      ) : (
-        <div className="min-h-[60vh]" aria-hidden="true" />
-      )}
+      <div ref={productLoadRef}>
+        {showProductSections ? (
+          <Suspense fallback={<div className="min-h-[60vh]" aria-hidden="true" />}>
+            <BestSellers />
+            <SustainabilitySection />
+            <FeaturedProducts />
+            <CoffeeSelectionSection />
+          </Suspense>
+        ) : (
+          <div className="min-h-[60vh]" aria-hidden="true" />
+        )}
+      </div>
 
       <div ref={carouselLoadRef}>
         {showCarouselSections ? (
