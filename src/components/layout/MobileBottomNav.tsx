@@ -2,7 +2,6 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Home, ShoppingBag, ShoppingCart, User, Gift } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../hooks/useAuth';
 import { useCart } from '../../hooks/useCart';
 
@@ -51,296 +50,120 @@ export const MobileBottomNav: React.FC = () => {
     },
   ];
 
-  const handleItemClick = (item: typeof navItems[0]) => {
-    if (item.action) {
-      item.action();
-    }
-  };
-
   const isActive = (path: string | null | undefined) => {
     if (!path) return false;
     if (path === '/') return location.pathname === '/';
     return location.pathname.startsWith(path);
   };
-  
-  // Hide on admin pages
-  const isAdminPage = location.pathname.includes('/admin');
-  
-  if (isAdminPage) {
+
+  if (location.pathname.includes('/admin')) {
     return null;
   }
 
   return (
-    <>
-      {/* Main navigation */}
-      <motion.div 
-        data-mobile-bottom-nav
-        initial={{ y: 100, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ type: "spring", stiffness: 260, damping: 20 }}
-        className="fixed bottom-0 left-0 right-0 z-40 md:hidden"
-      >
-        {/* Navigation container - Dark matte glass style */}
-        <div className="mx-3 mb-3 bg-black/60 backdrop-blur-xl shadow-lg rounded-2xl overflow-hidden border border-white/10">
-          {/* Subtle inner shadow for depth */}
-          <div className="absolute inset-0 shadow-inner rounded-2xl pointer-events-none" />
-          
-          {/* Navigation content */}
-          <div className="relative flex items-center justify-around py-2 px-1">
-            {navItems.map((item, index) => {
-              const Icon = item.icon;
-              const active = isActive(item.path);
+    <div data-mobile-bottom-nav className="fixed bottom-0 left-0 right-0 z-40 md:hidden">
+      <div className="mx-3 mb-3 bg-black/60 backdrop-blur-xl shadow-lg rounded-2xl overflow-hidden border border-white/10">
+        <div className="absolute inset-0 shadow-inner rounded-2xl pointer-events-none" />
+        <div className="relative flex items-center justify-around py-2 px-1">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const active = isActive(item.path);
+            const isShop = item.key === 'shop';
+            const isGift = item.key === 'gift';
+            const baseClass =
+              'group relative flex flex-col items-center justify-center p-3 min-w-[68px] rounded-xl transition-transform duration-150 active:scale-95';
+            const content = (
+              <>
+                {active && !isShop && !isGift ? (
+                  <div className="absolute inset-0 bg-white rounded-xl shadow-md" />
+                ) : null}
 
-              if (item.action) {
-                // Cart button with action
-                return (
-                  <motion.button
-                    key={item.key}
-                    initial={{ scale: 0, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ 
-                      delay: index * 0.1,
-                      type: "spring",
-                      stiffness: 200,
-                      damping: 15
-                    }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => handleItemClick(item)}
-                    className="group relative flex flex-col items-center justify-center p-3 min-w-[68px] rounded-xl"
-                  >
-                    {/* Active background - white style */}
-                    <AnimatePresence>
-                      {active && (
-                        <motion.div 
-                          layoutId="activeTab"
-                          initial={{ opacity: 0, scale: 0.9 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          exit={{ opacity: 0, scale: 0.9 }}
-                          transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                          className="absolute inset-0 bg-white rounded-xl shadow-md"
-                        />
-                      )}
-                    </AnimatePresence>
-                    
-                    {/* Hover state */}
-                    <motion.div 
-                      className="absolute inset-0 rounded-xl bg-accent/0"
-                      whileHover={{ 
-                        backgroundColor: "rgba(255, 255, 255, 0.1)",
-                        transition: { duration: 0.2 }
-                      }}
-                    />
-                    
-                    <div className="relative flex flex-col items-center gap-1.5">
-                      <motion.div 
-                        className="relative"
-                        animate={active ? { scale: [1, 1.05, 1] } : {}}
-                        transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
-                      >
-                        <Icon className={`w-5 h-5 transition-colors duration-200 ${
-                          active ? 'text-gray-900' : 'text-white/70 group-hover:text-white'
-                        }`} />
-                        
-                        {/* Badge with red background */}
-                        <AnimatePresence>
-                          {item.badge && item.badge > 0 && (
-                            <motion.div 
-                              initial={{ scale: 0 }}
-                              animate={{ scale: 1 }}
-                              exit={{ scale: 0 }}
-                              className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center font-semibold shadow-sm"
-                            >
-                              {item.badge > 99 ? '9+' : item.badge}
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </motion.div>
-                      
-                      <span 
-                        className={`text-[10px] font-medium leading-none transition-colors duration-200 ${
-                          active ? 'text-gray-900' : 'text-white/70 group-hover:text-white'
-                        }`}
-                      >
-                        {item.label}
-                      </span>
-                    </div>
-                  </motion.button>
-                );
-              }
-
-              // Special glossy "Our Coffee" item
-              if (item.key === 'shop') {
-                return (
-                  <motion.div
-                    key={item.key}
-                    initial={{ scale: 0, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{
-                      delay: index * 0.1,
-                      type: "spring",
-                      stiffness: 200,
-                      damping: 15,
-                    }}
-                    className="relative"
-                  >
-                    <Link
-                      to={item.path!}
-                      className="group relative flex flex-col items-center justify-center p-3 min-w-[68px] rounded-xl overflow-hidden"
-                    >
-                      <div className={`absolute inset-0 rounded-xl transition-opacity duration-300 ${
+                {isShop ? (
+                  <>
+                    <div
+                      className={`absolute inset-0 rounded-xl transition-opacity duration-300 ${
                         active
                           ? 'bg-gradient-to-br from-amber-300 via-orange-400 to-amber-600 opacity-100'
                           : 'bg-gradient-to-br from-amber-200/90 via-orange-300/90 to-amber-500/95 opacity-90 group-hover:opacity-100'
-                      }`} />
-
-                      {/* Glass gloss layer */}
-                      <div className="absolute inset-0 rounded-xl bg-gradient-to-b from-white/45 via-white/10 to-transparent pointer-events-none" />
-
-                      {/* Soft highlight bubble */}
-                      <div className="absolute -top-5 -right-4 w-12 h-12 rounded-full bg-white/30 blur-md pointer-events-none" />
-
-                      {/* Animated diagonal shine */}
-                      <motion.div
-                        className="absolute top-0 -left-10 h-full w-6 bg-white/35 blur-[1px] rotate-12 pointer-events-none"
-                        animate={{ x: [-8, 86, -8] }}
-                        transition={{ repeat: Infinity, duration: 2.8, ease: "easeInOut" }}
-                      />
-
-                      <div className="relative flex flex-col items-center gap-1.5">
-                        <motion.div
-                          animate={active ? { y: [0, -1.5, 0], scale: [1, 1.06, 1] } : { y: [0, -1, 0] }}
-                          transition={{ repeat: Infinity, duration: 2.2, ease: "easeInOut" }}
-                        >
-                          <Icon className="w-5 h-5 text-[#3a2308] drop-shadow-sm" />
-                        </motion.div>
-
-                        <span className="text-[10px] font-semibold leading-none text-[#3a2308] drop-shadow-sm text-center w-full block">
-                          {item.label}
-                        </span>
-                      </div>
-                    </Link>
-                  </motion.div>
-                );
-              }
-
-              // Special "Send a Gift" item
-              if (item.key === 'gift') {
-                return (
-                  <motion.div
-                    key={item.key}
-                    initial={{ scale: 0, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{
-                      delay: index * 0.1,
-                      type: "spring",
-                      stiffness: 200,
-                      damping: 15,
-                    }}
-                    className="relative"
-                  >
-                    {/* Pulsing glow behind the button */}
-                    <motion.div
-                      className="absolute inset-0 rounded-xl"
-                      animate={{ boxShadow: ["0 0 0px 0px rgba(244,63,94,0)", "0 0 12px 4px rgba(244,63,94,0.55)", "0 0 0px 0px rgba(244,63,94,0)"] }}
-                      transition={{ repeat: Infinity, duration: 2.4, ease: "easeInOut" }}
+                      }`}
                     />
+                    <div className="absolute inset-0 rounded-xl bg-gradient-to-b from-white/45 via-white/10 to-transparent pointer-events-none" />
+                    <div className="absolute -top-5 -right-4 w-12 h-12 rounded-full bg-white/30 blur-md pointer-events-none" />
+                    <div className="mobile-nav-shine absolute top-0 -left-10 h-full w-6 bg-white/35 blur-[1px] rotate-12 pointer-events-none" />
+                  </>
+                ) : null}
 
-                    <Link
-                      to={item.path!}
-                      className="group relative flex flex-col items-center justify-center p-3 min-w-[68px] rounded-xl overflow-hidden"
-                    >
-                      {/* Gradient background � always visible */}
-                      <div className={`absolute inset-0 rounded-xl transition-opacity duration-200 ${
+                {isGift ? (
+                  <>
+                    <div className="mobile-nav-gift-glow absolute inset-0 rounded-xl" />
+                    <div
+                      className={`absolute inset-0 rounded-xl transition-opacity duration-200 ${
                         active
                           ? 'bg-gradient-to-br from-rose-400 to-pink-600 opacity-100'
                           : 'bg-gradient-to-br from-rose-500 to-pink-600 opacity-90 group-hover:opacity-100'
-                      }`} />
-
-                      {/* Shine overlay */}
-                      <div className="absolute inset-0 rounded-xl bg-gradient-to-b from-white/20 to-transparent pointer-events-none" />
-
-                      <div className="relative flex flex-col items-center gap-1.5">
-                        <motion.div
-                          animate={{ y: [0, -2, 0] }}
-                          transition={{ repeat: Infinity, duration: 1.8, ease: "easeInOut" }}
-                        >
-                          <Icon className="w-5 h-5 text-white drop-shadow-sm" />
-                        </motion.div>
-
-                        <span className="text-[10px] font-semibold leading-none text-white drop-shadow-sm text-center w-full block">
-                          {item.label}
-                        </span>
-                      </div>
-                    </Link>
-                  </motion.div>
-                );
-              }
-
-              // Navigation link
-              return (
-                <motion.div
-                  key={item.key}
-                  initial={{ scale: 0, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ 
-                    delay: index * 0.1,
-                    type: "spring",
-                    stiffness: 200,
-                    damping: 15
-                  }}
-                >
-                  <Link
-                    to={item.path!}
-                    className="group relative flex flex-col items-center justify-center p-3 min-w-[68px] rounded-xl"
-                  >
-                    {/* Active background - white style */}
-                    <AnimatePresence>
-                      {active && (
-                        <motion.div 
-                          layoutId="activeTab"
-                          initial={{ opacity: 0, scale: 0.9 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          exit={{ opacity: 0, scale: 0.9 }}
-                          transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                          className="absolute inset-0 bg-white rounded-xl shadow-md"
-                        />
-                      )}
-                    </AnimatePresence>
-                    
-                    {/* Hover state */}
-                    <motion.div 
-                      className="absolute inset-0 rounded-xl bg-accent/0"
-                      whileHover={{ 
-                        backgroundColor: "rgba(255, 255, 255, 0.1)",
-                        transition: { duration: 0.2 }
-                      }}
+                      }`}
                     />
-                    
-                    <div className="relative flex flex-col items-center gap-1.5">
-                      <motion.div
-                        animate={active ? { scale: [1, 1.05, 1] } : {}}
-                        transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
-                      >
-                        <Icon className={`w-5 h-5 transition-colors duration-200 ${
-                          active ? 'text-gray-900' : 'text-white/70 group-hover:text-white'
-                        }`} />
-                      </motion.div>
-                      
-                      <span 
-                        className={`text-[10px] font-medium leading-none transition-colors duration-200 ${
-                          active ? 'text-gray-900' : 'text-white/70 group-hover:text-white'
-                        }`}
-                      >
-                        {item.label}
-                      </span>
-                    </div>
-                  </Link>
-                </motion.div>
+                    <div className="absolute inset-0 rounded-xl bg-gradient-to-b from-white/20 to-transparent pointer-events-none" />
+                  </>
+                ) : null}
+
+                {!isShop && !isGift ? (
+                  <div className="absolute inset-0 rounded-xl bg-white/0 transition-colors group-hover:bg-white/10" />
+                ) : null}
+
+                <div className="relative flex flex-col items-center gap-1.5">
+                  <div className={isShop || isGift ? 'mobile-nav-icon-float relative' : 'relative'}>
+                    <Icon
+                      className={`w-5 h-5 transition-colors duration-200 ${
+                        isShop
+                          ? 'text-[#3a2308] drop-shadow-sm'
+                          : isGift
+                            ? 'text-white drop-shadow-sm'
+                            : active
+                              ? 'text-gray-900'
+                              : 'text-white/70 group-hover:text-white'
+                      }`}
+                    />
+                    {item.badge && item.badge > 0 ? (
+                      <div className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center font-semibold shadow-sm">
+                        {item.badge > 99 ? '9+' : item.badge}
+                      </div>
+                    ) : null}
+                  </div>
+
+                  <span
+                    className={`text-[10px] leading-none text-center w-full block ${
+                      isShop
+                        ? 'font-semibold text-[#3a2308] drop-shadow-sm'
+                        : isGift
+                          ? 'font-semibold text-white drop-shadow-sm'
+                          : active
+                            ? 'font-medium text-gray-900'
+                            : 'font-medium text-white/70 group-hover:text-white'
+                    }`}
+                  >
+                    {item.label}
+                  </span>
+                </div>
+              </>
+            );
+
+            if (item.action) {
+              return (
+                <button key={item.key} onClick={item.action} className={baseClass}>
+                  {content}
+                </button>
               );
-            })}
-          </div>
+            }
+
+            return (
+              <Link key={item.key} to={item.path!} className={`${baseClass} overflow-hidden`}>
+                {content}
+              </Link>
+            );
+          })}
         </div>
-      </motion.div>
-    </>
+      </div>
+    </div>
   );
 };

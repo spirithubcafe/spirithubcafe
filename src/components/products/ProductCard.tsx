@@ -2,7 +2,6 @@ import React, { useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { ShoppingCart, Eye, Heart } from 'lucide-react';
-import { motion } from 'framer-motion';
 import { Card, CardContent, CardFooter } from '../ui/card';
 import { Button } from '../ui/button';
 import { useCart } from '../../hooks/useCart';
@@ -171,18 +170,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         
         {/* Animated clone for cart animation */}
         {isAnimating && (
-          <motion.img
+          <img
             src={productImage}
             alt={product.name}
-            className="absolute inset-0 w-full h-full object-cover pointer-events-none"
-            initial={{ scale: 1, opacity: 1, y: 0, x: 0 }}
-            animate={{
-              scale: [1, 0.8, 0],
-              opacity: [1, 1, 0],
-              y: [0, -20, -100],
-              x: isArabic ? [0, -100, -300] : [0, 100, 300],
-            }}
-            transition={{ duration: 0.8, ease: "easeInOut" }}
+            className="product-card-cart-fly absolute inset-0 w-full h-full object-cover pointer-events-none"
+            style={{ '--cart-fly-x': isArabic ? '-300px' : '300px' } as React.CSSProperties}
           />
         )}
         
