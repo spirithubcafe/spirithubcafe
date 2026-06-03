@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, useEffect, useMemo, useState } from 'react';
+import React, { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
 import { Compass, Coffee, Truck } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { ProfessionalHeroSlider } from '../components/layout/ProfessionalHeroSlider';
@@ -18,22 +18,24 @@ const InstagramSection = lazy(() => import('@/components/sections/InstagramSecti
 const HomePage: React.FC = () => {
   const { language } = useApp();
   const location = useLocation();
-  const [showDeferredSections, setShowDeferredSections] = useState(false);
+  const [showProductSections, setShowProductSections] = useState(false);
+  const [showCarouselSections, setShowCarouselSections] = useState(false);
+  const carouselLoadRef = useRef<HTMLDivElement | null>(null);
   const regionPrefix = location.pathname.startsWith('/sa') ? '/sa' : '/om';
 
   useEffect(() => {
-    const revealSections = () => setShowDeferredSections(true);
+    const revealSections = () => setShowProductSections(true);
 
     if (typeof window === 'undefined') {
       return;
     }
 
     let idleId: number | null = null;
-    const timeoutId = window.setTimeout(revealSections, 1200);
+    const timeoutId = window.setTimeout(revealSections, 2500);
 
     if ('requestIdleCallback' in window) {
       idleId = (window as Window & { requestIdleCallback: (cb: () => void, options?: { timeout: number }) => number })
-        .requestIdleCallback(revealSections, { timeout: 1500 });
+        .requestIdleCallback(revealSections, { timeout: 3000 });
     }
 
     return () => {
@@ -43,6 +45,38 @@ const HomePage: React.FC = () => {
       }
     };
   }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || showCarouselSections) {
+      return;
+    }
+
+    const revealCarousels = () => setShowCarouselSections(true);
+    const timeoutId = window.setTimeout(revealCarousels, 15000);
+    const target = carouselLoadRef.current;
+
+    if (!target || !('IntersectionObserver' in window)) {
+      return () => window.clearTimeout(timeoutId);
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          revealCarousels();
+          observer.disconnect();
+          window.clearTimeout(timeoutId);
+        }
+      },
+      { rootMargin: '500px 0px' }
+    );
+
+    observer.observe(target);
+
+    return () => {
+      observer.disconnect();
+      window.clearTimeout(timeoutId);
+    };
+  }, [showCarouselSections]);
 
   const seoCopy = useMemo(
     () =>
@@ -354,19 +388,28 @@ const HomePage: React.FC = () => {
         </ul>
       </div>
 
-      {showDeferredSections ? (
+      {showProductSections ? (
         <Suspense fallback={<div className="min-h-[60vh]" aria-hidden="true" />}>
           <BestSellers />
           <SustainabilitySection />
           <FeaturedProducts />
           <CoffeeSelectionSection />
-          <UnifiedCategoriesSection />
-          <GoogleReviewsSection />
-          <InstagramSection />
         </Suspense>
       ) : (
         <div className="min-h-[60vh]" aria-hidden="true" />
       )}
+
+      <div ref={carouselLoadRef}>
+        {showCarouselSections ? (
+          <Suspense fallback={<div className="min-h-[60vh]" aria-hidden="true" />}>
+            <UnifiedCategoriesSection />
+            <GoogleReviewsSection />
+            <InstagramSection />
+          </Suspense>
+        ) : (
+          <div className="min-h-[40vh]" aria-hidden="true" />
+        )}
+      </div>
 
       {/* Editorial + FAQ — sr-only: invisible to users, always in DOM for AI/SEO crawlers */}
       <section className="sr-only" aria-label={editorialCopy.sections.aboutTitle}>
