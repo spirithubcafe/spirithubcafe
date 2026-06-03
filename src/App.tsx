@@ -6,12 +6,10 @@ import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
 import { RegionProvider } from './contexts/RegionContext';
 import { Navigation } from './components/layout/Navigation';
-import { MobileBottomNav } from './components/layout/MobileBottomNav';
 import { ScrollToTop } from './components/layout/ScrollToTop';
 import { RegionRedirect } from './components/layout/RegionRedirect';
 import { ChatBot } from './components/chatbot/ChatBot';
 import { Footer } from './components/layout/Footer';
-import { CartDrawer } from './components/cart/CartDrawer';
 import HomePage from './pages/HomePage';
 import { ErrorBoundary, RouteErrorBoundary } from './components/pages/ErrorBoundary';
 import { RequireAuth } from './components/auth/RequireAuth';
@@ -58,6 +56,8 @@ const ProductDetailPage = lazy(() => import('./pages/ProductDetailPage').then((m
 const ShopPage = lazy(() => import('./pages/Shop/ShopPage'));
 const ShopCategoryPage = lazy(() => import('./pages/Shop/ShopCategoryPage'));
 const NotFound = lazy(() => import('./components/pages/NotFound').then((m) => ({ default: m.NotFound })));
+const MobileBottomNav = lazy(() => import('./components/layout/MobileBottomNav').then((m) => ({ default: m.MobileBottomNav })));
+const CartDrawer = lazy(() => import('./components/cart/CartDrawer').then((m) => ({ default: m.CartDrawer })));
 
 function AppContent() {
   const location = useLocation();
@@ -88,8 +88,12 @@ function AppContent() {
     <div className="min-h-screen bg-white">
       {!isInvoicePage && <RegionRedirect />}
       {!isInvoicePage && <Navigation />}
-      {!isInvoicePage && <MobileBottomNav />}
-      {!isInvoicePage && <CartDrawer />}
+      {!isInvoicePage && (
+        <Suspense fallback={null}>
+          <MobileBottomNav />
+          <CartDrawer />
+        </Suspense>
+      )}
       {!isInvoicePage && !isAdminPage && <ScrollToTop />}
       {!isInvoicePage && !isAdminPage && (import.meta.env.VITE_CHATBOT_ENABLED ?? 'false') === 'true' && <ChatBot />}
       {!isInvoicePage && <Toaster position="top-center" duration={2000} richColors />}

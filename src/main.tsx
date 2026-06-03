@@ -99,9 +99,6 @@ if (rootElement.hasChildNodes()) {
   );
 }
 
-// Initialize Overlayscrollbars on the document body so scrollbars across the app are replaced
-// We keep this outside the render so it runs once on load. Use a custom theme class so we can
-// style it with CSS variables in `src/index.css`.
 if (typeof window !== 'undefined') {
   const scheduleLowPriorityWork = (task: () => void, timeout = 2000) => {
     if ('requestIdleCallback' in window) {
@@ -113,30 +110,6 @@ if (typeof window !== 'undefined') {
   };
 
   const initDeferredEnhancements = () => {
-    scheduleLowPriorityWork(async () => {
-      try {
-        await import('overlayscrollbars/styles/overlayscrollbars.css');
-        const [{ OverlayScrollbars }, { initScrollbars }] = await Promise.all([
-          import('overlayscrollbars'),
-          import('./lib/scrollbars')
-        ]);
-
-        // @ts-ignore - overlayscrollbars type checks can be strict; cast options to any to avoid errors
-        OverlayScrollbars(document.body, {
-          className: 'os-theme-custom',
-          scrollbars: {
-            autoHide: 'leave',
-            clickScroll: true,
-            dragScroll: true
-          }
-        } as any);
-
-        initScrollbars();
-      } catch {
-        // Ignore enhancement failures so first paint is never blocked.
-      }
-    });
-
     scheduleLowPriorityWork(() => {
       const migrationKey = 'spirithub_sw_cleanup_v1';
       if (window.localStorage.getItem(migrationKey) === 'done') {

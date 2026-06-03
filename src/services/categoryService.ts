@@ -1,4 +1,4 @@
-import { http } from './apiClient';
+import { http, publicHttp } from './apiClient';
 import type {
   Category,
   CategoryCreateUpdateDto,
@@ -18,7 +18,8 @@ export const categoryService = {
    * @returns Promise with array of categories
    */
   getAll: async (params?: CategoryQueryParams): Promise<Category[]> => {
-    const response = await http.get<ApiResponse<Category[]>>('/api/Categories', {
+    const client = params?.includeInactive ? http : publicHttp;
+    const response = await client.get<ApiResponse<Category[]>>('/api/Categories', {
       params: {
         includeInactive: params?.includeInactive || false,
         excludeShop: params?.excludeShop,
@@ -37,7 +38,7 @@ export const categoryService = {
    * @returns Promise with array of categories
    */
   getHomepageCategories: async (count: number = 10): Promise<Category[]> => {
-    const response = await http.get<ApiResponse<Category[]>>('/api/Categories/homepage', {
+    const response = await publicHttp.get<ApiResponse<Category[]>>('/api/Categories/homepage', {
       params: { count },
     });
     return response.data.data || (response.data as unknown as Category[]);
@@ -48,7 +49,7 @@ export const categoryService = {
    * @returns Promise with array of categories including product count
    */
   getCategoriesWithCount: async (): Promise<CategoryWithCount[]> => {
-    const response = await http.get<ApiResponse<CategoryWithCount[]>>('/api/Categories/with-count');
+    const response = await publicHttp.get<ApiResponse<CategoryWithCount[]>>('/api/Categories/with-count');
     return response.data.data || (response.data as unknown as CategoryWithCount[]);
   },
 
@@ -68,7 +69,7 @@ export const categoryService = {
    * @returns Promise with category details
    */
   getBySlug: async (slug: string): Promise<Category> => {
-    const response = await http.get<ApiResponse<Category>>(`/api/Categories/slug/${slug}`);
+    const response = await publicHttp.get<ApiResponse<Category>>(`/api/Categories/slug/${slug}`);
     return response.data.data || (response.data as unknown as Category);
   },
 

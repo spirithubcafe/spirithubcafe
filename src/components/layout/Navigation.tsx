@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback, useEffect, useState, useRef } from 'react';
+import React, { Suspense, lazy, useMemo, useCallback, useEffect, useState, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Globe, ShoppingCart, Menu, ChevronDown, User, Heart, ShoppingBag, Shield, Coffee, Gift, Star, Home as HomeIcon, Package, Info, Mail, LogOut, LogIn, UserPlus } from 'lucide-react';
@@ -14,9 +14,6 @@ import { useApp } from '../../hooks/useApp';
 import { useAuth } from '../../hooks/useAuth';
 import { useCart } from '../../hooks/useCart';
 import { useRegion } from '../../hooks/useRegion';
-import { AuthButtons } from '../auth/AuthButtons';
-import { AuthModal } from '../auth/AuthModal';
-import { MinimalUserProfile } from '../auth/MinimalUserProfile';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { ScrollArea } from '../ui/scroll-area';
 import { RegionSwitcher } from './RegionSwitcher';
@@ -27,6 +24,9 @@ import { shopApi } from '../../services/shopApi';
 import { categoryService } from '../../services/categoryService';
 import type { ShopCategory } from '../../types/shop';
 import type { Category as ApiCategory } from '../../types/product';
+
+const AuthModal = lazy(() => import('../auth/AuthModal').then((m) => ({ default: m.AuthModal })));
+const MinimalUserProfile = lazy(() => import('../auth/MinimalUserProfile').then((m) => ({ default: m.MinimalUserProfile })));
 
 export const Navigation: React.FC = () => {
   const { t } = useTranslation();
@@ -39,7 +39,7 @@ export const Navigation: React.FC = () => {
   const [coffeeCategories, setCoffeeCategories] = useState<{ id: number; slug: string; name: string; nameAr?: string }[]>([]);
   const [mobileAccordion, setMobileAccordion] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [mobileAuthModal, setMobileAuthModal] = useState<'login' | 'register' | null>(null);
+  const [authModal, setAuthModal] = useState<'login' | 'register' | null>(null);
   const [dropdownKey, setDropdownKey] = useState(0);
   const [profilePictureUrl, setProfilePictureUrl] = useState<string>('');
   const coffeeAccordionRef = useRef<HTMLDivElement>(null);
@@ -426,9 +426,19 @@ export const Navigation: React.FC = () => {
                   <div className="w-16 h-4 bg-gray-200 rounded animate-pulse hidden md:block"></div>
                 </div>
               ) : isAuthenticated ? (
-                <MinimalUserProfile />
+                <Suspense fallback={<div className="h-10 w-10 rounded-full bg-white/20" />}>
+                  <MinimalUserProfile />
+                </Suspense>
               ) : (
-                <AuthButtons />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setAuthModal('login')}
+                  className="text-xs"
+                >
+                  <LogIn className="h-4 w-4" />
+                  <span className="mr-2">{t('auth.login')}</span>
+                </Button>
               )}
             </div>
           </div>
@@ -473,9 +483,19 @@ export const Navigation: React.FC = () => {
               {isLoading ? (
                 <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse"></div>
               ) : isAuthenticated ? (
-                <MinimalUserProfile />
+                <Suspense fallback={<div className="h-10 w-10 rounded-full bg-white/20" />}>
+                  <MinimalUserProfile />
+                </Suspense>
               ) : (
-                <AuthButtons showText={false} />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setAuthModal('login')}
+                  className="p-2.5"
+                  aria-label={t('auth.login')}
+                >
+                  <LogIn className="h-4 w-4" />
+                </Button>
               )}
             </div>
           </div>
@@ -603,11 +623,11 @@ export const Navigation: React.FC = () => {
                       </div>
                     ) : (
                       <div className="flex gap-2">
-                        <Button variant="default" size="sm" className="flex-1 h-8 text-xs" onClick={() => { setMobileMenuOpen(false); setMobileAuthModal('login'); }}>
+                        <Button variant="default" size="sm" className="flex-1 h-8 text-xs" onClick={() => { setMobileMenuOpen(false); setAuthModal('login'); }}>
                           <LogIn className="mr-2 h-4 w-4" />
                           {t('auth.login')}
                         </Button>
-                        <Button variant="default" size="sm" className="flex-1 h-8 text-xs" onClick={() => { setMobileMenuOpen(false); setMobileAuthModal('register'); }}>
+                        <Button variant="default" size="sm" className="flex-1 h-8 text-xs" onClick={() => { setMobileMenuOpen(false); setAuthModal('register'); }}>
                           <UserPlus className="mr-2 h-4 w-4" />
                           {t('auth.register')}
                         </Button>
@@ -937,11 +957,15 @@ export const Navigation: React.FC = () => {
       </div>
 
       {/* Standalone auth modal for mobile menu - rendered outside Sheet so it isn't unmounted when menu closes */}
-      <AuthModal
-        open={mobileAuthModal !== null}
-        onOpenChange={(open) => { if (!open) setMobileAuthModal(null); }}
-        defaultView={mobileAuthModal || 'login'}
-      />
+      {authModal !== null && (
+        <Suspense fallback={null}>
+          <AuthModal
+            open={authModal !== null}
+            onOpenChange={(open) => { if (!open) setAuthModal(null); }}
+            defaultView={authModal}
+          />
+        </Suspense>
+      )}
     </nav>
   );
 };

@@ -1,4 +1,4 @@
-import { http } from './apiClient';
+import { http, publicHttp } from './apiClient';
 import type {
   Product,
   ProductCreateUpdateDto,
@@ -83,7 +83,7 @@ export const productService = {
     }
 
     const requestPromise = (async (): Promise<ProductRawFetchResult> => {
-      const response = await http.get<ApiResponse<Product> | Product>(endpoint);
+      const response = await publicHttp.get<ApiResponse<Product> | Product>(endpoint);
       const body = response.data;
       const product = unwrapApiResponse<Product>(body as ApiResponse<Product> | Product | undefined) ?? null;
       const apiUrl = `${response.config.baseURL ?? ''}${response.config.url ?? endpoint}`;
@@ -118,7 +118,8 @@ export const productService = {
    * @returns Promise with paginated products
    */
   getAll: async (params?: ProductQueryParams): Promise<PaginatedResponse<Product>> => {
-    const response = await http.get<ApiResponse<Product[]>>('/api/Products', {
+    const client = params?.includeInactive ? http : publicHttp;
+    const response = await client.get<ApiResponse<Product[]>>('/api/Products', {
       params: {
         page: params?.page || 1,
         pageSize: params?.pageSize || 20,
@@ -150,7 +151,7 @@ export const productService = {
    * @returns Promise with array of featured products
    */
   getFeatured: async (count: number = 10): Promise<Product[]> => {
-    const response = await http.get<ApiResponse<Product[]>>('/api/Products/featured', {
+    const response = await publicHttp.get<ApiResponse<Product[]>>('/api/Products/featured', {
       params: { count },
     });
     const apiResponse = response.data;
@@ -166,7 +167,7 @@ export const productService = {
    * @returns Promise with array of latest products
    */
   getLatest: async (count: number = 10): Promise<Product[]> => {
-    const response = await http.get<ApiResponse<Product[]>>('/api/Products/latest', {
+    const response = await publicHttp.get<ApiResponse<Product[]>>('/api/Products/latest', {
       params: { count },
     });
     const apiResponse = response.data;
@@ -182,7 +183,7 @@ export const productService = {
    * @returns Promise with array of best-selling products
    */
   getBestSellers: async (count: number = 6): Promise<Product[]> => {
-    const response = await http.get<ApiResponse<Product[]>>('/api/products/best-sellers', {
+    const response = await publicHttp.get<ApiResponse<Product[]>>('/api/products/best-sellers', {
       params: { count },
     });
     const apiResponse = response.data;
@@ -202,7 +203,7 @@ export const productService = {
     categoryId: number,
     params?: { page?: number; pageSize?: number }
   ): Promise<PaginatedResponse<Product>> => {
-    const response = await http.get<ApiResponse<Product[]>>(
+    const response = await publicHttp.get<ApiResponse<Product[]>>(
       `/api/Products/category/${categoryId}`,
       {
         params: {
@@ -236,7 +237,7 @@ export const productService = {
    * @returns Promise with product details
    */
   getBySlug: async (slug: string): Promise<Product> => {
-    const response = await http.get<ApiResponse<Product>>(`/api/Products/slug/${slug}`);
+    const response = await publicHttp.get<ApiResponse<Product>>(`/api/Products/slug/${slug}`);
     return response.data.data || (response.data as unknown as Product);
   },
 
@@ -256,7 +257,7 @@ export const productService = {
    * @returns Promise with paginated search results
    */
   search: async (params: ProductSearchParams): Promise<PaginatedResponse<Product>> => {
-    const response = await http.get<ApiResponse<Product[]>>('/api/Products', {
+    const response = await publicHttp.get<ApiResponse<Product[]>>('/api/Products', {
       params: {
         searchTerm: params.q,
         page: params.page || 1,
@@ -281,7 +282,7 @@ export const productService = {
    * @returns Promise with array of related products
    */
   getRelated: async (id: number, count: number = 4): Promise<Product[]> => {
-    const response = await http.get<ApiResponse<Product[]>>(`/api/Products/${id}/related`, {
+    const response = await publicHttp.get<ApiResponse<Product[]>>(`/api/Products/${id}/related`, {
       params: { count },
     });
     const apiResponse = response.data;

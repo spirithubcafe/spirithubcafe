@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { useApp } from '../../hooks/useApp';
 import './ProfessionalHeroSlider.css';
@@ -17,6 +16,16 @@ interface SlideData {
   cta: string;
 }
 
+const MOBILE_HERO_IMAGES = [
+  '/images/slides/spirithub-cold-brew-oman-muscat.webp',
+  '/images/slides/spirithub-nitro-cascara.webp',
+  '/images/slides/spirithub-cold-brew-smooth-low-acidity.webp',
+];
+
+// Kept for future re-enable of mobile hero video without changing current image-only behavior.
+const MOBILE_HERO_VIDEO_SRC = '/video/spirithub-specialty-coffee-roastery-mobile-banner.mp4';
+const USE_MOBILE_HERO_VIDEO = false;
+
 export const ProfessionalHeroSlider: React.FC = () => {
   // const { t } = useTranslation(); // Removed unused import
   const { language } = useApp();
@@ -26,14 +35,6 @@ export const ProfessionalHeroSlider: React.FC = () => {
   const [isMobile, setIsMobile] = useState(() =>
     typeof window !== 'undefined' ? window.innerWidth < 768 : false,
   );
-  const mobileHeroImages = [
-    '/images/slides/spirithub-cold-brew-oman-muscat.webp',
-    '/images/slides/spirithub-nitro-cascara.webp',
-    '/images/slides/spirithub-cold-brew-smooth-low-acidity.webp',
-  ];
-  // Kept for future re-enable of mobile hero video without changing current image-only behavior.
-  const mobileHeroVideoSrc = '/video/spirithub-specialty-coffee-roastery-mobile-banner.mp4';
-  const useMobileHeroVideo = false;
   const [mobileImageIndex, setMobileImageIndex] = useState(0);
 
   // Check if device is mobile
@@ -66,26 +67,44 @@ export const ProfessionalHeroSlider: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (!isMobile || useMobileHeroVideo || mobileHeroImages.length <= 1) {
+    if (!isMobile || USE_MOBILE_HERO_VIDEO || MOBILE_HERO_IMAGES.length <= 1) {
       return;
     }
 
     const intervalId = window.setInterval(() => {
-      setMobileImageIndex((prev) => (prev + 1) % mobileHeroImages.length);
+      setMobileImageIndex((prev) => (prev + 1) % MOBILE_HERO_IMAGES.length);
     }, 5000);
 
     return () => {
       window.clearInterval(intervalId);
     };
-  }, [isMobile, useMobileHeroVideo, mobileHeroImages.length]);
+  }, [isMobile]);
 
   useEffect(() => {
-    // Preload hero mobile images once to avoid flicker during first cycle.
-    mobileHeroImages.forEach((src) => {
-      const img = new Image();
-      img.src = src;
-    });
-  }, []);
+    if (!isMobile || USE_MOBILE_HERO_VIDEO || MOBILE_HERO_IMAGES.length <= 1) {
+      return;
+    }
+
+    const preloadLaterImages = () => {
+      MOBILE_HERO_IMAGES.slice(1).forEach((src) => {
+        const img = new Image();
+        img.src = src;
+      });
+    };
+
+    if ('requestIdleCallback' in window) {
+      const idleId = (window as Window & { requestIdleCallback: (cb: () => void, options?: { timeout: number }) => number })
+        .requestIdleCallback(preloadLaterImages, { timeout: 3000 });
+      return () => {
+        if ('cancelIdleCallback' in window) {
+          (window as Window & { cancelIdleCallback: (id: number) => void }).cancelIdleCallback(idleId);
+        }
+      };
+    }
+
+    const timeoutId = globalThis.setTimeout(preloadLaterImages, 2500);
+    return () => globalThis.clearTimeout(timeoutId);
+  }, [isMobile]);
 
   // Professional slide data with rich content
   const allSlides: SlideData[] = [
@@ -365,7 +384,7 @@ export const ProfessionalHeroSlider: React.FC = () => {
         {isMobile ? (
           // Mobile: use photos only (no video) and rotate through the three assets.
           <div className="slide-background">
-            {useMobileHeroVideo ? (
+            {USE_MOBILE_HERO_VIDEO ? (
               <video
                 className="background-video"
                 autoPlay
@@ -373,13 +392,13 @@ export const ProfessionalHeroSlider: React.FC = () => {
                 muted
                 playsInline
                 preload="metadata"
-                poster={mobileHeroImages[0]}
+                poster={MOBILE_HERO_IMAGES[0]}
               >
-                <source src={mobileHeroVideoSrc} type="video/mp4" />
+                <source src={MOBILE_HERO_VIDEO_SRC} type="video/mp4" />
               </video>
             ) : (
               <>
-                {mobileHeroImages.map((src, index) => (
+                {MOBILE_HERO_IMAGES.map((src, index) => (
                   <img
                     key={src}
                     src={src}
@@ -407,15 +426,7 @@ export const ProfessionalHeroSlider: React.FC = () => {
           </div>
         ) : (
           // Desktop: Show image backgrounds with fade effect
-          <AnimatePresence initial={false}>
-            <motion.div
-              key={currentSlide}
-              className="slide-background"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.8, ease: "easeInOut" }}
-            >
+          <div key={currentSlide} className="slide-background slide-background--fade">
               <img
                 src={currentSlideData.image}
                 alt={currentSlideData.title}
@@ -426,8 +437,7 @@ export const ProfessionalHeroSlider: React.FC = () => {
                 decoding="async"
               />
               <div className={`background-overlay ${currentSlideData.overlayClassName ?? ''}`.trim()} />
-            </motion.div>
-          </AnimatePresence>
+          </div>
         )}
       </div>
 
@@ -437,21 +447,12 @@ export const ProfessionalHeroSlider: React.FC = () => {
           <div className="w-full items-center">
             
             {/* Content - Centered */}
-            <motion.div
+            <div
               key={`content-${currentSlide}`}
               className="content-section max-w-4xl mx-auto text-center"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
             >
               {/* Main Title */}
-              <motion.h1
-                className="slide-title"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.8, delay: 0.3 }}
-              >
+              <h1 className="slide-title">
                 {isHeroPrimaryTitle && language !== 'ar' ? (
                   <>
                     PREMIUM SPECIALTY COFFEE ROASTED IN{' '}
@@ -469,15 +470,10 @@ export const ProfessionalHeroSlider: React.FC = () => {
                 ) : (
                   currentSlideData.title
                 )}
-              </motion.h1>
+              </h1>
 
               {/* CTA Button */}
-              <motion.div
-                className="slide-cta flex justify-center"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.8, delay: 0.5 }}
-              >
+              <div className="slide-cta flex justify-center">
                 <Link
                   to="/products"
                   className={`hero-cta-button inline-block text-white font-semibold px-6 py-3 rounded-md transition-all duration-300 text-base uppercase tracking-wide ${
@@ -489,15 +485,10 @@ export const ProfessionalHeroSlider: React.FC = () => {
                 >
                   {currentSlideData.cta}
                 </Link>
-              </motion.div>
+              </div>
 
               {/* Subtitle */}
-              <motion.div
-                className="slide-subtitle"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.8, delay: 0.4 }}
-              >
+              <div className="slide-subtitle">
                 {Array.isArray(currentSlideData.subtitle) ? (
                   currentSlideData.subtitle.map((line, index) => (
                     <div key={index} className="subtitle-line">
@@ -507,9 +498,9 @@ export const ProfessionalHeroSlider: React.FC = () => {
                 ) : (
                   currentSlideData.subtitle
                 )}
-              </motion.div>
+              </div>
 
-            </motion.div>
+            </div>
           </div>
         </div>
       </div>
@@ -518,27 +509,22 @@ export const ProfessionalHeroSlider: React.FC = () => {
       {(!isMobile && slides.length > 1) && (
         <div className="slide-indicators">
           {slides.map((_, index) => (
-            <motion.button
+            <button
               key={index}
               className={`indicator ${index === currentSlide ? 'active' : ''}`}
               onClick={(e) => {
                 e.stopPropagation();
                 setCurrentSlide(index);
               }}
-              whileHover={{ scale: 1.2 }}
-              whileTap={{ scale: 0.9 }}
             >
               <div className="indicator-progress">
-                <motion.div
-                  className="progress-fill"
-                  initial={{ width: 0 }}
-                  animate={{ 
-                    width: index === currentSlide && isPlaying && !isHovered ? '100%' : '0%' 
-                  }}
-                  transition={{ duration: 6, ease: 'linear' }}
+                <div
+                  className={`progress-fill ${
+                    index === currentSlide && isPlaying && !isHovered ? 'progress-fill--active' : ''
+                  }`}
                 />
               </div>
-            </motion.button>
+            </button>
           ))}
         </div>
       )}

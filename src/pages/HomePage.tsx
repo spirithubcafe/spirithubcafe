@@ -1,18 +1,19 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { Suspense, lazy, useEffect, useMemo, useState } from 'react';
 import { Compass, Coffee, Truck } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { ProfessionalHeroSlider } from '../components/layout/ProfessionalHeroSlider';
 import { AnnouncementBar } from '../components/layout/AnnouncementBar';
-import { SustainabilitySection } from '../components/sections/SustainabilitySection';
-import { FeaturedProducts } from '../components/sections/FeaturedProducts';
-import { UnifiedCategoriesSection } from '../components/sections/UnifiedCategoriesSection';
-import { CoffeeSelectionSection } from '../components/sections/CoffeeSelectionSection';
 import { Seo } from '../components/seo/Seo';
 import { useApp } from '../hooks/useApp';
 import { siteMetadata } from '../config/siteMetadata';
-import { BestSellers } from '@/components/sections/BestSellers';
-import { InstagramSection } from '@/components/sections/InstagramSection';
-import { GoogleReviewsSection } from '@/components/sections/GoogleReviewsSection';
+
+const BestSellers = lazy(() => import('@/components/sections/BestSellers').then((m) => ({ default: m.BestSellers })));
+const SustainabilitySection = lazy(() => import('../components/sections/SustainabilitySection').then((m) => ({ default: m.SustainabilitySection })));
+const FeaturedProducts = lazy(() => import('../components/sections/FeaturedProducts').then((m) => ({ default: m.FeaturedProducts })));
+const CoffeeSelectionSection = lazy(() => import('../components/sections/CoffeeSelectionSection').then((m) => ({ default: m.CoffeeSelectionSection })));
+const UnifiedCategoriesSection = lazy(() => import('../components/sections/UnifiedCategoriesSection').then((m) => ({ default: m.UnifiedCategoriesSection })));
+const GoogleReviewsSection = lazy(() => import('@/components/sections/GoogleReviewsSection').then((m) => ({ default: m.GoogleReviewsSection })));
+const InstagramSection = lazy(() => import('@/components/sections/InstagramSection').then((m) => ({ default: m.InstagramSection })));
 
 const HomePage: React.FC = () => {
   const { language } = useApp();
@@ -354,7 +355,7 @@ const HomePage: React.FC = () => {
       </div>
 
       {showDeferredSections ? (
-        <>
+        <Suspense fallback={<div className="min-h-[60vh]" aria-hidden="true" />}>
           <BestSellers />
           <SustainabilitySection />
           <FeaturedProducts />
@@ -362,7 +363,7 @@ const HomePage: React.FC = () => {
           <UnifiedCategoriesSection />
           <GoogleReviewsSection />
           <InstagramSection />
-        </>
+        </Suspense>
       ) : (
         <div className="min-h-[60vh]" aria-hidden="true" />
       )}
