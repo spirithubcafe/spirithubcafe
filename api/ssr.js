@@ -12,6 +12,7 @@ const API_BASE_URL = process.env.VITE_API_URL || 'https://api.spirithubcafe.com/
 // Cache for product data (valid for 5 minutes)
 const productCache = new Map();
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const staticFileCache = new Map();
 
 // Fetch product details from API (by ID or slug)
 async function fetchProductDetails(identifier) {
@@ -466,7 +467,11 @@ export default async function handler(req, res) {
         }
 
         if (fs.existsSync(resolvedPath)) {
-          const content = fs.readFileSync(resolvedPath);
+          const cachedFile = staticFileCache.get(resolvedPath);
+          const content = cachedFile ?? fs.readFileSync(resolvedPath);
+          if (!cachedFile) {
+            staticFileCache.set(resolvedPath, content);
+          }
           const ext = path.extname(urlPathOnly);
           const contentTypes = {
             '.js': 'application/javascript',
@@ -491,7 +496,7 @@ export default async function handler(req, res) {
             '.webmanifest': 'application/manifest+json'
           };
           res.setHeader('Content-Type', contentTypes[ext] || 'application/octet-stream');
-          res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+          res.setHeader('Cache-Control', 'public, max-age=31536000, s-maxage=31536000, immutable');
           return res.status(200).send(content);
         }
       } catch (err) {

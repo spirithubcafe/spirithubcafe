@@ -16,7 +16,7 @@ const GoogleReviewsSection = lazy(() => import('@/components/sections/GoogleRevi
 const InstagramSection = lazy(() => import('@/components/sections/InstagramSection').then((m) => ({ default: m.InstagramSection })));
 
 const HomePage: React.FC = () => {
-  const { language } = useApp();
+  const { language, fetchProducts, fetchCategories } = useApp();
   const location = useLocation();
   const [showProductSections, setShowProductSections] = useState(false);
   const [showCarouselSections, setShowCarouselSections] = useState(false);
@@ -100,6 +100,18 @@ const HomePage: React.FC = () => {
       window.clearTimeout(timeoutId);
     };
   }, [showCarouselSections]);
+
+  useEffect(() => {
+    if (showProductSections) {
+      void fetchProducts();
+    }
+  }, [fetchProducts, showProductSections]);
+
+  useEffect(() => {
+    if (showCarouselSections) {
+      void fetchCategories();
+    }
+  }, [fetchCategories, showCarouselSections]);
 
   const seoCopy = useMemo(
     () =>
@@ -436,7 +448,8 @@ const HomePage: React.FC = () => {
         )}
       </div>
 
-      {/* Editorial + FAQ — sr-only: invisible to users, always in DOM for AI/SEO crawlers */}
+      {/* Keep FAQ/schema in <Seo>; avoid hydrating a large invisible editorial DOM block. */}
+      {false && (
       <section className="sr-only" aria-label={editorialCopy.sections.aboutTitle}>
         <h2>{editorialCopy.sections.aboutTitle}</h2>
         <p>{editorialCopy.intro}</p>
@@ -509,6 +522,7 @@ const HomePage: React.FC = () => {
           </Link>
         </section>
       </section>
+      )}
      
     </>
   );

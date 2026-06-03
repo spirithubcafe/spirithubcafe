@@ -9,6 +9,7 @@ import type { Category as ApiCategory, Product as ApiProduct } from '../types/pr
 import { getCategoryImageUrl, getProductImageUrl, resolveProductImagePath } from '../lib/imageUtils';
 import { cacheUtils, imageCacheUtils } from '../lib/cacheUtils';
 import { safeStorage } from '../lib/safeStorage';
+import { normalizeProductTags } from '../lib/productTagUtils';
 
 export interface User {
   id: string;
@@ -56,6 +57,11 @@ const getSessionArrayCache = <T,>(key: string): T[] | null => {
 };
 
 const hasValue = (value: unknown): boolean => value !== null && value !== undefined && value !== '';
+
+const isInitialHomepagePath = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  return /^\/(?:om|sa)?\/?$/.test(window.location.pathname);
+};
 
 export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const { i18n, t } = useTranslation();
@@ -398,24 +404,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
               lang === 'ar' && p.tastingNotesAr ? String(p.tastingNotesAr) : (p.tastingNotes ? String(p.tastingNotes) : undefined),
             tastingNotesAr: p.tastingNotesAr ? String(p.tastingNotesAr) : undefined,
             featured: p.isFeatured,
-            topTags: (() => {
-              const raw = (p as Record<string, unknown>).topTags;
-              if (Array.isArray(raw)) return raw as Product['topTags'];
-              if (raw && typeof raw === 'object' && '$values' in (raw as Record<string, unknown>)) {
-                const vals = (raw as Record<string, unknown>).$values;
-                return Array.isArray(vals) ? vals as Product['topTags'] : undefined;
-              }
-              return undefined;
-            })(),
-            bottomTags: (() => {
-              const raw = (p as Record<string, unknown>).bottomTags;
-              if (Array.isArray(raw)) return raw as Product['bottomTags'];
-              if (raw && typeof raw === 'object' && '$values' in (raw as Record<string, unknown>)) {
-                const vals = (raw as Record<string, unknown>).$values;
-                return Array.isArray(vals) ? vals as Product['bottomTags'] : undefined;
-              }
-              return undefined;
-            })(),
+            topTags: normalizeProductTags((p as Record<string, unknown>).topTags, 'Top'),
+            bottomTags: normalizeProductTags((p as Record<string, unknown>).bottomTags, 'Bottom'),
           } satisfies Product;
         })
         .filter((p): p is Product => p !== null)
@@ -649,13 +639,34 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     ongoingProductsFetchRef.current = null;
     ongoingCategoriesFetchRef.current = null;
     
-    // Fetch data
-    fetchProducts();
-    fetchCategories();
-    
     // Set initial document direction
     document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
     document.documentElement.lang = language;
+
+    const runFetches = () => {
+      fetchProducts();
+      fetchCategories();
+    };
+
+    if (!isInitialHomepagePath()) {
+      runFetches();
+      return;
+    }
+
+    const timeoutId = window.setTimeout(runFetches, 12000);
+    let idleId: number | null = null;
+
+    if ('requestIdleCallback' in window) {
+      idleId = (window as Window & { requestIdleCallback: (cb: () => void, options?: { timeout: number }) => number })
+        .requestIdleCallback(runFetches, { timeout: 9000 });
+    }
+
+    return () => {
+      window.clearTimeout(timeoutId);
+      if (idleId !== null && 'cancelIdleCallback' in window) {
+        (window as Window & { cancelIdleCallback: (id: number) => void }).cancelIdleCallback(idleId);
+      }
+    };
   // Only depend on language and region - callbacks are stable now
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentRegionCode, language]);

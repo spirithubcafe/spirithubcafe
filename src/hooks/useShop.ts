@@ -3,22 +3,13 @@ import { shopApi } from '../services/shopApi';
 import type { Pagination, ShopCategory, ShopPage, ShopProduct, SortBy } from '../types/shop';
 import { safeStorage } from '../lib/safeStorage';
 import { getActiveRegionForApi } from '../lib/regionUtils';
-
-/** Unwrap .NET $values wrapper if present */
-const unwrapValues = (val: unknown): unknown[] | undefined => {
-  if (Array.isArray(val)) return val;
-  if (val && typeof val === 'object' && '$values' in (val as Record<string, unknown>)) {
-    const inner = (val as Record<string, unknown>).$values;
-    return Array.isArray(inner) ? inner : undefined;
-  }
-  return undefined;
-};
+import { normalizeProductTags as normalizeProductTagList } from '../lib/productTagUtils';
 
 /** Ensure topTags/bottomTags are proper arrays (handles $values wrapper) */
 const normalizeProductTags = (product: ShopProduct): ShopProduct => {
   const raw = product as unknown as Record<string, unknown>;
-  const topTags = unwrapValues(raw.topTags);
-  const bottomTags = unwrapValues(raw.bottomTags);
+  const topTags = normalizeProductTagList(raw.topTags, 'Top');
+  const bottomTags = normalizeProductTagList(raw.bottomTags, 'Bottom');
   if (topTags !== product.topTags || bottomTags !== product.bottomTags) {
     return { ...product, topTags: topTags as ShopProduct['topTags'], bottomTags: bottomTags as ShopProduct['bottomTags'] };
   }

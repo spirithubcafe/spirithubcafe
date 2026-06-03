@@ -4,6 +4,7 @@ import { ProductCard } from '../products/ProductCard';
 import { useApp } from '../../hooks/useApp';
 import { productService } from '../../services/productService';
 import { getProductImageUrl } from '../../lib/imageUtils';
+import { normalizeProductTags } from '../../lib/productTagUtils';
 import type { Product } from '../../contexts/AppContextDefinition';
 
 export const BestSellers: React.FC = () => {
@@ -71,24 +72,8 @@ export const BestSellers: React.FC = () => {
           tastingNotes: lang === 'ar' && record.tastingNotesAr ? String(record.tastingNotesAr) : (record.tastingNotes as string) || undefined,
           tastingNotesAr: record.tastingNotesAr ? String(record.tastingNotesAr) : undefined,
           featured: (record.isFeatured as boolean) || undefined,
-          topTags: (() => {
-            const raw = record.topTags;
-            if (Array.isArray(raw)) return raw;
-            if (raw && typeof raw === 'object' && '$values' in (raw as Record<string, unknown>)) {
-              const vals = (raw as Record<string, unknown>).$values;
-              return Array.isArray(vals) ? vals : undefined;
-            }
-            return undefined;
-          })(),
-          bottomTags: (() => {
-            const raw = record.bottomTags;
-            if (Array.isArray(raw)) return raw;
-            if (raw && typeof raw === 'object' && '$values' in (raw as Record<string, unknown>)) {
-              const vals = (raw as Record<string, unknown>).$values;
-              return Array.isArray(vals) ? vals : undefined;
-            }
-            return undefined;
-          })(),
+          topTags: normalizeProductTags(record.topTags, 'Top'),
+          bottomTags: normalizeProductTags(record.bottomTags, 'Bottom'),
         } as Product;
       });
       setBestSellerProducts(mapped);

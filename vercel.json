@@ -47,7 +47,7 @@
     { "src": "/(om|sa)/manifest.webmanifest", "dest": "/manifest.webmanifest" },
     {
       "src": "/assets/(.*)",
-      "dest": "/assets/$1",
+      "dest": "/dist/assets/$1",
       "headers": {
         "Cache-Control": "public, max-age=31536000, immutable"
       }
@@ -68,7 +68,7 @@
     },
     {
       "src": "/(.*\\.(?:js|css|png|jpg|jpeg|gif|ico|svg|webp|mp4|webm|ogg|woff|woff2|ttf|eot|json|xml|txt|webmanifest))",
-      "dest": "/$1",
+      "dest": "/dist/$1",
       "headers": {
         "Cache-Control": "public, max-age=31536000, immutable"
       }

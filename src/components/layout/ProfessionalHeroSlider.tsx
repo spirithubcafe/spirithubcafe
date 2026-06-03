@@ -397,27 +397,16 @@ export const ProfessionalHeroSlider: React.FC = () => {
                 <source src={MOBILE_HERO_VIDEO_SRC} type="video/mp4" />
               </video>
             ) : (
-              <>
-                {MOBILE_HERO_IMAGES.map((src, index) => (
-                  <img
-                    key={src}
-                    src={src}
-                    alt={currentSlideData.title}
-                    aria-hidden={index !== mobileImageIndex}
-                    className={`background-image ${currentSlideData.imageClassName ?? ''}`.trim()}
-                    fetchPriority={index === 0 ? 'high' : 'auto'}
-                    loading={index === 0 ? 'eager' : 'lazy'}
-                    sizes="100vw"
-                    decoding="async"
-                    style={{
-                      position: 'absolute',
-                      inset: 0,
-                      opacity: index === mobileImageIndex ? 1 : 0,
-                      transition: 'opacity 0.55s ease-in-out',
-                    }}
-                  />
-                ))}
-              </>
+              <img
+                key={MOBILE_HERO_IMAGES[mobileImageIndex]}
+                src={MOBILE_HERO_IMAGES[mobileImageIndex]}
+                alt={currentSlideData.title}
+                className={`background-image ${currentSlideData.imageClassName ?? ''}`.trim()}
+                fetchPriority={mobileImageIndex === 0 ? 'high' : 'auto'}
+                loading={mobileImageIndex === 0 ? 'eager' : 'lazy'}
+                sizes="100vw"
+                decoding="async"
+              />
             )}
             
             <div
