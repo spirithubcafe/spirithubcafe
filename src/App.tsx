@@ -59,6 +59,64 @@ const NotFound = lazy(() => import('./components/pages/NotFound').then((m) => ({
 const MobileBottomNav = lazy(() => import('./components/layout/MobileBottomNav').then((m) => ({ default: m.MobileBottomNav })));
 const CartDrawer = lazy(() => import('./components/cart/CartDrawer').then((m) => ({ default: m.CartDrawer })));
 
+const scheduleAfterInitialLoad = (task: () => void) => {
+  if (typeof window === 'undefined') return () => undefined;
+
+  let didRun = false;
+  let timeoutId: number | null = null;
+  let idleId: number | null = null;
+  let onLoad: (() => void) | null = null;
+  const interactionEvents = ['pointerdown', 'keydown', 'touchstart'];
+
+  const clearScheduledWork = () => {
+    if (timeoutId !== null) {
+      window.clearTimeout(timeoutId);
+      timeoutId = null;
+    }
+    if (idleId !== null && 'cancelIdleCallback' in window) {
+      (window as Window & { cancelIdleCallback: (id: number) => void }).cancelIdleCallback(idleId);
+      idleId = null;
+    }
+    if (onLoad !== null) {
+      window.removeEventListener('load', onLoad);
+    }
+    interactionEvents.forEach((eventName) => {
+      window.removeEventListener(eventName, runOnce);
+    });
+  };
+
+  const runOnce = () => {
+    if (didRun) return;
+    didRun = true;
+    clearScheduledWork();
+    task();
+  };
+
+  const scheduleIdle = () => {
+    if ('requestIdleCallback' in window) {
+      idleId = (window as Window & { requestIdleCallback: (cb: () => void, options?: { timeout: number }) => number })
+        .requestIdleCallback(runOnce, { timeout: 20000 });
+      return;
+    }
+    timeoutId = globalThis.setTimeout(runOnce, 20000);
+  };
+
+  interactionEvents.forEach((eventName) => {
+    window.addEventListener(eventName, runOnce, { once: true, passive: true });
+  });
+
+  if (document.readyState === 'complete') {
+    timeoutId = window.setTimeout(scheduleIdle, 12000);
+  } else {
+    onLoad = () => {
+      timeoutId = window.setTimeout(scheduleIdle, 12000);
+    };
+    window.addEventListener('load', onLoad, { once: true });
+  }
+
+  return clearScheduledWork;
+};
+
 function AppContent() {
   const location = useLocation();
   const isAdminPage = location.pathname.includes('/admin');
@@ -71,7 +129,10 @@ function AppContent() {
 
   // Initialize GA4 analytics (no-op when VITE_GA4_MEASUREMENT_ID is not set)
   useEffect(() => {
-    initGA4();
+    return scheduleAfterInitialLoad(() => {
+      initGA4();
+      trackPageView(window.location.pathname + window.location.search);
+    });
   }, []);
 
   // Track page views on route change

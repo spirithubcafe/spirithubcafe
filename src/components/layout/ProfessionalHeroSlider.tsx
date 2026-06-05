@@ -32,10 +32,9 @@ export const ProfessionalHeroSlider: React.FC = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPlaying] = useState(true);
   const [isHovered, setIsHovered] = useState(false);
-  const [isMobile, setIsMobile] = useState(() =>
-    typeof window !== 'undefined' ? window.innerWidth < 768 : false,
-  );
+  const [isMobile, setIsMobile] = useState(false);
   const [mobileImageIndex, setMobileImageIndex] = useState(0);
+  const [autoPlayReady, setAutoPlayReady] = useState(false);
 
   // Check if device is mobile
   useEffect(() => {
@@ -67,7 +66,7 @@ export const ProfessionalHeroSlider: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (!isMobile || USE_MOBILE_HERO_VIDEO || MOBILE_HERO_IMAGES.length <= 1) {
+    if (!autoPlayReady || !isMobile || USE_MOBILE_HERO_VIDEO || MOBILE_HERO_IMAGES.length <= 1) {
       return;
     }
 
@@ -78,10 +77,10 @@ export const ProfessionalHeroSlider: React.FC = () => {
     return () => {
       window.clearInterval(intervalId);
     };
-  }, [isMobile]);
+  }, [autoPlayReady, isMobile]);
 
   useEffect(() => {
-    if (!isMobile || USE_MOBILE_HERO_VIDEO || MOBILE_HERO_IMAGES.length <= 1) {
+    if (!autoPlayReady || !isMobile || USE_MOBILE_HERO_VIDEO || MOBILE_HERO_IMAGES.length <= 1) {
       return;
     }
 
@@ -104,7 +103,7 @@ export const ProfessionalHeroSlider: React.FC = () => {
 
     const timeoutId = globalThis.setTimeout(preloadLaterImages, 2500);
     return () => globalThis.clearTimeout(timeoutId);
-  }, [isMobile]);
+  }, [autoPlayReady, isMobile]);
 
   // Professional slide data with rich content
   const allSlides: SlideData[] = [
@@ -338,13 +337,39 @@ export const ProfessionalHeroSlider: React.FC = () => {
 
   // Auto-play functionality - only on desktop with multiple slides
   useEffect(() => {
-    if (isPlaying && !isHovered && !isMobile && slides.length > 1) {
+    if (autoPlayReady && isPlaying && !isHovered && !isMobile && slides.length > 1) {
       const timer = setInterval(() => {
         setCurrentSlide((prev) => (prev + 1) % slides.length);
       }, 6000);
       return () => clearInterval(timer);
     }
-  }, [isPlaying, isHovered, isMobile, slides.length]);
+  }, [autoPlayReady, isPlaying, isHovered, isMobile, slides.length]);
+
+  useEffect(() => {
+    let timeoutId: number | null = null;
+
+    const enableAutoPlay = () => {
+      setAutoPlayReady(true);
+      cleanup();
+    };
+
+    const cleanup = () => {
+      if (timeoutId !== null) {
+        window.clearTimeout(timeoutId);
+        timeoutId = null;
+      }
+      window.removeEventListener('pointerdown', enableAutoPlay);
+      window.removeEventListener('keydown', enableAutoPlay);
+      window.removeEventListener('touchstart', enableAutoPlay);
+    };
+
+    window.addEventListener('pointerdown', enableAutoPlay, { passive: true, once: true });
+    window.addEventListener('keydown', enableAutoPlay, { once: true });
+    window.addEventListener('touchstart', enableAutoPlay, { passive: true, once: true });
+    timeoutId = window.setTimeout(enableAutoPlay, 16000);
+
+    return cleanup;
+  }, []);
 
   // Reset currentSlide when slides array changes (mobile/desktop switch)
   useEffect(() => {
@@ -415,7 +440,10 @@ export const ProfessionalHeroSlider: React.FC = () => {
           </div>
         ) : (
           // Desktop: Show image backgrounds with fade effect
-          <div key={currentSlide} className="slide-background slide-background--fade">
+          <div
+            key={currentSlide}
+            className={`slide-background ${currentSlide === 0 ? '' : 'slide-background--fade'}`.trim()}
+          >
               <img
                 src={currentSlideData.image}
                 alt={currentSlideData.title}
@@ -509,7 +537,7 @@ export const ProfessionalHeroSlider: React.FC = () => {
               <div className="indicator-progress">
                 <div
                   className={`progress-fill ${
-                    index === currentSlide && isPlaying && !isHovered ? 'progress-fill--active' : ''
+                    index === currentSlide && autoPlayReady && isPlaying && !isHovered ? 'progress-fill--active' : ''
                   }`}
                 />
               </div>

@@ -14,6 +14,7 @@ const CoffeeSelectionSection = lazy(() => import('../components/sections/CoffeeS
 const UnifiedCategoriesSection = lazy(() => import('../components/sections/UnifiedCategoriesSection').then((m) => ({ default: m.UnifiedCategoriesSection })));
 const GoogleReviewsSection = lazy(() => import('@/components/sections/GoogleReviewsSection').then((m) => ({ default: m.GoogleReviewsSection })));
 const InstagramSection = lazy(() => import('@/components/sections/InstagramSection').then((m) => ({ default: m.InstagramSection })));
+const SHOW_EDITORIAL_CONTENT = import.meta.env.VITE_SHOW_HOME_EDITORIAL === 'true';
 
 const HomePage: React.FC = () => {
   const { language, fetchProducts, fetchCategories } = useApp();
@@ -75,11 +76,15 @@ const HomePage: React.FC = () => {
     }
 
     const revealCarousels = () => setShowCarouselSections(true);
-    const timeoutId = window.setTimeout(revealCarousels, 30000);
     const target = carouselLoadRef.current;
 
-    if (!target || !('IntersectionObserver' in window)) {
-      return () => window.clearTimeout(timeoutId);
+    if (!target) {
+      return;
+    }
+
+    if (!('IntersectionObserver' in window)) {
+      revealCarousels();
+      return;
     }
 
     const observer = new IntersectionObserver(
@@ -87,17 +92,15 @@ const HomePage: React.FC = () => {
         if (entries.some((entry) => entry.isIntersecting)) {
           revealCarousels();
           observer.disconnect();
-          window.clearTimeout(timeoutId);
         }
       },
-      { rootMargin: '500px 0px' }
+      { rootMargin: '0px 0px 300px 0px' }
     );
 
     observer.observe(target);
 
     return () => {
       observer.disconnect();
-      window.clearTimeout(timeoutId);
     };
   }, [showCarouselSections]);
 
@@ -449,7 +452,7 @@ const HomePage: React.FC = () => {
       </div>
 
       {/* Keep FAQ/schema in <Seo>; avoid hydrating a large invisible editorial DOM block. */}
-      {false && (
+      {SHOW_EDITORIAL_CONTENT && (
       <section className="sr-only" aria-label={editorialCopy.sections.aboutTitle}>
         <h2>{editorialCopy.sections.aboutTitle}</h2>
         <p>{editorialCopy.intro}</p>

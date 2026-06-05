@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Facebook, Instagram, Mail, MessageCircle } from 'lucide-react';
 import { useApp } from '../../hooks/useApp';
@@ -13,6 +13,36 @@ export const Footer: React.FC = () => {
   const [email, setEmail] = useState('');
   const [subscribeStatus, setSubscribeStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
+  const [shouldLoadBackgroundVideo, setShouldLoadBackgroundVideo] = useState(false);
+  const footerRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    const footer = footerRef.current;
+    if (!footer || shouldLoadBackgroundVideo) {
+      return;
+    }
+
+    if (!('IntersectionObserver' in window)) {
+      setShouldLoadBackgroundVideo(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setShouldLoadBackgroundVideo(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: '600px 0px' },
+    );
+
+    observer.observe(footer);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [shouldLoadBackgroundVideo]);
 
   const handleNewsletterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -90,18 +120,21 @@ export const Footer: React.FC = () => {
   ];
 
   return (
-    <footer className="relative text-white overflow-hidden md:mt-0">
+    <footer ref={footerRef} className="relative text-white overflow-hidden md:mt-0">
       {/* Video Background */}
-      <div className="absolute inset-0 w-full h-full">
-        <video
-          className="w-full h-full object-cover scale-[1.08] transform-gpu"
-          autoPlay
-          muted
-          loop
-          playsInline
-        >
-          <source src="/video/back.mp4" type="video/mp4" />
-        </video>
+      <div className="absolute inset-0 w-full h-full bg-neutral-900">
+        {shouldLoadBackgroundVideo && (
+          <video
+            className="w-full h-full object-cover scale-[1.08] transform-gpu"
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="none"
+          >
+            <source src="/video/back.mp4" type="video/mp4" />
+          </video>
+        )}
         {/* Dark overlay for better text readability */}
         <div className="absolute inset-0 bg-black/70"></div>
       </div>
