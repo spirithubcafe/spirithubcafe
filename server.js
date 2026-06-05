@@ -157,6 +157,32 @@ const SEO_HOSTS = {
   sa: 'https://spirithub.sa',
 };
 
+const getPerformanceHintsForRoute = (url) => {
+  let routePath = String(url || '/').split('?')[0].split('#')[0];
+  if (!routePath.startsWith('/')) routePath = `/${routePath}`;
+
+  if (routePath === '/om' || routePath === '/sa') {
+    routePath = '/';
+  } else if (routePath.startsWith('/om/') || routePath.startsWith('/sa/')) {
+    routePath = routePath.slice(3) || '/';
+  }
+
+  routePath = routePath.replace(/\/+$/, '') || '/';
+
+  if (routePath === '/') {
+    return `
+    <link rel="preload" as="image" href="/images/slides/spirithub-cold-brew-oman-muscat.webp" type="image/webp" media="(max-width: 767.98px)" fetchpriority="high" />
+    <link rel="preload" as="image" href="/images/slides/premium-specialty-coffee-roasted-in-oman.webp" type="image/webp" media="(min-width: 768px)" fetchpriority="high" />`;
+  }
+
+  if (routePath === '/products') {
+    return `
+    <link rel="preload" as="image" href="/images/header.webp" type="image/webp" fetchpriority="high" />`;
+  }
+
+  return '';
+};
+
 // Create http server
 const app = express();
 // Respect reverse-proxy headers (e.g., Vercel/NGINX) when constructing absolute URLs.
@@ -296,13 +322,14 @@ app.use(async (req, res, next) => {
     // Get meta tags based on route (async because product routes may call the API)
     const requestLanguage = getRequestApiLanguage(req);
     const metaTags = await getMetaTagsForRoute(url, requestBaseUrl, requestLanguage);
+    const performanceHints = getPerformanceHintsForRoute(url);
 
     // Inject the server-detected language as a global so the React client can
     // initialize with the same value and avoid a React #418 hydration mismatch.
     const ssrLanguageScript = `<script>window.__SSR_LANGUAGE__="${requestLanguage === 'ar' ? 'ar' : 'en'}";</script>`;
 
     // Replace the meta tags in the template
-    let html = template.replace('<!--app-head-->', `${ssrLanguageScript}${metaTags}`);
+    let html = template.replace('<!--app-head-->', `${ssrLanguageScript}${performanceHints}${metaTags}`);
 
     let responseStatus = 200;
 

@@ -6,6 +6,32 @@ const SEO_HOSTS = {
   sa: 'https://spirithub.sa',
 };
 
+const getPerformanceHintsForRoute = (url) => {
+  let routePath = String(url || '/').split('?')[0].split('#')[0];
+  if (!routePath.startsWith('/')) routePath = `/${routePath}`;
+
+  if (routePath === '/om' || routePath === '/sa') {
+    routePath = '/';
+  } else if (routePath.startsWith('/om/') || routePath.startsWith('/sa/')) {
+    routePath = routePath.slice(3) || '/';
+  }
+
+  routePath = routePath.replace(/\/+$/, '') || '/';
+
+  if (routePath === '/') {
+    return `
+    <link rel="preload" as="image" href="/images/slides/spirithub-cold-brew-oman-muscat.webp" type="image/webp" media="(max-width: 767.98px)" fetchpriority="high" />
+    <link rel="preload" as="image" href="/images/slides/premium-specialty-coffee-roasted-in-oman.webp" type="image/webp" media="(min-width: 768px)" fetchpriority="high" />`;
+  }
+
+  if (routePath === '/products') {
+    return `
+    <link rel="preload" as="image" href="/images/header.webp" type="image/webp" fetchpriority="high" />`;
+  }
+
+  return '';
+};
+
 // API base URL
 const API_BASE_URL = process.env.VITE_API_URL || 'https://api.spirithubcafe.com/api';
 
@@ -511,16 +537,17 @@ export default async function handler(req, res) {
     
     // Get meta tags based on route (async)
     const metaTags = await getMetaTagsForRoute(url, requestBaseUrl, ssrProduct);
+    const performanceHints = getPerformanceHintsForRoute(url);
     const ssrBootstrapScript = ssrProduct
       ? `<script>window.__SSR_PRODUCT__=${serializeForInlineScript(ssrProduct)};window.__SSR_PRODUCT_ID__=${serializeForInlineScript(productIdentifier)};</script>`
       : '';
     
     // Replace the meta tags placeholder (only in head)
     if (html.includes('<!--app-head-->')) {
-      html = html.replace('<!--app-head-->', `${ssrBootstrapScript}${metaTags}`);
+      html = html.replace('<!--app-head-->', `${ssrBootstrapScript}${performanceHints}${metaTags}`);
     } else {
       // If placeholder not found, inject before </head>
-      html = html.replace('</head>', `${ssrBootstrapScript}${metaTags}\n  </head>`);
+      html = html.replace('</head>', `${ssrBootstrapScript}${performanceHints}${metaTags}\n  </head>`);
     }
 
     let responseStatus = 200;
