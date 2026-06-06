@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { lazy, memo, Suspense, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { ShoppingCart, Eye, Heart } from 'lucide-react';
@@ -10,14 +10,17 @@ import { useRegion } from '../../hooks/useRegion';
 import { formatPrice } from '../../lib/regionUtils';
 import type { Product } from '../../contexts/AppContextDefinition';
 import { buildResponsiveSrcSet, getProductImageUrl, handleImageError } from '../../lib/imageUtils';
-import { ProductQuickView } from './ProductQuickView';
 import { ProductTagBadge } from '../shop/ProductTagBadge';
+
+const ProductQuickView = lazy(() =>
+  import('./ProductQuickView').then((module) => ({ default: module.ProductQuickView })),
+);
 
 interface ProductCardProps {
   product: Product;
 }
 
-export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
+const ProductCardComponent: React.FC<ProductCardProps> = ({ product }) => {
   const { i18n, t } = useTranslation();
   const navigate = useNavigate();
   const isArabic = i18n.language === 'ar';
@@ -248,11 +251,17 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       </CardFooter>
 
       {/* Quick View Modal */}
-      <ProductQuickView
-        product={product}
-        open={showQuickView}
-        onOpenChange={handleQuickViewClose}
-      />
+      {showQuickView ? (
+        <Suspense fallback={null}>
+          <ProductQuickView
+            product={product}
+            open
+            onOpenChange={handleQuickViewClose}
+          />
+        </Suspense>
+      ) : null}
     </Card>
   );
 };
+
+export const ProductCard = memo(ProductCardComponent);

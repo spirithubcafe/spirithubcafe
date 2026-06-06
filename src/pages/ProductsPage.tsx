@@ -50,7 +50,6 @@ const isCompetitionPremiumCategory = (name: string, hrefOrSlug: string): boolean
 export const ProductsPage = () => {
   const { i18n } = useTranslation();
   const { products, allCategories, loading, language } = useApp();
-  const { shopData } = useShopPage();
   const { currentRegion } = useRegion();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -64,7 +63,10 @@ export const ProductsPage = () => {
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [canScrollCategoriesLeft, setCanScrollCategoriesLeft] = useState(false);
   const [canScrollCategoriesRight, setCanScrollCategoriesRight] = useState(false);
+  const [shouldLoadShopCategories, setShouldLoadShopCategories] = useState(false);
+  const browseCategoriesSectionRef = useRef<HTMLDivElement>(null);
   const browseCategoriesRef = useRef<HTMLDivElement>(null);
+  const { shopData } = useShopPage(shouldLoadShopCategories);
 
   const isArabic = i18n.language === 'ar';
 
@@ -343,6 +345,28 @@ export const ProductsPage = () => {
     [browseCategories, isArabic],
   );
 
+  useEffect(() => {
+    const section = browseCategoriesSectionRef.current;
+    if (!section || shouldLoadShopCategories) return;
+
+    if (!('IntersectionObserver' in window)) {
+      setShouldLoadShopCategories(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+        setShouldLoadShopCategories(true);
+        observer.disconnect();
+      },
+      { rootMargin: '600px 0px' },
+    );
+
+    observer.observe(section);
+    return () => observer.disconnect();
+  }, [shouldLoadShopCategories]);
+
   const updateBrowseCategoryArrows = useCallback(() => {
     const viewport = browseCategoriesRef.current;
     if (!viewport) return;
@@ -593,7 +617,7 @@ export const ProductsPage = () => {
                       };
 
                       return (
-                        <div key={category.id} className="space-y-6">
+                        <div key={category.id} className="products-product-group space-y-6">
                           {/* Category Section Header */}
                           <div className="flex items-center gap-4 pb-4 border-b-2 border-amber-500">
                             <div className="flex items-center gap-4 flex-1">
@@ -646,7 +670,7 @@ export const ProductsPage = () => {
         </div>
 
       {/* All Categories Section */}
-      <div className="products-categories-section bg-[#fbfbf9] py-8">
+      <div ref={browseCategoriesSectionRef} className="products-categories-section bg-[#fbfbf9] py-8">
         <div className="mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-6">
             <h2 className="text-2xl font-bold text-gray-900">
@@ -797,6 +821,11 @@ export const ProductsPage = () => {
         .products-categories-section {
           content-visibility: auto;
           contain-intrinsic-size: auto 420px;
+        }
+
+        .products-product-group {
+          content-visibility: auto;
+          contain-intrinsic-size: auto 620px;
         }
 
         .products-category-edge {

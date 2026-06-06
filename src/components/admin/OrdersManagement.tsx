@@ -580,7 +580,9 @@ export const OrdersManagement: React.FC = () => {
       const region = resolveRegionFromStorage();
       const regionInfo = REGION_INFO[region];
 
-      const pickupDate = combineDateTimeLocal(pickupDraft.pickupDate, '00:00');
+      // Use midday for the date-only field so JSON UTC conversion cannot move
+      // Sunday back to Saturday in Oman/Gulf time zones.
+      const pickupDate = combineDateTimeLocal(pickupDraft.pickupDate, '12:00');
       const readyTime = combineDateTimeLocal(pickupDraft.pickupDate, pickupDraft.readyTime);
       const lastPickupTime = combineDateTimeLocal(pickupDraft.pickupDate, pickupDraft.lastPickupTime);
       const closingTime = combineDateTimeLocal(pickupDraft.pickupDate, pickupDraft.closingTime);
@@ -641,6 +643,23 @@ export const OrdersManagement: React.FC = () => {
       const processed = createResponse?.processedPickup;
       const hasValidId = Boolean(processed?.id && String(processed.id).trim().length > 0);
       const hasValidGuid = Boolean(processed?.guid && String(processed.guid).trim().length > 0 && !isZeroGuid(processed.guid));
+      const notifications = Array.isArray(createResponse?.notifications) ? createResponse.notifications : [];
+      const nonWorkingDayNotification = notifications.find((notification) => notification.code === 'ERR77');
+
+      if (nonWorkingDayNotification) {
+        const selectedPickupDate = combineDateTimeLocal(pickupDraft.pickupDate, '00:00');
+        selectedPickupDate.setDate(selectedPickupDate.getDate() + 1);
+        const nextCandidateDate = skipWeekends(selectedPickupDate);
+        const nextCandidateYmd = toYmd(nextCandidateDate);
+        const msg = isArabic
+          ? `رفض أرامكس تاريخ الاستلام لأنه يوم غير عامل. تم اقتراح ${nextCandidateYmd}؛ راجع التاريخ ثم أعد المحاولة.`
+          : `Aramex rejected the pickup date as a non-working day. ${nextCandidateYmd} is now suggested; review the date and try again.`;
+
+        setPickupDraft((current) => current ? { ...current, pickupDate: nextCandidateYmd } : current);
+        setRegisterPickupError(msg);
+        toast.error(msg, { duration: 8000 });
+        return;
+      }
 
       // Aramex domestic (DOM/OND) returns success:true but with null id and zero GUID —
       // treat as success if the API call itself succeeded, even without a pickup reference.
@@ -648,9 +667,7 @@ export const OrdersManagement: React.FC = () => {
       const isAcceptableSuccess = createResponse?.success && (hasValidId || hasValidGuid || isDomesticPickup);
 
       if (!isAcceptableSuccess) {
-        const notif = Array.isArray(createResponse?.notifications)
-          ? createResponse.notifications.map((n) => `[${n.code}] ${n.message}`).join('\n')
-          : '';
+        const notif = notifications.map((n) => `[${n.code}] ${n.message}`).join('\n');
         const msg =
           createResponse?.errors?.join('\n') ||
           notif ||
@@ -785,14 +802,11 @@ export const OrdersManagement: React.FC = () => {
       await loadOrders({ silent: true });
       setShowRegisterPickupDialog(false);
 
-      // Show any Aramex warnings (e.g. ERR77 = non-working day)
+      // Show non-blocking Aramex warnings.
       if (createResponse?.hasWarnings && Array.isArray(createResponse.notifications)) {
         createResponse.notifications.forEach((n) => {
-          const isNonWorkingDay = n.code === 'ERR77';
           toast.warning(
-            isNonWorkingDay
-              ? (isArabic ? 'تحذير: لم يتمكن أرامكس من تأكيد الاستلام اليوم — قد يُحوَّل لأقرب موعد متاح' : `Warning: Aramex couldn't confirm same-day pickup — may be rescheduled to the next available slot (${n.code})`)
-              : `Aramex: [${n.code}] ${n.message}`,
+            `Aramex: [${n.code}] ${n.message}`,
             { duration: 8000 }
           );
         });
@@ -3298,6 +3312,11 @@ export const OrdersManagement: React.FC = () => {
               <Package className="h-5 w-5" />
               {isArabic ? 'تفاصيل الطلب' : 'Order Details'} #{selectedOrder?.orderNumber}
             </DialogTitle>
+            <DialogDescription className="sr-only">
+              {isArabic
+                ? `تفاصيل الطلب ${selectedOrder?.orderNumber || ''}`
+                : `Details for order ${selectedOrder?.orderNumber || ''}`}
+            </DialogDescription>
           </DialogHeader>
           
           {selectedOrder && (
@@ -3531,13 +3550,21 @@ export const OrdersManagement: React.FC = () => {
                               </Button>
                             </div>
                           ) : (
-                            <div className="mt-1 flex items-center gap-2">
-                              <p className="text-sm text-green-700 bg-green-50 px-3 py-2 rounded border border-green-200 flex-1">
-                                {isArabic ? 'تم تسجيل الاستلام — أدخل رقم التجميع من بريد أرامكس إن وجد' : 'Pickup registered — enter collection reference from Aramex email if available'}
+                            <div className="mt-1 space-y-2">
+                              <p className="text-sm text-amber-800 bg-amber-50 px-3 py-2 rounded border border-amber-200">
+                                {isArabic
+                                  ? 'لا يوجد رقم تجميع مؤكد من أرامكس. أعد التسجيل إذا لم يصلك تأكيد بالبريد.'
+                                  : 'No confirmed Aramex collection reference. Retry registration if no confirmation email arrived.'}
                               </p>
-                              <Button size="sm" variant="outline" onClick={() => { setEditingPickupRef(true); setEditPickupRefValue(''); }}>
-                                {isArabic ? 'تعديل' : 'Edit'}
-                              </Button>
+                              <div className="flex flex-wrap gap-2">
+                                <Button size="sm" variant="outline" onClick={() => openRegisterPickupDialog()}>
+                                  <RefreshCw className="h-4 w-4 mr-2" />
+                                  {isArabic ? 'إعادة تسجيل الاستلام' : 'Retry Pickup Registration'}
+                                </Button>
+                                <Button size="sm" variant="ghost" onClick={() => { setEditingPickupRef(true); setEditPickupRefValue(''); }}>
+                                  {isArabic ? 'إدخال الرقم يدوياً' : 'Enter Reference Manually'}
+                                </Button>
+                              </div>
                             </div>
                           )}
                         </div>
@@ -4414,6 +4441,11 @@ export const OrdersManagement: React.FC = () => {
                 </>
               )}
             </DialogTitle>
+            <DialogDescription className="sr-only">
+              {shipmentResult
+                ? (isArabic ? 'تفاصيل نتيجة إنشاء شحنة أرامكس.' : 'Aramex shipment creation result details.')
+                : (isArabic ? 'تفاصيل خطأ إنشاء شحنة أرامكس.' : 'Aramex shipment creation error details.')}
+            </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">

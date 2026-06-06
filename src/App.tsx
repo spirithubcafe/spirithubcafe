@@ -68,7 +68,6 @@ const scheduleAfterInitialLoad = (task: () => void) => {
   let timeoutId: number | null = null;
   let idleId: number | null = null;
   let onLoad: (() => void) | null = null;
-  const interactionEvents = ['pointerdown', 'keydown', 'touchstart'];
 
   const clearScheduledWork = () => {
     if (timeoutId !== null) {
@@ -82,9 +81,6 @@ const scheduleAfterInitialLoad = (task: () => void) => {
     if (onLoad !== null) {
       window.removeEventListener('load', onLoad);
     }
-    interactionEvents.forEach((eventName) => {
-      window.removeEventListener(eventName, runOnce);
-    });
   };
 
   const runOnce = () => {
@@ -102,10 +98,6 @@ const scheduleAfterInitialLoad = (task: () => void) => {
     }
     timeoutId = globalThis.setTimeout(runOnce, 20000);
   };
-
-  interactionEvents.forEach((eventName) => {
-    window.addEventListener(eventName, runOnce, { once: true, passive: true });
-  });
 
   if (document.readyState === 'complete') {
     timeoutId = window.setTimeout(scheduleIdle, 12000);

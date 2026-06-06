@@ -75,7 +75,7 @@ const withRetry = async <T>(fn: () => Promise<T>, maxAttempts = 3): Promise<T> =
   throw lastError;
 };
 
-export const useShopPage = () => {
+export const useShopPage = (enabled = true) => {
   const [shopData, setShopData] = useState<ShopPage | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -115,8 +115,9 @@ export const useShopPage = () => {
   }, []);
 
   useEffect(() => {
+    if (!enabled) return;
     fetchShopPage();
-  }, [fetchShopPage]);
+  }, [enabled, fetchShopPage]);
 
   return { shopData, loading, error, refetch: fetchShopPage };
 };
