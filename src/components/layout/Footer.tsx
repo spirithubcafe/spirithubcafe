@@ -34,7 +34,7 @@ export const Footer: React.FC = () => {
           observer.disconnect();
         }
       },
-      { rootMargin: '600px 0px' },
+      { rootMargin: '100px 0px' },
     );
 
     observer.observe(footer);

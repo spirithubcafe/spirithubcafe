@@ -1,6 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Check, ChevronDown, ChevronLeft, ChevronRight, Coffee, Filter, Search } from 'lucide-react';
-import useEmblaCarousel from 'embla-carousel-react';
 import { useTranslation } from 'react-i18next';
 import { useApp } from '../hooks/useApp';
 import { ProductCard } from '../components/products/ProductCard';
@@ -65,12 +64,7 @@ export const ProductsPage = () => {
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [canScrollCategoriesLeft, setCanScrollCategoriesLeft] = useState(false);
   const [canScrollCategoriesRight, setCanScrollCategoriesRight] = useState(false);
-  const [browseCategoriesRef, browseCategoriesApi] = useEmblaCarousel({
-    align: 'start',
-    containScroll: 'trimSnaps',
-    dragFree: false,
-    skipSnaps: false,
-  });
+  const browseCategoriesRef = useRef<HTMLDivElement>(null);
 
   const isArabic = i18n.language === 'ar';
 
@@ -329,42 +323,69 @@ export const ProductsPage = () => {
   );
 
   const updateBrowseCategoryArrows = useCallback(() => {
-    if (!browseCategoriesApi) return;
-    setCanScrollCategoriesLeft(browseCategoriesApi.canScrollPrev());
-    setCanScrollCategoriesRight(browseCategoriesApi.canScrollNext());
-  }, [browseCategoriesApi]);
+    const viewport = browseCategoriesRef.current;
+    if (!viewport) return;
+
+    const maxScrollLeft = viewport.scrollWidth - viewport.clientWidth;
+    setCanScrollCategoriesLeft(viewport.scrollLeft > 1);
+    setCanScrollCategoriesRight(viewport.scrollLeft < maxScrollLeft - 1);
+  }, []);
 
   useEffect(() => {
-    browseCategoriesApi?.reInit();
-    updateBrowseCategoryArrows();
-  }, [renderedBrowseCategories.length, browseCategoriesApi, updateBrowseCategoryArrows]);
+    const viewport = browseCategoriesRef.current;
+    if (!viewport) return;
 
-  useEffect(() => {
-    if (!browseCategoriesApi) return;
-    updateBrowseCategoryArrows();
-    browseCategoriesApi.on('select', updateBrowseCategoryArrows);
-    browseCategoriesApi.on('reInit', updateBrowseCategoryArrows);
+    let animationFrame = 0;
+    let resizeObserver: ResizeObserver | null = null;
+    const scheduleArrowUpdate = () => {
+      if (animationFrame) return;
+      animationFrame = window.requestAnimationFrame(() => {
+        animationFrame = 0;
+        updateBrowseCategoryArrows();
+      });
+    };
+
+    const intersectionObserver = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+
+        intersectionObserver.disconnect();
+        animationFrame = window.requestAnimationFrame(() => {
+          animationFrame = 0;
+          if (isArabic) {
+            viewport.scrollLeft = viewport.scrollWidth;
+          }
+          updateBrowseCategoryArrows();
+        });
+
+        resizeObserver = new ResizeObserver(scheduleArrowUpdate);
+        resizeObserver.observe(viewport);
+      },
+      { rootMargin: '300px 0px' },
+    );
+
+    intersectionObserver.observe(viewport);
+    viewport.addEventListener('scroll', scheduleArrowUpdate, { passive: true });
 
     return () => {
-      browseCategoriesApi.off('select', updateBrowseCategoryArrows);
-      browseCategoriesApi.off('reInit', updateBrowseCategoryArrows);
+      intersectionObserver.disconnect();
+      if (animationFrame) {
+        window.cancelAnimationFrame(animationFrame);
+      }
+      viewport.removeEventListener('scroll', scheduleArrowUpdate);
+      resizeObserver?.disconnect();
     };
-  }, [browseCategoriesApi, updateBrowseCategoryArrows]);
-
-  useEffect(() => {
-    if (!browseCategoriesApi || !isArabic || renderedBrowseCategories.length === 0) return;
-    browseCategoriesApi.scrollTo(browseCategoriesApi.scrollSnapList().length - 1, true);
-    updateBrowseCategoryArrows();
-  }, [browseCategoriesApi, isArabic, renderedBrowseCategories.length, updateBrowseCategoryArrows]);
+  }, [isArabic, renderedBrowseCategories.length, updateBrowseCategoryArrows]);
 
   const scrollBrowseCategories = useCallback((direction: 'left' | 'right') => {
-    if (!browseCategoriesApi) return;
-    if (direction === 'left') {
-      browseCategoriesApi.scrollPrev();
-      return;
-    }
-    browseCategoriesApi.scrollNext();
-  }, [browseCategoriesApi]);
+    const viewport = browseCategoriesRef.current;
+    if (!viewport) return;
+
+    viewport.scrollBy({
+      left: direction === 'left' ? -viewport.clientWidth * 0.8 : viewport.clientWidth * 0.8,
+      behavior: 'smooth',
+    });
+  }, []);
 
   return (
     <div className={`min-h-screen bg-gray-50 ${isArabic ? 'rtl' : 'ltr'}`}>
@@ -604,7 +625,7 @@ export const ProductsPage = () => {
         </div>
 
       {/* All Categories Section */}
-      <div className="bg-[#fbfbf9] py-8">
+      <div className="products-categories-section bg-[#fbfbf9] py-8">
         <div className="mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-6">
             <h2 className="text-2xl font-bold text-gray-900">
@@ -635,7 +656,7 @@ export const ProductsPage = () => {
               <ChevronRight className="w-4 h-4" />
             </button>
 
-            <div ref={browseCategoriesRef} dir="ltr" className="products-category-viewport overflow-hidden">
+            <div ref={browseCategoriesRef} dir="ltr" className="products-category-viewport overflow-x-auto">
               <div className="products-category-track flex pb-2">
             {renderedBrowseCategories.map((category) => {
               const isActive = category.kind === 'coffee' && (selectedCategory === category.categoryId || selectedCategory === category.categorySlug);
@@ -726,6 +747,15 @@ export const ProductsPage = () => {
       <style>{`
         .products-category-viewport {
           cursor: grab;
+          scrollbar-width: none;
+          scroll-behavior: smooth;
+          scroll-snap-type: x mandatory;
+          overscroll-behavior-inline: contain;
+          -webkit-overflow-scrolling: touch;
+        }
+
+        .products-category-viewport::-webkit-scrollbar {
+          display: none;
         }
 
         .products-category-viewport:active {
@@ -740,6 +770,12 @@ export const ProductsPage = () => {
         .products-category-slide {
           flex: 0 0 min(58vw, 212px);
           margin-left: 12px;
+          scroll-snap-align: start;
+        }
+
+        .products-categories-section {
+          content-visibility: auto;
+          contain-intrinsic-size: auto 420px;
         }
 
         .products-category-edge {

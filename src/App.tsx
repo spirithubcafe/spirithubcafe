@@ -10,6 +10,8 @@ import { ScrollToTop } from './components/layout/ScrollToTop';
 import { RegionRedirect } from './components/layout/RegionRedirect';
 import { ChatBot } from './components/chatbot/ChatBot';
 import { Footer } from './components/layout/Footer';
+import { AnnouncementBar } from './components/layout/AnnouncementBar';
+import { PageHeader } from './components/layout/PageHeader';
 import HomePage from './pages/HomePage';
 import { ErrorBoundary, RouteErrorBoundary } from './components/pages/ErrorBoundary';
 import { RequireAuth } from './components/auth/RequireAuth';
@@ -121,6 +123,22 @@ function AppContent() {
   const location = useLocation();
   const isAdminPage = location.pathname.includes('/admin');
   const isInvoicePage = location.pathname.startsWith('/invoice/');
+  const isProductsPage = /^\/(?:(?:om|sa)\/)?products\/?$/.test(location.pathname);
+
+  const routeFallback = isProductsPage ? (
+    <>
+      <AnnouncementBar />
+      <PageHeader
+        title="Our Products"
+        titleAr="منتجاتنا"
+        subtitle="Discover our premium collection of carefully crafted coffee and desserts"
+        subtitleAr="اكتشف مجموعتنا المميزة من القهوة والحلويات المحضرة بعناية"
+      />
+      <div className="min-h-screen bg-gray-50" aria-hidden="true" />
+    </>
+  ) : (
+    <div className="min-h-screen bg-white" />
+  );
 
   // Initialize visitor tracking on app load
   useEffect(() => {
@@ -159,7 +177,7 @@ function AppContent() {
       {!isInvoicePage && !isAdminPage && (import.meta.env.VITE_CHATBOT_ENABLED ?? 'false') === 'true' && <ChatBot />}
       {!isInvoicePage && <Toaster position="top-center" duration={2000} richColors />}
       <RouteErrorBoundary>
-      <Suspense fallback={<div className="min-h-screen bg-white" />}>
+      <Suspense fallback={routeFallback}>
       <Routes>
         <Route path="/invoice/:orderNumber" element={<InvoicePage />} />
 

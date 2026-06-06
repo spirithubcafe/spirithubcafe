@@ -18,15 +18,22 @@ const getPerformanceHintsForRoute = (url) => {
 
   routePath = routePath.replace(/\/+$/, '') || '/';
 
+  const announcementOffsetScript =
+    '<script>document.documentElement.style.setProperty("--announcement-bar-height","40px");</script>';
+
   if (routePath === '/') {
-    return `
+    return `${announcementOffsetScript}
     <link rel="preload" as="image" href="/images/slides/spirithub-cold-brew-oman-muscat.webp" type="image/webp" media="(max-width: 767.98px)" fetchpriority="high" />
     <link rel="preload" as="image" href="/images/slides/premium-specialty-coffee-roasted-in-oman.webp" type="image/webp" media="(min-width: 768px)" fetchpriority="high" />`;
   }
 
   if (routePath === '/products') {
-    return `
-    <link rel="preload" as="image" href="/images/header.webp" type="image/webp" fetchpriority="high" />`;
+    return `${announcementOffsetScript}
+    <link rel="preload" as="image" href="/images/header.webp" imagesrcset="/images/header-768.webp 768w, /images/header-1280.webp 1280w, /images/header.webp 1920w" imagesizes="100vw" type="image/webp" fetchpriority="high" />`;
+  }
+
+  if (routePath === '/shop') {
+    return announcementOffsetScript;
   }
 
   return '';

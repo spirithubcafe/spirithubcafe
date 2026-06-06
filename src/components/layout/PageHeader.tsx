@@ -9,16 +9,43 @@ interface PageHeaderProps {
   subtitleAr?: string;
 }
 
-// Helper function to strip HTML tags from text
+// Keep header text safe to render during SSR as well as in the browser.
 const stripHtmlTags = (html: string | undefined): string => {
   if (!html) return '';
-  
-  // Create a temporary div element to parse HTML
-  const tmp = document.createElement('div');
-  tmp.innerHTML = html;
-  
-  // Get text content and clean up extra whitespace
-  return tmp.textContent || tmp.innerText || '';
+
+  const withoutTags = html.replace(/<[^>]*>/g, '');
+  const decoded = withoutTags.replace(
+    /&(#x[\da-f]+|#\d+|amp|apos|gt|lt|nbsp|quot);/gi,
+    (entity, code: string) => {
+      const normalizedCode = code.toLowerCase();
+      const namedEntities: Record<string, string> = {
+        amp: '&',
+        apos: "'",
+        gt: '>',
+        lt: '<',
+        nbsp: ' ',
+        quot: '"',
+      };
+
+      if (normalizedCode in namedEntities) {
+        return namedEntities[normalizedCode];
+      }
+
+      const radix = normalizedCode.startsWith('#x') ? 16 : 10;
+      const codePoint = Number.parseInt(
+        normalizedCode.slice(radix === 16 ? 2 : 1),
+        radix,
+      );
+
+      if (!Number.isInteger(codePoint) || codePoint < 0 || codePoint > 0x10ffff) {
+        return entity;
+      }
+
+      return String.fromCodePoint(codePoint);
+    },
+  );
+
+  return decoded.replace(/\s+/g, ' ').trim();
 };
 
 export const PageHeader: React.FC<PageHeaderProps> = ({ 
@@ -36,11 +63,14 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   return (
     <div
       className="relative bg-gradient-to-br from-stone-50 via-white to-stone-100 page-padding-top pb-16 overflow-hidden"
-      style={{ paddingTop: 'calc(var(--nav-height) + var(--region-banner-height) + 3rem)' }}
     >
       {/* Background Image - Brighter and Clearer */}
       <img
         src="/images/header.webp"
+        srcSet="/images/header-768.webp 768w, /images/header-1280.webp 1280w, /images/header.webp 1920w"
+        sizes="100vw"
+        width={1920}
+        height={1081}
         alt=""
         aria-hidden="true"
         className="absolute inset-0 h-full w-full object-cover object-center opacity-80 brightness-110"
