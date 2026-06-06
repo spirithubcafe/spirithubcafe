@@ -196,13 +196,34 @@ export const ProductsPage = () => {
     });
 
     // Sort categories by their displayOrder
-    const sortedCategories = coffeeCategories
+    const sortedCategories = [...coffeeCategories]
       .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0))
       .map(cat => ({
         category: cat,
         products: grouped.get(cat.id) || []
       }))
       .filter(item => item.products.length > 0);
+
+    const matchedCategoryIds = new Set(sortedCategories.map(({ category }) => category.id));
+
+    // Keep products visible when category metadata is missing or stale.
+    grouped.forEach((categoryProducts, categoryId) => {
+      if (categoryId === 'uncategorized' || matchedCategoryIds.has(categoryId)) {
+        return;
+      }
+
+      const firstProduct = categoryProducts[0];
+      sortedCategories.push({
+        category: {
+          id: categoryId,
+          name: firstProduct?.category || 'Uncategorized',
+          slug: firstProduct?.categorySlug,
+          description: '',
+          image: '',
+        },
+        products: categoryProducts,
+      });
+    });
 
     // Add uncategorized products if any
     const uncategorized = grouped.get('uncategorized');
@@ -556,7 +577,7 @@ export const ProductsPage = () => {
                 </div>
 
                 {/* Show grouped by category if "All" is selected */}
-                {selectedCategory === 'all' && productsByCategory ? (
+                {selectedCategory === 'all' && productsByCategory && productsByCategory.length > 0 ? (
                   <div className="space-y-16">
                     {productsByCategory.map(({ category, products: categoryProducts }) => {
                       // Shorten category names
