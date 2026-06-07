@@ -7,6 +7,7 @@ interface PageHeaderProps {
   titleAr?: string;
   subtitle?: string;
   subtitleAr?: string;
+  variant?: 'default' | 'products';
 }
 
 // Keep header text safe to render during SSR as well as in the browser.
@@ -52,10 +53,12 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   title, 
   titleAr, 
   subtitle, 
-  subtitleAr 
+  subtitleAr,
+  variant = 'default',
 }) => {
   const { language } = useApp();
   const isArabic = language === 'ar';
+  const isProductsHeader = variant === 'products';
 
   const displayTitle = stripHtmlTags(isArabic && titleAr ? titleAr : title);
   const displaySubtitle = stripHtmlTags(isArabic && subtitleAr ? subtitleAr : subtitle);
@@ -65,26 +68,40 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
       className="relative bg-gradient-to-br from-stone-50 via-white to-stone-100 page-padding-top pb-16 overflow-hidden"
     >
       {/* Background Image - Brighter and Clearer */}
-      <img
-        src="/images/header.webp"
-        srcSet="/images/header-768.webp 768w, /images/header-1280.webp 1280w, /images/header.webp 1920w"
-        sizes="100vw"
-        width={1920}
-        height={1081}
-        alt=""
-        aria-hidden="true"
-        className="absolute inset-0 h-full w-full object-cover object-center opacity-80 brightness-110"
-        fetchPriority="high"
-        loading="eager"
-        decoding="async"
-      />
+      <picture>
+        <source
+          media="(min-width: 768px)"
+          srcSet={isProductsHeader
+            ? '/images/header-banner-1280.webp'
+            : '/images/header-1280.webp'}
+        />
+        <img
+          src={isProductsHeader
+            ? '/images/header-banner-768.webp'
+            : '/images/header-768.webp'}
+          width={768}
+          height={320}
+          alt=""
+          aria-hidden="true"
+          className={`absolute inset-0 h-full w-full object-cover opacity-80 brightness-110 ${
+            isProductsHeader ? 'object-[center_35%] md:object-center' : 'object-center'
+          }`}
+          fetchPriority={isProductsHeader ? undefined : 'high'}
+          loading="eager"
+          decoding="async"
+        />
+      </picture>
       
       {/* Dark Overlay Mask - Lighter for more brightness */}
-      <div className="absolute inset-0 bg-black/25" />
+      <div className={`absolute inset-0 ${
+        isProductsHeader ? 'bg-black/40 md:bg-black/25' : 'bg-black/25'
+      }`} />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
         <div className="text-center">
-          <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-4 drop-shadow-2xl">
+          <h1 className={`font-extrabold text-white mb-4 drop-shadow-2xl ${
+            isProductsHeader ? 'text-3xl sm:text-4xl md:text-5xl' : 'text-4xl md:text-5xl'
+          }`}>
             {displayTitle}
           </h1>
           

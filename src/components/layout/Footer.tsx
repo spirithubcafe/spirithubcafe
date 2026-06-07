@@ -120,7 +120,11 @@ export const Footer: React.FC = () => {
   ];
 
   return (
-    <footer ref={footerRef} className="relative text-white overflow-hidden md:mt-0">
+    <footer
+      ref={footerRef}
+      className="relative text-white overflow-hidden md:mt-0"
+      style={{ contentVisibility: 'auto', containIntrinsicSize: 'auto 700px' }}
+    >
       {/* Video Background */}
       <div className="absolute inset-0 w-full h-full bg-neutral-900">
         {shouldLoadBackgroundVideo && (

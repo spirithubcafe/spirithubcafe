@@ -121,9 +121,10 @@ function AppContent() {
     <>
       <AnnouncementBar />
       <PageHeader
-        title="Our Products"
+        variant="products"
+        title="Shop Specialty Coffee"
         titleAr="منتجاتنا"
-        subtitle="Discover our premium collection of carefully crafted coffee and desserts"
+        subtitle="Freshly roasted in Oman & Saudi Arabia"
         subtitleAr="اكتشف مجموعتنا المميزة من القهوة والحلويات المحضرة بعناية"
       />
       <div className="min-h-screen bg-gray-50" aria-hidden="true" />

@@ -2101,7 +2101,13 @@ export const OrdersManagement: React.FC = () => {
             .filter((v): v is number => typeof v === 'number' && Number.isFinite(v))
         )
       );
-      const variantsById = new Map<number, { weight: number; weightUnit: string }>();
+      const variantsById = new Map<number, {
+        weight: number;
+        weightUnit: string;
+        length?: number;
+        width?: number;
+        height?: number;
+      }>();
       if (variantIds.length > 0) {
         const results = await Promise.allSettled(variantIds.map((id) => productVariantService.getById(id)));
         results.forEach((r, idx) => {
@@ -2110,6 +2116,9 @@ export const OrdersManagement: React.FC = () => {
           variantsById.set(variantIds[idx], {
             weight: Number(v.weight ?? 0),
             weightUnit: String(v.weightUnit ?? 'kg'),
+            length: v.length ?? undefined,
+            width: v.width ?? undefined,
+            height: v.height ?? undefined,
           });
         });
       }
@@ -2127,6 +2136,28 @@ export const OrdersManagement: React.FC = () => {
       // Aramex domestic minimum: 0.5 KG; international minimum: 0.1 KG
       const minWeight = isDomestic ? 0.5 : 0.1;
       const chargeableWeight = Math.max(minWeight, totalKg > 0 ? Number(totalKg.toFixed(3)) : minWeight);
+      const itemDimensions = (orderSnapshot.items || []).flatMap((item) => {
+        const variant = variantsById.get(item.productVariantId!);
+        const length = Number(variant?.length ?? 0);
+        const width = Number(variant?.width ?? 0);
+        const height = Number(variant?.height ?? 0);
+        if (![length, width, height].every((value) => Number.isFinite(value) && value > 0)) return [];
+
+        return [{
+          length,
+          width,
+          height,
+        }];
+      });
+      const hasCompleteDimensions = itemDimensions.length === (orderSnapshot.items || []).length;
+      const shipmentDimensions = hasCompleteDimensions && itemDimensions.length > 0
+        ? {
+            length: Math.max(...itemDimensions.map((dimension) => dimension.length)),
+            width: Math.max(...itemDimensions.map((dimension) => dimension.width)),
+            height: Math.max(...itemDimensions.map((dimension) => dimension.height)),
+            unit: 'CM',
+          }
+        : { length: 20, width: 20, height: 20, unit: 'CM' };
 
       // ── Build and send shipment payload ────────────────────────────
       const { createAramexShipment } = await import('../../services/aramexService');
@@ -2177,7 +2208,7 @@ export const OrdersManagement: React.FC = () => {
           productType: isDomestic ? 'OND' : 'PPX',
           paymentType: 'P',
           descriptionOfGoods: 'Coffee Products',
-          dimensions: { length: 20, width: 20, height: 20, unit: 'CM' },
+          dimensions: shipmentDimensions,
           reference1: orderSnapshot.orderNumber,
           reference2: orderSnapshot.orderNumber,
           // Customs declaration for international shipments only

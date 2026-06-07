@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { Check, ChevronDown, ChevronLeft, ChevronRight, Coffee, Filter, Search } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useApp } from '../hooks/useApp';
@@ -47,6 +48,70 @@ const isCompetitionPremiumCategory = (name: string, hrefOrSlug: string): boolean
   );
 };
 
+const getPreferredCategoryOrder = (name: string): number => {
+  const normalizedName = name.toLowerCase().replace(/\s+/g, ' ').trim();
+  if (normalizedName.includes('espresso') && normalizedName.includes('milk-based')) return 0;
+  if (normalizedName.includes('filter') && normalizedName.includes('pour-over')) return 10;
+  if (normalizedName.includes('competition') && normalizedName.includes('premium')) return 20;
+  if (normalizedName.includes('ufo') && normalizedName.includes('drip')) return 30;
+  if (normalizedName.includes('spirithub') && normalizedName.includes('capsule')) return 40;
+  return 1000;
+};
+
+const DeferredProductGroup = ({
+  children,
+  eager,
+  productCount,
+}: {
+  children: ReactNode;
+  eager: boolean;
+  productCount: number;
+}) => {
+  const [shouldRender, setShouldRender] = useState(eager);
+  const groupRef = useRef<HTMLDivElement>(null);
+  const canRender = eager || shouldRender;
+
+  useEffect(() => {
+    if (canRender) return;
+
+    const group = groupRef.current;
+    if (!group || !('IntersectionObserver' in window)) {
+      setShouldRender(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+        setShouldRender(true);
+        observer.disconnect();
+      },
+      { rootMargin: '1200px 0px' },
+    );
+
+    observer.observe(group);
+    return () => observer.disconnect();
+  }, [canRender]);
+
+  const placeholderStyle = {
+    '--product-count': Math.max(productCount, 1),
+  } as CSSProperties;
+
+  return (
+    <div ref={groupRef} className="products-product-group space-y-6">
+      {canRender ? (
+        children
+      ) : (
+        <div
+          className="products-product-group-placeholder"
+          style={placeholderStyle}
+          aria-hidden="true"
+        />
+      )}
+    </div>
+  );
+};
+
 export const ProductsPage = () => {
   const { i18n } = useTranslation();
   const { products, allCategories, loading, language } = useApp();
@@ -70,10 +135,42 @@ export const ProductsPage = () => {
 
   const isArabic = i18n.language === 'ar';
 
-  // AppContext already fetches with excludeShop: true,
-  // so products and allCategories are already filtered.
-  const coffeeCategories = allCategories;
   const coffeeProducts = products;
+  const isProductsLoading = loading && coffeeProducts.length === 0;
+  // Keep filters usable when the categories request is delayed or unavailable.
+  // Product list responses already include enough category data to build a fallback.
+  const coffeeCategories = useMemo(() => {
+    const mergedCategories = new Map(
+      allCategories.map((category) => [category.id, category] as const),
+    );
+
+    coffeeProducts.forEach((product, index) => {
+      const categoryName = product.category?.trim();
+      const categoryId = product.categoryId || product.categorySlug || categoryName;
+      if (!categoryName || !categoryId || mergedCategories.has(categoryId)) return;
+
+      mergedCategories.set(categoryId, {
+        id: categoryId,
+        slug: product.categorySlug,
+        name: categoryName,
+        description: '',
+        image: product.image || '',
+        displayOrder: allCategories.length > 0
+          ? 1000 + index
+          : index,
+      });
+    });
+
+    return [...mergedCategories.values()].sort(
+      (a, b) => {
+        const preferredOrderDifference =
+          getPreferredCategoryOrder(`${a.name} ${a.slug || ''}`) -
+          getPreferredCategoryOrder(`${b.name} ${b.slug || ''}`);
+        if (preferredOrderDifference !== 0) return preferredOrderDifference;
+        return (a.displayOrder || 0) - (b.displayOrder || 0);
+      },
+    );
+  }, [allCategories, coffeeProducts]);
 
   const canonicalUrl = useMemo(() => {
     // Use region-prefixed URL: /om for Oman (canonical), no prefix for SA
@@ -197,9 +294,10 @@ export const ProductsPage = () => {
       grouped.get(categoryId)!.push(product);
     });
 
-    // Sort categories by their displayOrder
-    const sortedCategories = [...coffeeCategories]
-      .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0))
+    // coffeeCategories is already normalized into the preferred storefront order.
+    // Do not sort by displayOrder again: fallback categories derive that value from
+    // product arrival order, which can differ on a cold/Incognito request.
+    const sortedCategories = coffeeCategories
       .map(cat => ({
         category: cat,
         products: grouped.get(cat.id) || []
@@ -458,9 +556,10 @@ export const ProductsPage = () => {
       />
       {/* Page Header */}
       <PageHeader
+        variant="products"
         title={currentCategory && selectedCategory !== 'all' 
           ? currentCategory.name 
-          : 'Our Products'
+          : 'Shop Specialty Coffee'
         }
         titleAr={currentCategory && selectedCategory !== 'all' 
           ? currentCategory.name 
@@ -468,7 +567,7 @@ export const ProductsPage = () => {
         }
         subtitle={currentCategory && selectedCategory !== 'all'
           ? currentCategory.description 
-          : 'Discover our premium collection of carefully crafted coffee and desserts'
+          : 'Freshly roasted in Oman & Saudi Arabia'
         }
         subtitleAr={currentCategory && selectedCategory !== 'all'
           ? currentCategory.description 
@@ -525,7 +624,10 @@ export const ProductsPage = () => {
                     {categoryOptions.map((category) => (
                       <button
                         key={category.id}
-                        onPointerDown={(e) => { e.preventDefault(); handleCategoryChange(category.id); setCategoryOpen(false); }}
+                        onClick={() => {
+                          handleCategoryChange(category.id);
+                          setCategoryOpen(false);
+                        }}
                         className={`flex items-center gap-2 w-full rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
                           selectedCategory === category.id
                             ? 'bg-stone-700 text-white'
@@ -549,7 +651,7 @@ export const ProductsPage = () => {
         {/* Products Grid */}
         <div className="py-16 bg-gray-50">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            {loading ? (
+            {isProductsLoading ? (
               <div className="space-y-8">
                 {/* Results Count Skeleton */}
                 <div className="flex justify-center">
@@ -603,7 +705,7 @@ export const ProductsPage = () => {
                 {/* Show grouped by category if "All" is selected */}
                 {selectedCategory === 'all' && productsByCategory && productsByCategory.length > 0 ? (
                   <div className="space-y-16">
-                    {productsByCategory.map(({ category, products: categoryProducts }) => {
+                    {productsByCategory.map(({ category, products: categoryProducts }, categoryIndex) => {
                       // Shorten category names
                       const getShortName = (name: string) => {
                         const shortNames: Record<string, string> = {
@@ -617,7 +719,11 @@ export const ProductsPage = () => {
                       };
 
                       return (
-                        <div key={category.id} className="products-product-group space-y-6">
+                        <DeferredProductGroup
+                          key={category.id}
+                          eager={categoryIndex === 0}
+                          productCount={categoryProducts.length}
+                        >
                           {/* Category Section Header */}
                           <div className="flex items-center gap-4 pb-4 border-b-2 border-amber-500">
                             <div className="flex items-center gap-4 flex-1">
@@ -652,7 +758,7 @@ export const ProductsPage = () => {
                               <ProductCard key={product.id} product={product} />
                             ))}
                           </div>
-                        </div>
+                        </DeferredProductGroup>
                       );
                     })}
                   </div>
@@ -828,6 +934,10 @@ export const ProductsPage = () => {
           contain-intrinsic-size: auto 620px;
         }
 
+        .products-product-group-placeholder {
+          min-height: calc(120px + var(--product-count) * 215px);
+        }
+
         .products-category-edge {
           pointer-events: none;
           position: absolute;
@@ -897,9 +1007,19 @@ export const ProductsPage = () => {
         }
 
         @media (min-width: 768px) {
+          .products-product-group-placeholder {
+            min-height: calc(120px + var(--product-count) * 150px);
+          }
+
           .products-category-edge,
           .products-category-nav {
             display: flex;
+          }
+        }
+
+        @media (min-width: 1024px) {
+          .products-product-group-placeholder {
+            min-height: calc(120px + var(--product-count) * 115px);
           }
         }
       `}</style>

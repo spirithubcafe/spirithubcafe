@@ -180,7 +180,8 @@ const getPerformanceHintsForRoute = (url) => {
 
   if (routePath === '/products') {
     return `${announcementOffsetScript}
-    <link rel="preload" as="image" href="/images/header.webp" imagesrcset="/images/header-768.webp 768w, /images/header-1280.webp 1280w, /images/header.webp 1920w" imagesizes="100vw" type="image/webp" fetchpriority="high" />`;
+    <link rel="preload" as="image" href="/images/header-banner-768.webp" type="image/webp" media="(max-width: 767px)" fetchpriority="high" />
+    <link rel="preload" as="image" href="/images/header-banner-1280.webp" type="image/webp" media="(min-width: 768px)" fetchpriority="high" />`;
   }
 
   if (routePath === '/shop') {
