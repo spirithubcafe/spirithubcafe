@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect } from 'react';
-import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
+import { Routes, Route, useLocation, useSearchParams, Navigate } from 'react-router-dom';
 import { Toaster } from './components/ui/sonner';
 import { AppProvider } from './contexts/AppContext';
 import { AuthProvider } from './contexts/AuthContext';
@@ -20,6 +20,7 @@ import { AdminRegionRedirect } from './components/layout/AdminRegionRedirect';
 import { initVisitorTracking } from './lib/visitorTracking';
 import { migrateCartToRegionBased } from './lib/migrateCart';
 import { initGA4, trackPageView } from './lib/ga4';
+import { useApp } from './hooks/useApp';
 import './i18n';
 import './App.css';
 
@@ -60,6 +61,33 @@ const ShopCategoryPage = lazy(() => import('./pages/Shop/ShopCategoryPage'));
 const NotFound = lazy(() => import('./components/pages/NotFound').then((m) => ({ default: m.NotFound })));
 const MobileBottomNav = lazy(() => import('./components/layout/MobileBottomNav').then((m) => ({ default: m.MobileBottomNav })));
 const CartDrawer = lazy(() => import('./components/cart/CartDrawer').then((m) => ({ default: m.CartDrawer })));
+
+const ProductsRoute = () => {
+  const [searchParams] = useSearchParams();
+  const { allCategories } = useApp();
+  const selectedCategory = searchParams.get('category');
+  const currentCategory = selectedCategory
+    ? allCategories.find(
+        (category) => category.id === selectedCategory || category.slug === selectedCategory,
+      )
+    : null;
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <AnnouncementBar />
+      <PageHeader
+        variant="products"
+        title={currentCategory?.name || 'Shop Specialty Coffee'}
+        titleAr={currentCategory?.name || 'منتجاتنا'}
+        subtitle={currentCategory?.description || 'Freshly roasted in Oman & Saudi Arabia'}
+        subtitleAr={currentCategory?.description || 'اكتشف مجموعتنا المميزة من القهوة والحلويات المحضرة بعناية'}
+      />
+      <Suspense fallback={<div className="min-h-screen bg-gray-50" aria-hidden="true" />}>
+        <ProductsPage hidePageChrome />
+      </Suspense>
+    </div>
+  );
+};
 
 const scheduleAfterInitialLoad = (task: () => void) => {
   if (typeof window === 'undefined') return () => undefined;
@@ -115,23 +143,7 @@ function AppContent() {
   const location = useLocation();
   const isAdminPage = location.pathname.includes('/admin');
   const isInvoicePage = location.pathname.startsWith('/invoice/');
-  const isProductsPage = /^\/(?:(?:om|sa)\/)?products\/?$/.test(location.pathname);
-
-  const routeFallback = isProductsPage ? (
-    <>
-      <AnnouncementBar />
-      <PageHeader
-        variant="products"
-        title="Shop Specialty Coffee"
-        titleAr="منتجاتنا"
-        subtitle="Freshly roasted in Oman & Saudi Arabia"
-        subtitleAr="اكتشف مجموعتنا المميزة من القهوة والحلويات المحضرة بعناية"
-      />
-      <div className="min-h-screen bg-gray-50" aria-hidden="true" />
-    </>
-  ) : (
-    <div className="min-h-screen bg-white" />
-  );
+  const routeFallback = <div className="min-h-screen bg-white" />;
 
   // Initialize visitor tracking on app load
   useEffect(() => {
@@ -234,7 +246,7 @@ function AppContent() {
         <Route path="/om/shop" element={<ShopPage />} />
         <Route path="/om/shop/:slug" element={<ShopCategoryPage />} />
         <Route path="/om/shop/product/:productId" element={<ProductDetailPage />} />
-        <Route path="/om/products" element={<ProductsPage />} />
+        <Route path="/om/products" element={<ProductsRoute />} />
         <Route path="/om/products/:productId" element={<ProductDetailPage />} />
         <Route
           path="/om/wholesale"
@@ -276,7 +288,7 @@ function AppContent() {
         <Route path="/sa/shop" element={<ShopPage />} />
         <Route path="/sa/shop/:slug" element={<ShopCategoryPage />} />
         <Route path="/sa/shop/product/:productId" element={<ProductDetailPage />} />
-        <Route path="/sa/products" element={<ProductsPage />} />
+        <Route path="/sa/products" element={<ProductsRoute />} />
         <Route path="/sa/products/:productId" element={<ProductDetailPage />} />
         <Route
           path="/sa/wholesale"
@@ -322,7 +334,7 @@ function AppContent() {
         <Route path="/terms" element={<TermsConditionsPage />} />
         <Route path="/delivery" element={<DeliveryPolicyPage />} />
         <Route path="/refund" element={<RefundPolicyPage />} />
-        <Route path="/products" element={<ProductsPage />} />
+        <Route path="/products" element={<ProductsRoute />} />
         <Route path="/products/:productId" element={<ProductDetailPage />} />
         <Route
           path="/wholesale"

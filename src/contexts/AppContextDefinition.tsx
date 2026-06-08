@@ -23,6 +23,8 @@ export interface Product {
   featured?: boolean;
   topTags?: ProductTagInfoDto[];
   bottomTags?: ProductTagInfoDto[];
+  // Pre-built searchable text to avoid string concatenation during filtering
+  _searchText?: string;
 }
 
 export interface Category {

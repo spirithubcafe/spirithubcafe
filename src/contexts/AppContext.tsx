@@ -7,7 +7,7 @@ import { categoryService } from '../services/categoryService';
 import { productService } from '../services/productService';
 import type { Category as ApiCategory, Product as ApiProduct } from '../types/product';
 import { getCategoryImageUrl, getProductImageUrl, resolveProductImagePath } from '../lib/imageUtils';
-import { cacheUtils, imageCacheUtils } from '../lib/cacheUtils';
+import { cacheUtils } from '../lib/cacheUtils';
 import { safeStorage } from '../lib/safeStorage';
 import { normalizeProductTags } from '../lib/productTagUtils';
 
@@ -128,59 +128,6 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       setLoading(false);
     }
   }, []);
-
-  const shouldSkipImagePreload = useCallback((): boolean => {
-    if (typeof window === 'undefined') return true;
-    const nav = window.navigator as unknown as { connection?: { saveData?: boolean; effectiveType?: string } };
-    const effectiveType = nav.connection?.effectiveType || '';
-    if (nav.connection?.saveData) return true;
-    // Avoid aggressive preloading on slow networks.
-    return /(^|\b)(slow-2g|2g|3g)(\b|$)/.test(effectiveType);
-  }, []);
-
-  const preloadImagesBestEffort = useCallback((urls: string[], maxToPreload: number) => {
-    if (shouldSkipImagePreload()) return;
-
-    const unique = Array.from(new Set(urls.filter(Boolean)));
-    const candidates = unique
-      .filter((url) => !imageCacheUtils.isImageCached(url))
-      .slice(0, maxToPreload);
-
-    if (candidates.length === 0) return;
-
-    // Smaller chunks to avoid network/memory spikes.
-    const chunkSize = 4;
-    const chunks: string[][] = [];
-    for (let i = 0; i < candidates.length; i += chunkSize) {
-      chunks.push(candidates.slice(i, i + chunkSize));
-    }
-
-    const run = async () => {
-      for (const chunk of chunks) {
-        // Sequential chunks: reduces peak connections and memory.
-        await imageCacheUtils.preloadImages(chunk);
-        imageCacheUtils.markImagesCached(chunk);
-        // Add delay between chunks to prevent resource exhaustion
-        await new Promise((resolve) => window.setTimeout(resolve, 100));
-      }
-    };
-
-    // Use idle time if possible.
-    const w = window as unknown as { requestIdleCallback?: (cb: () => void) => void };
-    if (typeof w.requestIdleCallback === 'function') {
-      w.requestIdleCallback(() => {
-        run().catch(() => {
-          // best-effort
-        });
-      });
-    } else {
-      window.setTimeout(() => {
-        run().catch(() => {
-          // best-effort
-        });
-      }, 200);
-    }
-  }, [shouldSkipImagePreload]);
 
   const isDefaultProductImageUrl = (url: string | undefined): boolean => {
     if (!url) return true;
@@ -406,6 +353,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
             featured: p.isFeatured,
             topTags: normalizeProductTags((p as Record<string, unknown>).topTags, 'Top'),
             bottomTags: normalizeProductTags((p as Record<string, unknown>).bottomTags, 'Bottom'),
+            // Pre-built searchable text to avoid string concatenation during filtering
+            _searchText: `${(lang === 'ar' && p.nameAr ? String(p.nameAr) : String(p.name || ''))} ${lang === 'ar' && p.descriptionAr ? String(p.descriptionAr) : String(p.description || '')} ${categoryName || ''}`.toLowerCase(),
           } satisfies Product;
         })
         .filter((p): p is Product => p !== null)
@@ -456,12 +405,6 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       // - minPrice for pricing  
       // - isOrderable determined by minPrice > 0
       
-      // Preload a small, safe subset of images in background.
-      // Reduced from 24 to 12 to prevent resource exhaustion
-      preloadImagesBestEffort(
-        mergedProducts.map((p) => p.image),
-        12,
-      );
     } catch (err) {
       console.error('❌ Error fetching products:', err);
       if (!usedCache) {
@@ -482,7 +425,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       }
     }
   // Stable callback - uses refs for current language/region values
-  }, [beginLoading, endLoading, preloadImagesBestEffort]);
+  }, [beginLoading, endLoading]);
 
   const fetchCategories = useCallback(async (forceRefresh = false) => {
     const lang = languageRef.current;
@@ -575,12 +518,6 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       setSessionCache(cacheKey, homepageCategories);
       setSessionCache(allCategoriesCacheKey, transformedAllCategories);
       
-      // Preload a small, safe subset of images in background.
-      // Reduced from 24 to 8 to prevent resource exhaustion
-      preloadImagesBestEffort(
-        transformedAllCategories.map((c) => c.image),
-        8,
-      );
     } catch (err) {
       console.error('❌ Error fetching categories:', err);
       if (!hasCachedCategories) {
@@ -602,7 +539,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       }
     }
   // Stable callback - uses refs for current language/region values
-  }, [beginLoading, endLoading, preloadImagesBestEffort]);
+  }, [beginLoading, endLoading]);
 
   // Initialize data and language settings - refetch when region changes
   // Using a single stable effect to prevent infinite loops

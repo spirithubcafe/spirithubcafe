@@ -48,14 +48,25 @@ const isCompetitionPremiumCategory = (name: string, hrefOrSlug: string): boolean
   );
 };
 
+// Cache for category order to avoid repeated string normalization
+const categoryOrderCache = new Map<string, number>();
+
 const getPreferredCategoryOrder = (name: string): number => {
+  if (categoryOrderCache.has(name)) {
+    return categoryOrderCache.get(name)!;
+  }
+
   const normalizedName = name.toLowerCase().replace(/\s+/g, ' ').trim();
-  if (normalizedName.includes('espresso') && normalizedName.includes('milk-based')) return 0;
-  if (normalizedName.includes('filter') && normalizedName.includes('pour-over')) return 10;
-  if (normalizedName.includes('competition') && normalizedName.includes('premium')) return 20;
-  if (normalizedName.includes('ufo') && normalizedName.includes('drip')) return 30;
-  if (normalizedName.includes('spirithub') && normalizedName.includes('capsule')) return 40;
-  return 1000;
+  let order = 1000;
+
+  if (normalizedName.includes('espresso') && normalizedName.includes('milk-based')) order = 0;
+  else if (normalizedName.includes('filter') && normalizedName.includes('pour-over')) order = 10;
+  else if (normalizedName.includes('competition') && normalizedName.includes('premium')) order = 20;
+  else if (normalizedName.includes('ufo') && normalizedName.includes('drip')) order = 30;
+  else if (normalizedName.includes('spirithub') && normalizedName.includes('capsule')) order = 40;
+
+  categoryOrderCache.set(name, order);
+  return order;
 };
 
 const DeferredProductGroup = ({
@@ -86,7 +97,11 @@ const DeferredProductGroup = ({
         setShouldRender(true);
         observer.disconnect();
       },
-      { rootMargin: '1200px 0px' },
+      {
+        rootMargin: window.matchMedia('(max-width: 767px)').matches
+          ? '100px 0px'
+          : '900px 0px',
+      },
     );
 
     observer.observe(group);
@@ -112,9 +127,20 @@ const DeferredProductGroup = ({
   );
 };
 
-export const ProductsPage = () => {
+interface ProductsPageProps {
+  hidePageChrome?: boolean;
+}
+
+export const ProductsPage = ({ hidePageChrome = false }: ProductsPageProps) => {
   const { i18n } = useTranslation();
-  const { products, allCategories, loading, language } = useApp();
+  const {
+    products,
+    allCategories,
+    loading,
+    language,
+    fetchProducts,
+    fetchCategories,
+  } = useApp();
   const { currentRegion } = useRegion();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -137,6 +163,18 @@ export const ProductsPage = () => {
 
   const coffeeProducts = products;
   const isProductsLoading = loading && coffeeProducts.length === 0;
+
+  // Homepage data loading is intentionally deferred. If the user navigates
+  // here before that work starts, request the missing route data immediately.
+  useEffect(() => {
+    if (products.length === 0) {
+      void fetchProducts();
+    }
+    if (allCategories.length === 0) {
+      void fetchCategories();
+    }
+  }, [allCategories.length, fetchCategories, fetchProducts, products.length]);
+
   // Keep filters usable when the categories request is delayed or unavailable.
   // Product list responses already include enough category data to build a fallback.
   const coffeeCategories = useMemo(() => {
@@ -161,15 +199,18 @@ export const ProductsPage = () => {
       });
     });
 
-    return [...mergedCategories.values()].sort(
-      (a, b) => {
-        const preferredOrderDifference =
-          getPreferredCategoryOrder(`${a.name} ${a.slug || ''}`) -
-          getPreferredCategoryOrder(`${b.name} ${b.slug || ''}`);
-        if (preferredOrderDifference !== 0) return preferredOrderDifference;
-        return (a.displayOrder || 0) - (b.displayOrder || 0);
-      },
-    );
+    return [...mergedCategories.values()].sort((a, b) => {
+      // Build sort keys once per comparison
+      const aKey = `${a.name} ${a.slug || ''}`;
+      const bKey = `${b.name} ${b.slug || ''}`;
+
+      const preferredOrderDifference =
+        getPreferredCategoryOrder(aKey) -
+        getPreferredCategoryOrder(bKey);
+
+      if (preferredOrderDifference !== 0) return preferredOrderDifference;
+      return (a.displayOrder || 0) - (b.displayOrder || 0);
+    });
   }, [allCategories, coffeeProducts]);
 
   const canonicalUrl = useMemo(() => {
@@ -189,11 +230,6 @@ export const ProductsPage = () => {
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
-
-  // Scroll to top on page load or category change
-  useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, []);
 
   // Update selected category when URL changes
   useEffect(() => {
@@ -268,13 +304,14 @@ export const ProductsPage = () => {
         return false;
       }
 
-      // Filter by search term
+      // Filter by search term - use pre-built searchable text to avoid concatenation
       if (normalizedSearch === '') {
         return true;
       }
 
-      const searchableText = `${product.name} ${product.description || ''} ${product.category || ''}`;
-      return searchableText.toLowerCase().includes(normalizedSearch);
+      const searchableText = product._searchText ||
+        `${product.name} ${product.description || ''} ${product.category || ''}`.toLowerCase();
+      return searchableText.includes(normalizedSearch);
     });
   }, [coffeeProducts, searchTerm, selectedCategory, currentCategory]);
 
@@ -414,8 +451,22 @@ export const ProductsPage = () => {
     return [allOption, ...mappedCategories];
   }, [coffeeCategories, isArabic]);
 
+  const browseCoffeeCategories = useMemo(
+    () => [...allCategories].sort((a, b) => {
+      const preferredOrderDifference =
+        getPreferredCategoryOrder(`${a.name} ${a.slug || ''}`) -
+        getPreferredCategoryOrder(`${b.name} ${b.slug || ''}`);
+      if (preferredOrderDifference !== 0) return preferredOrderDifference;
+      return (a.displayOrder || 0) - (b.displayOrder || 0);
+    }),
+    [allCategories],
+  );
+
   const browseCategories = useMemo(() => {
-    const coffeeItems = coffeeCategories.map((category) => ({
+    // This visual carousel must use real category metadata. Product-derived
+    // fallback categories use a product image, which would visibly swap once
+    // the category request completes.
+    const coffeeItems = browseCoffeeCategories.map((category) => ({
       id: `coffee-${category.id}`,
       name: category.name,
       image: category.image || '/images/slides/slide1.webp',
@@ -436,11 +487,11 @@ export const ProductsPage = () => {
     }));
 
     return [...coffeeItems, ...shopItems];
-  }, [coffeeCategories, currentRegion.code, isArabic, shopData?.categories]);
+  }, [browseCoffeeCategories, currentRegion.code, isArabic, shopData?.categories]);
 
   const renderedBrowseCategories = useMemo(
-    () => (isArabic ? [...browseCategories].reverse() : browseCategories),
-    [browseCategories, isArabic],
+    () => browseCategories,
+    [browseCategories],
   );
 
   useEffect(() => {
@@ -476,7 +527,7 @@ export const ProductsPage = () => {
 
   useEffect(() => {
     const viewport = browseCategoriesRef.current;
-    if (!viewport) return;
+    if (!viewport || !window.matchMedia('(min-width: 768px)').matches) return;
 
     let animationFrame = 0;
     let resizeObserver: ResizeObserver | null = null;
@@ -532,7 +583,7 @@ export const ProductsPage = () => {
 
   return (
     <div className={`min-h-screen bg-gray-50 ${isArabic ? 'rtl' : 'ltr'}`}>
-      <AnnouncementBar />
+      {!hidePageChrome && <AnnouncementBar />}
       <Seo
         title={seoContent.title}
         description={seoContent.description}
@@ -555,25 +606,27 @@ export const ProductsPage = () => {
         type="website"
       />
       {/* Page Header */}
-      <PageHeader
-        variant="products"
-        title={currentCategory && selectedCategory !== 'all' 
-          ? currentCategory.name 
-          : 'Shop Specialty Coffee'
-        }
-        titleAr={currentCategory && selectedCategory !== 'all' 
-          ? currentCategory.name 
-          : 'منتجاتنا'
-        }
-        subtitle={currentCategory && selectedCategory !== 'all'
-          ? currentCategory.description 
-          : 'Freshly roasted in Oman & Saudi Arabia'
-        }
-        subtitleAr={currentCategory && selectedCategory !== 'all'
-          ? currentCategory.description 
-          : 'اكتشف مجموعتنا المميزة من القهوة والحلويات المحضرة بعناية'
-        }
-      />
+      {!hidePageChrome && (
+        <PageHeader
+          variant="products"
+          title={currentCategory && selectedCategory !== 'all'
+            ? currentCategory.name
+            : 'Shop Specialty Coffee'
+          }
+          titleAr={currentCategory && selectedCategory !== 'all'
+            ? currentCategory.name
+            : 'منتجاتنا'
+          }
+          subtitle={currentCategory && selectedCategory !== 'all'
+            ? currentCategory.description
+            : 'Freshly roasted in Oman & Saudi Arabia'
+          }
+          subtitleAr={currentCategory && selectedCategory !== 'all'
+            ? currentCategory.description
+            : 'اكتشف مجموعتنا المميزة من القهوة والحلويات المحضرة بعناية'
+          }
+        />
+      )}
 
       {/* Content Container - Sticky context */}
       <div className="relative">
@@ -731,6 +784,11 @@ export const ProductsPage = () => {
                                 <img
                                   src={category.image}
                                   alt={category.name}
+                                  width={64}
+                                  height={64}
+                                  loading="lazy"
+                                  fetchPriority="low"
+                                  decoding="async"
                                   className="w-16 h-16 rounded-lg object-cover shadow-md"
                                   onError={(e) => {
                                     const target = e.target as HTMLImageElement;
@@ -754,8 +812,12 @@ export const ProductsPage = () => {
 
                           {/* Category Products Grid */}
                           <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-                            {categoryProducts.map((product) => (
-                              <ProductCard key={product.id} product={product} />
+                            {categoryProducts.map((product, productIndex) => (
+                              <ProductCard
+                                key={product.id}
+                                product={product}
+                                prioritizeImage={categoryIndex === 0 && productIndex < 2}
+                              />
                             ))}
                           </div>
                         </DeferredProductGroup>
@@ -765,8 +827,12 @@ export const ProductsPage = () => {
                 ) : (
                   /* Single category view - standard grid */
                   <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-                    {filteredProducts.map((product) => (
-                      <ProductCard key={product.id} product={product} />
+                    {filteredProducts.map((product, productIndex) => (
+                      <ProductCard
+                        key={product.id}
+                        product={product}
+                        prioritizeImage={productIndex < 2}
+                      />
                     ))}
                   </div>
                 )}
@@ -808,7 +874,7 @@ export const ProductsPage = () => {
             </button>
 
             <div ref={browseCategoriesRef} dir="ltr" className="products-category-viewport overflow-x-auto">
-              <div className="products-category-track flex pb-2">
+              <div className={`products-category-track flex pb-2 ${isArabic ? 'flex-row-reverse' : ''}`}>
             {renderedBrowseCategories.map((category) => {
               const isActive = category.kind === 'coffee' && (selectedCategory === category.categoryId || selectedCategory === category.categorySlug);
               const cardClassName = 'products-category-slide group block min-w-0 shrink-0 h-full cursor-pointer text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/60';

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useSyncExternalStore } from 'react';
 
 export interface FavoriteItem {
   id: string;
@@ -13,6 +13,7 @@ export interface FavoriteItem {
 
 const FAVORITES_STORAGE_KEY = 'spirithub_favorites';
 const FAVORITES_EVENT = 'spirithub:favoritesUpdated';
+const EMPTY_FAVORITES: FavoriteItem[] = [];
 
 const readFavoritesFromStorage = (): FavoriteItem[] => {
   if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
@@ -27,45 +28,84 @@ const readFavoritesFromStorage = (): FavoriteItem[] => {
   }
 };
 
+let favoritesSnapshot: FavoriteItem[] = EMPTY_FAVORITES;
+let favoritesInitialized = false;
+let browserListenersInstalled = false;
+const favoritesListeners = new Set<() => void>();
+
+const ensureFavoritesInitialized = () => {
+  if (favoritesInitialized) return;
+  favoritesSnapshot = readFavoritesFromStorage();
+  favoritesInitialized = true;
+};
+
+const notifyFavoritesListeners = (nextFavorites: FavoriteItem[]) => {
+  favoritesSnapshot = nextFavorites;
+  favoritesInitialized = true;
+  favoritesListeners.forEach((listener) => listener());
+};
+
+const handleFavoritesEvent = (event: Event) => {
+  const customEvent = event as CustomEvent<FavoriteItem[] | undefined>;
+  notifyFavoritesListeners(customEvent.detail ?? readFavoritesFromStorage());
+};
+
+const handleFavoritesStorage = (event: StorageEvent) => {
+  if (event.key === FAVORITES_STORAGE_KEY) {
+    notifyFavoritesListeners(readFavoritesFromStorage());
+  }
+};
+
+const installBrowserListeners = () => {
+  if (browserListenersInstalled || typeof window === 'undefined') return;
+  window.addEventListener(FAVORITES_EVENT, handleFavoritesEvent);
+  window.addEventListener('storage', handleFavoritesStorage);
+  browserListenersInstalled = true;
+};
+
+const removeBrowserListeners = () => {
+  if (!browserListenersInstalled || favoritesListeners.size > 0 || typeof window === 'undefined') return;
+  window.removeEventListener(FAVORITES_EVENT, handleFavoritesEvent);
+  window.removeEventListener('storage', handleFavoritesStorage);
+  browserListenersInstalled = false;
+};
+
+const subscribeToFavorites = (listener: () => void) => {
+  ensureFavoritesInitialized();
+  favoritesListeners.add(listener);
+  installBrowserListeners();
+
+  return () => {
+    favoritesListeners.delete(listener);
+    removeBrowserListeners();
+  };
+};
+
+const getFavoritesSnapshot = () => {
+  ensureFavoritesInitialized();
+  return favoritesSnapshot;
+};
+
 export const useFavorites = () => {
-  const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Load favorites from localStorage on mount
-  useEffect(() => {
-    const loadFavorites = () => {
-      const parsedFavorites = readFavoritesFromStorage();
-      setFavorites(parsedFavorites);
-      setIsLoading(false);
-    };
-
-    const handleFavoritesUpdate = (event: Event) => {
-      const customEvent = event as CustomEvent<FavoriteItem[] | undefined>;
-      const updatedFavorites = customEvent.detail ?? readFavoritesFromStorage();
-      setFavorites(updatedFavorites);
-    };
-
-    loadFavorites();
-    window.addEventListener(FAVORITES_EVENT, handleFavoritesUpdate);
-
-    return () => {
-      window.removeEventListener(FAVORITES_EVENT, handleFavoritesUpdate);
-    };
-  }, []);
+  const favorites = useSyncExternalStore(
+    subscribeToFavorites,
+    getFavoritesSnapshot,
+    () => EMPTY_FAVORITES,
+  );
+  const isLoading = favorites === EMPTY_FAVORITES;
 
   // Save favorites to localStorage
-  const saveFavorites = (newFavorites: FavoriteItem[]) => {
+  const saveFavorites = useCallback((newFavorites: FavoriteItem[]) => {
     if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
       return;
     }
     try {
       localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(newFavorites));
-      setFavorites(newFavorites);
-      window.dispatchEvent(new CustomEvent(FAVORITES_EVENT, { detail: newFavorites }));
+      notifyFavoritesListeners(newFavorites);
     } catch (error) {
       console.error('Error saving favorites:', error);
     }
-  };
+  }, []);
 
   // Add item to favorites
   const addToFavorites = (product: Omit<FavoriteItem, 'addedDate'>) => {
@@ -117,8 +157,7 @@ export const useFavorites = () => {
       return;
     }
     localStorage.removeItem(FAVORITES_STORAGE_KEY);
-    setFavorites([]);
-    window.dispatchEvent(new CustomEvent(FAVORITES_EVENT, { detail: [] }));
+    notifyFavoritesListeners([]);
   };
 
   return {

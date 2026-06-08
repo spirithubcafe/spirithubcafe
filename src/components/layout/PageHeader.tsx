@@ -86,7 +86,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
           className={`absolute inset-0 h-full w-full object-cover opacity-80 brightness-110 ${
             isProductsHeader ? 'object-[center_35%] md:object-center' : 'object-center'
           }`}
-          fetchPriority={isProductsHeader ? undefined : 'high'}
+          fetchPriority="high"
           loading="eager"
           decoding="async"
         />

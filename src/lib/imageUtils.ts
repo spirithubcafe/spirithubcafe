@@ -83,7 +83,8 @@ export const getCategoryImageUrl = (imagePath?: string | null): string => {
   return getImageUrl(imagePath, '/images/header.webp');
 };
 
-const RESPONSIVE_WIDTHS = [160, 240, 320, 480, 640] as const;
+// Widths specifically optimized for product cards (smaller subset for faster rendering)
+const PRODUCT_CARD_WIDTHS = [240, 320, 480, 640] as const;
 const isImageResizingEnabled = String(import.meta.env.VITE_ENABLE_IMAGE_RESIZING || '').toLowerCase() === 'true';
 
 const withImageWidthParam = (imageUrl: string, width: number): string => {
@@ -106,10 +107,12 @@ const withImageWidthParam = (imageUrl: string, width: number): string => {
 
 export const buildResponsiveSrcSet = (
   imageUrl: string,
-  widths: readonly number[] = RESPONSIVE_WIDTHS,
+  widths: readonly number[] = PRODUCT_CARD_WIDTHS,
 ): string => {
   return widths.map((width) => `${withImageWidthParam(imageUrl, width)} ${width}w`).join(', ');
 };
+
+export { PRODUCT_CARD_WIDTHS };
 
 /**
  * Handle image loading error

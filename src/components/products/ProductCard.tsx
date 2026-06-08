@@ -1,4 +1,4 @@
-import React, { lazy, memo, Suspense, useState, useRef } from 'react';
+import React, { lazy, memo, Suspense, useState, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { ShoppingCart, Eye, Heart } from 'lucide-react';
@@ -18,9 +18,10 @@ const ProductQuickView = lazy(() =>
 
 interface ProductCardProps {
   product: Product;
+  prioritizeImage?: boolean;
 }
 
-const ProductCardComponent: React.FC<ProductCardProps> = ({ product }) => {
+const ProductCardComponent: React.FC<ProductCardProps> = ({ product, prioritizeImage = false }) => {
   const { i18n, t } = useTranslation();
   const navigate = useNavigate();
   const isArabic = i18n.language === 'ar';
@@ -36,7 +37,11 @@ const ProductCardComponent: React.FC<ProductCardProps> = ({ product }) => {
 
   const isWishlisted = isFavorite(product.id);
   const productImage = product.image || getProductImageUrl(undefined);
-  const productImageSrcSet = buildResponsiveSrcSet(productImage, [240, 320, 480, 640]);
+  // Memoize srcSet generation to avoid creating 4 new URL objects on every render
+  const productImageSrcSet = useMemo(
+    () => buildResponsiveSrcSet(productImage),
+    [productImage]
+  );
 
   const handleToggleWishlist = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent navigation when clicking wishlist
@@ -147,7 +152,8 @@ const ProductCardComponent: React.FC<ProductCardProps> = ({ product }) => {
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 319px"
           alt={product.name}
           className="w-full h-full object-cover"
-          loading="lazy"
+          loading={prioritizeImage ? 'eager' : 'lazy'}
+          fetchPriority={prioritizeImage ? 'high' : 'auto'}
           decoding="async"
           onError={(e) => handleImageError(e, '/images/products/default-product.webp')}
         />
