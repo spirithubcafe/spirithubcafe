@@ -7,6 +7,8 @@ import { Button } from '../ui/button';
 import { useApp } from '../../hooks/useApp';
 import { X } from 'lucide-react';
 
+const AUTO_REGION_PROMPT_ENABLED = false;
+
 /**
  * Component to handle automatic region detection and redirection
  * Place this component at the root level of your app
@@ -115,10 +117,11 @@ export const RegionRedirect: React.FC = () => {
 
     // â”€â”€ First-time visitor (no stored preference) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     // Navigate to /om as the default immediately.
+    safeStorage.setItem('spirithub-region', 'om');
     const targetPath = path === '/' ? '/om' : `/om${path}`;
     navigate(`${targetPath}${location.search}`, { replace: true });
 
-    if (!REGION_SELECTION_ENABLED) return;
+    if (!REGION_SELECTION_ENABLED || !AUTO_REGION_PROMPT_ENABLED) return;
 
     // Show the banner right away so the user can pick their region.
     // Default dropdown to 'om'; geo-detection will update it if possible.

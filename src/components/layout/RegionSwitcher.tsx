@@ -26,7 +26,7 @@ export const RegionSwitcher: React.FC<RegionSwitcherProps> = ({ isHomePage = fal
   }
 
   return (
-    <DropdownMenu>
+    <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
         <Button 
           variant="ghost" 
