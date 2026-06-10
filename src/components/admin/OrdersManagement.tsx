@@ -2320,6 +2320,11 @@ export const OrdersManagement: React.FC = () => {
     window.open(`/invoice/${encodedOrderNumber}?autoPrint=1`, '_blank', 'noopener,noreferrer');
   };
 
+  const downloadInvoiceInNewTab = (orderNumber: string) => {
+    const encodedOrderNumber = encodeURIComponent(orderNumber);
+    window.open(`/invoice/${encodedOrderNumber}?autoDownload=1`, '_blank', 'noopener,noreferrer');
+  };
+
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case 'pending':
@@ -3337,11 +3342,13 @@ export const OrdersManagement: React.FC = () => {
 
       {/* Order Details Dialog */}
       <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
-        <DialogContent className="max-w-4xl max-h-[90vh]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Package className="h-5 w-5" />
-              {isArabic ? 'تفاصيل الطلب' : 'Order Details'} #{selectedOrder?.orderNumber}
+        <DialogContent className="flex h-[calc(100dvh-1rem)] w-[calc(100%-1rem)] max-w-4xl max-h-[calc(100dvh-1rem)] flex-col gap-0 overflow-hidden p-0 sm:h-auto sm:max-h-[90vh] sm:gap-4 sm:p-6">
+          <DialogHeader className="shrink-0 px-4 pb-3 pt-4 sm:p-0">
+            <DialogTitle className="flex min-w-0 items-start gap-2 pe-6 text-start">
+              <Package className="h-5 w-5 shrink-0" />
+              <span className="min-w-0 break-all">
+                {isArabic ? 'تفاصيل الطلب' : 'Order Details'} #{selectedOrder?.orderNumber}
+              </span>
             </DialogTitle>
             <DialogDescription className="sr-only">
               {isArabic
@@ -3351,7 +3358,7 @@ export const OrdersManagement: React.FC = () => {
           </DialogHeader>
           
           {selectedOrder && (
-            <ScrollArea className="max-h-[70vh] pr-4">
+            <ScrollArea className="min-h-0 flex-1 px-4 sm:max-h-[70vh] sm:px-0 sm:pr-4">
               <div className="space-y-4 bg-[#f6f7f9] p-2 sm:p-3 rounded-2xl">
                 {/* Order Status Summary */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -4202,16 +4209,29 @@ export const OrdersManagement: React.FC = () => {
             </ScrollArea>
           )}
           
-          <div className="flex justify-end gap-3 mt-4">
-            <Button variant="outline" onClick={() => setShowDetailsDialog(false)}>
+          <div className="grid shrink-0 grid-cols-2 gap-2 border-t bg-background p-4 sm:mt-4 sm:flex sm:justify-end sm:border-0 sm:p-0">
+            <Button className="w-full sm:w-auto" variant="outline" onClick={() => setShowDetailsDialog(false)}>
               {isArabic ? 'إغلاق' : 'Close'}
             </Button>
-            <Button onClick={() => {
+            <Button
+              className="w-full sm:w-auto"
+              variant="outline"
+              disabled={!selectedOrder}
+              onClick={() => {
+                if (selectedOrder) {
+                  downloadInvoiceInNewTab(selectedOrder.orderNumber);
+                }
+              }}
+            >
+              <Download className="me-2 h-4 w-4" />
+              {isArabic ? 'تنزيل الفاتورة' : 'Download Invoice'}
+            </Button>
+            <Button className="col-span-2 w-full sm:w-auto" onClick={() => {
               if (selectedOrder) {
                 handleGenerateInvoice(selectedOrder);
               }
-            }}>
-              <FileText className="h-4 w-4 mr-2" />
+            }} disabled={invoiceLoading || !selectedOrder}>
+              <FileText className="me-2 h-4 w-4" />
               {isArabic ? 'طباعة الفاتورة' : 'Print Invoice'}
             </Button>
           </div>

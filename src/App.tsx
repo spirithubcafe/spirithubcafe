@@ -8,7 +8,6 @@ import { RegionProvider } from './contexts/RegionContext';
 import { Navigation } from './components/layout/Navigation';
 import { ScrollToTop } from './components/layout/ScrollToTop';
 import { RegionRedirect } from './components/layout/RegionRedirect';
-import { ChatBot } from './components/chatbot/ChatBot';
 import { Footer } from './components/layout/Footer';
 import { AnnouncementBar } from './components/layout/AnnouncementBar';
 import { PageHeader } from './components/layout/PageHeader';
@@ -21,6 +20,7 @@ import { initVisitorTracking } from './lib/visitorTracking';
 import { migrateCartToRegionBased } from './lib/migrateCart';
 import { initGA4, trackPageView } from './lib/ga4';
 import { useApp } from './hooks/useApp';
+import { useCart } from './hooks/useCart';
 import './i18n';
 import './App.css';
 
@@ -61,6 +61,21 @@ const ShopCategoryPage = lazy(() => import('./pages/Shop/ShopCategoryPage'));
 const NotFound = lazy(() => import('./components/pages/NotFound').then((m) => ({ default: m.NotFound })));
 const MobileBottomNav = lazy(() => import('./components/layout/MobileBottomNav').then((m) => ({ default: m.MobileBottomNav })));
 const CartDrawer = lazy(() => import('./components/cart/CartDrawer').then((m) => ({ default: m.CartDrawer })));
+const ChatBot = lazy(() => import('./components/chatbot/ChatBot').then((m) => ({ default: m.ChatBot })));
+
+const DeferredCartDrawer = () => {
+  const { isOpen } = useCart();
+
+  if (!isOpen) {
+    return null;
+  }
+
+  return (
+    <Suspense fallback={null}>
+      <CartDrawer />
+    </Suspense>
+  );
+};
 
 const ProductsRoute = () => {
   const [searchParams] = useSearchParams();
@@ -182,13 +197,19 @@ function AppContent() {
       {!isInvoicePage && <RegionRedirect />}
       {!isInvoicePage && <Navigation />}
       {!isInvoicePage && (
-        <Suspense fallback={null}>
-          <MobileBottomNav />
-          <CartDrawer />
-        </Suspense>
+        <>
+          <Suspense fallback={null}>
+            <MobileBottomNav />
+          </Suspense>
+          <DeferredCartDrawer />
+        </>
       )}
       {!isInvoicePage && !isAdminPage && <ScrollToTop />}
-      {!isInvoicePage && !isAdminPage && (import.meta.env.VITE_CHATBOT_ENABLED ?? 'false') === 'true' && <ChatBot />}
+      {!isInvoicePage && !isAdminPage && (import.meta.env.VITE_CHATBOT_ENABLED ?? 'false') === 'true' && (
+        <Suspense fallback={null}>
+          <ChatBot />
+        </Suspense>
+      )}
       {!isInvoicePage && <Toaster position="top-center" duration={2000} richColors />}
       <RouteErrorBoundary>
       <Suspense fallback={routeFallback}>

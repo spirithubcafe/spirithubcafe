@@ -20,12 +20,14 @@ export const InvoicePage: React.FC = () => {
   const [isPreparingPdf, setIsPreparingPdf] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const hasTriggeredAutoPrint = useRef(false);
+  const hasTriggeredAutoDownload = useRef(false);
   const pdfLibsRef = useRef<{
     html2canvas: (typeof import('html2canvas'))['default'];
     jsPDF: (typeof import('jspdf'))['jsPDF'];
   } | null>(null);
 
   const autoPrint = searchParams.get('autoPrint') === '1';
+  const autoDownload = searchParams.get('autoDownload') === '1';
   const safeOrderNumber = orderNumber ? decodeURIComponent(orderNumber) : '';
 
   useEffect(() => {
@@ -311,6 +313,35 @@ export const InvoicePage: React.FC = () => {
     }
   };
 
+  const handleDownload = async () => {
+    setShareMessage(null);
+    setIsPreparingPdf(true);
+
+    try {
+      const pdfFile = await generateInvoicePdfFile();
+      const preferredFileName = `${order?.orderNumber || safeOrderNumber || 'invoice'}.pdf`;
+      const pdfUrl = URL.createObjectURL(pdfFile);
+      const link = document.createElement('a');
+
+      link.href = pdfUrl;
+      link.download = preferredFileName;
+      link.rel = 'noopener noreferrer';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      window.setTimeout(() => URL.revokeObjectURL(pdfUrl), 60000);
+    } catch (_err: any) {
+      setShareMessage(
+        isArabic
+          ? 'تعذر تجهيز ملف PDF للتنزيل.'
+          : 'Unable to prepare PDF for download.',
+      );
+    } finally {
+      setIsPreparingPdf(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[#fafafa] flex items-center justify-center text-gray-600">
@@ -336,7 +367,14 @@ export const InvoicePage: React.FC = () => {
         ref={iframeRef}
         title={`Invoice ${order.orderNumber}`}
         srcDoc={invoiceHtml}
-        onLoad={() => setFrameLoaded(true)}
+        onLoad={() => {
+          setFrameLoaded(true);
+
+          if (autoDownload && !hasTriggeredAutoDownload.current) {
+            hasTriggeredAutoDownload.current = true;
+            void handleDownload();
+          }
+        }}
         className="block w-full min-h-screen border-0"
       />
 
