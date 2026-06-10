@@ -43,7 +43,7 @@ export const googleReviewsService = {
             profilePhotoUrl: review.profilePhotoUrl ?? raw.profile_photo_url,
           };
         })
-        .filter((review) => Number(review.rating) === 5)
+        .filter((review) => Number(review.rating) >= 4)
         .sort((a, b) => (b.time ?? 0) - (a.time ?? 0)),
     };
   },

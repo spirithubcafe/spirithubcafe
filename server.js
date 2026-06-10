@@ -175,8 +175,7 @@ const getPerformanceHintsForRoute = (url) => {
   }
 
   if (routePath === '/products') {
-    return `<link rel="preload" as="image" href="/images/header-banner-768.webp" type="image/webp" media="(max-width: 767px)" fetchpriority="high" />
-    <link rel="preload" as="image" href="/images/header-banner-1280.webp" type="image/webp" media="(min-width: 768px)" fetchpriority="high" />`;
+    return '<link rel="preload" as="image" href="/images/header-banner-768.webp" type="image/webp" media="(max-width: 767px)" fetchpriority="high" />';
   }
 
   return '';
