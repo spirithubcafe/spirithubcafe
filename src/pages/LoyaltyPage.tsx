@@ -61,6 +61,7 @@ export const LoyaltyPage: React.FC = () => {
       />
 
       <PageHeader
+        variant="products"
         title="Loyalty Program"
         titleAr="برنامج الولاء"
         subtitle="Earn points, unlock rewards, and enjoy exclusive perks with every sip."

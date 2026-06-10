@@ -216,6 +216,7 @@ export const ContactPage: React.FC = () => {
       />
       {/* Page Header */}
       <PageHeader
+        variant="products"
         title="Contact Us"
         titleAr="تواصل معنا"
         subtitle="We're here to answer all your questions. Feel free to reach out to us through any of the following channels"

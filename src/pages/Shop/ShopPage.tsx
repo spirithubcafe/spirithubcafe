@@ -167,6 +167,7 @@ export const ShopPage = () => {
       />
 
       <PageHeader
+        variant="products"
         title="Shop"
         titleAr="المتجر"
         subtitle="Discover curated roastery collections and seasonal highlights."

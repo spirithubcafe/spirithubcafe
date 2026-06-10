@@ -14,6 +14,12 @@ import { StarRating } from '../../components/shop/StarRating';
 import type { ShopProduct } from '../../types/shop';
 import { useRegion } from '../../hooks/useRegion';
 
+const PRODUCT_BANNER_CATEGORY_SLUGS = new Set([
+  'coffee-bundles-gift-boxes',
+  'electronic-gift-cards',
+  'tools-equipment',
+]);
+
 export const ShopCategoryPage = () => {
   const { slug } = useParams<{ slug: string }>();
   const { language } = useApp();
@@ -93,7 +99,6 @@ export const ShopCategoryPage = () => {
       numberOfItems: products.length,
       publisher: { '@type': 'Organization', name: 'Spirit Hub Cafe', url: siteMetadata.baseUrl },
     },
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   ], [categoryCanonical, shopUrl, homeUrl, name, description, isArabic, products.length]);
 
   if (loading) {
@@ -187,6 +192,7 @@ export const ShopCategoryPage = () => {
       />
 
       <PageHeader
+        variant={PRODUCT_BANNER_CATEGORY_SLUGS.has(categorySlug) ? 'products' : 'default'}
         title={name}
         titleAr={isArabic ? name : category.nameAr || name}
         subtitle={description || ''}

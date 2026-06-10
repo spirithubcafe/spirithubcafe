@@ -163,6 +163,7 @@ By following these steps, roasters produce exceptional coffee rich in flavor and
       />
       {/* Page Header */}
       <PageHeader
+        variant="products"
         title="About Us"
         titleAr="من نحن"
         subtitle="Discover our story, passion, and commitment to exceptional coffee"
