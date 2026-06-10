@@ -3,13 +3,6 @@ import { Link } from 'react-router-dom';
 import { ANNOUNCEMENT_BAR_HEIGHT_PX } from '../../constants/layout';
 
 export const AnnouncementBar: React.FC = () => {
-  React.useEffect(() => {
-    document.documentElement.style.setProperty('--announcement-bar-height', `${ANNOUNCEMENT_BAR_HEIGHT_PX}px`);
-    return () => {
-      document.documentElement.style.setProperty('--announcement-bar-height', '0px');
-    };
-  }, []);
-
   return (
     <div
       className="fixed left-0 right-0 z-[45] w-full overflow-hidden bg-[#681e15] group"

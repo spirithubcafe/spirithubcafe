@@ -151,6 +151,14 @@
   --scrollbar-thumb-hover: rgba(71, 85, 105, 0.56);
 }
 
+.app-layout {
+  --announcement-bar-height: 0px;
+}
+
+.app-layout.announcement-bar-layout {
+  --announcement-bar-height: 40px;
+}
+
 .dark {
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);

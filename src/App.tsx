@@ -143,6 +143,11 @@ function AppContent() {
   const location = useLocation();
   const isAdminPage = location.pathname.includes('/admin');
   const isInvoicePage = location.pathname.startsWith('/invoice/');
+  const normalizedPath = location.pathname.replace(/\/+$/, '') || '/';
+  const isProductsPage = /^\/(?:(?:om|sa)\/)?products$/.test(normalizedPath);
+  const hasAnnouncementBar =
+    isProductsPage ||
+    ['/', '/om', '/sa', '/shop', '/om/shop', '/sa/shop'].includes(normalizedPath);
   const routeFallback = <div className="min-h-screen bg-white" />;
 
   // Initialize visitor tracking on app load
@@ -169,7 +174,11 @@ function AppContent() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-white">
+    <div
+      className={`app-layout min-h-screen bg-white${hasAnnouncementBar ? ' announcement-bar-layout' : ''}${
+        isProductsPage ? ' products-page-layout' : ''
+      }`}
+    >
       {!isInvoicePage && <RegionRedirect />}
       {!isInvoicePage && <Navigation />}
       {!isInvoicePage && (

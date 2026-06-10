@@ -1,17 +1,43 @@
-/* Shop hero - responsive height & mobile framing */
-.page-header-shop {
-  min-height: 380px;
+/* Keep the products LCP image at a stable painted size through hydration. */
+.page-header-products {
+  box-sizing: border-box;
+  height: 320px;
+  padding-bottom: 0;
+}
+
+.page-header-products-content {
+  display: flex;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  padding-bottom: 24px;
+}
+
+.page-header-products-content > div {
+  width: 100%;
+}
+
+.page-header-products-title,
+.page-header-products-subtitle {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+}
+
+.page-header-products-title {
+  -webkit-line-clamp: 2;
+}
+
+.page-header-products-subtitle {
+  -webkit-line-clamp: 2;
 }
 
 @media (min-width: 768px) {
-  .page-header-shop {
-    min-height: 420px;
+  .page-header-products {
+    height: 360px;
   }
-}
 
-@media (max-width: 767px) {
-  .page-header-shop {
-    background-position: top center !important;
-    min-height: 260px;
+  .page-header-products-content {
+    padding-bottom: 32px;
   }
 }

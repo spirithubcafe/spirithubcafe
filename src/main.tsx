@@ -2,6 +2,9 @@ import { StrictMode } from 'react'
 import { createRoot, hydrateRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 
+import '@fontsource-variable/inter/index.css';
+import '@fontsource/cairo/400.css';
+import '@fontsource/cairo/700.css';
 import './index.css'
 import './styles/color-overrides.css'
 import App from './App.tsx'

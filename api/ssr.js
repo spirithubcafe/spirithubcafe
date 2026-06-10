@@ -18,23 +18,14 @@ const getPerformanceHintsForRoute = (url) => {
 
   routePath = routePath.replace(/\/+$/, '') || '/';
 
-  const announcementOffsetScript =
-    '<script>document.documentElement.style.setProperty("--announcement-bar-height","40px");</script>';
-
   if (routePath === '/') {
-    return `${announcementOffsetScript}
-    <link rel="preload" as="image" href="/images/slides/spirithub-cold-brew-oman-muscat.webp" type="image/webp" media="(max-width: 767.98px)" fetchpriority="high" />
+    return `<link rel="preload" as="image" href="/images/slides/spirithub-cold-brew-oman-muscat.webp" type="image/webp" media="(max-width: 767.98px)" fetchpriority="high" />
     <link rel="preload" as="image" href="/images/slides/premium-specialty-coffee-roasted-in-oman.webp" type="image/webp" media="(min-width: 768px)" fetchpriority="high" />`;
   }
 
   if (routePath === '/products') {
-    return `${announcementOffsetScript}
-    <link rel="preload" as="image" href="/images/header-banner-768.webp" type="image/webp" media="(max-width: 767px)" fetchpriority="high" />
+    return `<link rel="preload" as="image" href="/images/header-banner-768.webp" type="image/webp" media="(max-width: 767px)" fetchpriority="high" />
     <link rel="preload" as="image" href="/images/header-banner-1280.webp" type="image/webp" media="(min-width: 768px)" fetchpriority="high" />`;
-  }
-
-  if (routePath === '/shop') {
-    return announcementOffsetScript;
   }
 
   return '';

@@ -65,7 +65,9 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
 
   return (
     <div
-      className="relative bg-gradient-to-br from-stone-50 via-white to-stone-100 page-padding-top pb-16 overflow-hidden"
+      className={`relative bg-gradient-to-br from-stone-50 via-white to-stone-100 page-padding-top overflow-hidden ${
+        isProductsHeader ? 'page-header-products' : 'pb-16'
+      }`}
     >
       {/* Background Image - Brighter and Clearer */}
       <picture>
@@ -97,16 +99,22 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
         isProductsHeader ? 'bg-black/40 md:bg-black/25' : 'bg-black/25'
       }`} />
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+      <div className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative ${
+        isProductsHeader ? 'page-header-products-content' : ''
+      }`}>
         <div className="text-center">
           <h1 className={`font-extrabold text-white mb-4 drop-shadow-2xl ${
-            isProductsHeader ? 'text-3xl sm:text-4xl md:text-5xl' : 'text-4xl md:text-5xl'
+            isProductsHeader
+              ? 'page-header-products-title text-3xl sm:text-4xl md:text-5xl'
+              : 'text-4xl md:text-5xl'
           }`}>
             {displayTitle}
           </h1>
           
           {displaySubtitle && (
-            <p className="text-lg md:text-xl text-gray-100 max-w-3xl mx-auto drop-shadow-xl">
+            <p className={`text-lg md:text-xl text-gray-100 max-w-3xl mx-auto drop-shadow-xl ${
+              isProductsHeader ? 'page-header-products-subtitle' : ''
+            }`}>
               {displaySubtitle}
             </p>
           )}
