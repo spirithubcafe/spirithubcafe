@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useApp } from '../../hooks/useApp';
 import './ProfessionalHeroSlider.css';
@@ -35,6 +36,10 @@ export const ProfessionalHeroSlider: React.FC = () => {
   const [isMobile, setIsMobile] = useState(false);
   const [mobileImageIndex, setMobileImageIndex] = useState(0);
   const [autoPlayReady, setAutoPlayReady] = useState(false);
+  const sectionRef = useRef<HTMLElement | null>(null);
+  const [hoverZone, setHoverZone] = useState<'left' | 'right' | null>(null);
+  const [overInteractive, setOverInteractive] = useState(false);
+  const [cursorPos, setCursorPos] = useState({ x: 0, y: 0 });
 
   // Check if device is mobile
   useEffect(() => {
@@ -131,23 +136,9 @@ export const ProfessionalHeroSlider: React.FC = () => {
       id: '2',
       image: '/images/slides/slide1.webp',
       title: language === 'ar' ? 'مرحباً بكم في محمصة سبيريت هب للقهوة المختصة' : 'WELCOME TO SPIRITHUB SPECIALTY COFFEE ROASTERY',
-      subtitle: language === 'ar' ? (isMobile ? [
-        'اشتري حبوب قهوة مختصة محمصة بعناية',
-        'لتكريم عمل المنتجين وإبراز النكهات المميزة',
-        'اطلب الآن أفضل حبوب القهوة في عُمان والسعودية'
-      ] : [
-        'اشتري حبوب قهوة مختصة محمصة بدقة لتكريم العمل الشاق للمنتجين.',
-        'من خلال إبراز النكهات والروائح والحموضة المميزة لكل قهوة، ندع قصصهم تتألق',
-        'اطلب الآن أفضل حبوب القهوة في عُمان والسعودية.'
-      ]) : (isMobile ? [
-        'Buy specialty coffee beans expertly roasted',
-        'to honor producers and reveal distinctive flavors',
-        'Order now - Best coffee beans in Oman & Saudi'
-      ] : [
-        'Buy specialty coffee beans carefully roasted to honor producers\' hard work.',
-        'By revealing each coffee\'s distinctive flavors, aromatics, and acidities, we let their stories shine through',
-        'and provide customers the best coffee beans in Oman and Saudi Arabia.'
-      ]),
+      subtitle: language === 'ar'
+        ? 'حبوب مختصة محمصة بإتقان، تكريمًا لقصة كل منتج.'
+        : 'Specialty beans, expertly roasted to honor every producer\'s story.',
       description: language === 'ar' 
         ? 'اطلب الآن أجود أنواع القهوة المحمصة بعناية فائقة من أفضل مزارع القهوة حول العالم'
         : 'Order now the finest carefully roasted specialty coffee from the best coffee farms around the world',
@@ -167,14 +158,9 @@ export const ProfessionalHeroSlider: React.FC = () => {
       id: '3',
       image: '/images/slides/slide2.webp',
       title: language === 'ar' ? 'فلتر ورقي لتنقيط القهوة على شكل قرص UFO صديق للبيئة' : 'ECO-FRIENDLY UFO DISK DRIP COFFEE PAPER FILTER',
-      subtitle: language === 'ar' ? [
-        'مهمتنا هي إثراء يوم كل عميل بتجربة قهوة مصنوعة يدوياً.',
-        'من خلال محمصة سبيريت هب، نضمن جودة ونكهة استثنائية في كل كوب، من الحبوب المختارة بعناية إلى التحميص الخبير.',
-        'أينما نقدم خدماتنا، تتألق شغفنا وإخلاصنا، مما يجعل كل رشفة لا تُنسى.'
-      ] : [
-        'Explore SpiritHub Roastery’s curated world of specialty coffee, from espresso blends and pour-over selections to premium coffee capsules and curated gift bundles.',
-        'Freshly roasted in Oman and Saudi Arabia, each coffee is carefully selected for exceptional quality, distinctive character, and an unforgettable coffee experience.'
-      ],
+      subtitle: language === 'ar'
+        ? 'تحضير صديق للبيئة، لفنجان أنقى وأغنى نكهة.'
+        : 'Eco-friendly brewing, crafted for a cleaner, richer cup.',
       description: language === 'ar'
         ? 'باريستا محترفون يحضرون لك كل كوب بحب وإتقان باستخدام أحدث التقنيات'
         : 'Professional baristas prepare every cup with love and precision using the latest techniques',
@@ -194,15 +180,9 @@ export const ProfessionalHeroSlider: React.FC = () => {
       id: '4',
       image: '/images/slides/slide3.webp',
       title: language === 'ar' ? 'اشتري كبسولات قهوة مختصة فاخرة' : 'BUY SPECIALTY COFFEE CAPSULES',
-      subtitle: language === 'ar' ? [
-        'اليوم، يسعدنا أن نُقدّم لكم إنجازًا جديدًا في رحلتنا: تشكيلة حصرية من كبسولات القهوة المختصة!',
-        'اطلب الآن من هذه الأنواع الخمسة الاستثنائية من القهوة، المُختارة بعناية،',
-        'تُضفي جوهرًا أصيلًا على فنجانكم. توصيل سريع في عُمان والسعودية.'
-      ] : [
-        'Today, we are thrilled to introduce a new milestone in our journey: exclusive specialty coffee capsules selections!',
-        'Order now from these 5 carefully curated exceptional coffee varieties',
-        'that bring the authentic essence of their origins right to your cup. Fast delivery in Oman & Saudi Arabia.'
-      ],
+      subtitle: language === 'ar'
+        ? 'خمس خلطات كبسولات استثنائية، نكهة أصيلة في كل فنجان.'
+        : 'Five exceptional capsule blends, authentic flavor in every cup.',
       description: language === 'ar'
         ? 'تصميم داخلي أنيق وموسيقى هادئة وإضاءة مثالية لتجربة لا تُنسى'
         : 'Elegant interior design, soothing music, and perfect lighting for an unforgettable experience',
@@ -222,15 +202,9 @@ export const ProfessionalHeroSlider: React.FC = () => {
       id: '6',
       image: '/images/slides/yemen-jabal-nabi-shuaib-spirithub-coffee.webp',
       title: language === 'ar' ? 'متجذرون في اليمن، محمص في سبيريت هب' : 'ROOTED IN YEMEN, ROASTED AT SPIRITHUB',
-      subtitle: language === 'ar' ? [
-        'من المرتفعات المقدسة لجبل النبي شعيب إلى محمصتنا في عُمان، كل حبة تروي قصة الأصل والصمود والفن،',
-        'حكاية وُلدت من المدرجات اليمنية القديمة، رعاها أجيال من المزارعين،',
-        'وأُتقنت من خلال شغف سبيريت هب بالحرفية والأصالة.'
-      ] : [
-        'From the sacred highlands of Jabal Nabi Shu\'ayb to our roastery in Oman, each bean tells a story of origin, resilience, and artistry,',
-        'a tale born from Yemen\'s ancient terraces, nurtured by generations of farmers,',
-        'and perfected through SpiritHub\'s passion for craft and authenticity.'
-      ],
+      subtitle: language === 'ar'
+        ? 'من مرتفعات اليمن العريقة إلى محمصتنا، قصة في كل حبة.'
+        : 'From Yemen\'s ancient highlands to our roastery, a story in every bean.',
       description: language === 'ar'
         ? 'قهوة يمنية أصيلة من أعلى القمم'
         : 'Authentic Yemeni coffee from the highest peaks',
@@ -250,13 +224,9 @@ export const ProfessionalHeroSlider: React.FC = () => {
       id: '7',
       image: '/images/slides/spirithub-hero-bundles-gifts.webp',
       title: language === 'ar' ? 'هدايا مختارة بعناية وباقات اكتشاف' : 'THOUGHTFULLY CURATED GIFTS & DISCOVERY BUNDLES',
-      subtitle: language === 'ar' ? [
-        'من تشكيلات القهوة المختصة إلى تجارب الهدايا الأنيقة،',
-        'صُممت لتُسعد كل ذوق وتناسب كل مناسبة.'
-      ] : [
-        'From specialty coffee selections to elegant gift experiences,',
-        'crafted to delight every taste and occasion.'
-      ],
+      subtitle: language === 'ar'
+        ? 'هدايا مختارة وباقات اكتشاف لكل ذوق ومناسبة.'
+        : 'Curated gifts & discovery bundles for every taste and occasion.',
       description: language === 'ar'
         ? 'باقات هدايا وتشكيلات قهوة مختصة لكل مناسبة'
         : 'Gift bundles and specialty coffee selections for every occasion',
@@ -278,15 +248,9 @@ export const ProfessionalHeroSlider: React.FC = () => {
       imageClassName: 'background-image--nitro',
       overlayClassName: 'background-overlay--nitro',
       title: language === 'ar' ? 'حيث يلتقي الوقت بالمذاق' : 'Where Time Meets Taste',
-      subtitle: language === 'ar' ? [
-        'يتم تحضير الكولد برو لدينا بنقعٍ بطيء لساعات طويلة لاستخلاص نكهات عميقة،',
-        'وحموضة منخفضة، وقوامٍ ناعم',
-        'صُمم لعشّاق القهوة الحقيقيين.'
-      ] : [
-        'Our Cold Brew is patiently steeped for hours to unlock deep flavors,',
-        'low acidity, and a silky finish',
-        'designed for true coffee lovers.'
-      ],
+      subtitle: language === 'ar'
+        ? 'كولد برو منقوع ببطء لنكهة عميقة وقوام ناعم.'
+        : 'Cold brew, slow-steeped for deep flavor and a silky finish.',
       description: language === 'ar'
         ? 'كولد برو مختص مُحضَّر ببطء لنكهات عميقة وقوام استثنائي'
         : 'Specialty cold brew slowly steeped for deep flavors and an exceptional finish',
@@ -308,13 +272,9 @@ export const ProfessionalHeroSlider: React.FC = () => {
       imageClassName: 'background-image--nitro',
       overlayClassName: 'background-overlay--nitro',
       title: language === 'ar' ? 'نيترو كولد برو… بتجربة أرقى' : 'Nitro Cold Brew',
-      subtitle: language === 'ar' ? [
-        'مُعزز بالنيتروجين ليمنحك قوامًا كريميًا ناعمًا ونكهة غنية',
-        'تجربة قهوة مختصة منعشة لا مثيل لها.'
-      ] : [
-        'Infused with nitrogen for a smooth, creamy texture and rich flavor',
-        'a refreshing specialty coffee experience like no other.'
-      ],
+      subtitle: language === 'ar'
+        ? 'مُعزز بالنيتروجين لقوام كريمي منعش لا مثيل له.'
+        : 'Nitrogen-infused for a smooth, creamy, refreshing brew.',
       description: language === 'ar'
         ? 'نيترو كولد برو مُعزز بالنيتروجين لقوام كريمي ونكهة غنية لا مثيل لها'
         : 'Nitrogen-infused nitro cold brew for a smooth, creamy texture and unmatched rich flavor',
@@ -388,6 +348,36 @@ export const ProfessionalHeroSlider: React.FC = () => {
     }
   };
 
+  // Function to go to previous slide - only on desktop
+  const prevSlide = () => {
+    if (!isMobile && slides.length > 1) {
+      setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
+    }
+  };
+
+  const navEnabled = !isMobile && slides.length > 1;
+
+  const handleSliderMouseMove = (e: React.MouseEvent<HTMLElement>) => {
+    if (!navEnabled) return;
+    const rect = sectionRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const x = e.clientX - rect.left;
+    setCursorPos({ x, y: e.clientY - rect.top });
+    setHoverZone(x < rect.width / 2 ? 'left' : 'right');
+  };
+
+  const handleSliderClick = (e: React.MouseEvent<HTMLElement>) => {
+    if (!navEnabled) return;
+    const rect = sectionRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const x = e.clientX - rect.left;
+    if (x < rect.width / 2) {
+      prevSlide();
+    } else {
+      nextSlide();
+    }
+  };
+
   // Return loading state if no slide data is available
   if (!currentSlideData) {
     return (
@@ -399,10 +389,18 @@ export const ProfessionalHeroSlider: React.FC = () => {
 
   return (
     <section 
-      className={`professional-hero-slider ${!isMobile && slides.length > 1 ? 'cursor-pointer' : ''}`}
+      ref={sectionRef}
+      className={`professional-hero-slider ${navEnabled ? 'slider--interactive' : ''}`}
       onMouseEnter={() => !isMobile && setIsHovered(true)}
-      onMouseLeave={() => !isMobile && setIsHovered(false)}
-      onClick={!isMobile && slides.length > 1 ? nextSlide : undefined}
+      onMouseLeave={() => {
+        if (!isMobile) {
+          setIsHovered(false);
+          setHoverZone(null);
+          setOverInteractive(false);
+        }
+      }}
+      onMouseMove={handleSliderMouseMove}
+      onClick={navEnabled ? handleSliderClick : undefined}
     >
       {/* Background Images/Video with Fade Effect */}
       <div className="slider-backgrounds">
@@ -442,6 +440,35 @@ export const ProfessionalHeroSlider: React.FC = () => {
           <div className={`background-overlay ${currentSlideData.overlayClassName ?? ''}`.trim()} />
         </div>
       </div>
+
+      {/* Edge navigation hints */}
+      {navEnabled && (
+        <>
+          <div
+            className={`slider-edge-hint slider-edge-hint--left ${hoverZone === 'left' && !overInteractive ? 'is-active' : ''}`}
+            aria-hidden="true"
+          />
+          <div
+            className={`slider-edge-hint slider-edge-hint--right ${hoverZone === 'right' && !overInteractive ? 'is-active' : ''}`}
+            aria-hidden="true"
+          />
+        </>
+      )}
+
+      {/* Custom directional cursor */}
+      {navEnabled && hoverZone && !overInteractive && (
+        <div
+          className={`slider-cursor slider-cursor--${hoverZone}`}
+          style={{ left: cursorPos.x, top: cursorPos.y }}
+          aria-hidden="true"
+        >
+          {hoverZone === 'left' ? (
+            <ChevronLeft className="slider-cursor-icon" strokeWidth={2.5} />
+          ) : (
+            <ChevronRight className="slider-cursor-icon" strokeWidth={2.5} />
+          )}
+        </div>
+      )}
 
       {/* Main Content Container */}
       <div className="slider-content-container">
@@ -484,6 +511,8 @@ export const ProfessionalHeroSlider: React.FC = () => {
                       : 'bg-red-500 hover:bg-red-600'
                   }`}
                   onClick={(e) => e.stopPropagation()}
+                  onMouseEnter={() => setOverInteractive(true)}
+                  onMouseLeave={() => setOverInteractive(false)}
                 >
                   {currentSlideData.cta}
                 </Link>
@@ -509,7 +538,11 @@ export const ProfessionalHeroSlider: React.FC = () => {
 
       {/* Slide Indicators - only show on desktop or when multiple slides */}
       {(!isMobile && slides.length > 1) && (
-        <div className="slide-indicators">
+        <div
+          className="slide-indicators"
+          onMouseEnter={() => setOverInteractive(true)}
+          onMouseLeave={() => setOverInteractive(false)}
+        >
           {slides.map((_, index) => (
             <button
               key={index}
