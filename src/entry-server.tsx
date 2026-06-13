@@ -1,5 +1,5 @@
 import React from 'react';
-import ReactDOMServer from 'react-dom/server';
+import { renderToReadableStream } from 'react-dom/server';
 import { StaticRouter } from 'react-router';
 import App from './App';
 import i18n from './i18n';
@@ -15,11 +15,13 @@ import i18n from './i18n';
 export async function render(url: string, language: 'ar' | 'en' = 'ar'): Promise<{ html: string; error?: string }> {
   try {
     await i18n.changeLanguage(language);
-    const html = ReactDOMServer.renderToString(
+    const stream = await renderToReadableStream(
       React.createElement(StaticRouter, { location: url },
         React.createElement(App)
       )
     );
+    await stream.allReady;
+    const html = await new Response(stream).text();
     return { html };
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
