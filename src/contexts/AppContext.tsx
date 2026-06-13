@@ -580,30 +580,14 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
     document.documentElement.lang = language;
 
-    const runFetches = () => {
-      fetchProducts();
-      fetchCategories();
-    };
-
-    if (!isInitialHomepagePath()) {
-      runFetches();
+    // Homepage sections request their own data as they approach the viewport.
+    // Avoid a second timer-driven fetch that causes a large delayed React commit.
+    if (isInitialHomepagePath()) {
       return;
     }
 
-    const timeoutId = window.setTimeout(runFetches, 12000);
-    let idleId: number | null = null;
-
-    if ('requestIdleCallback' in window) {
-      idleId = (window as Window & { requestIdleCallback: (cb: () => void, options?: { timeout: number }) => number })
-        .requestIdleCallback(runFetches, { timeout: 9000 });
-    }
-
-    return () => {
-      window.clearTimeout(timeoutId);
-      if (idleId !== null && 'cancelIdleCallback' in window) {
-        (window as Window & { cancelIdleCallback: (id: number) => void }).cancelIdleCallback(idleId);
-      }
-    };
+    fetchProducts();
+    fetchCategories();
   // Only depend on language and region - callbacks are stable now
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentRegionCode, language]);

@@ -32,8 +32,6 @@ const HomePage: React.FC = () => {
       return;
     }
 
-    let idleId: number | null = null;
-    const timeoutId = window.setTimeout(revealSections, 10000);
     const target = productLoadRef.current;
 
     let observer: IntersectionObserver | null = null;
@@ -43,30 +41,18 @@ const HomePage: React.FC = () => {
           if (entries.some((entry) => entry.isIntersecting)) {
             revealSections();
             observer?.disconnect();
-            window.clearTimeout(timeoutId);
           }
         },
-        { rootMargin: '0px 0px 200px 0px' }
+        { rootMargin: '0px' }
       );
 
       observer.observe(target);
-    }
-
-    if ('requestIdleCallback' in window) {
-      idleId = (window as Window & { requestIdleCallback: (cb: () => void, options?: { timeout: number }) => number })
-        .requestIdleCallback(() => {
-          if (window.scrollY > 120) {
-            revealSections();
-          }
-        }, { timeout: 8000 });
+    } else {
+      revealSections();
     }
 
     return () => {
-      window.clearTimeout(timeoutId);
       observer?.disconnect();
-      if (idleId !== null && 'cancelIdleCallback' in window) {
-        (window as Window & { cancelIdleCallback: (id: number) => void }).cancelIdleCallback(idleId);
-      }
     };
   }, []);
 

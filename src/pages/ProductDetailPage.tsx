@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -39,13 +39,18 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/
 import { Seo } from '../components/seo/Seo';
 import { siteMetadata, resolveAbsoluteUrl } from '../config/siteMetadata';
 import { ProductShare } from '../components/products/ProductShare';
-import { RelatedProducts } from '../components/products/RelatedProducts';
 import { ProductTagBadge } from '../components/shop/ProductTagBadge';
 import { ProductViewers } from '../components/ui/LiveVisitors';
 import { toast } from 'sonner';
 import { getVariantStock, clampQuantity } from '../lib/stockUtils';
 import { safeStorage } from '../lib/safeStorage';
 import { getRegionFromPath } from '../lib/regionUtils';
+
+const RelatedProducts = lazy(() =>
+  import('../components/products/RelatedProducts').then((module) => ({
+    default: module.RelatedProducts,
+  })),
+);
 
 type LoadState = 'idle' | 'loading' | 'ready' | 'error';
 
@@ -2481,7 +2486,17 @@ export const ProductDetailPage = () => {
               )}
 
               {/* You might also like */}
-              <RelatedProducts currentProduct={product} shopData={shopData ?? null} />
+              <Suspense
+                fallback={
+                  <div
+                    className="mt-8 md:mt-10"
+                    style={{ minHeight: 360 }}
+                    aria-hidden="true"
+                  />
+                }
+              >
+                <RelatedProducts currentProduct={product} shopData={shopData ?? null} />
+              </Suspense>
 
               {/* Reviews Popup */}
               <Dialog open={isReviewsDialogOpen} onOpenChange={setIsReviewsDialogOpen}>

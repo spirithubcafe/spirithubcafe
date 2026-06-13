@@ -11,7 +11,6 @@ import { RegionRedirect } from './components/layout/RegionRedirect';
 import { Footer } from './components/layout/Footer';
 import { AnnouncementBar } from './components/layout/AnnouncementBar';
 import { PageHeader } from './components/layout/PageHeader';
-import HomePage from './pages/HomePage';
 import { ErrorBoundary, RouteErrorBoundary } from './components/pages/ErrorBoundary';
 import { RequireAuth } from './components/auth/RequireAuth';
 import { RequireWholesale } from './components/auth/RequireWholesale';
@@ -25,6 +24,7 @@ import './i18n';
 import './App.css';
 
 const ProfilePage = lazy(() => import('./pages/ProfilePage'));
+const HomePage = lazy(() => import('./pages/HomePage'));
 const FavoritesPage = lazy(() => import('./pages/FavoritesPage').then((m) => ({ default: m.FavoritesPage })));
 const OrdersPage = lazy(() => import('./pages/OrdersPage').then((m) => ({ default: m.OrdersPage })));
 const OrderDetailPage = lazy(() => import('./pages/OrderDetailPage').then((m) => ({ default: m.OrderDetailPage })));

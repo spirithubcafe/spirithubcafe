@@ -536,9 +536,13 @@ export default async function handler(req, res) {
     // Get meta tags based on route (async)
     const metaTags = await getMetaTagsForRoute(url, requestBaseUrl, ssrProduct);
     const performanceHints = getPerformanceHintsForRoute(url);
-    const ssrBootstrapScript = ssrProduct
+    const acceptLanguage = (req.headers?.['accept-language'] || '').toString().split(',')[0].trim().toLowerCase();
+    const requestLanguage = acceptLanguage.startsWith('ar') ? 'ar' : 'en';
+    const ssrLanguageScript = `<script>window.__SSR_LANGUAGE__=${serializeForInlineScript(requestLanguage)};</script>`;
+    const ssrProductScript = ssrProduct
       ? `<script>window.__SSR_PRODUCT__=${serializeForInlineScript(ssrProduct)};window.__SSR_PRODUCT_ID__=${serializeForInlineScript(productIdentifier)};</script>`
       : '';
+    const ssrBootstrapScript = `${ssrLanguageScript}${ssrProductScript}`;
     
     // Replace the meta tags placeholder (only in head)
     if (html.includes('<!--app-head-->')) {
@@ -557,8 +561,6 @@ export default async function handler(req, res) {
       if (fs.existsSync(ssrBundlePath)) {
         const { render } = await import(ssrBundlePath);
         if (typeof render === 'function') {
-          const acceptLanguage = (req.headers?.['accept-language'] || '').toString().split(',')[0].trim().toLowerCase();
-          const requestLanguage = acceptLanguage.startsWith('ar') ? 'ar' : 'en';
           const previousProduct = globalThis.__SSR_PRODUCT__;
           const previousProductId = globalThis.__SSR_PRODUCT_ID__;
 
