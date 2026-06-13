@@ -61,33 +61,39 @@ export const MobileBottomNav: React.FC = () => {
   }
 
   return (
-    <div data-mobile-bottom-nav className="fixed bottom-0 left-0 right-0 z-40 md:hidden">
-      <div className="mx-3 mb-3 bg-black/60 backdrop-blur-xl shadow-lg rounded-2xl overflow-hidden border border-white/10">
-        <div className="absolute inset-0 shadow-inner rounded-2xl pointer-events-none" />
-        <div className="relative flex items-center justify-around py-2 px-1">
+    <div
+      data-mobile-bottom-nav
+      className="fixed bottom-0 left-0 right-0 z-40 md:hidden pb-[env(safe-area-inset-bottom)]"
+    >
+      <div className="mx-3 mb-3 rounded-[1.4rem] border border-white/10 bg-neutral-900/70 shadow-[0_8px_30px_rgba(0,0,0,0.35)] backdrop-blur-xl overflow-hidden">
+        {/* Subtle top sheen + warm ambient glow tying into the coffee palette */}
+        <div className="pointer-events-none absolute inset-0 rounded-[1.4rem] bg-gradient-to-b from-white/[0.07] to-transparent" />
+        <div className="pointer-events-none absolute -bottom-8 left-1/2 h-16 w-3/4 -translate-x-1/2 rounded-full bg-amber-500/10 blur-2xl" />
+        <div className="relative flex items-stretch justify-between gap-1 px-2 py-1.5">
           {navItems.map((item) => {
             const Icon = item.icon;
             const active = isActive(item.path);
             const isShop = item.key === 'shop';
             const isGift = item.key === 'gift';
             const baseClass =
-              'group relative flex flex-col items-center justify-center p-3 min-w-[68px] rounded-xl transition-transform duration-150 active:scale-95';
+              'group relative flex flex-1 flex-col items-center justify-center rounded-2xl px-1 py-2.5 transition-transform duration-150 active:scale-90';
             const content = (
               <>
                 {active && !isShop && !isGift ? (
-                  <div className="absolute inset-0 bg-white rounded-xl shadow-md" />
+                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-b from-amber-400/20 to-amber-500/10 ring-1 ring-amber-300/30" />
                 ) : null}
 
                 {isShop ? (
                   <>
                     <div
-                      className={`absolute inset-0 rounded-xl transition-opacity duration-300 ${
+                      className={`absolute inset-0 rounded-2xl transition-opacity duration-300 ${
                         active
-                          ? 'bg-gradient-to-br from-amber-300 via-orange-400 to-amber-600 opacity-100'
-                          : 'bg-gradient-to-br from-amber-200/90 via-orange-300/90 to-amber-500/95 opacity-90 group-hover:opacity-100'
+                          ? 'bg-gradient-to-br from-amber-300 via-orange-400 to-orange-600 opacity-100'
+                          : 'bg-gradient-to-br from-amber-300/95 via-orange-400/95 to-orange-500/95 opacity-95 group-hover:opacity-100'
                       }`}
                     />
-                    <div className="absolute inset-0 rounded-xl bg-gradient-to-b from-white/45 via-white/10 to-transparent pointer-events-none" />
+                    <div className="absolute inset-0 rounded-2xl bg-gradient-to-b from-white/45 via-white/10 to-transparent pointer-events-none" />
+                    <div className="absolute inset-0 rounded-2xl ring-1 ring-white/25 pointer-events-none" />
                     <div className="absolute -top-5 -right-4 w-12 h-12 rounded-full bg-white/30 blur-md pointer-events-none" />
                     <div className="mobile-nav-shine absolute top-0 -left-10 h-full w-6 bg-white/35 blur-[1px] rotate-12 pointer-events-none" />
                   </>
@@ -95,51 +101,53 @@ export const MobileBottomNav: React.FC = () => {
 
                 {isGift ? (
                   <>
-                    <div className="mobile-nav-gift-glow absolute inset-0 rounded-xl" />
+                    <div className="mobile-nav-gift-glow absolute inset-0 rounded-2xl" />
                     <div
-                      className={`absolute inset-0 rounded-xl transition-opacity duration-200 ${
+                      className={`absolute inset-0 rounded-2xl transition-opacity duration-200 ${
                         active
-                          ? 'bg-gradient-to-br from-rose-400 to-pink-600 opacity-100'
-                          : 'bg-gradient-to-br from-rose-500 to-pink-600 opacity-90 group-hover:opacity-100'
+                          ? 'bg-gradient-to-br from-orange-400 via-red-500 to-red-600 opacity-100'
+                          : 'bg-gradient-to-br from-orange-400/95 via-red-500/95 to-red-600/95 opacity-95 group-hover:opacity-100'
                       }`}
                     />
-                    <div className="absolute inset-0 rounded-xl bg-gradient-to-b from-white/20 to-transparent pointer-events-none" />
+                    <div className="absolute inset-0 rounded-2xl bg-gradient-to-b from-white/35 via-white/10 to-transparent pointer-events-none" />
+                    <div className="absolute inset-0 rounded-2xl ring-1 ring-white/25 pointer-events-none" />
                   </>
                 ) : null}
 
                 {!isShop && !isGift ? (
-                  <div className="absolute inset-0 rounded-xl bg-white/0 transition-colors group-hover:bg-white/10" />
+                  <div className="absolute inset-0 rounded-2xl bg-white/0 transition-colors group-hover:bg-white/5" />
                 ) : null}
 
                 <div className="relative flex flex-col items-center gap-1.5">
                   <div className={isShop || isGift ? 'mobile-nav-icon-float relative' : 'relative'}>
                     <Icon
-                      className={`w-5 h-5 transition-colors duration-200 ${
+                      className={`h-[22px] w-[22px] transition-colors duration-200 ${
                         isShop
                           ? 'text-[#3a2308] drop-shadow-sm'
                           : isGift
                             ? 'text-white drop-shadow-sm'
                             : active
-                              ? 'text-gray-900'
-                              : 'text-white/70 group-hover:text-white'
+                              ? 'text-amber-300'
+                              : 'text-white/65 group-hover:text-white'
                       }`}
+                      strokeWidth={active || isShop || isGift ? 2.4 : 2}
                     />
                     {item.badge && item.badge > 0 ? (
-                      <div className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center font-semibold shadow-sm">
+                      <div className="absolute -top-2 -right-2 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] flex items-center justify-center font-bold shadow-md ring-2 ring-neutral-900/70">
                         {item.badge > 99 ? '9+' : item.badge}
                       </div>
                     ) : null}
                   </div>
 
                   <span
-                    className={`text-[10px] leading-none text-center w-full block ${
+                    className={`text-[10px] leading-none text-center w-full block tracking-tight ${
                       isShop
-                        ? 'font-semibold text-[#3a2308] drop-shadow-sm'
+                        ? 'font-bold text-[#3a2308] drop-shadow-sm'
                         : isGift
-                          ? 'font-semibold text-white drop-shadow-sm'
+                          ? 'font-bold text-white drop-shadow-sm'
                           : active
-                            ? 'font-medium text-gray-900'
-                            : 'font-medium text-white/70 group-hover:text-white'
+                            ? 'font-semibold text-amber-300'
+                            : 'font-medium text-white/65 group-hover:text-white'
                     }`}
                   >
                     {item.label}
@@ -150,14 +158,25 @@ export const MobileBottomNav: React.FC = () => {
 
             if (item.action) {
               return (
-                <button key={item.key} onClick={item.action} className={baseClass}>
+                <button
+                  key={item.key}
+                  onClick={item.action}
+                  aria-label={item.label}
+                  className={`${baseClass} overflow-hidden`}
+                >
                   {content}
                 </button>
               );
             }
 
             return (
-              <Link key={item.key} to={item.path!} className={`${baseClass} overflow-hidden`}>
+              <Link
+                key={item.key}
+                to={item.path!}
+                aria-label={item.label}
+                aria-current={active ? 'page' : undefined}
+                className={`${baseClass} overflow-hidden`}
+              >
                 {content}
               </Link>
             );
