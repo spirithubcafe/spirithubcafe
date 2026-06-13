@@ -55,6 +55,12 @@
   animation: hero-fade-in 0.55s ease-out both;
 }
 
+.background-picture {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
 .background-image {
   width: 100%;
   height: 100%;

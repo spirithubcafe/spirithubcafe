@@ -406,44 +406,28 @@ export const ProfessionalHeroSlider: React.FC = () => {
     >
       {/* Background Images/Video with Fade Effect */}
       <div className="slider-backgrounds">
-        {isMobile ? (
-          // Mobile: use photos only (no video) and rotate through the three assets.
-          <div className="slide-background">
-            {USE_MOBILE_HERO_VIDEO ? (
-              <video
-                className="background-video"
-                autoPlay
-                loop
-                muted
-                playsInline
-                preload="metadata"
-                poster={MOBILE_HERO_IMAGES[0]}
-              >
-                <source src={MOBILE_HERO_VIDEO_SRC} type="video/mp4" />
-              </video>
-            ) : (
-              <img
-                key={MOBILE_HERO_IMAGES[mobileImageIndex]}
-                src={MOBILE_HERO_IMAGES[mobileImageIndex]}
-                alt={currentSlideData.title}
-                className={`background-image ${currentSlideData.imageClassName ?? ''}`.trim()}
-                fetchPriority={mobileImageIndex === 0 ? 'high' : 'auto'}
-                loading={mobileImageIndex === 0 ? 'eager' : 'lazy'}
-                sizes="100vw"
-                decoding="async"
+        <div
+          key={isMobile ? MOBILE_HERO_IMAGES[mobileImageIndex] : currentSlide}
+          className={`slide-background ${!isMobile && currentSlide !== 0 ? 'slide-background--fade' : ''}`.trim()}
+        >
+          {isMobile && USE_MOBILE_HERO_VIDEO ? (
+            <video
+              className="background-video"
+              autoPlay
+              loop
+              muted
+              playsInline
+              preload="metadata"
+              poster={MOBILE_HERO_IMAGES[0]}
+            >
+              <source src={MOBILE_HERO_VIDEO_SRC} type="video/mp4" />
+            </video>
+          ) : (
+            <picture className="background-picture">
+              <source
+                media="(max-width: 767.98px)"
+                srcSet={MOBILE_HERO_IMAGES[mobileImageIndex]}
               />
-            )}
-            
-            <div
-              className={`background-overlay ${currentSlideData.overlayClassName ?? ''}`.trim()}
-            />
-          </div>
-        ) : (
-          // Desktop: Show image backgrounds with fade effect
-          <div
-            key={currentSlide}
-            className={`slide-background ${currentSlide === 0 ? '' : 'slide-background--fade'}`.trim()}
-          >
               <img
                 src={currentSlideData.image}
                 alt={currentSlideData.title}
@@ -453,9 +437,10 @@ export const ProfessionalHeroSlider: React.FC = () => {
                 sizes="100vw"
                 decoding="async"
               />
-              <div className={`background-overlay ${currentSlideData.overlayClassName ?? ''}`.trim()} />
-          </div>
-        )}
+            </picture>
+          )}
+          <div className={`background-overlay ${currentSlideData.overlayClassName ?? ''}`.trim()} />
+        </div>
       </div>
 
       {/* Main Content Container */}
