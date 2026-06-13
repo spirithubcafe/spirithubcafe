@@ -65,5 +65,5 @@ Allow: /
 Crawl-delay: 0
 
 # Sitemaps
-Sitemap: https://spirithubcafe.com/sitemap.xml
-Sitemap: https://spirithubcafe.com/products-feed.xml
+Sitemap: https://www.spirithubcafe.com/sitemap.xml
+Sitemap: https://www.spirithubcafe.com/products-feed.xml

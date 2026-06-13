@@ -153,7 +153,7 @@ const resolveAbsoluteImageUrl = (apiBase, imagePath) => {
 };
 
 const SEO_HOSTS = {
-  om: 'https://spirithubcafe.com',
+  om: 'https://www.spirithubcafe.com',
   sa: 'https://spirithub.sa',
 };
 
@@ -326,8 +326,14 @@ app.use(async (req, res, next) => {
     // initialize with the same value and avoid a React #418 hydration mismatch.
     const ssrLanguageScript = `<script>window.__SSR_LANGUAGE__="${requestLanguage === 'ar' ? 'ar' : 'en'}";</script>`;
 
+    // Keep the fallback tags in index.html for plain SPA/static serving, but
+    // remove them when SSR supplies route-specific metadata.
+    const templateWithRouteMetadata = template
+      .replace(/\s*<title>[\s\S]*?<\/title>/i, '')
+      .replace(/\s*<meta\s+name="description"[\s\S]*?\/>/i, '');
+
     // Replace the meta tags in the template
-    let html = template.replace('<!--app-head-->', `${ssrLanguageScript}${performanceHints}${metaTags}`);
+    let html = templateWithRouteMetadata.replace('<!--app-head-->', `${ssrLanguageScript}${performanceHints}${metaTags}`);
 
     let responseStatus = 200;
 
@@ -510,7 +516,7 @@ const buildMerchantPolicySchema = (siteUrl) => {
 
 // Helper function to generate meta tags based on route
 async function getMetaTagsForRoute(url, requestBaseUrl, requestLanguage = 'en') {
-  const baseUrl = (requestBaseUrl || process.env.VITE_SITE_URL || process.env.SITE_URL || 'https://spirithubcafe.com')
+  const baseUrl = (requestBaseUrl || process.env.VITE_SITE_URL || process.env.SITE_URL || 'https://www.spirithubcafe.com')
     .toString()
     .replace(/\/+$/, '');
 

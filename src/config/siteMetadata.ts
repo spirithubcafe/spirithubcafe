@@ -1,6 +1,6 @@
 export const siteMetadata = {
   siteName: 'Spirit Hub Cafe',
-  baseUrl: (import.meta.env.VITE_SITE_URL as string | undefined)?.replace(/\/+$/, '') || 'https://spirithubcafe.com',
+  baseUrl: (import.meta.env.VITE_SITE_URL as string | undefined)?.replace(/\/+$/, '') || 'https://www.spirithubcafe.com',
   defaultTitle: 'SpiritHub Roastery | Specialty Coffee Roasted in Oman & Saudi Arabia',
   defaultDescription:
     'Premium specialty coffee roasted in Oman and Saudi Arabia. Shop capsules, filter brews, and freshly roasted coffee beans online. Fast delivery in Muscat and Khobar.',

@@ -10,7 +10,7 @@
  */
 
 const API_BASE_URL = process.env.VITE_API_URL || process.env.VITE_API_BASE_URL || 'https://api.spirithubcafe.com';
-const SITE_URL = (process.env.VITE_SITE_URL || process.env.SITE_URL || 'https://spirithubcafe.com').replace(/\/+$/, '');
+const SITE_URL = (process.env.VITE_SITE_URL || process.env.SITE_URL || 'https://www.spirithubcafe.com').replace(/\/+$/, '');
 
 // ── In-memory cache ─────────────────────────────────────────────────
 let cachedXml = null;

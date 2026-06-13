@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 
 const SEO_HOSTS = {
-  om: 'https://spirithubcafe.com',
+  om: 'https://www.spirithubcafe.com',
   sa: 'https://spirithub.sa',
 };
 
@@ -205,7 +205,7 @@ const buildProductAggregateRating = (product, approvedReviews) => {
 
 // Helper function to generate meta tags based on route
 async function getMetaTagsForRoute(url, baseUrl, preloadedProduct = null) {
-  const resolvedBaseUrl = (baseUrl || process.env.VITE_SITE_URL || process.env.SITE_URL || 'https://spirithubcafe.com')
+  const resolvedBaseUrl = (baseUrl || process.env.VITE_SITE_URL || process.env.SITE_URL || 'https://www.spirithubcafe.com')
     .toString()
     .replace(/\/+$/, '');
   
@@ -544,6 +544,12 @@ export default async function handler(req, res) {
       : '';
     const ssrBootstrapScript = `${ssrLanguageScript}${ssrProductScript}`;
     
+    // Keep the fallback tags in index.html for plain SPA/static serving, but
+    // remove them when SSR supplies route-specific metadata.
+    html = html
+      .replace(/\s*<title>[\s\S]*?<\/title>/i, '')
+      .replace(/\s*<meta\s+name="description"[\s\S]*?\/>/i, '');
+
     // Replace the meta tags placeholder (only in head)
     if (html.includes('<!--app-head-->')) {
       html = html.replace('<!--app-head-->', `${ssrBootstrapScript}${performanceHints}${metaTags}`);

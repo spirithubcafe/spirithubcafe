@@ -2,13 +2,13 @@
 <rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">
   <channel>
     <title>Spirit Hub Cafe Product Feed</title>
-    <link>https://spirithubcafe.com</link>
+    <link>https://www.spirithubcafe.com</link>
     <description>Latest active products from Spirit Hub Cafe</description>
 <item>
       <g:id>ufo-drip-coffee-colombia-finca-milan-coconut--105g</g:id>
       <g:title>UFO Drip Coffee – Colombia Finca Milan Coconut Culturing | 7 Drip Bags – 105g</g:title>
       <g:description>UFO Drip Coffee – Colombia Finca Milan Coconut Culturing | 7 Drip Bags</g:description>
-      <g:link>https://spirithubcafe.com/products/ufo-drip-coffee-colombia-finca-milan-coconut-culturing-7-drip-bags</g:link>
+      <g:link>https://www.spirithubcafe.com/products/ufo-drip-coffee-colombia-finca-milan-coconut-culturing-7-drip-bags</g:link>
       <g:image_link>https://api.spirithubcafe.com/uploads/images/products/product-20260501-024914-953b893d.webp</g:image_link>
       <g:price>7.000 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -22,7 +22,7 @@
       <g:id>ufo-drip-coffee-ethiopia-agamosa-gotiti-natur-105g</g:id>
       <g:title>UFO Drip Coffee – Ethiopia Agamosa (Gotiti) Natural | 7 Drip Bags – 105g</g:title>
       <g:description>UFO Drip Coffee – Ethiopia Agamosa (Gotiti) Natural | 7 Drip Bags</g:description>
-      <g:link>https://spirithubcafe.com/products/ufo-drip-coffee-ethiopia-agamosa-gotiti-natural-7-drip-bags</g:link>
+      <g:link>https://www.spirithubcafe.com/products/ufo-drip-coffee-ethiopia-agamosa-gotiti-natural-7-drip-bags</g:link>
       <g:image_link>https://api.spirithubcafe.com/uploads/images/products/product-20260501-025019-0b80d509.webp</g:image_link>
       <g:price>6.300 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -36,7 +36,7 @@
       <g:id>costa-rica-ohban-gesha-anaerobic-honey-163-100g</g:id>
       <g:title>Costa Rica - OHBAN Gesha Anaerobic Honey #163 – 100g</g:title>
       <g:description>Costa Rica - OHBAN Gesha Anaerobic Honey #163</g:description>
-      <g:link>https://spirithubcafe.com/products/costa-rica-ohban-gesha-anaerobic-honey-163</g:link>
+      <g:link>https://www.spirithubcafe.com/products/costa-rica-ohban-gesha-anaerobic-honey-163</g:link>
       <g:image_link>https://api.spirithubcafe.com/uploads/images/products/product-20260421-043955-80a21ae0.webp</g:image_link>
       <g:price>11.000 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -50,7 +50,7 @@
       <g:id>costa-rica-ohban-gesha-anaerobic-honey-163-200g</g:id>
       <g:title>Costa Rica - OHBAN Gesha Anaerobic Honey #163 – 200g</g:title>
       <g:description>Costa Rica - OHBAN Gesha Anaerobic Honey #163</g:description>
-      <g:link>https://spirithubcafe.com/products/costa-rica-ohban-gesha-anaerobic-honey-163</g:link>
+      <g:link>https://www.spirithubcafe.com/products/costa-rica-ohban-gesha-anaerobic-honey-163</g:link>
       <g:image_link>https://api.spirithubcafe.com/uploads/images/products/product-20260421-043955-80a21ae0.webp</g:image_link>
       <g:price>22.000 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -64,7 +64,7 @@
       <g:id>ethiopia-agamosa-gotiti-natural-100g</g:id>
       <g:title>Ethiopia - Agamosa (Gotiti) Natural – 100g</g:title>
       <g:description>Ethiopia - Agamosa (Gotiti) Natural</g:description>
-      <g:link>https://spirithubcafe.com/products/ethiopia-agamosa-gotiti-natural</g:link>
+      <g:link>https://www.spirithubcafe.com/products/ethiopia-agamosa-gotiti-natural</g:link>
       <g:image_link>https://api.spirithubcafe.com/uploads/images/products/product-20260420-185823-fa8be5f6.webp</g:image_link>
       <g:price>3.500 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -78,7 +78,7 @@
       <g:id>ethiopia-agamosa-gotiti-natural-200g</g:id>
       <g:title>Ethiopia - Agamosa (Gotiti) Natural – 200g</g:title>
       <g:description>Ethiopia - Agamosa (Gotiti) Natural</g:description>
-      <g:link>https://spirithubcafe.com/products/ethiopia-agamosa-gotiti-natural</g:link>
+      <g:link>https://www.spirithubcafe.com/products/ethiopia-agamosa-gotiti-natural</g:link>
       <g:image_link>https://api.spirithubcafe.com/uploads/images/products/product-20260420-185823-fa8be5f6.webp</g:image_link>
       <g:price>6.500 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -92,7 +92,7 @@
       <g:id>ethiopia-agamosa-gotiti-natural-1000g</g:id>
       <g:title>Ethiopia - Agamosa (Gotiti) Natural – 1000g</g:title>
       <g:description>Ethiopia - Agamosa (Gotiti) Natural</g:description>
-      <g:link>https://spirithubcafe.com/products/ethiopia-agamosa-gotiti-natural</g:link>
+      <g:link>https://www.spirithubcafe.com/products/ethiopia-agamosa-gotiti-natural</g:link>
       <g:image_link>https://api.spirithubcafe.com/uploads/images/products/product-20260420-185823-fa8be5f6.webp</g:image_link>
       <g:price>30.000 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -106,7 +106,7 @@
       <g:id>chemex-classic-pour-over-coffee-maker-6-cups-900g</g:id>
       <g:title>Chemex Classic Pour-Over Coffee Maker 6 Cups – 900g</g:title>
       <g:description>Chemex Classic Pour-Over Coffee Maker 6 Cups</g:description>
-      <g:link>https://spirithubcafe.com/products/chemex-classic-pour-over-coffee-maker-6-cups</g:link>
+      <g:link>https://www.spirithubcafe.com/products/chemex-classic-pour-over-coffee-maker-6-cups</g:link>
       <g:image_link>https://api.spirithubcafe.com/uploads/images/products/product-20260215-001905-e82cdac3.webp</g:image_link>
       <g:price>23.000 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -120,7 +120,7 @@
       <g:id>kalita-wave-185-stainless-steel-coffee-drippe-450g</g:id>
       <g:title>Kalita Wave 185 Stainless Steel Coffee Dripper – 450g</g:title>
       <g:description>Kalita Wave 185 Stainless Steel Coffee Dripper</g:description>
-      <g:link>https://spirithubcafe.com/products/kalita-wave-185-stainless-steel-coffee-dripper</g:link>
+      <g:link>https://www.spirithubcafe.com/products/kalita-wave-185-stainless-steel-coffee-dripper</g:link>
       <g:image_link>https://api.spirithubcafe.com/uploads/images/products/product-20260215-000239-c3b12647.webp</g:image_link>
       <g:price>22.000 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -134,7 +134,7 @@
       <g:id>spirithub-capsule-collection-12-boxes-700g</g:id>
       <g:title>SpiritHub Capsule Collection – 12 Boxes – 700g</g:title>
       <g:description>SpiritHub Capsule Collection – 12 Boxes</g:description>
-      <g:link>https://spirithubcafe.com/products/spirithub-capsule-collection-12-boxes</g:link>
+      <g:link>https://www.spirithubcafe.com/products/spirithub-capsule-collection-12-boxes</g:link>
       <g:image_link>https://api.spirithubcafe.com/uploads/images/products/product-20260513-000123-6aab6137.webp</g:image_link>
       <g:price>14.880 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -148,7 +148,7 @@
       <g:id>hario-v60-range-server-600-clear-02-400g</g:id>
       <g:title>Hario V60 Range Server 600 Clear – 02 – 400g</g:title>
       <g:description>Hario V60 Range Server 600 Clear – 02</g:description>
-      <g:link>https://spirithubcafe.com/products/hario-v60-range-server-600-clear-02</g:link>
+      <g:link>https://www.spirithubcafe.com/products/hario-v60-range-server-600-clear-02</g:link>
       <g:image_link>https://api.spirithubcafe.com/uploads/images/products/product-20260214-065103-60e5f9c9.webp</g:image_link>
       <g:price>10.000 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -162,7 +162,7 @@
       <g:id>kalita-wave-paper-filter-185-70g</g:id>
       <g:title>Kalita Wave Paper Filter – 185 – 70g</g:title>
       <g:description>Kalita Wave Paper Filter – 185</g:description>
-      <g:link>https://spirithubcafe.com/products/kalita-wave-paper-filter-185</g:link>
+      <g:link>https://www.spirithubcafe.com/products/kalita-wave-paper-filter-185</g:link>
       <g:image_link>https://api.spirithubcafe.com/uploads/images/products/product-20260212-025651-04e3ba9b.webp</g:image_link>
       <g:price>6.000 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -176,7 +176,7 @@
       <g:id>aeropress-small-micro-filters-350-pack-120g</g:id>
       <g:title>AeroPress Small Micro-Filters (350 Pack) – 120g</g:title>
       <g:description>AeroPress Small Micro-Filters (350 Pack)</g:description>
-      <g:link>https://spirithubcafe.com/products/aeropress-small-micro-filters-350-pack</g:link>
+      <g:link>https://www.spirithubcafe.com/products/aeropress-small-micro-filters-350-pack</g:link>
       <g:image_link>https://api.spirithubcafe.com/uploads/images/products/product-20260212-024503-ae4dadb5.webp</g:image_link>
       <g:price>6.000 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -190,7 +190,7 @@
       <g:id>hario-v60-01-paper-filter-110g</g:id>
       <g:title>Hario V60 01 Paper Filter – 110g</g:title>
       <g:description>Hario V60 01 Paper Filter</g:description>
-      <g:link>https://spirithubcafe.com/products/hario-v60-01-paper-filter</g:link>
+      <g:link>https://www.spirithubcafe.com/products/hario-v60-01-paper-filter</g:link>
       <g:image_link>https://api.spirithubcafe.com/uploads/images/products/product-20260212-022645-c5688eea.webp</g:image_link>
       <g:price>2.200 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -204,7 +204,7 @@
       <g:id>hario-v60-02-paper-filter-140g</g:id>
       <g:title>Hario V60 02 Paper Filter – 140g</g:title>
       <g:description>Hario V60 02 Paper Filter</g:description>
-      <g:link>https://spirithubcafe.com/products/hario-v60-02-paper-filter</g:link>
+      <g:link>https://www.spirithubcafe.com/products/hario-v60-02-paper-filter</g:link>
       <g:image_link>https://api.spirithubcafe.com/uploads/images/products/product-20260210-075444-5cd00c23.webp</g:image_link>
       <g:price>2.300 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -218,7 +218,7 @@
       <g:id>spirithub-electronic-gift-card-20-omr-100g</g:id>
       <g:title>SpiritHub Electronic Gift Card – 20 OMR – 100g</g:title>
       <g:description>SpiritHub Electronic Gift Card – 20 OMR</g:description>
-      <g:link>https://spirithubcafe.com/products/spirithub-electronic-gift-card-20-omr</g:link>
+      <g:link>https://www.spirithubcafe.com/products/spirithub-electronic-gift-card-20-omr</g:link>
       <g:image_link>https://api.spirithubcafe.com/uploads/images/products/product-20260208-030231-f4cb180e.webp</g:image_link>
       <g:price>20.000 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -232,7 +232,7 @@
       <g:id>spirithub-electronic-gift-card-15-omr-100g</g:id>
       <g:title>SpiritHub Electronic Gift Card – 15 OMR – 100g</g:title>
       <g:description>SpiritHub Electronic Gift Card – 15 OMR</g:description>
-      <g:link>https://spirithubcafe.com/products/spirithub-electronic-gift-card-15-omr</g:link>
+      <g:link>https://www.spirithubcafe.com/products/spirithub-electronic-gift-card-15-omr</g:link>
       <g:image_link>https://api.spirithubcafe.com/uploads/images/products/product-20260208-025912-8c022316.webp</g:image_link>
       <g:price>15.000 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -246,7 +246,7 @@
       <g:id>spirithub-electronic-gift-card-10-omr-100g</g:id>
       <g:title>SpiritHub Electronic Gift Card – 10 OMR – 100g</g:title>
       <g:description>SpiritHub Electronic Gift Card – 10 OMR</g:description>
-      <g:link>https://spirithubcafe.com/products/spirithub-electronic-gift-card-10-omr</g:link>
+      <g:link>https://www.spirithubcafe.com/products/spirithub-electronic-gift-card-10-omr</g:link>
       <g:image_link>https://api.spirithubcafe.com/uploads/images/products/product-20260208-025700-97224c5c.webp</g:image_link>
       <g:price>10.000 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -260,7 +260,7 @@
       <g:id>spirithub-electronic-gift-card-5-omr-100g</g:id>
       <g:title>SpiritHub Electronic Gift Card – 5 OMR – 100g</g:title>
       <g:description>SpiritHub Electronic Gift Card – 5 OMR</g:description>
-      <g:link>https://spirithubcafe.com/products/spirithub-electronic-gift-card-5-omr</g:link>
+      <g:link>https://www.spirithubcafe.com/products/spirithub-electronic-gift-card-5-omr</g:link>
       <g:image_link>https://api.spirithubcafe.com/uploads/images/products/product-20260208-025121-ae5b7abb.webp</g:image_link>
       <g:price>5.000 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -274,7 +274,7 @@
       <g:id>decaf-colombia-swiss-water-decaffeinated-250g</g:id>
       <g:title>Decaf Colombia – Swiss Water Decaffeinated – 250g</g:title>
       <g:description>Decaf Colombia – Swiss Water Decaffeinated</g:description>
-      <g:link>https://spirithubcafe.com/products/decaf-colombia-swiss-water-decaffeinated</g:link>
+      <g:link>https://www.spirithubcafe.com/products/decaf-colombia-swiss-water-decaffeinated</g:link>
       <g:image_link>https://api.spirithubcafe.com/uploads/images/products/product-20260205-025909-8e6de91f.webp</g:image_link>
       <g:price>4.800 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -288,7 +288,7 @@
       <g:id>decaf-colombia-swiss-water-decaffeinated-1000g</g:id>
       <g:title>Decaf Colombia – Swiss Water Decaffeinated – 1000g</g:title>
       <g:description>Decaf Colombia – Swiss Water Decaffeinated</g:description>
-      <g:link>https://spirithubcafe.com/products/decaf-colombia-swiss-water-decaffeinated</g:link>
+      <g:link>https://www.spirithubcafe.com/products/decaf-colombia-swiss-water-decaffeinated</g:link>
       <g:image_link>https://api.spirithubcafe.com/uploads/images/products/product-20260205-025909-8e6de91f.webp</g:image_link>
       <g:price>16.000 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -302,7 +302,7 @@
       <g:id>coffee-discovery-bundle-everyday-harmony-disc-750g</g:id>
       <g:title>Coffee Discovery Bundle – Everyday Harmony Discovery – 750g</g:title>
       <g:description>Coffee Discovery Bundle – Everyday Harmony Discovery</g:description>
-      <g:link>https://spirithubcafe.com/products/coffee-discovery-bundle-everyday-harmony-discovery</g:link>
+      <g:link>https://www.spirithubcafe.com/products/coffee-discovery-bundle-everyday-harmony-discovery</g:link>
       <g:image_link>https://api.spirithubcafe.com/uploads/images/products/product-20260211-031040-2283dc32.webp</g:image_link>
       <g:price>16.000 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -316,7 +316,7 @@
       <g:id>coffee-discovery-bundle-wild-origins-discover-750g</g:id>
       <g:title>Coffee Discovery Bundle – Wild Origins Discovery – 750g</g:title>
       <g:description>Coffee Discovery Bundle – Wild Origins Discovery</g:description>
-      <g:link>https://spirithubcafe.com/products/coffee-discovery-bundle-wild-origins-discovery</g:link>
+      <g:link>https://www.spirithubcafe.com/products/coffee-discovery-bundle-wild-origins-discovery</g:link>
       <g:image_link>https://api.spirithubcafe.com/uploads/images/products/product-20260211-031200-0d843d5d.webp</g:image_link>
       <g:price>20.000 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -330,7 +330,7 @@
       <g:id>coffee-discovery-bundle-floral-elegant-750g</g:id>
       <g:title>Coffee Discovery Bundle – Floral &amp; Elegant – 750g</g:title>
       <g:description>Coffee Discovery Bundle – Floral &amp; Elegant</g:description>
-      <g:link>https://spirithubcafe.com/products/coffee-discovery-bundle-floral-elegant</g:link>
+      <g:link>https://www.spirithubcafe.com/products/coffee-discovery-bundle-floral-elegant</g:link>
       <g:image_link>https://api.spirithubcafe.com/uploads/images/products/product-20260211-030853-309cd19e.webp</g:image_link>
       <g:price>18.000 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -344,7 +344,7 @@
       <g:id>coffee-discovery-bundle-sweet-smooth-650g</g:id>
       <g:title>Coffee Discovery Bundle – Sweet &amp; Smooth – 650g</g:title>
       <g:description>Coffee Discovery Bundle – Sweet &amp; Smooth</g:description>
-      <g:link>https://spirithubcafe.com/products/coffee-discovery-bundle-sweet-smooth</g:link>
+      <g:link>https://www.spirithubcafe.com/products/coffee-discovery-bundle-sweet-smooth</g:link>
       <g:image_link>https://api.spirithubcafe.com/uploads/images/products/product-20260223-210844-f1bd5d62.webp</g:image_link>
       <g:price>17.000 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -358,7 +358,7 @@
       <g:id>panama-pacas-anaerobic-natural-100g</g:id>
       <g:title>Panama – Pacas  Anaerobic Natural – 100g</g:title>
       <g:description>Panama – Pacas  Anaerobic Natural</g:description>
-      <g:link>https://spirithubcafe.com/products/panama-pacas-anaerobic-natural</g:link>
+      <g:link>https://www.spirithubcafe.com/products/panama-pacas-anaerobic-natural</g:link>
       <g:image_link>https://api.spirithubcafe.com/uploads/images/products/product-20260125-222044-43143e8c.webp</g:image_link>
       <g:price>4.400 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -372,7 +372,7 @@
       <g:id>panama-pacas-anaerobic-natural-250g</g:id>
       <g:title>Panama – Pacas  Anaerobic Natural – 250g</g:title>
       <g:description>Panama – Pacas  Anaerobic Natural</g:description>
-      <g:link>https://spirithubcafe.com/products/panama-pacas-anaerobic-natural</g:link>
+      <g:link>https://www.spirithubcafe.com/products/panama-pacas-anaerobic-natural</g:link>
       <g:image_link>https://api.spirithubcafe.com/uploads/images/products/product-20260125-222044-43143e8c.webp</g:image_link>
       <g:price>9.000 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -386,7 +386,7 @@
       <g:id>panama-pacas-anaerobic-natural-1000g</g:id>
       <g:title>Panama – Pacas  Anaerobic Natural – 1000g</g:title>
       <g:description>Panama – Pacas  Anaerobic Natural</g:description>
-      <g:link>https://spirithubcafe.com/products/panama-pacas-anaerobic-natural</g:link>
+      <g:link>https://www.spirithubcafe.com/products/panama-pacas-anaerobic-natural</g:link>
       <g:image_link>https://api.spirithubcafe.com/uploads/images/products/product-20260125-222044-43143e8c.webp</g:image_link>
       <g:price>36.000 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -400,7 +400,7 @@
       <g:id>panama-geisha-jaguar-natural-100g</g:id>
       <g:title>Panama - Geisha JAGUAR Natural – 100g</g:title>
       <g:description>Panama - Geisha JAGUAR Natural</g:description>
-      <g:link>https://spirithubcafe.com/products/panama-geisha-jaguar-natural</g:link>
+      <g:link>https://www.spirithubcafe.com/products/panama-geisha-jaguar-natural</g:link>
       <g:image_link>https://api.spirithubcafe.com/uploads/images/products/product-20260105-222242-6fd681ec.webp</g:image_link>
       <g:price>14.000 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -414,7 +414,7 @@
       <g:id>ufo-drip-coffee-brazil-catuai-natural-7-dr-105.01g</g:id>
       <g:title>UFO Drip Coffee – Brazil Catuai Natural | 7 Drip Bags – 105.01g</g:title>
       <g:description>UFO Drip Coffee – Brazil Catuai Natural | 7 Drip Bags</g:description>
-      <g:link>https://spirithubcafe.com/products/ufo-drip-coffee-brazil-catuai-natural-7-drip-bags</g:link>
+      <g:link>https://www.spirithubcafe.com/products/ufo-drip-coffee-brazil-catuai-natural-7-drip-bags</g:link>
       <g:image_link>https://api.spirithubcafe.com/uploads/images/products/product-20251227-060645-66984ed2.webp</g:image_link>
       <g:price>4.700 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -428,7 +428,7 @@
       <g:id>ufo-drip-coffee-el-salvador-red-bourbon-washe-105g</g:id>
       <g:title>UFO Drip Coffee – El Salvador Red Bourbon Washed | 7 Drip Bags – 105g</g:title>
       <g:description>UFO Drip Coffee – El Salvador Red Bourbon Washed | 7 Drip Bags</g:description>
-      <g:link>https://spirithubcafe.com/products/ufo-drip-coffee-el-salvador-red-bourbon-washed-7-drip-bags</g:link>
+      <g:link>https://www.spirithubcafe.com/products/ufo-drip-coffee-el-salvador-red-bourbon-washed-7-drip-bags</g:link>
       <g:image_link>https://api.spirithubcafe.com/uploads/images/products/product-20251227-055453-ac0dad7f.webp</g:image_link>
       <g:price>6.500 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -442,7 +442,7 @@
       <g:id>ufo-drip-coffee-ethiopia-halo-hartume-natural-105g</g:id>
       <g:title>UFO Drip Coffee – Ethiopia Halo Hartume Natural | 7 Drip Bags – 105g</g:title>
       <g:description>UFO Drip Coffee – Ethiopia Halo Hartume Natural | 7 Drip Bags</g:description>
-      <g:link>https://spirithubcafe.com/products/ufo-drip-coffee-ethiopia-halo-hartume-natural-7-drip-bags</g:link>
+      <g:link>https://www.spirithubcafe.com/products/ufo-drip-coffee-ethiopia-halo-hartume-natural-7-drip-bags</g:link>
       <g:image_link>https://api.spirithubcafe.com/uploads/images/products/product-20251227-050443-9cd8fc4e.webp</g:image_link>
       <g:price>6.500 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -456,7 +456,7 @@
       <g:id>ufo-drip-coffee-kenya-endebess-estate-natural-105g</g:id>
       <g:title>UFO Drip Coffee – Kenya Endebess Estate Natural | 7 Drip Bags – 105g</g:title>
       <g:description>UFO Drip Coffee – Kenya Endebess Estate Natural | 7 Drip Bags</g:description>
-      <g:link>https://spirithubcafe.com/products/ufo-drip-coffee-kenya-endebess-estate-natural-7-drip-bags</g:link>
+      <g:link>https://www.spirithubcafe.com/products/ufo-drip-coffee-kenya-endebess-estate-natural-7-drip-bags</g:link>
       <g:image_link>https://api.spirithubcafe.com/uploads/images/products/product-20251227-045029-b86bbea7.webp</g:image_link>
       <g:price>6.300 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -470,7 +470,7 @@
       <g:id>ufo-drip-coffee-yemen-odaini-anaerobic-7-drip-105g</g:id>
       <g:title>UFO Drip Coffee – Yemen Odaini Anaerobic | 7 Drip Bags – 105g</g:title>
       <g:description>UFO Drip Coffee – Yemen Odaini Anaerobic | 7 Drip Bags</g:description>
-      <g:link>https://spirithubcafe.com/products/ufo-drip-coffee-yemen-odaini-anaerobic-7-drip-bags</g:link>
+      <g:link>https://www.spirithubcafe.com/products/ufo-drip-coffee-yemen-odaini-anaerobic-7-drip-bags</g:link>
       <g:image_link>https://api.spirithubcafe.com/uploads/images/products/product-20251227-043654-f8c21a70.webp</g:image_link>
       <g:price>7.000 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -484,7 +484,7 @@
       <g:id>colombia-finca-milan-coconut-culturing-100g</g:id>
       <g:title>Colombia - Finca Milan Coconut Culturing – 100g</g:title>
       <g:description>Colombia - Finca Milan Coconut Culturing</g:description>
-      <g:link>https://spirithubcafe.com/products/colombia-finca-milan-coconut-culturing</g:link>
+      <g:link>https://www.spirithubcafe.com/products/colombia-finca-milan-coconut-culturing</g:link>
       <g:image_link>https://api.spirithubcafe.com/uploads/images/products/product-20251208-185916-ee89d36d.webp</g:image_link>
       <g:price>5.200 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -498,7 +498,7 @@
       <g:id>colombia-finca-milan-coconut-culturing-250g</g:id>
       <g:title>Colombia - Finca Milan Coconut Culturing – 250g</g:title>
       <g:description>Colombia - Finca Milan Coconut Culturing</g:description>
-      <g:link>https://spirithubcafe.com/products/colombia-finca-milan-coconut-culturing</g:link>
+      <g:link>https://www.spirithubcafe.com/products/colombia-finca-milan-coconut-culturing</g:link>
       <g:image_link>https://api.spirithubcafe.com/uploads/images/products/product-20251208-185916-ee89d36d.webp</g:image_link>
       <g:price>11.000 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -512,7 +512,7 @@
       <g:id>colombia-finca-milan-coconut-culturing-1000g</g:id>
       <g:title>Colombia - Finca Milan Coconut Culturing – 1000g</g:title>
       <g:description>Colombia - Finca Milan Coconut Culturing</g:description>
-      <g:link>https://spirithubcafe.com/products/colombia-finca-milan-coconut-culturing</g:link>
+      <g:link>https://www.spirithubcafe.com/products/colombia-finca-milan-coconut-culturing</g:link>
       <g:image_link>https://api.spirithubcafe.com/uploads/images/products/product-20251208-185916-ee89d36d.webp</g:image_link>
       <g:price>37.000 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -526,7 +526,7 @@
       <g:id>yunnan-dehong-catimor-anaerobic-250g</g:id>
       <g:title>Yunnan - Dehong Catimor Anaerobic – 250g</g:title>
       <g:description>Yunnan - Dehong Catimor Anaerobic</g:description>
-      <g:link>https://spirithubcafe.com/products/yunnan-dehong-catimor-anaerobic</g:link>
+      <g:link>https://www.spirithubcafe.com/products/yunnan-dehong-catimor-anaerobic</g:link>
       <g:image_link>https://api.spirithubcafe.com/uploads/images/products/product-20251111-042741-f06bcb46.webp</g:image_link>
       <g:price>6.500 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -540,7 +540,7 @@
       <g:id>yunnan-dehong-catimor-anaerobic-1000g</g:id>
       <g:title>Yunnan - Dehong Catimor Anaerobic – 1000g</g:title>
       <g:description>Yunnan - Dehong Catimor Anaerobic</g:description>
-      <g:link>https://spirithubcafe.com/products/yunnan-dehong-catimor-anaerobic</g:link>
+      <g:link>https://www.spirithubcafe.com/products/yunnan-dehong-catimor-anaerobic</g:link>
       <g:image_link>https://api.spirithubcafe.com/uploads/images/products/product-20251111-042741-f06bcb46.webp</g:image_link>
       <g:price>23.000 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -554,7 +554,7 @@
       <g:id>kenya-endebess-estate-natural-250g</g:id>
       <g:title>Kenya - Endebess Estate Natural – 250g</g:title>
       <g:description>Kenya - Endebess Estate Natural</g:description>
-      <g:link>https://spirithubcafe.com/products/kenya-endebess-estate-natural</g:link>
+      <g:link>https://www.spirithubcafe.com/products/kenya-endebess-estate-natural</g:link>
       <g:image_link>https://api.spirithubcafe.com/uploads/images/products/product-20251110-210024-30191b99.webp</g:image_link>
       <g:price>6.500 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -568,7 +568,7 @@
       <g:id>kenya-endebess-estate-natural-1000g</g:id>
       <g:title>Kenya - Endebess Estate Natural – 1000g</g:title>
       <g:description>Kenya - Endebess Estate Natural</g:description>
-      <g:link>https://spirithubcafe.com/products/kenya-endebess-estate-natural</g:link>
+      <g:link>https://www.spirithubcafe.com/products/kenya-endebess-estate-natural</g:link>
       <g:image_link>https://api.spirithubcafe.com/uploads/images/products/product-20251110-210024-30191b99.webp</g:image_link>
       <g:price>26.000 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -582,7 +582,7 @@
       <g:id>colombia-aroma-nativo-aji-spirithub-exclusive-100g</g:id>
       <g:title>Colombia - Aroma Nativo Aji SpiritHub Exclusive Lot – 100g</g:title>
       <g:description>Colombia - Aroma Nativo Aji SpiritHub Exclusive Lot</g:description>
-      <g:link>https://spirithubcafe.com/products/colombia-aroma-nativo-aji-spirithub-exclusive-lot</g:link>
+      <g:link>https://www.spirithubcafe.com/products/colombia-aroma-nativo-aji-spirithub-exclusive-lot</g:link>
       <g:image_link>https://api.spirithubcafe.com/uploads/images/products/product-20251110-085122-c806d3df.webp</g:image_link>
       <g:price>5.500 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -596,7 +596,7 @@
       <g:id>colombia-aroma-nativo-aji-spirithub-exclusive-200g</g:id>
       <g:title>Colombia - Aroma Nativo Aji SpiritHub Exclusive Lot – 200g</g:title>
       <g:description>Colombia - Aroma Nativo Aji SpiritHub Exclusive Lot</g:description>
-      <g:link>https://spirithubcafe.com/products/colombia-aroma-nativo-aji-spirithub-exclusive-lot</g:link>
+      <g:link>https://www.spirithubcafe.com/products/colombia-aroma-nativo-aji-spirithub-exclusive-lot</g:link>
       <g:image_link>https://api.spirithubcafe.com/uploads/images/products/product-20251110-085122-c806d3df.webp</g:image_link>
       <g:price>10.500 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -610,7 +610,7 @@
       <g:id>colombia-aroma-nativo-aji-spirithub-exclusiv-1000g</g:id>
       <g:title>Colombia - Aroma Nativo Aji SpiritHub Exclusive Lot – 1000g</g:title>
       <g:description>Colombia - Aroma Nativo Aji SpiritHub Exclusive Lot</g:description>
-      <g:link>https://spirithubcafe.com/products/colombia-aroma-nativo-aji-spirithub-exclusive-lot</g:link>
+      <g:link>https://www.spirithubcafe.com/products/colombia-aroma-nativo-aji-spirithub-exclusive-lot</g:link>
       <g:image_link>https://api.spirithubcafe.com/uploads/images/products/product-20251110-085122-c806d3df.webp</g:image_link>
       <g:price>38.000 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -624,7 +624,7 @@
       <g:id>el-salvador-red-bourbon-washed-250g</g:id>
       <g:title>El Salvador - Red Bourbon Washed – 250g</g:title>
       <g:description>El Salvador - Red Bourbon Washed</g:description>
-      <g:link>https://spirithubcafe.com/products/el-salvador-red-bourbon-washed</g:link>
+      <g:link>https://www.spirithubcafe.com/products/el-salvador-red-bourbon-washed</g:link>
       <g:image_link>https://api.spirithubcafe.com/uploads/images/products/product-20260201-100616-209c27cc.jpg</g:image_link>
       <g:price>5.000 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -638,7 +638,7 @@
       <g:id>el-salvador-red-bourbon-washed-1000g</g:id>
       <g:title>El Salvador - Red Bourbon Washed – 1000g</g:title>
       <g:description>El Salvador - Red Bourbon Washed</g:description>
-      <g:link>https://spirithubcafe.com/products/el-salvador-red-bourbon-washed</g:link>
+      <g:link>https://www.spirithubcafe.com/products/el-salvador-red-bourbon-washed</g:link>
       <g:image_link>https://api.spirithubcafe.com/uploads/images/products/product-20260201-100616-209c27cc.jpg</g:image_link>
       <g:price>20.000 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -652,7 +652,7 @@
       <g:id>ufo-drip-coffee-yunnan-dehong-catimor-7-drip--105g</g:id>
       <g:title>UFO Drip Coffee – Yunnan Dehong Catimor | 7 Drip Bags – 105g</g:title>
       <g:description>UFO Drip Coffee – Yunnan Dehong Catimor | 7 Drip Bags</g:description>
-      <g:link>https://spirithubcafe.com/products/ufo-drip-coffee-yunnan-dehong-catimor-7-drip-bags</g:link>
+      <g:link>https://www.spirithubcafe.com/products/ufo-drip-coffee-yunnan-dehong-catimor-7-drip-bags</g:link>
       <g:image_link>https://api.spirithubcafe.com/images/products/main_20251017_093052_a64464ec.webp</g:image_link>
       <g:price>6.300 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -666,7 +666,7 @@
       <g:id>brazil-catuai-natural-250g</g:id>
       <g:title>Brazil - Catuai Natural – 250g</g:title>
       <g:description>Brazil - Catuai Natural</g:description>
-      <g:link>https://spirithubcafe.com/products/brazil-catuai-natural</g:link>
+      <g:link>https://www.spirithubcafe.com/products/brazil-catuai-natural</g:link>
       <g:image_link>https://api.spirithubcafe.com/images/products/main_20251017_072637_4689ff14.webp</g:image_link>
       <g:price>4.700 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -680,7 +680,7 @@
       <g:id>brazil-catuai-natural-1000g</g:id>
       <g:title>Brazil - Catuai Natural – 1000g</g:title>
       <g:description>Brazil - Catuai Natural</g:description>
-      <g:link>https://spirithubcafe.com/products/brazil-catuai-natural</g:link>
+      <g:link>https://www.spirithubcafe.com/products/brazil-catuai-natural</g:link>
       <g:image_link>https://api.spirithubcafe.com/images/products/main_20251017_072637_4689ff14.webp</g:image_link>
       <g:price>16.000 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -694,7 +694,7 @@
       <g:id>colombia-decaf-coffee-capsules-52g</g:id>
       <g:title>Colombia - Decaf Coffee Capsules – 52g</g:title>
       <g:description>Colombia - Decaf Coffee Capsules</g:description>
-      <g:link>https://spirithubcafe.com/products/colombia-decaf-coffee-capsules</g:link>
+      <g:link>https://www.spirithubcafe.com/products/colombia-decaf-coffee-capsules</g:link>
       <g:image_link>https://api.spirithubcafe.com/images/products/colombia-spirithub-capsule.webp</g:image_link>
       <g:price>2.900 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -708,7 +708,7 @@
       <g:id>colombia-laurina-las-margaritas-natural-100g</g:id>
       <g:title>Colombia - Laurina Las Margaritas Natural – 100g</g:title>
       <g:description>Colombia - Laurina Las Margaritas Natural</g:description>
-      <g:link>https://spirithubcafe.com/products/colombia-laurina-las-margaritas-natural</g:link>
+      <g:link>https://www.spirithubcafe.com/products/colombia-laurina-las-margaritas-natural</g:link>
       <g:image_link>https://api.spirithubcafe.com/images/products/spirithub-coffee-colombia-laurina.webp</g:image_link>
       <g:price>5.500 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -722,7 +722,7 @@
       <g:id>colombia-laurina-las-margaritas-natural-250g</g:id>
       <g:title>Colombia - Laurina Las Margaritas Natural – 250g</g:title>
       <g:description>Colombia - Laurina Las Margaritas Natural</g:description>
-      <g:link>https://spirithubcafe.com/products/colombia-laurina-las-margaritas-natural</g:link>
+      <g:link>https://www.spirithubcafe.com/products/colombia-laurina-las-margaritas-natural</g:link>
       <g:image_link>https://api.spirithubcafe.com/images/products/spirithub-coffee-colombia-laurina.webp</g:image_link>
       <g:price>13.000 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -736,7 +736,7 @@
       <g:id>colombia-pink-bourbon-honey-100g</g:id>
       <g:title>Colombia - Pink Bourbon Honey – 100g</g:title>
       <g:description>Colombia - Pink Bourbon Honey</g:description>
-      <g:link>https://spirithubcafe.com/products/colombia-pink-bourbon-honey</g:link>
+      <g:link>https://www.spirithubcafe.com/products/colombia-pink-bourbon-honey</g:link>
       <g:image_link>https://api.spirithubcafe.com/images/products/colombia-spirithub-coffee.webp</g:image_link>
       <g:price>3.900 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -750,7 +750,7 @@
       <g:id>colombia-pink-bourbon-honey-250g</g:id>
       <g:title>Colombia - Pink Bourbon Honey – 250g</g:title>
       <g:description>Colombia - Pink Bourbon Honey</g:description>
-      <g:link>https://spirithubcafe.com/products/colombia-pink-bourbon-honey</g:link>
+      <g:link>https://www.spirithubcafe.com/products/colombia-pink-bourbon-honey</g:link>
       <g:image_link>https://api.spirithubcafe.com/images/products/colombia-spirithub-coffee.webp</g:image_link>
       <g:price>9.000 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -764,7 +764,7 @@
       <g:id>colombia-pink-bourbon-honey-1000g</g:id>
       <g:title>Colombia - Pink Bourbon Honey – 1000g</g:title>
       <g:description>Colombia - Pink Bourbon Honey</g:description>
-      <g:link>https://spirithubcafe.com/products/colombia-pink-bourbon-honey</g:link>
+      <g:link>https://www.spirithubcafe.com/products/colombia-pink-bourbon-honey</g:link>
       <g:image_link>https://api.spirithubcafe.com/images/products/colombia-spirithub-coffee.webp</g:image_link>
       <g:price>32.000 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -778,7 +778,7 @@
       <g:id>ethiopia-gargari-gutity-yirgacheffe-supernatu-100g</g:id>
       <g:title>Ethiopia - Gargari Gutity Yirgacheffe – Supernatural – 100g</g:title>
       <g:description>Ethiopia - Gargari Gutity Yirgacheffe – Supernatural</g:description>
-      <g:link>https://spirithubcafe.com/products/ethiopia-gargari-gutity-yirgacheffe-supernatural</g:link>
+      <g:link>https://www.spirithubcafe.com/products/ethiopia-gargari-gutity-yirgacheffe-supernatural</g:link>
       <g:image_link>https://api.spirithubcafe.com/images/products/main_20251017_080927_395712bd.webp</g:image_link>
       <g:price>3.800 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -792,7 +792,7 @@
       <g:id>ethiopia-gargari-gutity-yirgacheffe-supernatu-250g</g:id>
       <g:title>Ethiopia - Gargari Gutity Yirgacheffe – Supernatural – 250g</g:title>
       <g:description>Ethiopia - Gargari Gutity Yirgacheffe – Supernatural</g:description>
-      <g:link>https://spirithubcafe.com/products/ethiopia-gargari-gutity-yirgacheffe-supernatural</g:link>
+      <g:link>https://www.spirithubcafe.com/products/ethiopia-gargari-gutity-yirgacheffe-supernatural</g:link>
       <g:image_link>https://api.spirithubcafe.com/images/products/main_20251017_080927_395712bd.webp</g:image_link>
       <g:price>8.500 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -806,7 +806,7 @@
       <g:id>ethiopia-gargari-gutity-yirgacheffe-supernat-1000g</g:id>
       <g:title>Ethiopia - Gargari Gutity Yirgacheffe – Supernatural – 1000g</g:title>
       <g:description>Ethiopia - Gargari Gutity Yirgacheffe – Supernatural</g:description>
-      <g:link>https://spirithubcafe.com/products/ethiopia-gargari-gutity-yirgacheffe-supernatural</g:link>
+      <g:link>https://www.spirithubcafe.com/products/ethiopia-gargari-gutity-yirgacheffe-supernatural</g:link>
       <g:image_link>https://api.spirithubcafe.com/images/products/main_20251017_080927_395712bd.webp</g:image_link>
       <g:price>32.000 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -820,7 +820,7 @@
       <g:id>ethiopia-halo-hartume-natural-250g</g:id>
       <g:title>Ethiopia - Halo Hartume Natural – 250g</g:title>
       <g:description>Ethiopia - Halo Hartume Natural</g:description>
-      <g:link>https://spirithubcafe.com/products/ethiopia-halo-hartume-natural</g:link>
+      <g:link>https://www.spirithubcafe.com/products/ethiopia-halo-hartume-natural</g:link>
       <g:image_link>https://api.spirithubcafe.com/images/products/main_20251017_080020_2b89339b.webp</g:image_link>
       <g:price>5.000 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -834,7 +834,7 @@
       <g:id>ethiopia-halo-hartume-natural-1000g</g:id>
       <g:title>Ethiopia - Halo Hartume Natural – 1000g</g:title>
       <g:description>Ethiopia - Halo Hartume Natural</g:description>
-      <g:link>https://spirithubcafe.com/products/ethiopia-halo-hartume-natural</g:link>
+      <g:link>https://www.spirithubcafe.com/products/ethiopia-halo-hartume-natural</g:link>
       <g:image_link>https://api.spirithubcafe.com/images/products/main_20251017_080020_2b89339b.webp</g:image_link>
       <g:price>20.000 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -848,7 +848,7 @@
       <g:id>ethiopian-sidamo-coffee-capsules-52g</g:id>
       <g:title>Ethiopian - Sidamo Coffee Capsules – 52g</g:title>
       <g:description>Ethiopian - Sidamo Coffee Capsules</g:description>
-      <g:link>https://spirithubcafe.com/products/ethiopian-sidamo-coffee-capsules</g:link>
+      <g:link>https://www.spirithubcafe.com/products/ethiopian-sidamo-coffee-capsules</g:link>
       <g:image_link>https://api.spirithubcafe.com/images/products/ethiopia-spirithub-capsule.webp</g:image_link>
       <g:price>2.900 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -862,7 +862,7 @@
       <g:id>intenso-coffee-capsules-52g</g:id>
       <g:title>Intenso - Coffee Capsules – 52g</g:title>
       <g:description>Intenso - Coffee Capsules</g:description>
-      <g:link>https://spirithubcafe.com/products/intenso-coffee-capsules</g:link>
+      <g:link>https://www.spirithubcafe.com/products/intenso-coffee-capsules</g:link>
       <g:image_link>https://api.spirithubcafe.com/images/products/intenso-spirithub-capsule.webp</g:image_link>
       <g:price>2.900 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -876,7 +876,7 @@
       <g:id>lungo-coffee-capsules-52g</g:id>
       <g:title>Lungo Coffee Capsules – 52g</g:title>
       <g:description>Lungo Coffee Capsules</g:description>
-      <g:link>https://spirithubcafe.com/products/lungo-coffee-capsules</g:link>
+      <g:link>https://www.spirithubcafe.com/products/lungo-coffee-capsules</g:link>
       <g:image_link>https://api.spirithubcafe.com/images/products/lungo-spirithub-capsule.webp</g:image_link>
       <g:price>2.900 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -890,7 +890,7 @@
       <g:id>palermo-coffee-capsules-52g</g:id>
       <g:title>Palermo - Coffee Capsules – 52g</g:title>
       <g:description>Palermo - Coffee Capsules</g:description>
-      <g:link>https://spirithubcafe.com/products/palermo-coffee-capsules</g:link>
+      <g:link>https://www.spirithubcafe.com/products/palermo-coffee-capsules</g:link>
       <g:image_link>https://api.spirithubcafe.com/images/products/palermo-spirithub-capsule.webp</g:image_link>
       <g:price>2.900 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -904,7 +904,7 @@
       <g:id>ufo-drip-coffee-spirithub-experience-box-7-di-105g</g:id>
       <g:title>UFO Drip Coffee – SpiritHub Experience Box | 7-Disk Collection – 105g</g:title>
       <g:description>UFO Drip Coffee – SpiritHub Experience Box | 7-Disk Collection</g:description>
-      <g:link>https://spirithubcafe.com/products/ufo-drip-coffee-spirithub-experience-box-7-disk-collection</g:link>
+      <g:link>https://www.spirithubcafe.com/products/ufo-drip-coffee-spirithub-experience-box-7-disk-collection</g:link>
       <g:image_link>https://api.spirithubcafe.com/images/products/ufodripmockupsummer-spirithub-experiencebox.webp</g:image_link>
       <g:price>5.800 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -918,7 +918,7 @@
       <g:id>ufo-drip-coffee-colombia-pink-bourbon-honey-7-105g</g:id>
       <g:title>UFO Drip Coffee – Colombia Pink Bourbon Honey | 7 Drip Bags – 105g</g:title>
       <g:description>UFO Drip Coffee – Colombia Pink Bourbon Honey | 7 Drip Bags</g:description>
-      <g:link>https://spirithubcafe.com/products/ufo-drip-coffee-colombia-pink-bourbon-honey-7-drip-bags</g:link>
+      <g:link>https://www.spirithubcafe.com/products/ufo-drip-coffee-colombia-pink-bourbon-honey-7-drip-bags</g:link>
       <g:image_link>https://api.spirithubcafe.com/images/products/ufodrip-spirithub-coffee-colombia-pink.webp</g:image_link>
       <g:price>7.000 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -932,7 +932,7 @@
       <g:id>ufo-drip-coffee-ethiopia-gargari-gutity-yirga-105g</g:id>
       <g:title>UFO Drip Coffee – Ethiopia Gargari Gutity Yirgacheffe | 7 Drip Bags – 105g</g:title>
       <g:description>UFO Drip Coffee – Ethiopia Gargari Gutity Yirgacheffe | 7 Drip Bags</g:description>
-      <g:link>https://spirithubcafe.com/products/ufo-drip-coffee-ethiopia-gargari-gutity-yirgacheffe-7-drip-bags</g:link>
+      <g:link>https://www.spirithubcafe.com/products/ufo-drip-coffee-ethiopia-gargari-gutity-yirgacheffe-7-drip-bags</g:link>
       <g:image_link>https://api.spirithubcafe.com/images/products/ufodrip-spirithub-ethiopia-gargari.webp</g:image_link>
       <g:price>5.800 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -946,7 +946,7 @@
       <g:id>yemen-odaini-anaerobic-natural-spirithub-excl-100g</g:id>
       <g:title>Yemen - Odaini Anaerobic Natural - SpiritHub Exclusive Lot – 100g</g:title>
       <g:description>Yemen - Odaini Anaerobic Natural - SpiritHub Exclusive Lot</g:description>
-      <g:link>https://spirithubcafe.com/products/yemen-odaini-anaerobic-natural-spirithub-exclusive-lot</g:link>
+      <g:link>https://www.spirithubcafe.com/products/yemen-odaini-anaerobic-natural-spirithub-exclusive-lot</g:link>
       <g:image_link>https://api.spirithubcafe.com/images/products/spirithub-coffee-yemen.webp</g:image_link>
       <g:price>5.000 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -960,7 +960,7 @@
       <g:id>yemen-odaini-anaerobic-natural-spirithub-excl-250g</g:id>
       <g:title>Yemen - Odaini Anaerobic Natural - SpiritHub Exclusive Lot – 250g</g:title>
       <g:description>Yemen - Odaini Anaerobic Natural - SpiritHub Exclusive Lot</g:description>
-      <g:link>https://spirithubcafe.com/products/yemen-odaini-anaerobic-natural-spirithub-exclusive-lot</g:link>
+      <g:link>https://www.spirithubcafe.com/products/yemen-odaini-anaerobic-natural-spirithub-exclusive-lot</g:link>
       <g:image_link>https://api.spirithubcafe.com/images/products/spirithub-coffee-yemen.webp</g:image_link>
       <g:price>10.000 OMR</g:price>
       <g:availability>in stock</g:availability>
@@ -974,7 +974,7 @@
       <g:id>yemen-odaini-anaerobic-natural-spirithub-exc-1000g</g:id>
       <g:title>Yemen - Odaini Anaerobic Natural - SpiritHub Exclusive Lot – 1000g</g:title>
       <g:description>Yemen - Odaini Anaerobic Natural - SpiritHub Exclusive Lot</g:description>
-      <g:link>https://spirithubcafe.com/products/yemen-odaini-anaerobic-natural-spirithub-exclusive-lot</g:link>
+      <g:link>https://www.spirithubcafe.com/products/yemen-odaini-anaerobic-natural-spirithub-exclusive-lot</g:link>
       <g:image_link>https://api.spirithubcafe.com/images/products/spirithub-coffee-yemen.webp</g:image_link>
       <g:price>40.000 OMR</g:price>
       <g:availability>in stock</g:availability>

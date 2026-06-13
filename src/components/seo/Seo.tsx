@@ -20,7 +20,7 @@ export interface SeoProps {
 }
 
 const REGION_HOSTS = {
-  om: 'https://spirithubcafe.com',
+  om: 'https://www.spirithubcafe.com',
   sa: 'https://spirithub.sa',
 } as const;
 
@@ -248,6 +248,7 @@ export const Seo: React.FC<SeoProps> = ({
     resolvedImage,
     resolvedLocale,
     resolvedTitle,
+    region,
     robots,
     omUrl,
     saUrl,
