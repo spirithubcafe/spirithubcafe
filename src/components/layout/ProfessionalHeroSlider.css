@@ -556,6 +556,127 @@
   transform: scale(1.1);
 }
 
+/* Interactive cursor + edge navigation */
+.slider--interactive {
+  cursor: none;
+}
+
+.slider--interactive a,
+.slider--interactive button {
+  cursor: pointer;
+}
+
+/* Edge hint gradients that reveal the active navigation side */
+.slider-edge-hint {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 22%;
+  max-width: 320px;
+  z-index: 5;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.45s ease;
+}
+
+.slider-edge-hint--left {
+  left: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.42) 0%,
+    rgba(0, 0, 0, 0) 100%
+  );
+}
+
+.slider-edge-hint--right {
+  right: 0;
+  background: linear-gradient(
+    270deg,
+    rgba(0, 0, 0, 0.42) 0%,
+    rgba(0, 0, 0, 0) 100%
+  );
+}
+
+.slider-edge-hint.is-active {
+  opacity: 1;
+}
+
+/* Custom directional cursor that follows the pointer */
+.slider-cursor {
+  position: absolute;
+  z-index: 30;
+  width: 72px;
+  height: 72px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  color: #ffffff;
+  background: rgba(17, 17, 17, 0.32);
+  border: 1.5px solid rgba(255, 255, 255, 0.55);
+  -webkit-backdrop-filter: blur(6px) saturate(120%);
+  backdrop-filter: blur(6px) saturate(120%);
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.35),
+    0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+  will-change: left, top, transform;
+  animation: slider-cursor-pop 0.28s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.slider-cursor-icon {
+  width: 30px;
+  height: 30px;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.45));
+  transition: transform 0.25s ease;
+}
+
+.slider-cursor--left .slider-cursor-icon {
+  animation: slider-nudge-left 1.1s ease-in-out infinite;
+}
+
+.slider-cursor--right .slider-cursor-icon {
+  animation: slider-nudge-right 1.1s ease-in-out infinite;
+}
+
+@keyframes slider-cursor-pop {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes slider-nudge-left {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(-4px);
+  }
+}
+
+@keyframes slider-nudge-right {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(4px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .slider-cursor,
+  .slider-cursor--left .slider-cursor-icon,
+  .slider-cursor--right .slider-cursor-icon {
+    animation: none;
+  }
+}
+
 /* Slide Indicators */
 .slide-indicators {
   position: absolute;
