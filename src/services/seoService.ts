@@ -155,7 +155,6 @@ const fetchAllProducts = async (): Promise<Product[]> => {
   const pageSize = 100;
   let page = 1;
   const products: Product[] = [];
-  // eslint-disable-next-line no-constant-condition
   while (true) {
     const response = await productService.getAll({
       page,
@@ -224,6 +223,7 @@ const buildSitemapXml = (
 ): { xml: string; entries: number } => {
   const today = new Date().toISOString().split('T')[0];
   const urls: string[] = [];
+  const regionBase = '/om';
   
   // Helper to create formatted URL entry
   const addUrl = (
@@ -246,25 +246,27 @@ const buildSitemapXml = (
   urls.push(`\n  <!-- ====================================== -->`);
   urls.push(`  <!-- Homepage - Highest Priority -->`);
   urls.push(`  <!-- ====================================== -->`);
-  addUrl('/', '1.0', 'daily');
+  addUrl(regionBase, '1.0', 'daily');
 
   // Main Pages - High Priority
   urls.push(`\n  <!-- ====================================== -->`);
   urls.push(`  <!-- Main Pages - High Priority -->`);
   urls.push(`  <!-- ====================================== -->`);
-  addUrl('/products', '0.9', 'daily');
-  addUrl('/about', '0.7', 'monthly');
-  addUrl('/contact', '0.6', 'monthly');
-  addUrl('/faq', '0.5', 'monthly');
+  addUrl(`${regionBase}/products`, '0.9', 'daily');
+  addUrl(`${regionBase}/shop`, '0.8', 'daily');
+  addUrl(`${regionBase}/about`, '0.7', 'monthly');
+  addUrl(`${regionBase}/contact`, '0.6', 'monthly');
+  addUrl(`${regionBase}/faq`, '0.5', 'monthly');
+  addUrl(`${regionBase}/loyalty`, '0.5', 'monthly');
 
   // Policy Pages - Medium Priority
   urls.push(`\n  <!-- ====================================== -->`);
   urls.push(`  <!-- Policy Pages - Medium Priority -->`);
   urls.push(`  <!-- ====================================== -->`);
-  addUrl('/privacy', '0.3', 'yearly');
-  addUrl('/terms', '0.3', 'yearly');
-  addUrl('/delivery', '0.4', 'monthly');
-  addUrl('/refund', '0.4', 'monthly');
+  addUrl(`${regionBase}/privacy`, '0.3', 'yearly');
+  addUrl(`${regionBase}/terms`, '0.3', 'yearly');
+  addUrl(`${regionBase}/delivery`, '0.4', 'monthly');
+  addUrl(`${regionBase}/refund`, '0.4', 'monthly');
 
   // Product Categories - High Priority
   if (categories.length > 0) {
@@ -273,7 +275,7 @@ const buildSitemapXml = (
     urls.push(`  <!-- ====================================== -->`);
     categories.forEach((category) => {
       const slug = category.slug || category.id;
-      addUrl(`/products?category=${slug}`, '0.8', 'weekly');
+      addUrl(`${regionBase}/shop/${slug}`, '0.8', 'weekly');
     });
   }
 
@@ -309,7 +311,7 @@ const buildSitemapXml = (
       urls.push(`  <!-- ====================================== -->`);
       categoryProducts.forEach((product) => {
         const slugOrId = product.slug || product.id;
-        addUrl(`/products/${slugOrId}`, '0.7', 'weekly');
+        addUrl(`${regionBase}/products/${slugOrId}`, '0.7', 'weekly');
       });
     }
   });

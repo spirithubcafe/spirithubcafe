@@ -157,6 +157,21 @@ const SEO_HOSTS = {
   sa: 'https://spirithub.sa',
 };
 
+const LEGACY_POLICY_REDIRECTS = {
+  '/refund-policy': '/refund',
+  '/terms-conditions': '/terms',
+  '/delivery-policy': '/delivery',
+};
+
+const getLegacyPolicyRedirect = (urlPath) => {
+  const cleanPath = String(urlPath || '/').replace(/\/+$/, '') || '/';
+  const regionMatch = cleanPath.match(/^\/(om|sa)(\/.*)$/);
+  const regionPrefix = regionMatch ? `/${regionMatch[1]}` : '/om';
+  const policyPath = regionMatch ? regionMatch[2] : cleanPath;
+  const destination = LEGACY_POLICY_REDIRECTS[policyPath];
+  return destination ? `${regionPrefix}${destination}` : null;
+};
+
 const getPerformanceHintsForRoute = (url) => {
   let routePath = String(url || '/').split('?')[0].split('#')[0];
   if (!routePath.startsWith('/')) routePath = `/${routePath}`;
@@ -224,6 +239,23 @@ app.get('/sa/sitemap.xml', async (req, res) => {
 app.get('/', (req, res) => {
   res.redirect(301, '/om');
 });
+
+app.get(
+  [
+    '/refund-policy',
+    '/terms-conditions',
+    '/delivery-policy',
+    '/om/refund-policy',
+    '/om/terms-conditions',
+    '/om/delivery-policy',
+    '/sa/refund-policy',
+    '/sa/terms-conditions',
+    '/sa/delivery-policy',
+  ],
+  (req, res) => {
+    res.redirect(301, getLegacyPolicyRedirect(req.path));
+  }
+);
 
 // Legacy email templates HTML endpoints -> native admin console page
 app.get('/email-templates.html', (_req, res) => {

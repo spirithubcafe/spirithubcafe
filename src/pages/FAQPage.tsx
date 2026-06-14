@@ -102,7 +102,7 @@ export const FAQPage: React.FC = () => {
         </>,
         'Provide order details and a clear explanation of the issue.',
         <>Our customer support team will guide you through the refund process according to our{' '}
-          <Link to="/refund-policy" className="text-amber-600 hover:text-amber-700 underline">
+          <Link to="/refund" className="text-amber-600 hover:text-amber-700 underline">
             refund policy
           </Link>
           .

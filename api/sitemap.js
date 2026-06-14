@@ -49,18 +49,34 @@ function escapeXml(str) {
     .replace(/'/g, '&apos;');
 }
 
+function parseProductResponse(json) {
+  let items = null;
+  if (Array.isArray(json)) {
+    items = json;
+  } else if (json?.data && Array.isArray(json.data)) {
+    items = json.data;
+  } else if (json?.data?.items && Array.isArray(json.data.items)) {
+    items = json.data.items;
+  } else if (json?.items && Array.isArray(json.items)) {
+    items = json.items;
+  }
+
+  const pagination = json?.pagination || json?.data?.pagination || null;
+  return { items, pagination };
+}
+
 /**
- * Fetch ALL products from the API.  Tries the paginated endpoint first
- * (most .NET APIs support ?page=1&pageSize=999) then falls back to the
- * plain /Products list.
+ * Fetch ALL products from the API. The API may clamp large page sizes,
+ * so follow its pagination metadata instead of assuming page 1 is complete.
  */
 async function fetchAllProducts() {
-  const endpoints = [
-    `${API_BASE_URL}/api/Products?page=1&pageSize=500`,
-    `${API_BASE_URL}/api/Products`,
-  ];
+  const products = [];
+  const seenIds = new Set();
+  let page = 1;
+  let totalPages = 1;
 
-  for (const url of endpoints) {
+  do {
+    const url = `${API_BASE_URL}/api/Products?page=${page}&pageSize=100`;
     try {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 8000);
@@ -70,29 +86,31 @@ async function fetchAllProducts() {
       });
       clearTimeout(timeout);
 
-      if (!res.ok) continue;
+      if (!res.ok) return products;
 
       const json = await res.json();
+      const { items, pagination } = parseProductResponse(json);
+      if (!items) return [];
 
-      // API may wrap data in { success, data } or { data: { items } }
-      let items = null;
-      if (Array.isArray(json)) {
-        items = json;
-      } else if (json?.data && Array.isArray(json.data)) {
-        items = json.data;
-      } else if (json?.data?.items && Array.isArray(json.data.items)) {
-        items = json.data.items;
-      } else if (json?.items && Array.isArray(json.items)) {
-        items = json.items;
+      for (const product of items) {
+        const key = product.id ?? product.slug ?? product.productSlug;
+        if (key == null || seenIds.has(key)) continue;
+        seenIds.add(key);
+        products.push(product);
       }
 
-      if (items && items.length > 0) return items;
+      const reportedTotalPages = Number(pagination?.totalPages);
+      totalPages =
+        Number.isFinite(reportedTotalPages) && reportedTotalPages > 0
+          ? Math.min(reportedTotalPages, 100)
+          : 1;
+      page += 1;
     } catch {
-      // try next endpoint
+      return products;
     }
-  }
+  } while (page <= totalPages);
 
-  return [];
+  return products;
 }
 
 /**

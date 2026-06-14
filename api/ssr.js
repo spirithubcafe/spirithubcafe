@@ -6,6 +6,21 @@ const SEO_HOSTS = {
   sa: 'https://spirithub.sa',
 };
 
+const LEGACY_POLICY_REDIRECTS = {
+  '/refund-policy': '/refund',
+  '/terms-conditions': '/terms',
+  '/delivery-policy': '/delivery',
+};
+
+const getLegacyPolicyRedirect = (urlPath) => {
+  const cleanPath = String(urlPath || '/').replace(/\/+$/, '') || '/';
+  const regionMatch = cleanPath.match(/^\/(om|sa)(\/.*)$/);
+  const regionPrefix = regionMatch ? `/${regionMatch[1]}` : '/om';
+  const policyPath = regionMatch ? regionMatch[2] : cleanPath;
+  const destination = LEGACY_POLICY_REDIRECTS[policyPath];
+  return destination ? `${regionPrefix}${destination}` : null;
+};
+
 const getPerformanceHintsForRoute = (url) => {
   let routePath = String(url || '/').split('?')[0].split('#')[0];
   if (!routePath.startsWith('/')) routePath = `/${routePath}`;
@@ -467,6 +482,13 @@ export default async function handler(req, res) {
   try {
     const url = req.url || '/';
     const urlPathOnly = url.split('?')[0].split('#')[0];
+    const legacyPolicyRedirect = getLegacyPolicyRedirect(urlPathOnly);
+    if (legacyPolicyRedirect) {
+      res.setHeader('Location', legacyPolicyRedirect);
+      res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=86400');
+      return res.status(301).end();
+    }
+
     const productIdentifier = getProductIdentifierFromUrl(urlPathOnly);
     const ssrProduct = productIdentifier ? await fetchProductDetails(productIdentifier) : null;
 

@@ -8,7 +8,7 @@
   <!-- Homepage - Highest Priority -->
   <!-- ====================================== -->
   <url>
-    <loc>https://www.spirithubcafe.com/</loc>
+    <loc>https://www.spirithubcafe.com/om</loc>
     <lastmod>2026-06-14</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
@@ -18,25 +18,37 @@
   <!-- Main Pages - High Priority -->
   <!-- ====================================== -->
   <url>
-    <loc>https://www.spirithubcafe.com/products</loc>
+    <loc>https://www.spirithubcafe.com/om/products</loc>
     <lastmod>2026-06-14</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://www.spirithubcafe.com/about</loc>
+    <loc>https://www.spirithubcafe.com/om/shop</loc>
+    <lastmod>2026-06-14</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.spirithubcafe.com/om/about</loc>
     <lastmod>2026-06-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.spirithubcafe.com/contact</loc>
+    <loc>https://www.spirithubcafe.com/om/contact</loc>
     <lastmod>2026-06-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.spirithubcafe.com/faq</loc>
+    <loc>https://www.spirithubcafe.com/om/faq</loc>
+    <lastmod>2026-06-14</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://www.spirithubcafe.com/om/loyalty</loc>
     <lastmod>2026-06-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
@@ -46,25 +58,25 @@
   <!-- Policy Pages - Medium Priority -->
   <!-- ====================================== -->
   <url>
-    <loc>https://www.spirithubcafe.com/privacy</loc>
+    <loc>https://www.spirithubcafe.com/om/privacy</loc>
     <lastmod>2026-06-14</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
-    <loc>https://www.spirithubcafe.com/terms</loc>
+    <loc>https://www.spirithubcafe.com/om/terms</loc>
     <lastmod>2026-06-14</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
-    <loc>https://www.spirithubcafe.com/delivery</loc>
+    <loc>https://www.spirithubcafe.com/om/delivery</loc>
     <lastmod>2026-06-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.4</priority>
   </url>
   <url>
-    <loc>https://www.spirithubcafe.com/refund</loc>
+    <loc>https://www.spirithubcafe.com/om/refund</loc>
     <lastmod>2026-06-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.4</priority>
@@ -74,49 +86,49 @@
   <!-- Product Categories - High Priority -->
   <!-- ====================================== -->
   <url>
-    <loc>https://www.spirithubcafe.com/products?category=coffee-bundles-gift-boxes</loc>
+    <loc>https://www.spirithubcafe.com/om/shop/coffee-bundles-gift-boxes</loc>
     <lastmod>2026-06-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.spirithubcafe.com/products?category=electronic-gift-cards</loc>
+    <loc>https://www.spirithubcafe.com/om/shop/electronic-gift-cards</loc>
     <lastmod>2026-06-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.spirithubcafe.com/products?category=espresso-milk-based-coffee</loc>
+    <loc>https://www.spirithubcafe.com/om/shop/espresso-milk-based-coffee</loc>
     <lastmod>2026-06-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.spirithubcafe.com/products?category=tools-equipment</loc>
+    <loc>https://www.spirithubcafe.com/om/shop/tools-equipment</loc>
     <lastmod>2026-06-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.spirithubcafe.com/products?category=filter-pour-over-coffee</loc>
+    <loc>https://www.spirithubcafe.com/om/shop/filter-pour-over-coffee</loc>
     <lastmod>2026-06-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.spirithubcafe.com/products?category=competition-premium-series</loc>
+    <loc>https://www.spirithubcafe.com/om/shop/competition-premium-series</loc>
     <lastmod>2026-06-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.spirithubcafe.com/products?category=ufo-drip-coffee-filters</loc>
+    <loc>https://www.spirithubcafe.com/om/shop/ufo-drip-coffee-filters</loc>
     <lastmod>2026-06-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.spirithubcafe.com/products?category=specialty-coffee-capsules</loc>
+    <loc>https://www.spirithubcafe.com/om/shop/specialty-coffee-capsules</loc>
     <lastmod>2026-06-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
@@ -126,73 +138,73 @@
   <!-- UFO Drip Coffee -->
   <!-- ====================================== -->
   <url>
-    <loc>https://www.spirithubcafe.com/products/ufo-drip-coffee-indonesia-black-orchid-lactobacillus-natural-7-drip-box</loc>
+    <loc>https://www.spirithubcafe.com/om/products/ufo-drip-coffee-indonesia-black-orchid-lactobacillus-natural-7-drip-box</loc>
     <lastmod>2026-06-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.spirithubcafe.com/products/ufo-drip-coffee-colombia-finca-milan-coconut-culturing-7-drip-bags</loc>
+    <loc>https://www.spirithubcafe.com/om/products/ufo-drip-coffee-colombia-finca-milan-coconut-culturing-7-drip-bags</loc>
     <lastmod>2026-06-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.spirithubcafe.com/products/ufo-drip-coffee-ethiopia-agamosa-gotiti-natural-7-drip-bags</loc>
+    <loc>https://www.spirithubcafe.com/om/products/ufo-drip-coffee-ethiopia-agamosa-gotiti-natural-7-drip-bags</loc>
     <lastmod>2026-06-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.spirithubcafe.com/products/kalita-wave-185-stainless-steel-coffee-dripper</loc>
+    <loc>https://www.spirithubcafe.com/om/products/kalita-wave-185-stainless-steel-coffee-dripper</loc>
     <lastmod>2026-06-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.spirithubcafe.com/products/ufo-drip-coffee-brazil-catuai-natural-7-drip-bags</loc>
+    <loc>https://www.spirithubcafe.com/om/products/ufo-drip-coffee-brazil-catuai-natural-7-drip-bags</loc>
     <lastmod>2026-06-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.spirithubcafe.com/products/ufo-drip-coffee-ethiopia-halo-hartume-natural-7-drip-bags</loc>
+    <loc>https://www.spirithubcafe.com/om/products/ufo-drip-coffee-ethiopia-halo-hartume-natural-7-drip-bags</loc>
     <lastmod>2026-06-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.spirithubcafe.com/products/ufo-drip-coffee-kenya-endebess-estate-natural-7-drip-bags</loc>
+    <loc>https://www.spirithubcafe.com/om/products/ufo-drip-coffee-kenya-endebess-estate-natural-7-drip-bags</loc>
     <lastmod>2026-06-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.spirithubcafe.com/products/ufo-drip-coffee-yemen-odaini-anaerobic-7-drip-bags</loc>
+    <loc>https://www.spirithubcafe.com/om/products/ufo-drip-coffee-yemen-odaini-anaerobic-7-drip-bags</loc>
     <lastmod>2026-06-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.spirithubcafe.com/products/ufo-drip-coffee-yunnan-dehong-catimor-7-drip-bags</loc>
+    <loc>https://www.spirithubcafe.com/om/products/ufo-drip-coffee-yunnan-dehong-catimor-7-drip-bags</loc>
     <lastmod>2026-06-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.spirithubcafe.com/products/ufo-drip-coffee-spirithub-experience-box-7-disk-collection</loc>
+    <loc>https://www.spirithubcafe.com/om/products/ufo-drip-coffee-spirithub-experience-box-7-disk-collection</loc>
     <lastmod>2026-06-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.spirithubcafe.com/products/ufo-drip-coffee-colombia-pink-bourbon-honey-7-drip-bags</loc>
+    <loc>https://www.spirithubcafe.com/om/products/ufo-drip-coffee-colombia-pink-bourbon-honey-7-drip-bags</loc>
     <lastmod>2026-06-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.spirithubcafe.com/products/ufo-drip-coffee-ethiopia-gargari-gutity-yirgacheffe-7-drip-bags</loc>
+    <loc>https://www.spirithubcafe.com/om/products/ufo-drip-coffee-ethiopia-gargari-gutity-yirgacheffe-7-drip-bags</loc>
     <lastmod>2026-06-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
@@ -202,31 +214,31 @@
   <!-- Colombian Coffee -->
   <!-- ====================================== -->
   <url>
-    <loc>https://www.spirithubcafe.com/products/decaf-colombia-swiss-water-decaffeinated</loc>
+    <loc>https://www.spirithubcafe.com/om/products/decaf-colombia-swiss-water-decaffeinated</loc>
     <lastmod>2026-06-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.spirithubcafe.com/products/colombia-finca-milan-coconut-culturing</loc>
+    <loc>https://www.spirithubcafe.com/om/products/colombia-finca-milan-coconut-culturing</loc>
     <lastmod>2026-06-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.spirithubcafe.com/products/colombia-aroma-nativo-aji-spirithub-exclusive-lot</loc>
+    <loc>https://www.spirithubcafe.com/om/products/colombia-aroma-nativo-aji-spirithub-exclusive-lot</loc>
     <lastmod>2026-06-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.spirithubcafe.com/products/colombia-decaf-coffee-capsules</loc>
+    <loc>https://www.spirithubcafe.com/om/products/colombia-decaf-coffee-capsules</loc>
     <lastmod>2026-06-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.spirithubcafe.com/products/colombia-pink-bourbon-honey</loc>
+    <loc>https://www.spirithubcafe.com/om/products/colombia-pink-bourbon-honey</loc>
     <lastmod>2026-06-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
@@ -236,25 +248,25 @@
   <!-- Ethiopian Coffee -->
   <!-- ====================================== -->
   <url>
-    <loc>https://www.spirithubcafe.com/products/ethiopia-agamosa-gotiti-natural</loc>
+    <loc>https://www.spirithubcafe.com/om/products/ethiopia-agamosa-gotiti-natural</loc>
     <lastmod>2026-06-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.spirithubcafe.com/products/ethiopia-gargari-gutity-yirgacheffe-supernatural</loc>
+    <loc>https://www.spirithubcafe.com/om/products/ethiopia-gargari-gutity-yirgacheffe-supernatural</loc>
     <lastmod>2026-06-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.spirithubcafe.com/products/ethiopia-halo-hartume-natural</loc>
+    <loc>https://www.spirithubcafe.com/om/products/ethiopia-halo-hartume-natural</loc>
     <lastmod>2026-06-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.spirithubcafe.com/products/ethiopian-sidamo-coffee-capsules</loc>
+    <loc>https://www.spirithubcafe.com/om/products/ethiopian-sidamo-coffee-capsules</loc>
     <lastmod>2026-06-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
@@ -264,25 +276,25 @@
   <!-- Coffee Capsules -->
   <!-- ====================================== -->
   <url>
-    <loc>https://www.spirithubcafe.com/products/spirithub-capsule-collection-12-boxes</loc>
+    <loc>https://www.spirithubcafe.com/om/products/spirithub-capsule-collection-12-boxes</loc>
     <lastmod>2026-06-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.spirithubcafe.com/products/intenso-coffee-capsules</loc>
+    <loc>https://www.spirithubcafe.com/om/products/intenso-coffee-capsules</loc>
     <lastmod>2026-06-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.spirithubcafe.com/products/lungo-coffee-capsules</loc>
+    <loc>https://www.spirithubcafe.com/om/products/lungo-coffee-capsules</loc>
     <lastmod>2026-06-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.spirithubcafe.com/products/palermo-coffee-capsules</loc>
+    <loc>https://www.spirithubcafe.com/om/products/palermo-coffee-capsules</loc>
     <lastmod>2026-06-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
@@ -292,133 +304,133 @@
   <!-- Other Products -->
   <!-- ====================================== -->
   <url>
-    <loc>https://www.spirithubcafe.com/products/indonesia-black-orchid-lactobacillus-spirithub-exclusive-lot</loc>
+    <loc>https://www.spirithubcafe.com/om/products/indonesia-black-orchid-lactobacillus-spirithub-exclusive-lot</loc>
     <lastmod>2026-06-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.spirithubcafe.com/products/costa-rica-ohban-geisha-anaerobic-honey-163</loc>
+    <loc>https://www.spirithubcafe.com/om/products/costa-rica-ohban-geisha-anaerobic-honey-163</loc>
     <lastmod>2026-06-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.spirithubcafe.com/products/chemex-classic-pour-over-coffee-maker-6-cups</loc>
+    <loc>https://www.spirithubcafe.com/om/products/chemex-classic-pour-over-coffee-maker-6-cups</loc>
     <lastmod>2026-06-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.spirithubcafe.com/products/hario-v60-range-server-600-clear-02</loc>
+    <loc>https://www.spirithubcafe.com/om/products/hario-v60-range-server-600-clear-02</loc>
     <lastmod>2026-06-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.spirithubcafe.com/products/kalita-wave-paper-filter-185</loc>
+    <loc>https://www.spirithubcafe.com/om/products/kalita-wave-paper-filter-185</loc>
     <lastmod>2026-06-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.spirithubcafe.com/products/aeropress-small-micro-filters-350-pack</loc>
+    <loc>https://www.spirithubcafe.com/om/products/aeropress-small-micro-filters-350-pack</loc>
     <lastmod>2026-06-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.spirithubcafe.com/products/hario-v60-01-paper-filter</loc>
+    <loc>https://www.spirithubcafe.com/om/products/hario-v60-01-paper-filter</loc>
     <lastmod>2026-06-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.spirithubcafe.com/products/hario-v60-02-paper-filter</loc>
+    <loc>https://www.spirithubcafe.com/om/products/hario-v60-02-paper-filter</loc>
     <lastmod>2026-06-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.spirithubcafe.com/products/spirithub-electronic-gift-card-20-omr</loc>
+    <loc>https://www.spirithubcafe.com/om/products/spirithub-electronic-gift-card-20-omr</loc>
     <lastmod>2026-06-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.spirithubcafe.com/products/spirithub-electronic-gift-card-15-omr</loc>
+    <loc>https://www.spirithubcafe.com/om/products/spirithub-electronic-gift-card-15-omr</loc>
     <lastmod>2026-06-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.spirithubcafe.com/products/spirithub-electronic-gift-card-10-omr</loc>
+    <loc>https://www.spirithubcafe.com/om/products/spirithub-electronic-gift-card-10-omr</loc>
     <lastmod>2026-06-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.spirithubcafe.com/products/spirithub-electronic-gift-card-5-omr</loc>
+    <loc>https://www.spirithubcafe.com/om/products/spirithub-electronic-gift-card-5-omr</loc>
     <lastmod>2026-06-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.spirithubcafe.com/products/coffee-discovery-bundle-everyday-harmony-discovery</loc>
+    <loc>https://www.spirithubcafe.com/om/products/coffee-discovery-bundle-everyday-harmony-discovery</loc>
     <lastmod>2026-06-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.spirithubcafe.com/products/coffee-discovery-bundle-wild-origins-discovery</loc>
+    <loc>https://www.spirithubcafe.com/om/products/coffee-discovery-bundle-wild-origins-discovery</loc>
     <lastmod>2026-06-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.spirithubcafe.com/products/coffee-discovery-bundle-floral-elegant</loc>
+    <loc>https://www.spirithubcafe.com/om/products/coffee-discovery-bundle-floral-elegant</loc>
     <lastmod>2026-06-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.spirithubcafe.com/products/coffee-discovery-bundle-sweet-smooth</loc>
+    <loc>https://www.spirithubcafe.com/om/products/coffee-discovery-bundle-sweet-smooth</loc>
     <lastmod>2026-06-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.spirithubcafe.com/products/panama-pacas-anaerobic-natural</loc>
+    <loc>https://www.spirithubcafe.com/om/products/panama-pacas-anaerobic-natural</loc>
     <lastmod>2026-06-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.spirithubcafe.com/products/panama-geisha-jaguar-natural</loc>
+    <loc>https://www.spirithubcafe.com/om/products/panama-geisha-jaguar-natural</loc>
     <lastmod>2026-06-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.spirithubcafe.com/products/yunnan-dehong-catimor-anaerobic</loc>
+    <loc>https://www.spirithubcafe.com/om/products/yunnan-dehong-catimor-anaerobic</loc>
     <lastmod>2026-06-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.spirithubcafe.com/products/kenya-endebess-estate-natural</loc>
+    <loc>https://www.spirithubcafe.com/om/products/kenya-endebess-estate-natural</loc>
     <lastmod>2026-06-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.spirithubcafe.com/products/brazil-catuai-natural</loc>
+    <loc>https://www.spirithubcafe.com/om/products/brazil-catuai-natural</loc>
     <lastmod>2026-06-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.spirithubcafe.com/products/yemen-odaini-anaerobic-natural-spirithub-exclusive-lot</loc>
+    <loc>https://www.spirithubcafe.com/om/products/yemen-odaini-anaerobic-natural-spirithub-exclusive-lot</loc>
     <lastmod>2026-06-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>

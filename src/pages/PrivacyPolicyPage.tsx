@@ -255,7 +255,7 @@ export const PrivacyPolicyPage: React.FC = () => {
               </h2>
               <div className="grid md:grid-cols-3 gap-4">
                 <Link 
-                  to="/terms-conditions"
+                  to="/terms"
                   className="p-4 border-2 border-gray-200 rounded-xl hover:border-amber-600 hover:shadow-md transition-all group"
                 >
                   <FileText className="w-6 h-6 text-amber-600 mb-2" />
@@ -267,7 +267,7 @@ export const PrivacyPolicyPage: React.FC = () => {
                   </p>
                 </Link>
                 <Link 
-                  to="/refund-policy"
+                  to="/refund"
                   className="p-4 border-2 border-gray-200 rounded-xl hover:border-amber-600 hover:shadow-md transition-all group"
                 >
                   <Shield className="w-6 h-6 text-amber-600 mb-2" />
@@ -279,7 +279,7 @@ export const PrivacyPolicyPage: React.FC = () => {
                   </p>
                 </Link>
                 <Link 
-                  to="/delivery-policy"
+                  to="/delivery"
                   className="p-4 border-2 border-gray-200 rounded-xl hover:border-amber-600 hover:shadow-md transition-all group"
                 >
                   <Globe className="w-6 h-6 text-amber-600 mb-2" />
