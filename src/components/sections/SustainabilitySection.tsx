@@ -11,7 +11,7 @@ export const SustainabilitySection: React.FC = () => {
     {
       icon: Leaf,
       title: isArabic ? 'الاستدامة' : 'Sustainability',
-      desc: isArabic ? 'مصادر أخلاقية ومسؤولة' : 'Ethically & responsibly sourced',
+      desc: isArabic ? 'مصادر موثوقة' : 'Ethically & responsibly sourced',
     },
     {
       icon: Award,
@@ -29,7 +29,7 @@ export const SustainabilitySection: React.FC = () => {
 
   return (
     <section
-      className="relative py-24 md:py-32 overflow-hidden bg-cover bg-center"
+      className="relative overflow-hidden bg-cover bg-center pb-10 pt-20 sm:py-24 md:py-32"
       style={{ backgroundImage: 'url(/images/header.webp)' }}
       dir={isArabic ? 'rtl' : 'ltr'}
     >
@@ -49,7 +49,7 @@ export const SustainabilitySection: React.FC = () => {
           </div>
 
           {/* Title */}
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold leading-tight tracking-tight mb-6">
+          <h2 className="mb-6 text-[1.7rem] font-extrabold leading-tight tracking-tight sm:text-4xl md:text-5xl">
             {isArabic ? (
               <>
                 الاستدامة، <span className="text-amber-400">الجودة</span>، الالتزام
@@ -62,10 +62,17 @@ export const SustainabilitySection: React.FC = () => {
           </h2>
 
           {/* Description */}
-          <p className="text-base md:text-lg leading-relaxed text-gray-200/90 max-w-2xl mx-auto mb-10">
-            {isArabic
-              ? 'نؤمن بأن القهوة المختصة تترك أثرًا يتجاوز الفنجان، من حبوب مختارة بمسؤولية إلى تحميص مدروس يحتفي بالمزارعين والمجتمعات والنكهة الاستثنائية في كل تحميصة.'
-              : 'We believe specialty coffee should create impact beyond the cup, from ethically sourced beans to responsible roasting that celebrates farmers, communities, and exceptional flavor in every roast.'}
+          <p className="mx-auto mb-10 max-w-2xl text-base leading-relaxed text-gray-200/90 md:text-lg">
+            <span className="sm:hidden">
+              {isArabic
+                ? 'قهوة مختصة بأثر يتجاوز الفنجان، من مصادر موثوقة إلى تحميص يحتفي بالمزارعين والمجتمعات.'
+                : 'Specialty coffee with impact beyond the cup, from trusted sourcing to roasting that celebrates farmers and communities.'}
+            </span>
+            <span className="hidden sm:inline">
+              {isArabic
+                ? 'نؤمن بأن القهوة المختصة تترك أثرًا يتجاوز الفنجان، من حبوب مختارة بمسؤولية إلى تحميص مدروس يحتفي بالمزارعين والمجتمعات والنكهة الاستثنائية في كل تحميصة.'
+                : 'We believe specialty coffee should create impact beyond the cup, from ethically sourced beans to responsible roasting that celebrates farmers, communities, and exceptional flavor in every roast.'}
+            </span>
           </p>
 
           {/* Pillars */}

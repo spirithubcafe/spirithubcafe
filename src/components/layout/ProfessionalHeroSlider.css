@@ -605,30 +605,24 @@
 .slider-cursor {
   position: absolute;
   z-index: 30;
-  width: 72px;
-  height: 72px;
+  width: 36px;
+  height: 36px;
   transform: translate(-50%, -50%);
-  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   pointer-events: none;
   color: #ffffff;
-  background: rgba(17, 17, 17, 0.32);
-  border: 1.5px solid rgba(255, 255, 255, 0.55);
-  -webkit-backdrop-filter: blur(6px) saturate(120%);
-  backdrop-filter: blur(6px) saturate(120%);
-  box-shadow:
-    0 10px 30px rgba(0, 0, 0, 0.35),
-    0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+  background: transparent;
+  border: 0;
   will-change: left, top, transform;
   animation: slider-cursor-pop 0.28s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
 .slider-cursor-icon {
-  width: 30px;
-  height: 30px;
-  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.45));
+  width: 26px;
+  height: 26px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.8));
   transition: transform 0.25s ease;
 }
 
@@ -684,20 +678,28 @@
   left: 50%;
   transform: translateX(-50%);
   display: flex;
-  gap: 1rem;
+  align-items: center;
+  gap: 0.125rem;
+  padding: 0.5rem 0.75rem;
+  background: rgba(18, 18, 18, 0.24);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 999px;
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.22);
   z-index: 20;
 }
 
 .indicator {
-  width: 60px;
-  height: 4px;
-  background: rgba(255, 255, 255, 0.3);
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  background: transparent;
   border: none;
-  border-radius: 2px;
+  border-radius: 50%;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: transform 0.2s ease;
   position: relative;
-  overflow: hidden;
   user-select: none;
   -webkit-user-select: none;
   -moz-user-select: none;
@@ -705,40 +707,39 @@
 }
 
 .indicator:hover {
-  transform: scaleX(1.08);
+  transform: scale(1.18);
 }
 
-.indicator.active {
-  background: rgba(217, 119, 6, 0.5);
+.indicator:focus-visible {
+  outline: 1px solid #fbbf24;
+  outline-offset: 1px;
 }
 
 .indicator-progress {
   position: absolute;
-  top: 0;
-  left: 0;
-  height: 100%;
-  width: 100%;
+  top: 50%;
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  transform: translate(-50%, -50%);
+  background: rgba(255, 255, 255, 0.48);
+  border-radius: 50%;
+  transition:
+    width 0.2s ease,
+    height 0.2s ease,
+    background-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.indicator.active .indicator-progress {
+  width: 7px;
+  height: 7px;
+  background: #d97706;
+  box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.16);
 }
 
 .progress-fill {
-  height: 100%;
-  background: #d97706;
-  border-radius: 2px;
-  transform: scaleX(0);
-  transform-origin: left center;
-}
-
-.progress-fill--active {
-  animation: indicator-progress 6s linear forwards;
-}
-
-@keyframes indicator-progress {
-  from {
-    transform: scaleX(0);
-  }
-  to {
-    transform: scaleX(1);
-  }
+  display: none;
 }
 
 /* Responsive Design */

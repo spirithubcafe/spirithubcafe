@@ -547,6 +547,8 @@ export const ProfessionalHeroSlider: React.FC = () => {
             <button
               key={index}
               className={`indicator ${index === currentSlide ? 'active' : ''}`}
+              aria-label={`${language === 'ar' ? 'انتقل إلى الشريحة' : 'Go to slide'} ${index + 1}`}
+              aria-current={index === currentSlide ? 'true' : undefined}
               onClick={(e) => {
                 e.stopPropagation();
                 setCurrentSlide(index);
