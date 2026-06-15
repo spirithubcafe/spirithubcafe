@@ -4,6 +4,7 @@ export type RegionCode = 'om' | 'sa';
 
 export const FORCED_REGION_CODE: RegionCode = 'om';
 export const REGION_SELECTION_ENABLED = true;
+export const OMANI_RIAL_SYMBOL = '\u20C4';
 
 export const isRegionCode = (value: unknown): value is RegionCode => value === 'om' || value === 'sa';
 
@@ -79,10 +80,10 @@ export const getCurrencyByRegion = (region: RegionCode): string => {
 /**
  * Get currency symbol based on region
  * @param region Region code (om or sa)
- * @returns Currency symbol (ر.ع. or ر.س)
+ * @returns Currency symbol
  */
 export const getCurrencySymbolByRegion = (region: RegionCode): string => {
-  return region === 'sa' ? 'ر.س' : 'ر.ع.';
+  return region === 'sa' ? 'ر.س' : OMANI_RIAL_SYMBOL;
 };
 
 /**
@@ -95,6 +96,12 @@ export const getCurrencySymbolByRegion = (region: RegionCode): string => {
 export const formatPrice = (price: number, region: RegionCode, isArabic: boolean = true): string => {
   const currency = getCurrencyByRegion(region);
   const symbol = getCurrencySymbolByRegion(region);
+
+  // CBO guidance places the Omani rial symbol before the value in all languages.
+  if (region === 'om') {
+    return `${symbol} ${price.toFixed(3)}`;
+  }
+
   return isArabic 
     ? `${price.toFixed(3)} ${symbol}`
     : `${price.toFixed(3)} ${currency}`;

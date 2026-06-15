@@ -15,6 +15,7 @@ import { useCart } from '../../hooks/useCart';
 import { useRegion } from '../../hooks/useRegion';
 import { useAuth } from '../../hooks/useAuth';
 import { formatPrice } from '../../lib/regionUtils';
+import { OmaniRialPrice } from '../ui/OmaniRialPrice';
 import type { Product } from '../../contexts/AppContextDefinition';
 import type { Product as ApiProduct, ProductReview, ProductReviewCreateDto, ProductVariant } from '../../types/product';
 import { handleImageError, getProductImageUrl, resolveProductImageUrls } from '../../lib/imageUtils';
@@ -57,6 +58,11 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
     customerName: '',
     customerEmail: '',
   });
+
+  const renderPrice = (value: number) =>
+    currentRegion.code === 'om'
+      ? <OmaniRialPrice amount={value} isArabic={isArabic} />
+      : formatPrice(value, currentRegion.code, isArabic);
 
   // Fetch full product details when modal opens
   useEffect(() => {
@@ -604,12 +610,12 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
                   <div className="flex items-center gap-1">
                     {selectedVariant?.discountPrice && selectedVariant.discountPrice < selectedVariant.price && (
                       <span className="text-[9px] md:text-xs text-gray-400 line-through">
-                        {selectedVariant.price.toFixed(3)}
+                        {renderPrice(selectedVariant.price)}
                       </span>
                     )}
                     <span className="text-base md:text-xl font-bold text-amber-900">
                       {currentPrice > 0
-                        ? formatPrice(currentPrice * quantity, currentRegion.code, isArabic)
+                        ? renderPrice(currentPrice * quantity)
                         : isArabic
                           ? 'قريباً'
                           : 'Soon'}
@@ -664,11 +670,11 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
                                   <div className="flex items-center gap-0.5">
                                     {hasDiscount && (
                                       <span className={`text-[8px] md:text-[9px] line-through ${isSelected ? 'text-white/70' : 'text-amber-600/60'}`}>
-                                        {variant.price.toFixed(3)}
+                                        {renderPrice(variant.price)}
                                       </span>
                                     )}
                                     <span className={`text-[9px] md:text-[10px] font-semibold ${isSelected ? 'text-white' : 'text-[#6B4423]'}`}>
-                                      {variantPrice.toFixed(3)}
+                                      {renderPrice(variantPrice)}
                                     </span>
                                   </div>
                                 </div>

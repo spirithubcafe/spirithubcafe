@@ -6,6 +6,7 @@ import { Button } from '../components/ui/button';
 import { wholesaleOrderService } from '../services';
 import { useApp } from '../hooks/useApp';
 import type { WholesaleOrder } from '../types/wholesale';
+import { formatPrice } from '../lib/regionUtils';
 
 const getStatusLabel = (status?: string) => {
   const labels: Record<string, string> = {
@@ -114,7 +115,7 @@ export const WholesaleOrderDetailsPage: React.FC = () => {
               <div>
                 <span className="text-gray-500">{isArabic ? 'المبلغ النهائي:' : 'Final amount:'}</span>{' '}
                 <span className="text-gray-900">
-                  {(order.manualPrice || 0).toLocaleString(isArabic ? 'ar' : 'en-US')} {isArabic ? 'ر.ع' : 'OMR'}
+                  {formatPrice(order.manualPrice || 0, 'om', isArabic)}
                 </span>
               </div>
               <div>

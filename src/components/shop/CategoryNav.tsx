@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import type { ShopCategory } from '../../types/shop';
 import { getCategoryImageUrl, handleImageError } from '../../lib/imageUtils';
 import { useApp } from '../../hooks/useApp';
+import { OMANI_RIAL_SYMBOL } from '../../lib/regionUtils';
 
 export type CategoryFilter = 'all' | 'bundles' | 'gift-cards' | 'under-15';
 
@@ -47,7 +48,26 @@ export const CategoryNav = ({ categories, activeFilter, onFilterChange }: Props)
           { id: 'all', label: isArabic ? 'الكل' : 'All' },
           { id: 'gift-cards', label: isArabic ? 'بطاقات هدايا' : 'Gift Cards' },
           { id: 'bundles', label: isArabic ? 'الباقات' : 'Bundles' },
-          { id: 'under-15', label: isArabic ? 'اقل من 15 ر.ع' : 'Under 15 OMR' },
+          {
+            id: 'under-15',
+            label: (
+              <span
+                dir={isArabic ? 'rtl' : 'ltr'}
+                className="inline-flex items-baseline gap-1 [unicode-bidi:isolate]"
+              >
+                <span>{isArabic ? 'اقل من' : 'Under'}</span>
+                <span dir="ltr" className="inline-flex items-baseline gap-0.5">
+                  <span
+                    aria-hidden="true"
+                    className="relative -top-px text-[0.85em] font-normal leading-none"
+                  >
+                    {OMANI_RIAL_SYMBOL}
+                  </span>
+                  <span>15</span>
+                </span>
+              </span>
+            ),
+          },
         ].map((chip) => (
           <button
             key={chip.id}

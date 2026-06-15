@@ -11,6 +11,7 @@ import { formatPrice } from '../../lib/regionUtils';
 import type { Product } from '../../contexts/AppContextDefinition';
 import { buildResponsiveSrcSet, getProductImageUrl, handleImageError } from '../../lib/imageUtils';
 import { ProductTagBadge } from '../shop/ProductTagBadge';
+import { OmaniRialPrice } from '../ui/OmaniRialPrice';
 
 const ProductQuickView = lazy(() =>
   import('./ProductQuickView').then((module) => ({ default: module.ProductQuickView })),
@@ -211,11 +212,20 @@ const ProductCardComponent: React.FC<ProductCardProps> = ({ product, prioritizeI
         {/* Price at bottom */}
         <div className="flex items-center justify-between pt-2 border-t border-gray-100">
           <span className="text-xs text-gray-400">{isArabic ? 'السعر' : 'Price'}</span>
-          <span className="text-lg font-bold text-amber-600">
-            {product.price > 0 
-              ? formatPrice(product.price, currentRegion.code, isArabic)
-              : (isArabic ? 'قريباً' : 'Soon')}
-          </span>
+          {product.price > 0 && currentRegion.code === 'om' ? (
+            <OmaniRialPrice
+              amount={product.price}
+              isArabic={isArabic}
+              className="text-lg text-amber-600"
+              amountClassName="font-bold"
+            />
+          ) : (
+            <span className="text-lg font-bold text-amber-600">
+              {product.price > 0
+                ? formatPrice(product.price, currentRegion.code, isArabic)
+                : (isArabic ? 'قريباً' : 'Soon')}
+            </span>
+          )}
         </div>
 
         {/* Bottom Tags */}

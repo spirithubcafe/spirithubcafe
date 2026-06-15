@@ -16,6 +16,7 @@ import { shippingService, type ShippingMethod } from '../services/shippingServic
 import { Seo } from '../components/seo/Seo';
 import { siteMetadata } from '../config/siteMetadata';
 import { getProductImageUrl } from '../lib/imageUtils';
+import { OmaniRialPrice } from '../components/ui/OmaniRialPrice';
 
 const PENDING_ORDER_STORAGE_KEY = 'spirithub_pending_checkout';
 const LAST_SUCCESS_STORAGE_KEY = 'spirithub_last_success_order';
@@ -271,8 +272,9 @@ export const PaymentPage: React.FC = () => {
     loadShippingMethods();
   }, []);
 
-  const currencyLabel = isArabic ? 'ر.ع' : 'OMR';
-  const formatCurrency = (value: number) => `${value.toFixed(3)} ${currencyLabel}`;
+  const renderCurrency = (value: number) => (
+    <OmaniRialPrice amount={value} isArabic={isArabic} />
+  );
 
   const recipientLabel = useMemo(() => {
     if (!order) return '';
@@ -729,7 +731,7 @@ export const PaymentPage: React.FC = () => {
                         </p>
                       </div>
                       <p className="font-semibold text-amber-600">
-                        {formatCurrency(item.price * item.quantity)}
+                        {renderCurrency(item.price * item.quantity)}
                       </p>
                     </div>
                   ))}
@@ -740,14 +742,14 @@ export const PaymentPage: React.FC = () => {
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between text-gray-600">
                     <span>{isArabic ? 'المجموع الفرعي' : 'Subtotal'}</span>
-                    <span>{formatCurrency(order.totals.subtotal)}</span>
+                    <span>{renderCurrency(order.totals.subtotal)}</span>
                   </div>
                   <div className="flex justify-between text-gray-600">
                     <span>{isArabic ? 'الشحن' : 'Shipping'}</span>
                     <span>
                       {order.totals.shipping === 0
                         ? isArabic ? 'مجاني' : 'Free'
-                        : formatCurrency(order.totals.shipping)}
+                        : renderCurrency(order.totals.shipping)}
                     </span>
                   </div>
                   {order.totals.discount && order.totals.discount > 0 && (
@@ -756,13 +758,16 @@ export const PaymentPage: React.FC = () => {
                         {isArabic ? 'الخصم' : 'Discount'}
                         {order.totals.couponCode && ` (${order.totals.couponCode})`}
                       </span>
-                      <span>-{formatCurrency(order.totals.discount)}</span>
+                      <span className="inline-flex items-baseline gap-0.5">
+                        <span aria-hidden="true">-</span>
+                        {renderCurrency(order.totals.discount)}
+                      </span>
                     </div>
                   )}
                   <Separator className="my-2" />
                   <div className="flex justify-between text-lg font-semibold text-gray-900">
                     <span>{isArabic ? 'المجموع الكلي' : 'Total'}</span>
-                    <span>{formatCurrency(order.totals.total)}</span>
+                    <span>{renderCurrency(order.totals.total)}</span>
                   </div>
                 </div>
               </CardContent>

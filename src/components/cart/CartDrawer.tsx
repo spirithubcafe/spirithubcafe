@@ -7,6 +7,7 @@ import { useCart } from '../../hooks/useCart';
 import { useRegion } from '../../hooks/useRegion';
 import { formatPrice } from '../../lib/regionUtils';
 import { Button } from '../ui/button';
+import { OmaniRialPrice } from '../ui/OmaniRialPrice';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from '../ui/sheet';
 import { ScrollArea } from '../ui/scroll-area';
 
@@ -16,6 +17,11 @@ export const CartDrawer: React.FC = () => {
   const navigate = useNavigate();
   const { items, removeFromCart, updateQuantity, clearCart, totalItems, totalPrice, isOpen, closeCart } = useCart();
   const { currentRegion } = useRegion();
+  const renderPrice = (amount: number) => (
+    currentRegion.code === 'om'
+      ? <OmaniRialPrice amount={amount} isArabic={isArabic} />
+      : formatPrice(amount, currentRegion.code, isArabic)
+  );
 
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && closeCart()}>
@@ -65,7 +71,7 @@ export const CartDrawer: React.FC = () => {
                         )}
                         <div className="flex items-center justify-between">
                           <span className="font-bold text-amber-600">
-                            {formatPrice(item.price, currentRegion.code, isArabic)}
+                            {renderPrice(item.price)}
                           </span>
                           <div className="flex items-center gap-2">
                             <Button
@@ -115,7 +121,7 @@ export const CartDrawer: React.FC = () => {
               <div className="flex items-center justify-between text-lg font-bold">
                 <span>{isArabic ? 'المجموع' : 'Total'}</span>
                 <span className="text-amber-600">
-                  {formatPrice(totalPrice, currentRegion.code, isArabic)}
+                  {renderPrice(totalPrice)}
                 </span>
               </div>
               <div className="flex gap-2 w-full">

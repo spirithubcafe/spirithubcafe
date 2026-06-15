@@ -26,7 +26,8 @@ import { siteMetadata } from '../config/siteMetadata';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { computeShippingMethods, calculateAramexShippingRate, GCC_LOCATIONS } from '@/lib/shipping';
 import { useShopPage } from '@/hooks/useShop';
-import { getCurrencySymbolByRegion } from '@/lib/regionUtils';
+import { formatPrice, OMANI_RIAL_SYMBOL } from '@/lib/regionUtils';
+import { OmaniRialPrice } from '../components/ui/OmaniRialPrice';
 import {
   getAramexCountries,
   getAramexCities,
@@ -172,9 +173,6 @@ const checkoutSchema = z
   });
 
 type CheckoutFormValues = z.infer<typeof checkoutSchema>;
-
-// Dynamic shipping methods computed based on selected country/city
-const formatCurrency = (value: number, label: string) => `${value.toFixed(3)} ${label}`;
 
 const getAramexNotSupportedMessage = (isArabic: boolean) =>
   isArabic ? 'غير مدعوم حالياً من أرامكس' : 'Currently not supported by Aramex';
@@ -496,9 +494,10 @@ export const CheckoutPage: React.FC = () => {
   const isNoolFreeShipping = isOman && watchedShipping === 'nool' && isBundlesGiftOnlyCart;
   // -------------------------------------------------------------------------
 
-  // Get currency based on current region
-  const currencySymbol = getCurrencySymbolByRegion(currentRegion.code);
-  const currencyLabel = isArabic ? currencySymbol : currentRegion.currency;
+  const renderCurrency = (value: number) =>
+    currentRegion.code === 'om'
+      ? <OmaniRialPrice amount={value} isArabic={isArabic} />
+      : formatPrice(value, currentRegion.code, isArabic);
 
   const subtotal = useMemo(() => totalPrice, [totalPrice]);
   const shippingCost = isNoolFreeShipping ? 0 : selectedShipping.price;
@@ -573,8 +572,8 @@ export const CheckoutPage: React.FC = () => {
     if (coupon.minOrderAmount && subtotal < coupon.minOrderAmount) {
       setCouponError(
         isArabic
-          ? `الحد الأدنى للطلب ${coupon.minOrderAmount} ريال`
-          : `Minimum order amount is ${coupon.minOrderAmount} OMR`
+          ? `الحد الأدنى للطلب ${OMANI_RIAL_SYMBOL} ${coupon.minOrderAmount}`
+          : `Minimum order amount is ${OMANI_RIAL_SYMBOL} ${coupon.minOrderAmount}`
       );
       return;
     }
@@ -1228,10 +1227,7 @@ export const CheckoutPage: React.FC = () => {
                                               ? isArabic
                                                 ? 'مجاني'
                                                 : 'Free'
-                                              : formatCurrency(
-                                                  method.price,
-                                                  currencyLabel
-                                                )}
+                                              : renderCurrency(method.price)}
                                           </p>
                                         ) : null}
                                       </div>
@@ -1444,7 +1440,7 @@ export const CheckoutPage: React.FC = () => {
                             </p>
                           </div>
                           <div className="text-right font-semibold text-amber-600">
-                            {formatCurrency(item.price * item.quantity, currencyLabel)}
+                            {renderCurrency(item.price * item.quantity)}
                           </div>
                         </div>
                       ))}
@@ -1453,7 +1449,7 @@ export const CheckoutPage: React.FC = () => {
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between text-gray-600">
                         <span>{isArabic ? 'المجموع الفرعي' : 'Subtotal'}</span>
-                        <span>{formatCurrency(subtotal, currencyLabel)}</span>
+                        <span>{renderCurrency(subtotal)}</span>
                       </div>
                       <div className="flex justify-between text-gray-600">
                         <span>
@@ -1472,7 +1468,7 @@ export const CheckoutPage: React.FC = () => {
                             ? isArabic
                               ? 'مجاني'
                               : 'Free'
-                            : formatCurrency(shippingCost, currencyLabel)}
+                            : renderCurrency(shippingCost)}
                         </span>
                       </div>
                       {appliedCoupon && discountAmount > 0 && (
@@ -1480,13 +1476,16 @@ export const CheckoutPage: React.FC = () => {
                           <span>
                             {isArabic ? 'الخصم' : 'Discount'} ({appliedCoupon.code})
                           </span>
-                          <span>-{formatCurrency(discountAmount, currencyLabel)}</span>
+                          <span className="inline-flex items-baseline gap-0.5">
+                            <span aria-hidden="true">-</span>
+                            {renderCurrency(discountAmount)}
+                          </span>
                         </div>
                       )}
                       <Separator className="my-2" />
                       <div className="flex justify-between font-semibold text-lg text-amber-700">
                         <span>{isArabic ? 'الإجمالي' : 'Total'}</span>
-                        <span>{formatCurrency(grandTotal, currencyLabel)}</span>
+                        <span>{renderCurrency(grandTotal)}</span>
                       </div>
                     </div>
                   </CardContent>

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Star, ExternalLink } from 'lucide-react';
 import type { ChatProduct } from '../../services/geminiChatService';
+import { formatPrice as formatRegionalPrice, type RegionCode } from '../../lib/regionUtils';
 
 interface ProductCardProps {
   product: ChatProduct;
@@ -14,10 +15,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, regionPrefix,
   const isAr = language === 'ar';
   const displayName = isAr && product.nameAr ? product.nameAr : product.name;
   const productUrl = `${regionPrefix}/shop/product/${product.slug || product.id}`;
+  const region: RegionCode = regionPrefix.startsWith('/sa') ? 'sa' : 'om';
 
   const formatPrice = (price: number) => {
     if (price <= 0) return null;
-    return isAr ? `${price.toFixed(3)} ر.ع` : `${price.toFixed(3)} OMR`;
+    return formatRegionalPrice(price, region, isAr);
   };
 
   return (

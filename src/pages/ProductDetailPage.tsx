@@ -44,7 +44,8 @@ import { ProductViewers } from '../components/ui/LiveVisitors';
 import { toast } from 'sonner';
 import { getVariantStock, clampQuantity } from '../lib/stockUtils';
 import { safeStorage } from '../lib/safeStorage';
-import { getRegionFromPath } from '../lib/regionUtils';
+import { formatPrice, getRegionFromPath } from '../lib/regionUtils';
+import { OmaniRialPrice } from '../components/ui/OmaniRialPrice';
 
 const RelatedProducts = lazy(() =>
   import('../components/products/RelatedProducts').then((module) => ({
@@ -267,17 +268,10 @@ export const ProductDetailPage = () => {
   const [errorMessage, setErrorMessage] = useState('');
 
   // Format currency based on current region and language
-  const formatCurrency = (value: number, lang: string): string => {
-    const formatted = value.toFixed(3);
-    
-    // For Arabic: show Arabic currency symbol (ر.ع. or ر.س)
-    if (lang === 'ar') {
-      return `${formatted} ${currentRegion.currencySymbol}`;
-    }
-    
-    // For English: show currency code (OMR or SAR)
-    return `${formatted} ${currentRegion.currency}`;
-  };
+  const formatCurrency = (value: number, lang: string) =>
+    currentRegion.code === 'om'
+      ? <OmaniRialPrice amount={value} isArabic={lang === 'ar'} />
+      : formatPrice(value, currentRegion.code, lang === 'ar');
   
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [isZooming, setIsZooming] = useState(false);

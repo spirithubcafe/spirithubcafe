@@ -8,6 +8,7 @@ import { useApp } from '../../hooks/useApp';
 import { useRegion } from '../../hooks/useRegion';
 import { useCart } from '../../hooks/useCart';
 import { useProductRecommendations } from '../../hooks/useProductRecommendations';
+import { OMANI_RIAL_SYMBOL } from '../../lib/regionUtils';
 
 interface Props {
   currentProduct: ApiProduct;
@@ -139,9 +140,19 @@ const RecommendedCard = ({
 
         {/* Price + cart */}
         <div className="flex items-center justify-between gap-1.5">
-          <div className="flex items-baseline gap-1">
+          <div
+            className="flex items-baseline gap-1"
+            aria-label={`${displayPrice} ${currentRegion.currency}`}
+          >
+            {currentRegion.code === 'om' && (
+              <span aria-hidden="true" className="text-[9px] font-medium text-stone-400">
+                {OMANI_RIAL_SYMBOL}
+              </span>
+            )}
             <span className="text-[13px] font-extrabold leading-none text-[#6B4423]">{displayPrice}</span>
-            <span className="text-[9px] font-medium text-stone-400">{currentRegion.currency}</span>
+            {currentRegion.code !== 'om' && (
+              <span className="text-[9px] font-medium text-stone-400">{currentRegion.currency}</span>
+            )}
           </div>
 
           {canQuickAdd ? (

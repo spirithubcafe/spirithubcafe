@@ -338,11 +338,15 @@ export const OrderDetailPage: React.FC = () => {
                               </div>
                               <div className="text-right">
                                 <p className="font-bold text-lg text-amber-600">
-                                  {item.totalAmount.toFixed(3)}
+                                  {currentRegion.code === 'om'
+                                    ? formatPrice(item.totalAmount, currentRegion.code, isArabic)
+                                    : item.totalAmount.toFixed(3)}
                                 </p>
-                                <p className="text-xs text-gray-500">
-                                  {isArabic ? 'ر.ع' : 'OMR'}
-                                </p>
+                                {currentRegion.code !== 'om' && (
+                                  <p className="text-xs text-gray-500">
+                                    {isArabic ? currentRegion.currencySymbol : currentRegion.currency}
+                                  </p>
+                                )}
                               </div>
                             </div>
                           </div>

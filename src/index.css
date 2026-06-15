@@ -1,6 +1,15 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+@font-face {
+  font-family: 'Omani Rial Symbol';
+  src: url('/fonts/omani-rial/omani-rial.ttf') format('truetype');
+  font-display: block;
+  font-style: normal;
+  font-weight: 400;
+  unicode-range: U+20C4;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -244,7 +253,7 @@ video[autoplay][loop][muted][playsinline] {
 
 /* Arabic Font Classes */
 .font-cairo {
-  font-family: 'Cairo', system-ui, -apple-system, sans-serif;
+  font-family: 'Cairo', 'Omani Rial Symbol', system-ui, -apple-system, sans-serif;
 }
 
 /* RTL Support */
@@ -269,12 +278,12 @@ video[autoplay][loop][muted][playsinline] {
 
 /* Arabic Font Support */
 html[lang="ar"] {
-  font-family: 'Cairo', system-ui, -apple-system, sans-serif;
+  font-family: 'Cairo', 'Omani Rial Symbol', system-ui, -apple-system, sans-serif;
   direction: rtl;
 }
 
 html[lang="en"] {
-  font-family: 'Inter Variable', 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: 'Inter Variable', 'Inter', 'Omani Rial Symbol', system-ui, -apple-system, sans-serif;
   direction: ltr;
 }
 

@@ -1,3 +1,5 @@
+import { OMANI_RIAL_SYMBOL } from '../../lib/regionUtils';
+
 interface Props {
   minPrice: number | null;
   maxPrice: number | null;
@@ -10,11 +12,20 @@ export const PriceDisplay = ({
   currency = 'OMR',
 }: Props) => {
   const formatAmount = (price: number) => price.toFixed(3);
+  const isOmaniRial = currency === 'OMR';
 
   const renderPrice = (price: number) => (
-    <span className="inline-flex items-baseline gap-1 whitespace-nowrap">
+    <span
+      className="inline-flex items-baseline gap-1 whitespace-nowrap"
+      aria-label={`${formatAmount(price)} ${currency}`}
+    >
+      {isOmaniRial && (
+        <span aria-hidden="true" className="text-xs font-medium text-stone-500">
+          {OMANI_RIAL_SYMBOL}
+        </span>
+      )}
       <span className="text-base font-bold text-stone-900">{formatAmount(price)}</span>
-      <span className="text-xs font-medium text-stone-500">{currency}</span>
+      {!isOmaniRial && <span className="text-xs font-medium text-stone-500">{currency}</span>}
     </span>
   );
 

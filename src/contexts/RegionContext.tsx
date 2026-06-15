@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { RegionContext, type RegionCode, type RegionConfig } from './RegionContextDefinition';
 import { safeStorage } from '../lib/safeStorage';
+import { OMANI_RIAL_SYMBOL } from '../lib/regionUtils';
 
 interface RegionProviderProps {
   children: ReactNode;
@@ -15,7 +16,7 @@ const REGIONS: Record<RegionCode, RegionConfig> = {
     name: 'Oman',
     nameAr: 'عُمان',
     currency: 'OMR',
-    currencySymbol: 'ر.ع.',
+    currencySymbol: OMANI_RIAL_SYMBOL,
     apiBaseUrl: import.meta.env.VITE_API_BASE_URL_OM || 'https://api.spirithubcafe.com',
     locale: 'ar-OM',
     flag: '🇴🇲',

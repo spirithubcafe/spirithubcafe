@@ -1,5 +1,6 @@
 import { useRegion } from '../../hooks/useRegion';
 import { useTranslation } from 'react-i18next';
+import { formatPrice as formatRegionalPrice } from '../../lib/regionUtils';
 
 interface PriceDisplayProps {
   price: number;
@@ -19,15 +20,11 @@ export const PriceDisplay: React.FC<PriceDisplayProps> = ({
   const { i18n } = useTranslation();
   const isArabic = i18n.language === 'ar';
 
-  const formattedPrice = price.toFixed(3);
-  
-  // Show currency symbol for Arabic, currency code for English
-  const currencyDisplay = isArabic ? currentRegion.currencySymbol : currentRegion.currency;
-
   return (
     <span className={className}>
-      {formattedPrice}
-      {showCurrency && <span className="currency-symbol"> {currencyDisplay}</span>}
+      {showCurrency
+        ? formatRegionalPrice(price, currentRegion.code, isArabic)
+        : price.toFixed(3)}
     </span>
   );
 };
@@ -41,20 +38,13 @@ export const usePrice = () => {
   const isArabic = i18n.language === 'ar';
 
   const formatPrice = (price: number, showCurrency: boolean = true): string => {
-    const formattedPrice = price.toFixed(3);
-    const currencyDisplay = isArabic ? currentRegion.currencySymbol : currentRegion.currency;
-
-    if (showCurrency) {
-      return `${formattedPrice} ${currencyDisplay}`;
-    }
-
-    return formattedPrice;
+    return showCurrency
+      ? formatRegionalPrice(price, currentRegion.code, isArabic)
+      : price.toFixed(3);
   };
 
   const formatPriceWithCurrency = (price: number): string => {
-    const formattedPrice = price.toFixed(3);
-    const currencyDisplay = isArabic ? currentRegion.currencySymbol : currentRegion.currency;
-    return `${formattedPrice} ${currencyDisplay}`;
+    return formatRegionalPrice(price, currentRegion.code, isArabic);
   };
 
   return {
