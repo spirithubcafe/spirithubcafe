@@ -1,4 +1,5 @@
-﻿import type { Order } from '../../types/order';
+﻿import { OMANI_RIAL_SYMBOL } from '../../lib/regionUtils';
+import type { Order } from '../../types/order';
 
 // â”€â”€â”€ helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
@@ -74,7 +75,7 @@ export function generatePremiumInvoiceHTML(order: Order, isArabic = false): stri
   const dir = isArabic ? 'rtl' : 'ltr';
   const al = isArabic ? 'right' : 'left';
   const ar = isArabic ? 'left' : 'right';
-  const currency = isArabic ? 'Ø±.Ø¹.' : 'OMR';
+  const formatMoney = (amount: number) => `<span class="omr-symbol">${OMANI_RIAL_SYMBOL}</span> ${amount.toFixed(3)}`;
   const subtotal = (order.subTotal ?? order.totalAmount - (order.shippingCost ?? 0));
   const shipping = order.shippingCost ?? 0;
   const total = order.totalAmount;
@@ -99,8 +100,8 @@ export function generatePremiumInvoiceHTML(order: Order, isArabic = false): stri
           ${variant}
         </td>
         <td class="col-qty" data-label="${qtyLabel}" style="padding:10px 16px;border-bottom:1px solid #e0d8cc;text-align:center;font-size:13px;color:#555;">${item.quantity}</td>
-        <td class="col-price" data-label="${priceLabel}" style="padding:10px 16px;border-bottom:1px solid #e0d8cc;text-align:${ar};font-size:13px;color:#555;white-space:nowrap;">${(item.unitPrice ?? 0).toFixed(3)} ${currency}</td>
-        <td class="col-total" data-label="${totalLabel}" style="padding:10px 16px;border-bottom:1px solid #e0d8cc;text-align:${ar};font-size:13px;font-weight:600;color:#2c2c2c;white-space:nowrap;">${(item.totalAmount ?? 0).toFixed(3)} ${currency}</td>
+        <td class="col-price" data-label="${priceLabel}" style="padding:10px 16px;border-bottom:1px solid #e0d8cc;text-align:${ar};font-size:13px;color:#555;white-space:nowrap;">${formatMoney(item.unitPrice ?? 0)}</td>
+        <td class="col-total" data-label="${totalLabel}" style="padding:10px 16px;border-bottom:1px solid #e0d8cc;text-align:${ar};font-size:13px;font-weight:600;color:#2c2c2c;white-space:nowrap;">${formatMoney(item.totalAmount ?? 0)}</td>
       </tr>`;
   }).join('');
 
@@ -119,7 +120,7 @@ export function generatePremiumInvoiceHTML(order: Order, isArabic = false): stri
   const discountRow = (order.discountAmount ?? 0) > 0 ? `
     <div style="padding:10px 20px;display:flex;justify-content:space-between;align-items:center;font-size:13px;border-bottom:1px solid #f0ebe0;">
       <span style="color:#777;">${isArabic ? 'Ø§Ù„Ø®ØµÙ…' : 'Discount'}${order.couponCode ? ` (${esc(order.couponCode)})` : ''}:</span>
-      <span style="font-weight:600;color:#059669;">-${(order.discountAmount!).toFixed(3)} ${currency}</span>
+      <span style="font-weight:600;color:#059669;">-${formatMoney(order.discountAmount!)}</span>
     </div>` : '';
 
   /* â”€â”€ notes section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
@@ -164,6 +165,14 @@ export function generatePremiumInvoiceHTML(order: Order, isArabic = false): stri
   <title>${esc(order.orderNumber)}</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    @font-face {
+      font-family: 'Omani Rial Symbol';
+      src: url('/fonts/omani-rial/omani-rial.ttf') format('truetype');
+      font-display: block;
+      font-style: normal;
+      font-weight: 400;
+      unicode-range: U+20C4;
+    }
     @page { size: A4 portrait; margin: 10mm 12mm; }
     @media print {
       body { margin: 0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -215,6 +224,13 @@ export function generatePremiumInvoiceHTML(order: Order, isArabic = false): stri
     .summary-row { display: flex; justify-content: flex-end; margin-bottom: 10px; }
     .summary-box { min-width: 260px; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 6px rgba(0,0,0,0.07); }
     .invoice-footer-bar { background: #f7f6f5; border-radius: 12px; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; gap: 24px; page-break-inside: avoid; }
+    .omr-symbol {
+      font-family: 'Omani Rial Symbol', 'Inter', 'Segoe UI', Arial, sans-serif;
+      font-weight: 400;
+      font-size: 0.9em;
+      line-height: 1;
+      vertical-align: -0.04em;
+    }
     @media screen and (max-width: 820px) {
       body {
         max-width: 100%;
@@ -410,16 +426,16 @@ export function generatePremiumInvoiceHTML(order: Order, isArabic = false): stri
     <div class="summary-box">
       <div style="padding:10px 20px;display:flex;justify-content:space-between;align-items:center;font-size:13px;border-bottom:1px solid #f0ebe0;">
         <span style="color:#777;">${isArabic ? 'Ø§Ù„Ù…Ø¬Ù…ÙˆØ¹ Ø§Ù„ÙØ±Ø¹ÙŠ' : 'Subtotal'}:</span>
-        <span style="font-weight:600;color:#2c2c2c;">${subtotal.toFixed(3)} ${currency}</span>
+        <span style="font-weight:600;color:#2c2c2c;">${formatMoney(subtotal)}</span>
       </div>
       <div style="padding:10px 20px;display:flex;justify-content:space-between;align-items:center;font-size:13px;border-bottom:1px solid #f0ebe0;">
         <span style="color:#777;">${isArabic ? 'Ø§Ù„Ø´Ø­Ù†' : 'Shipping'}:</span>
-        <span style="font-weight:600;color:#2c2c2c;">${shipping.toFixed(3)} ${currency}</span>
+        <span style="font-weight:600;color:#2c2c2c;">${formatMoney(shipping)}</span>
       </div>
       ${discountRow}
       <div style="padding:12px 20px;background:#c8a97e;display:flex;justify-content:space-between;align-items:center;">
         <span style="font-size:15px;font-weight:700;color:#fff;letter-spacing:0.5px;">${isArabic ? 'Ø§Ù„Ø¥Ø¬Ù…Ø§Ù„ÙŠ' : 'TOTAL'}:</span>
-        <span style="font-size:18px;font-weight:700;color:#fff;">${total.toFixed(3)} ${currency}</span>
+        <span style="font-size:18px;font-weight:700;color:#fff;">${formatMoney(total)}</span>
       </div>
     </div>
   </div>

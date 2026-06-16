@@ -1,4 +1,5 @@
 import React from 'react';
+import { OMANI_RIAL_SYMBOL } from '../../lib/regionUtils';
 import type { Order } from '../../types/order';
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
@@ -92,7 +93,18 @@ export interface InvoiceDocumentProps {
 
 export const InvoiceDocument: React.FC<InvoiceDocumentProps> = ({ order, isArabic = false }) => {
   const dir = isArabic ? 'rtl' : 'ltr';
-  const currency = isArabic ? 'ر.ع.' : 'OMR';
+  const formatMoney = (amount: number) => (
+    <>
+      <span
+        aria-hidden="true"
+        style={{ fontFamily: "'Omani Rial Symbol', 'Inter', 'Segoe UI', Arial, sans-serif" }}
+        className="inline-block text-[0.9em] font-normal leading-none align-[-0.04em]"
+      >
+        {OMANI_RIAL_SYMBOL}
+      </span>{' '}
+      <span>{amount.toFixed(3)}</span>
+    </>
+  );
   const subtotal = (order.subTotal ?? order.totalAmount - (order.shippingCost ?? 0));
   const shipping = order.shippingCost ?? 0;
   const total = order.totalAmount;
@@ -250,10 +262,10 @@ export const InvoiceDocument: React.FC<InvoiceDocumentProps> = ({ order, isArabi
                     {item.quantity}
                   </td>
                   <td className="px-4 py-3 border-b border-[#e0d8cc] text-right text-[13px] text-[#555] whitespace-nowrap">
-                    {(item.unitPrice ?? 0).toFixed(3)} {currency}
+                    {formatMoney(item.unitPrice ?? 0)}
                   </td>
                   <td className="px-4 py-3 border-b border-[#e0d8cc] text-right text-[13px] font-semibold text-[#2c2c2c] whitespace-nowrap">
-                    {(item.totalAmount ?? 0).toFixed(3)} {currency}
+                    {formatMoney(item.totalAmount ?? 0)}
                   </td>
                 </tr>
               ))}
@@ -266,25 +278,25 @@ export const InvoiceDocument: React.FC<InvoiceDocumentProps> = ({ order, isArabi
           <div className="w-64 bg-white rounded-xl shadow-sm overflow-hidden">
             <div className="px-5 py-3 flex justify-between items-center text-[13px] border-b border-[#f0ebe0]">
               <span className="text-[#777]">{isArabic ? 'المجموع الفرعي' : 'Subtotal'}:</span>
-              <span className="font-semibold text-[#2c2c2c]">{subtotal.toFixed(3)} {currency}</span>
+              <span className="font-semibold text-[#2c2c2c]">{formatMoney(subtotal)}</span>
             </div>
             <div className="px-5 py-3 flex justify-between items-center text-[13px] border-b border-[#f0ebe0]">
               <span className="text-[#777]">{isArabic ? 'الشحن' : 'Shipping'}:</span>
-              <span className="font-semibold text-[#2c2c2c]">{shipping.toFixed(3)} {currency}</span>
+              <span className="font-semibold text-[#2c2c2c]">{formatMoney(shipping)}</span>
             </div>
             {(order.discountAmount ?? 0) > 0 && (
               <div className="px-5 py-3 flex justify-between items-center text-[13px] border-b border-[#f0ebe0]">
                 <span className="text-[#777]">
                   {isArabic ? 'الخصم' : 'Discount'}{order.couponCode ? ` (${order.couponCode})` : ''}:
                 </span>
-                <span className="font-semibold text-emerald-600">-{(order.discountAmount!).toFixed(3)} {currency}</span>
+                <span className="font-semibold text-emerald-600">-{formatMoney(order.discountAmount!)}</span>
               </div>
             )}
             <div className="px-5 py-3 bg-[#c8a97e] flex justify-between items-center">
               <span className="text-[15px] font-bold text-white tracking-wide">
                 {isArabic ? 'الإجمالي' : 'TOTAL'}:
               </span>
-              <span className="text-[18px] font-bold text-white">{total.toFixed(3)} {currency}</span>
+              <span className="text-[18px] font-bold text-white">{formatMoney(total)}</span>
             </div>
           </div>
         </div>
