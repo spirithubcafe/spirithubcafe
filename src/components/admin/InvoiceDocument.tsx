@@ -107,6 +107,7 @@ export const InvoiceDocument: React.FC<InvoiceDocumentProps> = ({ order, isArabi
   );
   const subtotal = (order.subTotal ?? order.totalAmount - (order.shippingCost ?? 0));
   const shipping = order.shippingCost ?? 0;
+  const tax = order.taxAmount ?? (order.items ?? []).reduce((sum, item) => sum + (item.taxAmount ?? 0), 0);
   const total = order.totalAmount;
   const orderDate = fmtDate(order.createdAt);
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=100x100&bgcolor=f5f1ea&color=4a3728&data=${encodeURIComponent('https://spirithubcafe.com')}`;
@@ -284,6 +285,12 @@ export const InvoiceDocument: React.FC<InvoiceDocumentProps> = ({ order, isArabi
               <span className="text-[#777]">{isArabic ? 'الشحن' : 'Shipping'}:</span>
               <span className="font-semibold text-[#2c2c2c]">{formatMoney(shipping)}</span>
             </div>
+            {tax > 0 && (
+              <div className="px-5 py-3 flex justify-between items-center text-[13px] border-b border-[#f0ebe0]">
+                <span className="text-[#777]">{isArabic ? 'الضريبة' : 'Tax'}:</span>
+                <span className="font-semibold text-[#2c2c2c]">{formatMoney(tax)}</span>
+              </div>
+            )}
             {(order.discountAmount ?? 0) > 0 && (
               <div className="px-5 py-3 flex justify-between items-center text-[13px] border-b border-[#f0ebe0]">
                 <span className="text-[#777]">

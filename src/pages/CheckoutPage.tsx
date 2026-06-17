@@ -28,6 +28,8 @@ import { computeShippingMethods, calculateAramexShippingRate, GCC_LOCATIONS } fr
 import { useShopPage } from '@/hooks/useShop';
 import { formatPrice, OMANI_RIAL_SYMBOL } from '@/lib/regionUtils';
 import { OmaniRialPrice } from '../components/ui/OmaniRialPrice';
+import { categoryService } from '../services/categoryService';
+import type { Category as ApiCategory } from '../types/product';
 import {
   getAramexCountries,
   getAramexCities,
@@ -187,14 +189,17 @@ const looksLikeNetworkError = (msg?: string | null) => {
   );
 };
 
+const roundMoney = (value: number) => Math.round((value + Number.EPSILON) * 1000) / 1000;
+
 export const CheckoutPage: React.FC = () => {
-  const { language, products: appProducts } = useApp();
+  const { language, products: appProducts, allCategories } = useApp();
   const { isAuthenticated, user } = useAuth();
   const { currentRegion } = useRegion();
   const { shopData } = useShopPage();
   const isArabic = language === 'ar';
   const navigate = useNavigate();
   const { items, totalPrice } = useCart();
+  const [checkoutCategories, setCheckoutCategories] = useState<ApiCategory[]>([]);
 
   const form = useForm<CheckoutFormValues>({
     resolver: zodResolver(checkoutSchema),
@@ -330,6 +335,27 @@ export const CheckoutPage: React.FC = () => {
   // Load countries once (cached in localStorage for next visits)
   useEffect(() => {
     loadCountries();
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadCheckoutCategories = async () => {
+      try {
+        const categories = await categoryService.getAll({ includeInactive: false });
+        if (!cancelled) {
+          setCheckoutCategories(categories);
+        }
+      } catch (error) {
+        console.warn('Failed to load checkout tax categories', error);
+      }
+    };
+
+    loadCheckoutCategories();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // Prefetch cities for selected countries (cached per-country)
@@ -501,6 +527,43 @@ export const CheckoutPage: React.FC = () => {
 
   const subtotal = useMemo(() => totalPrice, [totalPrice]);
   const shippingCost = isNoolFreeShipping ? 0 : selectedShipping.price;
+  const taxPercentageByProductId = useMemo(() => {
+    const taxByProductId = new Map<number, number>();
+    const taxByCategoryId = new Map<string, number>();
+
+    for (const category of checkoutCategories) {
+      const taxPercentage = Number(category.taxPercentage ?? 0);
+      if (!Number.isFinite(taxPercentage) || taxPercentage <= 0) continue;
+      taxByCategoryId.set(String(category.id), taxPercentage);
+    }
+
+    for (const category of allCategories) {
+      const taxPercentage = Number(category.taxPercentage ?? 0);
+      if (!Number.isFinite(taxPercentage) || taxPercentage <= 0) continue;
+      taxByCategoryId.set(String(category.id), taxPercentage);
+    }
+
+    for (const category of shopData?.categories ?? []) {
+      const taxPercentage = Number(category.taxPercentage ?? 0);
+      if (!Number.isFinite(taxPercentage) || taxPercentage <= 0) continue;
+
+      taxByCategoryId.set(String(category.id), taxPercentage);
+      for (const product of category.products ?? []) {
+        taxByProductId.set(product.id, taxPercentage);
+      }
+    }
+
+    for (const product of appProducts) {
+      if (!product.categoryId) continue;
+      const taxPercentage = taxByCategoryId.get(String(product.categoryId));
+      const productId = Number(product.id);
+      if (taxPercentage && taxPercentage > 0 && Number.isFinite(productId)) {
+        taxByProductId.set(productId, taxPercentage);
+      }
+    }
+
+    return taxByProductId;
+  }, [allCategories, appProducts, checkoutCategories, shopData]);
   
   // Calculate discount amount
   const discountAmount = useMemo(() => {
@@ -512,8 +575,31 @@ export const CheckoutPage: React.FC = () => {
       return appliedCoupon.discountValue;
     }
   }, [appliedCoupon, subtotal]);
+
+  const taxAmount = useMemo(() => {
+    if (subtotal <= 0) return 0;
+
+    const taxableRatio = Math.max(0, subtotal - discountAmount) / subtotal;
+    const tax = items.reduce((sum, item) => {
+      const itemTaxPercentage = Number(
+        (item as unknown as { taxPercentage?: number }).taxPercentage ??
+        taxPercentageByProductId.get(item.productId) ??
+        taxPercentageByProductId.get(Number(item.id)) ??
+        0
+      );
+
+      if (!Number.isFinite(itemTaxPercentage) || itemTaxPercentage <= 0) {
+        return sum;
+      }
+
+      const discountedLineTotal = item.price * item.quantity * taxableRatio;
+      return sum + (discountedLineTotal * itemTaxPercentage) / 100;
+    }, 0);
+
+    return roundMoney(tax);
+  }, [discountAmount, items, subtotal, taxPercentageByProductId]);
   
-  const grandTotal = Math.max(0, subtotal - discountAmount + shippingCost);
+  const grandTotal = Math.max(0, roundMoney(subtotal - discountAmount + shippingCost + taxAmount));
 
   const aramexBlocked =
     selectedShipping.id === 'aramex' &&
@@ -636,6 +722,7 @@ export const CheckoutPage: React.FC = () => {
       totals: {
         subtotal,
         shipping: shippingCost,
+        tax: taxAmount,
         discount: discountAmount,
         total: grandTotal,
         couponCode: appliedCoupon?.code,
@@ -1471,6 +1558,12 @@ export const CheckoutPage: React.FC = () => {
                             : renderCurrency(shippingCost)}
                         </span>
                       </div>
+                      {taxAmount > 0 && (
+                        <div className="flex justify-between text-gray-600">
+                          <span>{isArabic ? 'Ø§Ù„Ø¶Ø±ÙŠØ¨Ø©' : 'Tax'}</span>
+                          <span>{renderCurrency(taxAmount)}</span>
+                        </div>
+                      )}
                       {appliedCoupon && discountAmount > 0 && (
                         <div className="flex justify-between text-green-600 font-medium">
                           <span>

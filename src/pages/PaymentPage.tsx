@@ -114,7 +114,8 @@ export const PaymentPage: React.FC = () => {
             if (productImagePath) {
               imageUrl = getProductImageUrl(productImagePath);
             }
-          } catch (error) {
+          } catch {
+            // Keep the order-provided image when product details are unavailable.
           }
           
           return {
@@ -159,8 +160,9 @@ export const PaymentPage: React.FC = () => {
           etaAr: orderDetails.shippingMethod === 1 ? 'فوري' : orderDetails.shippingMethod === 2 ? '1-2 أيام' : '2-3 أيام'
         },
         totals: {
-          subtotal: orderDetails.totalAmount - (orderDetails.shippingCost || 0),
+          subtotal: orderDetails.subTotal,
           shipping: orderDetails.shippingCost || 0,
+          tax: orderDetails.taxAmount || 0,
           total: orderDetails.totalAmount
         }
       };
@@ -752,6 +754,12 @@ export const PaymentPage: React.FC = () => {
                         : renderCurrency(order.totals.shipping)}
                     </span>
                   </div>
+                  {order.totals.tax && order.totals.tax > 0 && (
+                    <div className="flex justify-between text-gray-600">
+                      <span>{isArabic ? 'Ø§Ù„Ø¶Ø±ÙŠØ¨Ø©' : 'Tax'}</span>
+                      <span>{renderCurrency(order.totals.tax)}</span>
+                    </div>
+                  )}
                   {order.totals.discount && order.totals.discount > 0 && (
                     <div className="flex justify-between text-green-600 font-medium">
                       <span>

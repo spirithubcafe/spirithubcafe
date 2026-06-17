@@ -31,6 +31,7 @@ export interface CheckoutOrder {
   totals: {
     subtotal: number;
     shipping: number;
+    tax?: number;
     discount?: number;
     total: number;
     couponCode?: string;

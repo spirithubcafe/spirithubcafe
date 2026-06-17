@@ -18,6 +18,8 @@ export const InvoicePage: React.FC = () => {
   const [showActionSheet, setShowActionSheet] = useState(false);
   const [shareMessage, setShareMessage] = useState<string | null>(null);
   const [isPreparingPdf, setIsPreparingPdf] = useState(false);
+  const [omaniRialFontDataUrl, setOmaniRialFontDataUrl] = useState<string | null>(null);
+  const [omaniRialFontResolved, setOmaniRialFontResolved] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const hasTriggeredAutoPrint = useRef(false);
   const hasTriggeredAutoDownload = useRef(false);
@@ -29,6 +31,41 @@ export const InvoicePage: React.FC = () => {
   const autoPrint = searchParams.get('autoPrint') === '1';
   const autoDownload = searchParams.get('autoDownload') === '1';
   const safeOrderNumber = orderNumber ? decodeURIComponent(orderNumber) : '';
+
+  useEffect(() => {
+    let isActive = true;
+
+    const loadOmaniRialFont = async () => {
+      try {
+        const response = await fetch('/fonts/omani-rial/omani-rial.ttf');
+        if (!response.ok) return;
+
+        const blob = await response.blob();
+        const dataUrl = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(String(reader.result || ''));
+          reader.onerror = () => reject(reader.error);
+          reader.readAsDataURL(blob);
+        });
+
+        if (isActive && dataUrl) {
+          setOmaniRialFontDataUrl(dataUrl);
+        }
+      } catch {
+        // The invoice can still render with the normal font URL as a fallback.
+      } finally {
+        if (isActive) {
+          setOmaniRialFontResolved(true);
+        }
+      }
+    };
+
+    loadOmaniRialFont();
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
 
   useEffect(() => {
     let isActive = true;
@@ -73,8 +110,17 @@ export const InvoicePage: React.FC = () => {
 
   const invoiceHtml = useMemo(() => {
     if (!order) return '';
-    return generatePremiumInvoiceHTML(order, isArabic);
-  }, [order, isArabic]);
+    const html = generatePremiumInvoiceHTML(order, isArabic);
+    if (!omaniRialFontDataUrl) return html;
+    return html.replace(
+      "url('/fonts/omani-rial/omani-rial.ttf')",
+      `url('${omaniRialFontDataUrl}')`,
+    );
+  }, [order, isArabic, omaniRialFontDataUrl]);
+
+  useEffect(() => {
+    setFrameLoaded(false);
+  }, [invoiceHtml]);
 
   useEffect(() => {
     const previousTitle = document.title;
@@ -342,6 +388,21 @@ export const InvoicePage: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    if (
+      !autoDownload ||
+      !frameLoaded ||
+      !invoiceHtml ||
+      !omaniRialFontResolved ||
+      hasTriggeredAutoDownload.current
+    ) {
+      return;
+    }
+
+    hasTriggeredAutoDownload.current = true;
+    void handleDownload();
+  }, [autoDownload, frameLoaded, invoiceHtml, omaniRialFontResolved, handleDownload]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[#fafafa] flex items-center justify-center text-gray-600">
@@ -369,11 +430,6 @@ export const InvoicePage: React.FC = () => {
         srcDoc={invoiceHtml}
         onLoad={() => {
           setFrameLoaded(true);
-
-          if (autoDownload && !hasTriggeredAutoDownload.current) {
-            hasTriggeredAutoDownload.current = true;
-            void handleDownload();
-          }
         }}
         className="block w-full min-h-screen border-0"
       />

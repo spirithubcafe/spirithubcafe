@@ -78,6 +78,7 @@ export function generatePremiumInvoiceHTML(order: Order, isArabic = false): stri
   const formatMoney = (amount: number) => `<span class="omr-symbol">${OMANI_RIAL_SYMBOL}</span> ${amount.toFixed(3)}`;
   const subtotal = (order.subTotal ?? order.totalAmount - (order.shippingCost ?? 0));
   const shipping = order.shippingCost ?? 0;
+  const tax = order.taxAmount ?? (order.items ?? []).reduce((sum, item) => sum + (item.taxAmount ?? 0), 0);
   const total = order.totalAmount;
   const orderDate = fmtDate(order.createdAt);
   const printedAt = fmtDate(new Date());
@@ -121,6 +122,12 @@ export function generatePremiumInvoiceHTML(order: Order, isArabic = false): stri
     <div style="padding:10px 20px;display:flex;justify-content:space-between;align-items:center;font-size:13px;border-bottom:1px solid #f0ebe0;">
       <span style="color:#777;">${isArabic ? 'Ø§Ù„Ø®ØµÙ…' : 'Discount'}${order.couponCode ? ` (${esc(order.couponCode)})` : ''}:</span>
       <span style="font-weight:600;color:#059669;">-${formatMoney(order.discountAmount!)}</span>
+    </div>` : '';
+
+  const taxRow = tax > 0 ? `
+    <div style="padding:10px 20px;display:flex;justify-content:space-between;align-items:center;font-size:13px;border-bottom:1px solid #f0ebe0;">
+      <span style="color:#777;">${isArabic ? 'Ø§Ù„Ø¶Ø±ÙŠØ¨Ø©' : 'Tax'}:</span>
+      <span style="font-weight:600;color:#2c2c2c;">${formatMoney(tax)}</span>
     </div>` : '';
 
   /* â”€â”€ notes section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
@@ -432,6 +439,7 @@ export function generatePremiumInvoiceHTML(order: Order, isArabic = false): stri
         <span style="color:#777;">${isArabic ? 'Ø§Ù„Ø´Ø­Ù†' : 'Shipping'}:</span>
         <span style="font-weight:600;color:#2c2c2c;">${formatMoney(shipping)}</span>
       </div>
+      ${taxRow}
       ${discountRow}
       <div style="padding:12px 20px;background:#c8a97e;display:flex;justify-content:space-between;align-items:center;">
         <span style="font-size:15px;font-weight:700;color:#fff;letter-spacing:0.5px;">${isArabic ? 'Ø§Ù„Ø¥Ø¬Ù…Ø§Ù„ÙŠ' : 'TOTAL'}:</span>

@@ -13,6 +13,7 @@ export interface ShopCategory {
   descriptionAr: string | null;
   imagePath: string | null;
   shopDisplayOrder: number;
+  taxPercentage?: number;
   productCount: number;
   products: ShopProduct[];
 }

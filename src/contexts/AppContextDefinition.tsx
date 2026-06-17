@@ -34,6 +34,7 @@ export interface Category {
   description: string;
   image: string;
   displayOrder?: number;
+  taxPercentage?: number;
 }
 
 export interface AppContextType {

@@ -496,6 +496,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
           description: lang === 'ar' && cat.descriptionAr ? String(cat.descriptionAr) : String(cat.description || ''),
           image: imageUrl,
           displayOrder: typeof cat.displayOrder === 'number' ? cat.displayOrder : 0,
+          taxPercentage: typeof cat.taxPercentage === 'number' ? cat.taxPercentage : 0,
         };
       });
       
