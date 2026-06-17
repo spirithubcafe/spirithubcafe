@@ -18,10 +18,24 @@ interface SlideData {
 }
 
 const MOBILE_HERO_IMAGES = [
+  '/images/products/spirithub-mobile-hero-colombia-typica-watermelon-new-harvest.webp',
+  '/images/products/spirithub-mobile-hero-ethiopia-agamosa-gotiti-new-harvest.webp',
+  '/images/products/spirithub-mobile-hero-indonesia-black-orchid-new-harvest.webp',
   '/images/slides/spirithub-cold-brew-oman-muscat.webp',
   '/images/slides/spirithub-nitro-cascara.webp',
   '/images/slides/spirithub-cold-brew-smooth-low-acidity.webp',
 ];
+
+const MOBILE_HERO_IMAGE_ALTS = [
+  'SpiritHub Colombia Typica Watermelon new harvest specialty coffee',
+  'SpiritHub Ethiopia Agamosa Gotiti new harvest specialty coffee',
+  'SpiritHub Indonesia Black Orchid new harvest specialty coffee',
+  'SpiritHub cold brew specialty coffee in Muscat Oman',
+  'SpiritHub nitro cascara specialty coffee',
+  'SpiritHub smooth low acidity cold brew specialty coffee',
+];
+
+const NEW_HARVEST_MOBILE_IMAGE_COUNT = 3;
 
 // Kept for future re-enable of mobile hero video without changing current image-only behavior.
 const MOBILE_HERO_VIDEO_SRC = '/video/spirithub-specialty-coffee-roastery-mobile-banner.mp4';
@@ -340,6 +354,11 @@ export const ProfessionalHeroSlider: React.FC = () => {
 
   const currentSlideData = slides[currentSlide];
   const isHeroPrimaryTitle = currentSlideData?.id === '1';
+  const currentMobileHeroImage = MOBILE_HERO_IMAGES[mobileImageIndex];
+  const currentHeroImageAlt = isMobile
+    ? MOBILE_HERO_IMAGE_ALTS[mobileImageIndex] ?? currentSlideData.title
+    : currentSlideData.title;
+  const isNewHarvestMobileImage = isMobile && mobileImageIndex < NEW_HARVEST_MOBILE_IMAGE_COUNT;
 
   // Function to go to next slide - only on desktop
   const nextSlide = () => {
@@ -405,7 +424,7 @@ export const ProfessionalHeroSlider: React.FC = () => {
       {/* Background Images/Video with Fade Effect */}
       <div className="slider-backgrounds">
         <div
-          key={isMobile ? MOBILE_HERO_IMAGES[mobileImageIndex] : currentSlide}
+          key={isMobile ? currentMobileHeroImage : currentSlide}
           className={`slide-background ${!isMobile && currentSlide !== 0 ? 'slide-background--fade' : ''}`.trim()}
         >
           {isMobile && USE_MOBILE_HERO_VIDEO ? (
@@ -424,11 +443,11 @@ export const ProfessionalHeroSlider: React.FC = () => {
             <picture className="background-picture">
               <source
                 media="(max-width: 767.98px)"
-                srcSet={MOBILE_HERO_IMAGES[mobileImageIndex]}
+                srcSet={currentMobileHeroImage}
               />
               <img
                 src={currentSlideData.image}
-                alt={currentSlideData.title}
+                alt={currentHeroImageAlt}
                 className={`background-image ${currentSlideData.imageClassName ?? ''}`.trim()}
                 fetchPriority={currentSlide === 0 ? 'high' : 'auto'}
                 loading={currentSlide === 0 ? 'eager' : 'lazy'}
@@ -481,25 +500,27 @@ export const ProfessionalHeroSlider: React.FC = () => {
               className="content-section max-w-4xl mx-auto text-center"
             >
               {/* Main Title */}
-              <h1 className="slide-title">
-                {isHeroPrimaryTitle && language !== 'ar' ? (
-                  <>
-                    PREMIUM SPECIALTY COFFEE ROASTED IN{' '}
-                    <span className="title-underline-red">OMAN</span>
-                    {' '}AND{' '}
-                    <span className="title-underline-green">SAUDI ARABIA</span>
-                  </>
-                ) : isHeroPrimaryTitle && language === 'ar' ? (
-                  <>
-                    {`\u0642\u0647\u0648\u0629 \u0645\u062e\u062a\u0635\u0629 \u062a\u064f\u062d\u0645\u0651\u0635 \u0628\u0625\u062a\u0642\u0627\u0646 \u0641\u064a `}
-                    <span className="title-underline-red">{`\u0639\u064f\u0645\u0627\u0646`}</span>
-                    {` \u0648`}
-                    <span className="title-underline-green">{`\u0627\u0644\u0633\u0639\u0648\u062f\u064a\u0629`}</span>
-                  </>
-                ) : (
-                  currentSlideData.title
-                )}
-              </h1>
+              {!isNewHarvestMobileImage && (
+                <h1 className="slide-title">
+                  {isHeroPrimaryTitle && language !== 'ar' ? (
+                    <>
+                      PREMIUM SPECIALTY COFFEE ROASTED IN{' '}
+                      <span className="title-underline-red">OMAN</span>
+                      {' '}AND{' '}
+                      <span className="title-underline-green">SAUDI ARABIA</span>
+                    </>
+                  ) : isHeroPrimaryTitle && language === 'ar' ? (
+                    <>
+                      {`\u0642\u0647\u0648\u0629 \u0645\u062e\u062a\u0635\u0629 \u062a\u064f\u062d\u0645\u0651\u0635 \u0628\u0625\u062a\u0642\u0627\u0646 \u0641\u064a `}
+                      <span className="title-underline-red">{`\u0639\u064f\u0645\u0627\u0646`}</span>
+                      {` \u0648`}
+                      <span className="title-underline-green">{`\u0627\u0644\u0633\u0639\u0648\u062f\u064a\u0629`}</span>
+                    </>
+                  ) : (
+                    currentSlideData.title
+                  )}
+                </h1>
+              )}
 
               {/* CTA Button */}
               <div className="slide-cta flex justify-center">
