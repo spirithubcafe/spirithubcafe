@@ -21,18 +21,12 @@ const MOBILE_HERO_IMAGES = [
   '/images/products/spirithub-mobile-hero-colombia-typica-watermelon-new-harvest.webp',
   '/images/products/spirithub-mobile-hero-ethiopia-agamosa-gotiti-new-harvest.webp',
   '/images/products/spirithub-mobile-hero-indonesia-black-orchid-new-harvest.webp',
-  '/images/slides/spirithub-cold-brew-oman-muscat.webp',
-  '/images/slides/spirithub-nitro-cascara.webp',
-  '/images/slides/spirithub-cold-brew-smooth-low-acidity.webp',
 ];
 
 const MOBILE_HERO_IMAGE_ALTS = [
   'SpiritHub Colombia Typica Watermelon new harvest specialty coffee',
   'SpiritHub Ethiopia Agamosa Gotiti new harvest specialty coffee',
   'SpiritHub Indonesia Black Orchid new harvest specialty coffee',
-  'SpiritHub cold brew specialty coffee in Muscat Oman',
-  'SpiritHub nitro cascara specialty coffee',
-  'SpiritHub smooth low acidity cold brew specialty coffee',
 ];
 
 const NEW_HARVEST_MOBILE_IMAGE_COUNT = 3;
@@ -60,7 +54,7 @@ export const ProfessionalHeroSlider: React.FC = () => {
     let rafId: number | null = null;
 
     const checkIsMobile = () => {
-      const nextIsMobile = window.innerWidth < 768;
+      const nextIsMobile = window.innerWidth <= 768;
       setIsMobile((prev) => (prev === nextIsMobile ? prev : nextIsMobile));
     };
 
@@ -354,11 +348,13 @@ export const ProfessionalHeroSlider: React.FC = () => {
 
   const currentSlideData = slides[currentSlide];
   const isHeroPrimaryTitle = currentSlideData?.id === '1';
-  const currentMobileHeroImage = MOBILE_HERO_IMAGES[mobileImageIndex];
+  const safeMobileImageIndex = mobileImageIndex % MOBILE_HERO_IMAGES.length;
+  const currentMobileHeroImage = MOBILE_HERO_IMAGES[safeMobileImageIndex];
   const currentHeroImageAlt = isMobile
-    ? MOBILE_HERO_IMAGE_ALTS[mobileImageIndex] ?? currentSlideData.title
+    ? MOBILE_HERO_IMAGE_ALTS[safeMobileImageIndex] ?? currentSlideData.title
     : currentSlideData.title;
-  const isNewHarvestMobileImage = isMobile && mobileImageIndex < NEW_HARVEST_MOBILE_IMAGE_COUNT;
+  const currentHeroImageSrc = isMobile ? currentMobileHeroImage : currentSlideData.image;
+  const isNewHarvestMobileImage = isMobile && safeMobileImageIndex < NEW_HARVEST_MOBILE_IMAGE_COUNT;
 
   // Function to go to next slide - only on desktop
   const nextSlide = () => {
@@ -442,11 +438,11 @@ export const ProfessionalHeroSlider: React.FC = () => {
           ) : (
             <picture className="background-picture">
               <source
-                media="(max-width: 767.98px)"
+                media="(max-width: 768px)"
                 srcSet={currentMobileHeroImage}
               />
               <img
-                src={currentSlideData.image}
+                src={currentHeroImageSrc}
                 alt={currentHeroImageAlt}
                 className={`background-image ${currentSlideData.imageClassName ?? ''}`.trim()}
                 fetchPriority={currentSlide === 0 ? 'high' : 'auto'}
