@@ -62,6 +62,7 @@ import {
   Mail,
   Smartphone,
   Tag,
+  Sprout,
 } from 'lucide-react';
 
 interface AdminNavItem {
@@ -294,6 +295,14 @@ export const AdminLayout: React.FC = () => {
       roles: ['Admin', 'Manager'],
     },
     {
+      id: 'producers',
+      label: 'Producers',
+      description: 'Manage coffee producers and homepage visibility',
+      icon: Sprout,
+      path: '/admin/producers',
+      roles: ['Admin', 'Manager'],
+    },
+    {
       id: 'orders',
       label: t('admin.manageOrders'),
       description: t('admin.ordersDesc'),
@@ -451,7 +460,7 @@ export const AdminLayout: React.FC = () => {
       id: 'management',
       label: t('admin.navGroups.management'),
       items: availableNavItems.filter((item) =>
-        ['categories', 'products', 'productTags', 'users', 'reviews'].includes(item.id)
+        ['categories', 'products', 'productTags', 'producers', 'users', 'reviews'].includes(item.id)
       ),
     },
     {

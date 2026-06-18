@@ -19,6 +19,7 @@ import { WhatsAppActivationManagement } from './WhatsAppActivationManagement';
 import { WhatsAppNotificationSettingsManagement } from './WhatsAppNotificationSettingsManagement';
 import { WhatsAppTemplatesManagement } from './WhatsAppTemplatesManagement';
 import { ProductTagsManagement } from './ProductTagsManagement';
+import { ProducersManagement } from './ProducersManagement';
 import { CategoryAddPage } from '../../pages/CategoryAddPage';
 import { CategoryEditPage } from '../../pages/CategoryEditPage';
 import { ProductAddPage } from '../../pages/ProductAddPage';
@@ -38,6 +39,7 @@ export default function AdminRoutes() {
         <Route path="products/edit/:productId" element={<ProductEditPage />} />
         <Route path="products/:id/attributes" element={<ProductAttributesPage />} />
         <Route path="product-tags" element={<ProductTagsManagement />} />
+        <Route path="producers" element={<ProducersManagement />} />
         <Route path="seo" element={<SeoManagement />} />
         <Route path="users" element={<UsersManagement />} />
         <Route path="orders" element={<OrdersManagement />} />

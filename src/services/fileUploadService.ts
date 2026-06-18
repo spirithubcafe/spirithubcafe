@@ -60,6 +60,7 @@ export interface StorageStats {
 
 export type FolderType = 
   | 'products' 
+  | 'producers'
   | 'categories' 
   | 'slides' 
   | 'banners' 
