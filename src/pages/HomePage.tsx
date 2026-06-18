@@ -13,6 +13,7 @@ const CoffeeSelectionSection = lazy(() => import('../components/sections/CoffeeS
 const UnifiedCategoriesSection = lazy(() => import('../components/sections/UnifiedCategoriesSection').then((m) => ({ default: m.UnifiedCategoriesSection })));
 const GoogleReviewsSection = lazy(() => import('@/components/sections/GoogleReviewsSection').then((m) => ({ default: m.GoogleReviewsSection })));
 const InstagramSection = lazy(() => import('@/components/sections/InstagramSection').then((m) => ({ default: m.InstagramSection })));
+const ProducerHomepageSection = lazy(() => import('@/components/sections/ProducerHomepageSection').then((m) => ({ default: m.ProducerHomepageSection })));
 const SHOW_EDITORIAL_CONTENT = import.meta.env.VITE_SHOW_HOME_EDITORIAL === 'true';
 
 const HomePage: React.FC = () => {
@@ -91,13 +92,13 @@ const HomePage: React.FC = () => {
 
   useEffect(() => {
     if (showProductSections) {
-      void fetchProducts();
+      void fetchProducts(true);
     }
   }, [fetchProducts, showProductSections]);
 
   useEffect(() => {
     if (showCarouselSections) {
-      void fetchCategories();
+      void fetchCategories(true);
     }
   }, [fetchCategories, showCarouselSections]);
 
@@ -330,6 +331,7 @@ const HomePage: React.FC = () => {
           <Suspense fallback={<div className="min-h-[60vh]" aria-hidden="true" />}>
             <UnifiedCategoriesSection />
             <GoogleReviewsSection />
+            <ProducerHomepageSection />
             <InstagramSection />
           </Suspense>
         ) : (

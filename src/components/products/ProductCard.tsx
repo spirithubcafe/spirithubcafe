@@ -7,6 +7,7 @@ import { Button } from '../ui/button';
 import { useCart } from '../../hooks/useCart';
 import { useFavorites } from '../../hooks/useFavorites';
 import { useRegion } from '../../hooks/useRegion';
+import { useApp } from '../../hooks/useApp';
 import { formatPrice } from '../../lib/regionUtils';
 import type { Product } from '../../contexts/AppContextDefinition';
 import { buildResponsiveSrcSet, getProductImageUrl, handleImageError } from '../../lib/imageUtils';
@@ -23,9 +24,10 @@ interface ProductCardProps {
 }
 
 const ProductCardComponent: React.FC<ProductCardProps> = ({ product, prioritizeImage = false }) => {
-  const { i18n, t } = useTranslation();
+  const { t } = useTranslation();
   const navigate = useNavigate();
-  const isArabic = i18n.language === 'ar';
+  const { language } = useApp();
+  const isArabic = language === 'ar';
   const { addToCart, openCart } = useCart();
   const { toggleFavorite, isFavorite } = useFavorites();
   const { currentRegion } = useRegion();
@@ -38,6 +40,24 @@ const ProductCardComponent: React.FC<ProductCardProps> = ({ product, prioritizeI
 
   const isWishlisted = isFavorite(product.id);
   const productImage = product.image || getProductImageUrl(undefined);
+  const productName = isArabic ? product.nameAr || product.name : product.name;
+  const productDescription = isArabic
+    ? product.descriptionAr || product.description
+    : product.description;
+  const productCategory = isArabic ? product.categoryAr || product.category : product.category;
+  const productTastingNotes = isArabic
+    ? product.tastingNotesAr || product.tastingNotes
+    : product.tastingNotes;
+  const localizedProduct = useMemo(
+    () => ({
+      ...product,
+      name: productName,
+      description: productDescription,
+      category: productCategory,
+      tastingNotes: productTastingNotes,
+    }),
+    [product, productCategory, productDescription, productName, productTastingNotes],
+  );
   // Memoize srcSet generation to avoid creating 4 new URL objects on every render
   const productImageSrcSet = useMemo(
     () => buildResponsiveSrcSet(productImage),
@@ -51,10 +71,10 @@ const ProductCardComponent: React.FC<ProductCardProps> = ({ product, prioritizeI
     const favoriteItem = {
       id: product.id,
       slug: product.slug,
-      name: product.name,
+      name: productName,
       price: product.price,
       image: product.image || getProductImageUrl(undefined),
-      category: product.category,
+      category: productCategory,
       rating: 4.5 // Default rating since Product doesn't have rating field
     };
     
@@ -76,10 +96,10 @@ const ProductCardComponent: React.FC<ProductCardProps> = ({ product, prioritizeI
       id: product.id,
       productId: isNaN(productId) ? 0 : productId,
       productVariantId: null,
-      name: product.name,
+      name: productName,
       price: product.price,
       image: product.image || getProductImageUrl(undefined),
-      tastingNotes: product.tastingNotes,
+      tastingNotes: productTastingNotes,
       variantName: undefined,
       weight: undefined,
       weightUnit: undefined,
@@ -151,7 +171,7 @@ const ProductCardComponent: React.FC<ProductCardProps> = ({ product, prioritizeI
           src={productImage}
           srcSet={productImageSrcSet}
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 319px"
-          alt={product.name}
+          alt={productName}
           className="w-full h-full object-cover"
           loading={prioritizeImage ? 'eager' : 'lazy'}
           fetchPriority={prioritizeImage ? 'high' : 'auto'}
@@ -182,7 +202,7 @@ const ProductCardComponent: React.FC<ProductCardProps> = ({ product, prioritizeI
         {isAnimating && (
           <img
             src={productImage}
-            alt={product.name}
+            alt={productName}
             className="product-card-cart-fly absolute inset-0 w-full h-full object-cover pointer-events-none"
             style={{ '--cart-fly-x': isArabic ? '-300px' : '300px' } as React.CSSProperties}
           />
@@ -195,19 +215,19 @@ const ProductCardComponent: React.FC<ProductCardProps> = ({ product, prioritizeI
       {/* Product Content - Compact */}
       <CardContent className="p-3 pt-1">
         {/* Category Badge */}
-        {product.category && (
+        {productCategory && (
           <div className="mb-1 min-h-6 flex items-center">
             <span className="inline-block px-2 py-0.5 text-xs font-medium text-amber-700 bg-amber-50 rounded-full border border-amber-200 whitespace-nowrap overflow-hidden text-ellipsis max-w-full">
-              {product.category}
+              {productCategory}
             </span>
           </div>
         )}
         
         <h3 className="font-bold text-sm text-gray-900 line-clamp-2 mb-1 group-hover:text-amber-600 transition-colors min-h-10">
-          {product.name}
+          {productName}
         </h3>
         <p className="text-xs text-amber-600 mb-2 line-clamp-1">
-          {(isArabic ? product.tastingNotesAr : product.tastingNotes) || '---'}
+          {productTastingNotes || '---'}
         </p>
         {/* Price at bottom */}
         <div className="flex items-center justify-between pt-2 border-t border-gray-100">
@@ -270,7 +290,7 @@ const ProductCardComponent: React.FC<ProductCardProps> = ({ product, prioritizeI
       {showQuickView ? (
         <Suspense fallback={null}>
           <ProductQuickView
-            product={product}
+            product={localizedProduct}
             open
             onOpenChange={handleQuickViewClose}
           />

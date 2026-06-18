@@ -18,6 +18,7 @@ export interface Product {
   categoryId?: string;
   categorySlug?: string;
   category: string;
+  categoryAr?: string;
   tastingNotes?: string;
   tastingNotesAr?: string;
   featured?: boolean;
@@ -31,7 +32,9 @@ export interface Category {
   id: string;
   slug?: string;
   name: string;
+  nameAr?: string;
   description: string;
+  descriptionAr?: string;
   image: string;
   displayOrder?: number;
   taxPercentage?: number;
@@ -45,7 +48,7 @@ export interface AppContextType {
   allCategories: Category[];
   loading: boolean;
   error: string | null;
-  fetchProducts: () => Promise<void>;
+  fetchProducts: (forceRefresh?: boolean) => Promise<void>;
   fetchCategories: (forceRefresh?: boolean) => Promise<void>;
   t: (key: string, options?: Record<string, unknown>) => string;
 }

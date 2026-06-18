@@ -10,6 +10,7 @@ import { buildResponsiveSrcSet, getCategoryImageUrl, handleImageError } from '..
 type UnifiedCategoryItem = {
   id: string;
   name: string;
+  nameAr?: string;
   image: string;
   href: string;
   group: 'coffee' | 'shop';
@@ -62,7 +63,8 @@ export const UnifiedCategoriesSection: React.FC = () => {
   const allItems = useMemo<UnifiedCategoryItem[]>(() => {
     const coffeeItems = categories.map((category) => ({
       id: `coffee-${category.id}`,
-      name: category.name,
+      name: isArabic ? category.nameAr || category.name : category.name,
+      nameAr: category.nameAr,
       image: category.image || '/images/slides/slide1.webp',
       href: `/products?category=${category.id}`,
       group: 'coffee' as const,

@@ -83,7 +83,7 @@ export const ChatBot: React.FC = () => {
   const regionPrefix = currentRegion.code === 'om' ? '/om' : currentRegion.code === 'sa' ? '/sa' : '';
   const assistantTitle = isAr
     ? '\u0645\u0633\u0627\u0639\u062f\u0643 \u0627\u0644\u0630\u0643\u064a'
-    : 'SPIRIHUB AI';
+    : 'SPIRITHUB AI';
 
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);

@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ProductCard } from '../products/ProductCard';
-import { useApp } from '../../hooks/useApp';
 import { productService } from '../../services/productService';
 import { getProductImageUrl } from '../../lib/imageUtils';
 import { normalizeProductTags } from '../../lib/productTagUtils';
@@ -9,7 +8,6 @@ import type { Product } from '../../contexts/AppContextDefinition';
 
 export const BestSellers: React.FC = () => {
   const { t } = useTranslation();
-  const { language } = useApp();
   const [bestSellerProducts, setBestSellerProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -50,7 +48,6 @@ export const BestSellers: React.FC = () => {
         const minPrice = typeof record.minPrice === 'number' ? record.minPrice : 0;
         const price = typeof record.price === 'number' ? record.price : minPrice;
         const imagePath = (record.mainImagePath as string) || (record.imagePath as string) || '';
-        const lang = language;
         return {
           id: String(record.id),
           slug: (record.slug as string) || undefined,
@@ -58,18 +55,17 @@ export const BestSellers: React.FC = () => {
           isOrderable: price > 0,
           isLimited: (record.isLimited as boolean) || undefined,
           isPremium: (record.isPremium as boolean) || undefined,
-          name: lang === 'ar' && record.nameAr ? String(record.nameAr) : String(record.name || ''),
+          name: String(record.name || record.nameAr || ''),
           nameAr: record.nameAr ? String(record.nameAr) : undefined,
-          description: lang === 'ar' && record.descriptionAr ? String(record.descriptionAr) : String(record.description || ''),
+          description: String(record.description || record.descriptionAr || ''),
           descriptionAr: record.descriptionAr ? String(record.descriptionAr) : undefined,
           price,
           image: imagePath ? getProductImageUrl(imagePath) : '',
           categoryId: record.categoryId != null ? String(record.categoryId) : undefined,
           categorySlug: (record.categorySlug as string) || undefined,
-          category: lang === 'ar'
-            ? String(record.categoryNameAr || record.categoryName || '')
-            : String(record.categoryName || record.categoryNameAr || ''),
-          tastingNotes: lang === 'ar' && record.tastingNotesAr ? String(record.tastingNotesAr) : (record.tastingNotes as string) || undefined,
+          category: String(record.categoryName || record.categoryNameAr || ''),
+          categoryAr: record.categoryNameAr ? String(record.categoryNameAr) : undefined,
+          tastingNotes: (record.tastingNotes as string) || (record.tastingNotesAr as string) || undefined,
           tastingNotesAr: record.tastingNotesAr ? String(record.tastingNotesAr) : undefined,
           featured: (record.isFeatured as boolean) || undefined,
           topTags: normalizeProductTags(record.topTags, 'Top'),
@@ -83,7 +79,7 @@ export const BestSellers: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [language]);
+  }, []);
 
   useEffect(() => {
     fetchBestSellers();

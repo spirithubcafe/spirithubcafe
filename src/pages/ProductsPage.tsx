@@ -160,6 +160,11 @@ export const ProductsPage = ({ hidePageChrome = false }: ProductsPageProps) => {
   const { shopData } = useShopPage(shouldLoadShopCategories);
 
   const isArabic = i18n.language === 'ar';
+  const getCategoryDisplayName = useCallback(
+    (category: { name: string; nameAr?: string }) =>
+      isArabic ? category.nameAr || category.name : category.name,
+    [isArabic],
+  );
 
   const coffeeProducts = products;
   const isProductsLoading = loading && coffeeProducts.length === 0;
@@ -183,14 +188,15 @@ export const ProductsPage = ({ hidePageChrome = false }: ProductsPageProps) => {
     );
 
     coffeeProducts.forEach((product, index) => {
-      const categoryName = product.category?.trim();
+      const categoryName = (isArabic ? product.categoryAr || product.category : product.category)?.trim();
       const categoryId = product.categoryId || product.categorySlug || categoryName;
       if (!categoryName || !categoryId || mergedCategories.has(categoryId)) return;
 
       mergedCategories.set(categoryId, {
         id: categoryId,
         slug: product.categorySlug,
-        name: categoryName,
+        name: product.category || categoryName,
+        nameAr: product.categoryAr,
         description: '',
         image: product.image || '',
         displayOrder: allCategories.length > 0
@@ -211,7 +217,7 @@ export const ProductsPage = ({ hidePageChrome = false }: ProductsPageProps) => {
       if (preferredOrderDifference !== 0) return preferredOrderDifference;
       return (a.displayOrder || 0) - (b.displayOrder || 0);
     });
-  }, [allCategories, coffeeProducts]);
+  }, [allCategories, coffeeProducts, isArabic]);
 
   const canonicalUrl = useMemo(() => {
     // Use region-prefixed URL: /om for Oman (canonical), no prefix for SA
@@ -266,6 +272,9 @@ export const ProductsPage = ({ hidePageChrome = false }: ProductsPageProps) => {
       null
     );
   }, [selectedCategory, coffeeCategories]);
+  const currentCategoryDisplayName = currentCategory
+    ? getCategoryDisplayName(currentCategory)
+    : '';
 
   // Filter products
   const filteredProducts = useMemo(() => {
@@ -276,8 +285,8 @@ export const ProductsPage = ({ hidePageChrome = false }: ProductsPageProps) => {
     const activeCategorySlug =
       currentCategory?.slug ??
       (selectedCategory !== 'all' && !/^\d+$/.test(selectedCategory) ? selectedCategory : null);
-    const activeCategoryName = currentCategory?.name
-      ? currentCategory.name.trim().toLowerCase()
+    const activeCategoryName = currentCategory
+      ? getCategoryDisplayName(currentCategory).trim().toLowerCase()
       : null;
 
     return coffeeProducts.filter((product) => {
@@ -297,8 +306,8 @@ export const ProductsPage = ({ hidePageChrome = false }: ProductsPageProps) => {
         (activeCategoryId && product.categoryId === activeCategoryId) ||
         (activeCategorySlug && product.categorySlug === activeCategorySlug) ||
         (activeCategoryName &&
-          product.category &&
-          product.category.trim().toLowerCase() === activeCategoryName);
+          ((product.category && product.category.trim().toLowerCase() === activeCategoryName) ||
+            (product.categoryAr && product.categoryAr.trim().toLowerCase() === activeCategoryName)));
 
       if (!matchesCategory) {
         return false;
@@ -313,7 +322,7 @@ export const ProductsPage = ({ hidePageChrome = false }: ProductsPageProps) => {
         `${product.name} ${product.description || ''} ${product.category || ''}`.toLowerCase();
       return searchableText.includes(normalizedSearch);
     });
-  }, [coffeeProducts, searchTerm, selectedCategory, currentCategory]);
+  }, [coffeeProducts, searchTerm, selectedCategory, currentCategory, getCategoryDisplayName]);
 
   // Group products by category when "All" is selected
   const productsByCategory = useMemo(() => {
@@ -354,6 +363,7 @@ export const ProductsPage = ({ hidePageChrome = false }: ProductsPageProps) => {
         category: {
           id: categoryId,
           name: firstProduct?.category || 'Uncategorized',
+          nameAr: firstProduct?.categoryAr,
           slug: firstProduct?.categorySlug,
           description: '',
           image: '',
@@ -384,12 +394,12 @@ export const ProductsPage = ({ hidePageChrome = false }: ProductsPageProps) => {
     if (currentCategory && selectedCategory !== 'all') {
       return language === 'ar'
         ? {
-            title: `اشتري ${currentCategory.name} | قهوة مختصة SpiritHub عمان والسعودية`,
-            description: `اطلب ${currentCategory.name} من محمصة SpiritHub. قهوة مختصة محمصة طازجة، كبسولات، توصيل سريع في مسقط والخبر. اشتري الآن حبوب قهوة فاخرة.`,
+            title: `اشتري ${currentCategoryDisplayName} | قهوة مختصة SpiritHub عمان والسعودية`,
+            description: `اطلب ${currentCategoryDisplayName} من محمصة SpiritHub. قهوة مختصة محمصة طازجة، كبسولات، توصيل سريع في مسقط والخبر. اشتري الآن حبوب قهوة فاخرة.`,
           }
         : {
-            title: `Buy ${currentCategory.name} | Specialty Coffee SpiritHub Oman & Saudi`,
-            description: `Order ${currentCategory.name} from SpiritHub Roastery. Fresh roasted specialty coffee, capsules, fast delivery in Muscat & Khobar. Buy premium coffee beans online now.`,
+            title: `Buy ${currentCategoryDisplayName} | Specialty Coffee SpiritHub Oman & Saudi`,
+            description: `Order ${currentCategoryDisplayName} from SpiritHub Roastery. Fresh roasted specialty coffee, capsules, fast delivery in Muscat & Khobar. Buy premium coffee beans online now.`,
           };
     }
     return language === 'ar'
@@ -401,7 +411,7 @@ export const ProductsPage = ({ hidePageChrome = false }: ProductsPageProps) => {
           title: 'Buy Specialty Coffee & Capsules | SpiritHub Roastery Oman & Saudi',
           description: 'Order now: fresh roasted specialty coffee beans, compatible capsules, professional brewing equipment. Fast delivery in Muscat Oman and Khobar Saudi Arabia. Expert roastery.',
         };
-  }, [currentCategory, language, selectedCategory]);
+  }, [currentCategory, currentCategoryDisplayName, language, selectedCategory]);
 
   const structuredData = useMemo(() => {
     const regionPath = regionPrefix === '/sa' ? '' : '/om';
@@ -414,7 +424,7 @@ export const ProductsPage = ({ hidePageChrome = false }: ProductsPageProps) => {
           { '@type': 'ListItem', position: 1, name: language === 'ar' ? 'الرئيسية' : 'Home', item: homeUrl },
           { '@type': 'ListItem', position: 2, name: language === 'ar' ? 'المنتجات' : 'Products', item: canonicalUrl },
           ...(currentCategory?.name
-            ? [{ '@type': 'ListItem' as const, position: 3, name: currentCategory.name, item: canonicalUrl }]
+            ? [{ '@type': 'ListItem' as const, position: 3, name: currentCategoryDisplayName, item: canonicalUrl }]
             : []),
         ],
       },
@@ -433,7 +443,7 @@ export const ProductsPage = ({ hidePageChrome = false }: ProductsPageProps) => {
         },
       },
     ];
-  }, [canonicalUrl, filteredProducts.length, language, seoContent.description, seoContent.title, regionPrefix, currentCategory]);
+  }, [canonicalUrl, filteredProducts.length, language, seoContent.description, seoContent.title, regionPrefix, currentCategory, currentCategoryDisplayName]);
 
   // Category options
   const categoryOptions = useMemo<CategoryOption[]>(() => {
@@ -444,12 +454,12 @@ export const ProductsPage = ({ hidePageChrome = false }: ProductsPageProps) => {
 
     const mappedCategories = coffeeCategories.map<CategoryOption>((category) => ({
       id: category.id,
-      name: category.name,
+      name: getCategoryDisplayName(category),
       slug: category.slug,
     }));
 
     return [allOption, ...mappedCategories];
-  }, [coffeeCategories, isArabic]);
+  }, [coffeeCategories, getCategoryDisplayName, isArabic]);
 
   const browseCoffeeCategories = useMemo(
     () => [...allCategories].sort((a, b) => {
@@ -468,7 +478,7 @@ export const ProductsPage = ({ hidePageChrome = false }: ProductsPageProps) => {
     // the category request completes.
     const coffeeItems = browseCoffeeCategories.map((category) => ({
       id: `coffee-${category.id}`,
-      name: category.name,
+      name: getCategoryDisplayName(category),
       image: category.image || '/images/slides/slide1.webp',
       kind: 'coffee' as const,
       categoryId: category.id,
@@ -487,7 +497,7 @@ export const ProductsPage = ({ hidePageChrome = false }: ProductsPageProps) => {
     }));
 
     return [...coffeeItems, ...shopItems];
-  }, [browseCoffeeCategories, currentRegion.code, isArabic, shopData?.categories]);
+  }, [browseCoffeeCategories, currentRegion.code, getCategoryDisplayName, isArabic, shopData?.categories]);
 
   const renderedBrowseCategories = useMemo(
     () => browseCategories,
@@ -596,7 +606,7 @@ export const ProductsPage = ({ hidePageChrome = false }: ProductsPageProps) => {
           'brewing equipment',
           'single origin coffee',
           'coffee shop online Oman',
-          currentCategory?.name || 'Spirit Hub Cafe products',
+          currentCategoryDisplayName || 'Spirit Hub Cafe products',
           'قهوة مختصة مسقط',
           'شراء قهوة عمان',
           'محمصة قهوة',
@@ -610,19 +620,19 @@ export const ProductsPage = ({ hidePageChrome = false }: ProductsPageProps) => {
         <PageHeader
           variant="products"
           title={currentCategory && selectedCategory !== 'all'
-            ? currentCategory.name
+            ? currentCategoryDisplayName
             : 'Shop Specialty Coffee'
           }
           titleAr={currentCategory && selectedCategory !== 'all'
-            ? currentCategory.name
+            ? currentCategoryDisplayName
             : 'منتجاتنا'
           }
           subtitle={currentCategory && selectedCategory !== 'all'
-            ? currentCategory.description
+            ? (isArabic ? currentCategory.descriptionAr || currentCategory.description : currentCategory.description)
             : 'Freshly roasted in Oman & Saudi Arabia'
           }
           subtitleAr={currentCategory && selectedCategory !== 'all'
-            ? currentCategory.description
+            ? (currentCategory.descriptionAr || currentCategory.description)
             : 'اكتشف مجموعتنا المميزة من القهوة والحلويات المحضرة بعناية'
           }
         />
@@ -759,6 +769,7 @@ export const ProductsPage = ({ hidePageChrome = false }: ProductsPageProps) => {
                 {selectedCategory === 'all' && productsByCategory && productsByCategory.length > 0 ? (
                   <div className="space-y-16">
                     {productsByCategory.map(({ category, products: categoryProducts }, categoryIndex) => {
+                      const categoryDisplayName = getCategoryDisplayName(category);
                       // Shorten category names
                       const getShortName = (name: string) => {
                         const shortNames: Record<string, string> = {
@@ -783,7 +794,7 @@ export const ProductsPage = ({ hidePageChrome = false }: ProductsPageProps) => {
                               {category.image && category.id !== 'uncategorized' && (
                                 <img
                                   src={category.image}
-                                  alt={category.name}
+                                  alt={categoryDisplayName}
                                   width={64}
                                   height={64}
                                   loading="lazy"
@@ -798,7 +809,7 @@ export const ProductsPage = ({ hidePageChrome = false }: ProductsPageProps) => {
                               )}
                               <div>
                                 <h2 className="text-2xl font-bold text-gray-900">
-                                  {getShortName(category.name)}
+                                  {getShortName(categoryDisplayName)}
                                 </h2>
                               </div>
                             </div>

@@ -177,18 +177,17 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   }, []);
 
   // Fetch products from API - using refs to keep callback stable
-  const fetchProducts = useCallback(async () => {
-    const lang = languageRef.current;
+  const fetchProducts = useCallback(async (forceRefresh = false) => {
     const regionCode = currentRegionCodeRef.current;
-    const fetchKey = `${regionCode}_${lang}`;
+    const fetchKey = regionCode;
     
     // Prevent duplicate concurrent requests
-    if (ongoingProductsFetchRef.current === fetchKey) {
+    if (!forceRefresh && ongoingProductsFetchRef.current === fetchKey) {
       return;
     }
     
     // Skip if we already fetched this exact data
-    if (lastSuccessfulFetchRef.current.products === fetchKey) {
+    if (!forceRefresh && lastSuccessfulFetchRef.current.products === fetchKey) {
       return;
     }
     
@@ -196,7 +195,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     const requestId = ++latestProductsRequestRef.current;
 
     // Check session cache first - include region in cache key
-    const cacheKey = `spirithub_session_products_${regionCode}_${lang}`;
+    const cacheKey = `spirithub_session_products_v2_${regionCode}`;
     const cachedData = getSessionArrayCache<Product>(cacheKey);
 
     // If we loaded from cache, keep a reference so we can preserve non-default images
@@ -205,7 +204,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 
     let usedCache = false;
     
-    if (cachedData) {
+    if (!forceRefresh && cachedData) {
       // Check if cache has slug field, if not, clear cache and refetch
       if (cachedData.length > 0 && !cachedData[0].slug) {
         safeStorage.removeItem(cacheKey, 'session');
@@ -231,7 +230,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 
     try {
       let activeProducts: ApiProduct[] = [];
-      const maxAttempts = usedCache ? 2 : 3;
+      const maxAttempts = forceRefresh ? 3 : usedCache ? 2 : 3;
 
       // Retry transient failures and suspicious empty first-load responses.
       for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
@@ -301,16 +300,14 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
               : undefined) ??
             (typeof p.categorySlug === 'string' ? p.categorySlug : undefined);
 
-          const categoryName =
-            lang === 'ar'
-              ? (p.category as unknown as { nameAr?: string; name?: string } | undefined)?.nameAr ||
-                fallbackCategoryNameAr ||
-                (p.category as unknown as { name?: string } | undefined)?.name ||
-                fallbackCategoryName
-              : (p.category as unknown as { name?: string; nameAr?: string } | undefined)?.name ||
-                fallbackCategoryName ||
-                (p.category as unknown as { nameAr?: string } | undefined)?.nameAr ||
-                fallbackCategoryNameAr;
+          const categoryNameEn =
+            (p.category as unknown as { name?: string } | undefined)?.name ||
+            fallbackCategoryName ||
+            fallbackCategoryNameAr;
+          const categoryNameAr =
+            (p.category as unknown as { nameAr?: string } | undefined)?.nameAr ||
+            fallbackCategoryNameAr ||
+            categoryNameEn;
 
           const isLimited =
             typeof (p as unknown as { isLimited?: unknown }).isLimited === 'boolean'
@@ -337,24 +334,24 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
             isOrderable,
             isLimited,
             isPremium,
-            name: lang === 'ar' && p.nameAr ? String(p.nameAr) : String(p.name || ''),
+            name: String(p.name || p.nameAr || ''),
             nameAr: p.nameAr ? String(p.nameAr) : undefined,
-            description:
-              lang === 'ar' && p.descriptionAr ? String(p.descriptionAr) : String(p.description || ''),
+            description: String(p.description || p.descriptionAr || ''),
             descriptionAr: p.descriptionAr ? String(p.descriptionAr) : undefined,
             price,
             image: imageUrl,
             categoryId: categoryIdString,
             categorySlug,
-            category: categoryName ? String(categoryName) : '',
+            category: categoryNameEn ? String(categoryNameEn) : '',
+            categoryAr: categoryNameAr ? String(categoryNameAr) : undefined,
             tastingNotes:
-              lang === 'ar' && p.tastingNotesAr ? String(p.tastingNotesAr) : (p.tastingNotes ? String(p.tastingNotes) : undefined),
+              p.tastingNotes ? String(p.tastingNotes) : (p.tastingNotesAr ? String(p.tastingNotesAr) : undefined),
             tastingNotesAr: p.tastingNotesAr ? String(p.tastingNotesAr) : undefined,
             featured: p.isFeatured,
             topTags: normalizeProductTags((p as Record<string, unknown>).topTags, 'Top'),
             bottomTags: normalizeProductTags((p as Record<string, unknown>).bottomTags, 'Bottom'),
             // Pre-built searchable text to avoid string concatenation during filtering
-            _searchText: `${(lang === 'ar' && p.nameAr ? String(p.nameAr) : String(p.name || ''))} ${lang === 'ar' && p.descriptionAr ? String(p.descriptionAr) : String(p.description || '')} ${categoryName || ''}`.toLowerCase(),
+            _searchText: `${String(p.name || '')} ${p.nameAr ? String(p.nameAr) : ''} ${String(p.description || '')} ${p.descriptionAr ? String(p.descriptionAr) : ''} ${categoryNameEn || ''} ${categoryNameAr || ''}`.toLowerCase(),
           } satisfies Product;
         })
         .filter((p): p is Product => p !== null)
@@ -428,9 +425,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   }, [beginLoading, endLoading]);
 
   const fetchCategories = useCallback(async (forceRefresh = false) => {
-    const lang = languageRef.current;
     const regionCode = currentRegionCodeRef.current;
-    const fetchKey = `${regionCode}_${lang}`;
+    const fetchKey = regionCode;
     
     // Prevent duplicate concurrent requests (unless force refresh)
     if (!forceRefresh && ongoingCategoriesFetchRef.current === fetchKey) {
@@ -446,8 +442,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     const requestId = ++latestCategoriesRequestRef.current;
 
     // Check session cache first for both categories and allCategories - include region in cache key
-    const cacheKey = `spirithub_session_categories_${regionCode}_${lang}`;
-    const allCategoriesCacheKey = `spirithub_session_all_categories_${regionCode}_${lang}`;
+    const cacheKey = `spirithub_session_categories_v2_${regionCode}`;
+    const allCategoriesCacheKey = `spirithub_session_all_categories_v2_${regionCode}`;
     const cachedData = getSessionArrayCache<Category>(cacheKey);
     const cachedAllCategories = getSessionArrayCache<Category>(allCategoriesCacheKey);
     const hasCachedCategories = !!(cachedData && cachedAllCategories);
@@ -492,8 +488,10 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         return {
           id: String(cat.id),
           slug: typeof cat.slug === 'string' ? cat.slug : undefined,
-          name: lang === 'ar' && cat.nameAr ? String(cat.nameAr) : String(cat.name || ''),
-          description: lang === 'ar' && cat.descriptionAr ? String(cat.descriptionAr) : String(cat.description || ''),
+          name: String(cat.name || cat.nameAr || ''),
+          nameAr: cat.nameAr ? String(cat.nameAr) : undefined,
+          description: String(cat.description || cat.descriptionAr || ''),
+          descriptionAr: cat.descriptionAr ? String(cat.descriptionAr) : undefined,
           image: imageUrl,
           displayOrder: typeof cat.displayOrder === 'number' ? cat.displayOrder : 0,
           taxPercentage: typeof cat.taxPercentage === 'number' ? cat.taxPercentage : 0,
@@ -548,9 +546,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const prevFetchKeyRef = React.useRef<string>('');
   
   useEffect(() => {
-    const fetchKey = `${currentRegionCode}_${language}`;
+    const fetchKey = currentRegionCode;
     
-    // Skip if we already fetched for this exact region+language combination
+    // Skip if we already fetched for this exact region.
     if (prevFetchKeyRef.current === fetchKey && initialFetchDoneRef.current) {
       return;
     }
@@ -558,8 +556,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     prevFetchKeyRef.current = fetchKey;
     initialFetchDoneRef.current = true;
     
-    // Update refs before fetching
-    languageRef.current = language;
+    // Update refs before fetching.
     currentRegionCodeRef.current = currentRegionCode;
     
     // Cancel any ongoing enrichment operations from previous region
@@ -572,14 +569,13 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       imageEnrichmentAbortRef.current = null;
     }
     
-    // Reset successful fetch tracking when region/language changes
+    // Reset successful fetch tracking when region changes.
     lastSuccessfulFetchRef.current = { products: '', categories: '' };
     ongoingProductsFetchRef.current = null;
     ongoingCategoriesFetchRef.current = null;
     
-    // Set initial document direction
-    document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
-    document.documentElement.lang = language;
+    // Keep current data refs aligned with the active region.
+    currentRegionCodeRef.current = currentRegionCode;
 
     // Homepage sections request their own data as they approach the viewport.
     // Avoid a second timer-driven fetch that causes a large delayed React commit.
@@ -589,9 +585,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 
     fetchProducts();
     fetchCategories();
-  // Only depend on language and region - callbacks are stable now
+  // Only depend on region - callbacks are stable now
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentRegionCode, language]);
+  }, [currentRegionCode]);
   
   // Keyboard shortcut to clear cache (separate stable effect)
   useEffect(() => {

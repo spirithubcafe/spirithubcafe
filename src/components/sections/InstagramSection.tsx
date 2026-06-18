@@ -211,7 +211,7 @@ export const InstagramSection: React.FC = () => {
     (document.documentElement.dir === 'rtl' || document.documentElement.lang?.toLowerCase().startsWith('ar'));
 
   return (
-    <section className="bg-[#fbfbf9] py-12 sm:py-14 lg:py-16">
+    <section className="bg-[#fbfbf9] pb-12 pt-8 sm:pb-14 sm:pt-10 lg:pb-16 lg:pt-11">
       <div className="mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:px-8">
         <div className="mb-8 text-center sm:mb-10">
           <h2 className="text-[22px] font-semibold tracking-[1px] text-[#2E2E2E] md:text-[28px]">

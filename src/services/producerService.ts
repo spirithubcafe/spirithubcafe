@@ -104,6 +104,13 @@ export const producerService = {
     return unwrap(response.data, 'Failed to load producer section settings');
   },
 
+  getHomepage: async (count = 24): Promise<Producer[]> => {
+    const response = await publicHttp.get<ApiResponse<Producer[]>>('/api/Producers/homepage', {
+      params: { count },
+    });
+    return unwrap(response.data, 'Failed to load homepage producers');
+  },
+
   updateSectionSettings: async (data: ProducerSectionSettings): Promise<ProducerSectionSettings> => {
     const response = await http.put<ApiResponse<ProducerSectionSettings>>('/api/Producers/section-settings', data);
     return unwrap(response.data, 'Failed to update producer section settings');
