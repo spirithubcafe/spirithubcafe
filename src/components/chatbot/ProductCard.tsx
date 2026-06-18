@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Star, ExternalLink } from 'lucide-react';
+import { Eye, ExternalLink, ShoppingBag, ShoppingCart, Star } from 'lucide-react';
 import type { ChatProduct } from '../../services/geminiChatService';
 import { formatPrice as formatRegionalPrice, type RegionCode } from '../../lib/regionUtils';
+import { useCart } from '../../hooks/useCart';
 
 interface ProductCardProps {
   product: ChatProduct;
@@ -10,10 +11,35 @@ interface ProductCardProps {
   language: string;
 }
 
+const AR_LABELS = {
+  price: '\u0627\u0644\u0633\u0639\u0631',
+  priceRange: '\u0646\u0637\u0627\u0642 \u0627\u0644\u0633\u0639\u0631',
+  priceOnRequest: '\u0627\u0644\u0633\u0639\u0631 \u0639\u0646\u062f \u0627\u0644\u0637\u0644\u0628',
+  quickView: '\u0639\u0631\u0636 \u0633\u0631\u064a\u0639',
+  addToCart: '\u0625\u0636\u0627\u0641\u0629 \u0625\u0644\u0649 \u0627\u0644\u0633\u0644\u0629',
+  selectOptions: '\u0627\u062e\u062a\u0631 \u0627\u0644\u062e\u064a\u0627\u0631\u0627\u062a',
+};
+
+const CATEGORY_AR: Record<string, string> = {
+  coffee: '\u0642\u0647\u0648\u0629',
+  'filter & pour-over coffee': '\u0642\u0647\u0648\u0629 \u0641\u0644\u062a\u0631 \u0648\u0628\u0648\u0631 \u0623\u0648\u0641\u0631',
+  'filter and pour-over coffee': '\u0642\u0647\u0648\u0629 \u0641\u0644\u062a\u0631 \u0648\u0628\u0648\u0631 \u0623\u0648\u0641\u0631',
+  'espresso coffee': '\u0642\u0647\u0648\u0629 \u0625\u0633\u0628\u0631\u064a\u0633\u0648',
+  equipment: '\u0645\u0639\u062f\u0627\u062a',
+  accessories: '\u0625\u0643\u0633\u0633\u0648\u0627\u0631\u0627\u062a',
+  'gift cards': '\u0628\u0637\u0627\u0642\u0627\u062a \u0647\u062f\u0627\u064a\u0627',
+  'electronic gift cards': '\u0628\u0637\u0627\u0642\u0627\u062a \u0647\u062f\u0627\u064a\u0627 \u0625\u0644\u0643\u062a\u0631\u0648\u0646\u064a\u0629',
+  'digital gift cards': '\u0628\u0637\u0627\u0642\u0627\u062a \u0647\u062f\u0627\u064a\u0627 \u0631\u0642\u0645\u064a\u0629',
+};
+
 export const ProductCard: React.FC<ProductCardProps> = ({ product, regionPrefix, language }) => {
   const [imgError, setImgError] = useState(false);
+  const { addToCart, openCart } = useCart();
   const isAr = language === 'ar';
   const displayName = isAr && product.nameAr ? product.nameAr : product.name;
+  const displayCategory = isAr && product.category
+    ? CATEGORY_AR[product.category.trim().toLowerCase()]
+    : product.category;
   const productUrl = `${regionPrefix}/shop/product/${product.slug || product.id}`;
   const region: RegionCode = regionPrefix.startsWith('/sa') ? 'sa' : 'om';
 
@@ -22,72 +48,141 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, regionPrefix,
     return formatRegionalPrice(price, region, isAr);
   };
 
+  const minPrice = product.minPrice && product.minPrice > 0 ? product.minPrice : product.price;
+  const maxPrice = product.maxPrice && product.maxPrice > 0 ? product.maxPrice : undefined;
+  const hasDiscount = !!product.discountPrice && product.discountPrice > 0 && product.discountPrice < product.price;
+  const hasRange = minPrice > 0 && !!maxPrice && maxPrice > minPrice;
+  const canQuickAdd = minPrice > 0 && !hasRange;
+  const priceText = hasDiscount
+    ? formatPrice(product.discountPrice as number)
+    : formatPrice(minPrice);
+
+  const handleAddToCart = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (!canQuickAdd) return;
+
+    addToCart({
+      id: `${product.id}`,
+      productId: product.id,
+      productVariantId: null,
+      name: displayName,
+      price: hasDiscount ? product.discountPrice as number : minPrice,
+      image: product.imageUrl ?? '/images/products/default-product.webp',
+      tastingNotes: product.category,
+      variantName: undefined,
+      weight: undefined,
+      weightUnit: undefined,
+    });
+    openCart();
+  };
+
   return (
-    <Link
-      to={productUrl}
-      className="group flex gap-3 rounded-xl border border-amber-100 bg-white p-3 shadow-sm transition-all duration-200 hover:border-amber-300 hover:shadow-md"
-      style={{ textDecoration: 'none' }}
+    <div
+      className="group overflow-hidden rounded-2xl border border-[#f2ddd8] bg-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-[#e9b8b0] hover:shadow-lg"
+      dir={isAr ? 'rtl' : 'ltr'}
     >
-      {/* Image */}
-      <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg bg-amber-50">
-        {product.imageUrl && !imgError ? (
-          <img
-            src={product.imageUrl}
-            alt={displayName}
-            className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
-            onError={() => setImgError(true)}
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center text-2xl">☕</div>
-        )}
-      </div>
-
-      {/* Info */}
-      <div className="flex min-w-0 flex-1 flex-col justify-between">
-        <div>
-          <p className="line-clamp-2 text-sm font-semibold text-gray-800 leading-tight">
-            {displayName}
-          </p>
-          {product.category && (
-            <span className="mt-0.5 inline-block rounded-full bg-amber-50 px-2 py-0.5 text-xs text-amber-700">
-              {product.category}
-            </span>
+      <div className="grid grid-cols-[78px_minmax(0,1fr)] gap-2.5 p-2.5">
+        <Link
+          to={productUrl}
+          className="relative block aspect-square overflow-hidden rounded-xl bg-[#f8f1ed]"
+          aria-label={displayName}
+        >
+          {product.imageUrl && !imgError ? (
+            <img
+              src={product.imageUrl}
+              alt={displayName}
+              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+              onError={() => setImgError(true)}
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#faf5f1] to-[#fff1ed] text-[#c75049]">
+              <ShoppingBag className="h-7 w-7 opacity-55" />
+            </div>
           )}
-        </div>
+        </Link>
 
-        <div className="mt-1 flex items-center justify-between gap-2">
-          {/* Price */}
-          <div className="flex items-center gap-1">
-            {product.discountPrice && product.discountPrice < product.price ? (
-              <>
-                <span className="text-sm font-bold text-amber-700">
-                  {formatPrice(product.discountPrice)}
-                </span>
-                <span className="text-xs text-gray-400 line-through">
-                  {formatPrice(product.price)}
-                </span>
-              </>
-            ) : (
-              <span className="text-sm font-bold text-amber-700">
-                {formatPrice(product.price) ?? (isAr ? 'السعر عند الطلب' : 'Price on request')}
+        <div className="min-w-0">
+          <Link
+            to={productUrl}
+            className="line-clamp-2 text-sm font-bold leading-snug text-stone-900 transition-colors hover:text-[#c75049]"
+          >
+            {displayName}
+          </Link>
+
+          <div className="mt-1 flex min-w-0 items-center gap-1.5">
+            {displayCategory && (
+              <span className="min-w-0 max-w-[150px] truncate rounded-full bg-[#f8f1ed] px-2 py-1 text-[11px] font-medium text-stone-600">
+                {displayCategory}
+              </span>
+            )}
+            {product.rating && product.rating > 0 && (
+              <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#fff1ed] px-2 py-1 text-[11px] font-semibold text-[#c75049]">
+                <Star className="h-3 w-3 fill-[#f4b15f] text-[#f4b15f]" />
+                {product.rating.toFixed(1)}
               </span>
             )}
           </div>
 
-          {/* Rating */}
-          {product.rating && product.rating > 0 && (
-            <div className="flex items-center gap-0.5 text-xs text-amber-500">
-              <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-              <span className="font-medium text-gray-600">{product.rating.toFixed(1)}</span>
+          <div className="mt-2 rounded-xl bg-[#fff1ed] px-3 py-2">
+            <div className="flex items-baseline justify-between gap-2">
+              <span className="shrink-0 text-[10px] font-semibold uppercase text-[#c75049]/70">
+                {isAr ? AR_LABELS.price : 'Price'}
+              </span>
+              <span className="min-w-0 text-sm font-extrabold leading-tight text-[#8e4e47]">
+                {priceText ?? (isAr ? AR_LABELS.priceOnRequest : 'Price on request')}
+              </span>
             </div>
-          )}
+            <div className="mt-0.5 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-xs font-semibold text-stone-400">
+              {hasDiscount && (
+                <span className="line-through">
+                  {formatPrice(product.price)}
+                </span>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Arrow icon */}
-      <div className="flex flex-shrink-0 items-center text-amber-400 transition-transform duration-200 group-hover:translate-x-1">
-        <ExternalLink className="h-4 w-4" />
+      <div className="flex items-center justify-between border-t border-[#f4e6e1] bg-[#fffaf7]/90 px-3 py-1.5">
+        <Link
+          to={productUrl}
+          className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-stone-700 transition-colors hover:bg-white hover:text-[#c75049]"
+        >
+          <Eye className="h-3.5 w-3.5" />
+          {isAr ? AR_LABELS.quickView : 'Quick view'}
+        </Link>
+        <div className="flex items-center gap-1.5">
+          {canQuickAdd ? (
+            <button
+              type="button"
+              onClick={handleAddToCart}
+              title={isAr ? AR_LABELS.addToCart : 'Add to cart'}
+              aria-label={isAr ? AR_LABELS.addToCart : 'Add to cart'}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-white text-[#5f9b54] shadow-sm ring-1 ring-[#dfead6] transition-colors hover:bg-[#5f9b54] hover:text-white"
+            >
+              <ShoppingCart className="h-4 w-4" />
+            </button>
+          ) : (
+            <Link
+              to={productUrl}
+              title={isAr ? AR_LABELS.selectOptions : 'Select options'}
+              aria-label={isAr ? AR_LABELS.selectOptions : 'Select options'}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-white text-[#5f9b54] shadow-sm ring-1 ring-[#dfead6] transition-colors hover:bg-[#5f9b54] hover:text-white"
+            >
+              <ShoppingCart className="h-4 w-4" />
+            </Link>
+          )}
+          <Link
+            to={productUrl}
+            className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-white text-[#c75049] shadow-sm ring-1 ring-[#f2ddd8] transition-colors hover:bg-[#df6d64] hover:text-white"
+            aria-label={displayName}
+          >
+            <ExternalLink className="h-4 w-4" />
+          </Link>
+        </div>
       </div>
-    </Link>
+    </div>
   );
 };

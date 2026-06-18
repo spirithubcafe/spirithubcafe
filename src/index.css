@@ -491,6 +491,45 @@ pre {
   100% { transform: scale(1.6); opacity: 0; }
 }
 
+.chatbot-panel {
+  max-width: calc(100vw - max(1.25rem, env(safe-area-inset-left)) - max(1.25rem, env(safe-area-inset-right)));
+  max-height: calc(var(--chatbot-viewport-height, 100dvh) - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  overscroll-behavior: contain;
+  touch-action: manipulation;
+}
+
+.chatbot-panel,
+.chatbot-panel * {
+  min-width: 0;
+}
+
+.chatbot-input,
+.chatbot-input input,
+.chatbot-input textarea,
+.chatbot-input-field {
+  font-size: 16px !important;
+}
+
+.chatbot-trust-scroll {
+  scrollbar-width: none;
+}
+
+.chatbot-trust-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .chatbot-panel {
+    max-width: calc(100vw - max(1.25rem, env(safe-area-inset-left)) - max(1.25rem, env(safe-area-inset-right)));
+    max-height: calc(var(--chatbot-viewport-height, 100dvh) - max(1rem, env(safe-area-inset-top)) - max(0.75rem, env(safe-area-inset-bottom)) - 1rem);
+    border-radius: 1.25rem;
+  }
+
+  .chatbot-input {
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+  }
+}
+
 /* Marquee scrolling animation */
 @keyframes marquee {
   0% { transform: translateX(0); }
