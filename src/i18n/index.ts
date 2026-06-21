@@ -32,6 +32,7 @@ i18n
     resources,
     lng: getInitialLanguage(),
     fallbackLng: 'ar',
+    debug: false,
     
     interpolation: {
       escapeValue: false

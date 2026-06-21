@@ -10,6 +10,7 @@ import {
   getRecommendations,
   type BrowsingSignals,
 } from '../lib/recommendationEngine';
+import { personalizationService } from '../services/personalizationService';
 
 export interface UseProductRecommendationsResult {
   recommendations: ShopProduct[];
@@ -54,6 +55,13 @@ export function useProductRecommendations(
       shopData?.categories?.find((c) => c.id === currentProduct.categoryId)?.slug ?? null;
 
     trackProductView(signals, categorySlug);
+    personalizationService.trackEvent({
+      eventType: 'product_view',
+      productId: Number(currentProduct.id),
+      categoryId: Number(currentProduct.categoryId) || undefined,
+      source: 'product_detail',
+      metadata: { categorySlug },
+    });
     // Re-read the updated state so recommendations reflect the new view
     setBrowsing(loadBrowsingSignals());
   }, [currentProduct, shopData]);
@@ -61,6 +69,12 @@ export function useProductRecommendations(
   const onCartAdd = useCallback(
     (categoryId: number, categorySlug?: string | null) => {
       trackCartAdd(categoryId, categorySlug);
+      personalizationService.trackEvent({
+        eventType: 'add_to_cart',
+        categoryId,
+        source: 'recommendations',
+        metadata: { categorySlug },
+      });
       setBrowsing(loadBrowsingSignals());
     },
     [],

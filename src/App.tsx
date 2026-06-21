@@ -62,6 +62,7 @@ const NotFound = lazy(() => import('./components/pages/NotFound').then((m) => ({
 const MobileBottomNav = lazy(() => import('./components/layout/MobileBottomNav').then((m) => ({ default: m.MobileBottomNav })));
 const CartDrawer = lazy(() => import('./components/cart/CartDrawer').then((m) => ({ default: m.CartDrawer })));
 const ChatBot = lazy(() => import('./components/chatbot/ChatBot').then((m) => ({ default: m.ChatBot })));
+const DEBUG_AUTH = import.meta.env.DEV && import.meta.env.VITE_DEBUG_AUTH === 'true';
 
 const DeferredCartDrawer = () => {
   const { isOpen } = useCart();
@@ -402,9 +403,9 @@ function App() {
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
   // If this is missing at *build time*, Google Sign-In will not work in production.
-  if (!googleClientId) {
+  if (DEBUG_AUTH && !googleClientId) {
     console.warn('[auth] VITE_GOOGLE_CLIENT_ID is not set; Google Sign-In is disabled.');
-  } else if (typeof window !== 'undefined') {
+  } else if (DEBUG_AUTH && typeof window !== 'undefined') {
     // Helpful when "works on localhost but not on website": verify the *actual* origin users are visiting.
     console.info('[auth] Google OAuth enabled', {
       origin: window.location.origin,

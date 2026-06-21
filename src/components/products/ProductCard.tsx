@@ -13,6 +13,7 @@ import type { Product } from '../../contexts/AppContextDefinition';
 import { buildResponsiveSrcSet, getProductImageUrl, handleImageError } from '../../lib/imageUtils';
 import { ProductTagBadge } from '../shop/ProductTagBadge';
 import { OmaniRialPrice } from '../ui/OmaniRialPrice';
+import { personalizationService } from '../../services/personalizationService';
 
 const ProductQuickView = lazy(() =>
   import('./ProductQuickView').then((module) => ({ default: module.ProductQuickView })),
@@ -103,6 +104,14 @@ const ProductCardComponent: React.FC<ProductCardProps> = ({ product, prioritizeI
       variantName: undefined,
       weight: undefined,
       weightUnit: undefined,
+    });
+    personalizationService.trackEvent({
+      eventType: 'add_to_cart',
+      productId,
+      categoryId: Number(product.categoryId) || undefined,
+      language,
+      country: currentRegion.code,
+      source: 'product_card',
     });
 
     // Wait for animation

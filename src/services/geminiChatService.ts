@@ -10,6 +10,12 @@ import {
 import { mcpService } from './mcpService';
 import { formatPrice, getCurrencyByRegion, type RegionCode } from '../lib/regionUtils';
 import { REGION_INFO } from '../config/regionInfo';
+import type {
+  AIBundleResponse,
+  CoffeeQuizQuestion,
+  CoffeeQuizStatus,
+  SmartReorderSuggestion,
+} from './personalizationService';
 
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY as string;
 const MODEL_NAME = (import.meta.env.VITE_GEMINI_MODEL as string | undefined) || 'gemini-2.5-flash-lite';
@@ -26,7 +32,11 @@ export interface ChatProduct {
   minPrice?: number;
   maxPrice?: number;
   discountPrice?: number;
+  productVariantId?: number | null;
   imageUrl?: string;
+  tastingNotes?: string;
+  tastingNotesAr?: string;
+  matchPercentage?: number;
   rating?: number;
   reviewCount?: number;
   category?: string;
@@ -36,6 +46,16 @@ export interface ChatMessage {
   role: 'user' | 'model';
   text: string;
   products?: ChatProduct[];
+  quizQuestion?: CoffeeQuizQuestion;
+  quizStatus?: CoffeeQuizStatus;
+  openingActions?: Array<{
+    key: string;
+    label: string;
+    intent: string;
+    primary?: boolean;
+  }>;
+  bundle?: AIBundleResponse;
+  reorderSuggestion?: SmartReorderSuggestion;
   timestamp: Date;
 }
 
@@ -198,6 +218,13 @@ function extractImageUrl(product: Record<string, unknown>): string | undefined {
   if (tryPath(product.mainImagePath)) return tryPath(product.mainImagePath);
   if (tryPath(product.imageUrl)) return tryPath(product.imageUrl);
   if (tryPath(product.imagePath)) return tryPath(product.imagePath);
+
+  const mainImage = product.mainImage;
+  if (mainImage && typeof mainImage === 'object') {
+    const record = mainImage as Record<string, unknown>;
+    const nested = tryPath(record.imagePath) ?? tryPath(record.path) ?? tryPath(record.url);
+    if (nested) return nested;
+  }
 
   const images = product.images as unknown[];
   if (Array.isArray(images) && images.length > 0) {
@@ -363,6 +390,7 @@ export async function getFallbackChatResponse(
   const giftPattern = /gift|\u0647\u062f\u0627\u064a\u0627|\u0647\u062f\u064a\u0629|\u0645\u0645\u064a\u0632\u0629/i;
   const bestPattern = /best|popular|top|\u0627\u0644\u0623\u0643\u062b\u0631|\u0645\u0628\u064a\u0639/i;
   const latestPattern = /new|latest|\u062c\u062f\u064a\u062f|\u0648\u0635\u0644/i;
+  const fruityPattern = /fruity|fruit|berry|citrus|\u0641\u0627\u0643\u0647|\u0641\u0648\u0627\u0643\u0647|\u062d\u0645\u0636|\u062a\u0648\u062a/i;
   const greetingPattern = /^(hi|hello|hey|thanks?|thank you|\u0645\u0631\u062d\u0628\u0627|\u0627\u0647\u0644\u0627|\u0623\u0647\u0644\u0627|\u0634\u0643\u0631\u0627)$/i;
 
   let products: ChatProduct[] = [];
@@ -396,12 +424,25 @@ export async function getFallbackChatResponse(
     products = (await executeTool('get_best_sellers', { count: 6 })).products;
   } else if (latestPattern.test(query)) {
     products = (await executeTool('get_latest_products', { count: 6 })).products;
+  } else if (fruityPattern.test(query)) {
+    attemptedProductSearch = true;
+    products = [
+      ...(await executeTool('search_products', { query: 'fruity', pageSize: 8 })).products,
+      ...(await executeTool('search_products', { query: 'fruit', pageSize: 8 })).products,
+      ...(await executeTool('search_products', { query: 'citrus', pageSize: 6 })).products,
+      ...(await executeTool('search_products', { query: 'natural coffee', pageSize: 6 })).products,
+      ...(await executeTool('search_products', { query: 'ethiopia coffee', pageSize: 6 })).products,
+    ];
   } else if (query.length >= 2 && !greetingPattern.test(query)) {
     attemptedProductSearch = true;
     products = (await executeTool('search_products', { query, pageSize: 8 })).products;
   }
 
-  if (products.length === 0 && (bundleBoxPattern.test(query) || giftPattern.test(query) || bestPattern.test(query) || latestPattern.test(query))) {
+  if (products.length === 0 && (bundleBoxPattern.test(query) || giftPattern.test(query) || bestPattern.test(query) || latestPattern.test(query) || fruityPattern.test(query))) {
+    products = (await executeTool('get_best_sellers', { count: 6 })).products;
+  }
+
+  if (products.length === 0 && (bundleBoxPattern.test(query) || giftPattern.test(query) || bestPattern.test(query) || latestPattern.test(query) || fruityPattern.test(query))) {
     products = (await executeTool('get_featured_products', { count: 6 })).products;
   }
 
@@ -432,7 +473,11 @@ export class GeminiChatSession {
   private history: Content[] = [];
   private collectedProducts: ChatProduct[] = [];
 
-  async sendMessage(userText: string, region: RegionCode = 'om'): Promise<{ text: string; products: ChatProduct[] }> {
+  async sendMessage(
+    userText: string,
+    region: RegionCode = 'om',
+    personalizationContext?: string,
+  ): Promise<{ text: string; products: ChatProduct[] }> {
     if (!API_KEY || API_KEY === 'your_gemini_api_key_here') {
       throw new Error('GEMINI_API_KEY_NOT_SET');
     }
@@ -458,9 +503,10 @@ export class GeminiChatSession {
       `Storefront region: ${region.toUpperCase()}`,
       `Currency: ${currency}`,
       `Currency formatting examples: ${formatPrice(5.2, region, false)} and ${formatPrice(44, region, false)}`,
+      personalizationContext ? `Personalization context: ${personalizationContext}` : '',
       'Do not use USD or the "$" symbol.',
       `Customer message: ${userText}`,
-    ].join('\n');
+    ].filter(Boolean).join('\n');
 
     let response = await sendWithRetry(() => chat.sendMessage(messageWithContext));
     let candidate = response.response.candidates?.[0];

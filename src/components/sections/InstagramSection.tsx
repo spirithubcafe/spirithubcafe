@@ -26,6 +26,7 @@ type FeedResponse = {
 
 const MAX_POSTS = 12;
 const FETCH_POSTS = 25;
+const DEBUG_INSTAGRAM = import.meta.env.DEV && import.meta.env.VITE_DEBUG_INSTAGRAM === 'true';
 
 const getPinnedPermalinkSet = (): Set<string> => {
   const configured = import.meta.env.VITE_INSTAGRAM_PINNED_PERMALINKS;
@@ -85,7 +86,7 @@ const normalizePosts = (payload: unknown): InstagramPost[] => {
     })
     .filter((post): post is InstagramPost => post !== null);
 
-  if (skipped.length > 0) {
+  if (DEBUG_INSTAGRAM && skipped.length > 0) {
     console.info('[InstagramSection] Skipped posts during normalize', skipped);
   }
 
@@ -102,7 +103,7 @@ const normalizePosts = (payload: unknown): InstagramPost[] => {
       return bTs - aTs;
     });
 
-  if (configuredPinnedPermalinks.size > 0) {
+  if (DEBUG_INSTAGRAM && configuredPinnedPermalinks.size > 0) {
     const matchedConfiguredPins = sorted.filter((post) => configuredPinnedPermalinks.has(post.permalink)).length;
     console.info('[InstagramSection] Pinned post matching', {
       configuredCount: configuredPinnedPermalinks.size,
@@ -158,7 +159,9 @@ export const InstagramSection: React.FC = () => {
         const payload = (await response.json()) as FeedResponse;
         const parsedPosts = normalizePosts(payload?.data?.posts);
         const apiCount = Array.isArray(payload?.data?.posts) ? payload.data.posts.length : 0;
-        console.info('[InstagramSection] API count', { apiCount });
+        if (DEBUG_INSTAGRAM) {
+          console.info('[InstagramSection] API count', { apiCount });
+        }
         setPosts(parsedPosts);
         setHasError(payload?.success === false);
       } catch (error) {
@@ -200,7 +203,9 @@ export const InstagramSection: React.FC = () => {
       const imageUrl = post.mediaType === 'VIDEO' ? (post.thumbnailUrl || post.mediaUrl) : post.mediaUrl;
       return Boolean(imageUrl);
     }).length;
-    console.info('[InstagramSection] Rendered count', { renderedCount, totalNormalized: posts.length });
+    if (DEBUG_INSTAGRAM) {
+      console.info('[InstagramSection] Rendered count', { renderedCount, totalNormalized: posts.length });
+    }
   }, [posts, isLoading]);
 
   const showFallback = hasError || (!isLoading && posts.length === 0);
@@ -260,11 +265,13 @@ export const InstagramSection: React.FC = () => {
                   ? (post.thumbnailUrl || post.mediaUrl)
                   : post.mediaUrl;
                 if (!imageUrl) {
-                  console.info('[InstagramSection] Skipped post during render', {
-                    id: post.id,
-                    mediaType: post.mediaType,
-                    reason: 'missing image source (mediaUrl/thumbnailUrl)',
-                  });
+                  if (DEBUG_INSTAGRAM) {
+                    console.info('[InstagramSection] Skipped post during render', {
+                      id: post.id,
+                      mediaType: post.mediaType,
+                      reason: 'missing image source (mediaUrl/thumbnailUrl)',
+                    });
+                  }
                   return null;
                 }
 

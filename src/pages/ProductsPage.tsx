@@ -14,6 +14,7 @@ import { AnnouncementBar } from '../components/layout/AnnouncementBar';
 import { useShopPage } from '../hooks/useShop';
 import { useRegion } from '../hooks/useRegion';
 import { getCategoryImageUrl } from '../lib/imageUtils';
+import { personalizationService } from '../services/personalizationService';
 
 type CategoryOption = {
   id: string;
@@ -323,6 +324,23 @@ export const ProductsPage = ({ hidePageChrome = false }: ProductsPageProps) => {
       return searchableText.includes(normalizedSearch);
     });
   }, [coffeeProducts, searchTerm, selectedCategory, currentCategory, getCategoryDisplayName]);
+
+  useEffect(() => {
+    const normalizedSearch = searchTerm.trim();
+    if (normalizedSearch.length < 2) return;
+
+    const timer = window.setTimeout(() => {
+      personalizationService.trackEvent({
+        eventType: 'search',
+        searchTerm: normalizedSearch,
+        language,
+        country: currentRegion.code,
+        source: 'products_page',
+      });
+    }, 700);
+
+    return () => window.clearTimeout(timer);
+  }, [currentRegion.code, language, searchTerm]);
 
   // Group products by category when "All" is selected
   const productsByCategory = useMemo(() => {

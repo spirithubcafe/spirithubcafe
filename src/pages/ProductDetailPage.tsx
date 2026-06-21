@@ -46,6 +46,7 @@ import { getVariantStock, clampQuantity } from '../lib/stockUtils';
 import { safeStorage } from '../lib/safeStorage';
 import { formatPrice, getRegionFromPath } from '../lib/regionUtils';
 import { OmaniRialPrice } from '../components/ui/OmaniRialPrice';
+import { personalizationService } from '../services/personalizationService';
 
 const RelatedProducts = lazy(() =>
   import('../components/products/RelatedProducts').then((module) => ({
@@ -212,6 +213,7 @@ const resolvePrice = (product: ApiProduct, variant?: ProductVariant): number => 
 };
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+const DEBUG_PRODUCT_DETAIL = import.meta.env.DEV && import.meta.env.VITE_DEBUG_PRODUCT_DETAIL === 'true';
 
 const isEmptyProductPayload = (value: unknown): boolean => {
   if (!value || typeof value !== 'object') return true;
@@ -251,12 +253,12 @@ export const ProductDetailPage = () => {
   const isShopRoute = location.pathname.includes('/shop/');
   const { isAuthenticated, user } = useAuth();
   const cart = useCart();
-  const initialSsrProductRef = useRef<ApiProduct | null>(readSsrProductBootstrap(productId));
+  const [initialSsrProduct] = useState<ApiProduct | null>(() => readSsrProductBootstrap(productId));
 
-  const [state, setState] = useState<LoadState>(() => (initialSsrProductRef.current ? 'ready' : 'idle'));
-  const [product, setProduct] = useState<ApiProduct | null>(() => initialSsrProductRef.current);
+  const [state, setState] = useState<LoadState>(() => (initialSsrProduct ? 'ready' : 'idle'));
+  const [product, setProduct] = useState<ApiProduct | null>(() => initialSsrProduct);
   const [selectedVariantId, setSelectedVariantId] = useState<number | null>(() => {
-    const initialProduct = initialSsrProductRef.current;
+    const initialProduct = initialSsrProduct;
     if (!initialProduct?.variants?.length) return null;
 
     const activeVariants = initialProduct.variants.filter((variant) => variant.isActive !== false);
@@ -380,28 +382,34 @@ export const ProductDetailPage = () => {
         const regionFromPath = getRegionFromPath(location.pathname);
         const storedRegion = safeStorage.getItem('spirithub-region');
         const hasStoredRegion = storedRegion === 'om' || storedRegion === 'sa';
-        console.info('[ProductDetailPage][debug] bootstrap', {
-          path: location.pathname,
-          productSlug: productId,
-          language,
-          regionFromPath,
-          storedRegion,
-          hasStoredRegion,
-          currentRegion: currentRegion.code,
-        });
-
-        if (!regionFromPath && !hasStoredRegion && !location.pathname.startsWith('/om') && !location.pathname.startsWith('/sa')) {
-          console.info('[ProductDetailPage] Waiting for region resolution before product fetch', {
+        if (DEBUG_PRODUCT_DETAIL) {
+          console.info('[ProductDetailPage][debug] bootstrap', {
             path: location.pathname,
             productSlug: productId,
-            elapsedMs: Math.round(performance.now() - startedAt),
+            language,
+            regionFromPath,
+            storedRegion,
+            hasStoredRegion,
+            currentRegion: currentRegion.code,
           });
+        }
+
+        if (!regionFromPath && !hasStoredRegion && !location.pathname.startsWith('/om') && !location.pathname.startsWith('/sa')) {
+          if (DEBUG_PRODUCT_DETAIL) {
+            console.info('[ProductDetailPage] Waiting for region resolution before product fetch', {
+              path: location.pathname,
+              productSlug: productId,
+              elapsedMs: Math.round(performance.now() - startedAt),
+            });
+          }
           return;
         }
         const resolvedRegion = regionFromPath ?? (hasStoredRegion ? storedRegion : currentRegion.code);
         const requestKey = `${resolvedRegion}_${language}_${String(productId)}`;
         if (lastSuccessfulRequestKeyRef.current === requestKey && state === 'ready' && product) {
-          console.info('[ProductDetailPage][debug] skip duplicate already-ready request', { requestKey });
+          if (DEBUG_PRODUCT_DETAIL) {
+            console.info('[ProductDetailPage][debug] skip duplicate already-ready request', { requestKey });
+          }
           return;
         }
 
@@ -418,18 +426,20 @@ export const ProductDetailPage = () => {
           try {
             const raw = await productService.getByIdentifierRaw(productSlug);
             lastApiUrl = raw.apiUrl;
-            console.info('[ProductDetailPage] Product fetch attempt', {
-              attempt,
-              region: resolvedRegion,
-              countryCode,
-              productSlug,
-              apiUrl: raw.apiUrl,
-              source: raw.source,
-              status: raw.status,
-              body: raw.body,
-              attemptDurationMs: Math.round(performance.now() - attemptStartedAt),
-              totalElapsedMs: Math.round(performance.now() - startedAt),
-            });
+            if (DEBUG_PRODUCT_DETAIL) {
+              console.info('[ProductDetailPage] Product fetch attempt', {
+                attempt,
+                region: resolvedRegion,
+                countryCode,
+                productSlug,
+                apiUrl: raw.apiUrl,
+                source: raw.source,
+                status: raw.status,
+                body: raw.body,
+                attemptDurationMs: Math.round(performance.now() - attemptStartedAt),
+                totalElapsedMs: Math.round(performance.now() - startedAt),
+              });
+            }
 
             if (isEmptyProductPayload(raw.product)) {
               if (!emptyResponseSeen) {
@@ -447,18 +457,20 @@ export const ProductDetailPage = () => {
           } catch (err) {
             lastApiError = err;
             const apiErr = err as { statusCode?: number; message?: string; rawData?: unknown };
-            console.warn('[ProductDetailPage] Product fetch failed', {
-              attempt,
-              region: resolvedRegion,
-              countryCode,
-              productSlug,
-              apiUrl: lastApiUrl,
-              status: apiErr?.statusCode,
-              body: apiErr?.rawData,
-              message: apiErr?.message,
-              attemptDurationMs: Math.round(performance.now() - attemptStartedAt),
-              totalElapsedMs: Math.round(performance.now() - startedAt),
-            });
+            if (DEBUG_PRODUCT_DETAIL) {
+              console.warn('[ProductDetailPage] Product fetch failed', {
+                attempt,
+                region: resolvedRegion,
+                countryCode,
+                productSlug,
+                apiUrl: lastApiUrl,
+                status: apiErr?.statusCode,
+                body: apiErr?.rawData,
+                message: apiErr?.message,
+                attemptDurationMs: Math.round(performance.now() - attemptStartedAt),
+                totalElapsedMs: Math.round(performance.now() - startedAt),
+              });
+            }
 
             if (apiErr?.statusCode === 404) {
               break;
@@ -498,12 +510,14 @@ export const ProductDetailPage = () => {
         const cacheKey = `spirithub_session_product_${resolvedRegion}_${language}_${String(productSlug)}`;
         safeStorage.setItem(cacheKey, JSON.stringify(sanitized), 'session');
         lastSuccessfulRequestKeyRef.current = requestKey;
-        console.info('[ProductDetailPage][debug] product ready', {
-          region: resolvedRegion,
-          productSlug,
-          cacheKey,
-          totalElapsedMs: Math.round(performance.now() - startedAt),
-        });
+        if (DEBUG_PRODUCT_DETAIL) {
+          console.info('[ProductDetailPage][debug] product ready', {
+            region: resolvedRegion,
+            productSlug,
+            cacheKey,
+            totalElapsedMs: Math.round(performance.now() - startedAt),
+          });
+        }
         setProduct(sanitized);
 
         // Enrich with all tags (backend may only embed a subset)
@@ -555,24 +569,28 @@ export const ProductDetailPage = () => {
         const resolvedRegion = regionFromPath ?? currentRegion.code;
         const cacheKey = `spirithub_session_product_${resolvedRegion}_${language}_${String(productId)}`;
         const cached = safeStorage.getItem(cacheKey, 'session');
-        console.warn('[ProductDetailPage][debug] entering fallback path', {
-          region: resolvedRegion,
-          productSlug: productId,
-          cacheKey,
-          hasCached: !!cached,
-          totalElapsedMs: Math.round(performance.now() - startedAt),
-        });
+        if (DEBUG_PRODUCT_DETAIL) {
+          console.warn('[ProductDetailPage][debug] entering fallback path', {
+            region: resolvedRegion,
+            productSlug: productId,
+            cacheKey,
+            hasCached: !!cached,
+            totalElapsedMs: Math.round(performance.now() - startedAt),
+          });
+        }
         if (cached) {
           try {
             const cachedProduct = JSON.parse(cached) as ApiProduct;
             if (!isEmptyProductPayload(cachedProduct)) {
-              console.info('[ProductDetailPage] Using cached product fallback', {
-                region: resolvedRegion,
-                countryCode: resolvedRegion === 'sa' ? 'SA' : 'OM',
-                productSlug: productId,
-                cacheKey,
-                totalElapsedMs: Math.round(performance.now() - startedAt),
-              });
+              if (DEBUG_PRODUCT_DETAIL) {
+                console.info('[ProductDetailPage] Using cached product fallback', {
+                  region: resolvedRegion,
+                  countryCode: resolvedRegion === 'sa' ? 'SA' : 'OM',
+                  productSlug: productId,
+                  cacheKey,
+                  totalElapsedMs: Math.round(performance.now() - startedAt),
+                });
+              }
               setProduct(cachedProduct);
               setState('ready');
               lastSuccessfulRequestKeyRef.current = `${resolvedRegion}_${language}_${String(productId)}`;
@@ -621,7 +639,7 @@ export const ProductDetailPage = () => {
       try {
         const allowed = await productReviewService.canReview(product.id);
         if (!cancelled) setCanReview(Boolean(allowed));
-      } catch (err) {
+      } catch {
         // If endpoint is not available / unauthorized, don't block the UI.
         if (!cancelled) setCanReview(true);
       }
@@ -994,6 +1012,15 @@ export const ProductDetailPage = () => {
       weightUnit: showWeightInCart ? selectedVariant?.weightUnit : undefined,
       maxStock: variantStock,
     }, safeQty);
+    personalizationService.trackEvent({
+      eventType: 'add_to_cart',
+      productId: product.id,
+      categoryId: product.categoryId,
+      language,
+      country: currentRegion.code,
+      source: 'product_detail',
+      metadata: { productVariantId: selectedVariant?.id ?? null },
+    });
 
     cart.openCart();
   };

@@ -9,6 +9,7 @@ import { StarRating } from './StarRating';
 import { useApp } from '../../hooks/useApp';
 import { useRegion } from '../../hooks/useRegion';
 import { useCart } from '../../hooks/useCart';
+import { personalizationService } from '../../services/personalizationService';
 
 interface Props {
   product: ShopProduct;
@@ -48,6 +49,13 @@ export const ProductCard = ({ product }: Props) => {
       variantName: undefined,
       weight: undefined,
       weightUnit: undefined,
+    });
+    personalizationService.trackEvent({
+      eventType: 'add_to_cart',
+      productId: product.id,
+      language,
+      country: currentRegion.code,
+      source: 'shop_product_card',
     });
     openCart();
   };

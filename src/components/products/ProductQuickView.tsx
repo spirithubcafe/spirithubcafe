@@ -23,6 +23,7 @@ import { productService } from '../../services/productService';
 import { productReviewService } from '../../services/productReviewService';
 import { toast } from 'sonner';
 import { getVariantStock, clampQuantity } from '../../lib/stockUtils';
+import { personalizationService } from '../../services/personalizationService';
 
 interface ProductQuickViewProps {
   product: Product;
@@ -129,7 +130,7 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
       try {
         const allowed = await productReviewService.canReview(fullProduct.id);
         if (!cancelled) setCanReview(Boolean(allowed));
-      } catch (err) {
+      } catch {
         if (!cancelled) setCanReview(true);
       }
     };
@@ -263,6 +264,14 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
       weightUnit: selectedVariant?.weightUnit,
       maxStock: variantStock,
     }, safeQty);
+    personalizationService.trackEvent({
+      eventType: 'add_to_cart',
+      productId: isNaN(productId) ? 0 : productId,
+      language: i18n.language,
+      country: currentRegion.code,
+      source: 'product_quick_view',
+      metadata: { productVariantId: resolvedVariantId },
+    });
 
     openCart();
     onOpenChange(false);
