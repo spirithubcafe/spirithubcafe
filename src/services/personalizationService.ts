@@ -195,6 +195,27 @@ const toAbsoluteImageUrl = (value: unknown): string | undefined => {
   return getProductImageUrl(value);
 };
 
+const normalizeProductSlug = (value: unknown): string => {
+  if (typeof value !== 'string' && typeof value !== 'number') return '';
+  const raw = String(value).trim();
+  if (!raw) return '';
+
+  let path = raw;
+  try {
+    path = new URL(raw, 'https://www.spirithubcafe.com').pathname;
+  } catch {
+    path = raw.split('?')[0].split('#')[0];
+  }
+
+  return path
+    .replace(/^\/?(om|sa)\//i, '')
+    .replace(/^\/?(shop\/product|products|product)\//i, '')
+    .replace(/^\/+/, '')
+    .split('?')[0]
+    .split('#')[0]
+    .trim();
+};
+
 const extractImageFromRecord = (item: Record<string, unknown>): string | undefined => {
   const direct = toAbsoluteImageUrl(
     item.image ??
@@ -244,7 +265,7 @@ const normalizeChatProduct = (raw: unknown): ChatProduct | null => {
     id,
     name,
     nameAr: item.nameAr ? String(item.nameAr) : undefined,
-    slug: String(item.slug ?? item.url ?? ''),
+    slug: normalizeProductSlug(item.slug) || normalizeProductSlug(item.url),
     price: priceValue ?? 0,
     productVariantId: toNumber(item.productVariantId) ?? null,
     minPrice: toNumber(item.minPrice),

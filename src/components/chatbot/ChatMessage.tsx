@@ -21,6 +21,27 @@ interface ChatMessageProps {
 const CHATBOT_LOGO = '/images/logo-s.png';
 const PRODUCT_FALLBACK_IMAGE = '/images/products/default-product.webp';
 
+const getProductPathSegment = (value: string | number | undefined | null): string => {
+  if (value === undefined || value === null) return '';
+  const raw = String(value).trim();
+  if (!raw) return '';
+
+  let path = raw;
+  try {
+    path = new URL(raw, 'https://www.spirithubcafe.com').pathname;
+  } catch {
+    path = raw.split('?')[0].split('#')[0];
+  }
+
+  return path
+    .replace(/^\/?(om|sa)\//i, '')
+    .replace(/^\/?(shop\/product|products|product)\//i, '')
+    .replace(/^\/+/, '')
+    .split('?')[0]
+    .split('#')[0]
+    .trim();
+};
+
 function renderInlineMarkdown(text: string): React.ReactNode {
   return text.split(/(\*\*[^*]+\*\*)/g).map((part, j) => {
     if (part.startsWith('**') && part.endsWith('**')) {
@@ -289,15 +310,12 @@ const BundleCard = ({
   const region = regionPrefix.startsWith('/sa') ? 'sa' : 'om';
 
   const getBundleProductUrl = (product: AIBundleProduct) => {
-    const slugOrId = product.slug || product.productId;
+    const slugOrId = getProductPathSegment(product.slug || product.url) || String(product.productId);
     const rawUrl = product.url?.trim();
 
-    if (rawUrl?.startsWith('/om/') || rawUrl?.startsWith('/sa/')) return rawUrl;
-    if (rawUrl?.startsWith('/products/') || rawUrl?.startsWith('/shop/product/')) {
-      return `${regionPrefix}${rawUrl}`;
-    }
+    if (rawUrl?.startsWith('/om/shop/product/') || rawUrl?.startsWith('/sa/shop/product/')) return rawUrl;
 
-    return `${regionPrefix}/products/${slugOrId}`;
+    return `${regionPrefix}/shop/product/${slugOrId}`;
   };
 
   const handleBundleProductAdd = (product: AIBundleProduct) => {

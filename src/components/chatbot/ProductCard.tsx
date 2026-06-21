@@ -35,6 +35,26 @@ const CATEGORY_AR: Record<string, string> = {
   'digital gift cards': '\u0628\u0637\u0627\u0642\u0627\u062a \u0647\u062f\u0627\u064a\u0627 \u0631\u0642\u0645\u064a\u0629',
 };
 
+const getProductPathSegment = (value: string | number): string => {
+  const raw = String(value).trim();
+  if (!raw) return '';
+
+  let path = raw;
+  try {
+    path = new URL(raw, 'https://www.spirithubcafe.com').pathname;
+  } catch {
+    path = raw.split('?')[0].split('#')[0];
+  }
+
+  return path
+    .replace(/^\/?(om|sa)\//i, '')
+    .replace(/^\/?(shop\/product|products|product)\//i, '')
+    .replace(/^\/+/, '')
+    .split('?')[0]
+    .split('#')[0]
+    .trim();
+};
+
 export const ProductCard: React.FC<ProductCardProps> = ({ product, regionPrefix, language }) => {
   const [imgError, setImgError] = useState(false);
   const { addToCart, openCart } = useCart();
@@ -44,7 +64,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, regionPrefix,
     ? CATEGORY_AR[product.category.trim().toLowerCase()]
     : product.category;
   const tastingNotes = isAr ? product.tastingNotesAr || product.tastingNotes : product.tastingNotes;
-  const productUrl = `${regionPrefix}/shop/product/${product.slug || product.id}`;
+  const productPathSegment = getProductPathSegment(product.slug || product.id) || String(product.id);
+  const productUrl = `${regionPrefix}/shop/product/${productPathSegment}`;
   const region: RegionCode = regionPrefix.startsWith('/sa') ? 'sa' : 'om';
 
   const formatPrice = (price: number) => {
