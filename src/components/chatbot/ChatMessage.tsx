@@ -117,6 +117,8 @@ export const ChatMessageComponent: React.FC<ChatMessageProps> = ({
   const isAr = language === 'ar';
   const hasProducts = !!message.products?.length;
   const displayText = getDisplayText(message.text, hasProducts, isAr);
+  const quizQuestionText = message.quizQuestion ? (isAr ? message.quizQuestion.textAr : message.quizQuestion.textEn) : '';
+  const shouldShowTextBubble = displayText.trim().length > 0 && displayText.trim() !== quizQuestionText.trim();
 
   if (isUser) {
     return (
@@ -144,13 +146,14 @@ export const ChatMessageComponent: React.FC<ChatMessageProps> = ({
         </div>
 
         <div className="flex max-w-[calc(100%-2.25rem)] flex-1 flex-col gap-1.5 sm:max-w-[calc(100%-2.5rem)] sm:gap-2">
-          {/* Text bubble */}
-          <div
-            className={`break-words rounded-2xl border border-[#f2ddd8] bg-white px-3 py-2 text-sm leading-normal text-stone-800 shadow-sm shadow-rose-950/5 sm:px-3.5 sm:py-2.5 ${isAr ? 'text-right' : ''}`}
-            style={{ borderRadius: isAr ? '0 1rem 1rem 1rem' : '1rem 1rem 1rem 0' }}
-          >
-            {renderMarkdownText(displayText, isAr)}
-          </div>
+          {shouldShowTextBubble && (
+            <div
+              className={`break-words rounded-2xl border border-[#f2ddd8] bg-white px-3 py-2 text-sm leading-normal text-stone-800 shadow-sm shadow-rose-950/5 sm:px-3.5 sm:py-2.5 ${isAr ? 'text-right' : ''}`}
+              style={{ borderRadius: isAr ? '0 1rem 1rem 1rem' : '1rem 1rem 1rem 0' }}
+            >
+              {renderMarkdownText(displayText, isAr)}
+            </div>
+          )}
 
           {/* Product cards */}
           {hasProducts && (

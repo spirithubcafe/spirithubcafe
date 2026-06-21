@@ -8,7 +8,7 @@ import { useRegion } from '../../hooks/useRegion';
 import { formatPrice } from '../../lib/regionUtils';
 import { Button } from '../ui/button';
 import { OmaniRialPrice } from '../ui/OmaniRialPrice';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from '../ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from '../ui/sheet';
 import { ScrollArea } from '../ui/scroll-area';
 
 export const CartDrawer: React.FC = () => {
@@ -36,6 +36,11 @@ export const CartDrawer: React.FC = () => {
               </span>
             )}
           </SheetTitle>
+          <SheetDescription className="sr-only">
+            {isArabic
+              ? '\u0631\u0627\u062c\u0639 \u0645\u0646\u062a\u062c\u0627\u062a \u0633\u0644\u0629 \u0627\u0644\u062a\u0633\u0648\u0642 \u0648\u062d\u062f\u062b \u0627\u0644\u0643\u0645\u064a\u0627\u062a \u0623\u0648 \u0627\u0646\u062a\u0642\u0644 \u0625\u0644\u0649 \u0627\u0644\u062f\u0641\u0639.'
+              : 'Review your cart items, update quantities, or proceed to checkout.'}
+          </SheetDescription>
         </SheetHeader>
 
         {items.length === 0 ? (

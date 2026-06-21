@@ -93,6 +93,43 @@ const LOCAL_QUIZ_SESSION_ID = -1;
 const FRUITY_COFFEE_PATTERN = /fruity|fruit|berry|citrus|\u0642\u0647\u0648\u0629.*\u0641\u0627\u0643\u0647|\u0641\u0627\u0643\u0647|\u0641\u0648\u0627\u0643\u0647|\u062d\u0645\u0636|\u062a\u0648\u062a/i;
 const NO_PRODUCTS_RESPONSE_PATTERN = /could not find|couldn't find|no products|no matching products|no products with|لم أجد|لا توجد منتجات/i;
 
+const AR_QUICK_TEXT = {
+  startQuiz: '\u0627\u0628\u062f\u0623 \u0627\u062e\u062a\u0628\u0627\u0631 \u0627\u0644\u0642\u0647\u0648\u0629',
+  continueQuiz: '\u062a\u0627\u0628\u0639 \u0627\u062e\u062a\u0628\u0627\u0631 \u0627\u0644\u0642\u0647\u0648\u0629',
+  buildBundle: '\u0635\u0645\u0651\u0645 \u0628\u0627\u0642\u062a\u064a',
+  espresso: '\u0625\u0633\u0628\u0631\u064a\u0633\u0648',
+  fruity: '\u0641\u0627\u0643\u0647\u064a\u0629',
+  gifts: '\u0647\u062f\u0627\u064a\u0627',
+  capsules: '\u0643\u0628\u0633\u0648\u0644\u0627\u062a',
+  wholesale: '\u062c\u0645\u0644\u0629',
+  contact: '\u062a\u0648\u0627\u0635\u0644',
+  chooseNext: '\u0627\u062e\u062a\u0631 \u0645\u0627 \u064a\u0646\u0627\u0633\u0628\u0643 \u0627\u0644\u0622\u0646:',
+  learnTaste: '\u0645\u0627 \u0632\u0644\u062a \u0623\u062a\u0639\u0644\u0645 \u0630\u0648\u0642\u0643. \u0647\u0644 \u0646\u0628\u062f\u0623 \u0628\u0627\u062e\u062a\u0628\u0627\u0631 \u0642\u0647\u0648\u0629 \u0633\u0631\u064a\u0639\u061f',
+};
+
+const toBundlePrompt = (messageText: string): string => {
+  if (/^\s*(?:\u0635\u0645\u0651\u0645|\u0635\u0645\u0645).*\u0628\u0627\u0642\u062a\u064a\s*$/i.test(messageText)) return 'Build my bundle';
+  if (/\u0625\u0633\u0628\u0631\u064a\u0633\u0648|\u0627\u0633\u0628\u0631\u064a\u0633\u0648/i.test(messageText)) return 'Espresso coffee bundle';
+  if (/\u0647\u062f\u064a\u0629|\u0647\u062f\u0627\u064a\u0627/i.test(messageText)) return 'Coffee gifts bundle';
+  if (/\u0643\u0628\u0633\u0648\u0644\u0627\u062a/i.test(messageText)) return 'Coffee capsules bundle';
+  if (/\u062c\u0645\u0644\u0629|\u062a\u0648\u0631\u064a\u062f/i.test(messageText)) return 'Wholesale coffee bundle';
+  if (/\u0641\u0644\u062a\u0631/i.test(messageText)) return 'Filter coffee bundle';
+  return messageText;
+};
+
+const buildLocalQuizSearchPrompt = (answers: string[]): string => {
+  const values = answers.map((answer) => answer.toLowerCase());
+
+  if (values.includes('capsules')) return 'coffee capsules';
+  if (values.includes('filter')) return 'filter coffee';
+  if (values.includes('espresso')) return 'espresso coffee';
+  if (values.includes('fruity') || values.includes('bright')) return 'fruity coffee';
+  if (values.includes('floral')) return 'floral coffee';
+  if (values.includes('chocolate') || values.includes('classic') || values.includes('low_acidity')) return 'classic espresso coffee';
+
+  return 'best selling coffee';
+};
+
 const LOCAL_QUIZ_QUESTIONS: CoffeeQuizQuestion[] = [
   {
     key: 'taste_notes',
@@ -217,7 +254,7 @@ const buildOpeningActionMessage = (
   if (!hasProfileData) {
     actions.push({
       key: 'start-quiz',
-      label: isAr ? 'ابدأ اختبار القهوة' : 'Start Coffee Quiz',
+      label: isAr ? AR_QUICK_TEXT.startQuiz : 'Start Coffee Quiz',
       intent: '__start_quiz__',
       primary: true,
     });
@@ -226,7 +263,7 @@ const buildOpeningActionMessage = (
   if (hasIncompleteQuiz) {
     actions.push({
       key: 'continue-quiz',
-      label: isAr ? 'تابع اختبار القهوة' : 'Continue Coffee Quiz',
+      label: isAr ? AR_QUICK_TEXT.continueQuiz : 'Continue Coffee Quiz',
       intent: '__continue_quiz__',
       primary: true,
     });
@@ -234,18 +271,18 @@ const buildOpeningActionMessage = (
 
   actions.push({
     key: 'build-bundle',
-    label: isAr ? 'صمّم باقتي' : 'Build My Bundle',
+    label: isAr ? AR_QUICK_TEXT.buildBundle : 'Build My Bundle',
     intent: '__build_bundle__',
     primary: hasProfileData && !hasIncompleteQuiz,
   });
 
   [
-    [isAr ? 'إسبريسو' : 'Espresso', isAr ? 'إسبريسو' : 'Espresso'],
-    [isAr ? 'فاكهية' : 'Fruity', isAr ? 'قهوة بنكهات فاكهية' : 'Fruity coffee'],
-    [isAr ? 'هدايا' : 'Gifts', isAr ? 'هدايا قهوة' : 'Coffee gifts'],
-    [isAr ? 'كبسولات' : 'Capsules', isAr ? 'كبسولات قهوة' : 'Coffee capsules'],
-    [isAr ? 'جملة' : 'Wholesale', isAr ? 'باقة قهوة للجملة' : 'Wholesale coffee bundle'],
-    [isAr ? 'تواصل' : 'Contact', '__contact__'],
+    [isAr ? AR_QUICK_TEXT.espresso : 'Espresso', '__espresso__'],
+    [isAr ? AR_QUICK_TEXT.fruity : 'Fruity', '__fruity__'],
+    [isAr ? AR_QUICK_TEXT.gifts : 'Gifts', '__gifts__'],
+    [isAr ? AR_QUICK_TEXT.capsules : 'Capsules', '__capsules__'],
+    [isAr ? AR_QUICK_TEXT.wholesale : 'Wholesale', '__wholesale__'],
+    [isAr ? AR_QUICK_TEXT.contact : 'Contact', '__contact__'],
   ].forEach(([label, intent]) => {
     actions.push({
       key: String(intent),
@@ -257,8 +294,8 @@ const buildOpeningActionMessage = (
   return {
     role: 'model',
     text: hasProfileData
-      ? (isAr ? 'اختر ما يناسبك الآن:' : 'Choose what you would like to do next:')
-      : (isAr ? 'ما زلت أتعلم ذوقك. هل نبدأ باختبار قهوة سريع؟' : 'I am still learning your taste. Start a quick coffee quiz?'),
+      ? (isAr ? AR_QUICK_TEXT.chooseNext : 'Choose what you would like to do next:')
+      : (isAr ? AR_QUICK_TEXT.learnTaste : 'I am still learning your taste. Start a quick coffee quiz?'),
     openingActions: actions,
     timestamp: new Date(),
   };
@@ -562,7 +599,7 @@ export const ChatBot: React.FC = () => {
 
     try {
       if (quizSessionId === LOCAL_QUIZ_SESSION_ID) {
-        const nextAnswers = [...localQuizAnswers, selectedLabel];
+        const nextAnswers = [...localQuizAnswers, option.value];
         const nextIndex = quizIndex + 1;
         const nextQuestion = quizQuestions[nextIndex];
         setLocalQuizAnswers(nextAnswers);
@@ -576,9 +613,7 @@ export const ChatBot: React.FC = () => {
           return;
         }
 
-        const prompt = isAr
-          ? `\u0631\u0634\u062d \u0642\u0647\u0648\u0629 \u0645\u0646\u0627\u0633\u0628\u0629 \u0628\u0646\u0627\u0621 \u0639\u0644\u0649 \u0647\u0630\u0647 \u0627\u0644\u062a\u0641\u0636\u064a\u0644\u0627\u062a: ${nextAnswers.join(', ')}`
-          : `Recommend coffee based on these quiz preferences: ${nextAnswers.join(', ')}`;
+        const prompt = buildLocalQuizSearchPrompt(nextAnswers);
         const usedFallback = await appendFallbackResponse(prompt);
         if (!usedFallback) {
           setMessages((prev) => [...prev, { role: 'model', text: localizedText('quizDone'), timestamp: new Date() }]);
@@ -748,7 +783,7 @@ export const ChatBot: React.FC = () => {
     if (personalizationService.isEnabled() && BUNDLE_PATTERN.test(messageText)) {
       setInput('');
       setMessages((prev) => [...prev, { role: 'user', text: messageText, timestamp: new Date() }]);
-      await createBundle(messageText);
+      await createBundle(toBundlePrompt(messageText));
       return;
     }
 
@@ -887,6 +922,20 @@ export const ChatBot: React.FC = () => {
   }, [currentRegion.code, isAr]);
 
   const handleOpeningAction = useCallback(async (intent: string) => {
+    const display = {
+      buildBundle: isAr ? AR_QUICK_TEXT.buildBundle : 'Build my bundle',
+      espresso: isAr ? AR_QUICK_TEXT.espresso : 'Espresso',
+      fruity: isAr ? AR_QUICK_TEXT.fruity : 'Fruity',
+      gifts: isAr ? '\u0647\u062f\u0627\u064a\u0627 \u0642\u0647\u0648\u0629' : 'Coffee gifts',
+      capsules: isAr ? AR_QUICK_TEXT.capsules : 'Capsules',
+      wholesale: isAr ? AR_QUICK_TEXT.wholesale : 'Wholesale',
+    };
+
+    const runBundleIntent = async (displayText: string, backendPrompt: string) => {
+      setMessages((prev) => [...prev, { role: 'user', text: displayText, timestamp: new Date() }]);
+      await createBundle(backendPrompt);
+    };
+
     if (intent === '__start_quiz__') {
       await startQuiz();
       return;
@@ -898,9 +947,32 @@ export const ChatBot: React.FC = () => {
     }
 
     if (intent === '__build_bundle__') {
-      const prompt = isAr ? 'صمّم باقتي' : 'Build my bundle';
-      setMessages((prev) => [...prev, { role: 'user', text: prompt, timestamp: new Date() }]);
-      await createBundle(prompt);
+      await runBundleIntent(display.buildBundle, 'Build my bundle');
+      return;
+    }
+
+    if (intent === '__espresso__') {
+      await runBundleIntent(display.espresso, 'Espresso coffee bundle');
+      return;
+    }
+
+    if (intent === '__gifts__') {
+      await runBundleIntent(display.gifts, 'Coffee gifts bundle');
+      return;
+    }
+
+    if (intent === '__capsules__') {
+      await runBundleIntent(display.capsules, 'Coffee capsules bundle');
+      return;
+    }
+
+    if (intent === '__wholesale__') {
+      await runBundleIntent(display.wholesale, 'Wholesale coffee bundle');
+      return;
+    }
+
+    if (intent === '__fruity__') {
+      await handleSend(isAr ? '\u0642\u0647\u0648\u0629 \u0628\u0646\u0643\u0647\u0627\u062a \u0641\u0627\u0643\u0647\u064a\u0629' : 'Fruity coffee');
       return;
     }
 
