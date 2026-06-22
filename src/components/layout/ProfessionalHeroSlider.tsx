@@ -48,7 +48,6 @@ export const ProfessionalHeroSlider: React.FC = () => {
   const [hoverZone, setHoverZone] = useState<'left' | 'right' | null>(null);
   const [overInteractive, setOverInteractive] = useState(false);
   const [cursorPos, setCursorPos] = useState({ x: 0, y: 0 });
-  const mouseMoveRafRef = useRef<number | null>(null);
 
   // Check if device is mobile
   useEffect(() => {
@@ -347,15 +346,6 @@ export const ProfessionalHeroSlider: React.FC = () => {
     }
   }, [slides.length, currentSlide]);
 
-  // Cleanup RAF on unmount
-  useEffect(() => {
-    return () => {
-      if (mouseMoveRafRef.current !== null) {
-        cancelAnimationFrame(mouseMoveRafRef.current);
-      }
-    };
-  }, []);
-
   const currentSlideData = slides[currentSlide];
   const isHeroPrimaryTitle = currentSlideData?.id === '1';
   const safeMobileImageIndex = mobileImageIndex % MOBILE_HERO_IMAGES.length;
@@ -384,21 +374,11 @@ export const ProfessionalHeroSlider: React.FC = () => {
 
   const handleSliderMouseMove = (e: React.MouseEvent<HTMLElement>) => {
     if (!navEnabled) return;
-
-    // Throttle using requestAnimationFrame to reduce forced reflows
-    if (mouseMoveRafRef.current !== null) {
-      cancelAnimationFrame(mouseMoveRafRef.current);
-    }
-
-    mouseMoveRafRef.current = requestAnimationFrame(() => {
-      const rect = sectionRef.current?.getBoundingClientRect();
-      if (!rect) return;
-
-      const x = e.clientX - rect.left;
-      setCursorPos({ x, y: e.clientY - rect.top });
-      setHoverZone(x < rect.width / 2 ? 'left' : 'right');
-      mouseMoveRafRef.current = null;
-    });
+    const rect = sectionRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const x = e.clientX - rect.left;
+    setCursorPos({ x, y: e.clientY - rect.top });
+    setHoverZone(x < rect.width / 2 ? 'left' : 'right');
   };
 
   const handleSliderClick = (e: React.MouseEvent<HTMLElement>) => {
