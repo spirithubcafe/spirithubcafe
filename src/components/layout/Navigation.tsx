@@ -45,6 +45,8 @@ export const Navigation: React.FC = () => {
   const coffeeAccordionRef = useRef<HTMLDivElement>(null);
   const shopAccordionRef = useRef<HTMLDivElement>(null);
   const contactAccordionRef = useRef<HTMLDivElement>(null);
+  const navCategoriesLoadedRef = useRef(false);
+  const navCategoriesLoadingRef = useRef(false);
   const handleMobileCartOpen = useCallback(() => {
     setTimeout(() => {
       openCart();
@@ -81,63 +83,64 @@ export const Navigation: React.FC = () => {
     return () => { isMounted = false; };
   }, [isAuthenticated, user]);
 
+  const loadNavCategories = useCallback(async () => {
+    if (navCategoriesLoadedRef.current || navCategoriesLoadingRef.current) {
+      return;
+    }
+
+    navCategoriesLoadingRef.current = true;
+
+    try {
+      const [shopResult, coffeeResult] = await Promise.allSettled([
+        shopApi.getShopPage(),
+        categoryService.getAll({ excludeShop: true }),
+      ]);
+
+      if (shopResult.status === 'fulfilled' && shopResult.value.success) {
+        setShopCategories(shopResult.value.data.categories || []);
+      } else {
+        setShopCategories([]);
+      }
+
+      if (coffeeResult.status === 'fulfilled') {
+        const sorted = coffeeResult.value
+          .filter((c: ApiCategory) => c.isActive)
+          .sort((a: ApiCategory, b: ApiCategory) => a.displayOrder - b.displayOrder)
+          .map((c: ApiCategory) => ({ id: c.id, slug: c.slug, name: c.name, nameAr: c.nameAr }));
+        setCoffeeCategories(sorted);
+      } else {
+        setCoffeeCategories([]);
+      }
+
+      navCategoriesLoadedRef.current = true;
+    } finally {
+      navCategoriesLoadingRef.current = false;
+    }
+  }, []);
+
   useEffect(() => {
-    let isMounted = true;
     let timeoutId: number | null = null;
     let idleId: number | null = null;
 
-    const loadNavCategories = async () => {
-      try {
-        // Load shop categories
-        const shopResponse = await shopApi.getShopPage();
-        if (isMounted && shopResponse.success) {
-          setShopCategories(shopResponse.data.categories || []);
-        }
-      } catch (error) {
-        if (isMounted) {
-          setShopCategories([]);
-        }
-      }
-
-      try {
-        // Load coffee categories (excluding shop ones)
-        const cats = await categoryService.getAll({ excludeShop: true });
-        if (isMounted) {
-          const sorted = cats
-            .filter((c: ApiCategory) => c.isActive)
-            .sort((a: ApiCategory, b: ApiCategory) => a.displayOrder - b.displayOrder)
-            .map((c: ApiCategory) => ({ id: c.id, slug: c.slug, name: c.name, nameAr: c.nameAr }));
-          setCoffeeCategories(sorted);
-        }
-      } catch (error) {
-        if (isMounted) {
-          setCoffeeCategories([]);
-        }
-      }
-    };
-
-    const scheduleLoad = () => {
-      // Defer non-critical nav data out of the initial critical path.
-      // This keeps the menu functionality but lets above-the-fold content load first.
+    const scheduleLateLoad = () => {
       timeoutId = window.setTimeout(() => {
-        loadNavCategories();
-      }, 1500);
+        void loadNavCategories();
+      }, 12000);
     };
 
     if ('requestIdleCallback' in window) {
       const idleCb = window.requestIdleCallback as (cb: IdleRequestCallback, opts?: IdleRequestOptions) => number;
       idleId = idleCb(
         () => {
-          loadNavCategories();
+          void loadNavCategories();
         },
-        { timeout: 2500 },
+        { timeout: 12000 },
       );
     } else {
-      scheduleLoad();
+      scheduleLateLoad();
     }
 
     return () => {
-      isMounted = false;
       if (timeoutId !== null) {
         window.clearTimeout(timeoutId);
       }
@@ -146,7 +149,7 @@ export const Navigation: React.FC = () => {
         cancelIdleCb(idleId);
       }
     };
-  }, []);
+  }, [loadNavCategories]);
   
   // Helper to build region-aware URLs - memoized
   const regionCode = currentRegion.code;
@@ -186,7 +189,13 @@ export const Navigation: React.FC = () => {
         // "Our Coffee" products dropdown
         if (item.hasDropdown && item.key === 'products') {
           return (
-            <DropdownMenu key={`${item.key}-${dropdownKey}`} modal={false}>
+            <DropdownMenu
+              key={`${item.key}-${dropdownKey}`}
+              modal={false}
+              onOpenChange={(open) => {
+                if (open) void loadNavCategories();
+              }}
+            >
               <DropdownMenuTrigger asChild>
                 <button
                   className={`flex items-center gap-1 transition-colors duration-200 font-medium text-xs md:text-xs lg:text-sm whitespace-nowrap ${
@@ -239,7 +248,13 @@ export const Navigation: React.FC = () => {
         // Shop dropdown
         if (item.hasDropdown && item.key === 'shop') {
           return (
-            <DropdownMenu key={`${item.key}-${dropdownKey}`} modal={false}>
+            <DropdownMenu
+              key={`${item.key}-${dropdownKey}`}
+              modal={false}
+              onOpenChange={(open) => {
+                if (open) void loadNavCategories();
+              }}
+            >
               <DropdownMenuTrigger asChild>
                 <button
                   className={`flex items-center gap-1 transition-colors duration-200 font-medium text-xs md:text-xs lg:text-sm whitespace-nowrap ${
@@ -566,7 +581,7 @@ export const Navigation: React.FC = () => {
             </Button>
 
             {/* Mobile Menu */}
-            <Sheet open={mobileMenuOpen} onOpenChange={(open) => { setMobileMenuOpen(open); if (!open) setMobileAccordion(null); }}>
+            <Sheet open={mobileMenuOpen} onOpenChange={(open) => { setMobileMenuOpen(open); if (open) void loadNavCategories(); if (!open) setMobileAccordion(null); }}>
               <SheetTrigger asChild>
                 <Button
                   variant="ghost"
