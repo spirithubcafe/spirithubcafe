@@ -56,6 +56,7 @@ export interface ChatMessage {
   }>;
   bundle?: AIBundleResponse;
   reorderSuggestion?: SmartReorderSuggestion;
+  coffeePassportCard?: unknown; // CoffeePassportProfile type
   timestamp: Date;
 }
 

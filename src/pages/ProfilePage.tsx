@@ -21,6 +21,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { ProfileEditForm } from '../components/pages/ProfileEditForm';
 import { ProfilePictureUpload } from '../components/pages/ProfilePictureUpload';
 import { ChangePasswordForm } from '../components/pages/ChangePasswordForm';
+import { CoffeePassportSection } from '../components/pages/CoffeePassportSection';
 import { profileService } from '../services/profileService';
 import { newsletterService } from '../services/newsletterService';
 import type { UserProfile as UserProfileType } from '../services/profileService';
@@ -252,6 +253,13 @@ const ProfilePage: React.FC = () => {
       loadUserProfile();
       loadUserOrders();
       loadNewsletterStatus();
+    }
+    
+    // Check for tab parameter in URL
+    const params = new URLSearchParams(window.location.search);
+    const tabParam = params.get('tab');
+    if (tabParam && ['overview', 'profile', 'coffee-passport', 'settings', 'orders'].includes(tabParam)) {
+      setActiveTab(tabParam);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, user?.id, currentRegion.code]);
@@ -543,6 +551,10 @@ const ProfilePage: React.FC = () => {
                 <TabsTrigger value="profile" className="flex-1 flex items-center justify-center gap-1 py-2.5 px-1.5 sm:px-3 text-[11px] sm:text-sm rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-amber-700 data-[state=active]:font-semibold transition-all">
                   <User className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
                   <span className="truncate">{isArabic ? 'الملف' : 'Profile'}</span>
+                </TabsTrigger>
+                <TabsTrigger value="coffee-passport" className="flex-1 flex items-center justify-center gap-1 py-2.5 px-1.5 sm:px-3 text-[11px] sm:text-sm rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-amber-700 data-[state=active]:font-semibold transition-all">
+                  <Coffee className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+                  <span className="truncate">{isArabic ? 'جواز القهوة' : 'Passport'}</span>
                 </TabsTrigger>
                 <TabsTrigger value="settings" className="flex-1 flex items-center justify-center gap-1 py-2.5 px-1.5 sm:px-3 text-[11px] sm:text-sm rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-amber-700 data-[state=active]:font-semibold transition-all">
                   <Shield className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
@@ -1080,6 +1092,11 @@ const ProfilePage: React.FC = () => {
                     )}
                   </CardContent>
                 </Card>
+              </TabsContent>
+
+              {/* Coffee Passport Tab */}
+              <TabsContent value="coffee-passport" className="space-y-6">
+                <CoffeePassportSection isArabic={isArabic} userId={user?.id} />
               </TabsContent>
             </Tabs>
           </div>

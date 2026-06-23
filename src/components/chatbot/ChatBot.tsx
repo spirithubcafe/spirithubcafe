@@ -16,8 +16,10 @@ import {
   type CustomerCoffeeProfile,
   type SmartReorderSuggestion,
 } from '../../services/personalizationService';
+import { coffeePassportService, type CoffeePassportProfile } from '../../services/coffeePassportService';
 import { ChatMessageComponent } from './ChatMessage';
 import { TypingIndicator } from './TypingIndicator';
+import { CoffeePassportCard } from './CoffeePassportCard';
 
 const session = new GeminiChatSession();
 const RATE_LIMIT_COOLDOWN_MS = 60_000;
@@ -248,6 +250,7 @@ const buildOpeningActionMessage = (
   isAr: boolean,
   hasIncompleteQuiz: boolean,
   hasProfileData: boolean,
+  hasCoffeePassport: boolean = false,
 ): ChatMessage => {
   const actions: NonNullable<ChatMessage['openingActions']> = [];
 
@@ -269,11 +272,20 @@ const buildOpeningActionMessage = (
     });
   }
 
+  if (hasCoffeePassport) {
+    actions.push({
+      key: 'view-passport',
+      label: isAr ? 'عرض جواز القهوة' : 'View My Coffee Passport',
+      intent: '__view_passport__',
+      primary: hasProfileData && !hasIncompleteQuiz,
+    });
+  }
+
   actions.push({
     key: 'build-bundle',
     label: isAr ? AR_QUICK_TEXT.buildBundle : 'Build My Bundle',
     intent: '__build_bundle__',
-    primary: hasProfileData && !hasIncompleteQuiz,
+    primary: hasProfileData && !hasIncompleteQuiz && !hasCoffeePassport,
   });
 
   [
@@ -322,6 +334,7 @@ export const ChatBot: React.FC = () => {
   const [retryAfter, setRetryAfter] = useState(0);
   const [isMobileViewport, setIsMobileViewport] = useState(false);
   const [profile, setProfile] = useState<CustomerCoffeeProfile | null>(null);
+  const [coffeePassportProfile, setCoffeePassportProfile] = useState<CoffeePassportProfile | null>(null);
   const [openingQuizStatus, setOpeningQuizStatus] = useState<CoffeeQuizStatus | null>(null);
   const [quizSessionId, setQuizSessionId] = useState<number | null>(null);
   const [quizQuestions, setQuizQuestions] = useState<CoffeeQuizQuestion[]>([]);
@@ -432,6 +445,19 @@ export const ChatBot: React.FC = () => {
           });
         }
 
+        // Fetch and display Coffee Passport profile
+        const passportProfile = await coffeePassportService.getProfile();
+        if (passportProfile) {
+          setCoffeePassportProfile(passportProfile);
+          // Add Coffee Passport card as a custom component
+          nextMessages.push({
+            role: 'model',
+            text: '', // Empty text, component will be shown in ChatMessage
+            coffeePassportCard: passportProfile,
+            timestamp: new Date(),
+          } as ChatMessage & { coffeePassportCard: CoffeePassportProfile });
+        }
+
         if (data.recommendations.length > 0) {
           nextMessages.push({
             role: 'model',
@@ -451,7 +477,7 @@ export const ChatBot: React.FC = () => {
           });
         }
 
-        nextMessages.push(buildOpeningActionMessage(isAr, hasIncompleteQuiz, hasProfileData));
+        nextMessages.push(buildOpeningActionMessage(isAr, hasIncompleteQuiz, hasProfileData, !!passportProfile));
         setMessages(nextMessages);
       } finally {
         if (!cancelled) setIsLoading(false);
@@ -943,6 +969,12 @@ export const ChatBot: React.FC = () => {
 
     if (intent === '__continue_quiz__') {
       await continueQuiz();
+      return;
+    }
+
+    if (intent === '__view_passport__') {
+      // Navigate to Coffee Passport page or show full profile
+      window.location.href = '/my-account?tab=coffee-passport';
       return;
     }
 

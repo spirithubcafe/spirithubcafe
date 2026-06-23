@@ -262,6 +262,7 @@ function AppContent() {
         {/* Region-specific routes - /om and /sa */}
         <Route path="/om" element={<HomePage />} />
         <Route path="/om/profile" element={<ProfilePage />} />
+        <Route path="/om/my-account" element={<ProfilePage />} />
         <Route path="/om/favorites" element={<FavoritesPage />} />
         <Route path="/om/orders" element={<OrdersPage />} />
         <Route path="/om/order/:orderId" element={<OrderDetailPage />} />
@@ -304,6 +305,7 @@ function AppContent() {
         {/* Saudi Arabia routes */}
         <Route path="/sa" element={<HomePage />} />
         <Route path="/sa/profile" element={<ProfilePage />} />
+        <Route path="/sa/my-account" element={<ProfilePage />} />
         <Route path="/sa/favorites" element={<FavoritesPage />} />
         <Route path="/sa/orders" element={<OrdersPage />} />
         <Route path="/sa/order/:orderId" element={<OrderDetailPage />} />
@@ -349,6 +351,7 @@ function AppContent() {
         
         {/* Legacy routes for backward compatibility */}
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/my-account" element={<ProfilePage />} />
         <Route path="/favorites" element={<FavoritesPage />} />
         <Route path="/orders" element={<OrdersPage />} />
         <Route path="/order/:orderId" element={<OrderDetailPage />} />

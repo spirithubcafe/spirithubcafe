@@ -2,10 +2,12 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Eye, PackageCheck, RotateCcw, ShoppingCart } from 'lucide-react';
 import { ProductCard } from './ProductCard';
+import { CoffeePassportCard } from './CoffeePassportCard';
 import { handleImageError } from '../../lib/imageUtils';
 import { useCart } from '../../hooks/useCart';
 import type { ChatMessage as ChatMessageType } from '../../services/geminiChatService';
 import { personalizationService, type AIBundleProduct, type AIBundleResponse, type CoffeeQuizOption, type SmartReorderSuggestion } from '../../services/personalizationService';
+import type { CoffeePassportProfile } from '../../services/coffeePassportService';
 
 interface ChatMessageProps {
   message: ChatMessageType;
@@ -222,6 +224,16 @@ export const ChatMessageComponent: React.FC<ChatMessageProps> = ({
               suggestion={message.reorderSuggestion}
               isAr={isAr}
               onAction={(action) => onReorderAction?.(message.reorderSuggestion!, action)}
+            />
+          )}
+
+          {message.coffeePassportCard && (
+            <CoffeePassportCard
+              profile={message.coffeePassportCard as CoffeePassportProfile}
+              isArabic={isAr}
+              onViewPassport={() => {
+                window.location.href = '/my-account?tab=coffee-passport';
+              }}
             />
           )}
         </div>
