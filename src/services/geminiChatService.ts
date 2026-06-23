@@ -16,6 +16,7 @@ import type {
   CoffeeQuizStatus,
   SmartReorderSuggestion,
 } from './personalizationService';
+import type { CoffeePassportProfile } from './coffeePassportService';
 
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY as string;
 const MODEL_NAME = (import.meta.env.VITE_GEMINI_MODEL as string | undefined) || 'gemini-2.5-flash-lite';
@@ -56,7 +57,7 @@ export interface ChatMessage {
   }>;
   bundle?: AIBundleResponse;
   reorderSuggestion?: SmartReorderSuggestion;
-  coffeePassportCard?: unknown; // CoffeePassportProfile type
+  coffeePassportCard?: CoffeePassportProfile;
   timestamp: Date;
 }
 

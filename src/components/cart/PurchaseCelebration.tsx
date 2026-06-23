@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Award, Sparkles, X } from 'lucide-react';
+import { Sparkles, X } from 'lucide-react';
 
 interface PurchaseCelebrationProps {
   isOpen: boolean;

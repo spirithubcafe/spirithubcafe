@@ -17,7 +17,6 @@ import { coffeePassportService, type CoffeePassportProfile } from '../../service
 
 interface CoffeePassportSectionProps {
   isArabic: boolean;
-  userId?: number;
 }
 
 // Mock data for development - remove when backend API is ready
@@ -92,11 +91,9 @@ const getMockCoffeePassportProfile = (): CoffeePassportProfile => ({
 
 export const CoffeePassportSection: React.FC<CoffeePassportSectionProps> = ({
   isArabic,
-  userId,
 }) => {
   const [profile, setProfile] = useState<CoffeePassportProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -155,7 +152,7 @@ export const CoffeePassportSection: React.FC<CoffeePassportSectionProps> = ({
       <Card>
         <CardContent className="py-8 text-center">
           <p className="text-gray-600 dark:text-gray-400">
-            {error || (isArabic ? 'لا توجد بيانات' : 'No data available')}
+            {isArabic ? 'لا توجد بيانات' : 'No data available'}
           </p>
         </CardContent>
       </Card>

@@ -1,7 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Globe, Coffee, Trophy, Award, Flame, ArrowRight } from 'lucide-react';
-import { Button } from '../ui/button';
 import type { CoffeePassportProfile } from '../../services/coffeePassportService';
 
 interface CoffeePassportCardProps {
