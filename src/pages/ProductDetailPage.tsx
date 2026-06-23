@@ -35,7 +35,7 @@ import { useCart } from '../hooks/useCart';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Textarea } from '../components/ui/textarea';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../components/ui/dialog';
 import { Seo } from '../components/seo/Seo';
 import { siteMetadata, resolveAbsoluteUrl } from '../config/siteMetadata';
 import { ProductShare } from '../components/products/ProductShare';
@@ -2529,10 +2529,10 @@ export const ProductDetailPage = () => {
                           <DialogTitle className={`text-base ${language === 'ar' ? 'text-right' : 'text-left'}`}>
                             {language === 'ar' ? 'إرسال مراجعتك' : 'Send your review'}
                           </DialogTitle>
+                          <DialogDescription className="text-xs">
+                            {language === 'ar' ? product?.nameAr ?? product?.name : product?.name}
+                          </DialogDescription>
                         </DialogHeader>
-                        <p className="text-xs text-muted-foreground">
-                          {language === 'ar' ? product?.nameAr ?? product?.name : product?.name}
-                        </p>
                       </div>
                     </div>
 

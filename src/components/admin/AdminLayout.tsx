@@ -742,6 +742,10 @@ export const AdminLayout: React.FC = () => {
             side="left"
             className="w-[88vw] max-w-80 border-border/40 p-0 md:hidden"
           >
+            <div className="sr-only">
+              <DialogTitle>Navigation Menu</DialogTitle>
+              <DialogDescription>Admin navigation sidebar</DialogDescription>
+            </div>
             <div className="flex h-full min-h-0 flex-col bg-background">
               {renderSidebar(false, () => setIsMobileSidebarOpen(false))}
             </div>

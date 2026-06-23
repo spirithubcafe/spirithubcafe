@@ -841,6 +841,9 @@ export const UsersManagement: React.FC = () => {
           <DialogContent className="max-w-lg">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2"><Eye className="h-5 w-5" /> User Details</DialogTitle>
+              <DialogDescription>
+                View detailed information about the user
+              </DialogDescription>
             </DialogHeader>
             {detailUser && (
               <div className="space-y-5">

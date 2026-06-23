@@ -101,7 +101,6 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({ mode = 'lo
             shape="rectangular"
             theme="outline"
             size="large"
-            width="100%"
             locale={isArabic ? 'ar' : 'en'}
           />
         </div>

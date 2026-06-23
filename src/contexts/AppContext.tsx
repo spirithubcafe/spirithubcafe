@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AppContext, type Product, type Category, type AppContextType } from './AppContextDefinition';
@@ -141,7 +141,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const imageEnrichmentAbortRef = React.useRef<AbortController | null>(null);
 
   // Toggle language between Arabic and English
-  const toggleLanguage = () => {
+  const toggleLanguage = useCallback(() => {
     const newLang = language === 'ar' ? 'en' : 'ar';
     i18n.changeLanguage(newLang);
     setLanguage(newLang);
@@ -152,15 +152,15 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     // Update document direction for RTL support
     document.documentElement.dir = newLang === 'ar' ? 'rtl' : 'ltr';
     document.documentElement.lang = newLang;
-  };
+  }, [language, i18n]);
 
-  // Initialize language settings on component mount
+  // Initialize language settings on component mount and keep i18n in sync
   useEffect(() => {
-    // Apply saved language to i18n and document
-    i18n.changeLanguage(language);
-    document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
-    document.documentElement.lang = language;
-  }, [i18n, language]); // Include dependencies
+    // On mount and when language changes, ensure i18n is in sync with state
+    if (i18n.language !== language) {
+      i18n.changeLanguage(language);
+    }
+  }, [language, i18n]);
 
   useEffect(() => {
     const savedLanguage = safeStorage.getItem('spirithub-language');
@@ -612,7 +612,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const value: AppContextType = {
+  const value: AppContextType = useMemo(() => ({
     language,
     toggleLanguage,
     products,
@@ -623,7 +623,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     fetchProducts,
     fetchCategories,
     t
-  };
+  }), [language, toggleLanguage, products, categories, allCategories, loading, error, fetchProducts, fetchCategories, t]);
 
   return (
     <AppContext.Provider value={value}>
