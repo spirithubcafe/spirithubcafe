@@ -756,7 +756,7 @@ export const PaymentPage: React.FC = () => {
                   </div>
                   {order.totals.tax && order.totals.tax > 0 && (
                     <div className="flex justify-between text-gray-600">
-                      <span>{isArabic ? 'Ø§Ù„Ø¶Ø±ÙŠØ¨Ø©' : 'Tax'}</span>
+                      <span>{isArabic ? 'الضريبة' : 'Tax'}</span>
                       <span>{renderCurrency(order.totals.tax)}</span>
                     </div>
                   )}
