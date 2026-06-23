@@ -382,13 +382,19 @@ export const Navigation: React.FC = () => {
         <div className="flex items-center justify-between h-full">
           {/* Logo */}
           <Link to={getRegionalUrl('/')} className="flex items-center hover:opacity-80 transition-opacity flex-shrink-0">
-            <img 
-              src={isHomePage ? "/images/logo/logo-light.png" : "/images/logo/logo-dark.png"}
-              alt="Spirit Hub Cafe"
-              width={180}
-              height={48}
-              className="h-9 sm:h-10 md:h-11 lg:h-12 w-auto"
-            />
+            <picture>
+              <source 
+                srcSet={isHomePage ? "/images/logo/logo-light.webp" : "/images/logo/logo-dark.webp"} 
+                type="image/webp"
+              />
+              <img 
+                src={isHomePage ? "/images/logo/logo-light.png" : "/images/logo/logo-dark.png"}
+                alt="Spirit Hub Cafe"
+                width={180}
+                height={48}
+                className="h-9 sm:h-10 md:h-11 lg:h-12 w-auto"
+              />
+            </picture>
           </Link>
 
           {/* Desktop Navigation - Hidden on tablet and below */}

@@ -279,6 +279,34 @@ if (!isProduction) {
   app.use(vite.middlewares);
 } else {
   app.use(compression());
+  // Serve public images with aggressive caching
+  // Images in public/ are not fingerprinted, so we cache them for 1 week
+  app.use(
+    '/images',
+    express.static(path.resolve(__dirname, 'public/images'), {
+      maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
+      setHeaders(res) {
+        res.setHeader('Cache-Control', 'public, max-age=604800, immutable'); // 1 week
+      }
+    })
+  );
+
+  // Serve other public files (favicons, manifest, robots.txt, sitemap)
+  app.use(
+    express.static(path.resolve(__dirname, 'public'), {
+      maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
+      setHeaders(res, filePath) {
+        const fp = (filePath || '').replace(/\\/g, '/');
+        // robots.txt and sitemap.xml update more frequently
+        if (fp.endsWith('/robots.txt') || fp.endsWith('/sitemap.xml')) {
+          res.setHeader('Cache-Control', 'public, max-age=3600'); // 1 hour
+          return;
+        }
+        res.setHeader('Cache-Control', 'public, max-age=604800, immutable'); // 1 week
+      }
+    })
+  );
+
   // Serve static assets from Vite build output.
   const prodStaticRoot = fs.existsSync(path.resolve(__dirname, 'dist'))
     ? path.resolve(__dirname, 'dist')
@@ -316,6 +344,11 @@ if (!isProduction) {
     })
   );
 }
+
+// Request logging middleware
+app.use((req, res, next) => {
+  next();
+});
 
 // Serve HTML - Catch all routes with meta tag injection
 app.use(async (req, res, next) => {
@@ -378,10 +411,11 @@ app.use(async (req, res, next) => {
         const mod = await vite.ssrLoadModule('/src/entry-server.tsx');
         render = mod.render;
       } else if (isProduction) {
-        // In production, import the pre-built SSR bundle
+        // In production, import the pre-built SSR bundle using file:// URL
         const ssrBundlePath = path.resolve(__dirname, 'dist/server/entry-server.js');
         if (fs.existsSync(ssrBundlePath)) {
-          const mod = await import(ssrBundlePath);
+          const fileUrl = `file://${ssrBundlePath.replace(/\\/g, '/')}`;
+          const mod = await import(fileUrl);
           render = mod.render;
         }
       }
@@ -402,7 +436,16 @@ app.use(async (req, res, next) => {
       console.warn('[SSR] render skipped:', ssrError?.message || ssrError);
     }
 
-    res.status(responseStatus).set({ 'Content-Type': 'text/html' }).send(html);
+    // Set Cache-Control headers for HTML: short-lived cache to receive updates quickly
+    // while still providing browser cache benefits for repeat visitors
+    const htmlCacheControl = isProduction 
+      ? 'public, max-age=300, stale-while-revalidate=86400' // 5 min cache, use stale for up to 1 day
+      : 'no-cache, no-store, must-revalidate'; // No caching in dev
+    
+    res.status(responseStatus);
+    res.setHeader('Content-Type', 'text/html');
+    res.setHeader('Cache-Control', htmlCacheControl);
+    res.send(html);
   } catch (e) {
     if (!isProduction && vite) {
       vite.ssrFixStacktrace(e);
@@ -845,4 +888,8 @@ async function getMetaTagsForRoute(url, requestBaseUrl, requestLanguage = 'en') 
 // Start http server
 app.listen(port, () => {
   console.log(`Server started at http://localhost:${port}`);
+  console.log(`Mode: ${isProduction ? '🚀 PRODUCTION' : '🔧 DEVELOPMENT'}`);
+  if (isProduction) {
+    console.log(`✅ Production caching enabled (HTML: 5min, Images: 1week)`);
+  }
 });
