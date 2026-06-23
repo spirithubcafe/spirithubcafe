@@ -1096,7 +1096,7 @@ const ProfilePage: React.FC = () => {
 
               {/* Coffee Passport Tab */}
               <TabsContent value="coffee-passport" className="space-y-6">
-                <CoffeePassportSection isArabic={isArabic} userId={user?.id} />
+                <CoffeePassportSection isArabic={isArabic} />
               </TabsContent>
             </Tabs>
           </div>
