@@ -301,11 +301,12 @@ html {
 
 /* Never allow horizontal page scrolling.
    Use `clip` instead of `hidden` so RTL layouts don't create a scroll
-   container that clips the last (leftmost) grid column. */
+   container that clips the last (leftmost) grid column.
+   NOTE: horizontal clipping is applied on #root (not html/body) so that
+   OverlayScrollbars can fully control the page (body) scroll viewport. */
 html,
 body {
   max-width: 100%;
-  overflow-x: clip;
 }
 
 #root {

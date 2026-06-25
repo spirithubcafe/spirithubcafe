@@ -2,20 +2,22 @@
 
 import * as React from "react"
 import { cn } from "@/lib/utils"
+import { OverlayScroll } from "./OverlayScroll"
 
 type Props = React.HTMLAttributes<HTMLDivElement> & {
-  options?: unknown
+  options?: React.ComponentProps<typeof OverlayScroll>["options"]
 }
 
-function ScrollArea({ className, children, ...props }: Props) {
+function ScrollArea({ className, children, options, ...props }: Props) {
   return (
-    <div
+    <OverlayScroll
       data-slot="scroll-area"
-      className={cn("os-theme-custom overflow-auto", className)}
+      className={cn(className)}
+      options={options}
       {...props}
     >
       {children}
-    </div>
+    </OverlayScroll>
   )
 }
 

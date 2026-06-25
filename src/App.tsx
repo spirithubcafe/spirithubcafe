@@ -20,6 +20,7 @@ import { AdminRegionRedirect } from './components/layout/AdminRegionRedirect';
 import { initVisitorTracking } from './lib/visitorTracking';
 import { migrateCartToRegionBased } from './lib/migrateCart';
 import { initGA4, trackPageView } from './lib/ga4';
+import { initBodyScrollbars } from './lib/scrollbars';
 import { useApp } from './hooks/useApp';
 import { useCart } from './hooks/useCart';
 import './i18n';
@@ -170,6 +171,11 @@ function AppContent() {
   // Initialize visitor tracking on app load
   useEffect(() => {
     initVisitorTracking();
+  }, []);
+
+  // Apply the custom OverlayScrollbars to the whole page (body)
+  useEffect(() => {
+    initBodyScrollbars();
   }, []);
 
   // Initialize GA4 analytics (no-op when VITE_GA4_MEASUREMENT_ID is not set)

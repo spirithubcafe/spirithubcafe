@@ -3,6 +3,7 @@ import * as DialogPrimitive from "@radix-ui/react-dialog"
 import { XIcon } from "lucide-react"
 
 import { cn } from "../../lib/utils"
+import { OverlayScroll } from "./OverlayScroll"
 
 function Dialog({
   ...props
@@ -64,7 +65,9 @@ const DialogContent = React.forwardRef<
         )}
         {...props}
       >
-        {children}
+        <OverlayScroll className="max-h-[calc(85dvh-3rem)]">
+          <div className="grid gap-4">{children}</div>
+        </OverlayScroll>
         {showCloseButton ? (
           <DialogPrimitive.Close className="absolute top-4 ltr:right-4 rtl:left-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
             <XIcon className="h-4 w-4" />

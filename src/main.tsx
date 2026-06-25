@@ -5,6 +5,7 @@ import { BrowserRouter } from 'react-router-dom'
 import '@fontsource-variable/inter/index.css';
 import '@fontsource/cairo/400.css';
 import '@fontsource/cairo/700.css';
+import 'overlayscrollbars/overlayscrollbars.css'
 import './index.css'
 import './styles/color-overrides.css'
 import App from './App.tsx'
