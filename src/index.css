@@ -599,12 +599,8 @@ pre {
   }
 }
 
-/* Better touch targets on mobile */
+/* Better chatbot touch targets on mobile */
 @media (max-width: 640px) {
-  button {
-    min-height: 44px;
-  }
-
   .chatbot-panel button {
     min-height: 40px;
     min-width: 40px;

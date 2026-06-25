@@ -1369,7 +1369,7 @@ export const CheckoutPage: React.FC = () => {
                                 >
                                   <RadioGroupItem
                                     value={method.id}
-                                    className="mt-1"
+                                    className="mt-1 h-4 min-h-4 w-4 min-w-4"
                                     disabled={method.isCalculating}
                                   />
                                   <div className="flex-1 min-w-0">
