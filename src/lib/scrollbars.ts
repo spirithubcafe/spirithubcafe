@@ -48,8 +48,7 @@ export function initBodyScrollbars(): OverlayScrollbarsInstance | null {
     {
       scrollbars: {
         theme: 'os-theme-custom',
-        autoHide: 'leave',
-        autoHideDelay: 600,
+        autoHide: 'never',
         clickScroll: true,
       },
     },

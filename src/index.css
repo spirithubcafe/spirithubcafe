@@ -355,27 +355,23 @@ pre {
   background: var(--scrollbar-thumb-hover);
 }
 
-/* OverlayScrollbars theme overrides: use site CSS variables so the custom OS theme matches light/dark */
-.os-theme-custom .os-scrollbar-track {
-  background: var(--scrollbar-track) !important;
-  border-radius: 9999px !important;
-}
-
-.os-theme-custom .os-scrollbar-handle {
-  background: var(--scrollbar-thumb) !important;
-  border-radius: 9999px !important;
-  border: 2px solid transparent !important;
-  background-clip: padding-box !important;
-  transition: background 0.2s ease !important;
-}
-
-.os-theme-custom .os-scrollbar-handle:hover {
-  background: var(--scrollbar-thumb-hover) !important;
-}
-
-.os-theme-custom .os-scrollbar {
-  width: 10px !important;
-  height: 10px !important;
+/* OverlayScrollbars theme: drive the official OS CSS variables from the site
+   scrollbar tokens so the custom theme matches light/dark and renders the
+   handle/track correctly on both axes. */
+.os-theme-custom {
+  --os-size: 10px;
+  --os-padding-perpendicular: 2px;
+  --os-padding-axis: 2px;
+  --os-track-border-radius: 9999px;
+  --os-track-bg: var(--scrollbar-track);
+  --os-track-bg-hover: var(--scrollbar-track);
+  --os-track-bg-active: var(--scrollbar-track);
+  --os-handle-border-radius: 9999px;
+  --os-handle-bg: var(--scrollbar-thumb);
+  --os-handle-bg-hover: var(--scrollbar-thumb-hover);
+  --os-handle-bg-active: var(--scrollbar-thumb-hover);
+  --os-handle-min-size: 33px;
+  --os-handle-interactive-area-offset: 4px;
 }
 
 .admin-scrollbar {
