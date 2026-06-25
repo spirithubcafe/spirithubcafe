@@ -396,6 +396,9 @@ export const PaymentPage: React.FC = () => {
           ...(order.totals.couponCode && { couponCode: order.totals.couponCode }),
           ...(order.totals.discount && { discountAmount: order.totals.discount }),
           
+          // Gift Card Information
+          ...(order.totals.giftCardCode && { giftCardCode: order.totals.giftCardCode }),
+          
           // Gift Information (NEW API FORMAT - only include if gift)
           isGift: order.checkoutDetails.isGift || false,
           ...(order.checkoutDetails.isGift && {
@@ -544,9 +547,29 @@ export const PaymentPage: React.FC = () => {
         orderNumber,
         success: paymentResponse.success,
         hasPaymentUrl: Boolean(paymentResponse.paymentUrl),
+        paidByGiftCard: paymentResponse.paidByGiftCard,
+        amountDue: paymentResponse.amountDue,
         paymentUrlHost: paymentResponse.paymentUrl ? new URL(paymentResponse.paymentUrl).host : null,
         errorMessage: paymentResponse.errorMessage || null,
       });
+
+      // Check if order was fully paid by gift card
+      if (paymentResponse.paidByGiftCard && paymentResponse.amountDue === 0) {
+        // Order is fully paid by gift card - show success directly
+        setPaymentStep('redirecting');
+        setPaymentProgress(isArabic ? 'تم الدفع بنجاح بواسطة بطاقة الهدية' : 'Payment successful with gift card');
+        
+        clearCart();
+        sessionStorage.removeItem(PENDING_ORDER_STORAGE_KEY);
+        sessionStorage.setItem(ORDER_ID_KEY, orderNumber);
+        
+        // Small delay to show progress message
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Navigate to payment success page
+        navigate(`/checkout/payment-success?orderNumber=${orderNumber}`, { replace: true });
+        return;
+      }
 
       if (!paymentResponse.success || !paymentResponse.paymentUrl) {
         throw new Error(paymentResponse.errorMessage || 'Failed to initiate payment');

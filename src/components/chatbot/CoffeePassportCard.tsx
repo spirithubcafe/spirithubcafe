@@ -31,8 +31,6 @@ export const CoffeePassportCard: React.FC<CoffeePassportCardProps> = ({
     visible: { opacity: 1, transition: { duration: 0.3 } },
   };
 
-  const latestDiscovery = profile.latestDiscovery;
-
   return (
     <motion.div
       className="w-full mb-4"
@@ -118,43 +116,6 @@ export const CoffeePassportCard: React.FC<CoffeePassportCardProps> = ({
               </p>
             </motion.div>
           </div>
-
-          {/* Latest Discovery */}
-          {latestDiscovery && (
-            <motion.div
-              className="bg-white dark:bg-gray-800 rounded-lg p-3.5 border border-amber-100 dark:border-amber-900"
-              variants={itemVariants}
-            >
-              <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2.5 uppercase tracking-wide">
-                {isArabic ? 'آخر اكتشاف' : 'Latest discovery'}
-              </p>
-              <div className="flex items-start gap-3">
-                {latestDiscovery.productImage && (
-                  <img
-                    src={latestDiscovery.productImage}
-                    alt={latestDiscovery.nameEn}
-                    className="w-14 h-14 rounded-md object-cover flex-shrink-0 border border-amber-200 dark:border-amber-700"
-                  />
-                )}
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-gray-900 dark:text-white truncate text-sm">
-                    {isArabic ? latestDiscovery.nameAr : latestDiscovery.nameEn}
-                  </p>
-                  <div className="flex items-center gap-1 mt-1.5">
-                    <span className="text-lg">{latestDiscovery.originFlag}</span>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {isArabic ? latestDiscovery.originAr : latestDiscovery.originEn}
-                    </p>
-                  </div>
-                  <p className="text-xs text-amber-700 dark:text-amber-300 mt-1.5 line-clamp-1 font-medium">
-                    {isArabic
-                      ? latestDiscovery.tasteNotesAr.join(', ')
-                      : latestDiscovery.tasteNotesEn.join(', ')}
-                  </p>
-                </div>
-              </div>
-            </motion.div>
-          )}
 
           {/* Next Milestone */}
           {profile.nextMilestone && (

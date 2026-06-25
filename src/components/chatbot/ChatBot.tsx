@@ -274,7 +274,7 @@ const buildOpeningActionMessage = (
   if (hasCoffeePassport) {
     actions.push({
       key: 'view-passport',
-      label: isAr ? 'عرض جواز القهوة' : 'View My Coffee Passport',
+      label: isAr ? 'عرض جواز القهوة' : 'Coffee Passport',
       intent: '__view_passport__',
       primary: hasProfileData && !hasIncompleteQuiz,
     });
@@ -490,7 +490,11 @@ export const ChatBot: React.FC = () => {
   useEffect(() => {
     const updateViewportVars = () => {
       const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
+      const viewportWidth = window.visualViewport?.width ?? window.innerWidth;
+      const viewportOffsetTop = window.visualViewport?.offsetTop ?? 0;
       document.documentElement.style.setProperty('--chatbot-viewport-height', `${viewportHeight}px`);
+      document.documentElement.style.setProperty('--chatbot-viewport-width', `${viewportWidth}px`);
+      document.documentElement.style.setProperty('--chatbot-viewport-offset-top', `${viewportOffsetTop}px`);
       setIsMobileViewport(window.matchMedia('(max-width: 640px)').matches);
     };
 
@@ -498,13 +502,29 @@ export const ChatBot: React.FC = () => {
     window.visualViewport?.addEventListener('resize', updateViewportVars);
     window.visualViewport?.addEventListener('scroll', updateViewportVars);
     window.addEventListener('resize', updateViewportVars);
+    window.addEventListener('orientationchange', updateViewportVars);
 
     return () => {
       window.visualViewport?.removeEventListener('resize', updateViewportVars);
       window.visualViewport?.removeEventListener('scroll', updateViewportVars);
       window.removeEventListener('resize', updateViewportVars);
+      window.removeEventListener('orientationchange', updateViewportVars);
     };
   }, []);
+
+  useEffect(() => {
+    if (!isOpen || !isMobileViewport) return;
+
+    const previousOverflow = document.body.style.overflow;
+    const previousOverscrollBehavior = document.body.style.overscrollBehavior;
+    document.body.style.overflow = 'hidden';
+    document.body.style.overscrollBehavior = 'none';
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.body.style.overscrollBehavior = previousOverscrollBehavior;
+    };
+  }, [isMobileViewport, isOpen]);
 
   const appendFallbackResponse = useCallback(async (messageText: string) => {
     try {
@@ -1050,31 +1070,37 @@ export const ChatBot: React.FC = () => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 32, scale: 0.96 }}
             transition={{ type: 'spring', damping: 28, stiffness: 320 }}
-            className="chatbot-panel fixed z-50 flex flex-col overflow-hidden rounded-[1.6rem] border border-[#f2ddd8] bg-[#fffaf7] shadow-2xl shadow-rose-950/15"
+            className="chatbot-panel fixed z-50 flex flex-col overflow-hidden border border-[#f2ddd8] bg-[#fffaf7] shadow-2xl shadow-rose-950/15"
             style={{
-              bottom: isMobileViewport ? 'max(0.75rem, env(safe-area-inset-bottom))' : '5.5rem',
-              [isAr ? 'left' : 'right']: isMobileViewport ? 'max(0.625rem, env(safe-area-inset-left))' : '1rem',
-              [isAr ? 'right' : 'left']: isMobileViewport ? 'max(0.625rem, env(safe-area-inset-right))' : 'auto',
-              width: isMobileViewport ? 'auto' : 'min(390px, calc(100vw - 1.25rem))',
+              bottom: isMinimized && !isMobileViewport ? '5.5rem' : isMobileViewport ? 0 : '5.5rem',
+              [isAr ? 'left' : 'right']: isMobileViewport ? 0 : '1rem',
+              [isAr ? 'right' : 'left']: isMobileViewport ? 0 : 'auto',
+              top: isMobileViewport && isOpen && !isMinimized ? 'var(--chatbot-viewport-offset-top, 0px)' : 'auto',
+              width: isMobileViewport ? 'var(--chatbot-viewport-width, 100vw)' : 'min(390px, calc(100vw - 1.25rem))',
               height: isMinimized
                 ? 68
                 : isMobileViewport
-                  ? 'calc(var(--chatbot-viewport-height, 100dvh) - max(1rem, env(safe-area-inset-top)) - max(0.75rem, env(safe-area-inset-bottom)) - 1rem)'
+                  ? 'var(--chatbot-viewport-height, 100dvh)'
                   : 'min(620px, calc(100dvh - 7rem))',
               transition: 'height 0.25s cubic-bezier(0.4,0,0.2,1)',
+              borderRadius: isMobileViewport ? '0px' : '1.6rem',
+              paddingTop: isMobileViewport ? 'max(0px, env(safe-area-inset-top))' : '0px',
+              paddingBottom: isMobileViewport ? 'max(0px, env(safe-area-inset-bottom))' : '0px',
+              paddingLeft: isMobileViewport ? 'max(0px, env(safe-area-inset-left))' : '0px',
+              paddingRight: isMobileViewport ? 'max(0px, env(safe-area-inset-right))' : '0px',
             }}
             dir="ltr"
           >
-            <div className="relative flex flex-shrink-0 items-center justify-between overflow-hidden px-4 py-3.5">
+            <div className="relative flex flex-shrink-0 items-center justify-between overflow-hidden px-4 py-3.5 md:px-4 md:py-3.5">
               <div className="absolute inset-0 bg-[linear-gradient(135deg,#fffaf7_0%,#fff1ec_48%,#f8dfd8_100%)]" />
               <div className="absolute inset-x-0 bottom-0 h-px bg-[#f2ddd8]" />
 
               <div className="relative flex min-w-0 items-center gap-3">
-                <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-white/95 p-1.5 shadow-lg shadow-rose-900/10 ring-1 ring-rose-100">
+                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-2xl bg-white/95 p-1.5 shadow-lg shadow-rose-900/10 ring-1 ring-rose-100 md:h-11 md:w-11">
                   <img src={CHATBOT_LOGO} alt="SpiritHub Roastery" className="h-full w-full rounded-full object-contain" />
                 </div>
                 <div className="min-w-0 text-left" dir="ltr">
-                  <p className="truncate text-[15px] font-bold leading-tight tracking-normal text-[#3f2d2a]">
+                  <p className="truncate text-sm font-bold leading-tight tracking-normal text-[#3f2d2a] md:text-[15px]">
                     {assistantTitle}
                   </p>
                   <div className="mt-1 flex items-center gap-1.5">
@@ -1094,8 +1120,9 @@ export const ChatBot: React.FC = () => {
                 </button>
                 <button
                   onClick={() => setIsMinimized((m) => !m)}
-                  className="rounded-xl p-2 text-[#9b625b] transition-colors hover:bg-white/80 hover:text-[#c75049]"
+                  className="rounded-xl p-2 text-[#9b625b] transition-colors hover:bg-white/80 hover:text-[#c75049] md:block"
                   title={isAr ? '\u062a\u0635\u063a\u064a\u0631' : 'Minimize'}
+                  style={{ display: isMobileViewport ? 'none' : 'block' }}
                 >
                   <Minimize2 className="h-4 w-4" />
                 </button>
@@ -1112,8 +1139,10 @@ export const ChatBot: React.FC = () => {
             {!isMinimized && (
               <>
                 <div
-                  className="flex-1 overflow-y-auto overscroll-contain bg-[radial-gradient(circle_at_top_left,rgba(228,112,101,0.10),transparent_34%),linear-gradient(180deg,#fffaf7_0%,#fbf5f1_100%)] px-0 py-3"
+                  className="chatbot-messages flex-1 overflow-y-auto overscroll-contain bg-[radial-gradient(circle_at_top_left,rgba(228,112,101,0.10),transparent_34%),linear-gradient(180deg,#fffaf7_0%,#fbf5f1_100%)] px-3 py-3 md:px-0 md:py-3 sm:px-2"
                   style={{ minHeight: 0 }}
+                  role="log"
+                  aria-live="polite"
                   dir={isAr ? 'rtl' : 'ltr'}
                 >
                   {messages.map((message, index) => (
@@ -1133,13 +1162,13 @@ export const ChatBot: React.FC = () => {
                   {isLoading && <TypingIndicator language={language} />}
 
                   {showSuggestions && (
-                    <div className="px-3 pt-3" dir={isAr ? 'rtl' : 'ltr'}>
+                    <div className="px-2 pt-3 md:px-3 md:pt-3 sm:px-2" dir={isAr ? 'rtl' : 'ltr'}>
                       <div className="grid grid-cols-2 gap-1.5">
                         {suggestions.map((s) => (
                           <button
                             key={s}
                             onClick={() => handleSend(s)}
-                            className="min-w-0 truncate rounded-full border border-[#f2ddd8] bg-white/85 px-2.5 py-2 text-[11px] font-semibold text-[#8e4e47] shadow-sm transition-all hover:-translate-y-0.5 hover:border-[#e9b8b0] hover:bg-[#fff1ed]"
+                            className="min-w-0 truncate rounded-full border border-[#f2ddd8] bg-white/85 px-2 py-1.5 text-[10px] font-semibold text-[#8e4e47] shadow-sm transition-all hover:-translate-y-0.5 hover:border-[#e9b8b0] hover:bg-[#fff1ed] md:px-2.5 md:py-2 md:text-[11px]"
                           >
                             {s}
                           </button>
@@ -1152,7 +1181,7 @@ export const ChatBot: React.FC = () => {
                 </div>
 
                 <div
-                  className="flex-shrink-0 border-t border-[#f2ddd8] bg-white/75 px-3 py-2 backdrop-blur"
+                  className="flex-shrink-0 border-t border-[#f2ddd8] bg-white/75 px-2 py-2 backdrop-blur md:px-3 md:py-2"
                   dir={isAr ? 'rtl' : 'ltr'}
                 >
                   <div className="grid grid-cols-2 gap-1.5">
@@ -1165,16 +1194,16 @@ export const ChatBot: React.FC = () => {
                           key={item.enTitle}
                           type={isSupport ? 'button' : undefined}
                           onClick={isSupport ? handleSupportClick : undefined}
-                          className="flex min-h-[48px] items-center gap-1.5 rounded-xl border border-[#e7f0df] bg-[#fbfdf8] px-2 py-1.5 shadow-sm"
+                          className="flex min-h-[44px] items-center gap-1 rounded-xl border border-[#e7f0df] bg-[#fbfdf8] px-2 py-1.5 shadow-sm md:min-h-[48px] md:gap-1.5 md:px-2 sm:px-1.5"
                         >
                           <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-white text-[#5f9b54] shadow-sm ring-1 ring-[#dfead6]">
-                            <Icon className="h-4 w-4" strokeWidth={2} />
+                            <Icon className="h-3.5 w-3.5 md:h-4 md:w-4" strokeWidth={2} />
                           </div>
                           <div className="min-w-0 leading-tight">
-                            <p className="text-[10px] font-bold text-[#36543a]">
+                            <p className="text-[9px] font-bold text-[#36543a] md:text-[10px]">
                               {isAr ? item.arTitle : item.enTitle}
                             </p>
-                            <p className="mt-0.5 text-[9px] font-medium leading-snug text-[#6d806d]">
+                            <p className="mt-0.5 text-[8px] font-medium leading-snug text-[#6d806d] md:text-[9px]">
                               {isAr ? item.arSubtitle : item.enSubtitle}
                             </p>
                           </div>
@@ -1185,7 +1214,7 @@ export const ChatBot: React.FC = () => {
                 </div>
 
                 <div
-                  className="chatbot-input flex flex-shrink-0 items-end gap-2 border-t border-[#f2ddd8] bg-white/92 p-3 shadow-[0_-10px_30px_rgba(127,58,49,0.05)] backdrop-blur"
+                  className="chatbot-input flex flex-shrink-0 items-end gap-2 border-t border-[#f2ddd8] bg-white/92 p-3 shadow-[0_-10px_30px_rgba(127,58,49,0.05)] backdrop-blur md:p-3 sm:p-2.5"
                   dir={isAr ? 'rtl' : 'ltr'}
                 >
                   <textarea
@@ -1196,7 +1225,7 @@ export const ChatBot: React.FC = () => {
                     placeholder={localizedText('placeholder')}
                     disabled={isLoading}
                     rows={1}
-                    className="chatbot-input-field flex-1 resize-none rounded-2xl border border-[#f2ddd8] bg-[#fffaf7] px-4 py-3 text-base text-stone-800 outline-none transition-colors placeholder:text-stone-400 focus:border-[#e39c94] focus:bg-white disabled:opacity-50"
+                    className="chatbot-input-field flex-1 resize-none rounded-2xl border border-[#f2ddd8] bg-[#fffaf7] px-3 py-2.5 text-sm text-stone-800 outline-none transition-colors placeholder:text-stone-400 focus:border-[#e39c94] focus:bg-white disabled:opacity-50 md:px-4 md:py-3 md:text-base"
                     style={{ maxHeight: 96, lineHeight: '1.5' }}
                     onInput={(e) => {
                       const el = e.currentTarget;
@@ -1207,7 +1236,7 @@ export const ChatBot: React.FC = () => {
                   <button
                     onClick={() => handleSend()}
                     disabled={isSendDisabled}
-                    className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl text-white shadow-lg shadow-rose-900/15 transition-all hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:translate-y-0"
+                    className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-2xl text-white shadow-lg shadow-rose-900/15 transition-all hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:translate-y-0 md:h-12 md:w-12"
                     style={{
                       background: !isSendDisabled
                         ? 'linear-gradient(135deg, #f08a7f 0%, #df6d64 55%, #c75049 100%)'
@@ -1215,7 +1244,7 @@ export const ChatBot: React.FC = () => {
                     }}
                     aria-label={isAr ? '\u0625\u0631\u0633\u0627\u0644' : 'Send'}
                   >
-                    <Send className="h-4 w-4" style={{ transform: isAr ? 'scaleX(-1)' : 'none' }} />
+                    <Send className="h-4 w-4 md:h-4 md:w-4" style={{ transform: isAr ? 'scaleX(-1)' : 'none' }} />
                   </button>
                 </div>
               </>
@@ -1226,4 +1255,3 @@ export const ChatBot: React.FC = () => {
     </>
   );
 };
-

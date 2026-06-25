@@ -42,6 +42,8 @@ export interface PaymentGatewayResultDto {
   accessCode?: string;          // Gateway access code
   errorMessage?: string;        
   orderId?: string;
+  paidByGiftCard?: boolean;     // Whether order was fully paid by gift card
+  amountDue?: number;           // Amount still due after gift card application
 }
 
 export interface PaymentStatusDto {

@@ -246,6 +246,16 @@ export const CheckoutPage: React.FC = () => {
   const [couponError, setCouponError] = useState<string | null>(null);
   const [couponSuccess, setCouponSuccess] = useState<string | null>(null);
 
+  // Gift Card state
+  const [giftCardCode, setGiftCardCode] = useState('');
+  const [appliedGiftCard, setAppliedGiftCard] = useState<{
+    code: string;
+    discount: number;
+  } | null>(null);
+  const [giftCardError, setGiftCardError] = useState<string | null>(null);
+  const [giftCardSuccess, setGiftCardSuccess] = useState<string | null>(null);
+  const [giftCardValidating, setGiftCardValidating] = useState(false);
+
   // Countries/cities are loaded from backend and cached in localStorage.
   const [countries, setCountries] = useState<CheckoutCountryOption[]>([]);
   const [countriesLoading, setCountriesLoading] = useState(false);
@@ -565,16 +575,20 @@ export const CheckoutPage: React.FC = () => {
     return taxByProductId;
   }, [allCategories, appProducts, checkoutCategories, shopData]);
   
-  // Calculate discount amount
+  // Calculate discount amount (coupon + gift card)
   const discountAmount = useMemo(() => {
-    if (!appliedCoupon) return 0;
-    
-    if (appliedCoupon.discountType === 'percentage') {
-      return (subtotal * appliedCoupon.discountValue) / 100;
-    } else {
-      return appliedCoupon.discountValue;
+    let couponDiscount = 0;
+    if (appliedCoupon) {
+      if (appliedCoupon.discountType === 'percentage') {
+        couponDiscount = (subtotal * appliedCoupon.discountValue) / 100;
+      } else {
+        couponDiscount = appliedCoupon.discountValue;
+      }
     }
-  }, [appliedCoupon, subtotal]);
+    
+    const giftCardDiscount = appliedGiftCard?.discount || 0;
+    return couponDiscount + giftCardDiscount;
+  }, [appliedCoupon, appliedGiftCard, subtotal]);
 
   const taxAmount = useMemo(() => {
     if (subtotal <= 0) return 0;
@@ -680,6 +694,82 @@ export const CheckoutPage: React.FC = () => {
     setCouponSuccess(null);
   };
 
+  // Handle gift card validation and application
+  const handleApplyGiftCard = async () => {
+    setGiftCardError(null);
+    setGiftCardSuccess(null);
+
+    const code = giftCardCode.trim().toUpperCase();
+    if (!code) {
+      setGiftCardError(isArabic ? 'الرجاء إدخال رمز بطاقة الهدية' : 'Please enter a gift card code');
+      return;
+    }
+
+    // Check if already applied
+    if (appliedGiftCard?.code === code) {
+      setGiftCardError(isArabic ? 'بطاقة الهدية مطبقة بالفعل' : 'Gift card already applied');
+      return;
+    }
+
+    setGiftCardValidating(true);
+    try {
+      // Calculate current order total (before gift card discount)
+      const currentTotal = subtotal - discountAmount + shippingCost + taxAmount;
+
+      // Call gift card validation API
+      const response = await fetch('/api/GiftCards/validate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          code: code,
+          orderTotal: currentTotal,
+          currency: 'OMR',
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Invalid gift card code');
+      }
+
+      const data = await response.json();
+      
+      if (!data.valid) {
+        setGiftCardError(data.message || (isArabic ? 'رمز بطاقة الهدية غير صالح' : 'Invalid gift card code'));
+        return;
+      }
+
+      // Apply gift card with discount amount
+      const discount = data.discount || data.appliedAmount || 0;
+      setAppliedGiftCard({
+        code: code,
+        discount: discount,
+      });
+      setGiftCardSuccess(
+        isArabic
+          ? `تم تطبيق بطاقة الهدية! خصم: -${discount.toFixed(3)} OMR`
+          : `Gift card applied! Discount: -${discount.toFixed(3)} OMR`
+      );
+    } catch (error: any) {
+      console.error('Gift card validation error:', error);
+      setGiftCardError(
+        error.message || 
+        (isArabic ? 'فشل التحقق من بطاقة الهدية' : 'Failed to validate gift card')
+      );
+    } finally {
+      setGiftCardValidating(false);
+    }
+  };
+
+  const handleRemoveGiftCard = () => {
+    setAppliedGiftCard(null);
+    setGiftCardCode('');
+    setGiftCardError(null);
+    setGiftCardSuccess(null);
+  };
+
   const handleSubmit = (values: CheckoutFormValues) => {
     if (items.length === 0) {
       return;
@@ -724,8 +814,10 @@ export const CheckoutPage: React.FC = () => {
         shipping: shippingCost,
         tax: taxAmount,
         discount: discountAmount,
+        giftCardDiscount: appliedGiftCard?.discount,
         total: grandTotal,
         couponCode: appliedCoupon?.code,
+        giftCardCode: appliedGiftCard?.code,
       },
       checkoutDetails: {
         fullName: values.fullName,
@@ -1412,8 +1504,8 @@ export const CheckoutPage: React.FC = () => {
                   </CardContent>
                 </Card>
 
-                {/* Coupon Code Card */}
-                <Card>
+                {/* Coupon Code Card - Hidden */}
+                <Card className="hidden">
                   <CardHeader>
                     <CardTitle className="text-xl font-semibold flex items-center gap-2">
                       <Tag className="w-5 h-5 text-amber-600" />
@@ -1484,6 +1576,90 @@ export const CheckoutPage: React.FC = () => {
                           <Alert className="bg-green-50 border-green-200">
                             <AlertDescription className="text-green-800 text-sm">
                               {couponSuccess}
+                            </AlertDescription>
+                          </Alert>
+                        )}
+                      </>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Gift Card Code Card */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-xl font-semibold flex items-center gap-2">
+                      <Gift className="w-5 h-5 text-purple-600" />
+                      {isArabic ? 'بطاقة الهدية' : 'Gift Card'}
+                    </CardTitle>
+                    <CardDescription>
+                      {isArabic
+                        ? 'أدخل رمز بطاقة الهدية لتطبيق الخصم.'
+                        : 'Enter your gift card code to apply the discount.'}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {appliedGiftCard ? (
+                      <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1">
+                            <p className="font-semibold text-purple-800 text-sm mb-1">
+                              {appliedGiftCard.code}
+                            </p>
+                            <p className="text-xs text-purple-700">
+                              {isArabic ? 'بطاقة هدية مطبقة' : 'Gift card applied'}
+                            </p>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleRemoveGiftCard}
+                            className="text-purple-800 hover:text-purple-900 hover:bg-purple-100 h-auto py-1 px-2"
+                          >
+                            {isArabic ? 'إزالة' : 'Remove'}
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex gap-2">
+                          <Input
+                            type="text"
+                            placeholder={isArabic ? 'أدخل رمز بطاقة الهدية' : 'Enter gift card code'}
+                            value={giftCardCode}
+                            onChange={(e) => {
+                              setGiftCardCode(e.target.value.toUpperCase());
+                              setGiftCardError(null);
+                              setGiftCardSuccess(null);
+                            }}
+                            className="flex-1"
+                            disabled={giftCardValidating}
+                          />
+                          <Button
+                            type="button"
+                            onClick={handleApplyGiftCard}
+                            variant="outline"
+                            className="border-purple-600 text-purple-600 hover:bg-purple-50"
+                            disabled={giftCardValidating}
+                          >
+                            {giftCardValidating ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              isArabic ? 'تطبيق' : 'Apply'
+                            )}
+                          </Button>
+                        </div>
+                        {giftCardError && (
+                          <Alert className="bg-red-50 border-red-200">
+                            <AlertDescription className="text-red-800 text-sm">
+                              {giftCardError}
+                            </AlertDescription>
+                          </Alert>
+                        )}
+                        {giftCardSuccess && (
+                          <Alert className="bg-green-50 border-green-200">
+                            <AlertDescription className="text-green-800 text-sm">
+                              {giftCardSuccess}
                             </AlertDescription>
                           </Alert>
                         )}
@@ -1564,14 +1740,27 @@ export const CheckoutPage: React.FC = () => {
                           <span>{renderCurrency(taxAmount)}</span>
                         </div>
                       )}
-                      {appliedCoupon && discountAmount > 0 && (
+                      {appliedCoupon && (
                         <div className="flex justify-between text-green-600 font-medium">
                           <span>
-                            {isArabic ? 'الخصم' : 'Discount'} ({appliedCoupon.code})
+                            {isArabic ? 'خصم القسيمة' : 'Coupon Discount'} ({appliedCoupon.code})
                           </span>
                           <span className="inline-flex items-baseline gap-0.5">
                             <span aria-hidden="true">-</span>
-                            {renderCurrency(discountAmount)}
+                            {renderCurrency((appliedCoupon.discountType === 'percentage' 
+                              ? (subtotal * appliedCoupon.discountValue) / 100 
+                              : appliedCoupon.discountValue))}
+                          </span>
+                        </div>
+                      )}
+                      {appliedGiftCard && appliedGiftCard.discount > 0 && (
+                        <div className="flex justify-between text-purple-600 font-medium">
+                          <span>
+                            {isArabic ? 'خصم بطاقة الهدية' : 'Gift Card Discount'} ({appliedGiftCard.code})
+                          </span>
+                          <span className="inline-flex items-baseline gap-0.5">
+                            <span aria-hidden="true">-</span>
+                            {renderCurrency(appliedGiftCard.discount)}
                           </span>
                         </div>
                       )}

@@ -237,6 +237,9 @@ export interface CreateOrderDto {
   couponCode?: string;
   discountAmount?: number;
   
+  // Gift Card Information (Optional)
+  giftCardCode?: string;
+  
   // ============================================================================
   // Backward Compatibility (Deprecated - will be removed)
   // ============================================================================

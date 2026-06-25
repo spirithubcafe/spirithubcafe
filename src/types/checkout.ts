@@ -33,8 +33,10 @@ export interface CheckoutOrder {
     shipping: number;
     tax?: number;
     discount?: number;
+    giftCardDiscount?: number;
     total: number;
     couponCode?: string;
+    giftCardCode?: string;
   };
   checkoutDetails: CheckoutDetails;
 }

@@ -498,6 +498,139 @@ pre {
   animation-direction: reverse;
 }
 
+/* ============================================
+   CHATBOT MOBILE RESPONSIVE STYLES
+   ============================================ */
+
+/* Ensure chatbot panel respects safe areas on mobile */
+.chatbot-panel {
+  position: fixed;
+  z-index: 50;
+}
+
+/* Mobile-specific chatbot adjustments */
+@media (max-width: 640px) {
+  .chatbot-panel {
+    width: var(--chatbot-viewport-width, 100vw) !important;
+    height: var(--chatbot-viewport-height, 100dvh) !important;
+    max-width: none !important;
+    max-height: none !important;
+    top: var(--chatbot-viewport-offset-top, 0px) !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    border-radius: 0 !important;
+    border-left-width: 0;
+    border-right-width: 0;
+
+    /* Handle safe areas */
+    padding-top: max(0px, env(safe-area-inset-top));
+    padding-bottom: max(0px, env(safe-area-inset-bottom));
+    padding-left: max(0px, env(safe-area-inset-left));
+    padding-right: max(0px, env(safe-area-inset-right));
+  }
+
+  /* Optimize header for mobile */
+  .chatbot-panel > div:first-child {
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
+
+  /* Optimize messages container for mobile */
+  .chatbot-messages {
+    min-height: 0;
+    padding-left: max(0.75rem, env(safe-area-inset-left));
+    padding-right: max(0.75rem, env(safe-area-inset-right));
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+    scroll-padding-top: 0.5rem;
+    scroll-padding-bottom: 0.5rem;
+  }
+
+  /* Optimize input area for mobile */
+  .chatbot-input {
+    padding-left: max(0.75rem, env(safe-area-inset-left));
+    padding-right: max(0.75rem, env(safe-area-inset-right));
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+    gap: 0.5rem;
+  }
+
+  /* Slightly smaller input field on mobile */
+  .chatbot-input-field {
+    font-size: 14px;
+    padding: 0.625rem 0.75rem;
+  }
+
+  /* Hide minimize button on mobile */
+  [aria-label="Minimize"],
+  [title*="Minimize"],
+  [title*="تصغير"] {
+    display: none !important;
+  }
+}
+
+/* Tablet and up - desktop layout */
+@media (min-width: 641px) {
+  .chatbot-panel {
+    border-radius: 1.6rem;
+    width: min(390px, calc(100vw - 1.25rem)) !important;
+    height: min(620px, calc(100dvh - 7rem)) !important;
+    box-shadow: 0 20px 25px -5px rgba(127, 58, 49, 0.15);
+  }
+}
+
+/* Landscape mobile - adjust height */
+@media (max-width: 640px) and (orientation: landscape) {
+  .chatbot-panel {
+    height: var(--chatbot-viewport-height, 100dvh) !important;
+  }
+}
+
+/* Prevent iOS zoom on input focus */
+@media (max-width: 768px) {
+  input,
+  textarea,
+  select {
+    font-size: 16px;
+  }
+
+  .chatbot-input-field {
+    font-size: 16px;
+  }
+}
+
+/* Better touch targets on mobile */
+@media (max-width: 640px) {
+  button {
+    min-height: 44px;
+  }
+
+  .chatbot-panel button {
+    min-height: 40px;
+    min-width: 40px;
+  }
+}
+
+/* Smooth transitions for viewport changes */
+.chatbot-panel {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Prevent layout shift on scroll */
+.chatbot-panel > div:nth-child(2) {
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  will-change: scroll-position;
+}
+
+/* Optimize for notch devices */
+@supports (padding: max(0px, 1px)) {
+  body {
+    padding-left: max(0px, env(safe-area-inset-left));
+    padding-right: max(0px, env(safe-area-inset-right));
+  }
+}
+
 /* ChatBot animations */
 @keyframes chatbot-bounce {
   0%, 60%, 100% { transform: translateY(0); }
@@ -510,7 +643,7 @@ pre {
 }
 
 .chatbot-panel {
-  max-width: calc(100vw - max(1.25rem, env(safe-area-inset-left)) - max(1.25rem, env(safe-area-inset-right)));
+  max-width: calc(var(--chatbot-viewport-width, 100vw) - max(1.25rem, env(safe-area-inset-left)) - max(1.25rem, env(safe-area-inset-right)));
   max-height: calc(var(--chatbot-viewport-height, 100dvh) - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
   overscroll-behavior: contain;
   touch-action: manipulation;
@@ -538,13 +671,9 @@ pre {
 
 @media (max-width: 640px) {
   .chatbot-panel {
-    max-width: calc(100vw - max(1.25rem, env(safe-area-inset-left)) - max(1.25rem, env(safe-area-inset-right)));
-    max-height: calc(var(--chatbot-viewport-height, 100dvh) - max(1rem, env(safe-area-inset-top)) - max(0.75rem, env(safe-area-inset-bottom)) - 1rem);
-    border-radius: 1.25rem;
-  }
-
-  .chatbot-input {
-    padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+    max-width: none;
+    max-height: none;
+    border-radius: 0;
   }
 }
 
