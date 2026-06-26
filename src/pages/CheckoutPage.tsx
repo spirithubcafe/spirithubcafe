@@ -29,6 +29,7 @@ import { useShopPage } from '@/hooks/useShop';
 import { formatPrice, OMANI_RIAL_SYMBOL } from '@/lib/regionUtils';
 import { OmaniRialPrice } from '../components/ui/OmaniRialPrice';
 import { categoryService } from '../services/categoryService';
+import { publicHttp } from '../services/apiClient';
 import type { Category as ApiCategory } from '../types/product';
 import {
   getAramexCountries,
@@ -45,6 +46,34 @@ interface Coupon {
   minOrderAmount?: number;
   expiryDate?: string; // ISO date string
   description: { en: string; ar: string };
+}
+
+interface GiftCardValidationResult {
+  valid?: boolean;
+  isValid?: boolean;
+  message?: string;
+  discount?: number;
+  appliedAmount?: number;
+  discountAmount?: number;
+  amountApplied?: number;
+  amountToApply?: number;
+  balance?: number;
+  remainingBalance?: number;
+}
+
+interface GiftCardValidationResponse {
+  success?: boolean;
+  message?: string;
+  data?: GiftCardValidationResult;
+  valid?: boolean;
+  isValid?: boolean;
+  discount?: number;
+  appliedAmount?: number;
+  discountAmount?: number;
+  amountApplied?: number;
+  amountToApply?: number;
+  balance?: number;
+  remainingBalance?: number;
 }
 
 const AVAILABLE_COUPONS: Coupon[] = [
@@ -251,6 +280,7 @@ export const CheckoutPage: React.FC = () => {
   const [appliedGiftCard, setAppliedGiftCard] = useState<{
     code: string;
     discount: number;
+    remainingBalance?: number;
   } | null>(null);
   const [giftCardError, setGiftCardError] = useState<string | null>(null);
   const [giftCardSuccess, setGiftCardSuccess] = useState<string | null>(null);
@@ -716,36 +746,39 @@ export const CheckoutPage: React.FC = () => {
       // Calculate current order total (before gift card discount)
       const currentTotal = subtotal - discountAmount + shippingCost + taxAmount;
 
-      // Call gift card validation API
-      const response = await fetch('/api/GiftCards/validate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      // Call gift card validation API through the configured backend client.
+      const response = await publicHttp.post<GiftCardValidationResponse>(
+        '/api/GiftCards/validate',
+        {
           code: code,
           orderTotal: currentTotal,
           currency: 'OMR',
-        }),
-      });
+        },
+      );
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Invalid gift card code');
-      }
-
-      const data = await response.json();
+      const data = response.data.data ?? response.data;
+      const isValidGiftCard = data.valid ?? data.isValid ?? response.data.success ?? false;
       
-      if (!data.valid) {
+      if (!isValidGiftCard) {
         setGiftCardError(data.message || (isArabic ? 'رمز بطاقة الهدية غير صالح' : 'Invalid gift card code'));
         return;
       }
 
       // Apply gift card with discount amount
-      const discount = data.discount || data.appliedAmount || 0;
+      const discount =
+        data.discount ??
+        data.appliedAmount ??
+        data.discountAmount ??
+        data.amountApplied ??
+        data.amountToApply ??
+        Math.min(data.balance ?? data.remainingBalance ?? 0, currentTotal);
+      const remainingBalance =
+        data.remainingBalance ??
+        (data.balance !== undefined ? Math.max(0, data.balance - discount) : undefined);
       setAppliedGiftCard({
         code: code,
         discount: discount,
+        remainingBalance,
       });
       setGiftCardSuccess(
         isArabic
@@ -754,8 +787,12 @@ export const CheckoutPage: React.FC = () => {
       );
     } catch (error: any) {
       console.error('Gift card validation error:', error);
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        error?.message;
       setGiftCardError(
-        error.message || 
+        errorMessage || 
         (isArabic ? 'فشل التحقق من بطاقة الهدية' : 'Failed to validate gift card')
       );
     } finally {
@@ -1608,6 +1645,11 @@ export const CheckoutPage: React.FC = () => {
                             <p className="text-xs text-purple-700">
                               {isArabic ? 'بطاقة هدية مطبقة' : 'Gift card applied'}
                             </p>
+                            {appliedGiftCard.remainingBalance !== undefined && (
+                              <p className="text-xs text-purple-700 mt-1">
+                                {isArabic ? '\u0627\u0644\u0631\u0635\u064a\u062f \u0627\u0644\u0645\u062a\u0628\u0642\u064a' : 'Remaining balance'}: {renderCurrency(appliedGiftCard.remainingBalance)}
+                              </p>
+                            )}
                           </div>
                           <Button
                             type="button"

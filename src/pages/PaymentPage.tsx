@@ -285,6 +285,7 @@ export const PaymentPage: React.FC = () => {
     }
     return order.checkoutDetails.fullName;
   }, [order, isArabic]);
+  const isFullyCoveredByGiftCard = Boolean(order?.totals.giftCardCode && (order?.totals.total ?? 0) <= 0);
 
   const handlePayment = async (simulateFailure = false) => {
     if (!order) return;
@@ -311,6 +312,8 @@ export const PaymentPage: React.FC = () => {
       const isExistingOrder = order.id.startsWith('existing-');
       let orderNumber: string;
       let totalAmount: number;
+      let serverPaymentStatus: string | undefined;
+      let giftCardRedemptionApplied: boolean | undefined;
       
       if (isExistingOrder) {
         // This is a payment link for an existing order - skip order creation
@@ -333,10 +336,13 @@ export const PaymentPage: React.FC = () => {
         
         orderNumber = orderDetails.orderNumber;
         totalAmount = orderDetails.totalAmount;
+        serverPaymentStatus = orderDetails.paymentStatus;
+        giftCardRedemptionApplied = orderDetails.giftCardRedemptionApplied;
         paymentDebug('existing-order-loaded', {
           orderNumber,
           totalAmount,
           paymentStatus: orderDetails.paymentStatus,
+          giftCardRedemptionApplied: orderDetails.giftCardRedemptionApplied,
           shippingMethod: orderDetails.shippingMethod,
         });
       } else {
@@ -490,9 +496,13 @@ export const PaymentPage: React.FC = () => {
         
         orderNumber = orderResponse.orderNumber;
         totalAmount = orderResponse.totalAmount || order.totals.total;
+        serverPaymentStatus = orderResponse.paymentStatus;
+        giftCardRedemptionApplied = orderResponse.giftCardRedemptionApplied;
         paymentDebug('order-created', {
           orderNumber,
           totalAmount,
+          paymentStatus: orderResponse.paymentStatus,
+          giftCardRedemptionApplied: orderResponse.giftCardRedemptionApplied,
           itemsCount: createOrderDto.items.length,
           shippingMethodApiId: createOrderDto.shippingMethod,
         });
@@ -500,6 +510,45 @@ export const PaymentPage: React.FC = () => {
 
       // Store server order number
       sessionStorage.setItem(ORDER_ID_KEY, orderNumber);
+
+      if (Number(totalAmount) <= 0 && order.totals.giftCardCode) {
+        if (!serverPaymentStatus || serverPaymentStatus.toLowerCase() !== 'paid') {
+          paymentDebug('gift-card-full-payment-not-finalized', {
+            orderNumber,
+            totalAmount,
+            paymentStatus: serverPaymentStatus || null,
+            giftCardRedemptionApplied: giftCardRedemptionApplied ?? null,
+          });
+          throw new Error(
+            isArabic
+              ? 'تم إنشاء الطلب، لكن لم يتم تأكيد دفع بطاقة الهدية بعد. يرجى التواصل معنا لتأكيد الطلب.'
+              : 'The order was created, but gift card payment was not finalized yet. Please contact us to confirm this order.'
+          );
+        }
+
+        paymentDebug('gift-card-full-payment-detected', {
+          orderNumber,
+          totalAmount,
+          giftCardCode: order.totals.giftCardCode,
+          paymentStatus: serverPaymentStatus,
+          giftCardRedemptionApplied: giftCardRedemptionApplied ?? null,
+        });
+
+        setPaymentStep('redirecting');
+        setPaymentProgress(isArabic ? 'تم الدفع بنجاح بواسطة بطاقة الهدية' : 'Payment successful with gift card');
+
+        clearCart();
+        sessionStorage.removeItem(PENDING_ORDER_STORAGE_KEY);
+        sessionStorage.setItem(ORDER_ID_KEY, orderNumber);
+        sessionStorage.setItem(LAST_SUCCESS_STORAGE_KEY, JSON.stringify({
+          ...order,
+          serverOrderNumber: orderNumber,
+        }));
+
+        await new Promise(resolve => setTimeout(resolve, 500));
+        navigate(`/checkout/payment-success?orderNumber=${orderNumber}`, { replace: true });
+        return;
+      }
 
       // Step 2: Initiate payment with Bank Muscat Gateway
       setPaymentStep('initiating');
@@ -866,7 +915,9 @@ export const PaymentPage: React.FC = () => {
                     ) : (
                       <>
                         <ShieldCheck className="w-5 h-5 inline mr-2" />
-                        {isArabic ? 'ادفع الآن' : 'Pay Securely'}
+                        {isFullyCoveredByGiftCard
+                          ? (isArabic ? '\u062a\u0623\u0643\u064a\u062f \u0627\u0644\u0637\u0644\u0628' : 'Confirm Order')
+                          : (isArabic ? 'ادفع الآن' : 'Pay Securely')}
                       </>
                     )}
                   </Button>

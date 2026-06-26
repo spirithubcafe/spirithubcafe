@@ -65,6 +65,9 @@ interface OrderDetailsDto {
   taxAmount: number;
   shippingCost: number;
   totalAmount: number;
+  giftCardCode?: string;
+  giftCardAmountApplied?: number;
+  giftCardRedemptionApplied?: boolean;
   fullName: string;
   email: string;
   phone: string;

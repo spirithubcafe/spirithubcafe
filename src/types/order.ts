@@ -61,6 +61,9 @@ export interface Order {
   // Coupon/Discount (Optional)
   couponCode?: string;
   discountAmount?: number;
+  giftCardCode?: string;
+  giftCardAmountApplied?: number;
+  giftCardRedemptionApplied?: boolean;
   
   // Status
   status: OrderStatus;
