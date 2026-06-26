@@ -388,10 +388,12 @@ export const Navigation: React.FC = () => {
                 type="image/webp"
               />
               <img 
-                src={isHomePage ? "/images/logo/logo-light.png" : "/images/logo/logo-dark.png"}
+                src={isHomePage ? "/images/logo/logo-light.webp" : "/images/logo/logo-dark.webp"}
                 alt="Spirit Hub Cafe"
                 width={180}
                 height={48}
+                fetchPriority="high"
+                decoding="async"
                 className="h-9 sm:h-10 md:h-11 lg:h-12 w-auto"
               />
             </picture>

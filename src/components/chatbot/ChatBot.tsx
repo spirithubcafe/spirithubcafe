@@ -22,7 +22,7 @@ import { TypingIndicator } from './TypingIndicator';
 
 const session = new GeminiChatSession();
 const RATE_LIMIT_COOLDOWN_MS = 60_000;
-const CHATBOT_LOGO = '/images/logo-s.png';
+const CHATBOT_LOGO = '/images/logo-s.webp';
 
 const QUICK_SUGGESTIONS = {
   ar: [
@@ -1054,7 +1054,7 @@ export const ChatBot: React.FC = () => {
             aria-label="Open SpiritHub Helper"
             dir="ltr"
           >
-            <img src={CHATBOT_LOGO} alt="SpiritHub Roastery" className="relative z-10 h-12 w-12 object-contain drop-shadow-sm" />
+            <img src={CHATBOT_LOGO} alt="SpiritHub Roastery" loading="lazy" decoding="async" className="relative z-10 h-12 w-12 object-contain drop-shadow-sm" />
             <span className="absolute bottom-1 right-1 z-20 flex h-3 w-3 items-center justify-center rounded-full bg-white shadow-sm">
               <span className="h-2 w-2 rounded-full bg-emerald-400" />
             </span>
@@ -1097,7 +1097,7 @@ export const ChatBot: React.FC = () => {
 
               <div className="relative flex min-w-0 items-center gap-3">
                 <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-2xl bg-white/95 p-1.5 shadow-lg shadow-rose-900/10 ring-1 ring-rose-100 md:h-11 md:w-11">
-                  <img src={CHATBOT_LOGO} alt="SpiritHub Roastery" className="h-full w-full rounded-full object-contain" />
+                  <img src={CHATBOT_LOGO} alt="SpiritHub Roastery" loading="lazy" decoding="async" className="h-full w-full rounded-full object-contain" />
                 </div>
                 <div className="min-w-0 text-left" dir="ltr">
                   <p className="truncate text-sm font-bold leading-tight tracking-normal text-[#3f2d2a] md:text-[15px]">

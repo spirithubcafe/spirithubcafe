@@ -150,8 +150,10 @@ export const Footer: React.FC = () => {
             {/* Brand Section - Takes more space */}
             <div className="lg:col-span-5 space-y-6">
               <img 
-                src="/images/logo/logo-light.png" 
+                src="/images/logo/logo-light.webp" 
                 alt="Spirit Hub Roastery"
+                loading="lazy"
+                decoding="async"
                 className="h-16 w-auto"
               />
               <div className="space-y-4">

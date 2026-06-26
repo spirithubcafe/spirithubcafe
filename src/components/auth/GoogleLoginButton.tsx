@@ -86,6 +86,9 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({ mode = 'lo
           onSuccess={handleGoogleSuccess}
           onError={handleGoogleError}
           useOneTap={false}
+          itp_support
+          use_fedcm_for_button
+          use_fedcm_for_prompt
           text={mode === 'login' ? 'signin_with' : 'signup_with'}
           shape="rectangular"
           theme="outline"

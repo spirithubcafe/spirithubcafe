@@ -20,7 +20,7 @@ interface ChatMessageProps {
   onOpeningAction?: (intent: string) => void;
 }
 
-const CHATBOT_LOGO = '/images/logo-s.png';
+const CHATBOT_LOGO = '/images/logo-s.webp';
 const PRODUCT_FALLBACK_IMAGE = '/images/products/default-product.webp';
 
 const getProductPathSegment = (value: string | number | undefined | null): string => {
@@ -165,7 +165,7 @@ export const ChatMessageComponent: React.FC<ChatMessageProps> = ({
       <div className={`flex items-start gap-2 ${isAr ? 'flex-row-reverse' : 'flex-row'}`}>
         {/* Avatar */}
         <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-white p-1 shadow-sm ring-1 ring-[#f2ddd8] sm:h-8 sm:w-8">
-          <img src={CHATBOT_LOGO} alt="SpiritHub Roastery" className="h-full w-full rounded-full object-contain" />
+          <img src={CHATBOT_LOGO} alt="SpiritHub Roastery" loading="lazy" decoding="async" className="h-full w-full rounded-full object-contain" />
         </div>
 
         <div className="flex max-w-[calc(100%-2.25rem)] flex-1 flex-col gap-1.5 sm:max-w-[calc(100%-2.5rem)] sm:gap-2">

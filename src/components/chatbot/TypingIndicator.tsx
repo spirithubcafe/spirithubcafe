@@ -4,7 +4,7 @@ interface TypingIndicatorProps {
   language?: string;
 }
 
-const CHATBOT_LOGO = '/images/logo-s.png';
+const CHATBOT_LOGO = '/images/logo-s.webp';
 
 export const TypingIndicator: React.FC<TypingIndicatorProps> = ({ language }) => {
   const isAr = language === 'ar';
@@ -12,7 +12,7 @@ export const TypingIndicator: React.FC<TypingIndicatorProps> = ({ language }) =>
   return (
     <div className={`flex items-start gap-2 px-4 py-2 ${isAr ? 'flex-row-reverse' : ''}`}>
       <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-white p-1 shadow-sm ring-1 ring-[#f2ddd8]">
-        <img src={CHATBOT_LOGO} alt="SpiritHub Roastery" className="h-full w-full rounded-full object-contain" />
+        <img src={CHATBOT_LOGO} alt="SpiritHub Roastery" loading="lazy" decoding="async" className="h-full w-full rounded-full object-contain" />
       </div>
       <div className="flex items-center gap-1 rounded-2xl border border-[#f2ddd8] bg-white px-4 py-3 shadow-sm">
         <span
