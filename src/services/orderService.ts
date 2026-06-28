@@ -1,6 +1,7 @@
 import { apiClient } from './apiClient';
 import type {
   Order,
+  IssuedGiftCard,
   CreateOrderDto,
   UpdateOrderStatusDto,
   UpdatePaymentStatusDto,
@@ -68,6 +69,10 @@ interface OrderDetailsDto {
   giftCardCode?: string;
   giftCardAmountApplied?: number;
   giftCardRedemptionApplied?: boolean;
+  giftCards?: IssuedGiftCard[];
+  issuedGiftCards?: IssuedGiftCard[];
+  electronicGiftCards?: IssuedGiftCard[];
+  giftCardCodes?: string[];
   fullName: string;
   email: string;
   phone: string;
@@ -256,6 +261,19 @@ export const orderService = {
    */
   async getOrderByNumber(orderNumber: string): Promise<ApiResponse<Order>> {
     const response = await apiClient.get<ApiResponse<Order>>(`/api/orders/number/${orderNumber}`);
+    return response.data;
+  },
+
+  async getIssuedGiftCardsByOrderNumber(orderNumber: string): Promise<ApiResponse<IssuedGiftCard[]> & { pagination?: PaginationInfo }> {
+    const queryParams = new URLSearchParams({
+      searchTerm: orderNumber,
+      page: '1',
+      pageSize: '20',
+    });
+
+    const response = await apiClient.get<ApiResponse<IssuedGiftCard[]> & { pagination?: PaginationInfo }>(
+      `/api/GiftCards?${queryParams.toString()}`,
+    );
     return response.data;
   },
 

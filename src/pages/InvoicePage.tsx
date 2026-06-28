@@ -4,6 +4,7 @@ import { orderService } from '../services';
 import type { Order } from '../types/order';
 import { generatePremiumInvoiceHTML } from '../components/admin/InvoicePrint';
 import { useApp } from '../hooks/useApp';
+import { OMANI_RIAL_SYMBOL } from '../lib/regionUtils';
 
 export const InvoicePage: React.FC = () => {
   const { orderNumber } = useParams<{ orderNumber: string }>();
@@ -49,6 +50,17 @@ export const InvoicePage: React.FC = () => {
         });
 
         if (isActive && dataUrl) {
+          if ('fonts' in document && 'FontFace' in window) {
+            try {
+              const fontFace = new FontFace('Omani Rial Symbol', `url('${dataUrl}')`);
+              const loadedFont = await fontFace.load();
+              document.fonts.add(loadedFont);
+              await document.fonts.ready;
+            } catch {
+              // The iframe can still use the embedded data URL even if parent registration fails.
+            }
+          }
+
           setOmaniRialFontDataUrl(dataUrl);
         }
       } catch {
@@ -90,7 +102,26 @@ export const InvoicePage: React.FC = () => {
           return;
         }
 
-        setOrder(response.data);
+        let orderWithGiftCards = response.data;
+        try {
+          const giftCardsResponse = await orderService.getIssuedGiftCardsByOrderNumber(safeOrderNumber);
+          if (!isActive) return;
+
+          const issuedGiftCards = (giftCardsResponse.data ?? []).filter(
+            (giftCard) => giftCard.orderNumber?.toLowerCase() === orderWithGiftCards.orderNumber.toLowerCase(),
+          );
+
+          if (issuedGiftCards.length) {
+            orderWithGiftCards = {
+              ...orderWithGiftCards,
+              issuedGiftCards,
+            };
+          }
+        } catch {
+          // The invoice should still render if the admin gift-card lookup is unavailable.
+        }
+
+        setOrder(orderWithGiftCards);
       } catch (err: any) {
         if (!isActive) return;
         const message = err?.message || 'Failed to load invoice.';
@@ -159,7 +190,16 @@ export const InvoicePage: React.FC = () => {
 
     if ('fonts' in doc) {
       try {
-        await (doc as Document & { fonts?: FontFaceSet }).fonts?.ready;
+        const fonts = (doc as Document & { fonts?: FontFaceSet }).fonts;
+        await fonts?.ready;
+
+        if (doc.querySelector('.omr-symbol')) {
+          await Promise.race([
+            fonts?.load(`16px "Omani Rial Symbol"`, OMANI_RIAL_SYMBOL),
+            new Promise<void>((resolve) => window.setTimeout(resolve, 3000)),
+          ]);
+          await fonts?.ready;
+        }
       } catch {
         // Ignore font readiness errors and continue.
       }
@@ -168,6 +208,42 @@ export const InvoicePage: React.FC = () => {
     await new Promise<void>((resolve) => {
       requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
     });
+  };
+
+  const warmUpCurrencyFontCapture = async (
+    doc: Document,
+    html2canvas: (typeof import('html2canvas'))['default'],
+  ) => {
+    if (!doc.querySelector('.omr-symbol')) return;
+
+    const probe = doc.createElement('div');
+    probe.className = 'omr-symbol';
+    probe.textContent = OMANI_RIAL_SYMBOL;
+    probe.style.position = 'fixed';
+    probe.style.left = '0';
+    probe.style.top = '0';
+    probe.style.width = '32px';
+    probe.style.height = '32px';
+    probe.style.opacity = '0.01';
+    probe.style.pointerEvents = 'none';
+    probe.style.fontSize = '24px';
+    probe.style.background = 'transparent';
+    doc.body.appendChild(probe);
+
+    try {
+      await html2canvas(probe, {
+        scale: 1,
+        backgroundColor: null,
+        width: 32,
+        height: 32,
+        windowWidth: 64,
+        windowHeight: 64,
+        scrollX: 0,
+        scrollY: 0,
+      });
+    } finally {
+      probe.remove();
+    }
   };
 
   const generateInvoicePdfFile = async (): Promise<File> => {
@@ -218,6 +294,7 @@ export const InvoicePage: React.FC = () => {
       }
 
       await waitForDocumentReady(doc);
+      await warmUpCurrencyFontCapture(doc, pdfLibs.html2canvas);
 
       const bodyRect = doc.body.getBoundingClientRect();
       const captureX = Math.max(0, Math.floor(bodyRect.left));

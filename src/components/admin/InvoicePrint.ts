@@ -69,6 +69,46 @@ function esc(s: string | null | undefined): string {
     .replace(/"/g, '&quot;');
 }
 
+type InvoiceGiftCard = {
+  code?: string;
+  amount?: number;
+  balance?: number;
+  status?: string;
+};
+
+function getIssuedGiftCards(order: Order) {
+  const orderWithGiftCards = order as Order & {
+    giftCards?: InvoiceGiftCard[];
+    issuedGiftCards?: InvoiceGiftCard[];
+    electronicGiftCards?: InvoiceGiftCard[];
+    giftCardCodes?: string[];
+  };
+
+  const giftCardRows: InvoiceGiftCard[] = [
+    ...(orderWithGiftCards.giftCards ?? []),
+    ...(orderWithGiftCards.issuedGiftCards ?? []),
+    ...(orderWithGiftCards.electronicGiftCards ?? []),
+    ...(orderWithGiftCards.giftCardCodes ?? []).map((code) => ({ code })),
+  ];
+
+  const isRedemptionCode = Boolean(order.giftCardRedemptionApplied || order.giftCardAmountApplied);
+  if (order.giftCardCode && !isRedemptionCode) {
+    giftCardRows.push({ code: order.giftCardCode });
+  }
+
+  const seenCodes = new Set<string>();
+  return giftCardRows
+    .map((giftCard) => ({
+      ...giftCard,
+      code: giftCard.code?.trim(),
+    }))
+    .filter((giftCard) => {
+      if (!giftCard.code || seenCodes.has(giftCard.code)) return false;
+      seenCodes.add(giftCard.code);
+      return true;
+    });
+}
+
 // â”€â”€â”€ main export â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function generatePremiumInvoiceHTML(order: Order, isArabic = false): string {
@@ -83,6 +123,7 @@ export function generatePremiumInvoiceHTML(order: Order, isArabic = false): stri
   const orderDate = fmtDate(order.createdAt);
   const printedAt = fmtDate(new Date());
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=100x100&bgcolor=f5f1ea&color=4a3728&data=${encodeURIComponent('https://spirithubcafe.com')}`;
+  const issuedGiftCards = getIssuedGiftCards(order);
 
   /* â”€â”€ item rows â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   const itemRows = (order.items ?? []).map((item, i) => {
@@ -115,6 +156,34 @@ export function generatePremiumInvoiceHTML(order: Order, isArabic = false): stri
       ${order.giftRecipientEmail ? `<div style="display:flex;gap:6px;font-size:12px;padding:3px 0;"><span style="color:#888;min-width:100px;">${isArabic ? 'Ø§Ù„Ø¨Ø±ÙŠØ¯' : 'Email'}:</span><span style="color:#2c2c2c;font-weight:500;">${esc(order.giftRecipientEmail)}</span></div>` : ''}
       ${(order.giftRecipientAddress || order.giftRecipientCity || order.giftRecipientCountry) ? `<div style="display:flex;gap:6px;font-size:12px;padding:3px 0;"><span style="color:#888;min-width:100px;">${isArabic ? 'Ø¹Ù†ÙˆØ§Ù† Ø§Ù„ØªØ³Ù„ÙŠÙ…' : 'Delivery Address'}:</span><span style="color:#2c2c2c;font-weight:500;">${[order.giftRecipientAddress, order.giftRecipientCity, order.giftRecipientPostalCode, order.giftRecipientCountry].filter(Boolean).map(esc).join(', ')}</span></div>` : ''}
       ${order.giftMessage ? `<div style="margin-top:8px;padding:8px 12px;background:white;border-radius:8px;font-style:italic;font-size:12px;color:#5c4226;">"${esc(order.giftMessage)}"</div>` : ''}
+    </div>` : '';
+
+  const giftCardCodeSection = issuedGiftCards.length ? `
+    <div style="margin-bottom:20px;padding:16px 20px;border:1.5px solid #0f766e;border-radius:12px;background:#ecfdf5;">
+      <p style="font-size:13px;font-weight:700;color:#0f766e;margin:0 0 10px;">Electronic Gift Card Code</p>
+      ${issuedGiftCards.map((giftCard) => `
+        <div style="padding:8px 0;border-top:1px solid rgba(15,118,110,0.16);">
+          <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;font-size:12px;">
+            <span style="color:#475569;font-weight:600;">Code:</span>
+            <span style="font-family:'Courier New',monospace;font-size:15px;font-weight:800;letter-spacing:0.8px;color:#064e3b;text-align:${ar};word-break:break-all;">${esc(giftCard.code)}</span>
+          </div>
+          ${typeof giftCard.amount === 'number' ? `
+            <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;padding-top:3px;font-size:12px;">
+              <span style="color:#64748b;">Amount:</span>
+              <span style="font-weight:700;color:#064e3b;">${formatMoney(giftCard.amount)}</span>
+            </div>` : ''}
+          ${typeof giftCard.balance === 'number' ? `
+            <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;padding-top:3px;font-size:12px;">
+              <span style="color:#64748b;">Balance:</span>
+              <span style="font-weight:700;color:#064e3b;">${formatMoney(giftCard.balance)}</span>
+            </div>` : ''}
+          ${giftCard.status ? `
+            <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;padding-top:3px;font-size:12px;">
+              <span style="color:#64748b;">Status:</span>
+              <span style="font-weight:700;color:#064e3b;">${esc(giftCard.status)}</span>
+            </div>` : ''}
+        </div>
+      `).join('')}
     </div>` : '';
 
   /* â”€â”€ discount row â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
@@ -412,6 +481,8 @@ export function generatePremiumInvoiceHTML(order: Order, isArabic = false): stri
 
   <!-- â•â•â•â•â•â•â•â•â•â• GIFT â•â•â•â•â•â•â•â•â•â• -->
   ${giftSection}
+
+  ${giftCardCodeSection}
 
   <!-- â•â•â•â•â•â•â•â•â•â• TABLE â•â•â•â•â•â•â•â•â•â• -->
   <div class="table-wrapper">

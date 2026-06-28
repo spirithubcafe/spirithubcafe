@@ -14,6 +14,22 @@ export interface OrderItem {
   productImage?: string;
 }
 
+export interface IssuedGiftCard {
+  id?: number;
+  code?: string;
+  amount?: number;
+  balance?: number;
+  currency?: string;
+  status?: string;
+  customerName?: string;
+  customerPhone?: string;
+  orderNumber?: string;
+  createdAt?: string;
+  whatsAppSent?: boolean;
+  whatsAppSentAt?: string;
+  whatsAppError?: string;
+}
+
 export interface ShippingAddress {
   firstName: string;
   lastName: string;
@@ -64,6 +80,10 @@ export interface Order {
   giftCardCode?: string;
   giftCardAmountApplied?: number;
   giftCardRedemptionApplied?: boolean;
+  giftCards?: IssuedGiftCard[];
+  issuedGiftCards?: IssuedGiftCard[];
+  electronicGiftCards?: IssuedGiftCard[];
+  giftCardCodes?: string[];
   
   // Status
   status: OrderStatus;

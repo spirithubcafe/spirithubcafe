@@ -136,6 +136,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
               disabled={isLoading}
               className={`w-full ${isRTL ? 'font-cairo' : ''} text-left`}
               dir="ltr"
+              autoComplete="username"
             />
           </div>
           
@@ -166,6 +167,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
                 disabled={isLoading}
                 className={`w-full ${isRTL ? 'text-right font-cairo placeholder:text-right pl-10 pr-3' : 'text-left pr-10 pl-3'}`}
                 dir={isRTL ? 'rtl' : 'ltr'}
+                autoComplete="current-password"
               />
               <Button
                 type="button"

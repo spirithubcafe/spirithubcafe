@@ -188,6 +188,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
                 disabled={isLoading}
                 className={`w-full ${isRTL ? 'pl-10 font-cairo placeholder:text-right' : 'pr-10'} ${fieldErrors.password ? 'border-red-500' : ''} ${isRTL ? 'text-right' : 'text-left'}`}
                 dir={isRTL ? 'rtl' : 'ltr'}
+                autoComplete="new-password"
               />
               <Button
                 type="button"
@@ -227,6 +228,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
                 disabled={isLoading}
                 className={`w-full ${isRTL ? 'pl-10 font-cairo placeholder:text-right' : 'pr-10'} ${fieldErrors.confirmPassword ? 'border-red-500' : ''} ${isRTL ? 'text-right' : 'text-left'}`}
                 dir={isRTL ? 'rtl' : 'ltr'}
+                autoComplete="new-password"
               />
               <Button
                 type="button"
