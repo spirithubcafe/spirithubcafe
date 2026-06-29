@@ -137,6 +137,28 @@ export default defineConfig(({ isSsrBuild }) => ({
             // Only place the matched route modules themselves into the admin chunk.
             // Shared dependencies stay in their natural chunks so the homepage does
             // not inherit an unnecessary dependency on the admin bundle.
+
+            // Admin-specific vendor dependencies (separate chunks to avoid bloating admin chunk)
+            if (id.includes('/sonner/')) {
+              return 'sonner-vendor';
+            }
+
+            if (id.includes('/recharts/')) {
+              return 'recharts-vendor';
+            }
+
+            if (id.includes('/date-fns/')) {
+              return 'date-vendor';
+            }
+
+            if (id.includes('/react-quill-new/') || id.includes('/quill/')) {
+              return 'quill-vendor';
+            }
+
+            if (id.includes('/framer-motion/') || id.includes('/motion/')) {
+              return 'motion-vendor';
+            }
+
             if (
               id.includes('/src/components/admin/') ||
               id.includes('/src/pages/CategoryAddPage') ||
