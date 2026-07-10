@@ -394,16 +394,11 @@ export const ProductDetailPage = () => {
           });
         }
 
-        if (!regionFromPath && !hasStoredRegion && !location.pathname.startsWith('/om') && !location.pathname.startsWith('/sa')) {
-          if (DEBUG_PRODUCT_DETAIL) {
-            console.info('[ProductDetailPage] Waiting for region resolution before product fetch', {
-              path: location.pathname,
-              productSlug: productId,
-              elapsedMs: Math.round(performance.now() - startedAt),
-            });
-          }
-          return;
-        }
+        // Regionless legacy/shared links (for example `/products/:slug`) can be
+        // rendered before RegionProvider has persisted a selection. Do not
+        // leave the page in its loading state while waiting for storage: the
+        // current provider region is already a safe fallback, and a storage
+        // write by itself does not cause this effect to run again.
         const resolvedRegion = regionFromPath ?? (hasStoredRegion ? storedRegion : currentRegion.code);
         const requestKey = `${resolvedRegion}_${language}_${String(productId)}`;
         if (lastSuccessfulRequestKeyRef.current === requestKey && state === 'ready' && product) {
