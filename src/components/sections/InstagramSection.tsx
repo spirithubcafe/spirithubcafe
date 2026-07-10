@@ -41,12 +41,6 @@ const getPinnedPermalinkSet = (): Set<string> => {
   );
 };
 
-const getApiBaseUrl = (): string =>
-  import.meta.env.VITE_API_BASE_URL_OM ||
-  import.meta.env.VITE_API_BASE_URL_SA ||
-  import.meta.env.VITE_API_BASE_URL ||
-  'https://api.spirithubcafe.com';
-
 const isValidMediaType = (value: unknown): value is InstagramMediaType =>
   value === 'IMAGE' || value === 'VIDEO' || value === 'CAROUSEL_ALBUM';
 
