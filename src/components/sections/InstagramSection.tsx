@@ -146,7 +146,7 @@ export const InstagramSection: React.FC = () => {
 
     const loadFeed = async () => {
       try {
-        const response = await fetch(`${getApiBaseUrl()}/api/instagram/feed?postLimit=${FETCH_POSTS}`, {
+        const response = await fetch(`/api/instagram/feed?postLimit=${FETCH_POSTS}`, {
           method: 'GET',
           headers: { Accept: 'application/json' },
           signal: controller.signal,

@@ -60,11 +60,11 @@ export const LoginPage: React.FC = () => {
   const heroCopy = {
     en: {
       title: 'Sign in to Spirit Hub Cafe',
-      subtitle: 'Access your orders, private wishlists, and member-only perks with a fast and secure login experience.',
+      subtitle: 'Sign in to your Spirit Hub Cafe account to track orders, manage your private wishlist, redeem loyalty points, and unlock exclusive member-only offers.',
     },
     ar: {
       title: 'تسجيل الدخول إلى Spirit Hub Cafe',
-      subtitle: 'ادخل إلى حسابك لإدارة الطلبات، متابعة القائمة المفضلة، والوصول إلى عروض الأعضاء بسهولة.',
+      subtitle: 'سجّل الدخول إلى حسابك في سبيريت هب لمتابعة طلباتك، إدارة قائمتك المفضلة، استبدال نقاط الولاء، والاستمتاع بعروض حصرية.',
     },
   };
 

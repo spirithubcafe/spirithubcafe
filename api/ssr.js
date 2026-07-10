@@ -218,7 +218,7 @@ const buildProductAggregateRating = (product, approvedReviews) => {
 };
 
 // Helper function to generate meta tags based on route
-async function getMetaTagsForRoute(url, baseUrl, preloadedProduct = null) {
+async function getMetaTagsForRoute(url, baseUrl, preloadedProduct = null, hostHint = null) {
   const resolvedBaseUrl = (baseUrl || process.env.VITE_SITE_URL || process.env.SITE_URL || 'https://www.spirithubcafe.com')
     .toString()
     .replace(/\/+$/, '');
@@ -228,12 +228,19 @@ async function getMetaTagsForRoute(url, baseUrl, preloadedProduct = null) {
   let cleanUrl = originalPath;
   if (!cleanUrl.startsWith('/')) cleanUrl = `/${cleanUrl}`;
 
-  // Detect region from URL
+  // Detect region from URL path, then fall back to host header for the SA domain
   let region = '';
   if (cleanUrl === '/om' || cleanUrl.startsWith('/om/')) {
     region = 'om';
   } else if (cleanUrl === '/sa' || cleanUrl.startsWith('/sa/')) {
     region = 'sa';
+  } else if (
+    hostHint &&
+    (hostHint === 'spirithub.sa' || hostHint.endsWith('.spirithub.sa'))
+  ) {
+    region = 'sa';
+  } else {
+    region = 'om'; // default to OM for www.spirithubcafe.com paths without prefix
   }
 
   // Normalize region prefixes for route matching (but keep originalPath for og:url)
@@ -258,6 +265,7 @@ async function getMetaTagsForRoute(url, baseUrl, preloadedProduct = null) {
   const productCurrency = region === 'sa' ? 'SAR' : 'OMR';
   let productAvailability = 'in stock';
   let productForStructuredData = null;
+  let noindex = false;
 
   if (normalizedPath === '/' || normalizedPath === '') {
     image = `${resolvedBaseUrl}/logo.png`;
@@ -340,35 +348,84 @@ async function getMetaTagsForRoute(url, baseUrl, preloadedProduct = null) {
       console.log(`Description: ${description.substring(0, 50)}...`);
       console.log(`Price: ${productPrice} ${productCurrency}`);
     } else {
-      title = `Product Details${region ? ` | ${regionName}` : ''} | Spirit Hub Cafe`;
-      description = `View our premium coffee products at Spirit Hub Cafe in ${regionName}`;
+      // Product not found — use slug to generate a unique fallback description
+      const slugLabel = identifier
+        .replace(/-/g, ' ')
+        .replace(/\b\w/g, (c) => c.toUpperCase());
+      title = `${slugLabel} | Spirit Hub Cafe`;
+      description = `Buy ${slugLabel} from Spirit Hub Cafe – specialty coffee freshly roasted in ${regionName}. Discover tasting notes, origin details, and order online with fast delivery.`;
       ogType = 'product';
-      console.log('Product not found, using default meta tags');
+      console.log('Product not found, using slug-based meta tags');
     }
   } else if (normalizedPath === '/products' || normalizedPath === '/products/') {
-    title = `Our Products${region ? ` | ${regionName}` : ''} | Spirit Hub Cafe | سبيريت هب`;
-    description = `Browse our selection of specialty coffee beans, brewing equipment, and premium merchandise from Spirit Hub Cafe in ${regionName}`;
+    title = `Our Products | ${regionName} | Spirit Hub Cafe`;
+    description = `Browse specialty coffee beans, capsules, and brewing equipment from Spirit Hub Cafe in ${regionName}. Freshly roasted daily with fast delivery across the GCC.`;
+  } else if (normalizedPath === '/shop' || normalizedPath === '/shop/') {
+    title = `Coffee Shop | ${regionName} | Spirit Hub Cafe`;
+    description = `Shop specialty coffee, capsules, and brewing equipment at Spirit Hub Cafe in ${regionName}. Browse curated collections with fast delivery across the GCC.`;
+  } else if (normalizedPath.startsWith('/shop/')) {
+    // Shop sub-category page — convert slug to a human-readable title
+    const categorySlug = normalizedPath.split('/shop/')[1]?.split('/')[0] || '';
+    const categoryName = categorySlug
+      .replace(/-/g, ' ')
+      .replace(/\b\w/g, (c) => c.toUpperCase());
+    title = `${categoryName} | ${regionName} | Spirit Hub Cafe`;
+    description = `Browse ${categoryName} at Spirit Hub Cafe in ${regionName} – specialty coffee, capsules, and brewing equipment. Freshly roasted daily with fast GCC delivery.`;
   } else if (normalizedPath === '/about' || normalizedPath === '/about/') {
-    title = `About Us${region ? ` | ${regionName}` : ''} | Spirit Hub Cafe | سبيريت هب`;
-    description = `Learn about Spirit Hub Cafe - our story, mission, and passion for roasting the finest specialty coffee in ${regionName}`;
+    title = `About SpiritHub Roastery | ${regionName} | Spirit Hub Cafe`;
+    description = `Learn about SpiritHub Roastery in ${regionName} – our story, mission, and commitment to specialty coffee. Q Grader certified experts, premium beans, daily roasting.`;
   } else if (normalizedPath === '/contact' || normalizedPath === '/contact/') {
-    title = `Contact Us${region ? ` | ${regionName}` : ''} | Spirit Hub Cafe | سبيريت هب`;
-    description = `Get in touch with Spirit Hub Cafe in ${regionName === 'Saudi Arabia' ? 'Riyadh, Saudi Arabia' : 'Muscat, Oman'} - visit us, call us, or send us a message`;
+    const city = regionName === 'Saudi Arabia' ? 'Khobar' : 'Muscat';
+    title = `Contact Us | ${city}, ${regionName} | Spirit Hub Cafe`;
+    description = `Contact Spirit Hub Cafe in ${city}, ${regionName}. Visit our roastery, call, or message us on WhatsApp for orders, wholesale enquiries, and specialty coffee support.`;
+  } else if (normalizedPath === '/faq' || normalizedPath === '/faq/') {
+    title = `FAQ | ${regionName} | Spirit Hub Cafe`;
+    description = `Find answers to common questions about ordering, shipping, payment, and specialty coffee at Spirit Hub Cafe in ${regionName}. Expert support always available.`;
+  } else if (normalizedPath === '/loyalty' || normalizedPath.startsWith('/loyalty/')) {
+    title = `Loyalty Program | ${regionName} | Spirit Hub Cafe`;
+    description = `Join Spirit Hub Cafe loyalty program in ${regionName}: earn points on every purchase and redeem for free products, discounts, and exclusive member-only rewards.`;
+  } else if (normalizedPath === '/delivery' || normalizedPath === '/delivery/') {
+    title = `Delivery & Shipping Policy | ${regionName} | Spirit Hub Cafe`;
+    description = `Spirit Hub Cafe delivery policy for ${regionName}: order processing times, shipping methods, coverage areas, delivery costs, and estimated transit times for your orders.`;
+  } else if (normalizedPath === '/refund' || normalizedPath === '/refund/') {
+    title = `Refund & Return Policy | ${regionName} | Spirit Hub Cafe`;
+    description = `Spirit Hub Cafe refund and return policy for ${regionName}: eligibility, conditions, timelines, and how to submit a return or refund request on your order.`;
+  } else if (normalizedPath === '/privacy' || normalizedPath === '/privacy/') {
+    title = `Privacy Policy | ${regionName} | Spirit Hub Cafe`;
+    description = `Spirit Hub Cafe privacy policy for ${regionName}: how we collect, store, use, and protect your personal data, manage cookies, and handle account information.`;
+  } else if (normalizedPath === '/terms' || normalizedPath === '/terms/') {
+    title = `Terms & Conditions | ${regionName} | Spirit Hub Cafe`;
+    description = `Spirit Hub Cafe terms and conditions for ${regionName}: ordering, shipping, payments, returns, and acceptable use policies. Read before placing your first order.`;
+  } else if (normalizedPath === '/wholesale' || normalizedPath === '/wholesale/') {
+    title = `Wholesale Coffee | ${regionName} | Spirit Hub Cafe`;
+    description = `SpiritHub wholesale specialty coffee for ${regionName} businesses: freshly roasted beans, capsules, and flexible supply. Reliable quality for cafes, hotels, and retailers.`;
   } else if (normalizedPath === '/favorites' || normalizedPath === '/favorites/') {
-    title = `My Favorites${region ? ` | ${regionName}` : ''} | Spirit Hub Cafe`;
-    description = `View your favorite products from Spirit Hub Cafe in ${regionName}`;
+    title = `My Favorites | Spirit Hub Cafe`;
+    description = `View your favorite products from Spirit Hub Cafe`;
+    noindex = true;
   } else if (normalizedPath === '/orders' || normalizedPath === '/orders/') {
-    title = `My Orders${region ? ` | ${regionName}` : ''} | Spirit Hub Cafe`;
-    description = `Track and manage your orders from Spirit Hub Cafe in ${regionName}`;
+    title = `My Orders | Spirit Hub Cafe`;
+    description = `Track and manage your orders from Spirit Hub Cafe`;
+    noindex = true;
   } else if (normalizedPath === '/checkout' || normalizedPath === '/checkout/') {
-    title = `Checkout${region ? ` | ${regionName}` : ''} | Spirit Hub Cafe`;
-    description = `Complete your order from Spirit Hub Cafe - ${regionName}'s premier specialty coffee roastery`;
+    title = `Checkout | Spirit Hub Cafe`;
+    description = `Complete your order from Spirit Hub Cafe`;
+    noindex = true;
   } else if (normalizedPath === '/login' || normalizedPath === '/login/') {
-    title = `Login${region ? ` | ${regionName}` : ''} | Spirit Hub Cafe`;
+    title = `Login | Spirit Hub Cafe`;
     description = 'Sign in to your Spirit Hub Cafe account';
+    noindex = true;
   } else if (normalizedPath === '/register' || normalizedPath === '/register/') {
-    title = `Create Account${region ? ` | ${regionName}` : ''} | Spirit Hub Cafe`;
+    title = `Create Account | Spirit Hub Cafe`;
     description = 'Join Spirit Hub Cafe community and enjoy exclusive benefits';
+    noindex = true;
+  } else if (
+    normalizedPath === '/profile' || normalizedPath === '/profile/' ||
+    normalizedPath.startsWith('/profile/') ||
+    normalizedPath === '/payment' || normalizedPath.startsWith('/payment/') ||
+    normalizedPath === '/order-detail' || normalizedPath.startsWith('/order-detail/')
+  ) {
+    noindex = true;
   }
 
   const guessMimeType = (urlStr) => {
@@ -453,6 +510,7 @@ async function getMetaTagsForRoute(url, baseUrl, preloadedProduct = null) {
   return `
     <title>${title}</title>
     <meta name="description" content="${description}" />
+    ${noindex ? '<meta name="robots" content="noindex,nofollow" />' : ''}
     <link rel="canonical" href="${canonicalUrl}" />
     <link rel="alternate" hreflang="en-OM" href="${omUrl}" />
     <link rel="alternate" hreflang="ar-OM" href="${omUrl}" />
@@ -481,6 +539,48 @@ export default async function handler(req, res) {
   try {
     const url = req.url || '/';
     const urlPathOnly = url.split('?')[0].split('#')[0];
+
+    // Redirect bare root to the canonical Oman home page
+    if (urlPathOnly === '/') {
+      res.setHeader('Location', '/om');
+      res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=86400');
+      return res.status(301).end();
+    }
+
+    // Redirect bare (region-less) page paths to their /om/ equivalents.
+    // Prevents /contact, /shop, /about, /products/... etc. from being indexed
+    // separately from /om/contact, /om/shop, /om/about, /om/products/... etc.
+    const REGIONLESS_REDIRECT_PREFIXES = [
+      '/products', '/shop', '/about', '/contact', '/faq',
+      '/privacy', '/terms', '/delivery', '/refund', '/login',
+      '/register', '/checkout', '/wholesale', '/loyalty',
+      '/favorites', '/orders', '/profile', '/order',
+    ];
+    const isRegionPrefixed = urlPathOnly.startsWith('/om') || urlPathOnly.startsWith('/sa');
+    if (!isRegionPrefixed) {
+      const matchedPrefix = REGIONLESS_REDIRECT_PREFIXES.find(
+        (p) => urlPathOnly === p || urlPathOnly === p + '/' || urlPathOnly.startsWith(p + '/'),
+      );
+      if (matchedPrefix) {
+        const cleanTarget = urlPathOnly.replace(/\/+$/, '') || '/';
+        res.setHeader('Location', `/om${cleanTarget}`);
+        res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=86400');
+        return res.status(301).end();
+      }
+    }
+
+    // Return 404 + noindex for known-bad URL patterns (legacy WooCommerce paths,
+    // deeply nested /om/om/... loops, and old /product/ single routes).
+    const isLegacyBadPath =
+      urlPathOnly.startsWith('/product-category/') ||
+      urlPathOnly.startsWith('/product/') ||
+      /\/om\/om\//.test(urlPathOnly) ||
+      /\/sa\/sa\//.test(urlPathOnly);
+    if (isLegacyBadPath) {
+      // Let the SPA render the 404 component but tell crawlers not to index it.
+      res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+    }
+
     const legacyPolicyRedirect = getLegacyPolicyRedirect(urlPathOnly);
     if (legacyPolicyRedirect) {
       res.setHeader('Location', legacyPolicyRedirect);
@@ -555,7 +655,7 @@ export default async function handler(req, res) {
     let html = fs.readFileSync(indexPath, 'utf-8');
     
     // Get meta tags based on route (async)
-    const metaTags = await getMetaTagsForRoute(url, requestBaseUrl, ssrProduct);
+    const metaTags = await getMetaTagsForRoute(url, requestBaseUrl, ssrProduct, host);
     const performanceHints = getPerformanceHintsForRoute(url);
     const acceptLanguage = (req.headers?.['accept-language'] || '').toString().split(',')[0].trim().toLowerCase();
     const requestLanguage = acceptLanguage.startsWith('ar') ? 'ar' : 'en';
@@ -568,7 +668,7 @@ export default async function handler(req, res) {
     // Keep the fallback tags in index.html for plain SPA/static serving, but
     // remove them when SSR supplies route-specific metadata.
     html = html
-      .replace(/\s*<title>[\s\S]*?<\/title>/i, '')
+      .replace(/\s*<title>[\s\S]*?<\/title>/gi, '')  // global: strip ALL <title> tags
       .replace(/\s*<meta\s+name="description"[\s\S]*?\/>/i, '');
 
     // Replace the meta tags placeholder (only in head)

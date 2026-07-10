@@ -791,13 +791,18 @@ export const ProductDetailPage = () => {
       const priceText = price > 0 ? ` - ${price.toFixed(3)} ${currentRegion.currency}` : '';
       
       return language === 'ar'
-        ? `اشتري ${displayName} من سبيريت هب كافيه${priceText}. ${categoryName ? categoryName + ' - ' : ''}قهوة مختصة محمصة طازجة في مسقط، عمان. توصيل سريع، جودة مضمونة. ${plainDescription ? plainDescription.substring(0, 100) : ''}`
-        : `Buy ${displayName} from Spirit Hub Cafe${priceText}. ${categoryName ? categoryName + ' - ' : ''}Fresh roasted specialty coffee in Muscat, Oman. Fast delivery, guaranteed quality. ${plainDescription ? plainDescription.substring(0, 100) : ''}`;
+        ? `اشتري ${displayName} من سبيريت هب كافيه${priceText}. ${categoryName ? categoryName + ' - ' : ''}قهوة مختصة محمصة طازجة في ${currentRegion.nameAr || 'مسقط'}. توصيل سريع، جودة مضمونة. ${plainDescription ? plainDescription.substring(0, 100) : ''}`
+        : `Buy ${displayName} from Spirit Hub Cafe${priceText}. ${categoryName ? categoryName + ' - ' : ''}Fresh roasted specialty coffee in ${currentRegion.code === 'sa' ? 'Khobar, Saudi Arabia' : 'Muscat, Oman'}. Fast delivery, guaranteed quality. ${plainDescription ? plainDescription.substring(0, 100) : ''}`;
     }
 
+    const slugLabel = productId
+      ? productId.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+      : '';
+    const regionCity = currentRegion.code === 'sa' ? 'Khobar, Saudi Arabia' : 'Muscat, Oman';
+    const regionCityAr = currentRegion.code === 'sa' ? 'الخبر، السعودية' : 'مسقط، عمان';
     return language === 'ar'
-      ? 'قهوة مختصة محمصة طازجة من سبيريت هب كافيه في مسقط، عمان.'
-      : 'Fresh roasted specialty coffee from Spirit Hub Cafe in Muscat, Oman.';
+      ? `${slugLabel ? 'اشتري ' + slugLabel + ' – ' : ''}قهوة مختصة محمصة طازجة من سبيريت هب في ${regionCityAr}. اكتشف ملاحظات التذوق والأصل واطلب أونلاين مع توصيل سريع.`
+      : `${slugLabel ? 'Buy ' + slugLabel + ' – ' : ''}specialty coffee freshly roasted by SpiritHub Roastery in ${regionCity}. Discover tasting notes, origin, and order online with fast delivery.`;
   }, [displayName, language, plainDescription, product, price, currentRegion.currency]);
 
   const structuredData = useMemo(() => {

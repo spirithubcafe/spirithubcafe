@@ -28,6 +28,12 @@ type RegionCode = keyof typeof REGION_HOSTS;
 
 const detectRegionFromPath = (pathname: string): RegionCode => {
   if (pathname === '/sa' || pathname.startsWith('/sa/')) return 'sa';
+  if (
+    typeof window !== 'undefined' &&
+    (window.location.hostname === 'spirithub.sa' ||
+      window.location.hostname.endsWith('.spirithub.sa'))
+  )
+    return 'sa';
   return 'om';
 };
 
@@ -164,7 +170,10 @@ export const Seo: React.FC<SeoProps> = ({
   const resolvedDescription =
     description ??
     (language === 'ar' ? siteMetadata.defaultDescriptionAr : siteMetadata.defaultDescription);
-  const resolvedTitle = title ? `${title} | ${siteMetadata.siteName}` : siteMetadata.defaultTitle;
+  const regionLabel = region === 'sa' ? 'Saudi Arabia' : 'Oman';
+  const resolvedTitle = title
+    ? `${title} | ${regionLabel} | ${siteMetadata.siteName}`
+    : siteMetadata.defaultTitle;
   
   // Ensure images are always absolute URLs for social media crawlers
   const resolvedImage = (() => {

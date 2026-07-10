@@ -15,12 +15,12 @@ export const TermsConditionsPage: React.FC = () => {
         ? {
             title: 'الشروط والأحكام',
             description:
-              'تعرف على شروط استخدام موقع سبيريت هب كافيه وسياسات الطلب والشحن والمرتجعات.',
+              'تعرف على شروط وأحكام موقع سبيريت هب كافيه – سياسات الطلب، الشحن، الدفع، المرتجعات، وحقوق الملكية الفكرية واستخدام الموقع.',
           }
         : {
             title: 'Terms & conditions',
             description:
-              'Review Spirit Hub Cafe’s terms for ordering, shipping, refunds, and site usage.',
+              "Review Spirit Hub Cafe's complete terms and conditions: ordering, shipping, payment methods, refund eligibility, intellectual property, and acceptable use policies.",
           },
     [language]
   );

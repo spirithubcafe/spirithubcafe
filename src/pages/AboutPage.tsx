@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { useApp } from '../hooks/useApp';
+import { useRegion } from '../hooks/useRegion';
 import { motion } from 'framer-motion';
 import { Award, Coffee, Heart, Shield } from 'lucide-react';
 import { PageHeader } from '../components/layout/PageHeader';
@@ -9,20 +10,28 @@ import { Link } from 'react-router-dom';
 
 export const AboutPage: React.FC = () => {
   const { language } = useApp();
+  const { currentRegion } = useRegion();
+  const regionLabel = language === 'ar'
+    ? (currentRegion.code === 'sa' ? 'السعودية' : 'عُمان')
+    : (currentRegion.code === 'sa' ? 'Saudi Arabia' : 'Oman');
   const seoCopy = useMemo(
     () =>
       language === 'ar'
         ? {
-            title: 'عن محمصة SpiritHub - خبراء قهوة مختصة في عمان والسعودية',
+            title: `عن محمصة SpiritHub - خبراء قهوة مختصة في ${regionLabel}`,
             description:
-              'محمصة قهوة مختصة رائدة في مسقط والخبر. خبراء Q Graders معتمدين، حبوب قهوة فاخرة، تحميص يومي. اطلب الآن كبسولات وحبوب قهوة مختصة محمصة طازجة.',
+              currentRegion.code === 'sa'
+                ? 'محمصة سبيريت هب في الخبر، السعودية – خبراء Q Graders معتمدون. حبوب قهوة مختصة طازجة، كبسولات، ومعدات تحضير مع توصيل سريع في السعودية.'
+                : 'محمصة سبيريت هب في مسقط، عُمان – خبراء Q Graders معتمدون. حبوب قهوة مختصة طازجة، كبسولات، ومعدات تحضير مع توصيل سريع في عُمان.',
           }
         : {
-            title: 'About SpiritHub Roastery - Specialty Coffee Experts Oman & Saudi',
+            title: `About SpiritHub Roastery | Specialty Coffee Experts in ${regionLabel}`,
             description:
-              'Leading specialty coffee roastery in Muscat & Khobar. Q Grader certified experts, premium beans, daily roasting. Buy specialty coffee, order capsules online. Serving Oman and Saudi Arabia.',
+              currentRegion.code === 'sa'
+                ? 'SpiritHub Roastery in Khobar, Saudi Arabia – Q Grader certified specialty coffee experts. Fresh-roasted beans, capsules, and brewing equipment with fast delivery across Saudi Arabia.'
+                : 'SpiritHub Roastery in Muscat, Oman – Q Grader certified specialty coffee experts. Fresh-roasted beans, capsules, and brewing equipment with fast delivery across Oman.',
           },
-    [language]
+    [language, regionLabel]
   );
 
   const structuredData = useMemo(

@@ -2855,8 +2855,14 @@ export const OrdersManagement: React.FC = () => {
                       <div className="shrink-0 text-right">
                         <div className="font-semibold">OMR {order.totalAmount.toFixed(3)}</div>
                         <div className="mt-1 text-xs text-muted-foreground">
-                          {formatOrderDateTime(order.createdAt)}
+                          <span className="text-green-600 font-medium">{isArabic ? 'دُفع: ' : 'Paid: '}</span>
+                          {formatOrderDateTime(order.updatedAt || order.createdAt)}
                         </div>
+                        {order.updatedAt && order.updatedAt !== order.createdAt && (
+                          <div className="text-xs text-muted-foreground/60">
+                            {isArabic ? 'أُنشئ: ' : 'Created: '}{formatOrderDateTime(order.createdAt)}
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -2885,7 +2891,7 @@ export const OrdersManagement: React.FC = () => {
                       <TableHead>{isArabic ? 'المبلغ' : 'Amount'}</TableHead>
                       <TableHead>{isArabic ? 'الحالة' : 'Status'}</TableHead>
                       <TableHead>{isArabic ? 'الدفع' : 'Payment'}</TableHead>
-                      <TableHead>{isArabic ? 'التاريخ' : 'Date'}</TableHead>
+                      <TableHead>{isArabic ? 'تاريخ الدفع' : 'Paid on'}</TableHead>
                       <TableHead className="text-right">
                         {isArabic ? 'الإجراءات' : 'Actions'}
                       </TableHead>
@@ -2945,7 +2951,14 @@ export const OrdersManagement: React.FC = () => {
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          {formatOrderDateTime(order.createdAt)}
+                          <div className="text-green-700 font-medium text-sm">
+                            {formatOrderDateTime(order.updatedAt || order.createdAt)}
+                          </div>
+                          {order.updatedAt && order.updatedAt !== order.createdAt && (
+                            <div className="text-xs text-muted-foreground/60">
+                              {isArabic ? 'أُنشئ: ' : 'Created: '}{formatOrderDateTime(order.createdAt)}
+                            </div>
+                          )}
                         </TableCell>
                         <TableCell className="text-right">
                           <OrderActionsMenu order={order} triggerVariant="icon" />

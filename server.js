@@ -5,6 +5,21 @@ import express from 'express';
 import compression from 'compression';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// Load .env in development (Vercel injects env vars automatically in production)
+const envPath = path.resolve(__dirname, '.env');
+if (fs.existsSync(envPath)) {
+  const lines = fs.readFileSync(envPath, 'utf-8').split('\n');
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    const eq = trimmed.indexOf('=');
+    if (eq === -1) continue;
+    const key = trimmed.slice(0, eq).trim();
+    const val = trimmed.slice(eq + 1).trim();
+    if (key && !(key in process.env)) process.env[key] = val;
+  }
+}
 const isProduction = process.env.NODE_ENV === 'production';
 const enableDevSsr = process.env.VITE_DEV_SSR === 'true';
 const port = process.env.PORT || 5173;
@@ -265,6 +280,13 @@ app.get('/om/email-templates.html', (_req, res) => {
 });
 app.get('/sa/email-templates.html', (_req, res) => {
   res.redirect(302, '/sa/admin/email-templates');
+});
+
+// Instagram feed API – proxies the Instagram Graph API so the frontend
+// can fetch posts without exposing the access token to the client.
+app.get('/api/instagram/feed', async (req, res) => {
+  const { default: instagramFeedHandler } = await import('./api/instagram/feed.js');
+  return instagramFeedHandler(req, res);
 });
 
 // Add Vite or respective production middlewares
@@ -744,18 +766,18 @@ async function getMetaTagsForRoute(url, requestBaseUrl, requestLanguage = 'en') 
     }
   } else if (pathKey === '/products') {
     title = isAr
-      ? 'منتجاتنا | سبيريت هب | قهوة مختصة وكبسولات وأدوات تحضير'
-      : 'Our Products | Spirit Hub Cafe | Specialty Coffee, Capsules & Brewing Equipment';
+      ? `منتجاتنا | ${regionLabel} | سبيريت هب`
+      : `Our Products | ${regionLabel} | Spirit Hub Cafe`;
     description = isAr
-      ? 'تصفح مجموعتنا من حبوب القهوة المختصة والكبسولات ومعدات التحضير من سبيريت هب كافيه. محمصة طازجة يومياً في عمان.'
-      : 'Browse our specialty coffee beans, capsules, and brewing equipment. Freshly roasted daily at Spirit Hub Cafe in Oman.';
+      ? `تصفح مجموعتنا من حبوب القهوة المختصة والكبسولات ومعدات التحضير من سبيريت هب في ${regionLabel}.`
+      : `Browse our specialty coffee beans, capsules, and brewing equipment from Spirit Hub Cafe in ${regionLabel}.`;
   } else if (pathKey === '/about') {
     title = isAr
-      ? 'عن محمصة SpiritHub | خبراء قهوة مختصة في عمان والسعودية'
-      : 'About SpiritHub Roastery | Specialty Coffee Experts in Oman & Saudi Arabia';
+      ? `عن محمصة SpiritHub | ${regionLabel}`
+      : `About SpiritHub Roastery | ${regionLabel}`;
     description = isAr
-      ? 'محمصة قهوة مختصة رائدة في مسقط والخبر. خبراء Q Graders معتمدين، حبوب قهوة فاخرة، تحميص يومي.'
-      : 'Leading specialty coffee roastery in Muscat & Khobar. Q Grader certified experts, premium beans, daily roasting.';
+      ? `محمصة قهوة مختصة رائدة في ${cityLabel}. خبراء Q Graders معتمدين، حبوب قهوة فاخرة، تحميص يومي.`
+      : `Leading specialty coffee roastery in ${cityLabel}. Q Grader certified experts, premium beans, daily roasting.`;
   } else if (pathKey === '/contact') {
     title = isAr
       ? `اتصل بنا | محمصة SpiritHub ${cityLabel}`
@@ -765,53 +787,66 @@ async function getMetaTagsForRoute(url, requestBaseUrl, requestLanguage = 'en') 
       : `Reach us for orders and specialty coffee. Call, WhatsApp, or visit our roastery in ${cityLabel}, ${regionLabel}.`;
   } else if (pathKey === '/faq') {
     title = isAr
-      ? 'الأسئلة الشائعة | سبيريت هب كافيه'
-      : 'FAQ | Spirit Hub Cafe - Frequently Asked Questions';
+      ? `الأسئلة الشائعة | ${regionLabel} | سبيريت هب`
+      : `FAQ | ${regionLabel} | Spirit Hub Cafe`;
     description = isAr
-      ? 'إجابات على أكثر الأسئلة شيوعاً حول الطلبات والشحن والقهوة المختصة في سبيريت هب.'
-      : 'Answers to the most common questions about orders, shipping, and specialty coffee at Spirit Hub Cafe.';
-  } else if (pathKey === '/loyalty' || pathKey.startsWith('/loyalty')) {
+      ? `إجابات على أكثر الأسئلة شيوعاً حول الطلبات والشحن والقهوة المختصة في سبيريت هب ${cityLabel}.`
+      : `Answers to the most common questions about orders, shipping, and specialty coffee at Spirit Hub Cafe in ${regionLabel}.`;
+  } else if (pathKey === '/loyalty' || pathKey.startsWith('/loyalty/')) {
     title = isAr
-      ? 'برنامج الولاء | سبيريت هب - اكسب نقاط مع كل طلب'
-      : 'Loyalty Program | Spirit Hub Cafe - Earn Points With Every Order';
+      ? `برنامج الولاء | ${regionLabel} | سبيريت هب`
+      : `Loyalty Program | ${regionLabel} | Spirit Hub Cafe`;
     description = isAr
-      ? 'انضم لبرنامج الولاء في سبيريت هب واكسب نقاط مع كل عملية شراء. استبدل نقاطك بمنتجات مجانية وخصومات.'
-      : 'Join Spirit Hub Cafe loyalty program and earn points with every purchase. Redeem for free products and discounts.';
-  } else if (pathKey === '/shop' || pathKey.startsWith('/shop')) {
+      ? `انضم لبرنامج الولاء في سبيريت هب واكسب نقاط مع كل عملية شراء في ${regionLabel}. استبدل نقاطك بمنتجات مجانية وخصومات.`
+      : `Join Spirit Hub Cafe loyalty program and earn points with every purchase in ${regionLabel}. Redeem for free products and discounts.`;
+  } else if (pathKey === '/shop') {
     title = isAr
-      ? 'متجر القهوة | سبيريت هب - تصفح جميع الأصناف'
-      : 'Coffee Shop | Spirit Hub Cafe - Browse All Collections';
+      ? `متجر القهوة | ${regionLabel} | سبيريت هب`
+      : `Coffee Shop | ${regionLabel} | Spirit Hub Cafe`;
     description = isAr
-      ? 'تسوق قهوة مختصة، كبسولات، معدات تحضير وهدايا من سبيريت هب. توصيل سريع في عمان والسعودية.'
-      : 'Shop specialty coffee, capsules, brewing equipment and gifts at Spirit Hub Cafe. Fast delivery in Oman and Saudi Arabia.';
+      ? `تسوق قهوة مختصة، كبسولات، معدات تحضير وهدايا من سبيريت هب. توصيل سريع في ${regionLabel}.`
+      : `Shop specialty coffee, capsules, brewing equipment and gifts at Spirit Hub Cafe. Fast delivery in ${regionLabel}.`;
+  } else if (pathKey.startsWith('/shop/')) {
+    // Shop sub-category — derive a human-readable title from the slug
+    const categorySlug = pathKey.split('/shop/')[1]?.split('/')[0] || '';
+    const categoryName = categorySlug
+      .replace(/-/g, ' ')
+      .replace(/\b\w/g, (c) => c.toUpperCase());
+    const categoryNameAr = categorySlug.replace(/-/g, ' ');
+    title = isAr
+      ? `${categoryNameAr} | ${regionLabel} | سبيريت هب`
+      : `${categoryName} | ${regionLabel} | Spirit Hub Cafe`;
+    description = isAr
+      ? `تصفح منتجات ${categoryNameAr} من سبيريت هب في ${regionLabel}. قهوة مختصة محمصة طازجة.`
+      : `Browse ${categoryName} products at Spirit Hub Cafe in ${regionLabel}. Freshly roasted specialty coffee.`;
   } else if (pathKey === '/privacy') {
     title = isAr
-      ? 'سياسة الخصوصية | سبيريت هب كافيه'
-      : 'Privacy Policy | Spirit Hub Cafe';
+      ? `سياسة الخصوصية | ${regionLabel} | سبيريت هب`
+      : `Privacy Policy | ${regionLabel} | Spirit Hub Cafe`;
     description = isAr
-      ? 'سياسة الخصوصية لموقع سبيريت هب كافيه. تعرف على كيفية جمع واستخدام بياناتك.'
-      : 'Spirit Hub Cafe Privacy Policy. Learn how we collect and use your data to protect your privacy.';
+      ? `سياسة الخصوصية لموقع سبيريت هب في ${regionLabel}. تعرف على كيفية جمع واستخدام بياناتك.`
+      : `Spirit Hub Cafe Privacy Policy for ${regionLabel}. Learn how we collect and use your data.`;
   } else if (pathKey === '/terms') {
     title = isAr
-      ? 'الشروط والأحكام | سبيريت هب كافيه'
-      : 'Terms & Conditions | Spirit Hub Cafe';
+      ? `الشروط والأحكام | ${regionLabel} | سبيريت هب`
+      : `Terms & Conditions | ${regionLabel} | Spirit Hub Cafe`;
     description = isAr
-      ? 'شروط وأحكام الاستخدام والشراء في سبيريت هب كافيه.'
-      : 'Spirit Hub Cafe Terms and Conditions for using the website and making purchases.';
+      ? `شروط وأحكام الاستخدام والشراء في سبيريت هب ${regionLabel}.`
+      : `Spirit Hub Cafe Terms and Conditions for ${regionLabel}.`;
   } else if (pathKey === '/delivery') {
     title = isAr
-      ? 'سياسة التوصيل والشحن | سبيريت هب كافيه'
-      : 'Delivery & Shipping Policy | Spirit Hub Cafe';
+      ? `سياسة التوصيل والشحن | ${regionLabel} | سبيريت هب`
+      : `Delivery & Shipping Policy | ${regionLabel} | Spirit Hub Cafe`;
     description = isAr
-      ? 'معلومات الشحن والتوصيل: المناطق المخدومة، التكاليف، ومواعيد التسليم في سبيريت هب.'
-      : 'Shipping and delivery information: service areas, costs, and estimated delivery times at Spirit Hub Cafe.';
+      ? `معلومات الشحن والتوصيل في ${regionLabel}: المناطق المخدومة، التكاليف، ومواعيد التسليم.`
+      : `Shipping and delivery information for ${regionLabel}: service areas, costs, and estimated delivery times.`;
   } else if (pathKey === '/refund') {
     title = isAr
-      ? 'سياسة الاسترجاع والاسترداد | سبيريت هب كافيه'
-      : 'Refund & Return Policy | Spirit Hub Cafe';
+      ? `سياسة الاسترجاع والاسترداد | ${regionLabel} | سبيريت هب`
+      : `Refund & Return Policy | ${regionLabel} | Spirit Hub Cafe`;
     description = isAr
-      ? 'سياسة الاسترجاع والاسترداد في سبيريت هب. تعرف على حقوقك كعميل.'
-      : 'Spirit Hub Cafe Refund and Return Policy. Know your rights as a customer for returns and refunds.';
+      ? `سياسة الاسترجاع والاسترداد في سبيريت هب ${regionLabel}. تعرف على حقوقك كعميل.`
+      : `Spirit Hub Cafe Refund and Return Policy for ${regionLabel}. Know your rights as a customer.`;
   } else if (pathKey === '/login') {
     title = isAr ? 'تسجيل الدخول | سبيريت هب كافيه' : 'Login | Spirit Hub Cafe';
     description = isAr ? 'سجّل دخولك إلى حسابك في سبيريت هب كافيه.' : 'Sign in to your Spirit Hub Cafe account.';
@@ -826,6 +861,10 @@ async function getMetaTagsForRoute(url, requestBaseUrl, requestLanguage = 'en') 
       ? 'أتمم طلبك من سبيريت هب كافيه - محمصة القهوة المختصة الرائدة في عمان.'
       : 'Complete your order from Spirit Hub Cafe - Oman\'s premier specialty coffee roastery.';
   }
+
+  // Private/transactional pages — should not be indexed
+  const noindexPaths = ['/login', '/register', '/checkout', '/favorites', '/orders', '/profile', '/payment'];
+  const isNoindex = noindexPaths.some(p => pathKey === p || pathKey.startsWith(p + '/'));
 
   // Always proxy through wsrv.nl: enforces 1200×630, converts any format to JPEG,
   // and uses attention-based smart crop so the product stays centred in the frame.
@@ -861,6 +900,7 @@ async function getMetaTagsForRoute(url, requestBaseUrl, requestLanguage = 'en') 
   return `
     <title>${safeTitle}</title>
     <meta name="description" content="${safeDesc}" />
+    ${isNoindex ? '<meta name="robots" content="noindex,nofollow" />' : ''}
     <link rel="canonical" href="${safeCanonical}" />
     <link rel="alternate" hreflang="en-OM" href="${safeOmUrl}" />
     <link rel="alternate" hreflang="ar-OM" href="${safeOmUrl}" />

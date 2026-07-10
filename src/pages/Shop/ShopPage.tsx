@@ -3,6 +3,7 @@ import { useShopPage } from '../../hooks/useShop';
 import { CategorySection } from '../../components/shop/CategorySection';
 import { CategoryNav, type CategoryFilter } from '../../components/shop/CategoryNav';
 import { useApp } from '../../hooks/useApp';
+import { useRegion } from '../../hooks/useRegion';
 import { Seo } from '../../components/seo/Seo';
 import { siteMetadata } from '../../config/siteMetadata';
 import { PageHeader } from '../../components/layout/PageHeader';
@@ -13,6 +14,7 @@ export const ShopPage = () => {
   const { shopData, loading, error } = useShopPage();
   const { language } = useApp();
   const isArabic = language === 'ar';
+  const { currentRegion } = useRegion();
   const [activeFilter, setActiveFilter] = useState<CategoryFilter>('all');
 
   const filteredCategories = useMemo(() => {
@@ -77,7 +79,9 @@ export const ShopPage = () => {
         {/* Page Header Skeleton */}
         <div className="relative overflow-hidden bg-gradient-to-br from-stone-900 via-stone-800 to-stone-900 py-20 md:py-28">
           <div className="mx-auto flex max-w-4xl flex-col items-center gap-4 px-4 text-center">
-            <div className="h-9 w-48 animate-pulse rounded-full bg-white/10" />
+            <h1 className="h-9 w-48 animate-pulse rounded-full bg-white/10 text-transparent select-none">
+              {isArabic ? 'المتجر' : 'Shop'}
+            </h1>
             <div className="h-4 w-80 animate-pulse rounded-full bg-white/[0.06]" />
           </div>
         </div>
@@ -159,8 +163,8 @@ export const ShopPage = () => {
         title={isArabic ? 'المتجر | SpiritHub' : 'Shop | SpiritHub'}
         description={
           isArabic
-            ? 'تسوق منتجات المحمصة حسب الفئات مع أفضل اختياراتنا.'
-            : 'Browse roastery products by category with our best selections.'
+            ? `تسوق منتجات المحمصة في ${currentRegion.nameAr || 'عُمان'} – قهوة مختصة، كبسولات، وأدوات تحضير. تشكيلة متنوعة مختارة بعناية مع توصيل سريع في جميع أنحاء الخليج.`
+            : `Shop specialty coffee, capsules, and brewing equipment from SpiritHub Roastery in ${currentRegion.name}. Curated collections, freshly roasted daily, with fast delivery.`
         }
         canonical={`${siteMetadata.baseUrl}/shop`}
         type="website"

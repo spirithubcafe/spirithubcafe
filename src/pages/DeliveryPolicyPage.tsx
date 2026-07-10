@@ -14,11 +14,11 @@ export const DeliveryPolicyPage: React.FC = () => {
       language === 'ar'
         ? {
             title: 'سياسة التوصيل والشحن',
-            description: 'تعرف على جداول الشحن وخيارات التسليم ورسوم التوصيل لدى سبيريت هب كافيه.',
+            description: 'تعرف على سياسة التوصيل في سبيريت هب – أوقات معالجة الطلب، خيارات الشحن، مناطق التغطية، التكاليف، ومواعيد التسليم في عمان والسعودية.',
           }
         : {
             title: 'Delivery & shipping policy',
-            description: 'Understand transit times, shipping methods, and coverage for Spirit Hub Cafe orders.',
+            description: 'Spirit Hub Cafe delivery policy: order processing times, shipping methods, coverage areas, delivery costs, and estimated transit times for Oman and Saudi Arabia.',
           },
     [language]
   );

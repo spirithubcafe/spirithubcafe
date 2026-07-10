@@ -34,12 +34,12 @@ const REGIONS: Record<RegionCode, RegionConfig> = {
 };
 
 /**
- * Detect region from URL path
- * Returns region code if the path has a region prefix, otherwise null.
+ * Detect region from URL path or hostname.
+ * Returns region code if determinable, otherwise null.
  */
 const detectRegionFromPath = (pathname?: string): RegionCode | null => {
   const path = pathname ?? (typeof window !== 'undefined' ? window.location.pathname : '/');
-  
+
   if (path.startsWith('/sa')) {
     return 'sa';
   }
@@ -47,7 +47,16 @@ const detectRegionFromPath = (pathname?: string): RegionCode | null => {
   if (path.startsWith('/om')) {
     return 'om';
   }
-  
+
+  // For the SA domain (spirithub.sa) paths don't carry a region prefix.
+  if (
+    typeof window !== 'undefined' &&
+    (window.location.hostname === 'spirithub.sa' ||
+      window.location.hostname.endsWith('.spirithub.sa'))
+  ) {
+    return 'sa';
+  }
+
   return null;
 };
 
