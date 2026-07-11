@@ -1,6 +1,5 @@
 import { lazy, Suspense, useEffect } from 'react';
 import { Routes, Route, useLocation, useSearchParams, Navigate } from 'react-router-dom';
-import { GoogleOAuthProvider } from '@react-oauth/google';
 import { Toaster } from './components/ui/sonner';
 import { AppProvider } from './contexts/AppContext';
 import { AuthProvider } from './contexts/AuthContext';
@@ -423,46 +422,19 @@ function App() {
     });
   }
 
-  // Only initialize GoogleOAuthProvider if we have a client ID
-  const app = (
+  return (
     <ErrorBoundary>
-      {googleClientId ? (
-        <GoogleOAuthProvider
-          clientId={googleClientId}
-          onScriptLoadSuccess={() => {
-            console.info('[auth] Google OAuth script loaded');
-          }}
-          onScriptLoadError={() => {
-            console.error(
-              '[auth] Failed to load Google OAuth script. Check ad-blockers/CSP and Authorized JavaScript origins in Google Cloud Console.'
-            );
-          }}
-        >
-          <RegionProvider>
-            <AuthProvider>
-              <AppProvider>
-                <CartProvider>
-                  <AppContent />
-                </CartProvider>
-              </AppProvider>
-            </AuthProvider>
-          </RegionProvider>
-        </GoogleOAuthProvider>
-      ) : (
-        <RegionProvider>
-          <AuthProvider>
-            <AppProvider>
-              <CartProvider>
-                <AppContent />
-              </CartProvider>
-            </AppProvider>
-          </AuthProvider>
-        </RegionProvider>
-      )}
+      <RegionProvider>
+        <AuthProvider>
+          <AppProvider>
+            <CartProvider>
+              <AppContent />
+            </CartProvider>
+          </AppProvider>
+        </AuthProvider>
+      </RegionProvider>
     </ErrorBoundary>
   );
-
-  return app;
 }
 
 export default App;
