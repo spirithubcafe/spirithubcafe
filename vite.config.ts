@@ -104,6 +104,12 @@ export default defineConfig(({ isSsrBuild }) => ({
         // Only apply manualChunks for client builds; SSR externalizes these
         ...(!isSsrBuild && {
           onlyExplicitManualChunks: true,
+          assetFileNames: (assetInfo: { name?: string }) => {
+            if (assetInfo.name?.match(/\.(woff2?|ttf|eot|otf)$/i)) {
+              return 'assets/[name][extname]';
+            }
+            return 'assets/[name]-[hash][extname]';
+          },
           manualChunks(id: string) {
             if (id.includes('/node_modules/')) {
               if (

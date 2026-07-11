@@ -152,6 +152,8 @@ export const Footer: React.FC = () => {
               <img 
                 src="/images/logo/logo-light.webp" 
                 alt="Spirit Hub Roastery"
+                width="436"
+                height="198"
                 loading="lazy"
                 decoding="async"
                 className="h-16 w-auto"
