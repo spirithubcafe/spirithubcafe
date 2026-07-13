@@ -45,6 +45,15 @@ export interface ChatbotIntent {
   isActive: boolean;
 }
 
+export interface ChatbotIntentResolveResult {
+  matched: boolean;
+  intentCode?: string | null;
+  confidenceScore?: number;
+  productSearchTerms: string[];
+  preferredNotes: string[];
+  avoidNotes: string[];
+}
+
 export interface UnknownIntentList {
   items: ChatbotUnknownIntent[];
   totalCount: number;
@@ -95,6 +104,15 @@ const rememberProduct = (productId?: number) => {
 };
 
 export const chatbotIntentService = {
+  resolve: async (message: string, language: string): Promise<ChatbotIntentResolveResult | null> => {
+    try {
+      const response = await publicHttp.post('/api/chatbot-intents/resolve', { message, language }, { timeout: 5000 });
+      return unwrap<ChatbotIntentResolveResult>(response.data);
+    } catch {
+      return null;
+    }
+  },
+
   trackUnknown: (payload: UnknownIntentTrackPayload): void => {
     void publicHttp.post('/api/chatbot-intents/unknown', {
       ...payload,

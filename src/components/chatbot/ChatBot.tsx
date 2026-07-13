@@ -6,7 +6,7 @@ import { useApp } from '../../hooks/useApp';
 import { useAuth } from '../../hooks/useAuth';
 import { useCart } from '../../hooks/useCart';
 import { REGION_INFO } from '../../config/regionInfo';
-import { GeminiChatSession, getFallbackChatResponse, type ChatMessage } from '../../services/geminiChatService';
+import { GeminiChatSession, getFallbackChatResponse, getResolvedIntentChatResponse, type ChatMessage } from '../../services/geminiChatService';
 import {
   personalizationService,
   type AIBundleResponse,
@@ -858,6 +858,52 @@ export const ChatBot: React.FC = () => {
       setInput('');
       setMessages((prev) => [...prev, { role: 'user', text: messageText, timestamp: new Date() }]);
       await createBundle(toBundlePrompt(messageText));
+      return;
+    }
+
+    const resolvedIntent = await chatbotIntentService.resolve(messageText, language);
+    if (resolvedIntent?.matched) {
+      setInput('');
+      setMessages((prev) => [...prev, { role: 'user', text: messageText, timestamp: new Date() }]);
+      setIsLoading(true);
+      try {
+        const resolvedResponse = await getResolvedIntentChatResponse(resolvedIntent.productSearchTerms, language);
+        setMessages((prev) => [...prev, {
+          role: 'model',
+          text: resolvedResponse.text,
+          products: resolvedResponse.products.length > 0 ? resolvedResponse.products : undefined,
+          timestamp: new Date(),
+        }]);
+
+        if (resolvedResponse.products.length > 0) {
+          chatbotIntentService.trackRecommendationShown(
+            resolvedResponse.products.map((product) => product.id), language, currentRegion.code, messageText,
+          );
+        } else {
+          chatbotIntentService.trackUnknown({
+            customerId: isAuthenticated ? user?.id : undefined,
+            message: messageText,
+            language,
+            detectedIntent: resolvedIntent.intentCode,
+            confidenceScore: resolvedIntent.confidenceScore,
+          });
+          personalizationService.trackEvent({
+            eventType: 'CHATBOT_NO_RESULT', customerId: isAuthenticated ? user?.id : undefined,
+            searchTerm: messageText, language, country: currentRegion.code, source: 'chatbot',
+            metadata: {
+              chatbotMessage: messageText,
+              confidenceScore: resolvedIntent.confidenceScore,
+              intentCode: resolvedIntent.intentCode,
+              productSearchTerms: resolvedIntent.productSearchTerms,
+            },
+          });
+          awaitingRephraseRef.current = true;
+        }
+      } catch {
+        setMessages((prev) => [...prev, { role: 'model', text: localizedText('genericError'), timestamp: new Date() }]);
+      } finally {
+        setIsLoading(false);
+      }
       return;
     }
 

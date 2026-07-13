@@ -471,6 +471,33 @@ export async function getFallbackChatResponse(
   };
 }
 
+export async function getResolvedIntentChatResponse(
+  productSearchTerms: string[],
+  language: string,
+): Promise<{ text: string; products: ChatProduct[] }> {
+  const searches = await Promise.all(
+    productSearchTerms
+      .map((term) => term.trim())
+      .filter(Boolean)
+      .map((query) => executeTool('search_products', { query, pageSize: 8 })),
+  );
+  const products = searches
+    .flatMap((result) => result.products)
+    .filter((product, index, all) => all.findIndex((candidate) => candidate.id === product.id) === index)
+    .slice(0, 4);
+
+  return {
+    text: products.length > 0
+      ? language === 'ar'
+        ? '\u0625\u0644\u064a\u0643 \u0628\u0639\u0636 \u0627\u0644\u0627\u0642\u062a\u0631\u0627\u062d\u0627\u062a \u0627\u0644\u0645\u0646\u0627\u0633\u0628\u0629:'
+        : 'Here are some suitable suggestions:'
+      : language === 'ar'
+        ? '\u0644\u0645 \u0623\u062c\u062f \u0645\u0646\u062a\u062c\u0627\u062a \u0645\u0637\u0627\u0628\u0642\u0629. \u062c\u0631\u0628 \u0643\u0644\u0645\u0629 \u0623\u062e\u0631\u0649.'
+        : 'I could not find matching products. Try another search term.',
+    products,
+  };
+}
+
 export class GeminiChatSession {
   private history: Content[] = [];
   private collectedProducts: ChatProduct[] = [];
