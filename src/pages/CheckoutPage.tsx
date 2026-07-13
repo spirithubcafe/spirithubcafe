@@ -76,6 +76,21 @@ interface GiftCardValidationResponse {
   remainingBalance?: number;
 }
 
+const translateGiftCardValidationMessage = (message: string | undefined, isArabic: boolean) => {
+  if (!message || !isArabic) return message;
+
+  const normalized = message
+    .trim()
+    .toLowerCase()
+    .replace(/[.!؟]+$/g, '');
+
+  if (normalized === 'this gift card has already been redeemed in store') {
+    return 'تم استرداد بطاقة الهدية هذه بالفعل في المتجر.';
+  }
+
+  return message;
+};
+
 const AVAILABLE_COUPONS: Coupon[] = [
   {
     code: 'THANKS10',
@@ -760,7 +775,10 @@ export const CheckoutPage: React.FC = () => {
       const isValidGiftCard = data.valid ?? data.isValid ?? response.data.success ?? false;
       
       if (!isValidGiftCard) {
-        setGiftCardError(data.message || (isArabic ? 'رمز بطاقة الهدية غير صالح' : 'Invalid gift card code'));
+        setGiftCardError(
+          translateGiftCardValidationMessage(data.message, isArabic) ||
+          (isArabic ? 'رمز بطاقة الهدية غير صالح' : 'Invalid gift card code')
+        );
         return;
       }
 
@@ -792,7 +810,7 @@ export const CheckoutPage: React.FC = () => {
         error?.response?.data?.error ||
         error?.message;
       setGiftCardError(
-        errorMessage || 
+        translateGiftCardValidationMessage(errorMessage, isArabic) ||
         (isArabic ? 'فشل التحقق من بطاقة الهدية' : 'Failed to validate gift card')
       );
     } finally {
