@@ -13,6 +13,51 @@ interface ErrorBoundaryState {
   error: Error | null;
 }
 
+const CHUNK_RELOAD_GUARD_KEY = 'spirithub_chunk_reload_once';
+
+const isChunkLoadError = (error: unknown): boolean => {
+  const message =
+    error instanceof Error
+      ? error.message
+      : typeof error === 'string'
+        ? error
+        : '';
+
+  return (
+    message.includes('Failed to fetch dynamically imported module') ||
+    message.includes('ChunkLoadError') ||
+    message.includes('Loading chunk') ||
+    message.includes('Importing a module script failed')
+  );
+};
+
+const recoverFromChunkLoadError = (error: unknown): boolean => {
+  if (typeof window === 'undefined' || !isChunkLoadError(error)) {
+    return false;
+  }
+
+  let alreadyReloaded = false;
+  try {
+    alreadyReloaded = window.sessionStorage.getItem(CHUNK_RELOAD_GUARD_KEY) === '1';
+  } catch {
+    alreadyReloaded = false;
+  }
+
+  if (alreadyReloaded) {
+    return false;
+  }
+
+  try {
+    window.sessionStorage.setItem(CHUNK_RELOAD_GUARD_KEY, '1');
+  } catch {
+    // Storage can be blocked in some mobile browsers. Reload once anyway.
+  }
+
+  console.warn('[chunk-recovery] React lazy chunk load failure detected; reloading once to recover from stale assets.');
+  window.location.reload();
+  return true;
+};
+
 /**
  * Class-based React Error Boundary.
  *
@@ -29,6 +74,10 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   }
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
+    if (recoverFromChunkLoadError(error)) {
+      return;
+    }
+
     // Log full details so the developer can track down the real culprit.
     console.error('[ErrorBoundary] Uncaught error:', error);
     console.error('[ErrorBoundary] Component stack:', info.componentStack);
