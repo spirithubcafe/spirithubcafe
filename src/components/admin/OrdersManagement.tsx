@@ -3327,6 +3327,7 @@ export const OrdersManagement: React.FC = () => {
                   <SelectItem value="Processing">{isArabic ? 'قيد المعالجة' : 'Processing'}</SelectItem>
                   <SelectItem value="Shipped">{isArabic ? 'تم الشحن' : 'Shipped'}</SelectItem>
                   <SelectItem value="Delivered">{isArabic ? 'تم التسليم' : 'Delivered'}</SelectItem>
+                  <SelectItem value="Redeemed">{isArabic ? 'تم الاسترداد' : 'Redeemed'}</SelectItem>
                   <SelectItem value="Cancelled">{isArabic ? 'ملغي' : 'Cancelled'}</SelectItem>
                 </SelectContent>
               </Select>

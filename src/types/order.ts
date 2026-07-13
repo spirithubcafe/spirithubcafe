@@ -202,6 +202,7 @@ export type OrderStatus =
   | 'Processing'   // Order is being prepared
   | 'Shipped'      // Order has been shipped
   | 'Delivered'    // Order delivered to customer
+  | 'Redeemed'     // Order/gift card has been redeemed
   | 'Cancelled';   // Order cancelled
 
 /**
