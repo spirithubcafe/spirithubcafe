@@ -93,6 +93,10 @@ const GIFT_PATTERN = /gift|\u0647\u062f\u064a\u0629|\u0647\u062f\u0627\u064a\u06
 const WHOLESALE_PATTERN = /wholesale|\u062c\u0645\u0644\u0629|\u062a\u0648\u0631\u064a\u062f/i;
 const LOCAL_QUIZ_SESSION_ID = -1;
 const FRUITY_COFFEE_PATTERN = /fruity|fruit|berry|citrus|\u0642\u0647\u0648\u0629.*\u0641\u0627\u0643\u0647|\u0641\u0627\u0643\u0647|\u0641\u0648\u0627\u0643\u0647|\u062d\u0645\u0636|\u062a\u0648\u062a/i;
+const GRIND_OPTION_RESPONSE = {
+  ar: 'نوفر القهوة حبوب كاملة أو مطحونة. إذا اخترت المطحونة، أخبرني بطريقة التحضير مثل الإسبريسو، V60، فرنش برس، إيروبرس، فلتر أو قهوة تركية لنحدد درجة الطحن المناسبة.',
+  en: 'We offer whole-bean and ground coffee. If you prefer ground coffee, tell me your brewing method so I can recommend the correct grind: espresso, V60, French press, AeroPress, filter, or Turkish.',
+};
 const NO_PRODUCTS_RESPONSE_PATTERN = /could not find|couldn't find|no products|no matching products|no products with|لم أجد|لا توجد منتجات/i;
 
 const AR_QUICK_TEXT = {
@@ -862,6 +866,16 @@ export const ChatBot: React.FC = () => {
     }
 
     const resolvedIntent = await chatbotIntentService.resolve(messageText, language);
+    if (resolvedIntent?.matched && resolvedIntent.intentCode === 'GRIND_OPTION') {
+      setInput('');
+      setMessages((prev) => [
+        ...prev,
+        { role: 'user', text: messageText, timestamp: new Date() },
+        { role: 'model', text: isAr ? GRIND_OPTION_RESPONSE.ar : GRIND_OPTION_RESPONSE.en, timestamp: new Date() },
+      ]);
+      return;
+    }
+
     if (resolvedIntent?.matched) {
       setInput('');
       setMessages((prev) => [...prev, { role: 'user', text: messageText, timestamp: new Date() }]);
