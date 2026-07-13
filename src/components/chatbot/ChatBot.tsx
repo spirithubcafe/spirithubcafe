@@ -378,7 +378,9 @@ export const ChatBot: React.FC = () => {
   }, [messages, isOpen, isMinimized, scrollToBottom]);
 
   useEffect(() => {
-    if (isOpen && !isMinimized) inputRef.current?.focus();
+    if (isOpen && !isMinimized && !window.matchMedia('(max-width: 640px)').matches) {
+      inputRef.current?.focus();
+    }
   }, [isOpen, isMinimized]);
 
   useEffect(() => {
