@@ -17,6 +17,7 @@ import {
   type SmartReorderSuggestion,
 } from '../../services/personalizationService';
 import { coffeePassportService, type CoffeePassportProfile } from '../../services/coffeePassportService';
+import { chatbotIntentService } from '../../services/chatbotIntentService';
 import { ChatMessageComponent } from './ChatMessage';
 import { TypingIndicator } from './TypingIndicator';
 
@@ -342,6 +343,7 @@ export const ChatBot: React.FC = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const openPersonalizationLoadedRef = useRef(false);
+  const awaitingRephraseRef = useRef(false);
 
   const localizedText = useCallback(
     (key: keyof typeof CHATBOT_TEXT) => CHATBOT_TEXT[key][isAr ? 'ar' : 'en'],
@@ -456,6 +458,9 @@ export const ChatBot: React.FC = () => {
         }
 
         if (data.recommendations.length > 0) {
+          chatbotIntentService.trackRecommendationShown(
+            data.recommendations.slice(0, 3).map((product) => product.id), language, currentRegion.code, 'opening-personalization',
+          );
           nextMessages.push({
             role: 'model',
             text: isAr ? 'موصى بها لك:' : 'Recommended For You:',
@@ -540,11 +545,22 @@ export const ChatBot: React.FC = () => {
           timestamp: new Date(),
         },
       ]);
+      if (fallback.products.length > 0) {
+        chatbotIntentService.trackRecommendationShown(fallback.products.map((product) => product.id), language, currentRegion.code, messageText);
+      } else if (NO_PRODUCTS_RESPONSE_PATTERN.test(fallback.text)) {
+        chatbotIntentService.trackUnknown({ customerId: isAuthenticated ? user?.id : undefined, message: messageText, language, confidenceScore: 0 });
+        personalizationService.trackEvent({
+          eventType: 'CHATBOT_NO_RESULT', customerId: isAuthenticated ? user?.id : undefined,
+          searchTerm: messageText, language, country: currentRegion.code, source: 'chatbot',
+          metadata: { chatbotMessage: messageText, confidenceScore: 0 },
+        });
+        awaitingRephraseRef.current = true;
+      }
       return true;
     } catch {
       return false;
     }
-  }, [language, currentRegion.code]);
+  }, [language, currentRegion.code, isAuthenticated, user?.id]);
 
   const addCartReadyItems = useCallback(async (
     items: Array<{ productId: number; productVariantId: number | null; quantity: number }>,
@@ -556,6 +572,7 @@ export const ChatBot: React.FC = () => {
       const cartItem = await personalizationService.buildCartItem(item, source);
       if (!cartItem) continue;
       addToCart(cartItem, item.quantity || 1);
+      chatbotIntentService.trackAddToCart(item.productId, language, currentRegion.code, { cartReady: true });
       added += 1;
     }
 
@@ -563,7 +580,7 @@ export const ChatBot: React.FC = () => {
       openCart();
       setMessages((prev) => [...prev, { role: 'model', text: localizedText('cartAdded'), timestamp: new Date() }]);
     }
-  }, [addToCart, localizedText, openCart]);
+  }, [addToCart, currentRegion.code, language, localizedText, openCart]);
 
   const startQuiz = useCallback(async () => {
     setIsLoading(true);
@@ -682,6 +699,11 @@ export const ChatBot: React.FC = () => {
       }
 
       const recommendations = await personalizationService.completeCoffeeQuiz(quizSessionId);
+      if (recommendations.products.length > 0) {
+        chatbotIntentService.trackRecommendationShown(
+          recommendations.products.map((product) => product.id), language, currentRegion.code, 'coffee-quiz',
+        );
+      }
       setMessages((prev) => [
         ...prev,
         {
@@ -696,7 +718,7 @@ export const ChatBot: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [appendFallbackResponse, isAr, localQuizAnswers, localizedText, quizIndex, quizQuestions, quizSessionId]);
+  }, [appendFallbackResponse, currentRegion.code, isAr, language, localQuizAnswers, localizedText, quizIndex, quizQuestions, quizSessionId]);
 
   const createBundle = useCallback(async (messageText: string) => {
     setIsLoading(true);
@@ -789,6 +811,15 @@ export const ChatBot: React.FC = () => {
     const messageText = (text ?? input).trim();
     if (!messageText || isLoading) return;
 
+    if (awaitingRephraseRef.current) {
+      personalizationService.trackEvent({
+        eventType: 'CHATBOT_USER_REPHRASED', customerId: isAuthenticated ? user?.id : undefined,
+        searchTerm: messageText, language, country: currentRegion.code, source: 'chatbot',
+        metadata: { chatbotMessage: messageText },
+      });
+      awaitingRephraseRef.current = false;
+    }
+
     personalizationService.trackEvent({
       eventType: 'chatbot_message',
       customerId: isAuthenticated ? user?.id : undefined,
@@ -878,6 +909,18 @@ export const ChatBot: React.FC = () => {
       if (products.length === 0 && NO_PRODUCTS_RESPONSE_PATTERN.test(responseText)) {
         const usedFallback = await appendFallbackResponse(messageText);
         if (usedFallback) return;
+      }
+
+      if (products.length > 0) {
+        chatbotIntentService.trackRecommendationShown(products.map((product) => product.id), language, currentRegion.code, messageText);
+      } else if (NO_PRODUCTS_RESPONSE_PATTERN.test(responseText)) {
+        chatbotIntentService.trackUnknown({ customerId: isAuthenticated ? user?.id : undefined, message: messageText, language, confidenceScore: 0 });
+        personalizationService.trackEvent({
+          eventType: 'CHATBOT_NO_RESULT', customerId: isAuthenticated ? user?.id : undefined,
+          searchTerm: messageText, language, country: currentRegion.code, source: 'chatbot',
+          metadata: { chatbotMessage: messageText, confidenceScore: 0 },
+        });
+        awaitingRephraseRef.current = true;
       }
 
       setMessages((prev) => [

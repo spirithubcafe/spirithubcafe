@@ -9,6 +9,7 @@ import { useApp } from '../hooks/useApp';
 import { useRegion } from '../hooks/useRegion';
 import { Seo } from '../components/seo/Seo';
 import { siteMetadata } from '../config/siteMetadata';
+import { chatbotIntentService } from '../services/chatbotIntentService';
 
 export const PaymentSuccessPage: React.FC = () => {
   const { language } = useApp();
@@ -27,6 +28,7 @@ export const PaymentSuccessPage: React.FC = () => {
 
     // Clear cart after successful payment (region-specific)
     if (orderId) {
+      chatbotIntentService.trackPurchaseIfAttributed(orderId, language, currentRegion.code);
       // Clear region-specific cart
       localStorage.removeItem(`spirithub_cart_${currentRegion.code}`);
       // Also clear legacy cart key for backward compatibility
@@ -86,7 +88,7 @@ export const PaymentSuccessPage: React.FC = () => {
     });
 
     return () => clearInterval(interval);
-  }, [orderId, currentRegion.code]);
+  }, [orderId, currentRegion.code, language]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50 page-padding-top relative overflow-hidden">

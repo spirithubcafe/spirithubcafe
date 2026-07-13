@@ -64,6 +64,7 @@ import {
   Tag,
   Sprout,
   Truck,
+  Bot,
 } from 'lucide-react';
 
 interface AdminNavItem {
@@ -320,6 +321,14 @@ export const AdminLayout: React.FC = () => {
       roles: ['Admin', 'Manager'],
     },
     {
+      id: 'aiIntentReview',
+      label: 'AI Intent Review',
+      description: 'Approve, reject, or ignore chatbot intent suggestions',
+      icon: Bot,
+      path: '/admin/ai-intent-review',
+      roles: ['Admin'],
+    },
+    {
       id: 'reviews',
       label: t('admin.reviews.title'),
       description:
@@ -476,7 +485,7 @@ export const AdminLayout: React.FC = () => {
       id: 'operations',
       label: t('admin.navGroups.operations'),
       items: availableNavItems.filter((item) =>
-        ['orders', 'noolDispatch', 'wholesaleOrders', 'newsletter', 'emailSettings', 'emailNotificationSettings', 'emailTemplates', 'whatsappActivation', 'whatsappSend', 'whatsappNotificationSettings', 'whatsappTemplates', 'reports', 'system', 'seo'].includes(item.id)
+        ['orders', 'noolDispatch', 'aiIntentReview', 'wholesaleOrders', 'newsletter', 'emailSettings', 'emailNotificationSettings', 'emailTemplates', 'whatsappActivation', 'whatsappSend', 'whatsappNotificationSettings', 'whatsappTemplates', 'reports', 'system', 'seo'].includes(item.id)
       ),
     },
   ].filter((group) => group.items.length > 0);

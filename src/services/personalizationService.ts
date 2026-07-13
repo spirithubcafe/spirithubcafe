@@ -15,7 +15,13 @@ export type CustomerEventType =
   | 'chatbot_message'
   | 'chatbot_recommendation_click'
   | 'gift_interest'
-  | 'wholesale_interest';
+  | 'wholesale_interest'
+  | 'CHATBOT_RECOMMENDATION_SHOWN'
+  | 'CHATBOT_PRODUCT_CLICK'
+  | 'CHATBOT_ADD_TO_CART'
+  | 'CHATBOT_PURCHASE'
+  | 'CHATBOT_NO_RESULT'
+  | 'CHATBOT_USER_REPHRASED';
 
 export interface CustomerEventPayload {
   customerId?: number | null;

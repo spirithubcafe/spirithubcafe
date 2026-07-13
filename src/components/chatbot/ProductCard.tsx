@@ -4,7 +4,7 @@ import { Eye, ExternalLink, ShoppingBag, ShoppingCart, Star } from 'lucide-react
 import type { ChatProduct } from '../../services/geminiChatService';
 import { formatPrice as formatRegionalPrice, type RegionCode } from '../../lib/regionUtils';
 import { useCart } from '../../hooks/useCart';
-import { personalizationService } from '../../services/personalizationService';
+import { chatbotIntentService } from '../../services/chatbotIntentService';
 
 interface ProductCardProps {
   product: ChatProduct;
@@ -98,25 +98,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, regionPrefix,
       weight: undefined,
       weightUnit: undefined,
     });
-    personalizationService.trackEvent({
-      eventType: 'add_to_cart',
-      productId: product.id,
-      language,
-      country: region,
-      source: 'chatbot',
-      metadata: { recommendation: true },
-    });
+    chatbotIntentService.trackAddToCart(product.id, language, region, { recommendation: true });
     openCart();
   };
 
   const handleRecommendationClick = () => {
-    personalizationService.trackEvent({
-      eventType: 'chatbot_recommendation_click',
-      productId: product.id,
-      language,
-      country: region,
-      source: 'chatbot',
-    });
+    chatbotIntentService.trackProductClick(product.id, language, region);
   };
 
   return (

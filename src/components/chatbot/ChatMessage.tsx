@@ -6,7 +6,8 @@ import { CoffeePassportCard } from './CoffeePassportCard';
 import { handleImageError } from '../../lib/imageUtils';
 import { useCart } from '../../hooks/useCart';
 import type { ChatMessage as ChatMessageType } from '../../services/geminiChatService';
-import { personalizationService, type AIBundleProduct, type AIBundleResponse, type CoffeeQuizOption, type SmartReorderSuggestion } from '../../services/personalizationService';
+import { type AIBundleProduct, type AIBundleResponse, type CoffeeQuizOption, type SmartReorderSuggestion } from '../../services/personalizationService';
+import { chatbotIntentService } from '../../services/chatbotIntentService';
 import type { CoffeePassportProfile } from '../../services/coffeePassportService';
 
 interface ChatMessageProps {
@@ -346,14 +347,7 @@ const BundleCard = ({
       weightUnit: undefined,
     });
 
-    personalizationService.trackEvent({
-      eventType: 'add_to_cart',
-      productId: product.productId,
-      language,
-      country: region,
-      source: 'chatbot',
-      metadata: { bundleId: bundle.bundleId, bundleProduct: true },
-    });
+    chatbotIntentService.trackAddToCart(product.productId, language, region, { bundleId: bundle.bundleId, bundleProduct: true });
     openCart();
   };
 
@@ -399,14 +393,9 @@ const BundleCard = ({
                   title={isAr ? '\u0639\u0631\u0636 \u0627\u0644\u0645\u0646\u062a\u062c' : 'View product'}
                   aria-label={isAr ? '\u0639\u0631\u0636 \u0627\u0644\u0645\u0646\u062a\u062c' : 'View product'}
                   className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-white text-stone-600 shadow-sm ring-1 ring-[#f2ddd8] transition-colors hover:bg-[#fff1ed] hover:text-[#c75049]"
-                  onClick={() => personalizationService.trackEvent({
-                    eventType: 'chatbot_recommendation_click',
-                    productId: product.productId,
-                    language,
-                    country: region,
-                    source: 'chatbot',
-                    metadata: { bundleId: bundle.bundleId, bundleProduct: true },
-                  })}
+                  onClick={() => chatbotIntentService.trackProductClick(
+                    product.productId, language, region, { bundleId: bundle.bundleId, bundleProduct: true },
+                  )}
                 >
                   <Eye className="h-4 w-4" />
                 </Link>

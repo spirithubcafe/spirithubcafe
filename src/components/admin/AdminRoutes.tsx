@@ -26,6 +26,7 @@ import { ProductAddPage } from '../../pages/ProductAddPage';
 import { ProductEditPage } from '../../pages/ProductEditPage';
 import { ProductAttributesPage } from '../../pages/ProductAttributesPage';
 import { NoolDispatchQueue } from './NoolDispatchQueue';
+import { AIIntentReview } from './AIIntentReview';
 
 export default function AdminRoutes() {
   return (
@@ -45,6 +46,7 @@ export default function AdminRoutes() {
         <Route path="users" element={<UsersManagement />} />
         <Route path="orders" element={<OrdersManagement />} />
         <Route path="nool-dispatch" element={<NoolDispatchQueue />} />
+        <Route path="ai-intent-review" element={<AIIntentReview />} />
         <Route path="reviews" element={<ReviewsManagement />} />
         <Route path="wholesale-orders" element={<WholesaleOrdersManagement />} />
         <Route path="newsletter" element={<NewsletterManagement />} />
