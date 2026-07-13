@@ -8,6 +8,7 @@ import type {
   UpdateShippingDto,
   OrderQueryParams,
   OrdersResponse,
+  NoolDispatchQueueItem,
 } from '../types/order';
 
 /**
@@ -497,6 +498,36 @@ export const orderService = {
    */
   async sendPaymentReminder(id: number): Promise<ApiResponse<void>> {
     const response = await apiClient.post<ApiResponse<void>>(`/api/orders/${id}/send-payment-reminder`);
+    return response.data;
+  },
+
+  async getNoolDispatchQueue(): Promise<ApiResponse<NoolDispatchQueueItem[]>> {
+    const response = await apiClient.get<ApiResponse<NoolDispatchQueueItem[]>>('/api/orders/nool-dispatch-queue');
+    return response.data;
+  },
+
+  async requestNoolDispatch(id: number): Promise<ApiResponse<Order>> {
+    const response = await apiClient.post<ApiResponse<Order>>(`/api/orders/${id}/nool-dispatch/request`, { forceResend: false });
+    return response.data;
+  },
+
+  async resendNoolDispatch(id: number): Promise<ApiResponse<Order>> {
+    const response = await apiClient.post<ApiResponse<Order>>(`/api/orders/${id}/nool-dispatch/resend`);
+    return response.data;
+  },
+
+  async updateNoolTracking(id: number, trackingNumber: string, labelUrl?: string): Promise<ApiResponse<Order>> {
+    const response = await apiClient.put<ApiResponse<Order>>(`/api/orders/${id}/nool-dispatch/tracking`, { trackingNumber, labelUrl: labelUrl || null });
+    return response.data;
+  },
+
+  async markNoolCollected(id: number): Promise<ApiResponse<Order>> {
+    const response = await apiClient.post<ApiResponse<Order>>(`/api/orders/${id}/nool-dispatch/collected`);
+    return response.data;
+  },
+
+  async markNoolDelivered(id: number): Promise<ApiResponse<Order>> {
+    const response = await apiClient.post<ApiResponse<Order>>(`/api/orders/${id}/nool-dispatch/delivered`);
     return response.data;
   },
 

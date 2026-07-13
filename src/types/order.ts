@@ -93,6 +93,15 @@ export interface Order {
   // Shipping Information
   shippingMethod: number; // 1=Pickup, 2=Nool, 3=Aramex
   trackingNumber?: string;
+  dispatchProvider?: string;
+  dispatchStatus?: string;
+  dispatchRequestedAt?: string;
+  dispatchRequestedBy?: string;
+  noolWhatsAppMessageId?: string;
+  noolTrackingNumber?: string;
+  noolLabelUrl?: string;
+  canRequestNoolDispatch?: boolean;
+  canResendNoolDispatch?: boolean;
 
   // Unpaid reminder tracking
   unpaidReminderSent?: boolean;
@@ -149,6 +158,30 @@ export interface Order {
   shippingMethodId?: number;
   giftRecipientAddressLine1?: string;
   giftRecipientAddressLine2?: string;
+}
+
+export interface NoolDispatchQueueItem {
+  id: number;
+  orderNumber: string;
+  customerName: string;
+  phone: string;
+  address: string;
+  city: string;
+  country: string;
+  notes?: string;
+  status: string;
+  paymentStatus: string;
+  totalAmount: number;
+  createdAt: string;
+  dispatchProvider?: string;
+  dispatchStatus?: string;
+  dispatchRequestedAt?: string;
+  dispatchRequestedBy?: string;
+  noolWhatsAppMessageId?: string;
+  noolTrackingNumber?: string;
+  noolLabelUrl?: string;
+  canRequestNoolDispatch: boolean;
+  canResendNoolDispatch: boolean;
 }
 
 export interface PaymentRecord {

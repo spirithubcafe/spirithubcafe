@@ -63,6 +63,7 @@ import {
   Smartphone,
   Tag,
   Sprout,
+  Truck,
 } from 'lucide-react';
 
 interface AdminNavItem {
@@ -311,6 +312,14 @@ export const AdminLayout: React.FC = () => {
       roles: ['Admin', 'Manager'],
     },
     {
+      id: 'noolDispatch',
+      label: 'Nool Dispatch Queue',
+      description: 'Manage Nool pickup and delivery progress',
+      icon: Truck,
+      path: '/admin/nool-dispatch',
+      roles: ['Admin', 'Manager'],
+    },
+    {
       id: 'reviews',
       label: t('admin.reviews.title'),
       description:
@@ -467,7 +476,7 @@ export const AdminLayout: React.FC = () => {
       id: 'operations',
       label: t('admin.navGroups.operations'),
       items: availableNavItems.filter((item) =>
-        ['orders', 'wholesaleOrders', 'newsletter', 'emailSettings', 'emailNotificationSettings', 'emailTemplates', 'whatsappActivation', 'whatsappSend', 'whatsappNotificationSettings', 'whatsappTemplates', 'reports', 'system', 'seo'].includes(item.id)
+        ['orders', 'noolDispatch', 'wholesaleOrders', 'newsletter', 'emailSettings', 'emailNotificationSettings', 'emailTemplates', 'whatsappActivation', 'whatsappSend', 'whatsappNotificationSettings', 'whatsappTemplates', 'reports', 'system', 'seo'].includes(item.id)
       ),
     },
   ].filter((group) => group.items.length > 0);

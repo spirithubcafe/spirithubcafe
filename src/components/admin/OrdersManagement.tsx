@@ -145,6 +145,7 @@ export const OrdersManagement: React.FC = () => {
   const [invoiceLoading, setInvoiceLoading] = useState(false);
   const [paymentLinkLoading, setPaymentLinkLoading] = useState(false);
   const [sendingReminderOrderId, setSendingReminderOrderId] = useState<number | null>(null);
+  const [noolDispatchLoadingId, setNoolDispatchLoadingId] = useState<number | null>(null);
   const [shipmentLoading, setShipmentLoading] = useState<number | null>(null);
   const [printLabelLoading, setPrintLabelLoading] = useState<number | null>(null);
   
@@ -1598,6 +1599,22 @@ export const OrdersManagement: React.FC = () => {
     return message;
   };
 
+  const handleNoolDispatch = async (order: Order, resend: boolean) => {
+    setNoolDispatchLoadingId(order.id);
+    try {
+      const response = resend
+        ? await orderService.resendNoolDispatch(order.id)
+        : await orderService.requestNoolDispatch(order.id);
+      if (!response.success) throw new Error(response.message || 'Nool dispatch request failed.');
+      toast.success(response.message || (resend ? 'Nool dispatch resent.' : 'Nool pickup requested.'));
+      await loadOrders({ silent: true });
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || error?.message || 'Nool dispatch request failed.');
+    } finally {
+      setNoolDispatchLoadingId(null);
+    }
+  };
+
   const OrderActionsMenu = ({ order, triggerVariant }: { order: Order; triggerVariant: 'icon' | 'button' }) => {
     const trigger =
       triggerVariant === 'icon' ? (
@@ -1631,6 +1648,22 @@ export const OrdersManagement: React.FC = () => {
             <DropdownMenuItem onSelect={() => handleGeneratePaymentLink(order)} disabled={paymentLinkLoading}>
               <CreditCard className="h-4 w-4" />
               {isArabic ? 'رابط دفع' : 'Pay link'}
+            </DropdownMenuItem>
+          )}
+          {order.canRequestNoolDispatch && (
+            <DropdownMenuItem
+              onSelect={() => void handleNoolDispatch(order, false)}
+              disabled={noolDispatchLoadingId === order.id}
+              className="text-blue-700 focus:text-blue-700"
+            >
+              {noolDispatchLoadingId === order.id ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Truck className="h-4 w-4" />}
+              Ready for Nool Pickup
+            </DropdownMenuItem>
+          )}
+          {order.canResendNoolDispatch && (
+            <DropdownMenuItem onSelect={() => void handleNoolDispatch(order, true)} disabled={noolDispatchLoadingId === order.id}>
+              {noolDispatchLoadingId === order.id ? <RefreshCw className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+              Resend Nool Dispatch
             </DropdownMenuItem>
           )}
           {String(order.paymentStatus).toLowerCase() !== 'paid' && (

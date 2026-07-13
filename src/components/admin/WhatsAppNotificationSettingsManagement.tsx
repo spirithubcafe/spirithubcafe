@@ -43,6 +43,7 @@ const DEFAULT_SETTINGS: WhatsAppNotificationSettingsDto = {
   isEnabled: true,
   adminNumbers: '',
   supportNumber: '',
+  noolRecipientNumber: '',
 
   // Customer notifications
   customerOrderPlacedEnabled: true,
@@ -552,7 +553,7 @@ export const WhatsAppNotificationSettingsManagement: React.FC = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <div className="space-y-2">
               <Label htmlFor="adminNumbers">
                 {isArabic ? 'أرقام المشرف' : 'Admin Numbers'}
@@ -570,6 +571,18 @@ export const WhatsAppNotificationSettingsManagement: React.FC = () => {
                   ? 'افصل بين الأرقام بفاصلة (مع رمز الدولة 968)'
                   : 'Separate multiple numbers with commas (with country code 968)'}
               </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="noolRecipientNumber">Nool Dispatch Number</Label>
+              <Input
+                id="noolRecipientNumber"
+                placeholder="968XXXXXXXX"
+                value={settings.noolRecipientNumber || ''}
+                onChange={(e) => update('noolRecipientNumber', e.target.value)}
+                disabled={!settings.isEnabled}
+                dir="ltr"
+              />
+              <p className="text-xs text-muted-foreground">WhatsApp number that receives Nool pickup requests.</p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="supportNumber">
