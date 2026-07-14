@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { Routes, Route, useLocation, useSearchParams, Navigate } from 'react-router-dom';
 import { Toaster } from './components/ui/sonner';
 import { AppProvider } from './contexts/AppContext';
@@ -156,6 +156,53 @@ const scheduleAfterInitialLoad = (task: () => void) => {
   return clearScheduledWork;
 };
 
+// Defers loading of the ChatBot chunk (and its heavy transitive imports:
+// framer-motion, personalization/coffee-passport/intent services) until the
+// browser is idle or the user interacts, so it no longer competes with
+// LCP-critical resources on the initial load.
+const useDeferredChatBotReady = (enabled: boolean) => {
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    if (!enabled || ready || typeof window === 'undefined') return;
+
+    let settled = false;
+    const markReady = () => {
+      if (settled) return;
+      settled = true;
+      setReady(true);
+    };
+
+    const interactionEvents: Array<keyof WindowEventMap> = ['pointerdown', 'touchstart', 'keydown', 'scroll'];
+    interactionEvents.forEach((eventName) => {
+      window.addEventListener(eventName, markReady, { once: true, passive: true });
+    });
+
+    let idleId: number | null = null;
+    let timeoutId: number | null = null;
+    if ('requestIdleCallback' in window) {
+      idleId = (window as Window & { requestIdleCallback: (cb: () => void, options?: { timeout: number }) => number })
+        .requestIdleCallback(markReady, { timeout: 4000 });
+    } else {
+      timeoutId = globalThis.setTimeout(markReady, 3000);
+    }
+
+    return () => {
+      interactionEvents.forEach((eventName) => {
+        window.removeEventListener(eventName, markReady);
+      });
+      if (idleId !== null && 'cancelIdleCallback' in window) {
+        (window as Window & { cancelIdleCallback: (id: number) => void }).cancelIdleCallback(idleId);
+      }
+      if (timeoutId !== null) {
+        window.clearTimeout(timeoutId);
+      }
+    };
+  }, [enabled, ready]);
+
+  return ready;
+};
+
 function AppContent() {
   const location = useLocation();
   const isAdminPage = location.pathname.includes('/admin');
@@ -166,6 +213,9 @@ function AppContent() {
     isProductsPage ||
     ['/', '/om', '/sa', '/shop', '/om/shop', '/sa/shop'].includes(normalizedPath);
   const routeFallback = <div className="min-h-screen bg-white" />;
+  const chatBotEnabled =
+    !isInvoicePage && !isAdminPage && (import.meta.env.VITE_CHATBOT_ENABLED ?? 'false') === 'true';
+  const chatBotReady = useDeferredChatBotReady(chatBotEnabled);
 
   // Initialize visitor tracking on app load
   useEffect(() => {
@@ -212,7 +262,7 @@ function AppContent() {
         </>
       )}
       {!isInvoicePage && !isAdminPage && <ScrollToTop />}
-      {!isInvoicePage && !isAdminPage && (import.meta.env.VITE_CHATBOT_ENABLED ?? 'false') === 'true' && (
+      {chatBotEnabled && chatBotReady && (
         <Suspense fallback={null}>
           <ChatBot />
         </Suspense>
