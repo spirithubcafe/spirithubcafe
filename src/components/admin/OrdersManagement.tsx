@@ -1599,17 +1599,17 @@ export const OrdersManagement: React.FC = () => {
     return message;
   };
 
-  const handleNoolDispatch = async (order: Order, resend: boolean) => {
+  const handleNoolDispatch = async (order: Order, resend: boolean, dispatchProvider: 'Nool' | 'Genacom' = 'Nool') => {
     setNoolDispatchLoadingId(order.id);
     try {
       const response = resend
         ? await orderService.resendNoolDispatch(order.id)
-        : await orderService.requestNoolDispatch(order.id);
-      if (!response.success) throw new Error(response.message || 'Nool dispatch request failed.');
-      toast.success(response.message || (resend ? 'Nool dispatch resent.' : 'Nool pickup requested.'));
+        : await orderService.requestNoolDispatch(order.id, dispatchProvider);
+      if (!response.success) throw new Error(response.message || 'Dispatch request failed.');
+      toast.success(response.message || (resend ? 'Dispatch resent.' : `${dispatchProvider} pickup requested.`));
       await loadOrders({ silent: true });
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || error?.message || 'Nool dispatch request failed.');
+      toast.error(error?.response?.data?.message || error?.message || 'Dispatch request failed.');
     } finally {
       setNoolDispatchLoadingId(null);
     }
@@ -1652,12 +1652,22 @@ export const OrdersManagement: React.FC = () => {
           )}
           {order.canRequestNoolDispatch && (
             <DropdownMenuItem
-              onSelect={() => void handleNoolDispatch(order, false)}
+              onSelect={() => void handleNoolDispatch(order, false, 'Nool')}
               disabled={noolDispatchLoadingId === order.id}
               className="text-blue-700 focus:text-blue-700"
             >
               {noolDispatchLoadingId === order.id ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Truck className="h-4 w-4" />}
-              Ready for Nool Pickup
+              Nool Pickup
+            </DropdownMenuItem>
+          )}
+          {order.canRequestNoolDispatch && (
+            <DropdownMenuItem
+              onSelect={() => void handleNoolDispatch(order, false, 'Genacom')}
+              disabled={noolDispatchLoadingId === order.id}
+              className="text-blue-700 focus:text-blue-700"
+            >
+              {noolDispatchLoadingId === order.id ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Truck className="h-4 w-4" />}
+              Genacom Pickup
             </DropdownMenuItem>
           )}
           {order.canResendNoolDispatch && (
