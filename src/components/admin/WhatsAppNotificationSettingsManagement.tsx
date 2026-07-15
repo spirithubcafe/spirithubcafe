@@ -44,6 +44,7 @@ const DEFAULT_SETTINGS: WhatsAppNotificationSettingsDto = {
   adminNumbers: '',
   supportNumber: '',
   noolRecipientNumber: '',
+  genacomRecipientNumber: '',
 
   // Customer notifications
   customerOrderPlacedEnabled: true,
@@ -553,7 +554,7 @@ export const WhatsAppNotificationSettingsManagement: React.FC = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
             <div className="space-y-2">
               <Label htmlFor="adminNumbers">
                 {isArabic ? 'أرقام المشرف' : 'Admin Numbers'}
@@ -583,6 +584,18 @@ export const WhatsAppNotificationSettingsManagement: React.FC = () => {
                 dir="ltr"
               />
               <p className="text-xs text-muted-foreground">WhatsApp number that receives Nool pickup requests.</p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="genacomRecipientNumber">Genacom Dispatch Number</Label>
+              <Input
+                id="genacomRecipientNumber"
+                placeholder="968XXXXXXXX"
+                value={settings.genacomRecipientNumber || ''}
+                onChange={(e) => update('genacomRecipientNumber', e.target.value)}
+                disabled={!settings.isEnabled}
+                dir="ltr"
+              />
+              <p className="text-xs text-muted-foreground">WhatsApp number that receives Genacom pickup requests.</p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="supportNumber">

@@ -93,6 +93,7 @@ export interface WhatsAppNotificationSettingsDto {
   adminNumbers: string | null;
   supportNumber: string | null;
   noolRecipientNumber: string | null;
+  genacomRecipientNumber: string | null;
   
   // Customer notifications
   customerOrderPlacedEnabled: boolean;

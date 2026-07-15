@@ -506,8 +506,8 @@ export const orderService = {
     return response.data;
   },
 
-  async requestNoolDispatch(id: number): Promise<ApiResponse<Order>> {
-    const response = await apiClient.post<ApiResponse<Order>>(`/api/orders/${id}/nool-dispatch/request`, { forceResend: false });
+  async requestNoolDispatch(id: number, dispatchProvider: 'Nool' | 'Genacom' = 'Nool'): Promise<ApiResponse<Order>> {
+    const response = await apiClient.post<ApiResponse<Order>>(`/api/orders/${id}/nool-dispatch/request`, { forceResend: false, dispatchProvider });
     return response.data;
   },
 
