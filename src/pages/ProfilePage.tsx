@@ -9,6 +9,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../co
 import { Button } from '../components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import { Label } from '../components/ui/label';
+import { Switch } from '../components/ui/switch';
 import { Badge } from '../components/ui/badge';
 import { Separator } from '../components/ui/separator';
 import { Seo } from '../components/seo/Seo';
@@ -24,6 +25,7 @@ import { ChangePasswordForm } from '../components/pages/ChangePasswordForm';
 import { CoffeePassportSection } from '../components/pages/CoffeePassportSection';
 import { profileService } from '../services/profileService';
 import { newsletterService } from '../services/newsletterService';
+import { whatsAppProductReminderService } from '../services/whatsAppProductReminderService';
 import type { UserProfile as UserProfileType } from '../services/profileService';
 import { getProfilePictureUrl } from '../lib/profileUtils';
 import { 
@@ -91,6 +93,10 @@ const ProfilePage: React.FC = () => {
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [isLoadingSubscription, setIsLoadingSubscription] = useState(false);
   const [subscriptionMessage, setSubscriptionMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [whatsAppRemindersEnabled, setWhatsAppRemindersEnabled] = useState(false);
+  const [hasReminderPhone, setHasReminderPhone] = useState(false);
+  const [isLoadingWhatsAppPreference, setIsLoadingWhatsAppPreference] = useState(false);
+  const [whatsAppPreferenceMessage, setWhatsAppPreferenceMessage] = useState<string | null>(null);
   
   const [stats, setStats] = useState<ProfileStats>({
     totalOrders: 0,
@@ -247,12 +253,45 @@ const ProfilePage: React.FC = () => {
     }
   };
 
+  const loadWhatsAppReminderPreference = async () => {
+    try {
+      const preference = await whatsAppProductReminderService.getPreference();
+      setWhatsAppRemindersEnabled(preference.enabled);
+      setHasReminderPhone(preference.hasPhoneNumber);
+    } catch {
+      // This optional setting must never interrupt the profile page.
+    }
+  };
+
+  const handleWhatsAppReminderToggle = async (enabled: boolean) => {
+    setIsLoadingWhatsAppPreference(true);
+    setWhatsAppPreferenceMessage(null);
+    try {
+      const preference = await whatsAppProductReminderService.updatePreference(enabled);
+      setWhatsAppRemindersEnabled(preference.enabled);
+      setHasReminderPhone(preference.hasPhoneNumber);
+      setWhatsAppPreferenceMessage(
+        isArabic
+          ? (enabled ? 'تم تفعيل تذكيرات المنتجات عبر واتساب.' : 'تم إيقاف تذكيرات المنتجات عبر واتساب.')
+          : (enabled ? 'WhatsApp product reminders enabled.' : 'WhatsApp product reminders disabled.')
+      );
+    } catch (error: any) {
+      setWhatsAppPreferenceMessage(
+        error?.response?.data?.message ||
+        (isArabic ? 'أضف رقم هاتف إلى حسابك أولاً.' : 'Add a phone number to your account first.')
+      );
+    } finally {
+      setIsLoadingWhatsAppPreference(false);
+    }
+  };
+
   // Load user data and orders
   useEffect(() => {
     if (isAuthenticated && user) {
       loadUserProfile();
       loadUserOrders();
       loadNewsletterStatus();
+      loadWhatsAppReminderPreference();
     }
     
     // Check for tab parameter in URL
@@ -815,6 +854,48 @@ const ProfilePage: React.FC = () => {
                   language={language}
                   onSuccess={() => {}}
                 />
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Phone className="h-5 w-5" />
+                      {isArabic ? 'تذكيرات واتساب' : 'WhatsApp reminders'}
+                    </CardTitle>
+                    <CardDescription>
+                      {isArabic
+                        ? 'استلم تحديثات حول القهوة والمنتجات الجديدة.'
+                        : 'Receive updates about new coffees and products.'}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center justify-between gap-4 rounded-lg border p-4">
+                      <div>
+                        <Label htmlFor="whatsapp-product-reminders">
+                          {isArabic ? 'تذكيرات المنتجات عبر واتساب' : 'WhatsApp product reminders'}
+                        </Label>
+                        <p className="mt-1 text-sm text-gray-600">
+                          {hasReminderPhone
+                            ? (isArabic ? 'يمكنك إيقافها في أي وقت.' : 'You can turn this off at any time.')
+                            : (isArabic ? 'أضف رقم هاتف إلى حسابك لتفعيلها.' : 'Add a phone number to your account to enable this.')}
+                        </p>
+                      </div>
+                      {isLoadingWhatsAppPreference ? (
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                      ) : (
+                        <Switch
+                          id="whatsapp-product-reminders"
+                          checked={whatsAppRemindersEnabled}
+                          disabled={!hasReminderPhone && !whatsAppRemindersEnabled}
+                          onCheckedChange={handleWhatsAppReminderToggle}
+                          aria-label={isArabic ? 'تذكيرات المنتجات عبر واتساب' : 'WhatsApp product reminders'}
+                        />
+                      )}
+                    </div>
+                    {whatsAppPreferenceMessage && (
+                      <p className="mt-3 text-sm text-gray-700">{whatsAppPreferenceMessage}</p>
+                    )}
+                  </CardContent>
+                </Card>
 
                 {/* Newsletter Section */}
                 <Card>

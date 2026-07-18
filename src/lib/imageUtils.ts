@@ -19,6 +19,10 @@ export const getApiBaseUrl = (): string => {
   return import.meta.env.VITE_API_BASE_URL_OM || import.meta.env.VITE_API_BASE_URL || 'https://api.spirithubcafe.com';
 };
 
+const getAssetBaseUrl = (): string => {
+  return import.meta.env.VITE_ASSET_BASE_URL || getApiBaseUrl();
+};
+
 const resolvePublicAssetUrl = (assetPath: string): string => {
   // Ensure public assets work even when the app is served from a non-root base (e.g., /om/).
   const baseUrl = (import.meta.env.BASE_URL || '/').toString();
@@ -57,8 +61,8 @@ export const getImageUrl = (
   }
 
   // Build full URL: API Base URL + image path
-  const apiBaseUrl = getApiBaseUrl();
-  const fullUrl = `${apiBaseUrl}${pathToUse.startsWith('/') ? pathToUse : `/${pathToUse}`}`;
+  const assetBaseUrl = getAssetBaseUrl();
+  const fullUrl = `${assetBaseUrl.replace(/\/+$/, '')}${pathToUse.startsWith('/') ? pathToUse : `/${pathToUse}`}`;
 
   return fullUrl;
 };
@@ -89,8 +93,8 @@ const isImageResizingEnabled = String(import.meta.env.VITE_ENABLE_IMAGE_RESIZING
 
 const withImageWidthParam = (imageUrl: string, width: number): string => {
   // Keep public fallback assets untouched; only ask backend-hosted assets for resized variants.
-  const apiBaseUrl = getApiBaseUrl();
-  if (!isImageResizingEnabled || !imageUrl.startsWith(apiBaseUrl)) {
+  const assetBaseUrl = getAssetBaseUrl();
+  if (!isImageResizingEnabled || !imageUrl.startsWith(assetBaseUrl)) {
     return imageUrl;
   }
 
@@ -134,6 +138,11 @@ export const handleImageError = (
     ? fallbackUrl
     : resolvePublicAssetUrl(fallbackUrl);
 
+  // Browsers prioritize `srcset` over `src` when both are present, so a lone
+  // `src` update here would be silently ignored and the broken image would
+  // remain broken. Clear `srcset` (and `sizes`) so the fallback actually renders.
+  target.removeAttribute('srcset');
+  target.removeAttribute('sizes');
   target.src = resolvedFallback;
 };
 

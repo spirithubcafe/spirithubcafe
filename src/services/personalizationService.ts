@@ -489,7 +489,7 @@ const flushEventQueue = () => {
   const next = eventQueue.shift();
   if (!next) return;
 
-  void publicHttp.post('/api/customer-events/track', {
+  void apiClient.post('/api/customer-events/track', {
     ...next,
     sessionId: getSessionId(),
     source: next.source ?? 'website',

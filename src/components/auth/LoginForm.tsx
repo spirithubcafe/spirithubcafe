@@ -1,15 +1,18 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { toast } from 'sonner';
 import { useAuth } from '../../hooks/useAuth';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
+import { Checkbox } from '../ui/checkbox';
 import { GoogleLoginButton } from './GoogleLoginButton';
 import { PhoneLoginForm } from './PhoneLoginForm';
 import { Alert, AlertDescription } from '../ui/alert';
 import { Spinner } from '../ui/spinner';
 import { Eye, EyeOff, LogIn, AlertCircle, Phone, Mail } from 'lucide-react';
 import { useApp } from '../../hooks/useApp';
+import { whatsAppProductReminderService } from '../../services/whatsAppProductReminderService';
 
 type LoginMethod = 'email' | 'phone';
 
@@ -38,6 +41,34 @@ export const LoginForm: React.FC<LoginFormProps> = ({
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>('');
+  // Optional, unchecked by default. Leaving it unchecked never disables an
+  // existing preference — we only ever opt users IN after a successful login.
+  const [whatsAppRemindersOptIn, setWhatsAppRemindersOptIn] = useState(false);
+
+  const optInToWhatsAppReminders = () => {
+    if (!whatsAppRemindersOptIn) return;
+    whatsAppProductReminderService.updatePreference(true).catch((err) => {
+      // Non-critical: never block or interrupt a successful login for this.
+      // The API returns 400 specifically when the account has no phone number on file.
+      if (err?.response?.status === 400) {
+        toast.info(
+          isRTL
+            ? 'تسجيل الدخول ناجح. أضف رقم هاتف في ملفك الشخصي لتفعيل تذكيرات واتساب.'
+            : 'Login successful. Add a phone number in your profile to enable WhatsApp reminders.'
+        );
+      }
+    });
+  };
+
+  const handleGoogleLoginSuccess = () => {
+    optInToWhatsAppReminders();
+    onSuccess?.();
+  };
+
+  const handlePhoneLoginSuccess = () => {
+    optInToWhatsAppReminders();
+    onSuccess?.();
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -67,6 +98,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
       const response = await login(formData);
       
       if (response.success) {
+        optInToWhatsAppReminders();
         onSuccess?.();
       } else {
         setError(response.message || t('auth.loginFailed'));
@@ -103,10 +135,33 @@ export const LoginForm: React.FC<LoginFormProps> = ({
         </Button>
       </div>
 
+      {/* WhatsApp reminders opt-in */}
+      <div className="flex items-start gap-3 mb-6 rounded-lg border border-green-200 bg-green-50 p-3">
+        <Checkbox
+          id="whatsapp-reminders-optin"
+          checked={whatsAppRemindersOptIn}
+          onCheckedChange={(checked) => setWhatsAppRemindersOptIn(checked === true)}
+          className="mt-0.5"
+        />
+        <div>
+          <Label
+            htmlFor="whatsapp-reminders-optin"
+            className={`text-sm font-medium cursor-pointer ${isRTL ? 'font-cairo text-right' : 'text-left'}`}
+          >
+            {isRTL ? 'تذكيرات واتساب' : 'WhatsApp reminders'}
+          </Label>
+          <p className={`mt-1 text-xs text-gray-600 ${isRTL ? 'font-cairo text-right' : 'text-left'}`}>
+            {isRTL
+              ? 'استلم تحديثات حول القهوة والمنتجات الجديدة.'
+              : 'Receive reminders about new coffee.'}
+          </p>
+        </div>
+      </div>
+
       {/* Phone Login Form */}
       {loginMethod === 'phone' ? (
         <PhoneLoginForm
-          onSuccess={onSuccess}
+          onSuccess={handlePhoneLoginSuccess}
           onSwitchToEmail={() => setLoginMethod('email')}
         />
       ) : (
@@ -153,7 +208,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
                 className="text-sm text-amber-600 hover:text-amber-700 hover:underline"
                 onClick={onClose}
               >
-                Forgot password?
+                {t('auth.forgotPassword')}
               </Link>
             </div>
             <div className="relative">
@@ -217,7 +272,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
           </div>
 
           {/* Google Login Button */}
-          <GoogleLoginButton mode="login" onSuccess={onSuccess} />
+          <GoogleLoginButton mode="login" onSuccess={handleGoogleLoginSuccess} />
           
           {onSwitchToRegister && (
             <div className="text-center">
