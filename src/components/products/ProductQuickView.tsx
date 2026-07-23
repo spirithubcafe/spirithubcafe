@@ -396,7 +396,11 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0 bg-white shadow-2xl border border-gray-200/80" showCloseButton={false}>
+      <DialogContent
+        mobileFullScreen
+        className="sm:w-full sm:max-w-4xl sm:max-h-[94vh] overflow-y-auto p-0 rounded-2xl bg-white shadow-2xl border border-gray-200/80"
+        showCloseButton={false}
+      >
           <DialogHeader className="sr-only">
             <DialogTitle>{isArabic ? 'عرض سريع للمنتج' : 'Product Quick View'}</DialogTitle>
           </DialogHeader>
@@ -422,7 +426,7 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
             {/* Product Image */}
             <div className="relative overflow-hidden bg-[#fbf8f3] p-2 md:p-3">
               <div 
-                className="aspect-[3/2] md:aspect-square relative rounded-lg md:rounded-xl overflow-hidden cursor-zoom-in"
+                className="relative rounded-xl overflow-hidden cursor-zoom-in h-60 sm:h-72 md:h-auto md:aspect-square w-full"
                 onMouseMove={handleMouseMove}
                 onMouseEnter={handleMouseEnter}
                 onMouseLeave={handleMouseLeave}
@@ -443,14 +447,14 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
 
               {/* Thumbnail Gallery */}
               {images.length > 1 && (
-                <div className="bg-white p-2 border-t border-gray-200 -mx-2 -mb-2 mt-2 md:p-3 md:-mx-3 md:-mb-3 md:mt-3">
+                <div className="bg-white p-2 md:p-3 border-t border-gray-200 -mx-2 -mb-2 mt-2 md:-mx-3 md:-mb-3 md:mt-3">
                   <div className="flex flex-wrap gap-1.5 md:gap-2">
                     {images.map((image, index) => (
                       <button
                         key={index}
                         type="button"
                         onClick={handleThumbnailClick(index)}
-                        className={`relative h-12 w-12 md:h-16 md:w-16 rounded-md md:rounded-lg overflow-hidden shrink-0 border-2 transition-all ${
+                        className={`relative h-11 w-11 md:h-16 md:w-16 rounded-lg overflow-hidden shrink-0 border-2 transition-all ${
                           currentImageIndex === index
                             ? 'border-amber-500 ring-2 ring-amber-300 shadow-md'
                             : 'border-gray-300 hover:border-amber-400'
@@ -474,7 +478,7 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
               )}
             </div>
             {/* Product Details */}
-            <div className="flex flex-col p-2 md:p-5 space-y-1.5 md:space-y-4 bg-white">
+            <div className="flex flex-col p-3 md:p-5 space-y-2 md:space-y-4 bg-white">
               {/* Product Name and Reviews */}
               <div>
                 <h2 className="text-base md:text-2xl font-bold text-gray-900 mb-1 md:mb-2 leading-tight">{product.name}</h2>
@@ -522,69 +526,85 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
 
               {/* Coffee Information - Compact Grid on Mobile */}
               {fullProduct && (fullProduct.roastLevel || fullProduct.process || fullProduct.variety || fullProduct.altitude || fullProduct.farm || fullProduct.tastingNotes || fullProduct.notes || fullProduct.uses) && (
-                <div className="space-y-1 md:space-y-1.5 text-[11px] md:text-xs rounded-lg border border-gray-200 bg-white p-2 md:p-3 shadow-[0_1px_0_rgba(0,0,0,0.02)]">
-                  {fullProduct.roastLevel && (
-                    <div className="flex items-center gap-2">
-                      <Flame className="w-3.5 h-3.5 md:w-4 md:h-4 text-amber-600/70 shrink-0" />
-                      <span className="text-gray-500 min-w-[60px] md:min-w-[70px]">{isArabic ? 'التحميص:' : 'Roast:'}</span>
-                      <span className="font-semibold text-gray-900">
-                        {isArabic && fullProduct.roastLevelAr ? fullProduct.roastLevelAr : fullProduct.roastLevel}
-                      </span>
-                    </div>
-                  )}
-                  {fullProduct.process && (
-                    <div className="flex items-center gap-2">
-                      <RotateCw className="w-3.5 h-3.5 md:w-4 md:h-4 text-amber-600/70 shrink-0" />
-                      <span className="text-gray-500 min-w-[60px] md:min-w-[70px]">{isArabic ? 'المعالجة:' : 'Process:'}</span>
-                      <span className="font-semibold text-gray-900">
-                        {isArabic && fullProduct.processAr ? fullProduct.processAr : fullProduct.process}
-                      </span>
-                    </div>
-                  )}
-                  {fullProduct.variety && (
-                    <div className="flex items-center gap-2">
-                      <BarChart3 className="w-3.5 h-3.5 md:w-4 md:h-4 text-amber-600/70 shrink-0" />
-                      <span className="text-gray-500 min-w-[60px] md:min-w-[70px]">{isArabic ? 'الصنف:' : 'Variety:'}</span>
-                      <span className="font-semibold text-gray-900">
-                        {isArabic && fullProduct.varietyAr ? fullProduct.varietyAr : fullProduct.variety}
-                      </span>
-                    </div>
-                  )}
-                  {fullProduct.altitude && (
-                    <div className="flex items-center gap-2">
-                      <MapPin className="w-3.5 h-3.5 md:w-4 md:h-4 text-amber-600/70 shrink-0" />
-                      <span className="text-gray-500 min-w-[60px] md:min-w-[70px]">{isArabic ? 'الارتفاع:' : 'Altitude:'}</span>
-                      <span className="font-semibold text-gray-900">
-                        {fullProduct.altitude} {isArabic ? 'م' : 'masl'}
-                      </span>
-                    </div>
-                  )}
-                  {fullProduct.farm && (
-                    <div className="flex items-center gap-2">
-                      <Wheat className="w-3.5 h-3.5 md:w-4 md:h-4 text-amber-600/70 shrink-0" />
-                      <span className="text-gray-500 min-w-[60px] md:min-w-[70px]">{isArabic ? 'المزرعة:' : 'Farm:'}</span>
-                      <span className="font-semibold text-gray-900">
-                        {isArabic && fullProduct.farmAr ? fullProduct.farmAr : fullProduct.farm}
-                      </span>
-                    </div>
-                  )}
+                <div className="text-[11px] md:text-xs rounded-lg border border-gray-200 bg-white p-2.5 md:p-3 shadow-[0_1px_0_rgba(0,0,0,0.02)] space-y-1 md:space-y-1.5">
+                  <div className="grid grid-cols-2 gap-x-2 gap-y-1 md:gap-y-1.5">
+                    {fullProduct.roastLevel && (
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <Flame className="w-3.5 h-3.5 text-amber-600/70 shrink-0" />
+                        <span className="truncate">
+                          <span className="text-gray-500">{isArabic ? 'التحميص: ' : 'Roast: '}</span>
+                          <span className="font-semibold text-gray-900">
+                            {isArabic && fullProduct.roastLevelAr ? fullProduct.roastLevelAr : fullProduct.roastLevel}
+                          </span>
+                        </span>
+                      </div>
+                    )}
+                    {fullProduct.process && (
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <RotateCw className="w-3.5 h-3.5 text-amber-600/70 shrink-0" />
+                        <span className="truncate">
+                          <span className="text-gray-500">{isArabic ? 'المعالجة: ' : 'Process: '}</span>
+                          <span className="font-semibold text-gray-900">
+                            {isArabic && fullProduct.processAr ? fullProduct.processAr : fullProduct.process}
+                          </span>
+                        </span>
+                      </div>
+                    )}
+                    {fullProduct.variety && (
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <BarChart3 className="w-3.5 h-3.5 text-amber-600/70 shrink-0" />
+                        <span className="truncate">
+                          <span className="text-gray-500">{isArabic ? 'الصنف: ' : 'Variety: '}</span>
+                          <span className="font-semibold text-gray-900">
+                            {isArabic && fullProduct.varietyAr ? fullProduct.varietyAr : fullProduct.variety}
+                          </span>
+                        </span>
+                      </div>
+                    )}
+                    {fullProduct.altitude && (
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <MapPin className="w-3.5 h-3.5 text-amber-600/70 shrink-0" />
+                        <span className="truncate">
+                          <span className="text-gray-500">{isArabic ? 'الارتفاع: ' : 'Altitude: '}</span>
+                          <span className="font-semibold text-gray-900">
+                            {fullProduct.altitude} {isArabic ? 'م' : 'masl'}
+                          </span>
+                        </span>
+                      </div>
+                    )}
+                    {fullProduct.farm && (
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <Wheat className="w-3.5 h-3.5 text-amber-600/70 shrink-0" />
+                        <span className="truncate">
+                          <span className="text-gray-500">{isArabic ? 'المزرعة: ' : 'Farm: '}</span>
+                          <span className="font-semibold text-gray-900">
+                            {isArabic && fullProduct.farmAr ? fullProduct.farmAr : fullProduct.farm}
+                          </span>
+                        </span>
+                      </div>
+                    )}
+                  </div>
                   {(fullProduct.notes || fullProduct.notesAr || fullProduct.tastingNotes || fullProduct.tastingNotesAr) && (
-                    <div className="flex items-start gap-2">
-                      <ClipboardList className="w-3.5 h-3.5 md:w-4 md:h-4 text-amber-600/70 shrink-0 mt-0.5" />
-                      <span className="text-gray-500 min-w-[60px] md:min-w-[70px]">{isArabic ? 'ملاحظات التذوق:' : 'Notes:'}</span>
-                      <span className="font-semibold text-gray-900 flex-1">
-                        {isArabic 
-                          ? (fullProduct.tastingNotesAr || fullProduct.notesAr || fullProduct.tastingNotes || fullProduct.notes)
-                          : (fullProduct.tastingNotes || fullProduct.notes || fullProduct.tastingNotesAr || fullProduct.notesAr)}
+                    <div className="flex items-start gap-1.5 pt-1 border-t border-gray-100">
+                      <ClipboardList className="w-3.5 h-3.5 text-amber-600/70 shrink-0 mt-0.5" />
+                      <span className="leading-snug">
+                        <span className="text-gray-500">{isArabic ? 'ملاحظات: ' : 'Notes: '}</span>
+                        <span className="font-semibold text-gray-900">
+                          {isArabic 
+                            ? (fullProduct.tastingNotesAr || fullProduct.notesAr || fullProduct.tastingNotes || fullProduct.notes)
+                            : (fullProduct.tastingNotes || fullProduct.notes || fullProduct.tastingNotesAr || fullProduct.notesAr)}
+                        </span>
                       </span>
                     </div>
                   )}
                   {(fullProduct.uses || fullProduct.usesAr) && (
-                    <div className="flex items-start gap-2">
-                      <Coffee className="w-3.5 h-3.5 md:w-4 md:h-4 text-amber-600/70 shrink-0 mt-0.5" />
-                      <span className="text-gray-500 min-w-[60px] md:min-w-[70px]">{isArabic ? 'الاستخدامات:' : 'Uses:'}</span>
-                      <span className="font-semibold text-gray-900 flex-1">
-                        {isArabic && fullProduct.usesAr ? fullProduct.usesAr : fullProduct.uses}
+                    <div className="flex items-start gap-1.5">
+                      <Coffee className="w-3.5 h-3.5 text-amber-600/70 shrink-0 mt-0.5" />
+                      <span className="leading-snug">
+                        <span className="text-gray-500">{isArabic ? 'الاستخدامات: ' : 'Uses: '}</span>
+                        <span className="font-semibold text-gray-900">
+                          {isArabic && fullProduct.usesAr ? fullProduct.usesAr : fullProduct.uses}
+                        </span>
                       </span>
                     </div>
                   )}
@@ -592,23 +612,23 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
               )}
 
               {/* Price, Size and Quantity - Compact Unified Section */}
-              <div className="bg-linear-to-br from-amber-50 to-orange-50 border border-amber-200 rounded-lg p-1.5 md:p-3 space-y-1 md:space-y-2">
+              <div className="bg-linear-to-br from-amber-50 to-orange-50 border border-amber-200 rounded-lg p-2.5 md:p-3 space-y-1 md:space-y-2">
                 {/* Header: Select size + price */}
-                <div className="flex items-center justify-between py-0.5 border-b border-amber-200/50 pb-1 md:pb-2">
-                  <div className="flex items-center gap-1.5">
-                    <Coffee className="w-3.5 md:w-4 h-3.5 md:h-4 text-amber-700/70" />
-                    <div className="flex flex-col">
-                      <span className="text-[11px] md:text-sm text-gray-700 font-semibold">
+                <div className="flex items-center justify-between gap-2 flex-wrap py-0.5 border-b border-amber-200/50 pb-1 md:pb-2">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <Coffee className="w-3.5 md:w-4 h-3.5 md:h-4 text-amber-700/70 shrink-0" />
+                    <div className="flex flex-col min-w-0">
+                      <span className="text-xs md:text-sm text-gray-700 font-semibold">
                         {isArabic ? 'اختر الحجم' : 'Choose Size'}
                       </span>
                       {fullProduct && isUfoDripProduct(fullProduct) ? (
-                        <span className="text-[9px] md:text-[10px] text-emerald-700">
+                        <span className="text-[10px] text-emerald-700">
                           {isArabic
                             ? '♻️ علب يو إف أو دريب قابلة لإعادة التدوير'
                             : '♻️ UFO Drip Boxes – 100% recyclable'}
                         </span>
                       ) : fullProduct && isCapsuleProduct(fullProduct) ? (
-                        <span className="text-[9px] md:text-[10px] text-emerald-700">
+                        <span className="text-[10px] text-emerald-700">
                           {isArabic
                             ? '♻️ كبسولات ألمنيوم قابلة لإعادة التدوير'
                             : '♻️ Aluminium capsules – 100% recyclable'}
@@ -616,13 +636,13 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
                       ) : null}
                     </div>
                   </div>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1 shrink-0">
                     {selectedVariant?.discountPrice && selectedVariant.discountPrice < selectedVariant.price && (
-                      <span className="text-[9px] md:text-xs text-gray-400 line-through">
+                      <span className="text-xs text-gray-400 line-through">
                         {renderPrice(selectedVariant.price)}
                       </span>
                     )}
-                    <span className="text-base md:text-xl font-bold text-amber-900">
+                    <span className="text-lg md:text-xl font-bold text-amber-900">
                       {currentPrice > 0
                         ? renderPrice(currentPrice * quantity)
                         : isArabic
@@ -634,9 +654,9 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
 
                 {/* Size/Variant Selection - Optimized */}
                 {fullProduct?.variants && fullProduct.variants.length > 0 && (
-                  <div className="space-y-0.5 md:space-y-1 pt-0.5 md:pt-1">
+                  <div className="space-y-1 pt-1">
                     <label className="sr-only">{isArabic ? 'اختر الحجم' : 'Choose Size'}</label>
-                    <div className="flex gap-1 md:gap-2 flex-wrap">
+                    <div className="flex gap-1.5 md:gap-2 flex-wrap">
                       {fullProduct.variants.map((variant) => {
                         const variantPrice = variant.discountPrice && variant.discountPrice > 0 
                           ? variant.discountPrice 
@@ -653,10 +673,10 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
                             key={variant.id}
                             type="button"
                             onClick={() => setSelectedVariantId(variant.id)}
-                            className={`rounded-lg flex-1 min-w-0 shadow-sm ${
+                            className={`rounded-lg flex-1 basis-[86px] min-w-[86px] shadow-sm ${
                               isUfoDrip || isCapsule
                                 ? 'px-2 md:px-3 py-1 md:py-1.5 bg-[#6B4423] text-white border border-[#6B4423] cursor-default'
-                                : `px-2 md:px-3 py-1.5 md:py-2 transition-all duration-200 ${
+                                : `px-2 md:px-3 py-1 md:py-2 transition-all duration-200 ${
                                     isSelected
                                       ? 'bg-[#6B4423] hover:bg-[#5a3a1e] text-white shadow-md scale-[1.02]'
                                       : 'bg-white hover:bg-amber-50 text-amber-900 border border-amber-200 hover:border-amber-400 hover:shadow'
@@ -664,32 +684,32 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
                             } ${variantOutOfStock ? 'opacity-60' : ''}`}
                           >
                             <div className="flex flex-col items-center">
-                              <span className="text-[10px] md:text-xs font-semibold leading-tight">{label}</span>
+                              <span className="text-xs font-semibold leading-tight">{label}</span>
                               {isUfoDrip ? (
-                                <span className="text-[9px] md:text-[10px] text-white/80">
+                                <span className="text-[10px] text-white/80">
                                   {isArabic ? '(7 أكياس تقطير فردية)' : '(7 single-serve drip filters)'}
                                 </span>
                               ) : isCapsule ? (
-                                <span className="text-[9px] md:text-[10px] text-white/80">
+                                <span className="text-[10px] text-white/80">
                                   {isArabic ? '(10 كبسولات قهوة)' : '(10 coffee capsules)'}
                                 </span>
                               ) : null}
                               {!hideVariantPrice && (
                                 <div className="flex flex-col items-center mt-0.5">
-                                  <div className="flex items-center gap-0.5">
+                                  <div className="flex items-center gap-1">
                                     {hasDiscount && (
-                                      <span className={`text-[8px] md:text-[9px] line-through ${isSelected ? 'text-white/70' : 'text-amber-600/60'}`}>
+                                      <span className={`text-[10px] line-through ${isSelected ? 'text-white/70' : 'text-amber-600/60'}`}>
                                         {renderPrice(variant.price)}
                                       </span>
                                     )}
-                                    <span className={`text-[9px] md:text-[10px] font-semibold ${isSelected ? 'text-white' : 'text-[#6B4423]'}`}>
+                                    <span className={`text-[11px] font-semibold ${isSelected ? 'text-white' : 'text-[#6B4423]'}`}>
                                       {renderPrice(variantPrice)}
                                     </span>
                                   </div>
                                 </div>
                               )}
                               {variantOutOfStock && (
-                                <span className="text-[9px] text-red-600 font-semibold mt-1">
+                                <span className="text-[10px] text-red-600 font-semibold mt-1">
                                   {isArabic ? 'نفد المخزون' : 'Out of Stock'}
                                 </span>
                               )}
@@ -702,16 +722,16 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
                 )}
 
                 {/* Quantity - More compact */}
-                <div className="border-t border-amber-200/50 mt-0.5 pt-0.5 md:mt-1 md:pt-1 space-y-1 md:space-y-1.5">
-                  <span className="text-[9px] md:text-[10px] font-bold text-gray-700">
+                <div className="border-t border-amber-200/50 mt-1 pt-1 space-y-1">
+                  <span className="text-[11px] font-bold text-gray-700">
                     {isArabic ? 'الكمية' : 'Quantity'}
                   </span>
-                  <div className="flex items-center gap-1.5">
-                    <div className="flex items-center h-11 border-2 border-amber-300 rounded-lg bg-amber-100/60 overflow-hidden">
+                  <div className="flex items-center gap-1.5 md:gap-2">
+                    <div className="flex items-center h-10 md:h-11 border-2 border-amber-300 rounded-lg bg-amber-100/60 overflow-hidden">
                       <button
                         type="button"
                         onClick={decreaseQuantity}
-                        className="h-11 w-10 md:w-11 text-base font-extrabold text-amber-900 hover:text-[#6B4423] hover:bg-amber-200/60 transition-transform duration-150 active:scale-95 disabled:text-gray-400 disabled:hover:bg-transparent disabled:cursor-not-allowed"
+                        className="h-10 md:h-11 w-9 md:w-11 text-base font-extrabold text-amber-900 hover:text-[#6B4423] hover:bg-amber-200/60 transition-transform duration-150 active:scale-95 disabled:text-gray-400 disabled:hover:bg-transparent disabled:cursor-not-allowed"
                         disabled={quantity <= 1}
                         aria-label={isArabic ? 'تقليل الكمية' : 'Decrease quantity'}
                       >
@@ -724,7 +744,7 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
                           const val = parseInt(e.target.value) || 1;
                           setQuantity(clampQuantity(val, variantStock));
                         }}
-                        className="h-11 w-10 md:w-12 text-sm md:text-base font-bold text-gray-900 text-center border-x border-amber-200 focus:outline-none focus:bg-amber-100/60 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        className="h-10 md:h-11 w-9 md:w-12 text-sm md:text-base font-bold text-gray-900 text-center border-x border-amber-200 focus:outline-none focus:bg-amber-100/60 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         min="1"
                         max={maxQty}
                         aria-label={isArabic ? 'الكمية' : 'Quantity'}
@@ -732,7 +752,7 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
                       <button
                         type="button"
                         onClick={increaseQuantity}
-                        className="h-11 w-10 md:w-11 text-base font-extrabold text-amber-900 hover:text-[#6B4423] hover:bg-amber-200/60 transition-transform duration-150 active:scale-95 disabled:text-gray-400 disabled:hover:bg-transparent disabled:cursor-not-allowed"
+                        className="h-10 md:h-11 w-9 md:w-11 text-base font-extrabold text-amber-900 hover:text-[#6B4423] hover:bg-amber-200/60 transition-transform duration-150 active:scale-95 disabled:text-gray-400 disabled:hover:bg-transparent disabled:cursor-not-allowed"
                         disabled={quantity >= maxQty}
                         aria-label={isArabic ? 'زيادة الكمية' : 'Increase quantity'}
                       >
@@ -743,7 +763,7 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
                     <Button
                       onClick={handleAddToCart}
                       disabled={currentPrice <= 0 || isVariantOutOfStock}
-                      className="flex-1 h-11 bg-[#6B4423] hover:bg-[#5a3a1e] text-white text-[11px] md:text-sm font-semibold flex items-center justify-center shadow-md hover:shadow-lg transition-all duration-200"
+                      className="flex-1 h-10 md:h-11 bg-[#6B4423] hover:bg-[#5a3a1e] text-white text-xs md:text-sm font-semibold flex items-center justify-center whitespace-nowrap shadow-md hover:shadow-lg transition-all duration-200"
                     >
                       <ShoppingCart className="w-3.5 h-3.5 md:w-4 md:h-4 ltr:mr-1 rtl:ml-1 md:ltr:mr-1.5 md:rtl:ml-1.5" />
                       {isArabic ? 'إضافة للسلة' : 'Add to Cart'}
@@ -753,14 +773,14 @@ export const ProductQuickView: React.FC<ProductQuickViewProps> = ({
                 <Button
                   onClick={handleViewFullDetails}
                   variant="outline"
-                  className="w-full border-2 border-[#6B4423] text-[#6B4423] hover:bg-amber-50 h-9 md:h-11 text-[11px] md:text-sm font-semibold flex items-center justify-center transition-all duration-200"
+                  className="w-full border-2 border-[#6B4423] text-[#6B4423] hover:bg-amber-50 h-9 md:h-11 text-xs md:text-sm font-semibold flex items-center justify-center transition-all duration-200"
                 >
                   {isArabic ? 'عرض التفاصيل' : 'Coffee Details'}
                 </Button>
               </div>
 
               {/* Roasted Fresh in Oman Text */}
-              <div className="text-center border-t border-amber-200/50 pt-1 md:pt-2">
+              <div className="text-center border-t border-amber-200/50 pt-2">
                 <p className="text-xs text-gray-400 italic">
                   {isArabic ? 'محمص طازج أسبوعياً في عمان' : 'Roasted fresh weekly in Oman'}
                 </p>

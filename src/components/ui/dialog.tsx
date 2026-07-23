@@ -48,12 +48,20 @@ type DialogContentProps =
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & {
     showCloseButton?: boolean
     dir?: 'ltr' | 'rtl'
+    /**
+     * When true, the dialog nearly fills the viewport on mobile (below the `sm`
+     * breakpoint) as a floating sheet with a small margin on every side and
+     * rounded corners, and falls back to the normal centered/rounded dialog
+     * from `sm` and up. Opt-in only — existing dialogs are unaffected unless
+     * they pass this prop.
+     */
+    mobileFullScreen?: boolean
   }
 
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   DialogContentProps
->(({ className, children, showCloseButton = true, dir, ...props }, ref) => (
+>(({ className, children, showCloseButton = true, dir, mobileFullScreen = false, ...props }, ref) => (
   <DialogPortal>
     <DialogOverlay />
     <div dir={dir}>
@@ -61,11 +69,18 @@ const DialogContent = React.forwardRef<
         ref={ref}
         className={cn(
           "fixed left-[50%] top-[50%] z-[70] grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg",
+          mobileFullScreen &&
+            "max-sm:w-[calc(100%-2rem)] max-sm:h-[calc(100dvh-2rem)] max-sm:max-h-[calc(100dvh-2rem)] max-sm:max-w-none max-sm:rounded-2xl",
           className
         )}
         {...props}
       >
-        <OverlayScroll className="max-h-[calc(85dvh-3rem)]">
+        <OverlayScroll
+          className={cn(
+            "max-h-[calc(85dvh-3rem)]",
+            mobileFullScreen && "max-sm:h-full max-sm:max-h-full"
+          )}
+        >
           <div className="grid gap-4">{children}</div>
         </OverlayScroll>
         {showCloseButton ? (
