@@ -144,7 +144,10 @@ export const whatsappService = {
       `${getSessionPath(session)}/${assetType === 'qr' ? 'auth/qr' : 'screenshot'}`,
       {
         headers: {
-          Accept: assetType === 'qr' ? 'image/png' : 'image/jpeg',
+          // Accept the expected image type but also allow the server to
+          // negotiate a JSON error body (e.g. 422) instead of failing
+          // content negotiation and returning 406 Not Acceptable.
+          Accept: `${assetType === 'qr' ? 'image/png' : 'image/jpeg'}, application/json;q=0.9, */*;q=0.1`,
         },
         responseType: 'blob',
         validateStatus: () => true,
