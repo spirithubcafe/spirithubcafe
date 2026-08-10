@@ -566,8 +566,10 @@ export const CheckoutPage: React.FC = () => {
     return items.every((cartItem) => {
       const slug =
         slugById.get(String(cartItem.productId)) ||
-        slugById.get(String(cartItem.id));
-      return slug === 'bundles-gift';
+        slugById.get(String(cartItem.id)) ||
+        '';
+      // Real slug is "coffee-bundles-gift-boxes"; only this exact category qualifies.
+      return slug === 'coffee-bundles-gift-boxes';
     });
   }, [items, appProducts, shopData]);
 
