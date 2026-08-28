@@ -83,10 +83,7 @@ export const Footer: React.FC = () => {
   };
 
   const normalizeEmailAddress = (value: string) => value.replace(/^mailto:/i, '').trim();
-  const obfuscateEmailAddress = (value: string) => {
-    const normalized = normalizeEmailAddress(value);
-    return normalized.replace('@', ' [at] ');
-  };
+  const obfuscateEmailAddress = (value: string) => normalizeEmailAddress(value);
   const openEmailClient = (value: string) => {
     if (typeof window === 'undefined') return;
     const normalized = normalizeEmailAddress(value);
