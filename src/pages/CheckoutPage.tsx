@@ -23,7 +23,7 @@ import { cn } from '@/lib/utils';
 import type { CheckoutOrder } from '../types/checkout';
 import { Seo } from '../components/seo/Seo';
 import { siteMetadata } from '../config/siteMetadata';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import { SearchableSelect } from '../components/ui/searchable-select';
 import { computeShippingMethods, calculateAramexShippingRate, GCC_LOCATIONS } from '@/lib/shipping';
 import { useShopPage } from '@/hooks/useShop';
 import { formatPrice, OMANI_RIAL_SYMBOL } from '@/lib/regionUtils';
@@ -1064,36 +1064,27 @@ export const CheckoutPage: React.FC = () => {
                           <FormItem>
                             <FormLabel>{isArabic ? 'الدولة' : 'Country'}</FormLabel>
                             <FormControl>
-                              <Select
+                              <SearchableSelect
                                 value={field.value}
                                 onValueChange={(val) => {
                                   field.onChange(val);
                                   form.setValue('city', '');
                                 }}
-                              >
-                                <SelectTrigger size="default" className="w-full">
-                                  <SelectValue
-                                    placeholder={isArabic ? 'اختر الدولة' : 'Select country'}
-                                  />
-                                </SelectTrigger>
-                                <SelectContent className="max-h-64">
-                                  {countriesLoading ? (
-                                    <SelectItem value="__loading_countries__" disabled>
-                                      {isArabic ? 'جاري تحميل الدول…' : 'Loading countries…'}
-                                    </SelectItem>
-                                  ) : countriesError ? (
-                                    <SelectItem value="__countries_error__" disabled>
-                                      {countriesError}
-                                    </SelectItem>
-                                  ) : (
-                                    countries.map((c) => (
-                                      <SelectItem key={c.iso2} value={c.iso2}>
-                                        {isArabic ? c.name_ar : c.name_en}
-                                      </SelectItem>
-                                    ))
-                                  )}
-                                </SelectContent>
-                              </Select>
+                                loading={countriesLoading}
+                                options={countries.map((c) => ({
+                                  value: c.iso2,
+                                  label: isArabic ? c.name_ar : c.name_en,
+                                  keywords: `${c.name_en} ${c.name_ar} ${c.iso2}`,
+                                }))}
+                                placeholder={
+                                  countriesError
+                                    ? countriesError
+                                    : isArabic ? 'اختر الدولة' : 'Select country'
+                                }
+                                searchPlaceholder={isArabic ? 'ابحث عن دولة...' : 'Search country...'}
+                                emptyText={isArabic ? 'لا توجد نتائج' : 'No countries found'}
+                                dir={isArabic ? 'rtl' : 'ltr'}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -1107,30 +1098,20 @@ export const CheckoutPage: React.FC = () => {
                           <FormItem>
                             <FormLabel>{isArabic ? 'المدينة' : 'City'}</FormLabel>
                             <FormControl>
-                              <Select
+                              <SearchableSelect
                                 value={field.value}
                                 onValueChange={field.onChange}
                                 disabled={!watchCountryCode || Boolean(citiesLoadingByCountry[watchCountryCode])}
-                              >
-                                <SelectTrigger size="default" className="w-full">
-                                  <SelectValue
-                                    placeholder={isArabic ? 'اختر المدينة' : 'Select city'}
-                                  />
-                                </SelectTrigger>
-                                <SelectContent className="max-h-64">
-                                  {citiesLoadingByCountry[watchCountryCode] ? (
-                                    <SelectItem value="__loading_cities__" disabled>
-                                      {isArabic ? 'جاري تحميل المدن…' : 'Loading cities…'}
-                                    </SelectItem>
-                                  ) : (
-                                    (citiesByCountry[watchCountryCode] ?? []).map((cityName: string) => (
-                                      <SelectItem key={cityName} value={cityName}>
-                                        {getCityLabel(watchCountryCode, cityName)}
-                                      </SelectItem>
-                                    ))
-                                  )}
-                                </SelectContent>
-                              </Select>
+                                loading={Boolean(citiesLoadingByCountry[watchCountryCode])}
+                                options={(citiesByCountry[watchCountryCode] ?? []).map((cityName: string) => ({
+                                  value: cityName,
+                                  label: getCityLabel(watchCountryCode, cityName),
+                                }))}
+                                placeholder={isArabic ? 'اختر المدينة' : 'Select city'}
+                                searchPlaceholder={isArabic ? 'ابحث عن مدينة...' : 'Search city...'}
+                                emptyText={isArabic ? 'لا توجد نتائج' : 'No cities found'}
+                                dir={isArabic ? 'rtl' : 'ltr'}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -1283,36 +1264,27 @@ export const CheckoutPage: React.FC = () => {
                                   {isArabic ? 'دولة المستلم' : 'Recipient Country'}
                                 </FormLabel>
                                 <FormControl>
-                                  <Select
+                                  <SearchableSelect
                                     value={field.value}
                                     onValueChange={(val) => {
                                       field.onChange(val);
                                       form.setValue('recipientCity', '');
                                     }}
-                                  >
-                                    <SelectTrigger size="default" className="w-full">
-                                      <SelectValue
-                                        placeholder={isArabic ? 'اختر الدولة' : 'Select country'}
-                                      />
-                                    </SelectTrigger>
-                                    <SelectContent className="max-h-64">
-                                      {countriesLoading ? (
-                                        <SelectItem value="__loading_countries__" disabled>
-                                          {isArabic ? 'جاري تحميل الدول…' : 'Loading countries…'}
-                                        </SelectItem>
-                                      ) : countriesError ? (
-                                        <SelectItem value="__countries_error__" disabled>
-                                          {countriesError}
-                                        </SelectItem>
-                                      ) : (
-                                        countries.map((c) => (
-                                          <SelectItem key={c.iso2} value={c.iso2}>
-                                            {isArabic ? c.name_ar : c.name_en}
-                                          </SelectItem>
-                                        ))
-                                      )}
-                                    </SelectContent>
-                                  </Select>
+                                    loading={countriesLoading}
+                                    options={countries.map((c) => ({
+                                      value: c.iso2,
+                                      label: isArabic ? c.name_ar : c.name_en,
+                                      keywords: `${c.name_en} ${c.name_ar} ${c.iso2}`,
+                                    }))}
+                                    placeholder={
+                                      countriesError
+                                        ? countriesError
+                                        : isArabic ? 'اختر الدولة' : 'Select country'
+                                    }
+                                    searchPlaceholder={isArabic ? 'ابحث عن دولة...' : 'Search country...'}
+                                    emptyText={isArabic ? 'لا توجد نتائج' : 'No countries found'}
+                                    dir={isArabic ? 'rtl' : 'ltr'}
+                                  />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -1328,32 +1300,20 @@ export const CheckoutPage: React.FC = () => {
                                   {isArabic ? 'مدينة المستلم' : 'Recipient City'}
                                 </FormLabel>
                                 <FormControl>
-                                  <Select
+                                  <SearchableSelect
                                     value={field.value}
                                     onValueChange={field.onChange}
                                     disabled={!watchRecipientCountryCode || Boolean(citiesLoadingByCountry[watchRecipientCountryCode])}
-                                  >
-                                    <SelectTrigger size="default" className="w-full">
-                                      <SelectValue
-                                        placeholder={isArabic ? 'اختر المدينة' : 'Select city'}
-                                      />
-                                    </SelectTrigger>
-                                    <SelectContent className="max-h-64">
-                                      {citiesLoadingByCountry[watchRecipientCountryCode] ? (
-                                        <SelectItem value="__loading_cities__" disabled>
-                                          {isArabic ? 'جاري تحميل المدن…' : 'Loading cities…'}
-                                        </SelectItem>
-                                      ) : (
-                                        (citiesByCountry[watchRecipientCountryCode] ?? []).map(
-                                          (cityName: string) => (
-                                            <SelectItem key={cityName} value={cityName}>
-                                              {getCityLabel(watchRecipientCountryCode, cityName)}
-                                            </SelectItem>
-                                          )
-                                        )
-                                      )}
-                                    </SelectContent>
-                                  </Select>
+                                    loading={Boolean(citiesLoadingByCountry[watchRecipientCountryCode])}
+                                    options={(citiesByCountry[watchRecipientCountryCode] ?? []).map((cityName: string) => ({
+                                      value: cityName,
+                                      label: getCityLabel(watchRecipientCountryCode, cityName),
+                                    }))}
+                                    placeholder={isArabic ? 'اختر المدينة' : 'Select city'}
+                                    searchPlaceholder={isArabic ? 'ابحث عن مدينة...' : 'Search city...'}
+                                    emptyText={isArabic ? 'لا توجد نتائج' : 'No cities found'}
+                                    dir={isArabic ? 'rtl' : 'ltr'}
+                                  />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
