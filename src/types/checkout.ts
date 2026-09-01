@@ -7,6 +7,7 @@ export interface CheckoutDetails {
   country: string;
   city: string;
   address: string;
+  postalCode?: string;
   notes?: string;
   isGift: boolean;
   recipientName?: string;
@@ -14,6 +15,7 @@ export interface CheckoutDetails {
   recipientCountry?: string;
   recipientCity?: string;
   recipientAddress?: string;
+  recipientPostalCode?: string;
 }
 
 export interface CheckoutOrder {

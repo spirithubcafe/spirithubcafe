@@ -392,7 +392,7 @@ export const PaymentPage: React.FC = () => {
             : order.checkoutDetails.address,
           country: order.checkoutDetails.country || 'OM',
           city: order.checkoutDetails.city || 'Muscat',
-          postalCode: '100', // Default postal code for Oman
+          postalCode: order.checkoutDetails.postalCode || '100',
           
           // Shipping Details (NEW API FORMAT)
           shippingMethod: shippingMethodId as 1 | 2 | 3,

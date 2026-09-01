@@ -104,7 +104,8 @@ export function computeShippingMethods(opts: {
 export async function calculateAramexShippingRate(
   countryIso2: string,
   city: string,
-  weight: number
+  weight: number,
+  postalCode?: string
 ): Promise<{ success: boolean; price?: number; error?: string }> {
   try {
     const isOman = countryIso2 === 'OM';
@@ -125,7 +126,7 @@ export async function calculateAramexShippingRate(
         line1: 'Customer Address',
         city: city,
         countryCode: countryIso2,
-        postCode: '00000',
+        postCode: postalCode?.trim() || '00000',
       },
       shipmentDetails: {
         actualWeight: { unit: 'KG', value: chargeableWeight },

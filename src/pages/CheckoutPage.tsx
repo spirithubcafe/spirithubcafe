@@ -186,6 +186,7 @@ const checkoutSchema = z
     country: z.string().min(2, 'Country is required'),
     city: z.string().min(2, 'City is required'),
     address: z.string().min(4, 'Address is required'),
+    postalCode: z.string().optional(),
     notes: z.string().optional(),
     shippingMethod: z.string(),
     isGift: z.boolean(),
@@ -194,8 +195,19 @@ const checkoutSchema = z
     recipientCountry: z.string().optional(),
     recipientCity: z.string().optional(),
     recipientAddress: z.string().optional(),
+    recipientPostalCode: z.string().optional(),
   })
   .superRefine((data, ctx) => {
+    // Aramex validates postal codes for non-GCC destinations, so require one
+    // whenever the delivery country is outside the GCC.
+    if (!data.isGift && !GCC_COUNTRY_SET.has(data.country) && !data.postalCode?.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['postalCode'],
+        message: 'Postal/ZIP code is required for this country',
+      });
+    }
+
     if (!data.isGift) return;
 
     const requiredGiftFields = [
@@ -216,6 +228,14 @@ const checkoutSchema = z
         });
       }
     });
+
+    if (data.recipientCountry && !GCC_COUNTRY_SET.has(data.recipientCountry) && !data.recipientPostalCode?.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['recipientPostalCode'],
+        message: 'Postal/ZIP code is required for this country',
+      });
+    }
   });
 
 type CheckoutFormValues = z.infer<typeof checkoutSchema>;
@@ -254,6 +274,7 @@ export const CheckoutPage: React.FC = () => {
       country: 'OM', // store ISO2 code
       city: '', // store city name (from Aramex cities API)
       address: '',
+      postalCode: '',
       notes: '',
       shippingMethod: 'pickup',
       isGift: false,
@@ -262,13 +283,16 @@ export const CheckoutPage: React.FC = () => {
       recipientCountry: 'OM',
       recipientCity: '', // store city name (from Aramex cities API)
       recipientAddress: '',
+      recipientPostalCode: '',
     },
   });
 
   const watchCountry = form.watch('country');
   const watchCity = form.watch('city');
+  const watchPostalCode = form.watch('postalCode');
   const watchRecipientCountry = form.watch('recipientCountry');
   const watchRecipientCity = form.watch('recipientCity');
+  const watchRecipientPostalCode = form.watch('recipientPostalCode');
   const watchedShipping = form.watch('shippingMethod');
   const watchIsGift = form.watch('isGift');
 
@@ -278,6 +302,8 @@ export const CheckoutPage: React.FC = () => {
   // Use recipient's country/city for shipping if it's a gift, otherwise use customer's
   const effectiveCountry = watchIsGift ? watchRecipientCountry : watchCountry;
   const effectiveCity = watchIsGift ? watchRecipientCity : watchCity;
+  const effectivePostalCode = watchIsGift ? watchRecipientPostalCode : watchPostalCode;
+  const isEffectiveCountryGcc = GCC_COUNTRY_SET.has(effectiveCountry || '');
 
   // State for dynamic Aramex rate calculation
   const [aramexRate, setAramexRate] = useState<number | null>(null);
@@ -465,7 +491,8 @@ export const CheckoutPage: React.FC = () => {
         const result = await calculateAramexShippingRate(
           effectiveCountry,
           effectiveCity,
-          totalWeight
+          totalWeight,
+          effectivePostalCode
         );
 
         if (result.success && result.price) {
@@ -500,7 +527,7 @@ export const CheckoutPage: React.FC = () => {
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [effectiveCountry, effectiveCity, items]);
+  }, [effectiveCountry, effectiveCity, effectivePostalCode, items]);
 
   const shippingMethods = React.useMemo(() => {
     const methods = computeShippingMethods({
@@ -883,6 +910,7 @@ export const CheckoutPage: React.FC = () => {
         country: values.country,
         city: values.city,
         address: values.address,
+        postalCode: values.postalCode,
         notes: values.notes,
         isGift: values.isGift,
         recipientName: values.recipientName,
@@ -890,6 +918,7 @@ export const CheckoutPage: React.FC = () => {
         recipientCountry: values.recipientCountry,
         recipientCity: values.recipientCity,
         recipientAddress: values.recipientAddress,
+        recipientPostalCode: values.recipientPostalCode,
       },
     };
 
@@ -1157,6 +1186,29 @@ export const CheckoutPage: React.FC = () => {
                         )}
                       />
                     </div>
+
+                    {!isEffectiveCountryGcc && !watchIsGift && (
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <FormField
+                          control={form.control}
+                          name="postalCode"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>
+                                {isArabic ? 'الرمز البريدي' : 'Postal / ZIP Code'}
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  placeholder={isArabic ? 'الرمز البريدي' : 'Postal/ZIP code'}
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
 
@@ -1356,6 +1408,28 @@ export const CheckoutPage: React.FC = () => {
                             )}
                           />
                         </div>
+                        {!GCC_COUNTRY_SET.has(watchRecipientCountryCode) && (
+                          <div className="grid gap-4 md:grid-cols-2">
+                            <FormField
+                              control={form.control}
+                              name="recipientPostalCode"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>
+                                    {isArabic ? 'الرمز البريدي للمستلم' : 'Recipient Postal / ZIP Code'}
+                                  </FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      placeholder={isArabic ? 'الرمز البريدي' : 'Postal/ZIP code'}
+                                      {...field}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+                        )}
                       </motion.div>
                     )}
 
