@@ -340,7 +340,7 @@ export const OrdersManagement: React.FC = () => {
 
     const normalized = raw
       .toLowerCase()
-      .replace(/[()\[\]\-_,.]/g, ' ')
+      .replace(/[()[\]_,.-]/g, ' ')
       .replace(/\s+/g, ' ')
       .trim();
 
@@ -361,7 +361,7 @@ export const OrdersManagement: React.FC = () => {
 
     const normalized = raw
       .toLowerCase()
-      .replace(/[()\[\]\-_,.]/g, ' ')
+      .replace(/[()[\]_,.-]/g, ' ')
       .replace(/\s+/g, ' ')
       .trim();
 
@@ -2728,7 +2728,7 @@ export const OrdersManagement: React.FC = () => {
                     onFocus={() => {
                       const el = fromDateNativeInputRef.current as any;
                       if (el && typeof el.showPicker === 'function') {
-                        try { el.showPicker(); } catch {}
+                        try { el.showPicker(); } catch { /* Unsupported by this browser. */ }
                       }
                     }}
                     className="absolute inset-0 z-20 opacity-0 cursor-pointer"
@@ -2758,7 +2758,7 @@ export const OrdersManagement: React.FC = () => {
                     onFocus={() => {
                       const el = toDateNativeInputRef.current as any;
                       if (el && typeof el.showPicker === 'function') {
-                        try { el.showPicker(); } catch {}
+                        try { el.showPicker(); } catch { /* Unsupported by this browser. */ }
                       }
                     }}
                     className="absolute inset-0 z-20 opacity-0 cursor-pointer"

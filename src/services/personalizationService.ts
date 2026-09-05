@@ -329,7 +329,9 @@ const hydrateChatProductImages = async (products: ChatProduct[]): Promise<ChatPr
 
 const normalizeBundle = (bundle: AIBundleResponse): AIBundleResponse => ({
   ...bundle,
-  products: (bundle.products ?? []).map((product) => ({
+  products: (bundle.products ?? []).filter((product, index, all) =>
+    all.findIndex((candidate) => candidate.productId === product.productId) === index
+  ).map((product) => ({
     ...product,
     image: toAbsoluteImageUrl(product.image) ?? product.image,
   })),
@@ -616,9 +618,6 @@ export const personalizationService = {
   },
 
   createBundle: async (params: { customerId?: number | null; language: string; country: string; message: string }): Promise<AIBundleResponse> => {
-    if (!PERSONALIZATION_API_ENABLED) {
-      throw new Error('PERSONALIZATION_API_DISABLED');
-    }
     const response = await publicHttp.post('/api/ai-bundle-builder/create', {
       customerId: params.customerId ?? undefined,
       sessionId: getSessionId(),
@@ -630,9 +629,6 @@ export const personalizationService = {
   },
 
   refineBundle: async (bundleId: string, message: string, language: string): Promise<AIBundleResponse> => {
-    if (!PERSONALIZATION_API_ENABLED) {
-      throw new Error('PERSONALIZATION_API_DISABLED');
-    }
     const response = await publicHttp.post('/api/ai-bundle-builder/refine', {
       bundleId,
       message,
@@ -642,9 +638,6 @@ export const personalizationService = {
   },
 
   addBundleToCart: async (bundleId: string): Promise<CartReadyItem[]> => {
-    if (!PERSONALIZATION_API_ENABLED) {
-      throw new Error('PERSONALIZATION_API_DISABLED');
-    }
     const response = await publicHttp.post('/api/ai-bundle-builder/add-to-cart', {
       bundleId,
       giftWrap: false,

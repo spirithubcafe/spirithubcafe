@@ -9,6 +9,7 @@ import type { ChatMessage as ChatMessageType } from '../../services/geminiChatSe
 import { type AIBundleProduct, type AIBundleResponse, type CoffeeQuizOption, type SmartReorderSuggestion } from '../../services/personalizationService';
 import { chatbotIntentService } from '../../services/chatbotIntentService';
 import type { CoffeePassportProfile } from '../../services/coffeePassportService';
+import { dedupeProductsById, formatBundleTotal } from '../../lib/chatbotProductResults';
 
 interface ChatMessageProps {
   message: ChatMessageType;
@@ -139,7 +140,8 @@ export const ChatMessageComponent: React.FC<ChatMessageProps> = ({
 }) => {
   const isUser = message.role === 'user';
   const isAr = language === 'ar';
-  const hasProducts = !!message.products?.length;
+  const uniqueProducts = dedupeProductsById(message.products ?? []);
+  const hasProducts = uniqueProducts.length > 0;
   const displayText = getDisplayText(message.text, hasProducts, isAr);
   const quizQuestionText = message.quizQuestion ? (isAr ? message.quizQuestion.textAr : message.quizQuestion.textEn) : '';
   const shouldShowTextBubble = displayText.trim().length > 0 && displayText.trim() !== quizQuestionText.trim();
@@ -182,7 +184,7 @@ export const ChatMessageComponent: React.FC<ChatMessageProps> = ({
           {/* Product cards */}
           {hasProducts && (
             <div className="mt-1 flex flex-col gap-2.5">
-              {message.products?.map((product) => (
+              {uniqueProducts.map((product) => (
                 <ProductCard
                   key={product.id}
                   product={product}
@@ -287,7 +289,7 @@ const OpeningActionsCard = ({
           key={action.key}
           type="button"
           onClick={() => onAction?.(action.intent)}
-          className={`min-h-9 rounded-xl px-2.5 py-2 text-[12px] font-bold transition-colors ${
+          className={`min-h-9 rounded-xl px-2.5 py-2 text-[12px] font-bold transition-colors ${action.primary ? 'col-span-2 ' : ''}${
             action.primary
               ? 'bg-[#5f9b54] text-white hover:bg-[#528948]'
               : 'border border-[#f2ddd8] bg-[#fffaf7] text-[#8e4e47] hover:bg-[#fff1ed]'
@@ -319,7 +321,13 @@ const BundleCard = ({
   const title = isAr ? bundle.titleAr || bundle.titleEn : bundle.titleEn;
   const summary = isAr ? bundle.summaryAr || bundle.summaryEn : bundle.summaryEn;
   const actions = (isAr ? bundle.quickActionsAr : bundle.quickActions) ?? [];
-  const refinementActions = actions.filter((action) => !/cart|السلة|أضف/i.test(action)).slice(0, 3);
+  const defaultRefinements = isAr
+    ? ['أقل من 20 ر.ع', 'أقل من 30 ر.ع', 'اجعلها أقل سعراً', 'اجعلها أكثر فخامة']
+    : ['Under 20 OMR', 'Under 30 OMR', 'Make it cheaper', 'Make it more premium'];
+  const refinementActions = [...new Set([
+    ...defaultRefinements,
+    ...actions.filter((action) => !/cart|السلة|أضف/i.test(action)),
+  ])].slice(0, 4);
   const region = regionPrefix.startsWith('/sa') ? 'sa' : 'om';
 
   const getBundleProductUrl = (product: AIBundleProduct) => {
@@ -415,9 +423,8 @@ const BundleCard = ({
       </div>
 
       <div className="border-t border-[#f4e6e1] bg-[#fffaf7]/75 px-3 py-2">
-        <div className={`mb-1.5 flex items-center justify-between gap-3 px-0.5 text-[13px] ${isAr ? 'flex-row-reverse' : ''}`}>
-          <span className="font-extrabold text-stone-500">{isAr ? 'الإجمالي' : 'Total'}</span>
-          <span className="shrink-0 font-extrabold text-[#8e4e47]">{bundle.totalPrice}</span>
+        <div className={`mb-1.5 flex items-center justify-end gap-3 px-0.5 text-[13px] ${isAr ? 'flex-row-reverse' : ''}`}>
+          <span className="shrink-0 font-extrabold text-[#8e4e47]">{formatBundleTotal(bundle.totalPrice, region)}</span>
         </div>
         <button
           type="button"
@@ -428,7 +435,7 @@ const BundleCard = ({
           {isAr ? 'أضف الباقة إلى السلة' : 'Add Bundle to Cart'}
         </button>
         {refinementActions.length > 0 && (
-          <div className="mt-1.5 grid grid-cols-3 gap-1.5">
+          <div className="mt-1.5 grid grid-cols-2 gap-1.5">
             {refinementActions.map((action) => (
               <button
                 key={action}

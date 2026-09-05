@@ -63,7 +63,7 @@ export const LoyaltySignupPage: React.FC = () => {
     if (!formData.phone.trim()) {
       newErrors.phone = isArabic ? 'رقم الموبايل مطلوب' : 'Mobile number is required';
     } else {
-      const digits = formData.phone.replace(/[\s\-]/g, '');
+      const digits = formData.phone.replace(/[\s-]/g, '');
       if (!/^[0-9]+$/.test(digits) || digits.length < 7 || digits.length > selectedCountry.maxDigits) {
         newErrors.phone = isArabic ? 'رقم الموبايل غير صالح' : 'Invalid mobile number';
       }

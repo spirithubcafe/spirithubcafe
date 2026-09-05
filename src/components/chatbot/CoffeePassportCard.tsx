@@ -33,17 +33,17 @@ export const CoffeePassportCard: React.FC<CoffeePassportCardProps> = ({
 
   return (
     <motion.div
-      className="w-full mb-4"
+      className="mb-2 min-w-0 w-full max-w-full overflow-hidden sm:mb-4"
       variants={containerVariants}
       initial="hidden"
       animate="visible"
     >
       {/* Main Passport Card */}
       <motion.div
-        className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950 dark:to-orange-950 rounded-lg border border-amber-200 dark:border-amber-800 p-4 shadow-md"
+        className="max-w-full overflow-hidden bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950 dark:to-orange-950 rounded-lg border border-amber-200 dark:border-amber-800 p-3 sm:p-4 shadow-md"
         variants={itemVariants}
       >
-        <div className="space-y-3">
+        <div className="space-y-2.5 sm:space-y-3">
           {/* Header */}
           <div className="flex items-center justify-between gap-2">
             <h3 className="text-lg font-bold text-amber-900 dark:text-amber-100">
@@ -55,7 +55,7 @@ export const CoffeePassportCard: React.FC<CoffeePassportCardProps> = ({
           </div>
 
           {/* Stats Grid */}
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             {/* Countries Explored */}
             <motion.div
               className="bg-white dark:bg-gray-800 rounded-md p-2.5 text-center border border-amber-100 dark:border-amber-900 hover:shadow-md transition-shadow flex flex-col items-center justify-center min-h-20"
@@ -96,8 +96,8 @@ export const CoffeePassportCard: React.FC<CoffeePassportCardProps> = ({
               <p className="text-xl font-bold text-gray-900 dark:text-white leading-none">
                 {profile.achievements.length}
               </p>
-              <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
-                {isArabic ? 'الإنجازات' : 'Achieve.'}
+              <p className="mt-0.5 break-words text-[10px] leading-tight text-gray-600 dark:text-gray-400 sm:text-xs">
+                {isArabic ? 'الإنجازات' : 'Achievements'}
               </p>
             </motion.div>
 
@@ -124,7 +124,7 @@ export const CoffeePassportCard: React.FC<CoffeePassportCardProps> = ({
               variants={itemVariants}
             >
               <div className="flex items-center justify-between gap-2 mb-2">
-                <p className="text-sm font-semibold text-gray-900 dark:text-white line-clamp-1">
+                <p className="min-w-0 break-words text-sm font-semibold text-gray-900 dark:text-white">
                   {isArabic
                     ? profile.nextMilestone.titleAr
                     : profile.nextMilestone.titleEn}

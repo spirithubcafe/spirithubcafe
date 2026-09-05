@@ -31,7 +31,7 @@ export const AboutPage: React.FC = () => {
                 ? 'SpiritHub Roastery in Khobar, Saudi Arabia – Q Grader certified specialty coffee experts. Fresh-roasted beans, capsules, and brewing equipment with fast delivery across Saudi Arabia.'
                 : 'SpiritHub Roastery in Muscat, Oman – Q Grader certified specialty coffee experts. Fresh-roasted beans, capsules, and brewing equipment with fast delivery across Oman.',
           },
-    [language, regionLabel]
+    [currentRegion.code, language, regionLabel]
   );
 
   const structuredData = useMemo(

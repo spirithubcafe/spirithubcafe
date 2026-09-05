@@ -511,23 +511,16 @@ pre {
 /* Mobile-specific chatbot adjustments */
 @media (max-width: 640px) {
   .chatbot-panel {
-    width: var(--chatbot-viewport-width, 100vw) !important;
-    height: var(--chatbot-viewport-height, 100dvh) !important;
-    max-width: none !important;
-    max-height: none !important;
-    top: var(--chatbot-viewport-offset-top, 0px) !important;
-    bottom: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    border-radius: 0 !important;
-    border-left-width: 0;
-    border-right-width: 0;
-
-    /* Handle safe areas */
-    padding-top: max(0px, env(safe-area-inset-top));
-    padding-bottom: max(0px, env(safe-area-inset-bottom));
-    padding-left: max(0px, env(safe-area-inset-left));
-    padding-right: max(0px, env(safe-area-inset-right));
+    width: calc(var(--chatbot-viewport-width, 100vw) - max(8px, env(safe-area-inset-left)) - max(8px, env(safe-area-inset-right))) !important;
+    height: calc(var(--chatbot-viewport-height, 100dvh) - max(8px, env(safe-area-inset-top)) - max(8px, env(safe-area-inset-bottom))) !important;
+    max-width: calc(100vw - 16px) !important;
+    max-height: calc(100dvh - 16px) !important;
+    top: calc(var(--chatbot-viewport-offset-top, 0px) + max(8px, env(safe-area-inset-top))) !important;
+    bottom: auto !important;
+    left: max(8px, env(safe-area-inset-left)) !important;
+    right: max(8px, env(safe-area-inset-right)) !important;
+    border-radius: 18px !important;
+    padding: 0;
   }
 
   /* Optimize header for mobile */
@@ -582,7 +575,7 @@ pre {
 /* Landscape mobile - adjust height */
 @media (max-width: 640px) and (orientation: landscape) {
   .chatbot-panel {
-    height: var(--chatbot-viewport-height, 100dvh) !important;
+    height: calc(var(--chatbot-viewport-height, 100dvh) - max(8px, env(safe-area-inset-top)) - max(8px, env(safe-area-inset-bottom))) !important;
   }
 }
 
@@ -667,9 +660,9 @@ pre {
 
 @media (max-width: 640px) {
   .chatbot-panel {
-    max-width: none;
-    max-height: none;
-    border-radius: 0;
+    max-width: calc(100vw - 16px);
+    max-height: calc(100dvh - 16px);
+    border-radius: 18px;
   }
 }
 

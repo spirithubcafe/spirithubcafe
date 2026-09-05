@@ -5,6 +5,7 @@ import type { ChatProduct } from '../../services/geminiChatService';
 import { formatPrice as formatRegionalPrice, type RegionCode } from '../../lib/regionUtils';
 import { useCart } from '../../hooks/useCart';
 import { chatbotIntentService } from '../../services/chatbotIntentService';
+import { getMeaningfulMatchLabel } from '../../lib/chatbotProductResults';
 
 interface ProductCardProps {
   product: ChatProduct;
@@ -149,7 +150,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, regionPrefix,
             )}
             {product.matchPercentage && product.matchPercentage > 0 && (
               <span className="inline-flex shrink-0 items-center rounded-full bg-[#eef7e9] px-2 py-1 text-[11px] font-extrabold text-[#5f9b54]">
-                {product.matchPercentage}% {isAr ? AR_LABELS.match : 'match'}
+                {getMeaningfulMatchLabel(product.matchPercentage, isAr)}
               </span>
             )}
             {product.rating && product.rating > 0 && (
@@ -163,6 +164,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, regionPrefix,
           {tastingNotes && (
             <p className="mt-1.5 line-clamp-1 text-[11px] font-medium leading-snug text-stone-500">
               {tastingNotes}
+            </p>
+          )}
+          {(isAr ? product.matchReasonAr || product.matchReason : product.matchReason) && (
+            <p className="mt-1.5 text-[11px] font-semibold leading-snug text-[#5f7f55]">
+              {isAr ? product.matchReasonAr || product.matchReason : product.matchReason}
             </p>
           )}
 

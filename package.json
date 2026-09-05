@@ -9,6 +9,7 @@
     "build": "tsc -b && vite build && vite build --ssr src/entry-server.tsx --outDir dist/server",
     "serve": "NODE_ENV=production node server.js",
     "lint": "eslint .",
+    "test:chatbot": "node --experimental-strip-types --test src/services/chatbotAssistantResolver.test.ts src/lib/chatbotProductResults.test.ts",
     "preview": "vite preview"
   },
   "dependencies": {

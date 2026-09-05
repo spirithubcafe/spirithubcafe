@@ -16,6 +16,7 @@ import type {
   CoffeeQuizStatus,
   SmartReorderSuggestion,
 } from './personalizationService';
+import { selectFruityFilterCoffees } from '../lib/chatbotProductResults';
 import type { CoffeePassportProfile } from './coffeePassportService';
 
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY as string;
@@ -41,6 +42,13 @@ export interface ChatProduct {
   rating?: number;
   reviewCount?: number;
   category?: string;
+  description?: string;
+  tags?: string[];
+  brewMethods?: string[];
+  isInStock?: boolean;
+  stockQuantity?: number;
+  matchReason?: string;
+  matchReasonAr?: string;
 }
 
 export interface ChatMessage {
@@ -170,7 +178,6 @@ function extractProducts(data: unknown): ChatProduct[] {
   const tryExtract = (arr: unknown[]): ChatProduct[] =>
     arr
       .filter((p): p is Record<string, unknown> => !!p && typeof p === 'object')
-      .slice(0, 4)
       .map((p) => {
         const minPrice = toNumber(p.minPrice);
         const maxPrice = toNumber(p.maxPrice);
@@ -189,6 +196,13 @@ function extractProducts(data: unknown): ChatProduct[] {
           rating: toNumber(p.averageRating) ?? toNumber(p.rating),
           reviewCount: toNumber(p.reviewCount),
           category: p.categoryName ? String(p.categoryName) : p.category ? String(p.category) : undefined,
+          description: p.description ? String(p.description) : undefined,
+          tags: Array.isArray(p.tags) ? p.tags.map(String) : undefined,
+          brewMethods: Array.isArray(p.brewMethods) ? p.brewMethods.map(String) : undefined,
+          isInStock: typeof p.isInStock === 'boolean' ? p.isInStock : typeof p.inStock === 'boolean' ? p.inStock : undefined,
+          stockQuantity: toNumber(p.stockQuantity) ?? toNumber(p.availableQuantity) ?? toNumber(p.quantityInStock),
+          tastingNotes: p.tastingNotes ? String(p.tastingNotes) : p.notes ? String(p.notes) : undefined,
+          tastingNotesAr: p.tastingNotesAr ? String(p.tastingNotesAr) : p.notesAr ? String(p.notesAr) : undefined,
         };
       })
       .filter((p) => p.id > 0 && p.name);
@@ -393,6 +407,7 @@ export async function getFallbackChatResponse(
   const bestPattern = /best|popular|top|\u0627\u0644\u0623\u0643\u062b\u0631|\u0645\u0628\u064a\u0639/i;
   const latestPattern = /new|latest|\u062c\u062f\u064a\u062f|\u0648\u0635\u0644/i;
   const fruityPattern = /fruity|fruit|berry|citrus|\u0641\u0627\u0643\u0647|\u0641\u0648\u0627\u0643\u0647|\u062d\u0645\u0636|\u062a\u0648\u062a/i;
+  const filterPattern = /v\s*60|filter|pour[ -]?over|\u0641\u0644\u062a\u0631|\u062a\u0631\u0634\u064a\u062d/i;
   const greetingPattern = /^(hi|hello|hey|thanks?|thank you|\u0645\u0631\u062d\u0628\u0627|\u0627\u0647\u0644\u0627|\u0623\u0647\u0644\u0627|\u0634\u0643\u0631\u0627)$/i;
 
   let products: ChatProduct[] = [];
@@ -448,7 +463,10 @@ export async function getFallbackChatResponse(
     products = (await executeTool('get_featured_products', { count: 6 })).products;
   }
 
-  const uniqueProducts = products.filter(
+  const matchingProducts = fruityPattern.test(query) && filterPattern.test(query)
+    ? selectFruityFilterCoffees(products)
+    : products;
+  const uniqueProducts = matchingProducts.filter(
     (product, index, arr) => arr.findIndex((item) => item.id === product.id) === index
   ).slice(0, 4);
 
@@ -466,7 +484,9 @@ export async function getFallbackChatResponse(
   return {
     text: isAr
       ? '\u0625\u0644\u064a\u0643 \u0628\u0639\u0636 \u0627\u0644\u0627\u0642\u062a\u0631\u0627\u062d\u0627\u062a \u0627\u0644\u0645\u0646\u0627\u0633\u0628\u0629:'
-      : 'Here are some suitable suggestions:',
+      : fruityPattern.test(query) && filterPattern.test(query)
+        ? 'These in-stock coffees have fruity tasting notes and suit V60/filter brewing:'
+        : 'Here are some suitable suggestions:',
     products: uniqueProducts,
   };
 }

@@ -18,8 +18,10 @@ import {
 } from '../../services/personalizationService';
 import { coffeePassportService, type CoffeePassportProfile } from '../../services/coffeePassportService';
 import { chatbotIntentService } from '../../services/chatbotIntentService';
+import { chatbotAssistantService } from '../../services/chatbotAssistantService';
 import { ChatMessageComponent } from './ChatMessage';
 import { TypingIndicator } from './TypingIndicator';
+import { cleanCustomerEmail } from '../../lib/chatbotProductResults';
 
 const session = new GeminiChatSession();
 const RATE_LIMIT_COOLDOWN_MS = 60_000;
@@ -46,8 +48,8 @@ const CHATBOT_TEXT = {
     en: 'The assistant is busy right now. Please try again in a moment.',
   },
   keyMissing: {
-    ar: '\u064a\u0631\u062c\u0649 \u0625\u0636\u0627\u0641\u0629 \u0645\u0641\u062a\u0627\u062d Gemini API \u0641\u064a \u0645\u0644\u0641 .env.',
-    en: 'Please add your Gemini API key in .env.',
+    ar: '\u0639\u0630\u0631\u0627\u064b\u060c \u0644\u0627 \u064a\u0645\u0643\u0646\u0646\u064a \u0627\u0644\u0631\u062f \u0639\u0644\u0649 \u0647\u0630\u0627 \u0627\u0644\u0633\u0624\u0627\u0644 \u0627\u0644\u0622\u0646. \u064a\u0645\u0643\u0646\u0646\u064a \u0645\u0633\u0627\u0639\u062f\u062a\u0643 \u0641\u064a \u0627\u062e\u062a\u064a\u0627\u0631 \u0627\u0644\u0642\u0647\u0648\u0629\u060c \u0628\u0646\u0627\u0621 \u0628\u0627\u0642\u0629\u060c \u0623\u0648 \u0627\u0644\u062a\u0648\u0627\u0635\u0644 \u0645\u0639 \u0627\u0644\u062f\u0639\u0645.',
+    en: 'Sorry, I cannot answer that question right now. I can still help you choose coffee, build a bundle, or contact support.',
   },
   genericError: {
     ar: '\u0639\u0630\u0631\u0627\u060c \u062d\u062f\u062b \u062e\u0637\u0623. \u062d\u0627\u0648\u0644 \u0645\u062c\u062f\u062f\u0627.',
@@ -88,7 +90,7 @@ const CHATBOT_TEXT = {
 };
 
 const UNKNOWN_COFFEE_PATTERN = /don't know what coffee to choose|do not know what coffee to choose|not sure what coffee|help me choose coffee|which coffee should i choose|\u0645\u0627\s*\u0623\u0639\u0631\u0641.*\u0623\u062e\u062a\u0627\u0631.*\u0642\u0647\u0648\u0629|\u0645\u0634\s*\u0639\u0627\u0631\u0641.*\u0623\u062e\u062a\u0627\u0631.*\u0642\u0647\u0648\u0629|\u0645\u0627\s*\u0627\u062f\u0631\u064a.*\u0623\u062e\u062a\u0627\u0631.*\u0642\u0647\u0648\u0629|\u0623\u064a\s*\u0642\u0647\u0648\u0629.*\u0623\u062e\u062a\u0627\u0631/i;
-const BUNDLE_PATTERN = /bundle|gift|filter|espresso|capsules?|wholesale bundle|\u0628\u0627\u0642\u0629|\u0628\u0627\u0642\u0627\u062a|\u0647\u062f\u064a\u0629|\u0647\u062f\u0627\u064a\u0627|\u0641\u0644\u062a\u0631|\u0625\u0633\u0628\u0631\u064a\u0633\u0648|\u0627\u0633\u0628\u0631\u064a\u0633\u0648|\u0643\u0628\u0633\u0648\u0644\u0627\u062a|\u062c\u0645\u0644\u0629/i;
+const BUNDLE_PATTERN = /bundle|gift box|build (?:me )?(?:a )?(?:box|gift)|wholesale bundle|\u0628\u0627\u0642\u0629|\u0628\u0627\u0642\u0627\u062a|\u0628\u0648\u0643\u0633|\u0635\u0646\u062f\u0648\u0642 \u0647\u062f\u064a\u0629/i;
 const GIFT_PATTERN = /gift|\u0647\u062f\u064a\u0629|\u0647\u062f\u0627\u064a\u0627/i;
 const WHOLESALE_PATTERN = /wholesale|\u062c\u0645\u0644\u0629|\u062a\u0648\u0631\u064a\u062f/i;
 const LOCAL_QUIZ_SESSION_ID = -1;
@@ -209,6 +211,7 @@ const buildContactMessage = (regionCode: keyof typeof REGION_INFO, isAr: boolean
   const address = isAr ? contact.address.ar : contact.address.en;
   const workingHours = isAr ? contact.workingHours.ar : contact.workingHours.en;
   const wholesaleLabel = contact.phone3Label?.[isAr ? 'ar' : 'en'] ?? (isAr ? '\u0628\u064a\u0639 \u0628\u0627\u0644\u062c\u0645\u0644\u0629' : 'Wholesale');
+  const email = cleanCustomerEmail(contact.email);
 
   return isAr
     ? [
@@ -218,7 +221,7 @@ const buildContactMessage = (regionCode: keyof typeof REGION_INFO, isAr: boolean
         contact.phone2 ? `- **\u0631\u0642\u0645 \u0625\u0636\u0627\u0641\u064a:** ${contact.phone2}` : '',
         contact.phone3 ? `- **${wholesaleLabel}:** ${contact.phone3}` : '',
         `- **\u0648\u0627\u062a\u0633\u0627\u0628:** +${contact.whatsapp}`,
-        `- **\u0627\u0644\u0628\u0631\u064a\u062f:** ${contact.email}`,
+        `- **\u0627\u0644\u0628\u0631\u064a\u062f:** ${email}`,
         `- **\u0627\u0644\u0645\u0648\u0642\u0639:** ${address}`,
         `- **\u0627\u0644\u0639\u0645\u0644:** ${workingHours}`,
         `- **\u0627\u0644\u062e\u0631\u064a\u0637\u0629:** ${contact.googleMapsUrl}`,
@@ -230,7 +233,7 @@ const buildContactMessage = (regionCode: keyof typeof REGION_INFO, isAr: boolean
         contact.phone2 ? `- **Second phone:** ${contact.phone2}` : '',
         contact.phone3 ? `- **${wholesaleLabel}:** ${contact.phone3}` : '',
         `- **WhatsApp:** +${contact.whatsapp}`,
-        `- **Email:** ${contact.email}`,
+        `- **Email:** ${email}`,
         `- **Location:** ${address}`,
         `- **Working hours:** ${workingHours}`,
         `- **Google Maps:** ${contact.googleMapsUrl}`,
@@ -729,14 +732,6 @@ export const ChatBot: React.FC = () => {
   const createBundle = useCallback(async (messageText: string) => {
     setIsLoading(true);
     try {
-      if (!personalizationService.isEnabled()) {
-        const usedFallback = await appendFallbackResponse(messageText);
-        if (!usedFallback) {
-          setMessages((prev) => [...prev, { role: 'model', text: localizedText('genericError'), timestamp: new Date() }]);
-        }
-        return;
-      }
-
       const bundle = await personalizationService.createBundle({
         customerId: isAuthenticated ? user?.id : undefined,
         language,
@@ -752,7 +747,7 @@ export const ChatBot: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [appendFallbackResponse, currentRegion.code, isAuthenticated, language, localizedText, user]);
+  }, [currentRegion.code, isAuthenticated, language, localizedText, user]);
 
   const handleBundleRefine = useCallback(async (bundle: AIBundleResponse, action: string) => {
     setMessages((prev) => [...prev, { role: 'user', text: action, timestamp: new Date() }]);
@@ -865,6 +860,103 @@ export const ChatBot: React.FC = () => {
       setMessages((prev) => [...prev, { role: 'user', text: messageText, timestamp: new Date() }]);
       await createBundle(toBundlePrompt(messageText));
       return;
+    }
+
+    const routed = await chatbotAssistantService.resolve(messageText, language);
+    if (routed && routed.intent !== 'unknown' && routed.confidence >= 0.72) {
+      setInput('');
+      setMessages((prev) => [...prev, { role: 'user', text: messageText, timestamp: new Date() }]);
+
+      const routedText = isAr ? routed.replyAr : routed.replyEn;
+      const routedActions = routed.quickActions.map((action) => ({
+        key: `assistant-${action.id}`,
+        label: isAr ? action.labelAr : action.labelEn,
+        intent: `__assistant_${action.id}__`,
+      }));
+
+      if (routed.requiresAuthentication && !isAuthenticated) {
+        setMessages((prev) => [...prev, {
+          role: 'model',
+          text: `${routedText}\n\n${isAr ? 'يرجى تسجيل الدخول للمتابعة.' : 'Please sign in to continue.'}`,
+          openingActions: [{
+            key: 'assistant-sign-in',
+            label: isAr ? 'تسجيل الدخول' : 'Sign in',
+            intent: '__assistant_sign_in__',
+            primary: true,
+          }, ...routedActions.filter((action) => action.intent === '__assistant_contact_support__')],
+          timestamp: new Date(),
+        }]);
+        return;
+      }
+
+      if (routed.action === 'start_quiz') {
+        await startQuiz();
+        return;
+      }
+      if (routed.action === 'build_bundle') {
+        await createBundle(toBundlePrompt(messageText));
+        return;
+      }
+      if (routed.action === 'contact_support') {
+        setMessages((prev) => [...prev, { role: 'model', text: buildContactMessage(currentRegion.code, isAr), timestamp: new Date() }]);
+        return;
+      }
+      if (routed.action === 'show_passport') {
+        setIsLoading(true);
+        try {
+          const passport = await coffeePassportService.getProfile();
+          setMessages((prev) => [...prev, {
+            role: 'model', text: routedText, coffeePassportCard: passport ?? undefined,
+            openingActions: routedActions, timestamp: new Date(),
+          }]);
+        } finally {
+          setIsLoading(false);
+        }
+        return;
+      }
+      if (routed.action === 'show_reorders') {
+        setIsLoading(true);
+        try {
+          const result = await personalizationService.getSmartReorderSuggestions({
+            customerId: user?.id,
+            language,
+            country: currentRegion.code,
+          });
+          const suggestion = result?.suggestions?.[0];
+          setMessages((prev) => [...prev, {
+            role: 'model', text: suggestion ? routedText : (isAr ? 'لا توجد طلبات معتادة جاهزة لإعادة الطلب الآن.' : 'None of your usual coffees need reordering right now.'),
+            reorderSuggestion: suggestion,
+            openingActions: suggestion ? undefined : [
+              { key: 'reorder-orders', label: isAr ? 'تصفح الطلبات السابقة' : 'Browse previous orders', intent: '__assistant_view_orders__', primary: true },
+              { key: 'reorder-best', label: isAr ? 'تسوق الأكثر مبيعاً' : 'Shop best sellers', intent: '__assistant_best_sellers__' },
+            ],
+            timestamp: new Date(),
+          }]);
+        } finally {
+          setIsLoading(false);
+        }
+        return;
+      }
+      if (routed.action === 'track_order') {
+        setMessages((prev) => [...prev, {
+          role: 'model',
+          text: isAr
+            ? 'اختر طلباً بأمان من صفحة طلباتك لعرض حالته ومعلومات التوصيل.'
+            : 'Choose an order securely from My Orders to view its status and delivery details.',
+          openingActions: [{ key: 'assistant-orders', label: isAr ? 'عرض طلباتي' : 'View my orders', intent: '__assistant_view_orders__', primary: true }],
+          timestamp: new Date(),
+        }]);
+        return;
+      }
+      if (routed.action === 'recommend_products') {
+        setIsLoading(true);
+        const usedFallback = await appendFallbackResponse(messageText);
+        if (!usedFallback) {
+          setMessages((prev) => [...prev, { role: 'model', text: routedText, openingActions: routedActions, timestamp: new Date() }]);
+        }
+        setIsLoading(false);
+        return;
+      }
     }
 
     const resolvedIntent = await chatbotIntentService.resolve(messageText, language);
@@ -1084,6 +1176,51 @@ export const ChatBot: React.FC = () => {
       await createBundle(backendPrompt);
     };
 
+    if (intent === '__assistant_sign_in__') {
+      window.location.href = `${regionPrefix}/login?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`;
+      return;
+    }
+
+    if (intent === '__assistant_view_orders__' || intent === '__assistant_track_order__') {
+      window.location.href = `${regionPrefix}/my-account?tab=orders`;
+      return;
+    }
+
+    if (intent === '__assistant_best_sellers__') {
+      await handleSend(isAr ? 'الأكثر مبيعاً' : 'Best sellers');
+      return;
+    }
+
+    if (intent === '__assistant_view_passport__') {
+      window.location.href = `${regionPrefix}/my-account?tab=coffee-passport`;
+      return;
+    }
+
+    if (intent === '__assistant_contact_support__') {
+      handleSupportClick();
+      return;
+    }
+
+    if (intent === '__assistant_start_quiz__' || intent === '__assistant_find_coffee__') {
+      await startQuiz();
+      return;
+    }
+
+    if (intent === '__assistant_build_bundle__' || intent === '__assistant_set_budget__' || intent === '__assistant_gift_bundle__') {
+      await runBundleIntent(display.buildBundle, intent === '__assistant_gift_bundle__' ? 'Coffee gift bundle' : 'Build my bundle');
+      return;
+    }
+
+    if (intent === '__assistant_smart_reorder__') {
+      await handleSend(isAr ? 'أعد طلبي المعتاد' : 'Reorder my usual');
+      return;
+    }
+
+    if (intent === '__assistant_view_recommendations__') {
+      await handleSend(isAr ? 'اعرض ترشيحات القهوة' : 'Show coffee recommendations');
+      return;
+    }
+
     if (intent === '__start_quiz__') {
       await startQuiz();
       return;
@@ -1136,7 +1273,7 @@ export const ChatBot: React.FC = () => {
     }
 
     await handleSend(intent);
-  }, [continueQuiz, createBundle, handleSend, handleSupportClick, isAr, startQuiz]);
+  }, [continueQuiz, createBundle, handleSend, handleSupportClick, isAr, regionPrefix, startQuiz]);
 
   const suggestions = useMemo(() => (isAr ? QUICK_SUGGESTIONS.ar : QUICK_SUGGESTIONS.en), [isAr]);
   const showSuggestions = messages.length <= 1 && !isLoading;
@@ -1177,22 +1314,19 @@ export const ChatBot: React.FC = () => {
             transition={{ type: 'spring', damping: 28, stiffness: 320 }}
             className="chatbot-panel fixed z-50 flex flex-col overflow-hidden border border-[#f2ddd8] bg-[#fffaf7] shadow-2xl shadow-rose-950/15"
             style={{
-              bottom: isMinimized && !isMobileViewport ? '5.5rem' : isMobileViewport ? 0 : '5.5rem',
-              [isAr ? 'left' : 'right']: isMobileViewport ? 0 : '1rem',
-              [isAr ? 'right' : 'left']: isMobileViewport ? 0 : 'auto',
-              top: isMobileViewport && isOpen && !isMinimized ? 'var(--chatbot-viewport-offset-top, 0px)' : 'auto',
-              width: isMobileViewport ? 'var(--chatbot-viewport-width, 100vw)' : 'min(390px, calc(100vw - 1.25rem))',
+              bottom: isMinimized && !isMobileViewport ? '5.5rem' : 'auto',
+              [isAr ? 'left' : 'right']: isMobileViewport ? 'max(8px, env(safe-area-inset-left))' : '1rem',
+              [isAr ? 'right' : 'left']: isMobileViewport ? 'max(8px, env(safe-area-inset-right))' : 'auto',
+              top: isMobileViewport && isOpen && !isMinimized ? 'calc(var(--chatbot-viewport-offset-top, 0px) + max(8px, env(safe-area-inset-top)))' : 'auto',
+              width: isMobileViewport ? 'calc(var(--chatbot-viewport-width, 100vw) - max(8px, env(safe-area-inset-left)) - max(8px, env(safe-area-inset-right)))' : 'min(390px, calc(100vw - 1.25rem))',
               height: isMinimized
                 ? 68
                 : isMobileViewport
-                  ? 'var(--chatbot-viewport-height, 100dvh)'
+                  ? 'calc(var(--chatbot-viewport-height, 100dvh) - max(8px, env(safe-area-inset-top)) - max(8px, env(safe-area-inset-bottom)))'
                   : 'min(620px, calc(100dvh - 7rem))',
               transition: 'height 0.25s cubic-bezier(0.4,0,0.2,1)',
-              borderRadius: isMobileViewport ? '0px' : '1.6rem',
-              paddingTop: isMobileViewport ? 'max(0px, env(safe-area-inset-top))' : '0px',
-              paddingBottom: isMobileViewport ? 'max(0px, env(safe-area-inset-bottom))' : '0px',
-              paddingLeft: isMobileViewport ? 'max(0px, env(safe-area-inset-left))' : '0px',
-              paddingRight: isMobileViewport ? 'max(0px, env(safe-area-inset-right))' : '0px',
+              borderRadius: isMobileViewport ? '18px' : '1.6rem',
+              padding: '0px',
             }}
             dir="ltr"
           >
