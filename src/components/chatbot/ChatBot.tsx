@@ -1314,7 +1314,7 @@ export const ChatBot: React.FC = () => {
             transition={{ type: 'spring', damping: 28, stiffness: 320 }}
             className="chatbot-panel fixed z-50 flex flex-col overflow-hidden border border-[#f2ddd8] bg-[#fffaf7] shadow-2xl shadow-rose-950/15"
             style={{
-              bottom: isMinimized && !isMobileViewport ? '5.5rem' : 'auto',
+              bottom: !isMobileViewport ? (isMinimized ? '5.5rem' : '2rem') : 'auto',
               [isAr ? 'left' : 'right']: isMobileViewport ? 'max(8px, env(safe-area-inset-left))' : '1rem',
               [isAr ? 'right' : 'left']: isMobileViewport ? 'max(8px, env(safe-area-inset-right))' : 'auto',
               top: isMobileViewport && isOpen && !isMinimized ? 'calc(var(--chatbot-viewport-offset-top, 0px) + max(8px, env(safe-area-inset-top)))' : 'auto',
