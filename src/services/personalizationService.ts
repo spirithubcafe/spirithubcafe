@@ -7,6 +7,7 @@ import { resolveCurrentLocaleForApi } from '../lib/locale';
 import type { CartItem } from '../contexts/CartContextDefinition';
 import type { Product as ApiProduct, ProductVariant } from '../types/product';
 import type { ChatProduct } from './geminiChatService';
+import { getBundleBudget } from '../lib/chatbotProductResults';
 
 export type CustomerEventType =
   | 'product_view'
@@ -429,6 +430,28 @@ const hydrateBundleImages = async (bundle: AIBundleResponse): Promise<AIBundleRe
   return { ...normalized, products };
 };
 
+const enforceBundleBudget = (bundle: AIBundleResponse, refinement: string): AIBundleResponse => {
+  const budget = getBundleBudget(refinement);
+  if (budget === null) return bundle;
+
+  const priced = bundle.products
+    .map((product, index) => ({ product, index, price: product.priceValue ?? Number(product.price?.match(/\d+(?:\.\d+)?/)?.[0]) }))
+    .filter((entry): entry is { product: AIBundleProduct; index: number; price: number } => Number.isFinite(entry.price) && entry.price > 0)
+    .sort((a, b) => a.price - b.price);
+  const selected = new Set<number>();
+  let total = 0;
+  for (const entry of priced) {
+    if (total + entry.price <= budget) {
+      selected.add(entry.index);
+      total += entry.price;
+    }
+  }
+
+  const products = bundle.products.filter((_, index) => selected.has(index));
+  if (products.length === 0) return { ...bundle, products: [], totalPrice: '0' };
+  return { ...bundle, products, totalPrice: String(total) };
+};
+
 const headers = () => ({ 'X-Session-Id': getSessionId() });
 
 const getApiBaseUrl = (): string => {
@@ -634,7 +657,8 @@ export const personalizationService = {
       message,
       language,
     }, { headers: headers() });
-    return hydrateBundleImages(unwrap<AIBundleResponse>(response.data));
+    const hydrated = await hydrateBundleImages(unwrap<AIBundleResponse>(response.data));
+    return enforceBundleBudget(hydrated, message);
   },
 
   addBundleToCart: async (bundleId: string): Promise<CartReadyItem[]> => {

@@ -46,6 +46,28 @@ export const getMeaningfulMatchLabel = (percentage: number, isArabic: boolean): 
 
 export const cleanCustomerEmail = (email: string): string => email.replace(/^mailto:/i, '').replace(/\\/g, '').trim();
 
+export const getBundleBudget = (action: string): number | null => {
+  const isBudgetRequest = /under|less than|maximum|max total|budget|\u0623\u0642\u0644 \u0645\u0646|\u0627\u0644\u0645\u064a\u0632\u0627\u0646\u064a\u0629/i.test(action);
+  if (!isBudgetRequest) return null;
+
+  const amount = Number(action.match(/\d+(?:[.,]\d+)?/)?.[0]?.replace(',', '.'));
+  return Number.isFinite(amount) && amount > 0 ? amount : null;
+};
+
+export const getBundleRefinementPrompt = (action: string): string => {
+  const budget = getBundleBudget(action);
+  if (budget !== null) {
+    return `The maximum TOTAL price of the entire bundle is ${budget} OMR. Remove products until the combined total is at or below ${budget} OMR.`;
+  }
+  if (/\u0623\u0642\u0644 \u0633\u0639\u0631|\u0623\u0631\u062e\u0635|cheaper/i.test(action)) {
+    return 'Make the entire bundle cheaper. Replace or remove products and ensure the new combined total is lower than the current total.';
+  }
+  if (/\u0623\u0643\u062b\u0631 \u0641\u062e\u0627\u0645|\u0641\u0627\u062e\u0631|premium|luxur/i.test(action)) {
+    return 'Make the bundle more premium with higher-quality specialty coffee choices.';
+  }
+  return action;
+};
+
 export const formatBundleTotal = (value: string | number | undefined, region: 'om' | 'sa' = 'om'): string => {
   const amount = Number(String(value ?? '').replace(/,/g, '').match(/\d+(?:\.\d+)?/)?.[0]);
   const currency = region === 'sa' ? 'SAR' : 'OMR';

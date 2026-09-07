@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { cleanCustomerEmail, dedupeProductsById, formatBundleTotal, getMeaningfulMatchLabel, selectFruityFilterCoffees } from './chatbotProductResults.ts';
+import { cleanCustomerEmail, dedupeProductsById, formatBundleTotal, getBundleBudget, getBundleRefinementPrompt, getMeaningfulMatchLabel, selectFruityFilterCoffees } from './chatbotProductResults.ts';
+import { resolveCoffeeOrigin } from './chatbotOriginSearch.ts';
 
 test('fruity V60 results are stocked coffees only, deduplicated, and explained', () => {
   const results = selectFruityFilterCoffees([
@@ -32,4 +33,20 @@ test('customer email strips URI prefixes and stray backslashes', () => {
 test('bundle totals use explicit customer-facing currency formatting', () => {
   assert.equal(formatBundleTotal('OMR 42.5'), 'Total: 42.500 OMR');
   assert.equal(formatBundleTotal(42.5, 'sa'), 'Total: 42.50 SAR');
+});
+
+test('bundle budget refinements target the combined total in either language', () => {
+  assert.equal(getBundleBudget('Under 20 OMR'), 20);
+  assert.equal(getBundleBudget('\u0623\u0642\u0644 \u0645\u0646 30 \u0631.\u0639'), 30);
+  assert.equal(getBundleBudget('\u0627\u062c\u0639\u0644\u0647\u0627 \u0623\u0643\u062b\u0631 \u0641\u062e\u0627\u0645\u0629'), null);
+  assert.match(getBundleRefinementPrompt('\u0623\u0642\u0644 \u0645\u0646 20 \u0631.\u0639'), /maximum TOTAL.*20 OMR/i);
+});
+
+test('Arabic coffee origins tolerate common spelling mistakes', () => {
+  assert.equal(resolveCoffeeOrigin('\u0627\u062b\u064a\u0648\u0628\u064a\u0627'), 'Ethiopia');
+  assert.equal(resolveCoffeeOrigin('\u0643\u0644\u0648\u0645\u0628\u064a\u0627'), 'Colombia');
+  assert.equal(resolveCoffeeOrigin('\u0642\u0647\u0648\u0629 \u0645\u0646 \u0643\u0648\u0633\u062a\u0627\u0631\u064a\u0643\u0627'), 'Costa Rica');
+  assert.equal(resolveCoffeeOrigin('\u063a\u0648\u062a\u064a\u0645\u0627\u0644\u0627'), 'Guatemala');
+  assert.equal(resolveCoffeeOrigin('\u0628\u0631\u0627\u0632\u064a\u0644'), 'Brazil');
+  assert.equal(resolveCoffeeOrigin('\u0627\u0631\u064a\u062f \u0642\u0647\u0648\u0629 \u0641\u0644\u062a\u0631'), null);
 });

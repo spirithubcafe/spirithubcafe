@@ -64,7 +64,11 @@ function getDisplayText(text: string, hasProducts: boolean, isAr: boolean): stri
     .filter((line) => line && !/^[-*•]\s+/.test(line))
     .filter((line) => !/\b(from|to)\b.*(?:OMR|ر\.ع|\$)|(?:OMR|ر\.ع|\$).*\d/i.test(line));
 
-  return keptLines.join('\n').trim() || (isAr
+  const result = keptLines.join('\n').trim();
+  if (isAr && (!result || (/^[\x00-\x7F\s:.,!?'-]+$/.test(result) && /products?|suggestions?/i.test(result)))) {
+    return '\u0625\u0644\u064a\u0643 \u0628\u0639\u0636 \u0627\u0644\u0645\u0646\u062a\u062c\u0627\u062a \u0627\u0644\u0645\u0646\u0627\u0633\u0628\u0629:';
+  }
+  return result || (isAr
     ? '\u0625\u0644\u064a\u0643 \u0628\u0639\u0636 \u0627\u0644\u0645\u0646\u062a\u062c\u0627\u062a \u0627\u0644\u0645\u0646\u0627\u0633\u0628\u0629:'
     : 'Here are some products I found:');
 }
@@ -424,7 +428,7 @@ const BundleCard = ({
 
       <div className="border-t border-[#f4e6e1] bg-[#fffaf7]/75 px-3 py-2">
         <div className={`mb-1.5 flex items-center justify-end gap-3 px-0.5 text-[13px] ${isAr ? 'flex-row-reverse' : ''}`}>
-          <span className="shrink-0 font-extrabold text-[#8e4e47]">{formatBundleTotal(bundle.totalPrice, region)}</span>
+          <span className="shrink-0 font-extrabold text-[#8e4e47]">{isAr ? formatBundleTotal(bundle.totalPrice, region).replace('Total:', '\u0627\u0644\u0625\u062c\u0645\u0627\u0644\u064a:') : formatBundleTotal(bundle.totalPrice, region)}</span>
         </div>
         <button
           type="button"

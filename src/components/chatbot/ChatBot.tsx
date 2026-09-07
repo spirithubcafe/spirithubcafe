@@ -22,6 +22,7 @@ import { chatbotAssistantService } from '../../services/chatbotAssistantService'
 import { ChatMessageComponent } from './ChatMessage';
 import { TypingIndicator } from './TypingIndicator';
 import { cleanCustomerEmail } from '../../lib/chatbotProductResults';
+import { getBundleRefinementPrompt } from '../../lib/chatbotProductResults';
 
 const session = new GeminiChatSession();
 const RATE_LIMIT_COOLDOWN_MS = 60_000;
@@ -753,7 +754,7 @@ export const ChatBot: React.FC = () => {
     setMessages((prev) => [...prev, { role: 'user', text: action, timestamp: new Date() }]);
     setIsLoading(true);
     try {
-      const refined = await personalizationService.refineBundle(bundle.bundleId, action, language);
+      const refined = await personalizationService.refineBundle(bundle.bundleId, getBundleRefinementPrompt(action), language);
       setMessages((prev) => [
         ...prev,
         { role: 'model', text: localizedText('bundleIntro'), bundle: refined, timestamp: new Date() },
@@ -780,7 +781,8 @@ export const ChatBot: React.FC = () => {
       sources.set(`${product.productId}`, sources.get(key)!);
     });
 
-    await addCartReadyItems(cartItems, sources);
+    const allowedProductIds = new Set(bundle.products.map((product) => product.productId));
+    await addCartReadyItems(cartItems.filter((item) => allowedProductIds.has(item.productId)), sources);
   }, [addCartReadyItems, isAr]);
 
   const handleReorderAction = useCallback(async (suggestion: SmartReorderSuggestion, action: 'reorder' | 'snooze' | 'dismiss') => {
@@ -1103,14 +1105,17 @@ export const ChatBot: React.FC = () => {
         return;
       }
 
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: 'model',
-          text: isKeyError ? localizedText('keyMissing') : localizedText('genericError'),
-          timestamp: new Date(),
-        },
-      ]);
+      const usedFallback = await appendFallbackResponse(messageText);
+      if (!usedFallback) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: 'model',
+            text: isKeyError ? localizedText('keyMissing') : localizedText('genericError'),
+            timestamp: new Date(),
+          },
+        ]);
+      }
     } finally {
       setIsLoading(false);
     }

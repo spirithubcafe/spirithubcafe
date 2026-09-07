@@ -17,6 +17,7 @@ import type {
   SmartReorderSuggestion,
 } from './personalizationService';
 import { selectFruityFilterCoffees } from '../lib/chatbotProductResults';
+import { resolveCoffeeOrigin } from '../lib/chatbotOriginSearch';
 import type { CoffeePassportProfile } from './coffeePassportService';
 
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY as string;
@@ -399,7 +400,9 @@ export async function getFallbackChatResponse(
   language: string,
   region: RegionCode = 'om'
 ): Promise<{ text: string; products: ChatProduct[] } | null> {
-  const query = userText.trim().toLowerCase();
+  const rawQuery = userText.trim().toLowerCase();
+  const translatedOrigin = resolveCoffeeOrigin(rawQuery);
+  const query = translatedOrigin ?? rawQuery;
   const isAr = language === 'ar';
   const contactPattern = /contact|phone|number|mobile|call|support|whatsapp|\u062a\u0648\u0627\u0635\u0644|\u0627\u062a\u0635\u0627\u0644|\u0631\u0642\u0645|\u062c\u0648\u0627\u0644|\u0647\u0627\u062a\u0641|\u0648\u0627\u062a\u0633|\u062f\u0639\u0645/i;
   const bundleBoxPattern = /bundle|box|boxes|\u0628\u0627\u0642\u0629|\u0628\u0627\u0642\u0627\u062a|\u0635\u0646\u062f\u0648\u0642|\u0635\u0646\u0627\u062f\u064a\u0642/i;
@@ -463,9 +466,13 @@ export async function getFallbackChatResponse(
     products = (await executeTool('get_featured_products', { count: 6 })).products;
   }
 
-  const matchingProducts = fruityPattern.test(query) && filterPattern.test(query)
+  let matchingProducts = fruityPattern.test(query) && filterPattern.test(query)
     ? selectFruityFilterCoffees(products)
     : products;
+  if (translatedOrigin) {
+    const originPattern = new RegExp(translatedOrigin.replace(/\s+/g, '\\s*'), 'i');
+    matchingProducts = matchingProducts.filter((product) => originPattern.test(`${product.name} ${product.slug}`));
+  }
   const uniqueProducts = matchingProducts.filter(
     (product, index, arr) => arr.findIndex((item) => item.id === product.id) === index
   ).slice(0, 4);
