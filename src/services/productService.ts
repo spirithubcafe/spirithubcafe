@@ -9,12 +9,16 @@ import type {
   ProductVariantCreateDto,
   ProductVariantUpdateDto,
   ProductVariantStockUpdateDto,
+  ProductVariantStockAdjustDto,
   ProductVariantPriceUpdateDto,
   ProductImage,
   ProductImageCreateDto,
   ProductImageUpdateDto,
   ProductImageReorderDto,
   ApiResponse,
+  VariantStockOverviewItem,
+  VariantStockOverviewParams,
+  VariantStockSummary,
 } from '../types/product';
 
 const unwrapApiResponse = <T>(payload: ApiResponse<T> | T | undefined): T | undefined => {
@@ -507,6 +511,58 @@ export const productVariantService = {
     );
     const payload = unwrapApiResponse<ProductVariant>(response.data);
     return payload ?? (response.data as ProductVariant);
+  },
+
+  /**
+   * Adjust variant stock by a relative amount (Admin only)
+   * @param id Variant ID
+   * @param data Adjustment data (positive to add stock, negative to remove)
+   * @returns Promise with the new stock quantity
+   */
+  adjustStock: async (id: number, data: ProductVariantStockAdjustDto): Promise<number> => {
+    const response = await http.patch<ApiResponse<{ stockQuantity: number }>>(
+      `/api/Products/variants/${id}/stock/adjust`,
+      data
+    );
+    if (response.data?.success === false) {
+      throw new Error(response.data.message || 'Failed to adjust variant stock');
+    }
+    return response.data.data?.stockQuantity ?? 0;
+  },
+
+  /**
+   * Get a flat, paginated list of every variant across all products for the admin stock overview page
+   * @param params Filter and pagination parameters
+   * @returns Promise with paginated stock overview rows and summary counters
+   */
+  getStockOverview: async (
+    params?: VariantStockOverviewParams
+  ): Promise<PaginatedResponse<VariantStockOverviewItem> & { summary: VariantStockSummary }> => {
+    const response = await http.get<ApiResponse<VariantStockOverviewItem[]>>('/api/Products/stock-overview', {
+      params: {
+        page: params?.page || 1,
+        pageSize: params?.pageSize || 50,
+        searchTerm: params?.searchTerm,
+        categoryId: params?.categoryId,
+        lowStockOnly: params?.lowStockOnly,
+        outOfStockOnly: params?.outOfStockOnly,
+        includeInactive: params?.includeInactive,
+      },
+    });
+
+    const apiResponse = response.data;
+    if (apiResponse?.success === false) {
+      throw new Error(apiResponse.message || 'Failed to load stock overview');
+    }
+
+    return {
+      items: apiResponse.data || [],
+      totalCount: apiResponse.pagination?.totalCount || 0,
+      totalPages: apiResponse.pagination?.totalPages || 1,
+      currentPage: apiResponse.pagination?.currentPage || 1,
+      pageSize: apiResponse.pagination?.pageSize || 50,
+      summary: apiResponse.summary || { totalVariants: 0, outOfStockCount: 0, lowStockCount: 0 },
+    };
   },
 };
 

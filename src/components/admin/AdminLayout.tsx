@@ -65,6 +65,7 @@ import {
   Sprout,
   Truck,
   Bot,
+  Boxes,
 } from 'lucide-react';
 
 interface AdminNavItem {
@@ -305,6 +306,16 @@ export const AdminLayout: React.FC = () => {
       roles: ['Admin', 'Manager'],
     },
     {
+      id: 'stock',
+      label: isArabic ? 'إدارة المخزون' : 'Stock Management',
+      description: isArabic
+        ? 'مراقبة وتحديث مخزون جميع أصناف القهوة من مكان واحد'
+        : 'Monitor and update stock for every coffee variant in one place',
+      icon: Boxes,
+      path: '/admin/stock',
+      roles: ['Admin', 'Manager'],
+    },
+    {
       id: 'orders',
       label: t('admin.manageOrders'),
       description: t('admin.ordersDesc'),
@@ -478,7 +489,7 @@ export const AdminLayout: React.FC = () => {
       id: 'management',
       label: t('admin.navGroups.management'),
       items: availableNavItems.filter((item) =>
-        ['categories', 'products', 'productTags', 'producers', 'users', 'reviews'].includes(item.id)
+        ['categories', 'products', 'productTags', 'producers', 'stock', 'users', 'reviews'].includes(item.id)
       ),
     },
     {

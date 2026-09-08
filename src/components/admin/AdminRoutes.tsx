@@ -20,6 +20,7 @@ import { WhatsAppNotificationSettingsManagement } from './WhatsAppNotificationSe
 import { WhatsAppTemplatesManagement } from './WhatsAppTemplatesManagement';
 import { ProductTagsManagement } from './ProductTagsManagement';
 import { ProducersManagement } from './ProducersManagement';
+import { StockManagement } from './StockManagement';
 import { CategoryAddPage } from '../../pages/CategoryAddPage';
 import { CategoryEditPage } from '../../pages/CategoryEditPage';
 import { ProductAddPage } from '../../pages/ProductAddPage';
@@ -42,6 +43,7 @@ export default function AdminRoutes() {
         <Route path="products/:id/attributes" element={<ProductAttributesPage />} />
         <Route path="product-tags" element={<ProductTagsManagement />} />
         <Route path="producers" element={<ProducersManagement />} />
+        <Route path="stock" element={<StockManagement />} />
         <Route path="seo" element={<SeoManagement />} />
         <Route path="users" element={<UsersManagement />} />
         <Route path="orders" element={<OrdersManagement />} />

@@ -171,6 +171,10 @@ export interface ProductVariantStockUpdateDto {
   stockQuantity: number;
 }
 
+export interface ProductVariantStockAdjustDto {
+  adjustment: number;
+}
+
 export interface ProductVariantPriceUpdateDto {
   price: number;
   discountPrice?: number;
@@ -302,6 +306,42 @@ export interface PaginationParams {
   pageSize?: number;
 }
 
+// Stock overview row combining a variant with its parent product info (admin stock management page)
+export interface VariantStockOverviewItem {
+  variantId: number;
+  productId: number;
+  productSku: string;
+  productName: string;
+  productNameAr?: string;
+  mainImagePath?: string;
+  productIsActive: boolean;
+  categoryId: number;
+  categoryName: string;
+  variantSku: string;
+  weight: number;
+  weightUnit: string;
+  price: number;
+  discountPrice?: number;
+  stockQuantity: number;
+  lowStockThreshold: number;
+  isActive: boolean;
+  isDefault: boolean;
+}
+
+export interface VariantStockSummary {
+  totalVariants: number;
+  outOfStockCount: number;
+  lowStockCount: number;
+}
+
+export interface VariantStockOverviewParams extends PaginationParams {
+  searchTerm?: string;
+  categoryId?: number;
+  lowStockOnly?: boolean;
+  outOfStockOnly?: boolean;
+  includeInactive?: boolean;
+}
+
 export interface PaginatedResponse<T> {
   items: T[];
   totalCount: number;
@@ -340,6 +380,7 @@ export interface ApiResponse<T> {
   count?: number;
   message?: string;
   errors?: Record<string, string[]>;
+  summary?: VariantStockSummary;
   pagination?: {
     currentPage: number;
     pageSize: number;
