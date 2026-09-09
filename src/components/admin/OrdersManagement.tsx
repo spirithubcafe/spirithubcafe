@@ -44,7 +44,9 @@ import {
   ChevronRight,
   AlertTriangle,
   Server,
-  Trash2
+  Trash2,
+  Search,
+  X
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { createAramexPickup, emailService, orderService, productVariantService } from '../../services';
@@ -142,6 +144,7 @@ export const OrdersManagement: React.FC = () => {
   const [showShipmentResultDialog, setShowShipmentResultDialog] = useState(false);
   
   const [editLoading, setEditLoading] = useState(false);
+  const [exportLoading, setExportLoading] = useState(false);
   const [invoiceLoading, setInvoiceLoading] = useState(false);
   const [paymentLinkLoading, setPaymentLinkLoading] = useState(false);
   const [sendingReminderOrderId, setSendingReminderOrderId] = useState<number | null>(null);
@@ -201,6 +204,10 @@ export const OrdersManagement: React.FC = () => {
   const [filterFromDate, setFilterFromDate] = useState('');
   const [filterToDate, setFilterToDate] = useState('');
   const [activeQuickRange, setActiveQuickRange] = useState<'today' | '7d' | '30d' | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
+  const searchQueryRef = useRef('');
+  const isFirstSearchRunRef = useRef(true);
   const fromDateNativeInputRef = useRef<HTMLInputElement | null>(null);
   const toDateNativeInputRef = useRef<HTMLInputElement | null>(null);
   const [filterShippingCompany, setFilterShippingCompany] = useState<'all' | 'pickup' | 'nool' | 'aramex' | 'free'>('all');
@@ -921,17 +928,41 @@ export const OrdersManagement: React.FC = () => {
     pageSizeRef.current = pageSize;
   }, [pageSize]);
 
-  const loadOrders = async ({ silent = false, page, size }: { silent?: boolean; page?: number; size?: number } = {}) => {
+  useEffect(() => {
+    searchQueryRef.current = debouncedSearchQuery;
+  }, [debouncedSearchQuery]);
+
+  // Debounce the raw search input before it triggers a server request.
+  useEffect(() => {
+    const handle = window.setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery.trim());
+    }, 400);
+    return () => window.clearTimeout(handle);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    // Skip the initial run; the mount effect already triggers the first load.
+    if (isFirstSearchRunRef.current) {
+      isFirstSearchRunRef.current = false;
+      return;
+    }
+    loadOrders({ page: 1 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearchQuery]);
+
+  const loadOrders = async ({ silent = false, page, size, search }: { silent?: boolean; page?: number; size?: number; search?: string } = {}) => {
     if (!silent) setLoading(true);
     setError(null);
     
     const targetPage = page ?? currentPageRef.current;
     const targetSize = size ?? pageSizeRef.current;
+    const targetSearch = search ?? searchQueryRef.current;
     
     try {
       const response = await orderService.getOrders({
         page: targetPage,
         pageSize: targetSize,
+        searchTerm: targetSearch || undefined,
       });
       
       // Update pagination info
@@ -1190,14 +1221,30 @@ export const OrdersManagement: React.FC = () => {
     return 0;
   };
 
-  const filteredOrders = useMemo(() => {
+  const filterOrdersList = (list: Order[]): Order[] => {
     const fromDateTs = parseFilterDateToTimestamp(filterFromDate, false);
     const toDateTs = parseFilterDateToTimestamp(filterToDate, true);
+    const normalizedSearch = searchQuery.trim().toLowerCase();
+    const searchDigits = normalizedSearch.replace(/\D/g, '');
 
-    return sortedOrders.filter((order) => {
+    return list.filter((order) => {
       const orderTs = toOrderTimestamp(order.createdAt);
       if (fromDateTs !== null && orderTs < fromDateTs) return false;
       if (toDateTs !== null && orderTs > toDateTs) return false;
+
+      if (normalizedSearch) {
+        const orderNumber = String(order.orderNumber ?? '').toLowerCase();
+        const fullName = String(order.fullName ?? '').toLowerCase();
+        const email = String(order.email ?? '').toLowerCase();
+        const phoneDigits = String(order.phone ?? '').replace(/\D/g, '');
+
+        const matchesText = orderNumber.includes(normalizedSearch)
+          || fullName.includes(normalizedSearch)
+          || email.includes(normalizedSearch);
+        const matchesPhone = searchDigits.length > 0 && phoneDigits.includes(searchDigits);
+
+        if (!matchesText && !matchesPhone) return false;
+      }
 
       const shippingCode = resolveShippingMethodCode(order);
       const shippingFilter = String(filterShippingCompany ?? 'all').toLowerCase().trim();
@@ -1209,7 +1256,46 @@ export const OrdersManagement: React.FC = () => {
 
       return true;
     });
-  }, [sortedOrders, filterFromDate, filterToDate, filterShippingCompany]);
+  };
+
+  const filteredOrders = useMemo(() => {
+    return filterOrdersList(sortedOrders);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sortedOrders, filterFromDate, filterToDate, filterShippingCompany, searchQuery, resolvedShippingMethodByOrderId]);
+
+  // Fetch every order across all server pages (independent of the currently loaded page).
+  const fetchAllOrdersAcrossPages = async (): Promise<Order[]> => {
+    const searchTerm = searchQueryRef.current || undefined;
+    const pageSizeForFetch = 200;
+    const first = await orderService.getOrders({ page: 1, pageSize: pageSizeForFetch, searchTerm });
+    const firstList = Array.isArray(first?.data) ? first.data : [];
+    const serverPageSize = Number(first?.pagination?.pageSize ?? pageSizeForFetch) || pageSizeForFetch;
+    const computedTotalCount = Number(first?.pagination?.totalCount ?? firstList.length);
+    const computedTotalPages = Math.max(1, Math.ceil(computedTotalCount / serverPageSize));
+
+    const all = [...firstList];
+    for (let p = 2; p <= computedTotalPages; p += 1) {
+      try {
+        const r = await orderService.getOrders({ page: p, pageSize: serverPageSize, searchTerm });
+        if (Array.isArray(r?.data) && r.data.length > 0) {
+          all.push(...r.data);
+        }
+      } catch {
+        // Skip failing pages to avoid aborting the full fetch.
+      }
+    }
+
+    const byId = new Map<number, Order>();
+    for (const o of all) {
+      byId.set(o.id, o);
+    }
+
+    return Array.from(byId.values()).map((order) => ({
+      ...order,
+      items: Array.isArray(order.items) ? order.items : [],
+    }));
+  };
+
 
 
   useEffect(() => {
@@ -1277,6 +1363,7 @@ export const OrdersManagement: React.FC = () => {
     setFilterToDate('');
     setFilterShippingCompany('all');
     setActiveQuickRange(null);
+    setSearchQuery('');
   };
 
   const formatFilterDateLabel = (value: string): string => {
@@ -2403,21 +2490,30 @@ export const OrdersManagement: React.FC = () => {
   };
 
   const exportToExcel = async () => {
+    setExportLoading(true);
     try {
+      // Pull every matching order across all pages, not just the currently loaded page.
+      const allOrders = await fetchAllOrdersAcrossPages();
+      const ordersToExport = filterOrdersList(allOrders);
+
       // Hydrate each order from details endpoint so shipping cost matches Order Details view.
       const orderDetailsById = new Map<number, Order>();
-      await Promise.all(
-        filteredOrders.map(async (order) => {
-          try {
-            const response = await orderService.getOrderById(order.id);
-            if (response?.data) {
-              orderDetailsById.set(order.id, response.data);
+      const hydrationBatchSize = 25;
+      for (let i = 0; i < ordersToExport.length; i += hydrationBatchSize) {
+        const batch = ordersToExport.slice(i, i + hydrationBatchSize);
+        await Promise.all(
+          batch.map(async (order) => {
+            try {
+              const response = await orderService.getOrderById(order.id);
+              if (response?.data) {
+                orderDetailsById.set(order.id, response.data);
+              }
+            } catch {
+              // Keep export resilient; we'll fall back to list data for this row.
             }
-          } catch {
-            // Keep export resilient; we'll fall back to list data for this row.
-          }
-        })
-      );
+          })
+        );
+      }
 
       // Create CSV content
       const headers = [
@@ -2444,7 +2540,7 @@ export const OrdersManagement: React.FC = () => {
         'Notes'
       ];
 
-      const rows = filteredOrders.map(order => {
+      const rows = ordersToExport.map(order => {
         const detailedOrder = orderDetailsById.get(order.id);
         const shippingMethod = 
           order.shippingMethod === 1 ? 'Store Pickup' :
@@ -2521,7 +2617,7 @@ export const OrdersManagement: React.FC = () => {
       document.body.removeChild(link);
 
       toast(isArabic ? 'تم التصدير بنجاح' : 'Export successful', {
-        description: isArabic ? `تم تصدير ${filteredOrders.length} طلب` : `Exported ${filteredOrders.length} orders`,
+        description: isArabic ? `تم تصدير ${ordersToExport.length} طلب` : `Exported ${ordersToExport.length} orders`,
         duration: 3000,
       });
     } catch (error) {
@@ -2530,6 +2626,8 @@ export const OrdersManagement: React.FC = () => {
         description: isArabic ? 'حدث خطأ أثناء التصدير' : 'An error occurred during export',
         duration: 3000,
       });
+    } finally {
+      setExportLoading(false);
     }
   };
 
@@ -2562,9 +2660,9 @@ export const OrdersManagement: React.FC = () => {
               <span className="text-xs text-muted-foreground">{isArabic ? 'تنبيه' : 'Notify'}</span>
             </div>
           </div>
-          <Button onClick={exportToExcel} disabled={loading || filteredOrders.length === 0} variant="outline" className="w-full sm:w-auto">
-            <Download className="h-4 w-4 mr-2" />
-            {isArabic ? 'تصدير إلى Excel' : 'Export to Excel'}
+          <Button onClick={exportToExcel} disabled={loading || exportLoading || filteredOrders.length === 0} variant="outline" className="w-full sm:w-auto">
+            <Download className={`h-4 w-4 mr-2 ${exportLoading ? 'animate-pulse' : ''}`} />
+            {exportLoading ? (isArabic ? 'جاري التصدير...' : 'Exporting...') : (isArabic ? 'تصدير إلى Excel' : 'Export to Excel')}
           </Button>
           <Button onClick={() => loadOrders()} disabled={loading} className="w-full sm:w-auto">
             <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
@@ -2703,7 +2801,37 @@ export const OrdersManagement: React.FC = () => {
           ) : null}
         </CardHeader>
         <CardContent className="w-full max-w-full overflow-x-hidden space-y-8">
-          <div className="sticky top-2 z-20 rounded-3xl border border-[#eaeaea] bg-white/95 p-3 sm:p-4 shadow-[0_8px_22px_rgba(15,23,42,0.05)]">
+          <div className="sticky top-2 z-20 rounded-3xl border border-[#eaeaea] bg-white/95 p-3 sm:p-4 shadow-[0_8px_22px_rgba(15,23,42,0.05)] space-y-3">
+            <div className="space-y-1">
+              <Label className="text-sm font-semibold">
+                {isArabic ? 'بحث' : 'Search'}
+              </Label>
+              <div className="relative">
+                <Search className="h-4 w-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <Input
+                  type="text"
+                  placeholder={isArabic ? 'رقم الطلب، اسم العميل أو رقم الهاتف' : 'Order number, customer name, or phone number'}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="h-11 w-full text-sm rounded-2xl border-[#eaeaea] pl-10 pr-10"
+                />
+                {searchQuery ? (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    aria-label={isArabic ? 'مسح البحث' : 'Clear search'}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                ) : null}
+              </div>
+              {(loading || loadingAllOrdersForFiltering) && searchQuery.trim() ? (
+                <p className="text-xs text-muted-foreground">
+                  {isArabic ? 'جاري البحث في جميع الطلبات...' : 'Searching across all orders...'}
+                </p>
+              ) : null}
+            </div>
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-3">
               <div className="space-y-1 col-span-1 min-w-0">
                 <Label className="text-sm font-semibold">From date</Label>
