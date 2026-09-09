@@ -2786,7 +2786,7 @@ export const OrdersManagement: React.FC = () => {
       )}
 
       {/* Orders Tables */}
-      <Card>
+      <Card className="bg-[#f8fbf9]">
         <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <div className="space-y-1">
             <CardTitle>{isArabic ? 'الطلبات' : 'Orders'}</CardTitle>
@@ -2898,7 +2898,7 @@ export const OrdersManagement: React.FC = () => {
                 <div className="relative">
                   <Truck className="h-4 w-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none z-10" />
                   <Select value={filterShippingCompany} onValueChange={(value: 'all' | 'pickup' | 'nool' | 'aramex' | 'free') => setFilterShippingCompany(value)}>
-                    <SelectTrigger className="h-11 w-full rounded-2xl border-[#eaeaea] pl-10">
+                    <SelectTrigger className="data-[size=default]:!h-11 w-full min-w-0 rounded-2xl border-[#eaeaea] pl-10 pr-10 text-left text-sm">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
