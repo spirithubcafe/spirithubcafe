@@ -1296,7 +1296,7 @@ export const ChatBot: React.FC = () => {
             whileHover={{ scale: 1.05, y: -2 }}
             whileTap={{ scale: 0.94 }}
             onClick={() => { setIsOpen(true); setIsMinimized(false); }}
-            className="fixed bottom-24 z-50 flex h-16 w-16 items-center justify-center rounded-full bg-white/90 shadow-2xl shadow-rose-900/10 ring-1 ring-rose-100 backdrop-blur transition-colors hover:bg-white md:bottom-8"
+            className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-50 flex h-16 w-16 items-center justify-center rounded-full bg-white/90 shadow-2xl shadow-rose-900/10 ring-1 ring-rose-100 backdrop-blur transition-colors hover:bg-white md:bottom-8"
             style={{ [isAr ? 'left' : 'right']: '1.25rem' }}
             aria-label="Open SpiritHub Helper"
             dir="ltr"
