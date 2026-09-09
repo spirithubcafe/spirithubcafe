@@ -605,6 +605,15 @@ pre {
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Minimized state must win over the fixed-height rules above (which use
+   !important), regardless of viewport width. Higher specificity (two
+   classes) beats the single-class `!important` rules so the panel actually
+   collapses instead of staying open and blank. */
+.chatbot-panel.chatbot-panel--minimized {
+  height: 68px !important;
+  max-height: 68px !important;
+}
+
 /* Prevent layout shift on scroll */
 .chatbot-panel > div:nth-child(2) {
   -webkit-transform: translateZ(0);

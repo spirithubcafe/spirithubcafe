@@ -1317,7 +1317,7 @@ export const ChatBot: React.FC = () => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 32, scale: 0.96 }}
             transition={{ type: 'spring', damping: 28, stiffness: 320 }}
-            className="chatbot-panel fixed z-50 flex flex-col overflow-hidden border border-[#f2ddd8] bg-[#fffaf7] shadow-2xl shadow-rose-950/15"
+            className={`chatbot-panel fixed z-50 flex flex-col overflow-hidden border border-[#f2ddd8] bg-[#fffaf7] shadow-2xl shadow-rose-950/15${isMinimized ? ' chatbot-panel--minimized' : ''}`}
             style={{
               bottom: !isMobileViewport ? (isMinimized ? '5.5rem' : '2rem') : 'auto',
               [isAr ? 'left' : 'right']: isMobileViewport ? 'max(8px, env(safe-area-inset-left))' : '1rem',
