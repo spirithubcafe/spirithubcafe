@@ -1,5 +1,6 @@
 import { apiClient, publicHttp } from './apiClient';
 import { personalizationService } from './personalizationService';
+import { marketingAttributionService } from './marketingAttributionService';
 import { safeStorage } from '../lib/safeStorage';
 
 export interface UnknownIntentTrackPayload {
@@ -103,6 +104,9 @@ const rememberProduct = (productId?: number) => {
   } satisfies ChatbotAttribution));
 };
 
+const marketingMetadata = (metadata?: Record<string, unknown>) =>
+  marketingAttributionService.enrichMetadata(metadata);
+
 export const chatbotIntentService = {
   resolve: async (message: string, language: string): Promise<ChatbotIntentResolveResult | null> => {
     try {
@@ -126,18 +130,32 @@ export const chatbotIntentService = {
     productIds.forEach(rememberProduct);
     personalizationService.trackEvent({
       eventType: 'CHATBOT_RECOMMENDATION_SHOWN', language, country, source: 'chatbot',
-      metadata: { chatbotMessage: message, productIds },
+      metadata: marketingMetadata({ chatbotMessage: message, productIds }),
     });
   },
 
   trackProductClick: (productId: number, language: string, country: string, metadata?: Record<string, unknown>): void => {
     rememberProduct(productId);
-    personalizationService.trackEvent({ eventType: 'CHATBOT_PRODUCT_CLICK', productId, language, country, source: 'chatbot', metadata });
+    personalizationService.trackEvent({
+      eventType: 'CHATBOT_PRODUCT_CLICK',
+      productId,
+      language,
+      country,
+      source: 'chatbot',
+      metadata: marketingMetadata(metadata),
+    });
   },
 
   trackAddToCart: (productId: number, language: string, country: string, metadata?: Record<string, unknown>): void => {
     rememberProduct(productId);
-    personalizationService.trackEvent({ eventType: 'CHATBOT_ADD_TO_CART', productId, language, country, source: 'chatbot', metadata });
+    personalizationService.trackEvent({
+      eventType: 'CHATBOT_ADD_TO_CART',
+      productId,
+      language,
+      country,
+      source: 'chatbot',
+      metadata: marketingMetadata(metadata),
+    });
   },
 
   trackPurchaseIfAttributed: (orderId: string, language: string, country: string): void => {
@@ -149,7 +167,11 @@ export const chatbotIntentService = {
     }
     personalizationService.trackEvent({
       eventType: 'CHATBOT_PURCHASE', language, country, source: 'chatbot',
-      metadata: { orderId, productIds: attribution.productIds, chatbotSessionId: attribution.sessionId },
+      metadata: marketingMetadata({
+        orderId,
+        productIds: attribution.productIds,
+        chatbotSessionId: attribution.sessionId,
+      }),
     });
     safeStorage.removeItem(CHATBOT_ATTRIBUTION_KEY);
   },
