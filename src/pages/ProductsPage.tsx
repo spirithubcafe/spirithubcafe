@@ -1,26 +1,158 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
-import { Check, ChevronDown, ChevronLeft, ChevronRight, Coffee, Filter, Search } from 'lucide-react';
+import {
+  Check,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Coffee,
+  Grid2X2,
+  Grid3X3,
+  LayoutGrid,
+  Search,
+  SlidersHorizontal,
+  X,
+} from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useApp } from '../hooks/useApp';
+import { useIsMobile } from '../hooks/use-mobile';
 import { ProductCard } from '../components/products/ProductCard';
+import { ProductsFilterAccordion, type FilterSectionConfig } from '../components/products/ProductsFilterAccordion';
 import { PageHeader } from '../components/layout/PageHeader';
 import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from '../components/ui/sheet';
+import { Button } from '../components/ui/button';
 import { Seo } from '../components/seo/Seo';
 import { siteMetadata } from '../config/siteMetadata';
 import { AnnouncementBar } from '../components/layout/AnnouncementBar';
 import { useShopPage } from '../hooks/useShop';
 import { useRegion } from '../hooks/useRegion';
 import { getCategoryImageUrl } from '../lib/imageUtils';
-import { personalizationService } from '../services/personalizationService';
+import { productService } from '../services/productService';
 
 type CategoryOption = {
   id: string;
   name: string;
   slug?: string;
 };
+
+type SortOrder =
+  | 'featured'
+  | 'relevant'
+  | 'best-selling'
+  | 'alphabetical-asc'
+  | 'alphabetical-desc'
+  | 'price-asc'
+  | 'price-desc'
+  | 'date-asc'
+  | 'date-desc';
+
+type ProductCollection = 'featured' | 'premium' | 'limited';
+type CoffeeFacet = 'process' | 'variety' | 'roastLevel' | 'uses' | 'origin';
+type CoffeeAttributes = Partial<Record<CoffeeFacet, string>> & {
+  originAr?: string;
+  processAr?: string;
+  varietyAr?: string;
+  roastLevelAr?: string;
+  usesAr?: string;
+};
+
+const countryOptions = [
+  { value: 'Brazil', labelAr: 'البرازيل' },
+  { value: 'Burundi', labelAr: 'بوروندي' },
+  { value: 'Colombia', labelAr: 'كولومبيا' },
+  { value: 'Costa Rica', labelAr: 'كوستاريكا' },
+  { value: 'Ecuador', labelAr: 'الإكوادور' },
+  { value: 'El Salvador', labelAr: 'السلفادور' },
+  { value: 'Ethiopia', labelAr: 'إثيوبيا' },
+  { value: 'Guatemala', labelAr: 'غواتيمالا' },
+  { value: 'Honduras', labelAr: 'هندوراس' },
+  { value: 'India', labelAr: 'الهند' },
+  { value: 'Indonesia', labelAr: 'إندونيسيا' },
+  { value: 'Kenya', labelAr: 'كينيا' },
+  { value: 'Panama', labelAr: 'بنما' },
+  { value: 'Rwanda', labelAr: 'رواندا' },
+  { value: 'Yemen', labelAr: 'اليمن' },
+] as const;
+
+const coffeeUseOptions = [
+  { value: 'espresso', label: 'Espresso', labelAr: 'إسبريسو', terms: ['espresso'] },
+  { value: 'filter', label: 'Filter', labelAr: 'قهوة فلتر', terms: ['filter', 'pour over', 'pour-over', 'v60'] },
+  { value: 'cold-brew', label: 'Cold Brew', labelAr: 'كولد برو', terms: ['cold brew'] },
+  { value: 'nespresso-original', label: 'Nespresso Original', labelAr: 'نسبريسو أوريجنال', terms: ['nespresso original', 'nespresso'] },
+  { value: 'milk-based', label: 'Milk Based', labelAr: 'قهوة بالحليب', terms: ['milk based', 'milk-based', 'milk'] },
+] as const;
+
+const coffeeProcessOptions = [
+  { value: 'washed', label: 'Washed', labelAr: 'مغسولة', terms: ['washed'] },
+  { value: 'natural', label: 'Natural', labelAr: 'طبيعية', terms: ['natural'] },
+  { value: 'honey', label: 'Honey', labelAr: 'هاني', terms: ['honey'] },
+  { value: 'anaerobic', label: 'Anaerobic', labelAr: 'لاهوائية', terms: ['anaerobic'] },
+  { value: 'carbonic-maceration', label: 'Carbonic Maceration', labelAr: 'نقع كربوني', terms: ['carbonic maceration'] },
+] as const;
+
+const roastProfileOptions = [
+  { value: 'light', label: 'Light Roast', labelAr: 'تحميص خفيف', terms: ['light'] },
+  { value: 'medium', label: 'Medium Roast', labelAr: 'تحميص متوسط', terms: ['medium'] },
+  { value: 'medium-dark', label: 'Medium Dark Roast', labelAr: 'تحميص متوسط داكن', terms: ['medium dark', 'medium-dark'] },
+  { value: 'dark', label: 'Dark Roast', labelAr: 'تحميص داكن', terms: ['dark'] },
+] as const;
+
+const getCountriesFromOrigin = (origin?: string): string[] => {
+  if (!origin) return [];
+  const normalizedOrigin = origin.toLocaleLowerCase();
+  return countryOptions
+    .filter((country) => normalizedOrigin.includes(country.value.toLocaleLowerCase()))
+    .map((country) => country.value);
+};
+
+const getCoffeeUses = (uses?: string): string[] => {
+  if (!uses) return [];
+  const normalizedUses = uses.toLocaleLowerCase();
+  return coffeeUseOptions
+    .filter((option) => option.terms.some((term) => normalizedUses.includes(term)))
+    .map((option) => option.value);
+};
+
+const getCoffeeProcesses = (process?: string): string[] => {
+  if (!process) return [];
+  const normalizedProcess = process.toLocaleLowerCase();
+  return coffeeProcessOptions
+    .filter((option) => option.terms.some((term) => normalizedProcess.includes(term)))
+    .map((option) => option.value);
+};
+
+const getRoastProfiles = (roastLevel?: string): string[] => {
+  if (!roastLevel) return [];
+  const normalizedRoastLevel = roastLevel.toLocaleLowerCase();
+  return roastProfileOptions
+    .filter((option) => option.terms.some((term) => normalizedRoastLevel.includes(term)))
+    .map((option) => option.value);
+};
+
+const sortOptions: Array<{ value: SortOrder; label: string; labelAr: string; shortLabel: string; shortLabelAr: string }> = [
+  { value: 'featured', label: 'Featured', labelAr: 'المميزة', shortLabel: 'Featured', shortLabelAr: 'المميزة' },
+  { value: 'relevant', label: 'Most Relevant', labelAr: 'الأكثر صلة', shortLabel: 'Relevant', shortLabelAr: 'الصلة' },
+  { value: 'best-selling', label: 'Best Selling', labelAr: 'الأكثر مبيعًا', shortLabel: 'Best Selling', shortLabelAr: 'الأكثر مبيعًا' },
+  { value: 'alphabetical-asc', label: 'Alphabetically, A-Z', labelAr: 'أبجديًا، أ-ي', shortLabel: 'A-Z', shortLabelAr: 'أ-ي' },
+  { value: 'alphabetical-desc', label: 'Alphabetically, Z-A', labelAr: 'أبجديًا، ي-أ', shortLabel: 'Z-A', shortLabelAr: 'ي-أ' },
+  { value: 'price-asc', label: 'Price, Low to High', labelAr: 'السعر، من الأقل إلى الأعلى', shortLabel: 'Price: Low', shortLabelAr: 'السعر: أقل' },
+  { value: 'price-desc', label: 'Price, High to Low', labelAr: 'السعر، من الأعلى إلى الأقل', shortLabel: 'Price: High', shortLabelAr: 'السعر: أعلى' },
+  { value: 'date-asc', label: 'Date, Old to New', labelAr: 'التاريخ، من الأقدم إلى الأحدث', shortLabel: 'Oldest', shortLabelAr: 'الأقدم' },
+  { value: 'date-desc', label: 'Date, New to Old', labelAr: 'التاريخ، من الأحدث إلى الأقدم', shortLabel: 'Newest', shortLabelAr: 'الأحدث' },
+];
+
+const isValidSortOrder = (value: string | null): value is SortOrder =>
+  sortOptions.some((option) => option.value === value);
+
+const parseListParam = (value: string | null): string[] => (value ? value.split(',').filter(Boolean) : []);
+
+const parseNumberListParam = (value: string | null): number[] =>
+  parseListParam(value)
+    .map(Number)
+    .filter((numericValue) => Number.isFinite(numericValue));
 
 const GIFT_HINT_EN = '❤️ Gift Someone Special';
 const GIFT_HINT_AR = '❤️ أهدي شخص مميز';
@@ -146,13 +278,41 @@ export const ProductsPage = ({ hidePageChrome = false }: ProductsPageProps) => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { pathname } = useLocation();
+  const isMobileViewport = useIsMobile();
   // Preserve the region prefix (/om or /sa) so navigate() stays on the same
   // route instance and never causes a ProductsPage remount.
   const regionPrefix = pathname.startsWith('/sa') ? '/sa' : '/om';
   const categoryFromUrl = searchParams.get('category');
   const [selectedCategory, setSelectedCategory] = useState<string>(categoryFromUrl || 'all');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [categoryOpen, setCategoryOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState(() => searchParams.get('q') || '');
+  const [isDesktopSidebarOpen, setIsDesktopSidebarOpen] = useState(false);
+  const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
+  const [selectedCollections, setSelectedCollections] = useState<ProductCollection[]>(() =>
+    parseListParam(searchParams.get('collections')).filter(
+      (value): value is ProductCollection => value === 'featured' || value === 'premium' || value === 'limited',
+    ),
+  );
+  const [selectedTagIds, setSelectedTagIds] = useState<number[]>(() => parseNumberListParam(searchParams.get('tags')));
+  const [selectedCoffeeFacets, setSelectedCoffeeFacets] = useState<Partial<Record<CoffeeFacet, string[]>>>(() => {
+    const facetsFromUrl: Partial<Record<CoffeeFacet, string[]>> = {};
+    (['origin', 'uses', 'process', 'variety', 'roastLevel'] as CoffeeFacet[]).forEach((facetKey) => {
+      const values = parseListParam(searchParams.get(facetKey));
+      if (values.length > 0) facetsFromUrl[facetKey] = values;
+    });
+    return facetsFromUrl;
+  });
+  const [productAttributeOverrides, setProductAttributeOverrides] = useState<Record<string, CoffeeAttributes>>({});
+  const [loadingCoffeeFacets, setLoadingCoffeeFacets] = useState(false);
+  const hasLoadedCoffeeFacetsRef = useRef(false);
+  const [sortOpen, setSortOpen] = useState(false);
+  const [sortOrder, setSortOrder] = useState<SortOrder>(() => {
+    const sortFromUrl = searchParams.get('sort');
+    return isValidSortOrder(sortFromUrl) ? sortFromUrl : 'alphabetical-asc';
+  });
+  const [gridColumns, setGridColumns] = useState<2 | 3 | 4>(() => {
+    const viewFromUrl = searchParams.get('view');
+    return viewFromUrl === '2' || viewFromUrl === '3' || viewFromUrl === '4' ? (Number(viewFromUrl) as 2 | 3 | 4) : 4;
+  });
   const [canScrollCategoriesLeft, setCanScrollCategoriesLeft] = useState(false);
   const [canScrollCategoriesRight, setCanScrollCategoriesRight] = useState(false);
   const [shouldLoadShopCategories, setShouldLoadShopCategories] = useState(false);
@@ -169,6 +329,10 @@ export const ProductsPage = ({ hidePageChrome = false }: ProductsPageProps) => {
 
   const coffeeProducts = products;
   const isProductsLoading = loading && coffeeProducts.length === 0;
+  const filterableCoffeeProducts = useMemo(
+    () => coffeeProducts.map((product) => ({ ...product, ...productAttributeOverrides[product.id] })),
+    [coffeeProducts, productAttributeOverrides],
+  );
 
   // Homepage data loading is intentionally deferred. If the user navigates
   // here before that work starts, request the missing route data immediately.
@@ -227,14 +391,10 @@ export const ProductsPage = ({ hidePageChrome = false }: ProductsPageProps) => {
     return `${siteMetadata.baseUrl}${regionPath}/products`;
   }, [regionPrefix]);
 
-  // Handle category change and update URL
+  // Handle category change; URL query params are synchronized by the
+  // centralized filter-sync effect further below.
   const handleCategoryChange = (categoryId: string) => {
     setSelectedCategory(categoryId);
-    if (categoryId === 'all') {
-      navigate(`${regionPrefix}/products`, { replace: true });
-    } else {
-      navigate(`${regionPrefix}/products?category=${categoryId}`, { replace: true });
-    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -277,9 +437,73 @@ export const ProductsPage = ({ hidePageChrome = false }: ProductsPageProps) => {
     ? getCategoryDisplayName(currentCategory)
     : '';
 
+  const availableProductTags = useMemo(() => {
+    const tags = new Map<number, { id: number; name: string; nameAr?: string }>();
+    filterableCoffeeProducts.forEach((product) => {
+      [...(product.topTags ?? []), ...(product.bottomTags ?? [])].forEach((tag) => {
+        tags.set(tag.id, tag);
+      });
+    });
+
+    return [...tags.values()].sort((firstTag, secondTag) =>
+      (isArabic ? firstTag.nameAr || firstTag.name : firstTag.name).localeCompare(
+        isArabic ? secondTag.nameAr || secondTag.name : secondTag.name,
+        isArabic ? 'ar' : 'en',
+      ),
+    );
+  }, [filterableCoffeeProducts, isArabic]);
+
+  const availableCoffeeFacets = useMemo(() => {
+    const getOptions = (
+      getValue: (product: typeof filterableCoffeeProducts[number]) => string | undefined,
+      getArabicValue: (product: typeof filterableCoffeeProducts[number]) => string | undefined,
+    ) => {
+      const values = new Map<string, string>();
+      filterableCoffeeProducts.forEach((product) => {
+        const value = getValue(product)?.trim();
+        if (!value) return;
+        values.set(value, isArabic ? getArabicValue(product)?.trim() || value : value);
+      });
+      return [...values.entries()]
+        .map(([value, label]) => ({ value, label }))
+        .sort((firstOption, secondOption) => firstOption.label.localeCompare(secondOption.label, isArabic ? 'ar' : 'en'));
+    };
+
+    return [
+      {
+        key: 'origin' as const,
+        label: isArabic ? 'بلد المنشأ' : 'Country of Origin',
+        options: countryOptions
+          .filter((country) => filterableCoffeeProducts.some((product) => getCountriesFromOrigin(product.origin).includes(country.value)))
+          .map((country) => ({ value: country.value, label: isArabic ? country.labelAr : country.value })),
+      },
+      {
+        key: 'uses' as const,
+        label: isArabic ? 'الأفضل لـ' : 'Best for',
+        options: coffeeUseOptions
+          .filter((option) => filterableCoffeeProducts.some((product) => getCoffeeUses(product.uses).includes(option.value)))
+          .map((option) => ({ value: option.value, label: isArabic ? option.labelAr : option.label })),
+      },
+      {
+        key: 'process' as const,
+        label: isArabic ? 'معالجة القهوة' : 'Coffee Process',
+        options: coffeeProcessOptions
+          .filter((option) => filterableCoffeeProducts.some((product) => getCoffeeProcesses(product.process).includes(option.value)))
+          .map((option) => ({ value: option.value, label: isArabic ? option.labelAr : option.label })),
+      },
+      { key: 'variety' as const, label: isArabic ? 'نوع القهوة' : 'Coffee Variety', options: getOptions((product) => product.variety, (product) => product.varietyAr) },
+      {
+        key: 'roastLevel' as const,
+        label: isArabic ? 'درجة التحميص' : 'Roast Profile',
+        options: roastProfileOptions
+          .filter((option) => filterableCoffeeProducts.some((product) => getRoastProfiles(product.roastLevel).includes(option.value)))
+          .map((option) => ({ value: option.value, label: isArabic ? option.labelAr : option.label })),
+      },
+    ].filter((facet) => facet.options.length > 0);
+  }, [filterableCoffeeProducts, isArabic]);
+
   // Filter products
   const filteredProducts = useMemo(() => {
-    const normalizedSearch = searchTerm.trim().toLowerCase();
     const activeCategoryId =
       currentCategory?.id ??
       (selectedCategory !== 'all' && /^\d+$/.test(selectedCategory) ? selectedCategory : null);
@@ -290,7 +514,7 @@ export const ProductsPage = ({ hidePageChrome = false }: ProductsPageProps) => {
       ? getCategoryDisplayName(currentCategory).trim().toLowerCase()
       : null;
 
-    return coffeeProducts.filter((product) => {
+    const matchingProducts = filterableCoffeeProducts.filter((product) => {
       // Business rule: never show inactive products publicly.
       if (product.isActive === false) {
         return false;
@@ -314,33 +538,83 @@ export const ProductsPage = ({ hidePageChrome = false }: ProductsPageProps) => {
         return false;
       }
 
-      // Filter by search term - use pre-built searchable text to avoid concatenation
-      if (normalizedSearch === '') {
-        return true;
+      const normalizedSearchTerm = searchTerm.trim().toLocaleLowerCase();
+      if (
+        normalizedSearchTerm &&
+        !(product._searchText || `${product.name} ${product.description} ${product.category}`.toLocaleLowerCase()).includes(normalizedSearchTerm)
+      ) {
+        return false;
       }
 
-      const searchableText = product._searchText ||
-        `${product.name} ${product.description || ''} ${product.category || ''}`.toLowerCase();
-      return searchableText.includes(normalizedSearch);
+      if (
+        selectedCollections.length > 0 &&
+        !selectedCollections.some((collection) => {
+          if (collection === 'featured') return product.featured;
+          if (collection === 'premium') return product.isPremium;
+          return product.isLimited;
+        })
+      ) {
+        return false;
+      }
+
+      if (
+        selectedTagIds.length > 0 &&
+        ![...(product.topTags ?? []), ...(product.bottomTags ?? [])].some((tag) =>
+          selectedTagIds.includes(tag.id),
+        )
+      ) {
+        return false;
+      }
+
+      const matchesCoffeeFacets = (Object.entries(selectedCoffeeFacets) as Array<[CoffeeFacet, string[]]>).every(
+        ([facet, selectedValues]) => {
+          if (selectedValues.length === 0) return true;
+          if (facet === 'origin') {
+            return getCountriesFromOrigin(product.origin).some((country) => selectedValues.includes(country));
+          }
+          if (facet === 'uses') {
+            return getCoffeeUses(product.uses).some((use) => selectedValues.includes(use));
+          }
+          if (facet === 'process') {
+            return getCoffeeProcesses(product.process).some((process) => selectedValues.includes(process));
+          }
+          if (facet === 'roastLevel') {
+            return getRoastProfiles(product.roastLevel).some((roastProfile) => selectedValues.includes(roastProfile));
+          }
+          return selectedValues.includes(product[facet] || '');
+        },
+      );
+
+      if (!matchesCoffeeFacets) {
+        return false;
+      }
+
+      return true;
     });
-  }, [coffeeProducts, searchTerm, selectedCategory, currentCategory, getCategoryDisplayName]);
 
-  useEffect(() => {
-    const normalizedSearch = searchTerm.trim();
-    if (normalizedSearch.length < 2) return;
+    const alphabeticalComparison = (firstProduct: typeof matchingProducts[number], secondProduct: typeof matchingProducts[number]) =>
+      firstProduct.name.localeCompare(secondProduct.name, isArabic ? 'ar' : 'en', { sensitivity: 'base' });
 
-    const timer = window.setTimeout(() => {
-      personalizationService.trackEvent({
-        eventType: 'search',
-        searchTerm: normalizedSearch,
-        language,
-        country: currentRegion.code,
-        source: 'products_page',
-      });
-    }, 700);
-
-    return () => window.clearTimeout(timer);
-  }, [currentRegion.code, language, searchTerm]);
+    switch (sortOrder) {
+      case 'featured':
+        return [...matchingProducts].sort((firstProduct, secondProduct) =>
+          Number(Boolean(secondProduct.featured)) - Number(Boolean(firstProduct.featured)) ||
+          alphabeticalComparison(firstProduct, secondProduct),
+        );
+      case 'alphabetical-asc':
+        return [...matchingProducts].sort(alphabeticalComparison);
+      case 'alphabetical-desc':
+        return [...matchingProducts].sort((firstProduct, secondProduct) =>
+          alphabeticalComparison(secondProduct, firstProduct),
+        );
+      case 'price-asc':
+        return [...matchingProducts].sort((firstProduct, secondProduct) => firstProduct.price - secondProduct.price);
+      case 'price-desc':
+        return [...matchingProducts].sort((firstProduct, secondProduct) => secondProduct.price - firstProduct.price);
+      default:
+        return matchingProducts;
+    }
+  }, [filterableCoffeeProducts, selectedCategory, currentCategory, getCategoryDisplayName, isArabic, searchTerm, selectedCollections, selectedTagIds, selectedCoffeeFacets, sortOrder]);
 
   // Group products by category when "All" is selected
   const productsByCategory = useMemo(() => {
@@ -467,7 +741,7 @@ export const ProductsPage = ({ hidePageChrome = false }: ProductsPageProps) => {
   const categoryOptions = useMemo<CategoryOption[]>(() => {
     const allOption: CategoryOption = {
       id: 'all',
-      name: isArabic ? 'جميع المنتجات' : 'All Products',
+      name: isArabic ? 'جميع القهوة' : 'All Coffee',
     };
 
     const mappedCategories = coffeeCategories.map<CategoryOption>((category) => ({
@@ -478,6 +752,391 @@ export const ProductsPage = ({ hidePageChrome = false }: ProductsPageProps) => {
 
     return [allOption, ...mappedCategories];
   }, [coffeeCategories, getCategoryDisplayName, isArabic]);
+
+  // Reusable predicates shared between the main product filter and the
+  // per-option "available product" counts shown in each accordion section.
+  const productPassesSearch = useCallback(
+    (product: typeof filterableCoffeeProducts[number]) => {
+      const normalizedSearchTerm = searchTerm.trim().toLocaleLowerCase();
+      if (!normalizedSearchTerm) return true;
+      return (
+        product._searchText || `${product.name} ${product.description} ${product.category}`.toLocaleLowerCase()
+      ).includes(normalizedSearchTerm);
+    },
+    [searchTerm],
+  );
+
+  const productPassesCategory = useCallback(
+    (product: typeof filterableCoffeeProducts[number], categoryId: string) => {
+      if (categoryId === 'all') return true;
+      const candidateCategory =
+        coffeeCategories.find((cat) => cat.id === categoryId) ??
+        coffeeCategories.find((cat) => cat.slug === categoryId) ??
+        null;
+      const candidateCategoryId = candidateCategory?.id ?? (/^\d+$/.test(categoryId) ? categoryId : null);
+      const candidateCategorySlug = candidateCategory?.slug ?? (!/^\d+$/.test(categoryId) ? categoryId : null);
+      const candidateCategoryName = candidateCategory
+        ? getCategoryDisplayName(candidateCategory).trim().toLowerCase()
+        : null;
+
+      return Boolean(
+        (candidateCategoryId && product.categoryId === candidateCategoryId) ||
+          (candidateCategorySlug && product.categorySlug === candidateCategorySlug) ||
+          (candidateCategoryName &&
+            ((product.category && product.category.trim().toLowerCase() === candidateCategoryName) ||
+              (product.categoryAr && product.categoryAr.trim().toLowerCase() === candidateCategoryName))),
+      );
+    },
+    [coffeeCategories, getCategoryDisplayName],
+  );
+
+  const productPassesCollections = useCallback(
+    (product: typeof filterableCoffeeProducts[number], collections: ProductCollection[]) => {
+      if (collections.length === 0) return true;
+      return collections.some((collection) => {
+        if (collection === 'featured') return product.featured;
+        if (collection === 'premium') return product.isPremium;
+        return product.isLimited;
+      });
+    },
+    [],
+  );
+
+  const productPassesTags = useCallback(
+    (product: typeof filterableCoffeeProducts[number], tagIds: number[]) => {
+      if (tagIds.length === 0) return true;
+      return [...(product.topTags ?? []), ...(product.bottomTags ?? [])].some((tag) => tagIds.includes(tag.id));
+    },
+    [],
+  );
+
+  const productPassesFacets = useCallback(
+    (product: typeof filterableCoffeeProducts[number], facets: Partial<Record<CoffeeFacet, string[]>>, excludeKey?: CoffeeFacet) =>
+      (Object.entries(facets) as Array<[CoffeeFacet, string[] | undefined]>).every(([facetKey, selectedValues]) => {
+        if (facetKey === excludeKey) return true;
+        if (!selectedValues || selectedValues.length === 0) return true;
+        if (facetKey === 'origin') return getCountriesFromOrigin(product.origin).some((value) => selectedValues.includes(value));
+        if (facetKey === 'uses') return getCoffeeUses(product.uses).some((value) => selectedValues.includes(value));
+        if (facetKey === 'process') return getCoffeeProcesses(product.process).some((value) => selectedValues.includes(value));
+        if (facetKey === 'roastLevel') return getRoastProfiles(product.roastLevel).some((value) => selectedValues.includes(value));
+        return selectedValues.includes(product[facetKey] || '');
+      }),
+    [],
+  );
+
+  const getFacetOptionValue = useCallback(
+    (product: typeof filterableCoffeeProducts[number], facetKey: CoffeeFacet, value: string) => {
+      if (facetKey === 'origin') return getCountriesFromOrigin(product.origin).includes(value);
+      if (facetKey === 'uses') return getCoffeeUses(product.uses).includes(value);
+      if (facetKey === 'process') return getCoffeeProcesses(product.process).includes(value);
+      if (facetKey === 'roastLevel') return getRoastProfiles(product.roastLevel).includes(value);
+      return (product.variety ?? '').trim() === value;
+    },
+    [],
+  );
+
+  // Faceted "available product" counts: for each option, count products that
+  // match every OTHER active filter plus that specific option (not the
+  // filter's own current selection), so counts stay accurate as users refine.
+  const filterCounts = useMemo(() => {
+    const activeProducts = filterableCoffeeProducts.filter(
+      (product) => product.isActive !== false && product.isOrderable !== false,
+    );
+
+    const baseForCategory = activeProducts.filter(
+      (product) =>
+        productPassesSearch(product) &&
+        productPassesCollections(product, selectedCollections) &&
+        productPassesTags(product, selectedTagIds) &&
+        productPassesFacets(product, selectedCoffeeFacets),
+    );
+    const categoryCounts = new Map<string, number>(
+      categoryOptions.map((option) => [
+        option.id,
+        option.id === 'all' ? baseForCategory.length : baseForCategory.filter((product) => productPassesCategory(product, option.id)).length,
+      ]),
+    );
+
+    const baseForOthers = activeProducts.filter(
+      (product) => productPassesCategory(product, selectedCategory) && productPassesSearch(product),
+    );
+
+    const baseForCollections = baseForOthers.filter(
+      (product) => productPassesTags(product, selectedTagIds) && productPassesFacets(product, selectedCoffeeFacets),
+    );
+    const collectionCounts: Record<ProductCollection, number> = {
+      featured: baseForCollections.filter((product) => product.featured).length,
+      premium: baseForCollections.filter((product) => product.isPremium).length,
+      limited: baseForCollections.filter((product) => product.isLimited).length,
+    };
+
+    const baseForTags = baseForOthers.filter(
+      (product) => productPassesCollections(product, selectedCollections) && productPassesFacets(product, selectedCoffeeFacets),
+    );
+    const tagCounts = new Map<number, number>(
+      availableProductTags.map((tag) => [
+        tag.id,
+        baseForTags.filter((product) => [...(product.topTags ?? []), ...(product.bottomTags ?? [])].some((t) => t.id === tag.id)).length,
+      ]),
+    );
+
+    const facetOptionCounts = {} as Record<CoffeeFacet, Map<string, number>>;
+    (['origin', 'uses', 'process', 'variety', 'roastLevel'] as CoffeeFacet[]).forEach((facetKey) => {
+      const base = baseForOthers.filter(
+        (product) =>
+          productPassesCollections(product, selectedCollections) &&
+          productPassesTags(product, selectedTagIds) &&
+          productPassesFacets(product, selectedCoffeeFacets, facetKey),
+      );
+      const facetOptions = availableCoffeeFacets.find((facet) => facet.key === facetKey)?.options ?? [];
+      const map = new Map<string, number>();
+      facetOptions.forEach((option) => {
+        map.set(option.value, base.filter((product) => getFacetOptionValue(product, facetKey, option.value)).length);
+      });
+      facetOptionCounts[facetKey] = map;
+    });
+
+    return { categoryCounts, collectionCounts, tagCounts, facetOptionCounts };
+  }, [
+    filterableCoffeeProducts,
+    categoryOptions,
+    availableProductTags,
+    availableCoffeeFacets,
+    selectedCategory,
+    selectedCollections,
+    selectedTagIds,
+    selectedCoffeeFacets,
+    productPassesSearch,
+    productPassesCategory,
+    productPassesCollections,
+    productPassesTags,
+    productPassesFacets,
+    getFacetOptionValue,
+  ]);
+
+  const productsGridClassName = {
+    2: 'grid grid-cols-1 min-[361px]:grid-cols-2 gap-4 sm:gap-6 md:grid-cols-2',
+    3: 'grid grid-cols-1 min-[361px]:grid-cols-2 gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3',
+    4: 'grid grid-cols-1 min-[361px]:grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3 lg:grid-cols-4',
+  }[gridColumns];
+  const activeSortOption = sortOptions.find((option) => option.value === sortOrder)!;
+  const hasActiveCustomerFilters = selectedCategory !== 'all' || searchTerm.trim().length > 0 || selectedCollections.length > 0 || selectedTagIds.length > 0 || Object.values(selectedCoffeeFacets).some((values) => values.length > 0);
+
+  const toggleCollection = (collection: ProductCollection) => {
+    setSelectedCollections((currentCollections) =>
+      currentCollections.includes(collection)
+        ? currentCollections.filter((currentCollection) => currentCollection !== collection)
+        : [...currentCollections, collection],
+    );
+  };
+
+  const toggleTag = (tagId: number) => {
+    setSelectedTagIds((currentTagIds) =>
+      currentTagIds.includes(tagId)
+        ? currentTagIds.filter((currentTagId) => currentTagId !== tagId)
+        : [...currentTagIds, tagId],
+    );
+  };
+
+  const toggleCoffeeFacet = (facet: CoffeeFacet, value: string) => {
+    setSelectedCoffeeFacets((currentFacets) => {
+      const selectedValues = currentFacets[facet] ?? [];
+      return {
+        ...currentFacets,
+        [facet]: selectedValues.includes(value)
+          ? selectedValues.filter((selectedValue) => selectedValue !== value)
+          : [...selectedValues, value],
+      };
+    });
+  };
+
+  const clearCustomerFilters = () => {
+    setSearchTerm('');
+    setSelectedCollections([]);
+    setSelectedTagIds([]);
+    setSelectedCoffeeFacets({});
+    if (selectedCategory !== 'all') {
+      handleCategoryChange('all');
+    }
+  };
+
+  const collectionLabels: Record<ProductCollection, string> = {
+    featured: isArabic ? 'المميزة' : 'Featured',
+    premium: isArabic ? 'الفاخرة' : 'Premium',
+    limited: isArabic ? 'إصدار محدود' : 'Limited Release',
+  };
+
+  // Shared accordion sections rendered by both the desktop sidebar and the
+  // mobile filter sheet.
+  const filterSections: FilterSectionConfig[] = [
+    {
+      key: 'category',
+      title: isArabic ? 'الفئة' : 'Category',
+      options: categoryOptions.map((option) => ({
+        value: option.id,
+        label: option.name,
+        count: filterCounts.categoryCounts.get(option.id) ?? 0,
+      })),
+      isSelected: (value) => selectedCategory === value,
+      onToggle: (value) => handleCategoryChange(selectedCategory === value ? 'all' : value),
+      defaultOpen: true,
+    },
+    ...availableCoffeeFacets.map((facet) => ({
+      key: facet.key,
+      title: facet.label,
+      options: facet.options.map((option) => ({
+        ...option,
+        count: filterCounts.facetOptionCounts[facet.key]?.get(option.value) ?? 0,
+      })),
+      isSelected: (value: string) => (selectedCoffeeFacets[facet.key] ?? []).includes(value),
+      onToggle: (value: string) => toggleCoffeeFacet(facet.key, value),
+      defaultOpen: facet.key === 'origin' || facet.key === 'uses' || facet.key === 'process',
+    })),
+    ...(availableProductTags.length > 0
+      ? [
+          {
+            key: 'tags',
+            title: isArabic ? 'خصائص القهوة' : 'Coffee Attributes',
+            options: availableProductTags.map((tag) => ({
+              value: String(tag.id),
+              label: isArabic ? tag.nameAr || tag.name : tag.name,
+              count: filterCounts.tagCounts.get(tag.id) ?? 0,
+            })),
+            isSelected: (value: string) => selectedTagIds.includes(Number(value)),
+            onToggle: (value: string) => toggleTag(Number(value)),
+            defaultOpen: false,
+          },
+        ]
+      : []),
+    {
+      key: 'collection',
+      title: isArabic ? 'المجموعة' : 'Collection',
+      options: (['featured', 'premium', 'limited'] as const).map((collection) => ({
+        value: collection,
+        label: collectionLabels[collection],
+        count: filterCounts.collectionCounts[collection],
+      })),
+      isSelected: (value) => selectedCollections.includes(value as ProductCollection),
+      onToggle: (value) => toggleCollection(value as ProductCollection),
+      defaultOpen: false,
+    },
+  ];
+
+  // Removable chips shown above the product grid for every active filter.
+  const activeChips: Array<{ id: string; label: string; onRemove: () => void }> = [];
+  if (selectedCategory !== 'all') {
+    const categoryLabel = categoryOptions.find((option) => option.id === selectedCategory)?.name;
+    if (categoryLabel) {
+      activeChips.push({ id: `category-${selectedCategory}`, label: categoryLabel, onRemove: () => handleCategoryChange('all') });
+    }
+  }
+  if (searchTerm.trim()) {
+    activeChips.push({
+      id: 'search',
+      label: `${isArabic ? 'بحث' : 'Search'}: ${searchTerm.trim()}`,
+      onRemove: () => setSearchTerm(''),
+    });
+  }
+  availableCoffeeFacets.forEach((facet) => {
+    (selectedCoffeeFacets[facet.key] ?? []).forEach((value) => {
+      const optionLabel = facet.options.find((option) => option.value === value)?.label ?? value;
+      activeChips.push({ id: `${facet.key}-${value}`, label: optionLabel, onRemove: () => toggleCoffeeFacet(facet.key, value) });
+    });
+  });
+  selectedTagIds.forEach((tagId) => {
+    const tag = availableProductTags.find((t) => t.id === tagId);
+    if (tag) {
+      activeChips.push({ id: `tag-${tagId}`, label: isArabic ? tag.nameAr || tag.name : tag.name, onRemove: () => toggleTag(tagId) });
+    }
+  });
+  selectedCollections.forEach((collection) => {
+    activeChips.push({ id: `collection-${collection}`, label: collectionLabels[collection], onRemove: () => toggleCollection(collection) });
+  });
+
+  const loadCoffeeFacetAttributes = useCallback(async () => {
+    if (hasLoadedCoffeeFacetsRef.current || loadingCoffeeFacets || coffeeProducts.length === 0) return;
+
+    hasLoadedCoffeeFacetsRef.current = true;
+    setLoadingCoffeeFacets(true);
+    const attributeOverrides: Record<string, CoffeeAttributes> = {};
+
+    try {
+      // Product list responses intentionally omit these detail attributes. A
+      // bounded concurrent batch keeps the panel responsive without saturating
+      // the customer's connection.
+      for (let index = 0; index < coffeeProducts.length; index += 16) {
+        const productBatch = coffeeProducts.slice(index, index + 16);
+        const batchResults = await Promise.all(
+          productBatch.map(async (product) => {
+            try {
+              const { product: detail } = await productService.getByIdentifierRaw(product.id);
+              if (!detail) return null;
+              return [product.id, {
+                origin: detail.origin,
+                originAr: (detail as typeof detail & { originAr?: string }).originAr,
+                process: detail.process,
+                processAr: detail.processAr,
+                variety: detail.variety,
+                varietyAr: detail.varietyAr,
+                roastLevel: detail.roastLevel,
+                roastLevelAr: detail.roastLevelAr,
+                uses: detail.uses,
+                usesAr: detail.usesAr,
+              } satisfies CoffeeAttributes] as const;
+            } catch {
+              return null;
+            }
+          }),
+        );
+
+        batchResults.forEach((result) => {
+          if (result) attributeOverrides[result[0]] = result[1];
+        });
+        setProductAttributeOverrides((currentOverrides) => ({
+          ...currentOverrides,
+          ...attributeOverrides,
+        }));
+      }
+    } finally {
+      setLoadingCoffeeFacets(false);
+    }
+  }, [coffeeProducts, loadingCoffeeFacets]);
+
+  const handleToggleFilters = () => {
+    if (isMobileViewport) {
+      setIsMobileFiltersOpen(true);
+    } else {
+      setIsDesktopSidebarOpen((open) => !open);
+    }
+  };
+
+  // Coffee attribute detail data isn't in the list response; load it once
+  // products are available so facet options and counts can populate.
+  useEffect(() => {
+    if (coffeeProducts.length > 0) {
+      void loadCoffeeFacetAttributes();
+    }
+  }, [coffeeProducts.length, loadCoffeeFacetAttributes]);
+
+  // Keep URL query parameters synchronized with every active filter so a
+  // filtered view can be shared and restored after a page refresh.
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (selectedCategory !== 'all') params.set('category', selectedCategory);
+    if (searchTerm.trim()) params.set('q', searchTerm.trim());
+    if (selectedCollections.length > 0) params.set('collections', selectedCollections.join(','));
+    if (selectedTagIds.length > 0) params.set('tags', selectedTagIds.join(','));
+    (Object.entries(selectedCoffeeFacets) as Array<[CoffeeFacet, string[] | undefined]>).forEach(([facetKey, values]) => {
+      if (values && values.length > 0) params.set(facetKey, values.join(','));
+    });
+    if (sortOrder !== 'alphabetical-asc') params.set('sort', sortOrder);
+    if (gridColumns !== 4) params.set('view', String(gridColumns));
+
+    const nextQuery = params.toString();
+    if (nextQuery !== searchParams.toString()) {
+      navigate(`${pathname}${nextQuery ? `?${nextQuery}` : ''}`, { replace: true });
+    }
+  }, [selectedCategory, searchTerm, selectedCollections, selectedTagIds, selectedCoffeeFacets, sortOrder, gridColumns, navigate, pathname, searchParams]);
 
   const browseCoffeeCategories = useMemo(
     () => [...allCategories].sort((a, b) => {
@@ -656,82 +1315,152 @@ export const ProductsPage = ({ hidePageChrome = false }: ProductsPageProps) => {
         />
       )}
 
-      {/* Content Container - Sticky context */}
+      {/* Content Container */}
       <div className="relative">
-        {/* Filters Section - Compact & Professional */}
-        <div 
-          className="sticky-filter-bar bg-gradient-to-r from-stone-900 via-neutral-900 to-stone-900 shadow-xl border-b border-stone-700/50 flex items-center"
-        >
-          <div className="container mx-auto px-4 h-full flex items-center">
-            <div className="max-w-6xl mx-auto w-full">
-              {/* Single Row Compact Layout */}
-              <div className="flex flex-row gap-3 items-center">
-              {/* Search Box - Compact & Sleek */}
-              <div className="relative flex-1 min-w-0 max-w-md">
-                <div className="absolute top-1/2 -translate-y-1/2 text-stone-400 w-4 h-4 ltr:left-2.5 rtl:right-2.5 pointer-events-none z-10">
-                  <Search className="w-4 h-4" />
-                </div>
-                <input
-                  type="text"
-                  placeholder={isArabic ? 'البحث...' : 'Search...'}
-                  value={searchTerm}
-                  onChange={(event) => setSearchTerm(event.target.value)}
-                  className={`w-full h-9 py-2 px-2.5 border-0 rounded-lg focus:ring-2 focus:ring-stone-600 transition-all bg-stone-800/80 backdrop-blur-sm text-sm font-medium text-white placeholder:text-stone-500 shadow-sm hover:bg-stone-800 ${isArabic ? 'pr-9 pl-2.5' : 'pl-9 pr-2.5'}`}
-                  aria-label={isArabic ? 'بحث المنتجات' : 'Search products'}
-                />
-              </div>
+        {/* Toolbar */}
+        <div className="sticky-filter-bar products-filter-toolbar sticky flex items-center border-b border-border bg-background">
+          <div className={`mx-auto flex h-full w-full max-w-[1440px] items-center justify-between gap-2 px-4 sm:px-6 lg:px-8 ${isArabic ? 'flex-row-reverse' : ''}`}>
+            <div className={`flex items-center gap-2 ${isArabic ? 'flex-row-reverse' : ''}`}>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleToggleFilters}
+                aria-expanded={isMobileViewport ? isMobileFiltersOpen : isDesktopSidebarOpen}
+                aria-controls="products-filter-sidebar"
+                className={`gap-2 border-border text-foreground ${isArabic ? 'flex-row-reverse' : ''}`}
+              >
+                <SlidersHorizontal className="h-4 w-4" />
+                <span className="hidden md:inline">
+                  {isDesktopSidebarOpen ? (isArabic ? 'إخفاء الفلاتر' : 'Hide Filters') : (isArabic ? 'إظهار الفلاتر' : 'Show Filters')}
+                </span>
+                <span className="md:hidden">
+                  {isArabic ? 'الفلاتر' : 'Filters'}
+                  {activeChips.length > 0 ? ` (${activeChips.length})` : ''}
+                </span>
+              </Button>
 
-              {/* Category Dropdown - Popover-based, no scroll lock */}
-              <div className="relative flex items-center gap-2 shrink-0">
-                <Filter className="w-4 h-4 text-stone-400 shrink-0" />
-                <Popover open={categoryOpen} onOpenChange={setCategoryOpen}>
-                  <PopoverTrigger asChild>
-                    <button
-                      className={`flex items-center gap-2 h-9 w-auto min-w-[100px] max-w-[160px] xs:max-w-[180px] sm:max-w-[240px] rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-100 text-sm font-semibold px-3 border-0 shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-stone-600 ${isArabic ? 'flex-row-reverse' : ''}`}
-                      aria-label={isArabic ? 'فئة المنتج' : 'Product category'}
-                    >
-                      <span className={`flex-1 truncate ${isArabic ? 'text-right' : 'text-left'}`}>
-                        {categoryOptions.find(c => c.id === selectedCategory)?.name ?? (isArabic ? 'جميع المنتجات' : 'All Products')}
-                      </span>
-                      <ChevronDown className={`w-4 h-4 text-stone-400 shrink-0 transition-transform duration-200 ${categoryOpen ? 'rotate-180' : ''}`} />
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent
-                    align={isArabic ? 'end' : 'start'}
-                    sideOffset={6}
-                    onCloseAutoFocus={(e) => e.preventDefault()}
-                    className="w-64 p-1 bg-stone-900 border border-stone-700 shadow-xl rounded-xl z-[200]"
+              <Popover open={sortOpen} onOpenChange={setSortOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    aria-label={isArabic ? 'ترتيب المنتجات' : 'Sort products'}
+                    className={`gap-2 border-border text-foreground ${isArabic ? 'flex-row-reverse' : ''}`}
                   >
-                    {categoryOptions.map((category) => (
-                      <button
-                        key={category.id}
-                        onClick={() => {
-                          handleCategoryChange(category.id);
-                          setCategoryOpen(false);
-                        }}
-                        className={`flex items-center gap-2 w-full rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
-                          selectedCategory === category.id
-                            ? 'bg-stone-700 text-white'
-                            : 'text-stone-300 hover:bg-stone-800 hover:text-white'
-                        } ${isArabic ? 'flex-row-reverse' : ''}`}
-                      >
-                        <span className={`flex-1 truncate ${isArabic ? 'text-right' : 'text-left'}`}>{category.name}</span>
-                        {selectedCategory === category.id && (
-                          <Check className="w-4 h-4 text-amber-400 shrink-0" />
-                        )}
-                      </button>
-                    ))}
-                  </PopoverContent>
-                </Popover>
-              </div>
-              </div>
+                    <span>{isArabic ? activeSortOption.shortLabelAr : activeSortOption.shortLabel}</span>
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent align={isArabic ? 'end' : 'start'} sideOffset={6} className="w-52 border-border bg-popover p-1">
+                  {sortOptions.map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => { setSortOrder(option.value); setSortOpen(false); }}
+                      className={`flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ${
+                        sortOrder === option.value ? 'bg-amber-600 text-white' : 'text-foreground hover:bg-muted'
+                      } ${isArabic ? 'flex-row-reverse' : ''}`}
+                    >
+                      <span className={`flex-1 ${isArabic ? 'text-right' : 'text-left'}`}>{isArabic ? option.labelAr : option.label}</span>
+                      {sortOrder === option.value && <Check className="h-4 w-4" />}
+                    </button>
+                  ))}
+                </PopoverContent>
+              </Popover>
+
+              <span className="text-xs font-medium text-muted-foreground sm:text-sm">
+                {isArabic ? `${filteredProducts.length} منتج متاح` : `${filteredProducts.length} products`}
+              </span>
+            </div>
+
+            <div className={`flex items-center gap-1 ${isArabic ? 'flex-row-reverse' : ''}`} role="group" aria-label={isArabic ? 'عدد أعمدة المنتجات' : 'Product grid columns'}>
+              {[
+                { columns: 2 as const, icon: Grid2X2, label: isArabic ? 'شبكة بعمودين' : 'Two-column grid' },
+                { columns: 3 as const, icon: Grid3X3, label: isArabic ? 'شبكة بثلاثة أعمدة' : 'Three-column grid' },
+                { columns: 4 as const, icon: LayoutGrid, label: isArabic ? 'شبكة بأربعة أعمدة' : 'Four-column grid' },
+              ].map(({ columns, icon: Icon, label }) => (
+                <button
+                  key={columns}
+                  type="button"
+                  onClick={() => setGridColumns(columns)}
+                  aria-label={label}
+                  aria-pressed={gridColumns === columns}
+                  className={`hidden h-8 w-8 place-items-center rounded-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 md:grid ${
+                    gridColumns === columns ? 'bg-amber-600 text-white' : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                  }`}
+                >
+                  <Icon className="h-4 w-4" />
+                </button>
+              ))}
             </div>
           </div>
         </div>
 
-        {/* Products Grid */}
-        <div className="py-16 bg-gray-50">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div className={`mx-auto flex w-full max-w-[1440px] items-start gap-8 px-4 sm:px-6 lg:px-8 ${isArabic ? 'flex-row-reverse' : ''}`}>
+          {/* Desktop sticky sidebar */}
+          {isDesktopSidebarOpen && (
+            <aside
+              id="products-filter-sidebar"
+              aria-label={isArabic ? 'تصفية المنتجات' : 'Product filters'}
+              className={`products-filter-sidebar hidden w-[300px] shrink-0 md:block ${isArabic ? 'md:border-s md:border-border' : 'md:border-e md:border-border'}`}
+            >
+              <div className="flex items-center justify-between px-2 py-3">
+                <h2 className="text-sm font-semibold text-foreground">{isArabic ? 'الفلاتر' : 'Filters'}</h2>
+                {hasActiveCustomerFilters && (
+                  <button type="button" onClick={clearCustomerFilters} className="text-xs font-semibold text-amber-600 hover:text-amber-700">
+                    {isArabic ? 'مسح الكل' : 'Clear All'}
+                  </button>
+                )}
+              </div>
+              <div className="px-2 pb-3">
+                <div className="relative">
+                  <Search className={`pointer-events-none absolute top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground ${isArabic ? 'right-2.5' : 'left-2.5'}`} />
+                  <input
+                    type="search"
+                    value={searchTerm}
+                    onChange={(event) => setSearchTerm(event.target.value)}
+                    placeholder={isArabic ? 'ابحث عن القهوة...' : 'Search coffee...'}
+                    aria-label={isArabic ? 'البحث عن المنتجات' : 'Search products'}
+                    className={`h-9 w-full rounded-md border border-border bg-background text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-amber-600 focus:ring-1 focus:ring-amber-600 ${isArabic ? 'pr-9 pl-2.5 text-right' : 'pl-9 pr-2.5'}`}
+                  />
+                </div>
+              </div>
+              {loadingCoffeeFacets && (
+                <p className="px-2 pb-2 text-xs text-muted-foreground">
+                  {isArabic ? 'جارٍ تحميل خصائص القهوة...' : 'Loading coffee attributes...'}
+                </p>
+              )}
+              <ProductsFilterAccordion sections={filterSections} isArabic={isArabic} />
+            </aside>
+          )}
+
+          {/* Products Grid */}
+          <div className="products-results-container min-w-0 flex-1 py-8 md:py-10">
+            {activeChips.length > 0 && (
+              <div className={`mb-6 flex flex-wrap items-center gap-2 ${isArabic ? 'flex-row-reverse' : ''}`}>
+                {activeChips.map((chip) => (
+                  <button
+                    key={chip.id}
+                    type="button"
+                    onClick={chip.onRemove}
+                    className={`inline-flex items-center gap-1.5 rounded-full border border-amber-600 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-800 transition-colors hover:bg-amber-100 ${isArabic ? 'flex-row-reverse' : ''}`}
+                  >
+                    {chip.label}
+                    <X className="h-3 w-3" />
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  onClick={clearCustomerFilters}
+                  className="text-xs font-semibold text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+                >
+                  {isArabic ? 'مسح الكل' : 'Clear all'}
+                </button>
+              </div>
+            )}
+
             {isProductsLoading ? (
               <div className="space-y-8">
                 {/* Results Count Skeleton */}
@@ -766,23 +1495,6 @@ export const ProductsPage = ({ hidePageChrome = false }: ProductsPageProps) => {
               </div>
             ) : (
               <>
-                {/* Results Count */}
-                <div className="mb-8 text-center">
-                  <p className="text-gray-600">
-                    {isArabic ? (
-                      <>
-                        <span className="font-semibold text-amber-600">{filteredProducts.length}</span>
-                        {' منتج متاح'}
-                      </>
-                    ) : (
-                      <>
-                        <span className="font-semibold text-amber-600">{filteredProducts.length}</span>
-                        {' products available'}
-                      </>
-                    )}
-                  </p>
-                </div>
-
                 {/* Show grouped by category if "All" is selected */}
                 {selectedCategory === 'all' && productsByCategory && productsByCategory.length > 0 ? (
                   <div className="space-y-16">
@@ -840,7 +1552,7 @@ export const ProductsPage = ({ hidePageChrome = false }: ProductsPageProps) => {
                           </div>
 
                           {/* Category Products Grid */}
-                          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+                          <div className={productsGridClassName}>
                             {categoryProducts.map((product, productIndex) => (
                               <ProductCard
                                 key={product.id}
@@ -855,7 +1567,7 @@ export const ProductsPage = ({ hidePageChrome = false }: ProductsPageProps) => {
                   </div>
                 ) : (
                   /* Single category view - standard grid */
-                  <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+                  <div className={productsGridClassName}>
                     {filteredProducts.map((product, productIndex) => (
                       <ProductCard
                         key={product.id}
@@ -869,6 +1581,57 @@ export const ProductsPage = ({ hidePageChrome = false }: ProductsPageProps) => {
             )}
           </div>
         </div>
+
+        {/* Mobile filter sheet */}
+        <Sheet open={isMobileFiltersOpen} onOpenChange={setIsMobileFiltersOpen}>
+          <SheetContent side="bottom" className="flex h-[92dvh] w-full flex-col gap-0 rounded-t-2xl p-0 sm:max-w-full">
+            <SheetHeader className={`flex-row items-center justify-between gap-2 border-b border-border p-4 text-start ${isArabic ? 'flex-row-reverse' : ''}`}>
+              <SheetTitle>{isArabic ? 'الفلاتر' : 'Filters'}</SheetTitle>
+              <SheetDescription className="sr-only">
+                {isArabic ? 'تصفية وترتيب قائمة المنتجات.' : 'Filter and refine the product list.'}
+              </SheetDescription>
+              {hasActiveCustomerFilters && (
+                <button
+                  type="button"
+                  onClick={clearCustomerFilters}
+                  className={`text-xs font-semibold text-amber-600 hover:text-amber-700 ${isArabic ? 'me-8' : 'me-8'}`}
+                >
+                  {isArabic ? 'مسح الكل' : 'Clear All'}
+                </button>
+              )}
+            </SheetHeader>
+            <div className="flex-1 overflow-y-auto">
+              <div className="px-4 py-3">
+                <div className="relative">
+                  <Search className={`pointer-events-none absolute top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground ${isArabic ? 'right-2.5' : 'left-2.5'}`} />
+                  <input
+                    type="search"
+                    value={searchTerm}
+                    onChange={(event) => setSearchTerm(event.target.value)}
+                    placeholder={isArabic ? 'ابحث عن القهوة...' : 'Search coffee...'}
+                    aria-label={isArabic ? 'البحث عن المنتجات' : 'Search products'}
+                    className={`h-11 w-full rounded-md border border-border bg-background text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-amber-600 focus:ring-1 focus:ring-amber-600 ${isArabic ? 'pr-9 pl-2.5 text-right' : 'pl-9 pr-2.5'}`}
+                  />
+                </div>
+              </div>
+              {loadingCoffeeFacets && (
+                <p className="px-4 pb-2 text-xs text-muted-foreground">
+                  {isArabic ? 'جارٍ تحميل خصائص القهوة...' : 'Loading coffee attributes...'}
+                </p>
+              )}
+              <ProductsFilterAccordion sections={filterSections} isArabic={isArabic} />
+            </div>
+            <SheetFooter className="border-t border-border p-4">
+              <Button
+                type="button"
+                onClick={() => setIsMobileFiltersOpen(false)}
+                className="h-11 w-full bg-amber-600 text-white hover:bg-amber-700"
+              >
+                {isArabic ? `عرض ${filteredProducts.length} منتج` : `Show ${filteredProducts.length} Products`}
+              </Button>
+            </SheetFooter>
+          </SheetContent>
+        </Sheet>
 
       {/* All Categories Section */}
       <div ref={browseCategoriesSectionRef} className="products-categories-section bg-[#fbfbf9] py-8">

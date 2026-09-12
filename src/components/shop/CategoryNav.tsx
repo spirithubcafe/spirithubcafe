@@ -43,7 +43,11 @@ export const CategoryNav = ({ categories, activeFilter, onFilterChange }: Props)
         isStuck ? 'rounded-b-3xl rounded-t-none' : 'rounded-3xl'
       }`}
     >
-      <div className="grid grid-cols-4 gap-2 md:flex md:flex-wrap md:gap-4">
+      <div
+        className={isArabic
+          ? 'flex flex-wrap justify-end gap-2 md:gap-4'
+          : 'grid grid-cols-4 gap-2 md:flex md:flex-wrap md:gap-4'}
+      >
         {[
           { id: 'all', label: isArabic ? 'الكل' : 'All' },
           { id: 'gift-cards', label: isArabic ? 'بطاقات هدايا' : 'Gift Cards' },
@@ -87,7 +91,9 @@ export const CategoryNav = ({ categories, activeFilter, onFilterChange }: Props)
         ))}
       </div>
 
-      <div className="flex flex-col gap-3 md:flex-row md:flex-wrap">
+      <div
+        className={`flex flex-col gap-3 ${isArabic ? 'items-end md:flex-row md:flex-wrap md:justify-end' : 'md:flex-row md:flex-wrap'}`}
+      >
         {categories.map((category) => (
           <button
             key={category.id}
@@ -100,7 +106,7 @@ export const CategoryNav = ({ categories, activeFilter, onFilterChange }: Props)
               activeCategorySlug === category.slug
                 ? 'border-amber-500 bg-amber-600 text-white shadow-sm'
                 : 'border-stone-200 bg-white text-stone-700 hover:border-amber-400 hover:text-amber-600'
-            }`}
+            } ${isArabic ? 'flex-row-reverse text-right' : ''}`}
           >
             {category.imagePath && (
               <img

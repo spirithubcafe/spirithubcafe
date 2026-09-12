@@ -21,6 +21,16 @@ export interface Product {
   categoryAr?: string;
   tastingNotes?: string;
   tastingNotesAr?: string;
+  origin?: string;
+  originAr?: string;
+  process?: string;
+  processAr?: string;
+  variety?: string;
+  varietyAr?: string;
+  roastLevel?: string;
+  roastLevelAr?: string;
+  uses?: string;
+  usesAr?: string;
   featured?: boolean;
   topTags?: ProductTagInfoDto[];
   bottomTags?: ProductTagInfoDto[];

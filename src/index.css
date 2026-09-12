@@ -419,12 +419,26 @@ pre {
   padding-top: calc(var(--nav-height) + var(--region-banner-height) + var(--announcement-bar-height, 0px));
 }
 
-/* Sticky Filter Bar - Same height as navigation */
+/* Sticky Filter Bar - compact toolbar above the product listing */
 .sticky-filter-bar {
   position: sticky;
   top: calc(var(--nav-height) + var(--region-banner-height) + var(--announcement-bar-height, 0px));
-  height: var(--nav-height);
+  height: 56px;
   z-index: 40;
+}
+
+.products-filter-toolbar {
+  height: 56px;
+}
+
+@media (min-width: 768px) {
+  /* Plain in-flow sticky sidebar: relies on the browser's single page
+     scrollbar instead of an internally scrolling box. */
+  .products-filter-sidebar {
+    position: sticky;
+    top: calc(var(--nav-height) + var(--region-banner-height) + var(--announcement-bar-height, 0px) + 56px);
+    align-self: flex-start;
+  }
 }
 
 /* Custom gradient backgrounds */

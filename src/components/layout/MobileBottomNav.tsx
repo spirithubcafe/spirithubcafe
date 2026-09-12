@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, ShoppingBag, ShoppingCart, User, Gift } from 'lucide-react';
+import { Home, ShoppingBag, ShoppingCart, User, LogIn, Gift } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../hooks/useAuth';
 import { useCart } from '../../hooks/useCart';
@@ -9,7 +9,7 @@ import { useRegion } from '../../hooks/useRegion';
 export const MobileBottomNav: React.FC = () => {
   const { t } = useTranslation();
   const { isAuthenticated } = useAuth();
-  const { totalItems, openCart } = useCart();
+  const { totalItems, openCart, isOpen: isCartOpen } = useCart();
   const { currentRegion } = useRegion();
   const location = useLocation();
 
@@ -48,17 +48,19 @@ export const MobileBottomNav: React.FC = () => {
       path: null,
       action: openCart,
       badge: totalItems,
+      forceActive: isCartOpen,
     },
     {
       key: 'user',
       label: isAuthenticated ? t('nav.profile') : t('auth.login'),
-      icon: User,
+      icon: isAuthenticated ? User : LogIn,
       path: getRegionalUrl(isAuthenticated ? '/profile' : '/login'),
       action: null,
     },
   ];
 
-  const isActive = (path: string | null | undefined) => {
+  const isActive = (path: string | null | undefined, forceActive?: boolean) => {
+    if (forceActive) return true;
     if (!path) return false;
     if (path === '/om' || path === '/sa') return location.pathname === path || location.pathname === `${path}/`;
     return location.pathname.startsWith(path);
@@ -73,37 +75,41 @@ export const MobileBottomNav: React.FC = () => {
       data-mobile-bottom-nav
       className="fixed bottom-0 left-0 right-0 z-40 md:hidden pb-[env(safe-area-inset-bottom)]"
     >
-      <div className="mx-3 mb-3 rounded-full bg-black shadow-[0_12px_30px_rgba(0,0,0,0.45)]">
+      <div className="mx-3 mb-3 rounded-full bg-black/65 backdrop-blur-md shadow-[0_12px_30px_rgba(0,0,0,0.45)]">
         <div className="flex items-center justify-between gap-1 px-2 py-2">
           {navItems.map((item) => {
             const Icon = item.icon;
-            const active = isActive(item.path);
-            const baseClass = `group relative flex items-center transition-all duration-300 ease-out ${
-              active ? 'gap-2 rounded-full bg-white pl-1 pr-4 py-1' : 'h-11 w-11 justify-center rounded-full border border-white/15'
+            const active = isActive(item.path, item.forceActive);
+            const baseClass = `group relative flex items-center transition-all duration-300 ease-out motion-reduce:transition-none active:scale-95 ${
+              active ? 'min-w-0 gap-2 rounded-full bg-white pl-1 pr-4 py-1' : 'h-11 w-11 shrink-0 justify-center rounded-full border border-white/15'
             }`;
 
             const content = (
               <>
                 <div
-                  className={`relative flex items-center justify-center ${
+                  className={`relative flex shrink-0 items-center justify-center ${
                     active ? 'h-9 w-9 rounded-full bg-black' : ''
                   }`}
                 >
                   <Icon
-                    className={`h-[19px] w-[19px] transition-colors duration-300 ${
+                    className={`h-[19px] w-[19px] transition-colors duration-300 motion-reduce:transition-none ${
                       active ? 'text-white' : 'text-white/70 group-hover:text-white'
                     }`}
                     strokeWidth={2}
                   />
                   {item.badge && item.badge > 0 ? (
-                    <div className="absolute -top-1.5 -right-1.5 min-w-[16px] h-[16px] px-1 rounded-full bg-red-500 text-white text-[9px] flex items-center justify-center font-bold shadow-md ring-2 ring-black">
+                    <div
+                      className={`absolute -top-1.5 -right-1.5 min-w-[16px] h-[16px] px-1 rounded-full bg-red-500 text-white text-[9px] flex items-center justify-center font-bold shadow-md ring-2 ${
+                        active ? 'ring-white' : 'ring-black'
+                      }`}
+                    >
                       {item.badge > 99 ? '9+' : item.badge}
                     </div>
                   ) : null}
                 </div>
 
                 {active ? (
-                  <span className="whitespace-nowrap text-sm font-semibold tracking-tight text-black">
+                  <span className="truncate whitespace-nowrap text-sm font-semibold tracking-tight text-black">
                     {item.label}
                   </span>
                 ) : null}
