@@ -340,6 +340,16 @@ export const AdminLayout: React.FC = () => {
       roles: ['Admin'],
     },
     {
+      id: 'chatbotMarketing',
+      label: isArabic ? 'تحليلات تسويق الشات بوت' : 'Chatbot Marketing',
+      description: isArabic
+        ? 'تحليل جلسات الشات بوت ومصادر الزيارات ومسار التحويل'
+        : 'Analyze chatbot sessions, traffic sources, campaigns, and conversion funnel',
+      icon: TrendingUp,
+      path: '/admin/chatbot-marketing',
+      roles: ['Admin'],
+    },
+    {
       id: 'reviews',
       label: t('admin.reviews.title'),
       description:
@@ -496,7 +506,7 @@ export const AdminLayout: React.FC = () => {
       id: 'operations',
       label: t('admin.navGroups.operations'),
       items: availableNavItems.filter((item) =>
-        ['orders', 'noolDispatch', 'aiIntentReview', 'wholesaleOrders', 'newsletter', 'emailSettings', 'emailNotificationSettings', 'emailTemplates', 'whatsappActivation', 'whatsappSend', 'whatsappNotificationSettings', 'whatsappTemplates', 'reports', 'system', 'seo'].includes(item.id)
+        ['orders', 'noolDispatch', 'aiIntentReview', 'chatbotMarketing', 'wholesaleOrders', 'newsletter', 'emailSettings', 'emailNotificationSettings', 'emailTemplates', 'whatsappActivation', 'whatsappSend', 'whatsappNotificationSettings', 'whatsappTemplates', 'reports', 'system', 'seo'].includes(item.id)
       ),
     },
   ].filter((group) => group.items.length > 0);
