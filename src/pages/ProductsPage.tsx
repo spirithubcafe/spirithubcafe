@@ -1319,8 +1319,8 @@ export const ProductsPage = ({ hidePageChrome = false }: ProductsPageProps) => {
       <div className="relative">
         {/* Toolbar */}
         <div className="sticky-filter-bar products-filter-toolbar sticky flex items-center border-b border-border bg-background">
-          <div className={`mx-auto flex h-full w-full max-w-[1440px] items-center justify-between gap-2 px-4 sm:px-6 lg:px-8 ${isArabic ? 'flex-row-reverse' : ''}`}>
-            <div className={`flex items-center gap-2 ${isArabic ? 'flex-row-reverse' : ''}`}>
+          <div className="mx-auto flex h-full w-full max-w-[1440px] items-center justify-between gap-2 px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center gap-2">
               <Button
                 type="button"
                 variant="outline"
@@ -1328,7 +1328,7 @@ export const ProductsPage = ({ hidePageChrome = false }: ProductsPageProps) => {
                 onClick={handleToggleFilters}
                 aria-expanded={isMobileViewport ? isMobileFiltersOpen : isDesktopSidebarOpen}
                 aria-controls="products-filter-sidebar"
-                className={`gap-2 border-border text-foreground ${isArabic ? 'flex-row-reverse' : ''}`}
+                className="gap-2 border-border text-foreground"
               >
                 <SlidersHorizontal className="h-4 w-4" />
                 <span className="hidden md:inline">
@@ -1347,7 +1347,7 @@ export const ProductsPage = ({ hidePageChrome = false }: ProductsPageProps) => {
                     variant="outline"
                     size="sm"
                     aria-label={isArabic ? 'ترتيب المنتجات' : 'Sort products'}
-                    className={`gap-2 border-border text-foreground ${isArabic ? 'flex-row-reverse' : ''}`}
+                    className="gap-2 border-border text-foreground"
                   >
                     <span>{isArabic ? activeSortOption.shortLabelAr : activeSortOption.shortLabel}</span>
                     <ChevronDown className="h-4 w-4" />
@@ -1361,7 +1361,7 @@ export const ProductsPage = ({ hidePageChrome = false }: ProductsPageProps) => {
                       onClick={() => { setSortOrder(option.value); setSortOpen(false); }}
                       className={`flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ${
                         sortOrder === option.value ? 'bg-amber-600 text-white' : 'text-foreground hover:bg-muted'
-                      } ${isArabic ? 'flex-row-reverse' : ''}`}
+                      }`}
                     >
                       <span className={`flex-1 ${isArabic ? 'text-right' : 'text-left'}`}>{isArabic ? option.labelAr : option.label}</span>
                       {sortOrder === option.value && <Check className="h-4 w-4" />}
@@ -1375,7 +1375,7 @@ export const ProductsPage = ({ hidePageChrome = false }: ProductsPageProps) => {
               </span>
             </div>
 
-            <div className={`flex items-center gap-1 ${isArabic ? 'flex-row-reverse' : ''}`} role="group" aria-label={isArabic ? 'عدد أعمدة المنتجات' : 'Product grid columns'}>
+            <div className="flex items-center gap-1" role="group" aria-label={isArabic ? 'عدد أعمدة المنتجات' : 'Product grid columns'}>
               {[
                 { columns: 2 as const, icon: Grid2X2, label: isArabic ? 'شبكة بعمودين' : 'Two-column grid' },
                 { columns: 3 as const, icon: Grid3X3, label: isArabic ? 'شبكة بثلاثة أعمدة' : 'Three-column grid' },
@@ -1398,13 +1398,13 @@ export const ProductsPage = ({ hidePageChrome = false }: ProductsPageProps) => {
           </div>
         </div>
 
-        <div className={`mx-auto flex w-full max-w-[1440px] items-start gap-8 px-4 sm:px-6 lg:px-8 ${isArabic ? 'flex-row-reverse' : ''}`}>
+        <div className="mx-auto flex w-full max-w-[1440px] items-start gap-8 px-4 sm:px-6 lg:px-8">
           {/* Desktop sticky sidebar */}
           {isDesktopSidebarOpen && (
             <aside
               id="products-filter-sidebar"
               aria-label={isArabic ? 'تصفية المنتجات' : 'Product filters'}
-              className={`products-filter-sidebar hidden w-[300px] shrink-0 md:block ${isArabic ? 'md:border-s md:border-border' : 'md:border-e md:border-border'}`}
+              className="products-filter-sidebar hidden w-[300px] shrink-0 md:block md:border-e md:border-border"
             >
               <div className="flex items-center justify-between px-2 py-3">
                 <h2 className="text-sm font-semibold text-foreground">{isArabic ? 'الفلاتر' : 'Filters'}</h2>
@@ -1439,13 +1439,13 @@ export const ProductsPage = ({ hidePageChrome = false }: ProductsPageProps) => {
           {/* Products Grid */}
           <div className="products-results-container min-w-0 flex-1 py-8 md:py-10">
             {activeChips.length > 0 && (
-              <div className={`mb-6 flex flex-wrap items-center gap-2 ${isArabic ? 'flex-row-reverse' : ''}`}>
+              <div className="mb-6 flex flex-wrap items-center gap-2">
                 {activeChips.map((chip) => (
                   <button
                     key={chip.id}
                     type="button"
                     onClick={chip.onRemove}
-                    className={`inline-flex items-center gap-1.5 rounded-full border border-amber-600 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-800 transition-colors hover:bg-amber-100 ${isArabic ? 'flex-row-reverse' : ''}`}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-amber-600 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-800 transition-colors hover:bg-amber-100"
                   >
                     {chip.label}
                     <X className="h-3 w-3" />
@@ -1585,7 +1585,7 @@ export const ProductsPage = ({ hidePageChrome = false }: ProductsPageProps) => {
         {/* Mobile filter sheet */}
         <Sheet open={isMobileFiltersOpen} onOpenChange={setIsMobileFiltersOpen}>
           <SheetContent side="bottom" className="flex h-[92dvh] w-full flex-col gap-0 rounded-t-2xl p-0 sm:max-w-full">
-            <SheetHeader className={`flex-row items-center justify-between gap-2 border-b border-border p-4 text-start ${isArabic ? 'flex-row-reverse' : ''}`}>
+            <SheetHeader className="flex-row items-center justify-between gap-2 border-b border-border p-4 text-start">
               <SheetTitle>{isArabic ? 'الفلاتر' : 'Filters'}</SheetTitle>
               <SheetDescription className="sr-only">
                 {isArabic ? 'تصفية وترتيب قائمة المنتجات.' : 'Filter and refine the product list.'}

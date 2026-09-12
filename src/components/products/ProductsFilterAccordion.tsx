@@ -51,7 +51,7 @@ export const ProductsFilterAccordion: React.FC<ProductsFilterAccordionProps> = (
       {sections.map((section) => (
         <AccordionItem key={section.key} value={section.key} className="border-border px-4">
           <AccordionTrigger
-            className={`text-sm font-semibold text-foreground hover:no-underline ${isArabic ? 'flex-row-reverse text-right' : ''}`}
+            className={`text-sm font-semibold text-foreground hover:no-underline ${isArabic ? 'text-right' : ''}`}
           >
             {section.title}
           </AccordionTrigger>
@@ -72,7 +72,7 @@ export const ProductsFilterAccordion: React.FC<ProductsFilterAccordionProps> = (
                         disabled
                           ? 'cursor-not-allowed text-muted-foreground/50'
                           : 'cursor-pointer text-foreground hover:bg-muted'
-                      } ${isArabic ? 'flex-row-reverse text-right' : ''}`}
+                      }`}
                     >
                       <input
                         type="checkbox"
