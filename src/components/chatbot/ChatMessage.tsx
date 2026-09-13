@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Eye, PackageCheck, RotateCcw, ShoppingCart } from 'lucide-react';
 import { ProductCard } from './ProductCard';
 import { CoffeePassportCard } from './CoffeePassportCard';
+import { CoffeeReleaseAlertsCard } from './CoffeeAlertsChatCard';
 import { handleImageError } from '../../lib/imageUtils';
 import { useCart } from '../../hooks/useCart';
 import type { ChatMessage as ChatMessageType } from '../../services/geminiChatService';
@@ -149,6 +150,9 @@ export const ChatMessageComponent: React.FC<ChatMessageProps> = ({
   const displayText = getDisplayText(message.text, hasProducts, isAr);
   const quizQuestionText = message.quizQuestion ? (isAr ? message.quizQuestion.textAr : message.quizQuestion.textEn) : '';
   const shouldShowTextBubble = displayText.trim().length > 0 && displayText.trim() !== quizQuestionText.trim();
+  const shouldOfferCoffeeAlerts = message.openingActions?.some(
+    (action) => action.intent === '__build_bundle__' || action.intent === '__start_quiz__',
+  ) ?? false;
 
   if (isUser) {
     return (
@@ -170,7 +174,6 @@ export const ChatMessageComponent: React.FC<ChatMessageProps> = ({
   return (
     <div className="px-3 py-0.5 sm:px-4 sm:py-1">
       <div className={`flex items-start gap-2 ${isAr ? 'flex-row-reverse' : 'flex-row'}`}>
-        {/* Avatar */}
         <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-white p-1 shadow-sm ring-1 ring-[#f2ddd8] sm:h-8 sm:w-8">
           <img src={CHATBOT_LOGO} alt="SpiritHub Roastery" loading="lazy" decoding="async" className="h-full w-full rounded-full object-contain" />
         </div>
@@ -185,7 +188,6 @@ export const ChatMessageComponent: React.FC<ChatMessageProps> = ({
             </div>
           )}
 
-          {/* Product cards */}
           {hasProducts && (
             <div className="mt-1 flex flex-col gap-2.5">
               {uniqueProducts.map((product) => (
@@ -213,6 +215,10 @@ export const ChatMessageComponent: React.FC<ChatMessageProps> = ({
               isAr={isAr}
               onAction={onOpeningAction}
             />
+          )}
+
+          {shouldOfferCoffeeAlerts && (
+            <CoffeeReleaseAlertsCard language={language} regionPrefix={regionPrefix} />
           )}
 
           {message.bundle && (

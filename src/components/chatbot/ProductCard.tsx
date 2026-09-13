@@ -6,6 +6,7 @@ import { formatPrice as formatRegionalPrice, type RegionCode } from '../../lib/r
 import { useCart } from '../../hooks/useCart';
 import { chatbotIntentService } from '../../services/chatbotIntentService';
 import { getMeaningfulMatchLabel } from '../../lib/chatbotProductResults';
+import { BackInStockAlertButton } from './CoffeeAlertsChatCard';
 
 interface ProductCardProps {
   product: ChatProduct;
@@ -76,7 +77,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, regionPrefix,
 
   const minPrice = product.minPrice && product.minPrice > 0 ? product.minPrice : product.price;
   const hasDiscount = !!product.discountPrice && product.discountPrice > 0 && product.discountPrice < product.price;
-  const canQuickAdd = minPrice > 0;
+  const isExplicitlyOutOfStock = product.isInStock === false;
+  const canQuickAdd = minPrice > 0 && !isExplicitlyOutOfStock;
   const priceText = hasDiscount
     ? formatPrice(product.discountPrice as number)
     : formatPrice(minPrice);
@@ -191,6 +193,17 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, regionPrefix,
           </div>
         </div>
       </div>
+
+      {isExplicitlyOutOfStock && (
+        <div className="border-t border-[#f4e6e1] bg-[#fffaf7]/90 px-3 py-2">
+          <BackInStockAlertButton
+            productId={product.id}
+            productName={displayName}
+            language={language}
+            regionPrefix={regionPrefix}
+          />
+        </div>
+      )}
 
       <div className="flex items-center justify-between border-t border-[#f4e6e1] bg-[#fffaf7]/90 px-3 py-1.5">
         <Link
