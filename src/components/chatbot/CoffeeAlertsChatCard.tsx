@@ -12,7 +12,7 @@ const releaseOptions: Array<{ value: CoffeeReleaseFollowValue; en: string; ar: s
   { value: 'ethiopia', en: 'Ethiopian coffees', ar: 'القهوة الإثيوبية' },
   { value: 'colombia', en: 'Colombian coffees', ar: 'القهوة الكولومبية' },
   { value: 'yemen', en: 'Yemeni coffees', ar: 'القهوة اليمنية' },
-  { value: 'microlot', en: 'Microlots', ar: 'المايكرو لوت' },
+  { value: 'microlot', en: 'Microlots', ar: 'المحاصيل النادرة' },
 ];
 
 const getRegion = (regionPrefix: string) => regionPrefix.startsWith('/sa') ? 'sa' : 'om';
@@ -109,7 +109,7 @@ export const CoffeeReleaseAlertsCard: React.FC<{
         </span>
         <span className={`min-w-0 flex-1 ${isAr ? 'text-right' : ''}`}>
           <span className="block text-[12px] font-extrabold text-stone-900">
-            {isAr ? 'هل تريد تنبيهات القهوة؟' : 'Want coffee release alerts?'}
+            {isAr ? 'تابع أنواع القهوة المفضلة لديك' : 'Follow Your Favorite Coffees'}
           </span>
           <span className="block text-[10px] leading-relaxed text-stone-500">
             {isAr ? 'اختر ما تريد وسنرسل لك رسالة واتساب فقط عند وجود جديد.' : 'Choose what to follow and we will WhatsApp you only when there is something new.'}
