@@ -3,10 +3,27 @@ import type { ProductOption, ProductVariantMode } from '../types/productOptions'
 
 type ApiResponse<T> = { success: boolean; data?: T; message?: string; id?: number };
 
+export interface ProductOptionCombination {
+  id: number;
+  productVariantId: number;
+  combinationKey: string;
+  productOptionValueIds: number[];
+  displayOrder: number;
+  isActive: boolean;
+}
+
+export interface SaveProductOptionCombination {
+  productVariantId: number;
+  productOptionValueIds: number[];
+  displayOrder: number;
+  isActive: boolean;
+}
+
 export interface AdvancedProductOptionsResponse {
   productId: number;
   variantMode: 'Standard' | 'Advanced';
   options: ProductOption[];
+  combinations: ProductOptionCombination[];
 }
 
 export interface CreateProductOptionInput {
@@ -57,6 +74,11 @@ export const productOptionsService = {
     const payload = ensureSuccess(response.data, 'Failed to create option value');
     if (!payload.id) throw new Error('Option value ID was not returned');
     return payload.id;
+  },
+
+  saveCombinations: async (productId: number, combinations: SaveProductOptionCombination[]): Promise<void> => {
+    const response = await http.put<ApiResponse<never>>(`/api/products/${productId}/options/combinations`, { combinations });
+    ensureSuccess(response.data, 'Failed to save variant mappings');
   },
 
   setVariantSelections: async (productId: number, productVariantId: number, productOptionValueIds: number[]): Promise<void> => {
