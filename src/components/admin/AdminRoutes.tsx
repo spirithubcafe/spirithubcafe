@@ -26,6 +26,7 @@ import { CategoryEditPage } from '../../pages/CategoryEditPage';
 import { ProductAddPage } from '../../pages/ProductAddPage';
 import { ProductEditPage } from '../../pages/ProductEditPage';
 import { ProductAttributesPage } from '../../pages/ProductAttributesPage';
+import { ProductOptionsVariantsPage } from '../../pages/ProductOptionsVariantsPage';
 import { NoolDispatchQueue } from './NoolDispatchQueue';
 import { AIIntentReview } from './AIIntentReview';
 import { ChatbotMarketingDashboard } from './ChatbotMarketingDashboard';
@@ -42,6 +43,7 @@ export default function AdminRoutes() {
         <Route path="products/add" element={<ProductAddPage />} />
         <Route path="products/edit/:productId" element={<ProductEditPage />} />
         <Route path="products/:id/attributes" element={<ProductAttributesPage />} />
+        <Route path="products/:id/options-variants" element={<ProductOptionsVariantsPage />} />
         <Route path="product-tags" element={<ProductTagsManagement />} />
         <Route path="producers" element={<ProducersManagement />} />
         <Route path="stock" element={<StockManagement />} />
