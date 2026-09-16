@@ -48,6 +48,13 @@ export const ProductOptionsVariantsPage: React.FC = () => {
   const [values, setValues] = useState('');
 
   const generated = useMemo(() => buildCombinations(options), [options]);
+  const combinationCounts = useMemo(() => {
+    const counts: Record<number, number> = {};
+    savedCombinations.filter(item => item.isActive).forEach(item => {
+      counts[item.productVariantId] = (counts[item.productVariantId] || 0) + 1;
+    });
+    return counts;
+  }, [savedCombinations]);
 
   const hydrateMappings = (combinations: ProductOptionCombination[]) => {
     const next: Record<string, number> = {};
@@ -163,7 +170,18 @@ export const ProductOptionsVariantsPage: React.FC = () => {
         </>}
       </section>}
 
-      {tab === 'inventory' && <section style={card}><h2 style={{ marginTop: 0 }}>Inventory</h2><p style={{ color: '#6b7280' }}>Current variant stock remains authoritative.</p><div style={{ padding: 18, background: '#f9fafb', borderRadius: 10 }}>When several combinations map to the same existing variant, they already resolve to that same SKU/stock record. Dedicated shared inventory groups can be considered later only where a product needs inventory behavior beyond this mapping.</div></section>}
+      {tab === 'inventory' && <section style={card}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'flex-start', marginBottom: 16, flexWrap: 'wrap' }}><div><h2 style={{ margin: 0 }}>Inventory</h2><p style={{ color: '#6b7280', margin: '6px 0 0' }}>Read-only view. Existing ProductVariant SKU, price, weight and stock remain authoritative.</p></div><div style={{ padding: '7px 11px', borderRadius: 999, background: '#f3f4f6', color: '#4b5563', fontWeight: 700 }}>READ ONLY</div></div>
+        <div style={{ padding: 14, marginBottom: 16, background: '#faf8f5', border: '1px solid #e7e1dc', borderRadius: 10, color: '#5d3a2e' }}>Multiple customer combinations can share one existing variant. They therefore share the same SKU and stock record; no duplicate inventory is created here.</div>
+        {variants.length === 0 ? <div style={{ padding: 18, background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 10 }}>No existing ProductVariants are available for this product.</div> : <div style={{ display: 'grid', gap: 12 }}>{variants.slice().sort((a, b) => a.displayOrder - b.displayOrder || a.id - b.id).map(variant => {
+          const usedBy = combinationCounts[variant.id] || 0;
+          return <div key={variant.id} style={{ border: '1px solid #e5e7eb', borderRadius: 12, padding: 16, opacity: variant.isActive ? 1 : 0.65 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}><div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}><strong style={{ fontSize: 16 }}>{variant.variantSku}</strong>{variant.isDefault && <span style={{ padding: '4px 8px', borderRadius: 999, background: '#f3f4f6', color: '#4b5563', fontSize: 12, fontWeight: 700 }}>DEFAULT</span>}{!variant.isActive && <span style={{ padding: '4px 8px', borderRadius: 999, background: '#fef2f2', color: '#991b1b', fontSize: 12, fontWeight: 700 }}>INACTIVE</span>}</div><strong style={{ color: '#5d3a2e' }}>Stock {variant.stockQuantity}</strong></div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))', gap: 12, marginTop: 14 }}><div><div style={{ color: '#6b7280', fontSize: 12 }}>Price</div><div style={{ fontWeight: 600 }}>{money(variant.price)} OMR</div></div><div><div style={{ color: '#6b7280', fontSize: 12 }}>Weight</div><div style={{ fontWeight: 600 }}>{variant.weight} {variant.weightUnit}</div></div><div><div style={{ color: '#6b7280', fontSize: 12 }}>Low stock threshold</div><div style={{ fontWeight: 600 }}>{variant.lowStockThreshold}</div></div><div><div style={{ color: '#6b7280', fontSize: 12 }}>Used by</div><div style={{ fontWeight: 600 }}>{usedBy} customer {usedBy === 1 ? 'combination' : 'combinations'}</div></div></div>
+          </div>;
+        })}</div>}
+        <div style={{ marginTop: 16, color: '#6b7280', fontSize: 13 }}>To change stock, SKU, price or physical weight, continue using the existing Product Variant management. This Advanced Options inventory view intentionally does not write inventory data.</div>
+      </section>}
     </>}
   </div>;
 };
