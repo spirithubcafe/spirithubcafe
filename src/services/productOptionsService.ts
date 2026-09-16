@@ -56,6 +56,14 @@ export const productOptionsService = {
     return payload.data;
   },
 
+  /** Public, read-only storefront projection. No admin permission or write capability. */
+  getCatalog: async (productId: number): Promise<AdvancedProductOptionsResponse> => {
+    const response = await http.get<ApiResponse<AdvancedProductOptionsResponse>>(`/api/products/${productId}/option-catalog`);
+    const payload = ensureSuccess(response.data, 'Failed to load product option catalog');
+    if (!payload.data) throw new Error('Product option catalog response was empty');
+    return payload.data;
+  },
+
   setMode: async (productId: number, mode: ProductVariantMode): Promise<void> => {
     const variantMode = mode === 'advanced' ? 'Advanced' : 'Standard';
     const response = await http.put<ApiResponse<never>>(`/api/products/${productId}/options/mode`, { variantMode });
@@ -64,14 +72,14 @@ export const productOptionsService = {
 
   createOption: async (productId: number, input: CreateProductOptionInput): Promise<number> => {
     const response = await http.post<ApiResponse<never>>(`/api/products/${productId}/options`, input);
-    const payload = ensureSuccess(response.data, 'Failed to create option');
+    const payload = ensureSuccess(response.data, 'Failed to create product option');
     if (!payload.id) throw new Error('Option ID was not returned');
     return payload.id;
   },
 
   createValue: async (productId: number, optionId: number, input: CreateProductOptionValueInput): Promise<number> => {
     const response = await http.post<ApiResponse<never>>(`/api/products/${productId}/options/${optionId}/values`, input);
-    const payload = ensureSuccess(response.data, 'Failed to create option value');
+    const payload = ensureSuccess(response.data, 'Failed to create product option value');
     if (!payload.id) throw new Error('Option value ID was not returned');
     return payload.id;
   },
