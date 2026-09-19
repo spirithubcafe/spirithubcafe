@@ -22,6 +22,7 @@ import { initGA4, trackPageView } from './lib/ga4';
 import { initBodyScrollbars } from './lib/scrollbars';
 import { useApp } from './hooks/useApp';
 import { useCart } from './hooks/useCart';
+import { isMarketingCampaignRouteEligible } from './types/publicMarketingCampaign';
 import './i18n';
 import './App.css';
 
@@ -63,6 +64,7 @@ const NotFound = lazy(() => import('./components/pages/NotFound').then((m) => ({
 const MobileBottomNav = lazy(() => import('./components/layout/MobileBottomNav').then((m) => ({ default: m.MobileBottomNav })));
 const CartDrawer = lazy(() => import('./components/cart/CartDrawer').then((m) => ({ default: m.CartDrawer })));
 const ChatBot = lazy(() => import('./components/chatbot/ChatBot').then((m) => ({ default: m.ChatBot })));
+const MarketingCampaignHost = lazy(() => import('./components/marketing/MarketingCampaignHost'));
 const DEBUG_AUTH = import.meta.env.DEV && import.meta.env.VITE_DEBUG_AUTH === 'true';
 
 const DeferredCartDrawer = () => {
@@ -205,7 +207,9 @@ const useDeferredChatBotReady = (enabled: boolean) => {
 
 function AppContent() {
   const location = useLocation();
+  const [isBrowserReady, setIsBrowserReady] = useState(false);
   const isAdminPage = location.pathname.includes('/admin');
+  const isCampaignRoute = isMarketingCampaignRouteEligible(location.pathname);
   const isInvoicePage = location.pathname.startsWith('/invoice/');
   const normalizedPath = location.pathname.replace(/\/+$/, '') || '/';
   const isProductsPage = /^\/(?:(?:om|sa)\/)?products$/.test(normalizedPath);
@@ -216,6 +220,10 @@ function AppContent() {
   const chatBotEnabled =
     !isInvoicePage && !isAdminPage && (import.meta.env.VITE_CHATBOT_ENABLED ?? 'false') === 'true';
   const chatBotReady = useDeferredChatBotReady(chatBotEnabled);
+
+  useEffect(() => {
+    setIsBrowserReady(true);
+  }, []);
 
   // Initialize visitor tracking on app load
   useEffect(() => {
@@ -262,6 +270,13 @@ function AppContent() {
         </>
       )}
       {!isInvoicePage && !isAdminPage && <ScrollToTop />}
+      {isBrowserReady && isCampaignRoute && (
+        <ErrorBoundary fallback={null}>
+          <Suspense fallback={null}>
+            <MarketingCampaignHost />
+          </Suspense>
+        </ErrorBoundary>
+      )}
       {chatBotEnabled && chatBotReady && (
         <Suspense fallback={null}>
           <ChatBot />

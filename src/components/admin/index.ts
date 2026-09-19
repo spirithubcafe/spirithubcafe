@@ -21,3 +21,7 @@ export { WhatsAppTemplateEditor } from './WhatsAppTemplateEditor';
 export { ReviewsManagement } from './ReviewsManagement';
 export { ProductTagsManagement } from './ProductTagsManagement';
 export { ProductTagSelector } from './ProductTagSelector';
+export { MarketingCampaignsManagement } from './MarketingCampaignsManagement';
+export { MarketingCampaignEditor } from './MarketingCampaignEditor';
+export { MarketingCampaignAnalytics } from './MarketingCampaignAnalytics';
+export { MarketingCampaignPreview } from './MarketingCampaignPreview';

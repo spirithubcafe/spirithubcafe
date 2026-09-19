@@ -4,7 +4,7 @@ import { FileText, Globe, RefreshCw, RotateCcw, Save, Search, ShieldAlert } from
 import { useApp } from '../../hooks/useApp';
 import { useRegion } from '../../hooks/useRegion';
 import { useAuth } from '../../hooks/useAuth';
-import { safeStorage } from '../../lib/safeStorage';
+import { getPermissionsFromToken } from '../../lib/authPermissions';
 import type { RegionCode } from '../../contexts/RegionContextDefinition';
 import type { EmailMessageTemplate } from '../../types/emailTemplate';
 import { emailTemplateService } from '../../services/emailTemplateService';
@@ -15,33 +15,6 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
 import { Switch } from '../ui/switch';
-
-const getPermissionsFromToken = (): string[] => {
-  const token = safeStorage.getItem('accessToken');
-  if (!token) return [];
-
-  try {
-    const payload = JSON.parse(atob(token.split('.')[1])) as Record<string, unknown>;
-    const candidates = [
-      payload.permission,
-      payload.permissions,
-      payload.scope,
-      payload.scp,
-      payload['http://schemas.microsoft.com/ws/2008/06/identity/claims/permission'],
-    ];
-
-    const values = candidates.flatMap((value) => {
-      if (!value) return [];
-      if (Array.isArray(value)) return value.map(String);
-      if (typeof value === 'string') return value.split(/[,\s]+/).filter(Boolean);
-      return [];
-    });
-
-    return Array.from(new Set(values));
-  } catch {
-    return [];
-  }
-};
 
 export const EmailTemplatesManagement: React.FC = () => {
   const { language } = useApp();

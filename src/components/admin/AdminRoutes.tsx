@@ -29,6 +29,8 @@ import { ProductAttributesPage } from '../../pages/ProductAttributesPage';
 import { NoolDispatchQueue } from './NoolDispatchQueue';
 import { AIIntentReview } from './AIIntentReview';
 import { ChatbotMarketingDashboard } from './ChatbotMarketingDashboard';
+import { MarketingCampaignsManagement } from './MarketingCampaignsManagement';
+import { MarketingCampaignEditor } from './MarketingCampaignEditor';
 
 export default function AdminRoutes() {
   return (
@@ -51,6 +53,9 @@ export default function AdminRoutes() {
         <Route path="nool-dispatch" element={<NoolDispatchQueue />} />
         <Route path="ai-intent-review" element={<AIIntentReview />} />
         <Route path="chatbot-marketing" element={<ChatbotMarketingDashboard />} />
+        <Route path="campaigns" element={<MarketingCampaignsManagement />} />
+        <Route path="campaigns/new" element={<MarketingCampaignEditor />} />
+        <Route path="campaigns/:campaignId/edit" element={<MarketingCampaignEditor />} />
         <Route path="reviews" element={<ReviewsManagement />} />
         <Route path="wholesale-orders" element={<WholesaleOrdersManagement />} />
         <Route path="newsletter" element={<NewsletterManagement />} />

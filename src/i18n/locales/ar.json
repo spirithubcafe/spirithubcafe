@@ -1,4 +1,18 @@
 {
+  "marketingCampaign": {
+    "emailLabel": "البريد الإلكتروني",
+    "emailPlaceholder": "you@example.com",
+    "invalidEmail": "يرجى إدخال بريد إلكتروني صالح.",
+    "submitError": "تعذر إرسال الطلب. يرجى المحاولة مرة أخرى.",
+    "descriptionFallback": "انضم إلينا لمعرفة الأخبار وعروض القهوة المختارة بعناية.",
+    "discountCode": "رمزك",
+    "discountValue": "الخصم",
+    "minimumOrder": "الحد الأدنى للطلب",
+    "copyCode": "نسخ الرمز",
+    "copied": "تم النسخ",
+    "displayOnly": "احتفظ بهذا الرمز لاستخدامه لاحقاً. لم يتم تطبيقه عند الدفع.",
+    "done": "تم"
+  },
   "nav": {
     "home": "الرئيسية",
     "products": "المحاصيل",
@@ -285,6 +299,7 @@
       "viewFile": "فتح الملف"
     },
     "navGroups": {
+      "marketing": "التسويق",
       "overview": "نظرة عامة",
       "management": "الإدارة",
       "operations": "العمليات"
@@ -307,6 +322,23 @@
     "newsletter": {
       "title": "النشرة البريدية",
       "description": "إدارة مشتركي النشرة البريدية وإرسال الحملات"
+    },
+    "marketingCampaigns": {
+      "title": "الحملات التسويقية", "description": "إنشاء وجدولة وإدارة حملات المتجر", "newCampaign": "حملة جديدة", "editCampaign": "تعديل الحملة", "editorDescription": "إعداد محتوى الحملة والاستهداف والعرض والجدول.",
+      "search": "البحث في الحملات", "allTypes": "كل أنواع الحملات", "campaign": "الحملة", "type": "نوع الحملة", "statusLabel": "الحالة", "schedule": "الجدول", "priority": "الأولوية", "actions": "الإجراءات", "edit": "تعديل", "analytics": "التحليلات", "activate": "تفعيل", "deactivate": "إلغاء التفعيل", "archive": "أرشفة", "cancel": "إلغاء", "save": "حفظ الحملة", "refresh": "تحديث", "retry": "إعادة المحاولة",
+      "empty": "لا توجد حملات تطابق عوامل التصفية.", "loadError": "تعذر تحميل الحملات", "loadOneError": "تعذر تحميل الحملة", "actionError": "تعذر تحديث الحملة.", "saveError": "تعذر حفظ الحملة.", "createSuccess": "تم إنشاء الحملة بنجاح.", "updateSuccess": "تم تحديث الحملة بنجاح.", "activateSuccess": "تم تفعيل الحملة.", "deactivateSuccess": "تم إلغاء تفعيل الحملة.", "archiveSuccess": "تمت أرشفة الحملة.",
+      "activateConfirmTitle": "تفعيل هذه الحملة؟", "deactivateConfirmTitle": "إلغاء تفعيل هذه الحملة؟", "archiveConfirmTitle": "أرشفة هذه الحملة؟", "archiveConfirmDescription": "ستتوقف الحملة عن الظهور، مع الاحتفاظ بسجل الإرسالات والتحليلات.",
+      "notAuthorized": "غير مصرح", "permissionRequired": "يلزم تصريح MarketingCampaigns.Manage للوصول إلى هذه الصفحة.", "archivedReadOnly": "الحملات المؤرشفة للقراءة فقط.",
+      "name": "اسم الحملة", "active": "نشطة", "adminPreview": "معاينة المشرف فقط", "headline": "العنوان", "emailPlaceholder": "نص البريد الإلكتروني", "contentDescription": "الوصف", "buttonText": "نص الزر", "closeText": "نص الإغلاق", "successTitle": "عنوان النجاح", "successMessage": "رسالة النجاح", "successButtonText": "نص زر النجاح", "termsText": "نص الشروط", "discountNoticeTitle": "تكامل الدفع غير مفعل", "discountNotice": "رموز الخصم هي إعداد للحملة فقط حالياً. استخدام الخصم عند الدفع غير مفعل بعد.", "discountType": "نوع الخصم", "discountValue": "قيمة الخصم", "discountCode": "رمز الخصم", "minimumOrder": "الحد الأدنى للطلب", "newCustomersOnly": "للعملاء الجدد فقط", "none": "بدون",
+      "targetAllPages": "استهداف كل الصفحات", "targetAllPagesHelp": "عند التفعيل تكون الحملة مؤهلة لكل مسارات المتجر.", "targetPattern": "نمط الصفحة المستهدفة", "targetPatternHelp": "يدعم التطابق البسيط بالرمز *. استخدم مساراً نسبياً؛ التعبيرات النمطية غير مدعومة.",
+      "desktopEnabled": "مفعل على سطح المكتب", "mobileEnabled": "مفعل على الهاتف", "triggerType": "نوع المشغل", "delaySeconds": "ثواني التأخير", "scrollPercentage": "نسبة التمرير", "exitIntent": "تفعيل نية المغادرة", "exitIntentHelp": "ستستخدم مرحلة واجهة المتجر العامة هذا الإعداد للاستجابة لنية المغادرة.", "frequencyDays": "أيام التكرار", "frequencyHelp": "0 يعني عدم وجود منع لعدة أيام. سيسري هذا الإعداد عند تفعيل تتبع الزائر في مرحلة الحملة العامة.",
+      "startDate": "تاريخ ووقت البدء", "endDate": "تاريخ ووقت الانتهاء", "scheduleHelp": "تُدخل التواريخ بتوقيتك المحلي وتُحفظ في الخادم بتوقيت UTC. اترك أي حقل فارغاً لعدم وضع حد.",
+      "views": "المشاهدات", "uniqueViews": "المشاهدات الفريدة", "submissions": "الإرسالات", "submissionRate": "معدل الإرسال", "ctaClicks": "نقرات الإجراء", "discountReveals": "إظهار الخصم", "closes": "الإغلاقات", "analyticsDescription": "المقاييس التي توفرها واجهة تحليلات الحملة.", "analyticsLoadError": "تعذر تحميل تحليلات الحملة",
+      "tabs": { "general": "عام", "content": "المحتوى", "offer": "العرض", "targeting": "الاستهداف", "display": "العرض المرئي", "schedule": "الجدول", "analytics": "التحليلات" },
+      "status": { "all": "كل الحالات", "active": "نشطة", "inactive": "غير نشطة", "scheduled": "مجدولة", "ended": "منتهية", "archived": "مؤرشفة" },
+      "types": { "NEWSLETTER": "النشرة البريدية", "FIRST_ORDER_DISCOUNT": "خصم الطلب الأول" },
+      "discountTypes": { "PERCENTAGE": "نسبة مئوية", "FIXED_AMOUNT": "مبلغ ثابت" },
+      "triggerTypes": { "DELAY": "تأخير", "SCROLL": "تمرير" }
     },
     "whatsapp": {
       "sendTitle": "رسالة واتساب",

@@ -14,6 +14,8 @@ import {
 import { profileService } from '../../services/profileService';
 import type { UserProfile as UserProfileType } from '../../services/profileService';
 import { getProfilePictureUrl } from '../../lib/profileUtils';
+import { hasPermission } from '../../lib/authPermissions';
+import { MARKETING_CAMPAIGN_PERMISSION } from '../../types/marketingCampaign';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Separator } from '../ui/separator';
@@ -66,6 +68,7 @@ import {
   Truck,
   Bot,
   Boxes,
+  Megaphone,
 } from 'lucide-react';
 
 interface AdminNavItem {
@@ -371,6 +374,14 @@ export const AdminLayout: React.FC = () => {
       roles: ['Admin', 'Manager'],
     },
     {
+      id: 'campaigns',
+      label: t('admin.marketingCampaigns.title'),
+      description: t('admin.marketingCampaigns.description'),
+      icon: Megaphone,
+      path: '/admin/campaigns',
+      roles: ['Admin', 'Administrator', 'Manager'],
+    },
+    {
       id: 'newsletter',
       label: t('admin.newsletter.title') || 'Newsletter',
       description: t('admin.newsletter.description') || 'Manage newsletter subscribers',
@@ -485,9 +496,10 @@ export const AdminLayout: React.FC = () => {
     },
   ];
 
-  const availableNavItems = navItems.filter((item) =>
-    item.roles.some((role) => hasRole(role))
-  );
+  const availableNavItems = navItems.filter((item) => {
+    if (item.id === 'campaigns') return hasPermission(MARKETING_CAMPAIGN_PERMISSION, user.roles);
+    return item.roles.some((role) => hasRole(role));
+  });
 
   const navGroups: AdminNavGroup[] = [
     {
@@ -503,10 +515,17 @@ export const AdminLayout: React.FC = () => {
       ),
     },
     {
+      id: 'marketing',
+      label: t('admin.navGroups.marketing'),
+      items: availableNavItems.filter((item) =>
+        ['campaigns', 'newsletter', 'chatbotMarketing'].includes(item.id)
+      ),
+    },
+    {
       id: 'operations',
       label: t('admin.navGroups.operations'),
       items: availableNavItems.filter((item) =>
-        ['orders', 'noolDispatch', 'aiIntentReview', 'chatbotMarketing', 'wholesaleOrders', 'newsletter', 'emailSettings', 'emailNotificationSettings', 'emailTemplates', 'whatsappActivation', 'whatsappSend', 'whatsappNotificationSettings', 'whatsappTemplates', 'reports', 'system', 'seo'].includes(item.id)
+        ['orders', 'noolDispatch', 'aiIntentReview', 'wholesaleOrders', 'emailSettings', 'emailNotificationSettings', 'emailTemplates', 'whatsappActivation', 'whatsappSend', 'whatsappNotificationSettings', 'whatsappTemplates', 'reports', 'system', 'seo'].includes(item.id)
       ),
     },
   ].filter((group) => group.items.length > 0);

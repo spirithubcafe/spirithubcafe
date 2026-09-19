@@ -1,4 +1,18 @@
 {
+  "marketingCampaign": {
+    "emailLabel": "Email address",
+    "emailPlaceholder": "you@example.com",
+    "invalidEmail": "Please enter a valid email address.",
+    "submitError": "Unable to submit. Please try again.",
+    "descriptionFallback": "Join us for news and carefully selected coffee offers.",
+    "discountCode": "Your code",
+    "discountValue": "Discount",
+    "minimumOrder": "Minimum order amount",
+    "copyCode": "Copy code",
+    "copied": "Copied",
+    "displayOnly": "Save this code for later. It has not been applied to checkout.",
+    "done": "Done"
+  },
   "nav": {
     "home": "Home",
     "products": "Our Coffee",
@@ -212,6 +226,7 @@
       "viewFile": "Open file"
     },
     "navGroups": {
+      "marketing": "Marketing",
       "overview": "Overview",
       "management": "Management",
       "operations": "Operations"
@@ -234,6 +249,23 @@
     "newsletter": {
       "title": "Newsletter",
       "description": "Manage newsletter subscribers and send campaigns"
+    },
+    "marketingCampaigns": {
+      "title": "Marketing Campaigns", "description": "Create, schedule, and manage storefront campaigns", "newCampaign": "New Campaign", "editCampaign": "Edit Campaign", "editorDescription": "Configure campaign content, eligibility, display, and schedule.",
+      "search": "Search campaigns", "allTypes": "All campaign types", "campaign": "Campaign", "type": "Campaign type", "statusLabel": "Status", "schedule": "Schedule", "priority": "Priority", "actions": "Actions", "edit": "Edit", "analytics": "Analytics", "activate": "Activate", "deactivate": "Deactivate", "archive": "Archive", "cancel": "Cancel", "save": "Save campaign", "refresh": "Refresh", "retry": "Retry",
+      "empty": "No campaigns match the current filters.", "loadError": "Unable to load campaigns", "loadOneError": "Unable to load this campaign", "actionError": "Unable to update the campaign.", "saveError": "Unable to save the campaign.", "createSuccess": "Marketing campaign created successfully.", "updateSuccess": "Marketing campaign updated successfully.", "activateSuccess": "Campaign activated.", "deactivateSuccess": "Campaign deactivated.", "archiveSuccess": "Campaign archived.",
+      "activateConfirmTitle": "Activate this campaign?", "deactivateConfirmTitle": "Deactivate this campaign?", "archiveConfirmTitle": "Archive this campaign?", "archiveConfirmDescription": "The campaign will stop displaying, but its submissions and analytics history will be preserved.",
+      "notAuthorized": "Not authorized", "permissionRequired": "MarketingCampaigns.Manage permission is required to access this page.", "archivedReadOnly": "Archived campaigns are read-only.",
+      "name": "Campaign name", "active": "Active", "adminPreview": "Admin preview only", "headline": "Headline", "emailPlaceholder": "Email placeholder", "contentDescription": "Description", "buttonText": "Button text", "closeText": "Close text", "successTitle": "Success title", "successMessage": "Success message", "successButtonText": "Success button text", "termsText": "Terms text", "discountNoticeTitle": "Checkout integration is not enabled", "discountNotice": "Discount codes are currently campaign configuration only. Checkout redemption is not enabled yet.", "discountType": "Discount type", "discountValue": "Discount value", "discountCode": "Discount code", "minimumOrder": "Minimum order amount", "newCustomersOnly": "New customers only", "none": "None",
+      "targetAllPages": "Target all pages", "targetAllPagesHelp": "When enabled, the campaign is eligible on every storefront path.", "targetPattern": "Target page pattern", "targetPatternHelp": "Simple * wildcard matching is supported. Use a relative path; regular expressions are not supported.",
+      "desktopEnabled": "Desktop enabled", "mobileEnabled": "Mobile enabled", "triggerType": "Trigger type", "delaySeconds": "Trigger delay seconds", "scrollPercentage": "Scroll percentage", "exitIntent": "Exit intent enabled", "exitIntentHelp": "The public storefront phase will use this setting to respond to exit intent.", "frequencyDays": "Frequency days", "frequencyHelp": "0 means no multi-day suppression. This setting will take effect when visitor tracking is enabled on the storefront in the public campaign phase.",
+      "startDate": "Start date/time", "endDate": "End date/time", "scheduleHelp": "Dates are entered in your local time and saved to the backend as UTC. Leave either field empty for no boundary.",
+      "views": "Views", "uniqueViews": "Unique views", "submissions": "Submissions", "submissionRate": "Submission rate", "ctaClicks": "CTA clicks", "discountReveals": "Discount reveals", "closes": "Closes", "analyticsDescription": "Metrics reported by the campaign analytics API.", "analyticsLoadError": "Unable to load campaign analytics",
+      "tabs": { "general": "General", "content": "Content", "offer": "Offer", "targeting": "Targeting", "display": "Display", "schedule": "Schedule", "analytics": "Analytics" },
+      "status": { "all": "All statuses", "active": "Active", "inactive": "Inactive", "scheduled": "Scheduled", "ended": "Ended", "archived": "Archived" },
+      "types": { "NEWSLETTER": "Newsletter", "FIRST_ORDER_DISCOUNT": "First order discount" },
+      "discountTypes": { "PERCENTAGE": "Percentage", "FIXED_AMOUNT": "Fixed amount" },
+      "triggerTypes": { "DELAY": "Delay", "SCROLL": "Scroll" }
     },
     "whatsapp": {
       "sendTitle": "WhatsApp Message",
