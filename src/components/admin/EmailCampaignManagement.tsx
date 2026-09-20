@@ -15,6 +15,7 @@ import { Textarea } from '../ui/textarea';
 import { Checkbox } from '../ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { emailService } from '../../services/emailService';
+import { EmailBlockDesigner } from './EmailBlockDesigner';
 
 const STORAGE_KEY = 'admin.email-campaigns.v1';
 
@@ -47,6 +48,7 @@ export const EmailCampaignManagement: React.FC = () => {
   const [scheduleAt, setScheduleAt] = useState('');
   const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile' | 'dark'>('desktop');
   const [sourceMode, setSourceMode] = useState(false);
+  const [designerMode, setDesignerMode] = useState(true);
   const editorRef = useRef<HTMLDivElement>(null);
   const [campaigns, setCampaigns] = useState<CampaignRecord[]>(readCampaigns);
   const [notice, setNotice] = useState<string | null>(null);
@@ -186,7 +188,7 @@ export const EmailCampaignManagement: React.FC = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Email Management System</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Email Management &amp; Designer</h1>
         <p className="text-muted-foreground">Create newsletters, send to active subscribers, and review delivery results.</p>
       </div>
 
@@ -231,7 +233,12 @@ export const EmailCampaignManagement: React.FC = () => {
               <div className="space-y-2"><Label>Preview Text *</Label><Input value={previewText} onChange={(e) => setPreviewText(e.target.value)} placeholder="Inbox preview text" /></div>
               <div className="space-y-2">
                 <Label>Message *</Label>
-                <div className="overflow-hidden rounded-lg border border-indigo-400">
+                <div className="flex flex-wrap gap-2">
+                  <Button type="button" size="sm" variant={designerMode ? 'default' : 'outline'} onClick={() => setDesignerMode(true)}>Visual Designer</Button>
+                  <Button type="button" size="sm" variant={!designerMode ? 'default' : 'outline'} onClick={() => setDesignerMode(false)}>HTML Editor</Button>
+                </div>
+                <div className={designerMode ? '' : 'hidden'}><EmailBlockDesigner value={htmlBody} onChange={setHtmlBody} /></div>
+                <div className={designerMode ? 'hidden' : 'overflow-hidden rounded-lg border border-indigo-400'}>
                   <div className="flex flex-wrap items-center gap-1 border-b bg-muted/50 p-2">
                     <EditorButton label="<>" title="HTML source" onClick={toggleSource} active={sourceMode} />
                     <EditorButton label="↶" title="Undo" onClick={() => runEditorCommand('undo')} />

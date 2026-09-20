@@ -66,6 +66,7 @@ export type FolderType =
   | 'banners' 
   | 'users' 
   | 'brands' 
+  | 'newsletters'
   | 'documents' 
   | 'temp';
 
