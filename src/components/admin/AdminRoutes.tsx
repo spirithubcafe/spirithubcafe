@@ -13,6 +13,7 @@ import { NewsletterManagement } from './NewsletterManagement';
 import { EmailSettingsManagement } from './EmailSettingsManagement';
 import { EmailNotificationSettingsManagement } from './EmailNotificationSettingsManagement';
 import { EmailTemplatesManagement } from './EmailTemplatesManagement';
+import { EmailCampaignManagement } from './EmailCampaignManagement';
 import { ReviewsManagement } from './ReviewsManagement';
 import { WhatsAppSendMessage } from './WhatsAppSendMessage';
 import { WhatsAppActivationManagement } from './WhatsAppActivationManagement';
@@ -59,6 +60,7 @@ export default function AdminRoutes() {
         <Route path="reviews" element={<ReviewsManagement />} />
         <Route path="wholesale-orders" element={<WholesaleOrdersManagement />} />
         <Route path="newsletter" element={<NewsletterManagement />} />
+        <Route path="email-management" element={<EmailCampaignManagement />} />
         <Route path="email-settings" element={<EmailSettingsManagement />} />
         <Route path="email-notification-settings" element={<EmailNotificationSettingsManagement />} />
         <Route path="email-templates" element={<EmailTemplatesManagement />} />

@@ -390,6 +390,17 @@ export const AdminLayout: React.FC = () => {
       roles: ['Admin', 'Manager'],
     },
     {
+      id: 'emailManagement',
+      label: isArabic ? 'إدارة حملات البريد' : 'Email Management',
+      description: isArabic
+        ? 'إنشاء وإرسال حملات البريد الجماعية ومراجعة نتائج التسليم'
+        : 'Create bulk newsletter campaigns and review delivery results',
+      icon: Megaphone,
+      path: '/admin/email-management',
+      roles: ['Admin'],
+      badge: 'NEW',
+    },
+    {
       id: 'emailSettings',
       label: t('admin.emailSettings.title') || (isArabic ? 'إعدادات البريد الإلكتروني' : 'Email Settings'),
       description:
@@ -518,7 +529,7 @@ export const AdminLayout: React.FC = () => {
       id: 'marketing',
       label: t('admin.navGroups.marketing'),
       items: availableNavItems.filter((item) =>
-        ['campaigns', 'newsletter', 'chatbotMarketing'].includes(item.id)
+        ['campaigns', 'newsletter', 'emailManagement', 'chatbotMarketing'].includes(item.id)
       ),
     },
     {
