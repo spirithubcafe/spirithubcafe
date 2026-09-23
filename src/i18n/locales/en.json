@@ -698,6 +698,25 @@
     "addBillingInfo": "Add Billing Information",
     "loginMessage": "Please log in to manage payment methods"
   },
+  "customBundle": {
+    "eyebrow": "Build your own bundle",
+    "title": "Choose your coffees",
+    "subtitle": "Mix eligible coffees and sizes. Your savings and complimentary cups are confirmed live by SpiritHub.",
+    "open": "Start building",
+    "close": "Close builder",
+    "choose": "Choose your coffees",
+    "progress": "{{count}} / {{max}} bags selected",
+    "addSecond": "Add a second bag to unlock your first bundle benefit.",
+    "selectHint": "Select an available size for each coffee.",
+    "benefit": "Save {{discount}}% + {{gifts}} complimentary cups",
+    "coffeeSubtotal": "Coffee subtotal",
+    "savings": "Bundle savings",
+    "bundleSubtotal": "Bundle subtotal",
+    "add": "Add bundle",
+    "added": "Custom bundle added to your cart",
+    "complimentary": "Complimentary",
+    "remove": "Remove bundle"
+  },
   "loading": "Loading...",
   "error": "Something went wrong"
 }

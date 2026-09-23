@@ -67,6 +67,8 @@ interface OrderDetailsDto {
   taxAmount: number;
   shippingCost: number;
   totalAmount: number;
+  bundleDiscountAmount?: number;
+  customBundles?: Order['customBundles'];
   giftCardCode?: string;
   giftCardAmountApplied?: number;
   giftCardRedemptionApplied?: boolean;
@@ -106,6 +108,13 @@ interface OrderDetailsDto {
     taxPercentage: number;
     taxAmount: number;
     totalAmount: number;
+    merchandiseSubtotal?: number;
+    couponDiscountAmount?: number;
+    discountedTaxableSubtotal?: number;
+    bundleDiscountAmount?: number;
+    postBundleSubtotal?: number;
+    couponEligible?: boolean;
+    referenceUnitPrice?: number;
   }>;
   payments?: Array<{
     orderId: string;

@@ -10,6 +10,7 @@
     "serve": "NODE_ENV=production node server.js",
     "lint": "eslint .",
     "test:chatbot": "node --experimental-strip-types --test src/services/chatbotAssistantResolver.test.ts src/lib/chatbotProductResults.test.ts",
+    "test:custom-bundle": "node --experimental-strip-types --test src/lib/customBundle.test.ts",
     "preview": "vite preview"
   },
   "dependencies": {

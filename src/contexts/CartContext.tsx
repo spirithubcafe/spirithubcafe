@@ -4,6 +4,8 @@ import { useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import { CartContext, type CartItem, type CartContextType } from './CartContextDefinition';
 import { clampQuantity, DEFAULT_MAX_QUANTITY } from '../lib/stockUtils';
+import type { CartCustomBundle } from '../types/customBundle';
+import { parseStoredBundles } from '../lib/customBundle';
 
 interface CartProviderProps {
   children: ReactNode;
@@ -18,6 +20,7 @@ const getRegionFromPath = (pathname: string): string => {
 
 // Helper function to get cart storage key for specific region
 const getCartStorageKey = (regionCode: string) => `spirithub_cart_${regionCode}`;
+const getBundleStorageKey = (regionCode: string) => `spirithub_custom_bundles_${regionCode}`;
 
 // Helper function to load cart from localStorage
 const loadCartFromStorage = (regionCode: string): CartItem[] => {
@@ -46,6 +49,9 @@ const saveCartToStorage = (regionCode: string, items: CartItem[]): void => {
   }
 };
 
+const loadBundlesFromStorage = (regionCode: string) =>
+  parseStoredBundles(localStorage.getItem(getBundleStorageKey(regionCode)));
+
 export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
   // Get region directly from URL using useLocation - this is the source of truth
   const location = useLocation();
@@ -55,9 +61,11 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
   const activeRegionRef = useRef<string>(currentRegionCode);
   // Track what was last saved to prevent duplicate saves
   const lastSavedRef = useRef<{ region: string; itemsHash: string }>({ region: '', itemsHash: '' });
+  const lastSavedBundlesRef = useRef<{ region: string; bundlesHash: string }>({ region: '', bundlesHash: '' });
   const hasHydratedCartRef = useRef(false);
   
   const [items, setItems] = useState<CartItem[]>([]);
+  const [customBundles, setCustomBundles] = useState<CartCustomBundle[]>([]);
   
   const [isOpen, setIsOpen] = useState(false);
 
@@ -68,6 +76,9 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     lastSavedRef.current = { region: currentRegionCode, itemsHash };
     hasHydratedCartRef.current = true;
     setItems(loadedItems);
+    const loadedBundles = loadBundlesFromStorage(currentRegionCode);
+    lastSavedBundlesRef.current = { region: currentRegionCode, bundlesHash: JSON.stringify(loadedBundles) };
+    setCustomBundles(loadedBundles);
   }, []);
 
   // Handle region changes - load cart for new region
@@ -92,6 +103,9 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     lastSavedRef.current = { region: currentRegionCode, itemsHash };
     
     setItems(loadedItems);
+    const loadedBundles = loadBundlesFromStorage(currentRegionCode);
+    lastSavedBundlesRef.current = { region: currentRegionCode, bundlesHash: JSON.stringify(loadedBundles) };
+    setCustomBundles(loadedBundles);
   }, [currentRegionCode]);
 
   // Save cart to localStorage whenever items change
@@ -119,6 +133,18 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     
     saveCartToStorage(currentRegionCode, items);
   }, [items, currentRegionCode]);
+
+  useEffect(() => {
+    if (!hasHydratedCartRef.current || activeRegionRef.current !== currentRegionCode) return;
+    const bundlesHash = JSON.stringify(customBundles);
+    if (lastSavedBundlesRef.current.region === currentRegionCode && lastSavedBundlesRef.current.bundlesHash === bundlesHash) return;
+    try {
+      localStorage.setItem(getBundleStorageKey(currentRegionCode), bundlesHash);
+      lastSavedBundlesRef.current = { region: currentRegionCode, bundlesHash };
+    } catch {
+      // Storage is optional; the in-memory cart remains usable.
+    }
+  }, [customBundles, currentRegionCode]);
 
   const addToCart = useCallback((newItem: Omit<CartItem, 'quantity'>, requestedQty: number = 1) => {
     setItems(prevItems => {
@@ -187,6 +213,15 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
 
   const clearCart = useCallback(() => {
     setItems([]);
+    setCustomBundles([]);
+  }, []);
+
+  const addCustomBundle = useCallback((bundle: CartCustomBundle) => {
+    setCustomBundles((previous) => [...previous, bundle]);
+  }, []);
+
+  const removeCustomBundle = useCallback((id: string) => {
+    setCustomBundles((previous) => previous.filter((bundle) => bundle.id !== id));
   }, []);
 
   const openCart = useCallback(() => {
@@ -199,28 +234,32 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
 
   // Memoize computed values to prevent unnecessary re-renders
   const totalItems = useMemo(() => 
-    items.reduce((sum, item) => sum + item.quantity, 0),
-    [items]
+    items.reduce((sum, item) => sum + item.quantity, 0) + customBundles.length,
+    [items, customBundles]
   );
   
   const totalPrice = useMemo(() => 
-    items.reduce((sum, item) => sum + item.price * item.quantity, 0),
-    [items]
+    items.reduce((sum, item) => sum + item.price * item.quantity, 0) +
+      customBundles.reduce((sum, bundle) => sum + (bundle.quote?.postDiscountBundleSubtotal ?? 0), 0),
+    [items, customBundles]
   );
 
   // Memoize the context value to prevent unnecessary re-renders of consumers
   const value: CartContextType = useMemo(() => ({
     items,
+    customBundles,
     addToCart,
     removeFromCart,
     updateQuantity,
     clearCart,
+    addCustomBundle,
+    removeCustomBundle,
     totalItems,
     totalPrice,
     isOpen,
     openCart,
     closeCart,
-  }), [items, addToCart, removeFromCart, updateQuantity, clearCart, totalItems, totalPrice, isOpen, openCart, closeCart]);
+  }), [items, customBundles, addToCart, removeFromCart, updateQuantity, clearCart, addCustomBundle, removeCustomBundle, totalItems, totalPrice, isOpen, openCart, closeCart]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 };

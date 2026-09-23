@@ -1,4 +1,5 @@
 import { createContext } from 'react';
+import type { CartCustomBundle } from '../types/customBundle';
 
 export interface CartItem {
   id: string; // productId as string for backward compatibility
@@ -17,10 +18,13 @@ export interface CartItem {
 
 export interface CartContextType {
   items: CartItem[];
+  customBundles: CartCustomBundle[];
   addToCart: (item: Omit<CartItem, 'quantity'>, requestedQty?: number) => void;
   removeFromCart: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
+  addCustomBundle: (bundle: CartCustomBundle) => void;
+  removeCustomBundle: (id: string) => void;
   totalItems: number;
   totalPrice: number;
   isOpen: boolean;

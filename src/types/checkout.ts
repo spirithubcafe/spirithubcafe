@@ -1,4 +1,5 @@
 import type { CartItem } from '../contexts/CartContextDefinition';
+import type { CartCustomBundle } from './customBundle';
 
 export interface CheckoutDetails {
   fullName: string;
@@ -22,6 +23,7 @@ export interface CheckoutOrder {
   id: string;
   createdAt: string;
   items: CartItem[];
+  customBundles?: CartCustomBundle[];
   shippingMethod: {
     id: string;
     name: string;

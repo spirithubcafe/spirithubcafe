@@ -17,6 +17,7 @@ import { Seo } from '../components/seo/Seo';
 import { siteMetadata } from '../config/siteMetadata';
 import { getProductImageUrl } from '../lib/imageUtils';
 import { OmaniRialPrice } from '../components/ui/OmaniRialPrice';
+import { toOrderCustomBundles } from '../lib/customBundle';
 
 const PENDING_ORDER_STORAGE_KEY = 'spirithub_pending_checkout';
 const LAST_SUCCESS_STORAGE_KEY = 'spirithub_last_success_order';
@@ -420,6 +421,7 @@ export const PaymentPage: React.FC = () => {
           
           // Order Items - will be populated after fetching variants
           items: [], // Temporary empty array
+          customBundles: toOrderCustomBundles(order.customBundles ?? []),
         };
 
         // Fetch and populate items with variant IDs
@@ -487,7 +489,7 @@ export const PaymentPage: React.FC = () => {
         if (!createOrderDto.shippingMethod || ![1, 2, 3].includes(createOrderDto.shippingMethod)) {
           throw new Error('Valid shipping method is required (1=Pickup, 2=Nool, 3=Aramex)');
         }
-        if (createOrderDto.items.length === 0) {
+        if (createOrderDto.items.length === 0 && (createOrderDto.customBundles?.length ?? 0) === 0) {
           throw new Error('Order must contain at least one item');
         }
 

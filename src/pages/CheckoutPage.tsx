@@ -31,6 +31,9 @@ import { OmaniRialPrice } from '../components/ui/OmaniRialPrice';
 import { categoryService } from '../services/categoryService';
 import { publicHttp } from '../services/apiClient';
 import type { Category as ApiCategory } from '../types/product';
+import { customBundleService, CustomBundleApiError } from '../services/customBundleService';
+import { customBundleErrorMessage } from '../lib/customBundle';
+import { toast } from 'sonner';
 import {
   getAramexCountries,
   getAramexCities,
@@ -262,7 +265,7 @@ export const CheckoutPage: React.FC = () => {
   const { shopData } = useShopPage();
   const isArabic = language === 'ar';
   const navigate = useNavigate();
-  const { items, totalPrice } = useCart();
+  const { items, customBundles, totalPrice } = useCart();
   const [checkoutCategories, setCheckoutCategories] = useState<ApiCategory[]>([]);
 
   const form = useForm<CheckoutFormValues>({
@@ -569,7 +572,7 @@ export const CheckoutPage: React.FC = () => {
   // Uses useApp().products first; falls back to shop catalog metadata for legacy items
   // that may not carry a stored categorySlug.
   const isBundlesGiftOnlyCart = useMemo(() => {
-    if (items.length === 0) return false;
+    if (items.length === 0 && customBundles.length === 0) return false;
 
     // Build a quick lookup: productId -> categorySlug
     const slugById = new Map<string, string>();
@@ -598,7 +601,7 @@ export const CheckoutPage: React.FC = () => {
       // Real slug is "coffee-bundles-gift-boxes"; only this exact category qualifies.
       return slug === 'coffee-bundles-gift-boxes';
     });
-  }, [items, appProducts, shopData]);
+  }, [items, customBundles, appProducts, shopData]);
 
   const isOman = effectiveCountry === 'OM';
   const isNoolFreeShipping = isOman && watchedShipping === 'nool' && isBundlesGiftOnlyCart;
@@ -610,6 +613,7 @@ export const CheckoutPage: React.FC = () => {
       : formatPrice(value, currentRegion.code, isArabic);
 
   const subtotal = useMemo(() => totalPrice, [totalPrice]);
+  const ordinarySubtotal = useMemo(() => items.reduce((sum, item) => sum + item.price * item.quantity, 0), [items]);
   const shippingCost = isNoolFreeShipping ? 0 : selectedShipping.price;
   const taxPercentageByProductId = useMemo(() => {
     const taxByProductId = new Map<number, number>();
@@ -654,20 +658,22 @@ export const CheckoutPage: React.FC = () => {
     let couponDiscount = 0;
     if (appliedCoupon) {
       if (appliedCoupon.discountType === 'percentage') {
-        couponDiscount = (subtotal * appliedCoupon.discountValue) / 100;
+        couponDiscount = (ordinarySubtotal * appliedCoupon.discountValue) / 100;
       } else {
-        couponDiscount = appliedCoupon.discountValue;
+        couponDiscount = Math.min(appliedCoupon.discountValue, ordinarySubtotal);
       }
     }
     
     const giftCardDiscount = appliedGiftCard?.discount || 0;
     return couponDiscount + giftCardDiscount;
-  }, [appliedCoupon, appliedGiftCard, subtotal]);
+  }, [appliedCoupon, appliedGiftCard, ordinarySubtotal]);
 
   const taxAmount = useMemo(() => {
     if (subtotal <= 0) return 0;
 
-    const taxableRatio = Math.max(0, subtotal - discountAmount) / subtotal;
+    const taxableRatio = ordinarySubtotal > 0
+      ? Math.max(0, ordinarySubtotal - Math.min(discountAmount, ordinarySubtotal)) / ordinarySubtotal
+      : 0;
     const tax = items.reduce((sum, item) => {
       const itemTaxPercentage = Number(
         (item as unknown as { taxPercentage?: number }).taxPercentage ??
@@ -684,8 +690,8 @@ export const CheckoutPage: React.FC = () => {
       return sum + (discountedLineTotal * itemTaxPercentage) / 100;
     }, 0);
 
-    return roundMoney(tax);
-  }, [discountAmount, items, subtotal, taxPercentageByProductId]);
+    return roundMoney(tax + customBundles.reduce((sum, bundle) => sum + (bundle.quote?.taxEstimate ?? 0), 0));
+  }, [discountAmount, items, ordinarySubtotal, subtotal, taxPercentageByProductId, customBundles]);
   
   const grandTotal = Math.max(0, roundMoney(subtotal - discountAmount + shippingCost + taxAmount));
 
@@ -854,8 +860,8 @@ export const CheckoutPage: React.FC = () => {
     setGiftCardSuccess(null);
   };
 
-  const handleSubmit = (values: CheckoutFormValues) => {
-    if (items.length === 0) {
+  const handleSubmit = async (values: CheckoutFormValues) => {
+    if (items.length === 0 && customBundles.length === 0) {
       return;
     }
 
@@ -876,7 +882,19 @@ export const CheckoutPage: React.FC = () => {
       return;
     }
 
-    // Mark coupon as used before navigating
+    let revalidatedBundles = customBundles;
+    try {
+      revalidatedBundles = await Promise.all(customBundles.map(async (bundle) => ({
+        ...bundle,
+        quote: await customBundleService.quote(bundle.selection),
+      })));
+    } catch (reason) {
+      const message = customBundleErrorMessage(reason instanceof CustomBundleApiError ? reason.code : undefined, isArabic);
+      form.setError('root', { type: 'server', message });
+      toast.error(message);
+      return;
+    }
+
     if (appliedCoupon && user) {
       markCouponAsUsed(String(user.id), appliedCoupon.code);
     }
@@ -885,6 +903,7 @@ export const CheckoutPage: React.FC = () => {
       id: `SPH-${Date.now()}`,
       createdAt: new Date().toISOString(),
       items: items.map((item) => ({ ...item })),
+      customBundles: revalidatedBundles,
       shippingMethod: {
         id: selectedShipping.id,
         name: isNoolFreeShipping ? 'Free Nool Delivery' : selectedShipping.label.en,
@@ -926,7 +945,7 @@ export const CheckoutPage: React.FC = () => {
     navigate('/payment', { state: { order } });
   };
 
-  if (items.length === 0) {
+  if (items.length === 0 && customBundles.length === 0) {
     return (
       <div className="min-h-screen bg-linear-to-br from-gray-50 to-white page-padding-top">
         <Seo
@@ -1803,6 +1822,12 @@ export const CheckoutPage: React.FC = () => {
                           </div>
                         </div>
                       ))}
+                      {customBundles.map((bundle) => bundle.quote && (
+                        <div key={bundle.id} className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+                          <div className="flex justify-between gap-3"><div><p className="font-semibold">{isArabic ? 'اصنع حزمتك من القهوة' : 'Build Your Own Coffee Bundle'}</p><p className="text-xs text-stone-500">{bundle.quote.components.map((line) => `${isArabic ? line.productNameAr || line.productName : line.productName} (${line.weight}${line.weightUnit}) × ${line.quantity}`).join(' · ')}</p></div><span className="font-semibold text-amber-700">{renderCurrency(bundle.quote.postDiscountBundleSubtotal)}</span></div>
+                          <div className="mt-2 flex justify-between text-xs text-emerald-700"><span>{bundle.quote.complimentaryGift.quantity} × {isArabic ? bundle.quote.complimentaryGift.productNameAr || bundle.quote.complimentaryGift.productName : bundle.quote.complimentaryGift.productName} ({isArabic ? 'مجاني' : 'Free'})</span><span>-{renderCurrency(bundle.quote.bundleDiscountAmount)}</span></div>
+                        </div>
+                      ))}
                     </div>
                     <Separator />
                     <div className="space-y-2 text-sm">
@@ -1844,8 +1869,8 @@ export const CheckoutPage: React.FC = () => {
                           <span className="inline-flex items-baseline gap-0.5">
                             <span aria-hidden="true">-</span>
                             {renderCurrency((appliedCoupon.discountType === 'percentage' 
-                              ? (subtotal * appliedCoupon.discountValue) / 100 
-                              : appliedCoupon.discountValue))}
+                              ? (ordinarySubtotal * appliedCoupon.discountValue) / 100
+                              : Math.min(appliedCoupon.discountValue, ordinarySubtotal)))}
                           </span>
                         </div>
                       )}

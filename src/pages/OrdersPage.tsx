@@ -25,6 +25,7 @@ import { getProductImageUrl } from '../lib/imageUtils';
 import { Seo } from '../components/seo/Seo';
 import { siteMetadata } from '../config/siteMetadata';
 import type { Order as BackendOrder } from '../types/order';
+import { getUnbundledOrderItems } from '../lib/customBundle';
 
 interface OrderItem {
   id: string;
@@ -87,13 +88,13 @@ export const OrdersPage: React.FC = () => {
         
         if (response.success) {
           if (response.data && response.data.length > 0) {
-            
+
             // Map backend order format to frontend format and load product images
             const mappedOrders: Order[] = await Promise.all(
               response.data.map(async (order: BackendOrder) => {
                 // Load images for items that don't have them
                 const itemsWithImages = await Promise.all(
-                  (order.items || []).map(async (item) => {
+                  getUnbundledOrderItems(order).map(async (item) => {
                     // If item already has an image, use it
                     if (item.productImage) {
                       return {
@@ -133,17 +134,25 @@ export const OrdersPage: React.FC = () => {
                   })
                 );
                 
+                const bundleItems: OrderItem[] = (order.customBundles ?? []).map((bundle) => ({
+                  id: `bundle-${bundle.id}`,
+                  name: isArabic ? 'اصنع حزمتك من القهوة' : 'Build Your Own Coffee Bundle',
+                  price: bundle.finalBundleSubtotal,
+                  quantity: 1,
+                  image: getProductImageUrl(''),
+                }));
+
                 return {
                   id: order.id.toString(),
                   orderNumber: order.orderNumber,
                   date: order.createdAt || new Date().toISOString(),
                   status: mapOrderStatus(order.status),
                   total: order.totalAmount || 0,
-                  items: itemsWithImages
+                  items: [...bundleItems, ...itemsWithImages]
                 };
               })
             );
-            
+
             setOrders(mappedOrders);
           } else {
             setOrders([]);
@@ -164,7 +173,7 @@ export const OrdersPage: React.FC = () => {
     } else {
       setIsLoading(false);
     }
-  }, [isAuthenticated, user, currentRegion.code]);
+  }, [isAuthenticated, user, currentRegion.code, isArabic]);
 
   if (!isAuthenticated) {
     return (
@@ -410,6 +419,3 @@ export const OrdersPage: React.FC = () => {
     </div>
   );
 };
-
-
-            

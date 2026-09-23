@@ -52,6 +52,8 @@ import { format } from 'date-fns';
 import { createAramexPickup, emailService, orderService, productVariantService } from '../../services';
 import { REGION_INFO } from '../../config/regionInfo';
 import type { Order, OrderStatus, PaymentStatus } from '../../types/order';
+import { OrderBundles } from '../OrderBundles';
+import { getUnbundledOrderItems } from '../../lib/customBundle';
 
 export const OrdersManagement: React.FC = () => {
   const { language } = useApp();
@@ -4227,7 +4229,8 @@ export const OrdersManagement: React.FC = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      {selectedOrder.items?.map((item, index) => (
+                      <OrderBundles bundles={selectedOrder.customBundles} isArabic={isArabic} renderPrice={(amount) => `${amount.toFixed(3)} ${isArabic ? 'ر.ع.' : 'OMR'}`} />
+                      {getUnbundledOrderItems(selectedOrder).map((item, index) => (
                         <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
                           <div className="flex items-center gap-4">
                             {item.productImage && (

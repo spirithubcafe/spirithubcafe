@@ -11,7 +11,52 @@ export interface OrderItem {
   taxPercentage?: number;
   taxAmount: number;
   totalAmount: number;
+  merchandiseSubtotal?: number;
+  couponDiscountAmount?: number;
+  discountedTaxableSubtotal?: number;
+  bundleDiscountAmount?: number;
+  postBundleSubtotal?: number;
+  couponEligible?: boolean;
+  referenceUnitPrice?: number;
   productImage?: string;
+}
+
+export interface CustomBundleComponent {
+  orderItemId: number;
+  productId: number;
+  productVariantId?: number;
+  productName: string;
+  variantInfo?: string;
+  quantity: number;
+  referenceUnitPrice?: number;
+  unitPrice: number;
+  merchandiseSubtotal: number;
+  bundleDiscountAmount: number;
+  postBundleSubtotal: number;
+  taxPercentage: number;
+  taxAmount: number;
+  totalAmount: number;
+  couponEligible: boolean;
+  isComplimentaryGift: boolean;
+  componentType: string;
+  sequence: number;
+}
+
+export interface CustomBundle {
+  id: number;
+  bundleDefinitionId?: number;
+  bundleCode: string;
+  bundleName: string;
+  configurationVersion: number;
+  selectedBagQuantity: number;
+  coffeeSubtotal: number;
+  discountPercentage: number;
+  bundleDiscountAmount: number;
+  finalBundleSubtotal: number;
+  complimentaryQuantity: number;
+  currency: string;
+  couponEligible: boolean;
+  components: CustomBundleComponent[];
 }
 
 export interface IssuedGiftCard {
@@ -66,6 +111,7 @@ export interface Order {
   
   // Order Items
   items: OrderItem[];
+  customBundles?: CustomBundle[];
   itemsCount?: number;
   
   // Pricing (All amounts in OMR)
@@ -77,6 +123,7 @@ export interface Order {
   // Coupon/Discount (Optional)
   couponCode?: string;
   discountAmount?: number;
+  bundleDiscountAmount?: number;
   giftCardCode?: string;
   giftCardAmountApplied?: number;
   giftCardRedemptionApplied?: boolean;
@@ -288,6 +335,16 @@ export interface CreateOrderDto {
     productId: number;
     productVariantId: number;
     quantity: number;
+  }[];
+
+  customBundles?: {
+    definitionId: number;
+    configurationVersion: number;
+    items: {
+      productId: number;
+      productVariantId: number;
+      quantity: number;
+    }[];
   }[];
   
   // Coupon/Discount Information (Optional)

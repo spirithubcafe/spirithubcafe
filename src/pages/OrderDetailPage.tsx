@@ -33,6 +33,8 @@ import { getProductImageUrl } from '../lib/imageUtils';
 import { Seo } from '../components/seo/Seo';
 import { siteMetadata } from '../config/siteMetadata';
 import type { Order as BackendOrder } from '../types/order';
+import { OrderBundles } from '../components/OrderBundles';
+import { getUnbundledOrderItems } from '../lib/customBundle';
 import { productService } from '../services/productService';
 import { AramexPickupInfo } from '../components/admin/AramexPickupInfo';
 
@@ -208,6 +210,7 @@ export const OrderDetailPage: React.FC = () => {
   const statusInfo = statusConfig[order.status as keyof typeof statusConfig] || statusConfig.Pending;
   const StatusIcon = statusInfo.icon;
   const paymentInfo = paymentStatusConfig[order.paymentStatus as keyof typeof paymentStatusConfig] || paymentStatusConfig.Unpaid;
+  const unbundledItems = getUnbundledOrderItems(order);
 
   const getShippingMethodLabel = (method: number) => {
     switch (method) {
@@ -302,8 +305,9 @@ export const OrderDetailPage: React.FC = () => {
                 <CardContent>
                   <ScrollArea className="max-h-[500px]">
                     <div className="space-y-4">
+                      <OrderBundles bundles={order.customBundles} isArabic={isArabic} renderPrice={(amount) => formatPrice(amount, currentRegion.code, isArabic)} />
                       {order.items && order.items.length > 0 ? (
-                        order.items.map((item, index) => (
+                        unbundledItems.map((item, index) => (
                           <div key={index}>
                             {index > 0 && <Separator className="my-4" />}
                             <div className="flex gap-4">

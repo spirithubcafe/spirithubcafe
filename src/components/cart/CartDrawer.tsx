@@ -12,10 +12,10 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFo
 import { ScrollArea } from '../ui/scroll-area';
 
 export const CartDrawer: React.FC = () => {
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation();
   const isArabic = i18n.language === 'ar';
   const navigate = useNavigate();
-  const { items, removeFromCart, updateQuantity, clearCart, totalItems, totalPrice, isOpen, closeCart } = useCart();
+  const { items, customBundles, removeFromCart, removeCustomBundle, updateQuantity, clearCart, totalItems, totalPrice, isOpen, closeCart } = useCart();
   const { currentRegion } = useRegion();
   const renderPrice = (amount: number) => (
     currentRegion.code === 'om'
@@ -43,7 +43,7 @@ export const CartDrawer: React.FC = () => {
           </SheetDescription>
         </SheetHeader>
 
-        {items.length === 0 ? (
+        {items.length === 0 && customBundles.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center text-center py-6">
             <ShoppingCart className="w-16 h-16 text-gray-300 mb-4" />
             <p className="text-gray-500">
@@ -119,6 +119,16 @@ export const CartDrawer: React.FC = () => {
                     </motion.div>
                   ))}
                 </AnimatePresence>
+                {customBundles.map((bundle) => bundle.quote && (
+                  <div key={bundle.id} className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div><h3 className="font-bold text-stone-900">{t('customBundle.eyebrow')}</h3><p className="text-xs text-stone-500">{bundle.quote.selectedTier.requiredQuantity === 2 ? 'Duo' : 'Trio'} · {bundle.quote.discountPercentage}%</p></div>
+                      <Button size="icon-sm" variant="ghost" onClick={() => removeCustomBundle(bundle.id)} className="text-red-600"><Trash2 className="h-4 w-4" /></Button>
+                    </div>
+                    <div className="mt-3 space-y-1 text-sm">{bundle.quote.components.map((component) => <div key={component.productVariantId} className="flex justify-between gap-2"><span>{isArabic ? component.productNameAr || component.productName : component.productName} · {component.weight}{component.weightUnit} × {component.quantity}</span><span>{renderPrice(component.lineSubtotal)}</span></div>)}</div>
+                    <div className="mt-3 border-t border-amber-200 pt-2 text-sm"><div className="flex justify-between"><span>{t('customBundle.savings')}</span><span>-{renderPrice(bundle.quote.bundleDiscountAmount)}</span></div><div className="flex justify-between font-bold"><span>{t('customBundle.bundleSubtotal')}</span><span>{renderPrice(bundle.quote.postDiscountBundleSubtotal)}</span></div><p className="mt-1 text-xs text-emerald-700">{bundle.quote.complimentaryGift.quantity} × {isArabic ? bundle.quote.complimentaryGift.productNameAr || bundle.quote.complimentaryGift.productName : bundle.quote.complimentaryGift.productName} · {t('customBundle.complimentary')}</p></div>
+                  </div>
+                ))}
               </div>
             </ScrollArea>
 

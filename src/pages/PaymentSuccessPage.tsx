@@ -31,6 +31,7 @@ export const PaymentSuccessPage: React.FC = () => {
       chatbotIntentService.trackPurchaseIfAttributed(orderId, language, currentRegion.code);
       // Clear region-specific cart
       localStorage.removeItem(`spirithub_cart_${currentRegion.code}`);
+      localStorage.removeItem(`spirithub_custom_bundles_${currentRegion.code}`);
       // Also clear legacy cart key for backward compatibility
       localStorage.removeItem('spirithub_cart');
       sessionStorage.removeItem('spirithub_checkout_order');

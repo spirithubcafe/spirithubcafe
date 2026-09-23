@@ -13,6 +13,7 @@ import { PriceDisplay } from '../../components/shop/PriceDisplay';
 import { StarRating } from '../../components/shop/StarRating';
 import type { ShopProduct } from '../../types/shop';
 import { useRegion } from '../../hooks/useRegion';
+import { CustomBundleBuilder } from '../../components/CustomBundleBuilder';
 
 const PRODUCT_BANNER_CATEGORY_SLUGS = new Set([
   'coffee-bundles-gift-boxes',
@@ -200,6 +201,7 @@ export const ShopCategoryPage = () => {
       />
 
       <div className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-12">
+        {categorySlug === 'coffee-bundles-gift-boxes' && <CustomBundleBuilder />}
         <div className="flex flex-col gap-6 rounded-3xl bg-white p-6 shadow-sm md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-4">
             {category.imagePath && (
