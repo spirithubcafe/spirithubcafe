@@ -279,7 +279,6 @@ export type ShippingMethod = 1 | 2 | 3;
  * 
  * @example
  * {
- *   userId: "12345",
  *   fullName: "John Doe",
  *   email: "john.doe@example.com",
  *   phone: "+96812345678",
@@ -312,9 +311,6 @@ export interface CreateOrderDto {
   // Shipping Details (Required)
   shippingMethod: 1 | 2 | 3; // 1=Pickup, 2=Nool, 3=Aramex
   shippingCost: number;
-  
-  // User ID (Required - guest checkout not supported)
-  userId: string;
   
   // Gift Information (Optional)
   isGift?: boolean;
@@ -349,7 +345,6 @@ export interface CreateOrderDto {
   
   // Coupon/Discount Information (Optional)
   couponCode?: string;
-  discountAmount?: number;
   
   // Gift Card Information (Optional)
   giftCardCode?: string;

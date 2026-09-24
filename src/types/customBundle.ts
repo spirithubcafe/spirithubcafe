@@ -111,9 +111,9 @@ export interface CustomBundleQuote {
 }
 
 export interface CustomBundleApiResult<T> {
-  isSuccess: boolean;
+  success: boolean;
   errorCode?: string;
-  message: string;
+  message?: string;
   data?: T;
 }
 

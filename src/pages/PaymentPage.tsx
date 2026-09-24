@@ -384,9 +384,6 @@ export const PaymentPage: React.FC = () => {
             ? order.checkoutDetails.recipientPhone || order.checkoutDetails.phone
             : order.checkoutDetails.phone,
           
-          // User ID (Required - no guest checkout)
-          userId: String(user.id),
-          
           // Shipping Address (NEW API FORMAT)
           address: order.checkoutDetails.isGift 
             ? order.checkoutDetails.recipientAddress || order.checkoutDetails.address
@@ -401,7 +398,6 @@ export const PaymentPage: React.FC = () => {
           
           // Coupon/Discount Information
           ...(order.totals.couponCode && { couponCode: order.totals.couponCode }),
-          ...(order.totals.discount && { discountAmount: order.totals.discount }),
           
           // Gift Card Information
           ...(order.totals.giftCardCode && { giftCardCode: order.totals.giftCardCode }),

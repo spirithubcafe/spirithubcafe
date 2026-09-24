@@ -42,6 +42,28 @@ test('ordinary items and custom bundles remain separate', () => {
   assert.equal(ordinaryItems[0].productId, 99);
   assert.equal(customBundles[0].items[0].productId, 10);
 });
+test('mixed order payload contains only accepted authoritative inputs', () => {
+  const payload = {
+    items: [{ productId: 99, productVariantId: 100, quantity: 1 }],
+    customBundles: toOrderCustomBundles([bundle(3)]),
+    couponCode: 'SAVE10',
+  };
+
+  assert.deepEqual(payload.items, [{ productId: 99, productVariantId: 100, quantity: 1 }]);
+  assert.deepEqual(payload.customBundles[0], {
+    definitionId: 7,
+    configurationVersion: 3,
+    items: [{ productId: 10, productVariantId: 20, quantity: 3 }],
+  });
+  assert.equal(payload.couponCode, 'SAVE10');
+  assert.equal('userId' in payload, false);
+  assert.equal('discountAmount' in payload, false);
+  assert.equal('complimentaryGift' in payload.customBundles[0], false);
+  assert.equal('bundleDiscountAmount' in payload.customBundles[0], false);
+  assert.equal('discountPercentage' in payload.customBundles[0], false);
+  assert.equal('taxEstimate' in payload.customBundles[0], false);
+  assert.equal('finalQuotedBundleAmount' in payload.customBundles[0], false);
+});
 test('a stale quote cannot become current', () => {
   const guard = createQuoteRequestGuard();
   const oldRequest = guard.next();
