@@ -103,17 +103,17 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
         isProductsHeader ? 'page-header-products-content' : ''
       }`}>
         <div className="text-center">
-          <h1 className={`font-extrabold text-white mb-4 drop-shadow-2xl ${
+          <h1 className={`font-extrabold text-white drop-shadow-2xl ${
             isProductsHeader
-              ? 'page-header-products-title text-3xl sm:text-4xl md:text-5xl'
-              : 'text-4xl md:text-5xl'
+              ? 'page-header-products-title mb-2 text-2xl sm:mb-4 sm:text-4xl md:text-5xl'
+              : 'mb-4 text-4xl md:text-5xl'
           }`}>
             {displayTitle}
           </h1>
           
           {displaySubtitle && (
-            <p className={`text-lg md:text-xl text-gray-100 max-w-3xl mx-auto drop-shadow-xl ${
-              isProductsHeader ? 'page-header-products-subtitle' : ''
+            <p className={`text-gray-100 max-w-3xl mx-auto drop-shadow-xl ${
+              isProductsHeader ? 'page-header-products-subtitle text-sm sm:text-lg md:text-xl' : 'text-lg md:text-xl'
             }`}>
               {displaySubtitle}
             </p>

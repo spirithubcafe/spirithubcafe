@@ -32,6 +32,20 @@
   -webkit-line-clamp: 2;
 }
 
+/* Mobile: avoid the fixed 320px box (which includes the nav/banner offset via
+   page-padding-top) clipping the H1 when combined bars leave little room. */
+@media (max-width: 767px) {
+  .page-header-products {
+    height: auto;
+  }
+
+  .page-header-products-content {
+    height: auto;
+    min-height: 180px;
+    padding-bottom: 20px;
+  }
+}
+
 @media (min-width: 768px) {
   .page-header-products {
     height: 360px;

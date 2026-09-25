@@ -69,6 +69,7 @@ import {
   Bot,
   Boxes,
   Megaphone,
+  Coffee,
 } from 'lucide-react';
 
 interface AdminNavItem {
@@ -319,6 +320,16 @@ export const AdminLayout: React.FC = () => {
       roles: ['Admin', 'Manager'],
     },
     {
+      id: 'customCoffeeBundle',
+      label: isArabic ? 'باقة القهوة المخصصة' : 'Custom Coffee Bundle',
+      description: isArabic
+        ? 'إدارة أصناف وإعدادات باقة اصنع قهوتك الخاصة'
+        : 'Manage eligible variants and settings for the Build Your Own Coffee bundle',
+      icon: Coffee,
+      path: '/admin/custom-coffee-bundle',
+      roles: ['Admin', 'Manager'],
+    },
+    {
       id: 'orders',
       label: t('admin.manageOrders'),
       description: t('admin.ordersDesc'),
@@ -522,7 +533,7 @@ export const AdminLayout: React.FC = () => {
       id: 'management',
       label: t('admin.navGroups.management'),
       items: availableNavItems.filter((item) =>
-        ['categories', 'products', 'productTags', 'producers', 'stock', 'users', 'reviews'].includes(item.id)
+        ['categories', 'products', 'productTags', 'producers', 'stock', 'customCoffeeBundle', 'users', 'reviews'].includes(item.id)
       ),
     },
     {

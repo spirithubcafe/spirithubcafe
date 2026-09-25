@@ -202,37 +202,48 @@ export const ShopCategoryPage = () => {
 
       <div className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-12">
         {categorySlug === 'coffee-bundles-gift-boxes' && <CustomBundleBuilder />}
-        <div className="flex flex-col gap-6 rounded-3xl bg-white p-6 shadow-sm md:flex-row md:items-center md:justify-between">
-          <div className="flex items-center gap-4">
-            {category.imagePath && (
-              <img
-                src={getCategoryImageUrl(category.imagePath)}
-                alt={name}
-                className="h-20 w-20 rounded-2xl object-cover"
-                onError={(event) => handleImageError(event, '/images/header.webp')}
-              />
-            )}
-            <div>
-              <p className="text-xs uppercase tracking-widest text-stone-400">
-                {isArabic ? 'فئة' : 'Category'}
-              </p>
-              <h2 className="mt-1 text-2xl font-semibold text-stone-900">{name}</h2>
-            </div>
+        {categorySlug === 'coffee-bundles-gift-boxes' ? (
+          <div className="flex flex-col items-center gap-1.5 border-t border-stone-200 pt-8 text-center">
+            <p className="text-sm font-medium text-stone-500">
+              {isArabic ? 'تفضل مجموعة جاهزة؟' : 'Prefer a ready-made selection?'}
+            </p>
+            <h2 className="text-2xl font-bold text-stone-900 sm:text-3xl">
+              {isArabic ? 'تسوّق حزم القهوة المختارة' : 'Shop Curated Coffee Bundles'}
+            </h2>
+            <p className="text-sm text-stone-500">
+              {isArabic ? 'تركيبات قهوة اختارها فريق سبيريت هب.' : 'Coffee combinations selected by SpiritHub.'}
+            </p>
           </div>
-          <SortDropdown
-            value={sortBy}
-            ascending={ascending}
-            onChange={(value) => {
-              setPage(1);
-              setSortBy(value);
-            }}
-            onToggleDirection={() => {
-              setPage(1);
-              setAscending((prev) => !prev);
-            }}
-            isArabic={isArabic}
-          />
-        </div>
+        ) : (
+          <div className="flex flex-col gap-6 rounded-3xl bg-white p-6 shadow-sm md:flex-row md:items-center md:justify-between">
+            <div className="flex items-center gap-4">
+              {category.imagePath && (
+                <img
+                  src={getCategoryImageUrl(category.imagePath)}
+                  alt={name}
+                  className="h-20 w-20 rounded-2xl object-cover"
+                  onError={(event) => handleImageError(event, '/images/header.webp')}
+                />
+              )}
+              <div>
+                <h2 className="mt-1 text-2xl font-semibold text-stone-900">{name}</h2>
+              </div>
+            </div>
+            <SortDropdown
+              value={sortBy}
+              ascending={ascending}
+              onChange={(value) => {
+                setPage(1);
+                setSortBy(value);
+              }}
+              onToggleDirection={() => {
+                setPage(1);
+                setAscending((prev) => !prev);
+              }}
+              isArabic={isArabic}
+            />
+          </div>
+        )}
 
         {(productsLoading || shopPageLoading) && (
           <div className="grid grid-cols-2 gap-3 sm:gap-4 md:gap-6">
@@ -368,7 +379,7 @@ const BundlesGiftProductCard = ({
                 : (isArabic ? 'حزمة مميزة' : 'Curated Bundle')}
             </p>
             <Link to={productUrl}>
-              <h3 className="text-sm font-bold text-stone-900 transition group-hover:text-amber-700 sm:text-base md:text-lg line-clamp-2 text-balance">
+              <h3 className="text-base font-extrabold text-stone-900 transition group-hover:text-amber-700 sm:text-lg md:text-xl line-clamp-2 text-balance">
                 {name}
               </h3>
             </Link>
@@ -401,7 +412,7 @@ const BundlesGiftProductCard = ({
             </div>
             <Link
               to={productUrl}
-              className="shrink-0 self-start rounded-full bg-stone-900 px-3 py-1.5 text-[10px] font-semibold text-white transition hover:bg-stone-800 sm:self-auto sm:px-4 sm:py-2 sm:text-xs"
+              className="shrink-0 self-start rounded-full bg-stone-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-stone-800 sm:self-auto sm:px-5 sm:py-2.5 sm:text-sm"
             >
               {product.categoryName?.toLowerCase() === 'electronic gift cards'
                 ? (isArabic ? 'أرسل كهدية' : 'Send as a Gift')
