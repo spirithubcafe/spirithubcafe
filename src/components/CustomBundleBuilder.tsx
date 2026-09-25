@@ -165,7 +165,8 @@ export const CustomBundleBuilder = () => {
         <button type="button" onClick={() => setOpen((value) => !value)} className="flex w-full flex-wrap items-start justify-between gap-3 p-4 pb-3 text-start sm:flex-nowrap sm:gap-4 sm:p-8">
           <div className="pe-9 sm:pe-0">
             <div className="mb-1.5 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.22em] text-amber-400"><Sparkles className="h-4 w-4" />{t('customBundle.eyebrow')}</div>
-            <h2 className="text-2xl font-bold sm:text-3xl">{t('customBundle.title')}</h2>
+            <h2 className="text-lg! font-bold sm:text-3xl!">{t('customBundle.title')}</h2>
+            {isArabic && <p className="text-sm font-semibold text-amber-300">{t('customBundle.titleTagline')}</p>}
             <p className="mt-1.5 max-w-2xl text-sm text-stone-300">{renderWithBold(subtitleText)}</p>
           </div>
           <span className={`shrink-0 rounded-full bg-amber-500 px-4 py-2 text-xs font-bold text-stone-950 ${open ? 'hidden sm:inline-flex' : 'inline-flex'}`}>{open ? t('customBundle.close') : t('customBundle.open')}</span>

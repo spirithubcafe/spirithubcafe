@@ -12,7 +12,7 @@ export const OrderBundles = ({ bundles, isArabic, renderPrice }: OrderBundlesPro
   return <div className="space-y-4">{bundles.map((bundle) => (
     <section key={bundle.id} className="rounded-2xl border border-amber-200 bg-amber-50/60 p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div><h3 className="flex items-center gap-2 font-bold text-stone-900"><Package className="h-4 w-4 text-amber-700" />{isArabic ? 'اصنع حزمتك من القهوة' : 'Build Your Own Coffee Bundle'}</h3><p className="text-xs text-stone-500">{bundle.bundleName} · {bundle.selectedBagQuantity === 2 ? (isArabic ? 'ثنائية' : 'Duo') : (isArabic ? 'ثلاثية' : 'Trio')}</p></div>
+        <div><h3 className="flex items-center gap-2 font-bold text-stone-900"><Package className="h-4 w-4 text-amber-700" />{isArabic ? 'اصنع حزمتك من القهوة · بوكس على مزاجك' : 'Build Your Own Coffee Bundle'}</h3><p className="text-xs text-stone-500">{bundle.bundleName} · {bundle.selectedBagQuantity === 2 ? (isArabic ? 'ثنائية' : 'Duo') : (isArabic ? 'ثلاثية' : 'Trio')}</p></div>
         <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-800">-{bundle.discountPercentage}%</span>
       </div>
       <div className="mt-4 space-y-2">{[...bundle.components].sort((a, b) => a.sequence - b.sequence).map((component) => (

@@ -136,7 +136,7 @@ export const OrdersPage: React.FC = () => {
                 
                 const bundleItems: OrderItem[] = (order.customBundles ?? []).map((bundle) => ({
                   id: `bundle-${bundle.id}`,
-                  name: isArabic ? 'اصنع حزمتك من القهوة' : 'Build Your Own Coffee Bundle',
+                  name: isArabic ? 'اصنع حزمتك من القهوة · بوكس على مزاجك' : 'Build Your Own Coffee Bundle',
                   price: bundle.finalBundleSubtotal,
                   quantity: 1,
                   image: getProductImageUrl(''),

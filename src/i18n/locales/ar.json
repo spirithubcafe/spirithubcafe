@@ -728,6 +728,7 @@
   "customBundle": {
     "eyebrow": "اصنع حزمتك بنفسك",
     "title": "اصنع حزمتك الخاصة",
+    "titleTagline": "بوكس على مزاجك",
     "subtitleWithDiscount": "اختر {{max}} أكياس قهوة. امزج المناشئ والأحجام، ووفر حتى __B__{{discount}}٪__/B__ على حزمتك.",
     "subtitleRangeWithDiscount": "اختر {{min}}–{{max}} أكياس قهوة. امزج المناشئ والأحجام، ووفر حتى __B__{{discount}}٪__/B__ على حزمتك.",
     "subtitleNoDiscount": "اختر {{max}} أكياس قهوة. امزج المناشئ والأحجام لحزمتك الخاصة.",
