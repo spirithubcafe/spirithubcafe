@@ -17,14 +17,14 @@ export const AnnouncementBar: React.FC = () => {
                 to="/om/shop"
                 className="inline-block px-10 text-sm font-medium text-white hover:underline"
               >
-                🚚 Free shipping on Bundles &amp; Gift
+                ☕ Create Your Perfect Coffee Bundle
               </Link>
               <Link
                 to="/om/shop"
                 className="inline-block px-10 text-sm font-medium text-white hover:underline"
                 dir="rtl"
               >
-                🚚 شحن مجاني على الباقات والهدايا
+                ☕ قهوتك كما تحبها
               </Link>
             </React.Fragment>
           ))}
@@ -37,7 +37,7 @@ export const AnnouncementBar: React.FC = () => {
                 className="inline-block px-10 text-sm font-medium text-white hover:underline"
                 tabIndex={-1}
               >
-                🚚 Free shipping on Bundles &amp; Gift
+                ☕ Create Your Perfect Coffee Bundle
               </Link>
               <Link
                 to="/om/shop"
@@ -45,7 +45,7 @@ export const AnnouncementBar: React.FC = () => {
                 dir="rtl"
                 tabIndex={-1}
               >
-                🚚 شحن مجاني على الباقات والهدايا
+                ☕ قهوتك كما تحبها
               </Link>
             </React.Fragment>
           ))}

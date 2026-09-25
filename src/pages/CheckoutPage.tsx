@@ -467,29 +467,45 @@ export const CheckoutPage: React.FC = () => {
       setAramexError(null);
 
       try {
+        const convertWeightToKg = (weight: number, unit?: string) => {
+          const normalizedUnit = unit?.toLowerCase();
+          if (normalizedUnit === 'kg') return weight;
+          if (normalizedUnit === 'g') return weight / 1000;
+          if (normalizedUnit === 'lb') return weight * 0.453592;
+          if (normalizedUnit === 'oz') return weight * 0.0283495;
+          return 0.5;
+        };
+
         // Calculate total weight for shipment from cart items
         // Convert all weights to KG for Aramex API
-        const totalWeight = items.reduce((sum, item) => {
+        const regularItemsWeight = items.reduce((sum, item) => {
           let weightInKg = 0.5; // Default fallback weight per item (500g)
-          
+
           if (item.weight && item.weightUnit) {
-            const weight = item.weight;
-            const unit = item.weightUnit.toLowerCase();
-            
-            // Convert to KG based on unit
-            if (unit === 'kg') {
-              weightInKg = weight;
-            } else if (unit === 'g') {
-              weightInKg = weight / 1000;
-            } else if (unit === 'lb') {
-              weightInKg = weight * 0.453592;
-            } else if (unit === 'oz') {
-              weightInKg = weight * 0.0283495;
-            }
+            weightInKg = convertWeightToKg(item.weight, item.weightUnit);
           }
-          
+
           return sum + (weightInKg * item.quantity);
         }, 0);
+
+        const customBundlesWeight = customBundles.reduce((bundleSum, bundle) => {
+          if (bundle.quote?.components.length) {
+            return bundleSum + bundle.quote.components.reduce(
+              (componentSum, component) =>
+                componentSum + convertWeightToKg(component.weight, component.weightUnit) * component.quantity,
+              0
+            );
+          }
+
+          // Persisted legacy bundles may not have a quote. Use the same 500g
+          // per-item fallback as ordinary cart products until revalidation.
+          return bundleSum + bundle.selection.items.reduce(
+            (selectionSum, item) => selectionSum + (0.5 * item.quantity),
+            0
+          );
+        }, 0);
+
+        const totalWeight = regularItemsWeight + customBundlesWeight;
 
         const result = await calculateAramexShippingRate(
           effectiveCountry,
@@ -522,7 +538,7 @@ export const CheckoutPage: React.FC = () => {
     };
 
     const timer = setTimeout(() => {
-      if (items.length > 0) {
+      if (items.length > 0 || customBundles.length > 0) {
         runCalculation();
       } else {
         setAramexRate(null);
@@ -530,7 +546,7 @@ export const CheckoutPage: React.FC = () => {
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [effectiveCountry, effectiveCity, effectivePostalCode, items]);
+  }, [effectiveCountry, effectiveCity, effectivePostalCode, items, customBundles]);
 
   const shippingMethods = React.useMemo(() => {
     const methods = computeShippingMethods({
@@ -567,46 +583,6 @@ export const CheckoutPage: React.FC = () => {
     }
   }, [shippingMethods, effectiveCountry, form]);
 
-  // --------------- Bundles & Gift free-shipping eligibility ---------------
-  // True when every shippable item in the cart belongs to the "Bundles & Gift" category.
-  // Uses useApp().products first; falls back to shop catalog metadata for legacy items
-  // that may not carry a stored categorySlug.
-  const isBundlesGiftOnlyCart = useMemo(() => {
-    if (items.length === 0 && customBundles.length === 0) return false;
-
-    // Build a quick lookup: productId -> categorySlug
-    const slugById = new Map<string, string>();
-
-    // Source 1: AppContext products (has categorySlug)
-    for (const p of appProducts) {
-      if (p.categorySlug) slugById.set(String(p.id), p.categorySlug);
-    }
-
-    // Source 2: Shop catalog (fallback – ShopProduct has categoryId + parent ShopCategory.slug)
-    if (shopData?.categories) {
-      for (const cat of shopData.categories) {
-        if (!cat.slug) continue;
-        for (const sp of cat.products) {
-          const key = String(sp.id);
-          if (!slugById.has(key)) slugById.set(key, cat.slug);
-        }
-      }
-    }
-
-    return items.every((cartItem) => {
-      const slug =
-        slugById.get(String(cartItem.productId)) ||
-        slugById.get(String(cartItem.id)) ||
-        '';
-      // Real slug is "coffee-bundles-gift-boxes"; only this exact category qualifies.
-      return slug === 'coffee-bundles-gift-boxes';
-    });
-  }, [items, customBundles, appProducts, shopData]);
-
-  const isOman = effectiveCountry === 'OM';
-  const isNoolFreeShipping = isOman && watchedShipping === 'nool' && isBundlesGiftOnlyCart;
-  // -------------------------------------------------------------------------
-
   const renderCurrency = (value: number) =>
     currentRegion.code === 'om'
       ? <OmaniRialPrice amount={value} isArabic={isArabic} />
@@ -614,7 +590,7 @@ export const CheckoutPage: React.FC = () => {
 
   const subtotal = useMemo(() => totalPrice, [totalPrice]);
   const ordinarySubtotal = useMemo(() => items.reduce((sum, item) => sum + item.price * item.quantity, 0), [items]);
-  const shippingCost = isNoolFreeShipping ? 0 : selectedShipping.price;
+  const shippingCost = selectedShipping.price;
   const taxPercentageByProductId = useMemo(() => {
     const taxByProductId = new Map<number, number>();
     const taxByCategoryId = new Map<string, number>();
@@ -906,11 +882,11 @@ export const CheckoutPage: React.FC = () => {
       customBundles: revalidatedBundles,
       shippingMethod: {
         id: selectedShipping.id,
-        name: isNoolFreeShipping ? 'Free Nool Delivery' : selectedShipping.label.en,
-        nameAr: isNoolFreeShipping ? 'توصيل نول مجاني' : selectedShipping.label.ar,
+        name: selectedShipping.label.en,
+        nameAr: selectedShipping.label.ar,
         eta: selectedShipping.eta.en,
         etaAr: selectedShipping.eta.ar,
-        cost: isNoolFreeShipping ? 0 : selectedShipping.price,
+        cost: selectedShipping.price,
       },
       totals: {
         subtotal,
@@ -1490,11 +1466,7 @@ export const CheckoutPage: React.FC = () => {
                                       )}
                                     >
                                       <p className="font-semibold text-sm">
-                                        {method.id === 'nool' && isOman && isBundlesGiftOnlyCart
-                                          ? isArabic
-                                            ? 'توصيل نول مجاني'
-                                            : 'Free Nool Delivery'
-                                          : isArabic
+                                        {isArabic
                                           ? method.label.ar
                                           : method.label.en}
                                       </p>
@@ -1512,7 +1484,7 @@ export const CheckoutPage: React.FC = () => {
                                         ) : method.id !== 'aramex' ||
                                           (method.id === 'aramex' && method.price > 0) ? (
                                           <p className="font-bold text-amber-600 text-sm whitespace-nowrap">
-                                            {method.price === 0 || (method.id === 'nool' && isOman && isBundlesGiftOnlyCart)
+                                            {method.price === 0
                                               ? isArabic
                                                 ? 'مجاني'
                                                 : 'Free'
@@ -1556,13 +1528,6 @@ export const CheckoutPage: React.FC = () => {
                                         ? method.description.ar
                                         : method.description.en}
                                     </p>
-                                    {method.id === 'nool' && isOman && isBundlesGiftOnlyCart && (
-                                      <p className="text-xs text-green-600 mt-1 mb-1" dir={isArabic ? 'rtl' : 'ltr'}>
-                                        {isArabic
-                                          ? (<span>توصيل مجاني لطلبات الباقات والهدايا <span dir="ltr">(عُمان فقط)</span></span>)
-                                          : 'Free delivery for Bundles & Gift (Oman only)'}
-                                      </p>
-                                    )}
                                     {method.calculationError &&
                                       method.id === 'aramex' && (
                                         <p className="text-xs text-orange-600 mb-2 flex items-center gap-1">
@@ -1838,17 +1803,13 @@ export const CheckoutPage: React.FC = () => {
                       <div className="flex justify-between text-gray-600">
                         <span>
                           {isArabic ? 'الشحن' : 'Shipping'} (
-                          {isNoolFreeShipping
-                            ? isArabic
-                              ? 'توصيل نول مجاني'
-                              : 'Free Nool Delivery'
-                            : isArabic
+                          {isArabic
                             ? selectedShipping.label.ar
                             : selectedShipping.label.en}
                           )
                         </span>
                         <span>
-                          {isNoolFreeShipping || selectedShipping.price === 0
+                          {selectedShipping.price === 0
                             ? isArabic
                               ? 'مجاني'
                               : 'Free'
