@@ -44,7 +44,7 @@ const LONG_PRESS_MS = 400;
 const LONG_PRESS_MOVE_TOLERANCE = 8;
 const LONG_PRESS_VERTICAL_CANCEL = 12;
 const DRAG_SCALE_RADIUS = 105;
-const FLOATING_HIGHLIGHT_SIZE = 44;
+const FLOATING_HIGHLIGHT_SIZE = 50;
 const HIGHLIGHT_ICON_SCALE = 1.1;
 const NEIGHBOR_ICON_SCALE = 0.07;
 const NEIGHBOR_LIFT = 2;
@@ -108,7 +108,7 @@ export const MobileBottomNav: React.FC = () => {
       key: 'gift',
       label: t('nav.shop'),
       icon: Gift,
-      path: getRegionalUrl('/shop'),
+      path: getRegionalUrl('/shop/coffee-bundles-gift-boxes'),
       action: null,
     },
     {
@@ -413,7 +413,7 @@ export const MobileBottomNav: React.FC = () => {
       onContextMenu={(event) => event.preventDefault()}
       style={{ WebkitTouchCallout: 'none', WebkitUserSelect: 'none', userSelect: 'none' }}
     >
-      <div className="relative mx-3 mb-3 h-[62px] overflow-visible rounded-[22px] border border-white/[0.08] bg-black/85 shadow-[0_10px_24px_rgba(0,0,0,0.36)] backdrop-blur-xl">
+      <div className="relative mx-3 mb-3 h-[76px] overflow-visible rounded-[26px] border border-white/[0.08] bg-black/85 shadow-[0_10px_24px_rgba(0,0,0,0.36)] backdrop-blur-xl">
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-0 opacity-90"
@@ -423,17 +423,17 @@ export const MobileBottomNav: React.FC = () => {
         />
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute -left-6 top-1 h-14 w-24 rounded-full blur-2xl"
+          className="pointer-events-none absolute -left-6 top-1 h-16 w-28 rounded-full blur-2xl"
           style={{ background: 'radial-gradient(circle, rgba(90,147,255,0.32) 0%, rgba(90,147,255,0.08) 50%, rgba(90,147,255,0) 74%)' }}
         />
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute right-0 top-0 h-14 w-24 rounded-full blur-2xl"
+          className="pointer-events-none absolute right-0 top-0 h-16 w-28 rounded-full blur-2xl"
           style={{ background: 'radial-gradient(circle, rgba(255,184,77,0.26) 0%, rgba(255,184,77,0.08) 52%, rgba(255,184,77,0) 76%)' }}
         />
         <div
           ref={innerRef}
-          className="relative flex h-full items-center justify-between px-6"
+          className="relative flex h-full items-center justify-center px-2 gap-1"
           style={{ touchAction: 'pan-y pinch-zoom' }}
         >
           {dragState && highlightedMetrics && floatingHighlightStyle ? (
@@ -463,22 +463,18 @@ export const MobileBottomNav: React.FC = () => {
             const isIdleActive = !dragState && active;
             const showHomeGlow = isIdleActive && item.key === 'home';
             const showShopSquare = isIdleActive && item.key === 'shop';
-            const showGiftCaption = isIdleActive && item.key === 'gift';
             const showCartNotch = isIdleActive && item.key === 'cart';
-            const showUserUnderline = isIdleActive && item.key === 'user';
-            const showLabel = false;
-            const idleTranslateY = showGiftCaption ? -4 : showUserUnderline ? -2 : 0;
             const itemTranslateY = dragState
               ? isHighlighted
                 ? -4
                 : -1 * easedInfluence * NEIGHBOR_LIFT
-              : idleTranslateY;
+              : 0;
             const haloOpacity = dragState ? (isHighlighted ? 0.34 : 0.08 + easedInfluence * 0.16) : active ? 0.14 : 0.06;
             const baseClass = `
   group relative z-20
-  flex h-11 w-11 shrink-0
-  items-center justify-center
-  rounded-full
+  flex h-16 flex-1 max-w-[76px] shrink-0
+  flex-col items-center justify-center gap-1
+  rounded-2xl
   border border-transparent
   transition-[transform,color,background-color,border-color,opacity]
   duration-300 ease-out
@@ -488,7 +484,7 @@ export const MobileBottomNav: React.FC = () => {
             const content = (
               <>
                 <div
-                  className={`relative flex h-9 w-9 shrink-0 items-center justify-center ${
+                  className={`relative flex h-10 w-10 shrink-0 items-center justify-center ${
                     showHomeGlow
                       ? 'rounded-[10px] border border-white/[0.04]'
                       : showShopSquare
@@ -518,7 +514,7 @@ export const MobileBottomNav: React.FC = () => {
                     />
                   ) : null}
                   <Icon
-                    className={`h-[19px] w-[19px] transition-colors duration-300 motion-reduce:transition-none ${
+                    className={`h-[23px] w-[23px] transition-colors duration-300 motion-reduce:transition-none ${
                       active || isHighlighted
                         ? 'text-[#c69c6d]'
                         : 'text-white/50'
@@ -536,17 +532,16 @@ export const MobileBottomNav: React.FC = () => {
                   ) : null}
                 </div>
 
-                {showGiftCaption ? (
-                  <span className="pointer-events-none absolute left-1/2 top-[31px] -translate-x-1/2 whitespace-nowrap text-[8px] font-medium text-[#c69c6d]">
-                    {item.label}
-                  </span>
-                ) : null}
-
-                {dragState && isHighlighted ? (
-                  <span className="pointer-events-none absolute left-1/2 top-[38px] -translate-x-1/2 whitespace-nowrap text-[8px] font-medium text-[#c69c6d]">
-                    {item.label}
-                  </span>
-                ) : null}
+                <span
+                  className={`whitespace-nowrap text-[10.5px] font-medium leading-none transition-colors duration-300 motion-reduce:transition-none ${
+                    active || isHighlighted ? 'text-[#c69c6d]' : 'text-white/45'
+                  }`}
+                  style={{
+                    opacity: dragState ? (isHighlighted ? 1 : 0.6 + easedInfluence * 0.3) : 1,
+                  }}
+                >
+                  {item.label}
+                </span>
               </>
             );
 
@@ -614,18 +609,9 @@ export const MobileBottomNav: React.FC = () => {
                     transform: `scale(${dragState ? 1 + easedInfluence * 0.2 : 1})`,
                   }}
                 />
-                <span className={`flex items-center ${showLabel ? 'gap-2' : ''}`}>
+                <span className="flex flex-col items-center justify-center gap-1">
                   {content}
                 </span>
-
-                {showUserUnderline ? (
-                  <span
-                    aria-hidden="true"
-                    className="pointer-events-none absolute bottom-[4px] left-1/2 h-[2px] w-6 -translate-x-1/2 rounded-full bg-[#c69c6d]"
-                  />
-                ) : null}
-
-
               </button>
             );
           })}

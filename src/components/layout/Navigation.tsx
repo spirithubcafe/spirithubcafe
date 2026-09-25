@@ -276,7 +276,7 @@ export const Navigation: React.FC = () => {
                 {/* Shop Main Link */}
                 <DropdownMenuItem asChild>
                   <Link
-                    to={getRegionalUrl('/shop')}
+                    to={getRegionalUrl('/shop/coffee-bundles-gift-boxes')}
                     className={`w-full px-4 py-2 whitespace-nowrap ${language === 'ar' ? 'text-right' : 'text-left'} text-gray-900 hover:bg-amber-50 hover:text-amber-600 font-medium`}
                   >
                     {language === 'ar' ? 'أرسل هدية' : 'Send a Gift'}
@@ -756,7 +756,7 @@ export const Navigation: React.FC = () => {
                                       <div className={`pt-1 pb-1 ${language === 'ar' ? 'pr-6 border-r border-white/[0.04] mr-4' : 'pl-6 border-l border-white/[0.04] ml-4'}`}>
                                         <SheetClose asChild>
                                           <Link
-                                            to={getRegionalUrl('/shop')}
+                                            to={getRegionalUrl('/shop/coffee-bundles-gift-boxes')}
                                             className="flex items-center px-3 py-2 text-[12px] text-amber-200/80 rounded-md transition-colors hover:bg-white/[0.05] hover:text-amber-200"
                                           >
                                             {language === 'ar' ? 'أرسل هدية' : 'Send a Gift'}
