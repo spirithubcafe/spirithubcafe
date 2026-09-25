@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Check, Gift, Loader2, Minus, Plus, Search, ShoppingBag, Sparkles, X } from 'lucide-react';
+import { ArrowRight, Check, Gift, Loader2, Minus, Package, Plus, Search, ShoppingBag, Sparkles, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { Button } from './ui/button';
@@ -127,13 +127,17 @@ export const CustomBundleBuilder = () => {
       ?? Math.max(...tiers.map((tier) => tier.discountPercentage));
   }, [configuration?.tiers, maxCount]);
 
-  const subtitleText = topDiscount !== undefined
-    ? (hasRange
-        ? t('customBundle.subtitleRangeWithDiscount', { min: minCount, max: maxCount, discount: topDiscount })
-        : t('customBundle.subtitleWithDiscount', { max: maxCount, discount: topDiscount }))
-    : (hasRange
-        ? t('customBundle.subtitleRangeNoDiscount', { min: minCount, max: maxCount })
-        : t('customBundle.subtitleNoDiscount', { max: maxCount }));
+  const headlineLine2 = topDiscount !== undefined
+    ? t('customBundle.headlineLine2WithDiscount', { discount: topDiscount })
+    : t('customBundle.headlineLine2NoDiscount');
+
+  const simpleSubtitleText = hasRange
+    ? t('customBundle.simpleSubtitleRange', { min: minCount, max: maxCount })
+    : t('customBundle.simpleSubtitle', { max: maxCount });
+
+  const benefitBagsText = hasRange
+    ? t('customBundle.benefitBagsRange', { min: minCount, max: maxCount })
+    : t('customBundle.benefitBags', { max: maxCount });
 
   const filteredProducts = useMemo(() => {
     const products = configuration?.eligibleProducts ?? [];
@@ -162,14 +166,34 @@ export const CustomBundleBuilder = () => {
   return (
     <section className="overflow-hidden rounded-3xl bg-stone-900 text-white shadow-xl">
       <div className="relative">
-        <button type="button" onClick={() => setOpen((value) => !value)} className="flex w-full flex-wrap items-start justify-between gap-3 p-4 pb-3 text-start sm:flex-nowrap sm:gap-4 sm:p-8">
-          <div className="pe-9 sm:pe-0">
-            <div className="mb-1.5 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.22em] text-amber-400"><Sparkles className="h-4 w-4" />{t('customBundle.eyebrow')}</div>
-            <h2 className="text-lg! font-bold sm:text-3xl!">{t('customBundle.title')}</h2>
-            {isArabic && <p className="text-sm font-semibold text-amber-300">{t('customBundle.titleTagline')}</p>}
-            <p className="mt-1.5 max-w-2xl text-sm text-stone-300">{renderWithBold(subtitleText)}</p>
+        <button type="button" onClick={() => setOpen((value) => !value)} className="group relative flex w-full flex-col items-start gap-4 overflow-hidden p-5 pb-4 text-start sm:flex-row sm:flex-nowrap sm:items-start sm:justify-between sm:gap-6 sm:p-10">
+          <div className="relative z-10 pe-9 sm:max-w-xl sm:pe-0">
+            <div className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.22em] text-amber-400"><Sparkles className="h-4 w-4" />{t('customBundle.eyebrow')}</div>
+            <h2 className="text-xl! font-extrabold leading-tight sm:text-4xl!">
+              <span className="block">{t('customBundle.headlineLine1')}</span>
+              <span className="block">{renderWithBold(headlineLine2)}</span>
+            </h2>
+            {isArabic && <p className="mt-1 text-sm font-semibold text-amber-300">{t('customBundle.titleTagline')}</p>}
+            <p className="mt-2 max-w-md text-sm text-stone-300 sm:text-base">{simpleSubtitleText}</p>
+            <div className="mt-3 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs font-semibold text-stone-400 sm:text-sm">
+              <span>{benefitBagsText}</span>
+              <span aria-hidden="true" className="text-stone-600">·</span>
+              <span>{t('customBundle.benefitMixOrigins')}</span>
+              <span aria-hidden="true" className="text-stone-600">·</span>
+              <span>{t('customBundle.benefitMixSizes')}</span>
+            </div>
           </div>
-          <span className={`shrink-0 rounded-full bg-amber-500 px-4 py-2 text-xs font-bold text-stone-950 ${open ? 'hidden sm:inline-flex' : 'inline-flex'}`}>{open ? t('customBundle.close') : t('customBundle.open')}</span>
+
+          <div aria-hidden="true" className="pointer-events-none absolute -end-4 -bottom-4 hidden opacity-60 sm:flex sm:items-end">
+            <ShoppingBag className="h-14 w-14 -rotate-12 text-amber-500/40" />
+            <Package className="-mx-4 h-16 w-16 rotate-3 text-amber-400/50" />
+            <ShoppingBag className="h-14 w-14 rotate-12 text-amber-500/40" />
+          </div>
+
+          <span className={`relative z-10 w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-full bg-amber-500 px-6 py-3 text-sm font-extrabold text-stone-950 shadow-lg shadow-amber-500/20 transition-all group-hover:-translate-y-0.5 group-hover:shadow-xl group-hover:shadow-amber-500/30 sm:h-12 sm:w-auto sm:px-8 sm:text-base ${open ? 'hidden sm:inline-flex' : 'inline-flex'}`}>
+            {open ? t('customBundle.close') : t('customBundle.open')}
+            {!open && <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1 sm:h-5 sm:w-5" />}
+          </span>
         </button>
         {open && (
           <button

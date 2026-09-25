@@ -6,6 +6,7 @@ import { AnnouncementBar } from '../components/layout/AnnouncementBar';
 import { Seo } from '../components/seo/Seo';
 import { useApp } from '../hooks/useApp';
 
+const CustomBundleBuilder = lazy(() => import('@/components/CustomBundleBuilder').then((m) => ({ default: m.CustomBundleBuilder })));
 const BestSellers = lazy(() => import('@/components/sections/BestSellers').then((m) => ({ default: m.BestSellers })));
 const SustainabilitySection = lazy(() => import('../components/sections/SustainabilitySection').then((m) => ({ default: m.SustainabilitySection })));
 const FeaturedProducts = lazy(() => import('../components/sections/FeaturedProducts').then((m) => ({ default: m.FeaturedProducts })));
@@ -298,20 +299,13 @@ const HomePage: React.FC = () => {
       <AnnouncementBar />
       <ProfessionalHeroSlider />
 
-      {/* Quick-links bar — always visible, body context, satisfies AEO internal-link check */}
-      <div className="bg-stone-100 border-b border-stone-200 py-2 px-4 overflow-x-auto">
-        <ul className="flex flex-nowrap items-center justify-center gap-x-5 gap-y-1 text-xs text-stone-600 min-w-max mx-auto">
-          <li><Link to={`${regionPrefix}/products`} className="hover:text-stone-900 hover:underline transition-colors">{language === 'ar' ? 'جميع المنتجات' : 'All Products'}</Link></li>
-          <li aria-hidden="true" className="text-stone-300">·</li>
-          <li><Link to={`${regionPrefix}/shop`} className="hover:text-stone-900 hover:underline transition-colors">{language === 'ar' ? 'تصفح المتجر' : 'Browse Shop'}</Link></li>
-          <li aria-hidden="true" className="text-stone-300">·</li>
-          <li><Link to={`${regionPrefix}/about`} className="hover:text-stone-900 hover:underline transition-colors">{language === 'ar' ? 'عن المحمصة' : 'About the Roastery'}</Link></li>
-          <li aria-hidden="true" className="text-stone-300">·</li>
-          <li><Link to={`${regionPrefix}/faq`} className="hover:text-stone-900 hover:underline transition-colors">{language === 'ar' ? 'الأسئلة الشائعة' : 'FAQ'}</Link></li>
-          <li aria-hidden="true" className="text-stone-300">·</li>
-          <li><Link to={`${regionPrefix}/contact`} className="hover:text-stone-900 hover:underline transition-colors">{language === 'ar' ? 'تواصل معنا' : 'Contact Us'}</Link></li>
-        </ul>
-      </div>
+      <section className="bg-white px-4 pt-10 sm:pt-14">
+        <div className="mx-auto max-w-6xl">
+          <Suspense fallback={<div className="h-24" aria-hidden="true" />}>
+            <CustomBundleBuilder />
+          </Suspense>
+        </div>
+      </section>
 
       <div ref={productLoadRef}>
         {showProductSections ? (
