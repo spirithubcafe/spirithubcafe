@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import { ArrowLeft, ArrowRight, Gift, Package, Sparkles } from 'lucide-react';
 import { useApp } from '../../hooks/useApp';
 import { useCategoryProducts, useShopCategory, useShopPage } from '../../hooks/useShop';
 import { ProductCard } from '../../components/shop/ProductCard';
@@ -203,16 +204,34 @@ export const ShopCategoryPage = () => {
       <div className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-12">
         {categorySlug === 'coffee-bundles-gift-boxes' && <CustomBundleBuilder />}
         {categorySlug === 'coffee-bundles-gift-boxes' ? (
-          <div className="flex flex-col items-center gap-1.5 border-t border-stone-200 pt-8 text-center">
-            <p className="text-sm font-medium text-stone-500">
-              {isArabic ? 'تفضل مجموعة جاهزة؟' : 'Prefer a ready-made selection?'}
-            </p>
-            <h2 className="text-2xl font-bold text-stone-900 sm:text-3xl">
-              {isArabic ? 'تسوّق حزم القهوة المختارة' : 'Shop Curated Coffee Bundles'}
-            </h2>
-            <p className="text-sm text-stone-500">
-              {isArabic ? 'تركيبات قهوة اختارها فريق سبيريت هب.' : 'Coffee combinations selected by SpiritHub.'}
-            </p>
+          <div className="relative overflow-hidden rounded-3xl border border-stone-200 bg-stone-50 p-5 text-center shadow-sm sm:p-10">
+            <div aria-hidden="true" className="pointer-events-none absolute -end-4 -bottom-4 hidden opacity-60 sm:flex sm:items-end">
+              <Gift className="h-14 w-14 -rotate-12 text-stone-200" />
+              <Package className="-mx-4 h-16 w-16 rotate-3 text-stone-300" />
+              <Gift className="h-14 w-14 rotate-12 text-stone-200" />
+            </div>
+            <div className="relative z-10 mx-auto flex max-w-xl flex-col items-center gap-2">
+              <div className="mb-1 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.22em] text-amber-600">
+                <Sparkles className="h-4 w-4" />
+                {isArabic ? 'تفضل أن نختار لك؟' : 'Prefer Us To Choose?'}
+              </div>
+              <h2 className="text-2xl! font-extrabold leading-tight text-stone-900 sm:text-4xl!">
+                {isArabic ? 'اكتشف حزمنا المختارة' : 'Discover Our Curated Bundles'}
+              </h2>
+              <p className="mt-1 text-sm text-stone-500 sm:text-base">
+                {isArabic ? 'تشكيلات قهوة مدروسة بعناية، جاهزة للاستمتاع.' : 'Thoughtfully paired coffees, ready to enjoy.'}
+              </p>
+              <button
+                type="button"
+                onClick={() => document.getElementById('curated-bundle-grid')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                className="group mt-3 inline-flex items-center gap-2 rounded-full border border-stone-900 px-6 py-2.5 text-sm font-bold text-stone-900 transition hover:bg-stone-900 hover:text-white"
+              >
+                {isArabic ? 'تسوق الحزم' : 'Shop bundles'}
+                {isArabic
+                  ? <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
+                  : <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />}
+              </button>
+            </div>
           </div>
         ) : (
           <div className="flex flex-col gap-6 rounded-3xl bg-white p-6 shadow-sm md:flex-row md:items-center md:justify-between">
@@ -284,6 +303,7 @@ export const ShopCategoryPage = () => {
 
         {!shopPageLoading && products.length > 0 && (
           <div
+            id="curated-bundle-grid"
             className={
               hasShopProducts
                 ? 'grid grid-cols-2 gap-3 sm:gap-4 md:gap-6'
