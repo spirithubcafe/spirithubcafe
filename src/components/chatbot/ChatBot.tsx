@@ -91,6 +91,7 @@ const CHATBOT_TEXT = {
 };
 
 const UNKNOWN_COFFEE_PATTERN = /don't know what coffee to choose|do not know what coffee to choose|not sure what coffee|help me choose coffee|which coffee should i choose|\u0645\u0627\s*\u0623\u0639\u0631\u0641.*\u0623\u062e\u062a\u0627\u0631.*\u0642\u0647\u0648\u0629|\u0645\u0634\s*\u0639\u0627\u0631\u0641.*\u0623\u062e\u062a\u0627\u0631.*\u0642\u0647\u0648\u0629|\u0645\u0627\s*\u0627\u062f\u0631\u064a.*\u0623\u062e\u062a\u0627\u0631.*\u0642\u0647\u0648\u0629|\u0623\u064a\s*\u0642\u0647\u0648\u0629.*\u0623\u062e\u062a\u0627\u0631/i;
+const DELIVERY_TIME_PATTERN = /how long.*(deliver|arrive|ship|take)|delivery time|shipping time|when.*(arrive|receive|deliver)|\u0643\u0645\s*(?:\u064a\u0648\u0645|\u0648\u0642\u062a|\u0645\u062f\u0629).*(?:\u062a\u0648\u0635\u064a\u0644|\u0634\u062d\u0646|\u064a\u0648\u0635\u0644)|\u0645\u062a\u0649.*\u064a\u0635\u0644|\u0645\u062f\u0629\s*\u0627\u0644\u062a\u0648\u0635\u064a\u0644/i;
 const BUNDLE_PATTERN = /bundle|gift box|build (?:me )?(?:a )?(?:box|gift)|wholesale bundle|\u0628\u0627\u0642\u0629|\u0628\u0627\u0642\u0627\u062a|\u0628\u0648\u0643\u0633|\u0635\u0646\u062f\u0648\u0642 \u0647\u062f\u064a\u0629/i;
 const GIFT_PATTERN = /gift|\u0647\u062f\u064a\u0629|\u0647\u062f\u0627\u064a\u0627/i;
 const WHOLESALE_PATTERN = /wholesale|\u062c\u0645\u0644\u0629|\u062a\u0648\u0631\u064a\u062f/i;
@@ -240,6 +241,37 @@ const buildContactMessage = (regionCode: keyof typeof REGION_INFO, isAr: boolean
         `- **Google Maps:** ${contact.googleMapsUrl}`,
       ].filter(Boolean).join('\n');
 };
+
+const buildDeliveryTimeMessage = (regionCode: keyof typeof REGION_INFO, isAr: boolean): string => {
+  const isOman = regionCode === 'om';
+
+  if (isAr) {
+    return [
+      '\u0623\u0643\u064a\u062f\u060c \u0645\u062f\u0629 \u0627\u0644\u062a\u0648\u0635\u064a\u0644 \u062a\u0639\u062a\u0645\u062f \u0639\u0644\u0649 \u0637\u0631\u064a\u0642\u0629 \u0627\u0644\u0634\u062d\u0646 \u0627\u0644\u0645\u062e\u062a\u0627\u0631\u0629 \u0639\u0646\u062f \u0625\u062a\u0645\u0627\u0645 \u0627\u0644\u0637\u0644\u0628:',
+      '',
+      isOman ? '- **\u0627\u0644\u0627\u0633\u062a\u0644\u0627\u0645 (\u0645\u0633\u0642\u0637):** \u062e\u0644\u0627\u0644 24 \u0633\u0627\u0639\u0629 \u2013 \u0645\u062c\u0627\u0646\u064b\u0627' : '',
+      isOman ? '- **\u062a\u0648\u0635\u064a\u0644 \u0646\u0648\u0644 (\u0645\u0633\u0642\u0637/\u0627\u0644\u0642\u0631\u0645):** 1-2 \u064a\u0648\u0645 \u0639\u0645\u0644' : '',
+      '- **\u0623\u0631\u0627\u0645\u0643\u0633:** 2-4 \u0623\u064a\u0627\u0645 \u0639\u0645\u0644 (\u0639\u0645\u0627\u0646 \u0648\u062f\u0648\u0644 \u0627\u0644\u062e\u0644\u064a\u062c)',
+      '',
+      isOman
+        ? '\u0627\u0644\u0645\u062f\u0629 \u0648\u0627\u0644\u0633\u0639\u0631 \u0627\u0644\u0646\u0647\u0627\u0626\u064a\u0627\u0646 \u064a\u0638\u0647\u0631\u0627\u0646 \u0639\u0646\u062f \u0627\u0644\u062f\u0641\u0639\u060c \u0648\u0642\u062f \u062a\u0635\u0644 \u0628\u0639\u0636 \u0645\u0646\u0627\u0637\u0642 \u0645\u0633\u0642\u0637 \u0641\u064a \u0646\u0641\u0633 \u0627\u0644\u064a\u0648\u0645 \u0645\u0639 \u0646\u0648\u0644.'
+        : '\u0627\u0644\u0645\u062f\u0629 \u0648\u0627\u0644\u0633\u0639\u0631 \u0627\u0644\u0646\u0647\u0627\u0626\u064a\u0627\u0646 \u064a\u0638\u0647\u0631\u0627\u0646 \u0639\u0646\u062f \u0627\u0644\u062f\u0641\u0639.',
+    ].filter(Boolean).join('\n');
+  }
+
+  return [
+    "Sure, here's how delivery timing works when you check out:",
+    '',
+    isOman ? '- **Pickup (Muscat):** ready within 24 hours \u2013 free' : '',
+    isOman ? '- **Nool delivery (Muscat/Qurum):** 1-2 business days' : '',
+    '- **Aramex courier:** 2-4 business days (Oman & GCC)',
+    '',
+    isOman
+      ? 'Final ETA and cost show at checkout – some Muscat areas may even get same-day Nool delivery.'
+      : 'Final ETA and cost show at checkout.',
+  ].filter(Boolean).join('\n');
+};
+
 const hasProfileSignals = (profile: CustomerCoffeeProfile | null, recommendationsCount: number): boolean => {
   if (recommendationsCount > 0) return true;
   if (!profile) return false;
@@ -854,6 +886,16 @@ export const ChatBot: React.FC = () => {
       setInput('');
       setMessages((prev) => [...prev, { role: 'user', text: messageText, timestamp: new Date() }]);
       await startQuiz();
+      return;
+    }
+
+    if (DELIVERY_TIME_PATTERN.test(messageText)) {
+      setInput('');
+      setMessages((prev) => [
+        ...prev,
+        { role: 'user', text: messageText, timestamp: new Date() },
+        { role: 'model', text: buildDeliveryTimeMessage(currentRegion.code, isAr), timestamp: new Date() },
+      ]);
       return;
     }
 

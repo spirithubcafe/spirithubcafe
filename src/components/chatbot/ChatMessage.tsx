@@ -101,14 +101,14 @@ function renderMarkdownText(text: string, isAr: boolean): React.ReactNode {
         elements.push(
           <div
             key={i}
-            className={`my-1 flex gap-2 rounded-lg bg-[#fffaf7] px-2.5 py-1.5 ring-1 ring-[#f6e9e4] ${isAr ? 'items-start justify-between text-right' : 'items-baseline'}`}
+            className={`my-1 flex flex-wrap gap-x-2 gap-y-0.5 rounded-lg bg-[#fffaf7] px-2.5 py-1.5 ring-1 ring-[#f6e9e4] ${isAr ? 'items-start justify-between text-right' : 'items-baseline'}`}
             dir={isAr ? 'rtl' : 'ltr'}
           >
             <strong className="shrink-0 text-stone-800">{label}</strong>
             {trimmedValue && (
               <span
                 dir={isLtrValue ? 'ltr' : isAr ? 'rtl' : 'ltr'}
-                className={`min-w-0 flex-1 text-stone-700 [unicode-bidi:isolate] ${isAr ? 'text-left' : 'text-right'} ${trimmedValue.startsWith('http') ? 'break-all text-[12px] leading-relaxed' : 'break-words'}`}
+                className={`min-w-[7rem] flex-1 text-stone-700 [unicode-bidi:isolate] ${isAr ? 'text-left' : 'text-right'} ${trimmedValue.startsWith('http') ? 'break-all text-[12px] leading-relaxed' : 'break-words'}`}
               >
                 {trimmedValue}
               </span>
