@@ -439,15 +439,17 @@ export const ProductsPage = ({ hidePageChrome = false }: ProductsPageProps) => {
     // off-screen whenever a category is selected.
   }, [categoryFromUrl]);
 
-  // Normalize selected category to a known category ID when allCategories change
+  // Keep the public category value as the readable slug whenever one exists.
+  // Numeric category IDs remain accepted for backward-compatible shared URLs,
+  // but are normalized to the category slug once metadata is available.
   useEffect(() => {
     if (selectedCategory === 'all') {
       return;
     }
 
-    const matchBySlug = coffeeCategories.find((cat) => cat.slug === selectedCategory);
-    if (matchBySlug && selectedCategory !== matchBySlug.id) {
-      setSelectedCategory(matchBySlug.id);
+    const matchById = coffeeCategories.find((cat) => cat.id === selectedCategory);
+    if (matchById?.slug && selectedCategory !== matchById.slug) {
+      setSelectedCategory(matchById.slug);
     }
   }, [coffeeCategories, selectedCategory]);
 
