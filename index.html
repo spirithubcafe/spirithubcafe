@@ -43,7 +43,8 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="mobile-web-app-capable" content="yes" />
-    <link rel="manifest" href="/manifest.webmanifest" />
+    <!-- Reuse same-origin verification cookies when the host applies a security challenge. -->
+    <link rel="manifest" href="/manifest.webmanifest" crossorigin="use-credentials" />
 
     <!-- Preconnect to API domain for faster image loading -->
     <link rel="preconnect" href="https://api.spirithubcafe.com" crossorigin />
