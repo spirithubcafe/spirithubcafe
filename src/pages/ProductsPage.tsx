@@ -307,6 +307,7 @@ export const ProductsPage = ({ hidePageChrome = false }: ProductsPageProps) => {
   const [productAttributeOverrides, setProductAttributeOverrides] = useState<Record<string, CoffeeAttributes>>({});
   const [loadingCoffeeFacets, setLoadingCoffeeFacets] = useState(false);
   const hasLoadedCoffeeFacetsRef = useRef(false);
+  const facetEnrichmentRunRef = useRef(0);
   const [sortOpen, setSortOpen] = useState(false);
   const [sortOrder, setSortOrder] = useState<SortOrder>(() => {
     const sortFromUrl = searchParams.get('sort');
@@ -346,6 +347,12 @@ export const ProductsPage = ({ hidePageChrome = false }: ProductsPageProps) => {
   );
 
   const coffeeProducts = products;
+  const facetCatalogKey = useMemo(
+    () => `${currentRegion.code}:${coffeeProducts.map((product) => product.id).join(',')}`,
+    [coffeeProducts, currentRegion.code],
+  );
+  const facetCatalogKeyRef = useRef(facetCatalogKey);
+  facetCatalogKeyRef.current = facetCatalogKey;
   const filterableCoffeeProducts = useMemo(
     () => coffeeProducts.map((product) => {
       const attributeOverride = productAttributeOverrides[product.id];
@@ -1088,6 +1095,8 @@ export const ProductsPage = ({ hidePageChrome = false }: ProductsPageProps) => {
 
     hasLoadedCoffeeFacetsRef.current = true;
     setLoadingCoffeeFacets(true);
+    const enrichmentRun = ++facetEnrichmentRunRef.current;
+    const enrichmentCatalogKey = facetCatalogKeyRef.current;
     const attributeOverrides: Record<string, CoffeeAttributes> = {};
 
     try {
@@ -1122,13 +1131,20 @@ export const ProductsPage = ({ hidePageChrome = false }: ProductsPageProps) => {
         batchResults.forEach((result) => {
           if (result) attributeOverrides[result[0]] = result[1];
         });
-        setProductAttributeOverrides((currentOverrides) => ({
-          ...currentOverrides,
-          ...attributeOverrides,
-        }));
+      }
+
+      // Publish once, after every batch has completed. A region/catalog change
+      // invalidates this run so stale detail responses cannot enter the new list.
+      if (
+        enrichmentRun === facetEnrichmentRunRef.current &&
+        enrichmentCatalogKey === facetCatalogKeyRef.current
+      ) {
+        setProductAttributeOverrides(attributeOverrides);
       }
     } finally {
-      setLoadingCoffeeFacets(false);
+      if (enrichmentRun === facetEnrichmentRunRef.current) {
+        setLoadingCoffeeFacets(false);
+      }
     }
   }, [coffeeProducts, loadingCoffeeFacets]);
 
@@ -1144,12 +1160,14 @@ export const ProductsPage = ({ hidePageChrome = false }: ProductsPageProps) => {
     }
   };
 
-  // Attribute detail data is region-specific. Do not retain it after switching
-  // catalogs; the next filter-panel open will enrich the new product list.
+  // Attribute detail data is catalog-specific. Invalidate in-flight work and
+  // let the next filter-panel open enrich the current product list.
   useEffect(() => {
+    facetEnrichmentRunRef.current += 1;
     hasLoadedCoffeeFacetsRef.current = false;
+    setLoadingCoffeeFacets(false);
     setProductAttributeOverrides({});
-  }, [currentRegion.code]);
+  }, [facetCatalogKey]);
 
   // Keep URL query parameters synchronized with every active filter so a
   // filtered view can be shared and restored after a page refresh.
