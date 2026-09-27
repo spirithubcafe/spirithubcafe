@@ -13,6 +13,7 @@ import type { ProductsSsrBootstrap } from './lib/productTransform';
 
 const rootElement = document.getElementById('root')!;
 const CHUNK_RELOAD_GUARD_KEY = 'spirithub_chunk_reload_once';
+const CHUNK_RELOAD_COOLDOWN_MS = 5 * 60 * 1000;
 
 // Read the SSR products bootstrap once at startup - window.__SSR_PRODUCTS__/
 // __SSR_PRODUCTS_REGION__ are injected by server.js/api/ssr.js only when the
@@ -48,24 +49,26 @@ if (typeof window !== 'undefined') {
   const recoverFromChunkError = (error: unknown) => {
     if (!isChunkLoadError(error)) return;
 
-    let alreadyReloaded = false;
+    let lastReloadAt = 0;
     try {
-      alreadyReloaded = window.sessionStorage.getItem(CHUNK_RELOAD_GUARD_KEY) === '1';
+      const storedValue = window.sessionStorage.getItem(CHUNK_RELOAD_GUARD_KEY);
+      lastReloadAt = storedValue ? Number(storedValue) : 0;
     } catch {
-      alreadyReloaded = false;
+      lastReloadAt = 0;
     }
 
-    if (alreadyReloaded) {
-      console.error('[chunk-recovery] chunk load failed after one auto-reload; showing fallback UI.', error);
+    const now = Date.now();
+    if (lastReloadAt > 0 && now - lastReloadAt < CHUNK_RELOAD_COOLDOWN_MS) {
+      console.error('[chunk-recovery] chunk load failed during recovery cooldown; suppressing another reload.', error);
       return;
     }
 
     try {
-      window.sessionStorage.setItem(CHUNK_RELOAD_GUARD_KEY, '1');
+      window.sessionStorage.setItem(CHUNK_RELOAD_GUARD_KEY, String(now));
     } catch {
       // Storage can be blocked in some mobile browsers. Reload once anyway.
     }
-    console.warn('[chunk-recovery] chunk load failure detected; reloading once to recover from stale assets.');
+    console.warn('[chunk-recovery] chunk load failure detected; performing one guarded reload.', error);
     window.location.reload();
   };
 
@@ -77,18 +80,6 @@ if (typeof window !== 'undefined') {
     recoverFromChunkError(event.reason);
   });
 
-  // Reset guard after a successful page load cycle so future deployments can recover once again.
-  window.addEventListener(
-    'pageshow',
-    () => {
-      try {
-        window.sessionStorage.removeItem(CHUNK_RELOAD_GUARD_KEY);
-      } catch {
-        // ignore
-      }
-    },
-    { once: true },
-  );
 }
 
 // Check if the app was server-rendered
