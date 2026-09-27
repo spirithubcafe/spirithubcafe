@@ -8,6 +8,7 @@ import { productService } from '../services/productService';
 import type { Category as ApiCategory, Product as ApiProduct } from '../types/product';
 import { getCategoryImageUrl, getProductImageUrl, resolveProductImagePath } from '../lib/imageUtils';
 import { cacheUtils } from '../lib/cacheUtils';
+import { isRetryableProductFetchError, productsBelongToRegion, shouldClearProductsOnFetchError } from '../lib/productFetchRetry';
 import { safeStorage } from '../lib/safeStorage';
 import { normalizeProductTags } from '../lib/productTagUtils';
 
@@ -110,12 +111,22 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   // Keep current values in refs to avoid useCallback dependency changes
   const languageRef = React.useRef(language);
   const currentRegionCodeRef = React.useRef(currentRegionCode);
+  // Mirrors `products` state so a failing background/retry request can tell
+  // whether valid data already exists before deciding to clear it.
+  const productsRef = React.useRef(products);
+  // Which region the products currently in state were fetched for - prevents
+  // preserving another region's stale list across a region switch that fails.
+  const productsRegionRef = React.useRef(currentRegionCode);
   
   // Update refs when values change
   useEffect(() => {
     languageRef.current = language;
     currentRegionCodeRef.current = currentRegionCode;
   }, [language, currentRegionCode]);
+
+  useEffect(() => {
+    productsRef.current = products;
+  }, [products]);
 
   const beginLoading = useCallback(() => {
     pendingRequestsRef.current += 1;
@@ -217,6 +228,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         setProducts(filteredCached);
         cachedProductsToMerge = filteredCached;
         usedCache = true;
+        productsRegionRef.current = regionCode;
         // Continue to fetch fresh data in the background to pick up admin changes (activation/deactivation).
       }
     }
@@ -232,30 +244,39 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       let activeProducts: ApiProduct[] = [];
       const maxAttempts = forceRefresh ? 3 : usedCache ? 2 : 3;
 
-      // Retry transient failures and suspicious empty first-load responses.
+      // Retry transient failures (network errors, timeouts, 408/429/5xx) and
+      // suspicious empty first-load responses. Non-retryable errors (e.g. 400/
+      // 401/403/404) are rethrown immediately without burning remaining attempts.
       for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
         if (!isMountedRef.current || requestId !== latestProductsRequestRef.current) {
           return;
         }
 
-        const response = await productService.getAll({
-          page: 1,
-          pageSize: 100, // Get all products
-          includeInactive: false,
-          excludeShop: true,
-        });
+        try {
+          const response = await productService.getAll({
+            page: 1,
+            pageSize: 100, // Get all products
+            includeInactive: false,
+            excludeShop: true,
+          });
 
-        const products = (Array.isArray(response) ? response : response.items || []) as ApiProduct[];
-        activeProducts = products.filter(
-          (prod) => (prod as unknown as { isActive?: boolean }).isActive !== false,
-        );
+          const products = (Array.isArray(response) ? response : response.items || []) as ApiProduct[];
+          activeProducts = products.filter(
+            (prod) => (prod as unknown as { isActive?: boolean }).isActive !== false,
+          );
 
-        if (!usedCache && activeProducts.length === 0 && attempt < maxAttempts) {
+          if (!usedCache && activeProducts.length === 0 && attempt < maxAttempts) {
+            await wait(350 * attempt);
+            continue;
+          }
+
+          break;
+        } catch (attemptError) {
+          if (attempt >= maxAttempts || !isRetryableProductFetchError(attemptError)) {
+            throw attemptError;
+          }
           await wait(350 * attempt);
-          continue;
         }
-
-        break;
       }
 
       // IMPORTANT: Avoid N+1 calls (getById per product). Use list payload for initial rendering.
@@ -403,6 +424,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       const mergedProducts = transformedProducts.map(preserveImageFromCache);
       setProducts(mergedProducts);
       fetchSucceeded = true;
+      productsRegionRef.current = regionCode;
       
       // Cache the data
       setSessionCache(cacheKey, mergedProducts);
@@ -414,8 +436,24 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       
     } catch (err) {
       console.error('❌ Error fetching products:', err);
-      if (!usedCache) {
-        setError('Failed to fetch products');
+
+      // Ignore stale failures: a newer request for a different region/language
+      // may have already resolved (successfully or not) and updated state.
+      if (!isMountedRef.current || requestId !== latestProductsRequestRef.current) {
+        return;
+      }
+
+      setError('Failed to fetch products');
+
+      // Never wipe out valid products just because a background/retry request
+      // threw - only fall back to an empty list when we have nothing valid to
+      // show (no session cache and no products already in state). Products left
+      // over from a different region never count as "valid" here, so a failed
+      // switch can't leave the old region's catalog on screen.
+      const existingProductCount = productsBelongToRegion(productsRegionRef.current, regionCode)
+        ? productsRef.current.length
+        : 0;
+      if (shouldClearProductsOnFetchError(usedCache, existingProductCount)) {
         setProducts([]);
       }
     } finally {

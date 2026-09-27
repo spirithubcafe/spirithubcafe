@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import {
+  AlertCircle,
   Check,
   ChevronDown,
   ChevronLeft,
@@ -31,6 +32,7 @@ import { useShopPage } from '../hooks/useShop';
 import { useRegion } from '../hooks/useRegion';
 import { getCategoryImageUrl } from '../lib/imageUtils';
 import { productService } from '../services/productService';
+import { resolveProductsViewState } from '../lib/productsPageState';
 
 type CategoryOption = {
   id: string;
@@ -270,6 +272,7 @@ export const ProductsPage = ({ hidePageChrome = false }: ProductsPageProps) => {
     products,
     allCategories,
     loading,
+    error,
     language,
     fetchProducts,
     fetchCategories,
@@ -328,7 +331,6 @@ export const ProductsPage = ({ hidePageChrome = false }: ProductsPageProps) => {
   );
 
   const coffeeProducts = products;
-  const isProductsLoading = loading && coffeeProducts.length === 0;
   const filterableCoffeeProducts = useMemo(
     () => coffeeProducts.map((product) => ({ ...product, ...productAttributeOverrides[product.id] })),
     [coffeeProducts, productAttributeOverrides],
@@ -921,6 +923,13 @@ export const ProductsPage = ({ hidePageChrome = false }: ProductsPageProps) => {
   }[gridColumns];
   const activeSortOption = sortOptions.find((option) => option.value === sortOrder)!;
   const hasActiveCustomerFilters = selectedCategory !== 'all' || searchTerm.trim().length > 0 || selectedCollections.length > 0 || selectedTagIds.length > 0 || Object.values(selectedCoffeeFacets).some((values) => values.length > 0);
+  const productsViewState = resolveProductsViewState({
+    loading,
+    error,
+    productCount: coffeeProducts.length,
+    filteredCount: filteredProducts.length,
+    hasActiveFilters: hasActiveCustomerFilters,
+  });
 
   const toggleCollection = (collection: ProductCollection) => {
     setSelectedCollections((currentCollections) =>
@@ -1370,9 +1379,11 @@ export const ProductsPage = ({ hidePageChrome = false }: ProductsPageProps) => {
                 </PopoverContent>
               </Popover>
 
-              <span className="text-xs font-medium text-muted-foreground sm:text-sm">
-                {isArabic ? `${filteredProducts.length} منتج متاح` : `${filteredProducts.length} products`}
-              </span>
+              {productsViewState !== 'loading' && productsViewState !== 'error' && (
+                <span className="text-xs font-medium text-muted-foreground sm:text-sm">
+                  {isArabic ? `${filteredProducts.length} منتج متاح` : `${filteredProducts.length} products`}
+                </span>
+              )}
             </div>
 
             <div className="flex items-center gap-1" role="group" aria-label={isArabic ? 'عدد أعمدة المنتجات' : 'Product grid columns'}>
@@ -1461,7 +1472,7 @@ export const ProductsPage = ({ hidePageChrome = false }: ProductsPageProps) => {
               </div>
             )}
 
-            {isProductsLoading ? (
+            {productsViewState === 'loading' ? (
               <div className="space-y-8">
                 {/* Results Count Skeleton */}
                 <div className="flex justify-center">
@@ -1481,18 +1492,50 @@ export const ProductsPage = ({ hidePageChrome = false }: ProductsPageProps) => {
                   ))}
                 </div>
               </div>
-            ) : filteredProducts.length === 0 ? (
+            ) : productsViewState === 'error' ? (
               <div className="text-center py-16">
-                <Coffee className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                <AlertCircle className="w-16 h-16 text-amber-500 mx-auto mb-4" />
                 <h3 className="text-xl font-semibold text-gray-600 mb-2">
-                  {isArabic ? 'لم يتم العثور على منتجات' : 'No products found'}
+                  {isArabic ? 'تعذر تحميل قهوتنا' : "We couldn't load our coffees"}
                 </h3>
-                <p className="text-gray-500">
+                <p className="text-gray-500 mb-6">
                   {isArabic
-                    ? 'جرب تغيير فلاتر البحث'
-                    : 'Try changing your search filters'}
+                    ? 'حدث خطأ أثناء تحميل المجموعة. يرجى المحاولة مرة أخرى.'
+                    : 'Something went wrong while loading the collection. Please try again.'}
                 </p>
+                <Button onClick={() => void fetchProducts(true)} disabled={loading}>
+                  {loading ? (isArabic ? 'جارٍ المحاولة...' : 'Retrying...') : (isArabic ? 'حاول مرة أخرى' : 'Try again')}
+                </Button>
               </div>
+            ) : productsViewState === 'filter-empty' || productsViewState === 'empty' ? (
+              productsViewState === 'filter-empty' ? (
+                <div className="text-center py-16">
+                  <Coffee className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold text-gray-600 mb-2">
+                    {isArabic ? 'لا توجد منتجات مطابقة لفلاترك' : 'No products match your filters'}
+                  </h3>
+                  <p className="text-gray-500 mb-6">
+                    {isArabic
+                      ? 'جرب تغيير الفلاتر أو مسحها.'
+                      : 'Try changing or clearing your filters.'}
+                  </p>
+                  <Button variant="outline" onClick={clearCustomerFilters}>
+                    {isArabic ? 'مسح الفلاتر' : 'Clear filters'}
+                  </Button>
+                </div>
+              ) : (
+                <div className="text-center py-16">
+                  <Coffee className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold text-gray-600 mb-2">
+                    {isArabic ? 'لم يتم العثور على منتجات' : 'No products found'}
+                  </h3>
+                  <p className="text-gray-500">
+                    {isArabic
+                      ? 'جرب تغيير فلاتر البحث'
+                      : 'Try changing your search filters'}
+                  </p>
+                </div>
+              )
             ) : (
               <>
                 {/* Show grouped by category if "All" is selected */}
@@ -1627,7 +1670,9 @@ export const ProductsPage = ({ hidePageChrome = false }: ProductsPageProps) => {
                 onClick={() => setIsMobileFiltersOpen(false)}
                 className="h-11 w-full bg-amber-600 text-white hover:bg-amber-700"
               >
-                {isArabic ? `عرض ${filteredProducts.length} منتج` : `Show ${filteredProducts.length} Products`}
+                {productsViewState === 'error'
+                  ? (isArabic ? 'عرض المنتجات' : 'Show Products')
+                  : (isArabic ? `عرض ${filteredProducts.length} منتج` : `Show ${filteredProducts.length} Products`)}
               </Button>
             </SheetFooter>
           </SheetContent>
