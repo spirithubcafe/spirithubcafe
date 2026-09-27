@@ -1,5 +1,5 @@
 import type { Product, ProductImage } from '../types/product';
-import { getActiveRegionForApi } from './regionUtils';
+import { getActiveRegionForApi } from './regionUtils.ts';
 
 /**
  * Image Utilities
@@ -89,7 +89,9 @@ export const getCategoryImageUrl = (imagePath?: string | null): string => {
 
 // Widths specifically optimized for product cards (smaller subset for faster rendering)
 const PRODUCT_CARD_WIDTHS = [240, 320, 480, 640] as const;
-const isImageResizingEnabled = String(import.meta.env.VITE_ENABLE_IMAGE_RESIZING || '').toLowerCase() === 'true';
+// Optional chaining: import.meta.env is always populated under Vite, but is
+// undefined when this module loads under a plain Node runtime (e.g. tests).
+const isImageResizingEnabled = String(import.meta.env?.VITE_ENABLE_IMAGE_RESIZING || '').toLowerCase() === 'true';
 
 const withImageWidthParam = (imageUrl: string, width: number): string => {
   // Keep public fallback assets untouched; only ask backend-hosted assets for resized variants.

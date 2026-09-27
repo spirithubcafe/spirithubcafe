@@ -323,6 +323,21 @@ export const ProductsPage = ({ hidePageChrome = false }: ProductsPageProps) => {
   const browseCategoriesRef = useRef<HTMLDivElement>(null);
   const { shopData } = useShopPage(shouldLoadShopCategories);
 
+  // True only for the render(s) that must match the server's SSR output
+  // (server itself, plus the client's first hydration pass) - flips to false
+  // right after the first commit so later renders (filter changes, etc.)
+  // restore normal per-group lazy loading.
+  const hadSsrProductBootstrapRef = useRef(
+    typeof window === 'undefined'
+      ? true
+      : document.getElementById('root')?.getAttribute('data-ssr') === 'true',
+  );
+  const [hasSettledAfterHydration, setHasSettledAfterHydration] = useState(false);
+  useEffect(() => {
+    setHasSettledAfterHydration(true);
+  }, []);
+  const forceEagerGroupsForHydration = hadSsrProductBootstrapRef.current && !hasSettledAfterHydration;
+
   const isArabic = i18n.language === 'ar';
   const getCategoryDisplayName = useCallback(
     (category: { name: string; nameAr?: string }) =>
@@ -1558,7 +1573,7 @@ export const ProductsPage = ({ hidePageChrome = false }: ProductsPageProps) => {
                       return (
                         <DeferredProductGroup
                           key={category.id}
-                          eager={categoryIndex === 0}
+                          eager={categoryIndex === 0 || forceEagerGroupsForHydration}
                           productCount={categoryProducts.length}
                         >
                           {/* Category Section Header */}

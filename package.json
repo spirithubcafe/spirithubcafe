@@ -13,6 +13,7 @@
     "test:custom-bundle": "node --experimental-strip-types --test src/lib/customBundle.test.ts",
     "test:bundle-admin": "node --experimental-strip-types --test src/lib/bundleAdminUtils.test.ts",
     "test:products-resilience": "node --experimental-strip-types --test src/lib/productFetchRetry.test.ts src/lib/productsPageState.test.ts",
+    "test:products-ssr": "node --experimental-strip-types --test src/lib/productTransform.test.ts",
     "preview": "vite preview"
   },
   "dependencies": {
