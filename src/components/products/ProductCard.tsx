@@ -22,9 +22,12 @@ const ProductQuickView = lazy(() =>
 interface ProductCardProps {
   product: Product;
   prioritizeImage?: boolean;
+  /** 'homepage' applies the premium homepage presentation (subtle border, plain price format, no Price label). Defaults to the standard look used on the Shop/Products pages. */
+  variant?: 'default' | 'homepage';
 }
 
-const ProductCardComponent: React.FC<ProductCardProps> = ({ product, prioritizeImage = false }) => {
+const ProductCardComponent: React.FC<ProductCardProps> = ({ product, prioritizeImage = false, variant = 'default' }) => {
+  const isHomepage = variant === 'homepage';
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { language } = useApp();
@@ -155,9 +158,13 @@ const ProductCardComponent: React.FC<ProductCardProps> = ({ product, prioritizeI
   };
 
   return (
-    <Card 
-      ref={cardRef} 
-      className="group overflow-hidden hover:shadow-xl transition-all duration-300 bg-white border-0 shadow-md py-0 relative cursor-pointer"
+    <Card
+      ref={cardRef}
+      className={
+        isHomepage
+          ? 'group flex h-full flex-col overflow-hidden border border-stone-100 bg-white py-0 shadow-sm transition-all duration-300 hover:shadow-md relative cursor-pointer'
+          : 'group overflow-hidden hover:shadow-xl transition-all duration-300 bg-white border-0 shadow-md py-0 relative cursor-pointer'
+      }
       onClick={handleCardClick}
     >
       {/* Wishlist Button - Positioned absolutely in top-right corner */}
@@ -222,38 +229,58 @@ const ProductCardComponent: React.FC<ProductCardProps> = ({ product, prioritizeI
       </div>
 
       {/* Product Content - Compact */}
-      <CardContent className="p-3 pt-1">
+      <CardContent className={isHomepage ? 'flex flex-1 flex-col p-3 pt-1' : 'p-3 pt-1'}>
         {/* Category Badge */}
         {productCategory && (
           <div className="mb-1 min-h-6 flex items-center">
-            <span className="inline-block px-2 py-0.5 text-xs font-medium text-amber-700 bg-amber-50 rounded-full border border-amber-200 whitespace-nowrap overflow-hidden text-ellipsis max-w-full">
-              {productCategory}
-            </span>
+            {isHomepage ? (
+              <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-stone-400 whitespace-nowrap overflow-hidden text-ellipsis max-w-full">
+                {productCategory}
+              </span>
+            ) : (
+              <span className="inline-block px-2 py-0.5 text-xs font-medium text-amber-700 bg-amber-50 rounded-full border border-amber-200 whitespace-nowrap overflow-hidden text-ellipsis max-w-full">
+                {productCategory}
+              </span>
+            )}
           </div>
         )}
         
-        <h3 className="font-bold text-sm text-gray-900 line-clamp-2 mb-1 group-hover:text-amber-600 transition-colors min-h-10">
+        <h3 className={
+          isHomepage
+            ? 'font-extrabold text-sm text-stone-900 line-clamp-2 mb-1 group-hover:text-amber-700 transition-colors min-h-10'
+            : 'font-bold text-sm text-gray-900 line-clamp-2 mb-1 group-hover:text-amber-600 transition-colors min-h-10'
+        }>
           {productName}
         </h3>
-        <p className="text-xs text-amber-600 mb-2 line-clamp-1">
+        <p className={isHomepage ? 'text-xs text-stone-500 mb-2 line-clamp-1' : 'text-xs text-amber-600 mb-2 line-clamp-1'}>
           {productTastingNotes || '---'}
         </p>
         {/* Price at bottom */}
-        <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-          <span className="text-xs text-gray-400">{isArabic ? 'السعر' : 'Price'}</span>
-          {product.price > 0 && currentRegion.code === 'om' ? (
-            <OmaniRialPrice
-              amount={product.price}
-              isArabic={isArabic}
-              className="text-lg text-amber-600"
-              amountClassName="font-bold"
-            />
-          ) : (
-            <span className="text-lg font-bold text-amber-600">
+        <div className={isHomepage ? 'mt-auto flex items-center justify-between pt-2 border-t border-stone-100' : 'flex items-center justify-between pt-2 border-t border-gray-100'}>
+          {isHomepage ? (
+            <span className="text-base font-bold text-stone-900">
               {product.price > 0
                 ? formatPrice(product.price, currentRegion.code, isArabic)
                 : (isArabic ? 'قريباً' : 'Soon')}
             </span>
+          ) : (
+            <>
+              <span className="text-xs text-gray-400">{isArabic ? 'السعر' : 'Price'}</span>
+              {product.price > 0 && currentRegion.code === 'om' ? (
+                <OmaniRialPrice
+                  amount={product.price}
+                  isArabic={isArabic}
+                  className="text-lg text-amber-600"
+                  amountClassName="font-bold"
+                />
+              ) : (
+                <span className="text-lg font-bold text-amber-600">
+                  {product.price > 0
+                    ? formatPrice(product.price, currentRegion.code, isArabic)
+                    : (isArabic ? 'قريباً' : 'Soon')}
+                </span>
+              )}
+            </>
           )}
         </div>
 

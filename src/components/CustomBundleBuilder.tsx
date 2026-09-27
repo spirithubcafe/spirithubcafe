@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowRight, Check, Gift, Loader2, Minus, Package, Plus, Search, ShoppingBag, Sparkles, X } from 'lucide-react';
+import { ArrowRight, Check, Gift, Loader2, Minus, Plus, Search, ShoppingBag, Sparkles, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { Button } from './ui/button';
@@ -166,34 +166,38 @@ export const CustomBundleBuilder = () => {
   return (
     <section className="overflow-hidden rounded-3xl bg-stone-900 text-white shadow-xl">
       <div className="relative">
-        <button type="button" onClick={() => setOpen((value) => !value)} className="group relative flex w-full flex-col items-start gap-4 overflow-hidden p-5 pb-4 text-start sm:flex-row sm:flex-nowrap sm:items-start sm:justify-between sm:gap-6 sm:p-10">
-          <div className="relative z-10 pe-9 sm:max-w-xl sm:pe-0">
-            <div className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.22em] text-amber-400"><Sparkles className="h-4 w-4" />{t('customBundle.eyebrow')}</div>
+        <button type="button" onClick={() => setOpen((value) => !value)} className="group relative flex w-full flex-col items-start gap-5 overflow-hidden px-5 py-2 text-start sm:flex-row sm:items-stretch sm:gap-x-[8%] sm:px-10 sm:py-7">
+          <div className="relative z-10 flex min-w-0 flex-col items-start justify-center gap-2 pe-9 sm:flex-none sm:basis-[42%] sm:gap-3 sm:pe-0">
+            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.22em] text-amber-400"><Sparkles className="h-4 w-4" />{t('customBundle.eyebrow')}</div>
             <h2 className="text-xl! font-extrabold leading-tight sm:text-4xl!">
               <span className="block">{t('customBundle.headlineLine1')}</span>
               <span className="block">{renderWithBold(headlineLine2)}</span>
             </h2>
-            {isArabic && <p className="mt-1 text-sm font-semibold text-amber-300">{t('customBundle.titleTagline')}</p>}
-            <p className="mt-2 max-w-md text-sm text-stone-300 sm:text-base">{simpleSubtitleText}</p>
-            <div className="mt-3 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs font-semibold text-stone-400 sm:text-sm">
+            {isArabic && <p className="text-sm font-semibold text-amber-300">{t('customBundle.titleTagline')}</p>}
+            <p className="max-w-md text-sm text-stone-300 sm:text-base">{simpleSubtitleText}</p>
+            <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs font-semibold text-stone-400 sm:text-sm">
               <span>{benefitBagsText}</span>
               <span aria-hidden="true" className="text-stone-600">·</span>
               <span>{t('customBundle.benefitMixOrigins')}</span>
               <span aria-hidden="true" className="text-stone-600">·</span>
               <span>{t('customBundle.benefitMixSizes')}</span>
             </div>
+            <span className={`relative z-10 mt-1 h-12 w-[88%] items-center justify-center gap-2 self-center whitespace-nowrap rounded-full bg-amber-500 px-6 py-3 text-sm font-extrabold text-stone-950 shadow-lg shadow-amber-500/20 transition-all group-hover:-translate-y-0.5 group-hover:shadow-xl group-hover:shadow-amber-500/30 sm:h-12 sm:w-auto sm:self-auto sm:px-8 sm:text-base ${open ? 'hidden sm:inline-flex' : 'inline-flex'}`}>
+              {open ? t('customBundle.close') : t('customBundle.open')}
+              {!open && <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1 sm:h-5 sm:w-5" />}
+            </span>
           </div>
 
-          <div aria-hidden="true" className="pointer-events-none absolute -end-4 -bottom-4 hidden opacity-60 sm:flex sm:items-end">
-            <ShoppingBag className="h-14 w-14 -rotate-12 text-amber-500/40" />
-            <Package className="-mx-4 h-16 w-16 rotate-3 text-amber-400/50" />
-            <ShoppingBag className="h-14 w-14 rotate-12 text-amber-500/40" />
+          <div aria-hidden="true" className="relative block h-48 w-full shrink-0 overflow-hidden rounded-3xl sm:h-auto sm:w-auto sm:flex-none sm:basis-[50%] sm:self-stretch">
+            <img
+              src="/images/spirithub-coffee-discovery-bundle-everyday-harmony.webp"
+              alt=""
+              loading="lazy"
+              decoding="async"
+              className="absolute inset-0 h-full w-full scale-105 object-cover transition-transform duration-500 group-hover:scale-110"
+            />
+            <div className="pointer-events-none absolute inset-0 rounded-3xl ring-1 ring-inset ring-white/10" />
           </div>
-
-          <span className={`relative z-10 w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-full bg-amber-500 px-6 py-3 text-sm font-extrabold text-stone-950 shadow-lg shadow-amber-500/20 transition-all group-hover:-translate-y-0.5 group-hover:shadow-xl group-hover:shadow-amber-500/30 sm:h-12 sm:w-auto sm:px-8 sm:text-base ${open ? 'hidden sm:inline-flex' : 'inline-flex'}`}>
-            {open ? t('customBundle.close') : t('customBundle.open')}
-            {!open && <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1 sm:h-5 sm:w-5" />}
-          </span>
         </button>
         {open && (
           <button

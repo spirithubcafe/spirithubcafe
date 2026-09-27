@@ -3,10 +3,12 @@ import { Compass, Coffee, Truck } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { ProfessionalHeroSlider } from '../components/layout/ProfessionalHeroSlider';
 import { AnnouncementBar } from '../components/layout/AnnouncementBar';
+import { TrustBadgesBar } from '../components/sections/TrustBadgesBar';
 import { Seo } from '../components/seo/Seo';
 import { useApp } from '../hooks/useApp';
 
 const CustomBundleBuilder = lazy(() => import('@/components/CustomBundleBuilder').then((m) => ({ default: m.CustomBundleBuilder })));
+const CuratedBundlesSection = lazy(() => import('../components/sections/CuratedBundlesSection').then((m) => ({ default: m.CuratedBundlesSection })));
 const BestSellers = lazy(() => import('@/components/sections/BestSellers').then((m) => ({ default: m.BestSellers })));
 const SustainabilitySection = lazy(() => import('../components/sections/SustainabilitySection').then((m) => ({ default: m.SustainabilitySection })));
 const FeaturedProducts = lazy(() => import('../components/sections/FeaturedProducts').then((m) => ({ default: m.FeaturedProducts })));
@@ -298,14 +300,19 @@ const HomePage: React.FC = () => {
       />
       <AnnouncementBar />
       <ProfessionalHeroSlider />
+      <TrustBadgesBar />
 
-      <section className="bg-white px-4 pt-10 sm:pt-14">
+      <section className="bg-white px-4 pt-4 sm:pt-6">
         <div className="mx-auto max-w-6xl">
           <Suspense fallback={<div className="h-24" aria-hidden="true" />}>
             <CustomBundleBuilder />
           </Suspense>
         </div>
       </section>
+
+      <Suspense fallback={<div className="min-h-[40vh]" aria-hidden="true" />}>
+        <CuratedBundlesSection />
+      </Suspense>
 
       <div ref={productLoadRef}>
         {showProductSections ? (

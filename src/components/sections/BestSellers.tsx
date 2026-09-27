@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { ArrowRight, ArrowLeft } from 'lucide-react';
 import { ProductCard } from '../products/ProductCard';
 import { productService } from '../../services/productService';
 import { getProductImageUrl } from '../../lib/imageUtils';
@@ -7,7 +8,9 @@ import { normalizeProductTags } from '../../lib/productTagUtils';
 import type { Product } from '../../contexts/AppContextDefinition';
 
 export const BestSellers: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isArabic = i18n.language === 'ar';
+  const Arrow = isArabic ? ArrowLeft : ArrowRight;
   const [bestSellerProducts, setBestSellerProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -87,16 +90,17 @@ export const BestSellers: React.FC = () => {
 
   if (loading) {
     return (
-      <section className="py-16 bg-gray-50">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="pt-6 pb-5 bg-white sm:pt-8 sm:pb-10">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           {/* Section Header Skeleton */}
-          <div className="flex flex-col items-center gap-3 mb-12">
+          <div className="flex flex-col gap-3 mb-8 sm:mb-10">
+            <div className="h-3 w-40 animate-pulse rounded bg-gray-200" />
             <div className="h-8 w-52 animate-pulse rounded-lg bg-gray-200" />
             <div className="h-4 w-72 animate-pulse rounded bg-gray-100" />
           </div>
           {/* Product Cards Skeleton */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 sm:gap-6">
-            {[0, 1, 2, 3, 4, 5].map((i) => (
+          <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 lg:grid-cols-6">
+            {Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
                 <div className="aspect-square w-full animate-pulse bg-gray-100" />
                 <div className="space-y-2 p-3">
@@ -117,30 +121,33 @@ export const BestSellers: React.FC = () => {
   }
 
   return (
-    <section className="py-16 bg-gray-50">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="pt-6 pb-5 bg-white sm:pt-8 sm:pb-10">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
-        <div className="text-center mb-12">
-          <h2 className="text-[22px] font-semibold tracking-[1px] text-[#2E2E2E] mb-4 uppercase md:text-[28px]">
+        <div className="mb-8 sm:mb-10">
+          <p className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.22em] text-amber-600">
+            <span className="h-px w-6 bg-amber-500/60" aria-hidden="true" />
+            {t('sections.bestSellersEyebrow')}
+          </p>
+          <h2 className="text-2xl font-extrabold text-stone-900 sm:text-4xl">
             {t('sections.bestSellers')}
           </h2>
-          
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          <p className="mt-2 text-sm text-stone-500 sm:max-w-xl sm:text-base">
             {t('sections.bestSellersDescription')}
           </p>
         </div>
 
         {/* Products Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 sm:gap-6">
+        <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 lg:grid-cols-6">
           {bestSellerProducts.map((product, index) => (
             <div
               key={product.id}
-              className="transform transition-all duration-300 hover:scale-105 animate-fade-in"
+              className="h-full transform transition-all duration-300 hover:scale-[1.02] animate-fade-in"
               style={{ animationDelay: `${index * 100}ms` }}
             >
-              <div className="relative">
+              <div className="relative h-full">
                 {/* Badges are now handled by ProductCard component */}
-                <ProductCard product={product} />
+                <ProductCard product={product} variant="homepage" />
               </div>
             </div>
           ))}
@@ -150,9 +157,10 @@ export const BestSellers: React.FC = () => {
         <div className="text-center mt-12">
           <a
             href="/products"
-            className="inline-block bg-red-500 hover:bg-red-600 text-white font-semibold px-6 py-3 rounded-md transition-all duration-300 text-base uppercase tracking-wide"
+            className="group inline-flex items-center gap-2 rounded-full bg-stone-900 px-8 py-3 text-sm font-bold text-white transition hover:bg-amber-600"
           >
             {t('sections.viewAllProducts')}
+            <Arrow className="h-4 w-4 transition-transform group-hover:translate-x-1 rtl:group-hover:-translate-x-1" />
           </a>
         </div>
       </div>

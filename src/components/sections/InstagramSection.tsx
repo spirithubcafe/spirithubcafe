@@ -212,11 +212,14 @@ export const InstagramSection: React.FC = () => {
   return (
     <section className="bg-[#fbfbf9] pb-12 pt-8 sm:pb-14 sm:pt-10 lg:pb-16 lg:pt-11">
       <div className="mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:px-8">
-        <div className="mb-8 text-center sm:mb-10">
-          <h2 className="text-[22px] font-semibold tracking-[1px] text-[#2E2E2E] md:text-[28px]">
-            {isArabic ? 'زوروا إنستغرامنا' : 'VISIT OUR INSTAGRAM'}
+        <div className="mb-8 sm:mb-10">
+          <p className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.22em] text-amber-600">
+            <span className="h-px w-6 bg-amber-500/60" aria-hidden="true" />
+            {isArabic ? 'تابعونا' : 'Follow Along'}
+          </p>
+          <h2 className="text-2xl font-extrabold text-stone-900 sm:text-4xl">
+            {isArabic ? 'زوروا إنستغرامنا' : 'Visit Our Instagram'}
           </h2>
-          <div className="mx-auto mt-4 h-px w-12 bg-[#b9b8b2]" />
         </div>
 
         <div className="mx-auto w-full max-w-[1320px]">

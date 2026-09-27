@@ -196,16 +196,19 @@ export const GoogleReviewsSection: React.FC = () => {
   if (!isLoading && (!payload || cards.length === 0)) return null;
 
   return (
-    <section className="bg-[#fbfbf9] pt-10 pb-0 sm:pt-12 sm:pb-0 lg:pt-14 lg:pb-0" dir={isArabic ? 'rtl' : 'ltr'}>
+    <section className="bg-[#fbfbf9] pt-6 pb-0 sm:pt-8 sm:pb-0 lg:pt-10 lg:pb-0" dir={isArabic ? 'rtl' : 'ltr'}>
       <div className="mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:px-8">
-        <div className="mb-6 text-center sm:mb-7">
-          <h2 className="text-[22px] font-semibold tracking-[1px] text-[#2E2E2E] md:text-[28px]">
-            {isArabic ? 'ماذا يقول عملاؤنا' : 'WHAT OUR FRIENDS ARE SAYING'}
+        <div className="mb-6 sm:mb-7">
+          <p className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.22em] text-amber-600">
+            <span className="h-px w-6 bg-amber-500/60" aria-hidden="true" />
+            {isArabic ? 'حب عملائنا' : 'Customer Love'}
+          </p>
+          <h2 className="text-2xl font-extrabold text-stone-900 sm:text-4xl">
+            {isArabic ? 'ماذا يقول عملاؤنا' : 'What Our Friends Are Saying'}
           </h2>
-          <p className="mt-2 text-sm text-[#5f6a65]">
+          <p className="mt-2 text-sm text-stone-500 sm:max-w-xl sm:text-base">
             {isArabic ? 'آراء حقيقية من عملاء سبيريت هب على Google' : 'Real reviews from Spirit Hub customers on Google'}
           </p>
-          <div className="mx-auto mt-3 h-px w-12 bg-[#b9b8b2]" />
         </div>
 
         {isLoading ? (

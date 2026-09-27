@@ -27,15 +27,16 @@ export const FeaturedProducts: React.FC = () => {
 
   if (loading) {
     return (
-      <section className="py-16 bg-gray-50">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="pt-10 pb-16 bg-[#faf7f2]">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           {/* Section Header Skeleton */}
-          <div className="flex flex-col items-center gap-3 mb-12">
+          <div className="flex flex-col gap-3 mb-12">
+            <div className="h-3 w-40 animate-pulse rounded bg-gray-200" />
             <div className="h-8 w-56 animate-pulse rounded-lg bg-gray-200" />
           </div>
           {/* Product Cards Skeleton */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 sm:gap-6">
-            {[0, 1, 2, 3, 4, 5].map((i) => (
+          <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 lg:grid-cols-6">
+            {Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
                 <div className="aspect-square w-full animate-pulse bg-gray-100" />
                 <div className="space-y-2 p-3">
@@ -53,10 +54,14 @@ export const FeaturedProducts: React.FC = () => {
 
   if (!latestProducts || latestProducts.length === 0) {
     return (
-      <section id="products" className="py-16 bg-gray-50">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-[22px] font-semibold tracking-[1px] text-[#2E2E2E] mb-4 uppercase md:text-[28px]">
+      <section id="products" className="pt-10 pb-16 bg-[#faf7f2]">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-12">
+            <p className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.22em] text-amber-600">
+              <span className="h-px w-6 bg-amber-500/60" aria-hidden="true" />
+              {t('sections.featuredProductsEyebrow')}
+            </p>
+            <h2 className="text-2xl font-extrabold text-stone-900 sm:text-4xl">
               {t('sections.featuredProducts')}
             </h2>
           </div>
@@ -81,19 +86,25 @@ export const FeaturedProducts: React.FC = () => {
   }
 
   return (
-    <section id="products" className="py-16 bg-gray-50">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="products" className="pt-10 pb-16 bg-[#faf7f2]">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
-        <div className="text-center mb-12">
-          <h2 className="text-[22px] font-semibold tracking-[1px] text-[#2E2E2E] mb-4 uppercase md:text-[28px]">
+        <div className="mb-8 sm:mb-10">
+          <p className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.22em] text-amber-600">
+            <span className="h-px w-6 bg-amber-500/60" aria-hidden="true" />
+            {t('sections.featuredProductsEyebrow')}
+          </p>
+          <h2 className="text-2xl font-extrabold text-stone-900 sm:text-4xl">
             {t('sections.featuredProducts')}
           </h2>
-          <div className="mx-auto mt-3 h-px w-12 bg-[#b9b8b2]" />
+          <p className="mt-2 text-sm text-stone-500 sm:max-w-xl sm:text-base">
+            {t('sections.featuredProductsDescription')}
+          </p>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 sm:gap-6">
+        <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 lg:grid-cols-6">
           {latestProducts.map((product) => (
-            <ProductCard key={product.id} product={product} />
+            <ProductCard key={product.id} product={product} variant="homepage" />
           ))}
         </div>
       </div>

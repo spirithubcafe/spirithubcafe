@@ -126,6 +126,13 @@
   --announcement-bar-height: 40px;
 }
 
+/* Keeps page content/buttons clear of the fixed MobileBottomNav (nav is md:hidden). */
+@media (max-width: 767px) {
+  .app-layout {
+    padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
 .dark {
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);

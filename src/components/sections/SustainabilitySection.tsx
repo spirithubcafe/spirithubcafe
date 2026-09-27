@@ -1,113 +1,64 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, ArrowLeft, Leaf, Award, HandHeart } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Play } from 'lucide-react';
 import { useApp } from '../../hooks/useApp';
 
 export const SustainabilitySection: React.FC = () => {
   const { language } = useApp();
   const isArabic = language === 'ar';
 
-  const pillars = [
-    {
-      icon: Leaf,
-      title: isArabic ? 'الاستدامة' : 'Sustainability',
-      desc: isArabic ? 'مصادر موثوقة' : 'Ethically & responsibly sourced',
-    },
-    {
-      icon: Award,
-      title: isArabic ? 'الجودة' : 'Quality',
-      desc: isArabic ? 'تحميص طازج بإتقان' : 'Freshly roasted to perfection',
-    },
-    {
-      icon: HandHeart,
-      title: isArabic ? 'الالتزام' : 'Commitment',
-      desc: isArabic ? 'تكريم المزارعين والمجتمعات' : 'Honoring farmers & communities',
-    },
-  ];
-
   const Arrow = isArabic ? ArrowLeft : ArrowRight;
 
   return (
-    <section
-      className="relative overflow-hidden bg-cover bg-center pb-10 pt-20 sm:py-24 md:py-32"
-      style={{ backgroundImage: 'url(/images/header.webp)' }}
-      dir={isArabic ? 'rtl' : 'ltr'}
-    >
-      {/* Layered overlays for depth */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/65 to-black/85" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_transparent_0%,_rgba(0,0,0,0.55)_100%)]" />
+    <section className="bg-white pt-5 pb-12 sm:pt-12 sm:pb-16" dir={isArabic ? 'rtl' : 'ltr'}>
+      <div className="mx-auto max-w-6xl px-4">
+        <div className="flex flex-col gap-10 lg:flex-row lg:items-center lg:gap-12">
+          {/* Video thumbnail — no video source yet, links to the About/story page */}
+          <Link
+            to="/about"
+            className="group relative block aspect-[4/3] w-full overflow-hidden rounded-3xl shadow-lg lg:w-1/2"
+          >
+            <img
+              src="/images/slides/rwanda-farm-spirithub-coffee.webp"
+              alt={isArabic ? 'رحلتنا من الحبة إلى الكوب' : 'Our journey from bean to cup'}
+              loading="lazy"
+              decoding="async"
+              className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-black/10" />
+            <span className="absolute start-6 top-1/2 flex h-14 w-14 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-stone-900 shadow-xl transition-transform group-hover:scale-110 sm:h-16 sm:w-16">
+              <Play className="h-6 w-6 fill-current ps-0.5" aria-hidden="true" />
+            </span>
+            <div className="absolute inset-x-6 bottom-6 text-white">
+              <p className="text-lg font-extrabold leading-tight sm:text-xl">
+                {isArabic ? 'رحلتنا من الحبة إلى الكوب' : 'Our Journey From Bean to Cup'}
+              </p>
+              <p className="mt-1 text-sm text-white/80">
+                {isArabic ? 'شاهد الفيديو · (٢:١٥)' : 'Watch the video · (2:15)'}
+              </p>
+            </div>
+          </Link>
 
-      <div className="relative z-10 container mx-auto px-4">
-        <div className="max-w-4xl mx-auto text-center text-white">
-          {/* Eyebrow */}
-          <div className="flex items-center justify-center gap-3 mb-6">
-            <span className="h-px w-8 bg-amber-400/70" />
-            <span className="text-amber-400 text-xs md:text-sm font-semibold tracking-[0.3em] uppercase">
+          {/* Copy */}
+          <div className="lg:w-1/2">
+            <div className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.22em] text-amber-600">
+              <span className="h-px w-6 bg-amber-500/60" aria-hidden="true" />
               {isArabic ? 'فلسفتنا' : 'Our Philosophy'}
-            </span>
-            <span className="h-px w-8 bg-amber-400/70" />
-          </div>
-
-          {/* Title */}
-          <h2 className="mb-6 text-[1.7rem] font-extrabold leading-tight tracking-tight sm:text-4xl md:text-5xl">
-            {isArabic ? (
-              <>
-                الاستدامة، <span className="text-amber-400">الجودة</span>، الالتزام
-              </>
-            ) : (
-              <>
-                Sustainability, <span className="text-amber-400">Quality</span>, Commitment
-              </>
-            )}
-          </h2>
-
-          {/* Description */}
-          <p className="mx-auto mb-10 max-w-2xl text-base leading-relaxed text-gray-200/90 md:text-lg">
-            <span className="sm:hidden">
+            </div>
+            <h2 className="text-2xl font-extrabold leading-tight text-stone-900 sm:text-4xl">
+              {isArabic ? 'الاستدامة، الجودة، الالتزام' : 'Sustainability, Quality, Commitment'}
+            </h2>
+            <p className="mt-4 max-w-xl text-sm leading-relaxed text-stone-600 sm:text-base">
               {isArabic
-                ? 'قهوة مختصة بأثر يتجاوز الفنجان، من مصادر موثوقة إلى تحميص يحتفي بالمزارعين والمجتمعات.'
-                : 'Specialty coffee with impact beyond the cup, from trusted sourcing to roasting that celebrates farmers and communities.'}
-            </span>
-            <span className="hidden sm:inline">
-              {isArabic
-                ? 'نؤمن بأن القهوة المختصة تترك أثرًا يتجاوز الفنجان، من حبوب مختارة بمسؤولية إلى تحميص مدروس يحتفي بالمزارعين والمجتمعات والنكهة الاستثنائية في كل تحميصة.'
-                : 'We believe specialty coffee should create impact beyond the cup, from ethically sourced beans to responsible roasting that celebrates farmers, communities, and exceptional flavor in every roast.'}
-            </span>
-          </p>
-
-          {/* Pillars */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 mb-12 max-w-3xl mx-auto">
-            {pillars.map((pillar) => (
-              <div
-                key={pillar.title}
-                className="group flex flex-col items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-6 backdrop-blur-sm transition-all duration-300 hover:border-amber-400/40 hover:bg-white/10"
-              >
-                <span className="flex h-12 w-12 items-center justify-center rounded-full bg-amber-400/15 text-amber-400 transition-transform duration-300 group-hover:scale-110">
-                  <pillar.icon className="h-6 w-6" strokeWidth={1.75} />
-                </span>
-                <span className="text-base font-bold tracking-wide">{pillar.title}</span>
-                <span className="text-xs md:text-sm text-gray-300/80">{pillar.desc}</span>
-              </div>
-            ))}
-          </div>
-
-          {/* CTAs */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link
-              to="/products"
-              className="group inline-flex items-center gap-2 rounded-full bg-red-500 px-8 py-3.5 text-sm font-bold uppercase tracking-widest text-white shadow-lg shadow-red-500/25 transition-all duration-300 hover:bg-red-600 hover:shadow-red-500/40 hover:-translate-y-0.5"
-            >
-              {isArabic ? 'تسوق الآن' : 'Shop Now'}
-              <Arrow className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1 rtl:group-hover:-translate-x-1" />
-            </Link>
+                ? 'نؤمن بأن للقهوة المختصة أثرًا يتجاوز جودة المذاق، بدءًا من اختيار حبوب من مصادر مسؤولة، وصولًا إلى دعم المزارعين والمجتمعات التي تقف وراء كل فنجان.'
+                : 'We believe specialty coffee should create a positive impact — from ethically sourced beans to supporting the communities and farmers who make it possible.'}
+            </p>
             <Link
               to="/about"
-              className="group inline-flex items-center gap-2 text-sm font-semibold tracking-wide text-amber-300 transition-colors hover:text-amber-200"
+              className="group mt-6 inline-flex items-center gap-2 rounded-full border border-stone-900 bg-white px-6 py-2.5 text-sm font-bold text-stone-900 shadow-sm transition hover:bg-stone-900 hover:text-white"
             >
-              <span className="border-b border-amber-300/40 pb-0.5 transition-colors group-hover:border-amber-200">
-                {isArabic ? 'اعرف المزيد عن قصتنا' : 'Learn more about our story'}
-              </span>
-              <Arrow className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1 rtl:group-hover:-translate-x-1" />
+              {isArabic ? 'اعرف المزيد' : 'Learn more'}
+              <Arrow className="h-4 w-4 transition-transform group-hover:translate-x-1 rtl:group-hover:-translate-x-1" />
             </Link>
           </div>
         </div>
