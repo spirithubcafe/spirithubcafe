@@ -347,7 +347,13 @@ export const ProductsPage = ({ hidePageChrome = false }: ProductsPageProps) => {
 
   const coffeeProducts = products;
   const filterableCoffeeProducts = useMemo(
-    () => coffeeProducts.map((product) => ({ ...product, ...productAttributeOverrides[product.id] })),
+    () => coffeeProducts.map((product) => {
+      const attributeOverride = productAttributeOverrides[product.id];
+      // Keep the original object identity until this product actually receives
+      // enrichment data. ProductCard is memoized, so this prevents unrelated
+      // cards (and their images) from repainting after every detail batch.
+      return attributeOverride ? { ...product, ...attributeOverride } : product;
+    }),
     [coffeeProducts, productAttributeOverrides],
   );
 
@@ -1129,18 +1135,21 @@ export const ProductsPage = ({ hidePageChrome = false }: ProductsPageProps) => {
   const handleToggleFilters = () => {
     if (isMobileViewport) {
       setIsMobileFiltersOpen(true);
+      void loadCoffeeFacetAttributes();
     } else {
-      setIsDesktopSidebarOpen((open) => !open);
+      setIsDesktopSidebarOpen((open) => {
+        if (!open) void loadCoffeeFacetAttributes();
+        return !open;
+      });
     }
   };
 
-  // Coffee attribute detail data isn't in the list response; load it once
-  // products are available so facet options and counts can populate.
+  // Attribute detail data is region-specific. Do not retain it after switching
+  // catalogs; the next filter-panel open will enrich the new product list.
   useEffect(() => {
-    if (coffeeProducts.length > 0) {
-      void loadCoffeeFacetAttributes();
-    }
-  }, [coffeeProducts.length, loadCoffeeFacetAttributes]);
+    hasLoadedCoffeeFacetsRef.current = false;
+    setProductAttributeOverrides({});
+  }, [currentRegion.code]);
 
   // Keep URL query parameters synchronized with every active filter so a
   // filtered view can be shared and restored after a page refresh.
