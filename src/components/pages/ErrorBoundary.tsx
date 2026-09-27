@@ -14,6 +14,7 @@ interface ErrorBoundaryState {
 }
 
 const CHUNK_RELOAD_GUARD_KEY = 'spirithub_chunk_reload_once';
+const CHUNK_RELOAD_COOLDOWN_MS = 5 * 60 * 1000;
 
 const isChunkLoadError = (error: unknown): boolean => {
   const message =
@@ -36,24 +37,27 @@ const recoverFromChunkLoadError = (error: unknown): boolean => {
     return false;
   }
 
-  let alreadyReloaded = false;
+  let lastReloadAt = 0;
   try {
-    alreadyReloaded = window.sessionStorage.getItem(CHUNK_RELOAD_GUARD_KEY) === '1';
+    const storedValue = window.sessionStorage.getItem(CHUNK_RELOAD_GUARD_KEY);
+    lastReloadAt = storedValue ? Number(storedValue) : 0;
   } catch {
-    alreadyReloaded = false;
+    lastReloadAt = 0;
   }
 
-  if (alreadyReloaded) {
+  const now = Date.now();
+  if (lastReloadAt > 0 && now - lastReloadAt < CHUNK_RELOAD_COOLDOWN_MS) {
+    console.error('[chunk-recovery] React lazy chunk load failed during recovery cooldown; showing fallback UI.', error);
     return false;
   }
 
   try {
-    window.sessionStorage.setItem(CHUNK_RELOAD_GUARD_KEY, '1');
+    window.sessionStorage.setItem(CHUNK_RELOAD_GUARD_KEY, String(now));
   } catch {
     // Storage can be blocked in some mobile browsers. Reload once anyway.
   }
 
-  console.warn('[chunk-recovery] React lazy chunk load failure detected; reloading once to recover from stale assets.');
+  console.warn('[chunk-recovery] React lazy chunk load failure detected; performing one guarded reload.', error);
   window.location.reload();
   return true;
 };
