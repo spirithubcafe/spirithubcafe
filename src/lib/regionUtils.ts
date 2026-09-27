@@ -1,4 +1,4 @@
-import { safeStorage } from './safeStorage';
+import { safeStorage } from './safeStorage.ts';
 
 export type RegionCode = 'om' | 'sa';
 

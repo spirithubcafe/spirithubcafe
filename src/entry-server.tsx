@@ -1,8 +1,8 @@
-import React from 'react';
 import { renderToReadableStream } from 'react-dom/server';
 import { StaticRouter } from 'react-router';
 import App from './App';
 import i18n from './i18n';
+import type { ProductsSsrBootstrap } from './lib/productTransform';
 
 /**
  * Server-side render the application for the given URL.
@@ -11,14 +11,22 @@ import i18n from './i18n';
  * throws (e.g. browser-only code used in a component).  The caller
  * should fall back to serving the SPA shell on error so nothing
  * breaks for the end user.
+ *
+ * `bootstrapData` (products list + region) is passed as a plain function
+ * argument rather than a mutable global, so concurrent SSR requests never
+ * share state with one another.
  */
-export async function render(url: string, language: 'ar' | 'en' = 'ar'): Promise<{ html: string; error?: string }> {
+export async function render(
+  url: string,
+  language: 'ar' | 'en' = 'ar',
+  bootstrapData?: ProductsSsrBootstrap,
+): Promise<{ html: string; error?: string }> {
   try {
     await i18n.changeLanguage(language);
     const stream = await renderToReadableStream(
-      React.createElement(StaticRouter, { location: url },
-        React.createElement(App)
-      )
+      <StaticRouter location={url}>
+        <App bootstrapData={bootstrapData} />
+      </StaticRouter>
     );
     await stream.allReady;
     const html = await new Response(stream).text();

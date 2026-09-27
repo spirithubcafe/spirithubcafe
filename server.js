@@ -3,6 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import express from 'express';
 import compression from 'compression';
+import { detectSsrRegion, fetchProductsBootstrap, isProductsListPath, serializeForInlineScript } from './ssrProductsBootstrap.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -388,6 +389,7 @@ app.use(async (req, res, next) => {
     const host = forwardedHost || req.headers.host;
     const proto = forwardedProto || req.protocol || 'https';
     const requestBaseUrl = host ? `${proto}://${host}`.replace(/\/+$/, '') : undefined;
+    const region = detectSsrRegion(url, host);
 
     let template;
     if (!isProduction) {
@@ -412,6 +414,16 @@ app.use(async (req, res, next) => {
     // initialize with the same value and avoid a React #418 hydration mismatch.
     const ssrLanguageScript = `<script>window.__SSR_LANGUAGE__="${requestLanguage === 'ar' ? 'ar' : 'en'}";</script>`;
 
+    // Products-list bootstrap: only fetched for the /products route, so other
+    // pages never pay this extra request. Failure returns null and SSR simply
+    // falls back to today's client-side fetch/retry/error UI (Phase A).
+    const productsBootstrap = isProductsListPath(url)
+      ? await fetchProductsBootstrap(region, requestLanguage)
+      : null;
+    const ssrProductsScript = productsBootstrap
+      ? `<script>window.__SSR_PRODUCTS__=${serializeForInlineScript(productsBootstrap.products)};window.__SSR_PRODUCTS_REGION__=${serializeForInlineScript(productsBootstrap.region)};</script>`
+      : '';
+
     // Keep the fallback tags in index.html for plain SPA/static serving, but
     // remove them when SSR supplies route-specific metadata.
     const templateWithRouteMetadata = template
@@ -419,7 +431,7 @@ app.use(async (req, res, next) => {
       .replace(/\s*<meta\s+name="description"[\s\S]*?\/>/i, '');
 
     // Replace the meta tags in the template
-    let html = templateWithRouteMetadata.replace('<!--app-head-->', `${ssrLanguageScript}${performanceHints}${metaTags}`);
+    let html = templateWithRouteMetadata.replace('<!--app-head-->', `${ssrLanguageScript}${ssrProductsScript}${performanceHints}${metaTags}`);
 
     let responseStatus = 200;
 
@@ -443,13 +455,18 @@ app.use(async (req, res, next) => {
       }
 
       if (typeof render === 'function') {
-         const { html: appHtml, error } = await render(url, requestLanguage === 'ar' ? 'ar' : 'en');
+         const { html: appHtml, error } = await render(url, requestLanguage === 'ar' ? 'ar' : 'en', {
+           region: productsBootstrap?.region ?? null,
+           products: productsBootstrap?.products ?? null,
+         });
         if (appHtml && !error) {
           if (appHtml.includes('data-not-found-page="true"')) {
             responseStatus = 404;
           }
-          // Inject the server-rendered markup inside <div id="root">
-          html = html.replace('<div id="root"></div>', `<div id="root">${appHtml}</div>`);
+          // Inject the server-rendered markup inside <div id="root"> - the
+          // data-ssr flag lets the client know its first hydration pass must
+          // match real SSR content (e.g. rendering all product groups eagerly).
+          html = html.replace('<div id="root"></div>', `<div id="root" data-ssr="true">${appHtml}</div>`);
         }
         // If error, we just serve the SPA shell – no impact on users
       }

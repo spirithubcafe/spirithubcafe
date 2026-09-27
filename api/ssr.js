@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { detectSsrRegion, fetchProductsBootstrap, isProductsListPath } from '../ssrProductsBootstrap.js';
 
 const SEO_HOSTS = {
   om: 'https://www.spirithubcafe.com',
@@ -596,6 +597,7 @@ export default async function handler(req, res) {
     const host = forwardedHost || req.headers?.host;
     const proto = forwardedProto || 'https';
     const requestBaseUrl = host ? `${proto}://${host}`.replace(/\/+$/, '') : undefined;
+    const region = detectSsrRegion(urlPathOnly, host);
     
     // For static assets, try to serve from dist folder
     if (urlPathOnly.match(/\.(js|css|png|jpg|jpeg|gif|ico|svg|webp|mp4|webm|ogg|woff|woff2|ttf|eot|json|xml|txt|webmanifest)$/)) {
@@ -663,7 +665,16 @@ export default async function handler(req, res) {
     const ssrProductScript = ssrProduct
       ? `<script>window.__SSR_PRODUCT__=${serializeForInlineScript(ssrProduct)};window.__SSR_PRODUCT_ID__=${serializeForInlineScript(productIdentifier)};</script>`
       : '';
-    const ssrBootstrapScript = `${ssrLanguageScript}${ssrProductScript}`;
+    // Products-list bootstrap: only fetched for the /products route, so other
+    // pages never pay this extra request. Failure returns null and SSR simply
+    // falls back to today's client-side fetch/retry/error UI (Phase A).
+    const productsBootstrap = isProductsListPath(urlPathOnly)
+      ? await fetchProductsBootstrap(region, requestLanguage)
+      : null;
+    const ssrProductsScript = productsBootstrap
+      ? `<script>window.__SSR_PRODUCTS__=${serializeForInlineScript(productsBootstrap.products)};window.__SSR_PRODUCTS_REGION__=${serializeForInlineScript(productsBootstrap.region)};</script>`
+      : '';
+    const ssrBootstrapScript = `${ssrLanguageScript}${ssrProductScript}${ssrProductsScript}`;
     
     // Keep the fallback tags in index.html for plain SPA/static serving, but
     // remove them when SSR supplies route-specific metadata.
@@ -699,7 +710,10 @@ export default async function handler(req, res) {
             delete globalThis.__SSR_PRODUCT_ID__;
           }
 
-          const { html: appHtml, error } = await render(url, requestLanguage);
+          const { html: appHtml, error } = await render(url, requestLanguage, {
+            region: productsBootstrap?.region ?? null,
+            products: productsBootstrap?.products ?? null,
+          });
 
           if (typeof previousProduct === 'undefined') {
             delete globalThis.__SSR_PRODUCT__;

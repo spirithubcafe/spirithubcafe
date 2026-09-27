@@ -9,9 +9,24 @@ import 'overlayscrollbars/overlayscrollbars.css'
 import './index.css'
 import './styles/color-overrides.css'
 import App from './App.tsx'
+import type { ProductsSsrBootstrap } from './lib/productTransform';
 
 const rootElement = document.getElementById('root')!;
 const CHUNK_RELOAD_GUARD_KEY = 'spirithub_chunk_reload_once';
+
+// Read the SSR products bootstrap once at startup - window.__SSR_PRODUCTS__/
+// __SSR_PRODUCTS_REGION__ are injected by server.js/api/ssr.js only when the
+// requested route pre-fetched the product list server-side.
+const ssrGlobals = window as unknown as {
+  __SSR_PRODUCTS__?: unknown;
+  __SSR_PRODUCTS_REGION__?: unknown;
+};
+const productsBootstrap: ProductsSsrBootstrap | undefined = ssrGlobals.__SSR_PRODUCTS__
+  ? {
+      products: Array.isArray(ssrGlobals.__SSR_PRODUCTS__) ? ssrGlobals.__SSR_PRODUCTS__ : null,
+      region: typeof ssrGlobals.__SSR_PRODUCTS_REGION__ === 'string' ? ssrGlobals.__SSR_PRODUCTS_REGION__ : null,
+    }
+  : undefined;
 
 if (typeof window !== 'undefined') {
   const isChunkLoadError = (error: unknown): boolean => {
@@ -83,7 +98,7 @@ if (rootElement.hasChildNodes()) {
     rootElement,
     <StrictMode>
       <BrowserRouter>
-        <App />
+        <App bootstrapData={productsBootstrap} />
       </BrowserRouter>
     </StrictMode>
   );
@@ -92,7 +107,7 @@ if (rootElement.hasChildNodes()) {
   createRoot(rootElement).render(
     <StrictMode>
       <BrowserRouter>
-        <App />
+        <App bootstrapData={productsBootstrap} />
       </BrowserRouter>
     </StrictMode>,
   );

@@ -23,6 +23,7 @@ import { initBodyScrollbars } from './lib/scrollbars';
 import { useApp } from './hooks/useApp';
 import { useCart } from './hooks/useCart';
 import { isMarketingCampaignRouteEligible } from './types/publicMarketingCampaign';
+import type { ProductsSsrBootstrap } from './lib/productTransform';
 import './i18n';
 import './App.css';
 
@@ -473,7 +474,7 @@ function AppContent() {
   );
 }
 
-function App() {
+function App({ bootstrapData }: { bootstrapData?: ProductsSsrBootstrap }) {
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
   // If this is missing at *build time*, Google Sign-In will not work in production.
@@ -491,7 +492,7 @@ function App() {
     <ErrorBoundary>
       <RegionProvider>
         <AuthProvider>
-          <AppProvider>
+          <AppProvider bootstrapData={bootstrapData}>
             <CartProvider>
               <AppContent />
             </CartProvider>
