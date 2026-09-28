@@ -286,7 +286,7 @@ export const ProductsPage = ({ hidePageChrome = false }: ProductsPageProps) => {
   // route instance and never causes a ProductsPage remount.
   const regionPrefix = pathname.startsWith('/sa') ? '/sa' : '/om';
   const categoryFromUrl = searchParams.get('category');
-  const [selectedCategory, setSelectedCategory] = useState<string>(categoryFromUrl || 'all');
+  const selectedCategory = categoryFromUrl || 'all';
   const [searchTerm, setSearchTerm] = useState(() => searchParams.get('q') || '');
   const [isDesktopSidebarOpen, setIsDesktopSidebarOpen] = useState(false);
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
@@ -424,32 +424,26 @@ export const ProductsPage = ({ hidePageChrome = false }: ProductsPageProps) => {
   // Handle category change; URL query params are synchronized by the
   // centralized filter-sync effect further below.
   const handleCategoryChange = (categoryId: string) => {
-    setSelectedCategory(categoryId);
+    const category = coffeeCategories.find(
+      (candidate) => candidate.id === categoryId || candidate.slug === categoryId,
+    );
+    const params = new URLSearchParams(searchParams);
+    if (categoryId === 'all') {
+      params.delete('category');
+    } else {
+      params.set('category', category?.slug || categoryId);
+    }
+    const nextQuery = params.toString();
+    navigate(`${pathname}${nextQuery ? `?${nextQuery}` : ''}`, { replace: true });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Update selected category when URL changes
-  useEffect(() => {
-    if (categoryFromUrl) {
-      setSelectedCategory(categoryFromUrl);
-    } else {
-      setSelectedCategory('all');
-    }
+  /* Category selection is derived directly from the URL so browser navigation
+     and filter clicks cannot compete through a second copy of state. */
+  /*
     // NOTE: no scroll-to-top here — that would scroll the sticky filter bar
     // off-screen whenever a category is selected.
-  }, [categoryFromUrl]);
-
-  // Normalize selected category to a known category ID when allCategories change
-  useEffect(() => {
-    if (selectedCategory === 'all') {
-      return;
-    }
-
-    const matchBySlug = coffeeCategories.find((cat) => cat.slug === selectedCategory);
-    if (matchBySlug && selectedCategory !== matchBySlug.id) {
-      setSelectedCategory(matchBySlug.id);
-    }
-  }, [coffeeCategories, selectedCategory]);
+  */
 
   // Get current category details
   const currentCategory = useMemo(() => {
@@ -775,7 +769,7 @@ export const ProductsPage = ({ hidePageChrome = false }: ProductsPageProps) => {
     };
 
     const mappedCategories = coffeeCategories.map<CategoryOption>((category) => ({
-      id: category.id,
+      id: category.slug || category.id,
       name: getCategoryDisplayName(category),
       slug: category.slug,
     }));
@@ -1173,7 +1167,10 @@ export const ProductsPage = ({ hidePageChrome = false }: ProductsPageProps) => {
   // filtered view can be shared and restored after a page refresh.
   useEffect(() => {
     const params = new URLSearchParams();
-    if (selectedCategory !== 'all') params.set('category', selectedCategory);
+    if (selectedCategory !== 'all') {
+      // Expose the stable, readable category slug in shareable storefront URLs.
+      params.set('category', currentCategory?.slug || selectedCategory);
+    }
     if (searchTerm.trim()) params.set('q', searchTerm.trim());
     if (selectedCollections.length > 0) params.set('collections', selectedCollections.join(','));
     if (selectedTagIds.length > 0) params.set('tags', selectedTagIds.join(','));
@@ -1187,7 +1184,7 @@ export const ProductsPage = ({ hidePageChrome = false }: ProductsPageProps) => {
     if (nextQuery !== searchParams.toString()) {
       navigate(`${pathname}${nextQuery ? `?${nextQuery}` : ''}`, { replace: true });
     }
-  }, [selectedCategory, searchTerm, selectedCollections, selectedTagIds, selectedCoffeeFacets, sortOrder, gridColumns, navigate, pathname, searchParams]);
+  }, [selectedCategory, currentCategory?.slug, searchTerm, selectedCollections, selectedTagIds, selectedCoffeeFacets, sortOrder, gridColumns, navigate, pathname, searchParams]);
 
   const browseCoffeeCategories = useMemo(
     () => [...allCategories].sort((a, b) => {
