@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowRight, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useApp } from '../../hooks/useApp';
 import './ProfessionalHeroSlider.css';
@@ -347,7 +347,6 @@ export const ProfessionalHeroSlider: React.FC = () => {
   }, [slides.length, currentSlide]);
 
   const currentSlideData = slides[currentSlide];
-  const isHeroPrimaryTitle = currentSlideData?.id === '1';
   const safeMobileImageIndex = mobileImageIndex % MOBILE_HERO_IMAGES.length;
   const currentMobileHeroImage = MOBILE_HERO_IMAGES[safeMobileImageIndex];
   const currentHeroImageAlt = isMobile
@@ -490,64 +489,52 @@ export const ProfessionalHeroSlider: React.FC = () => {
         <div className="container mx-auto px-4 h-full flex items-center">
           <div className="w-full items-center">
             
-            {/* Content - Centered */}
+            {/* Consistent promotional content used across every hero slide */}
             <div
               key={`content-${currentSlide}`}
-              className="content-section max-w-4xl mx-auto text-center"
+              className="content-section"
             >
-              {/* Main Title */}
-              {!isNewHarvestMobileImage && (
-                <h1 className="slide-title">
-                  {isHeroPrimaryTitle && language !== 'ar' ? (
-                    <>
-                      PREMIUM SPECIALTY COFFEE ROASTED IN{' '}
-                      <span className="title-underline-red">OMAN</span>
-                      {' '}AND{' '}
-                      <span className="title-underline-green">SAUDI ARABIA</span>
-                    </>
-                  ) : isHeroPrimaryTitle && language === 'ar' ? (
-                    <>
-                      {`\u0642\u0647\u0648\u0629 \u0645\u062e\u062a\u0635\u0629 \u062a\u064f\u062d\u0645\u0651\u0635 \u0628\u0625\u062a\u0642\u0627\u0646 \u0641\u064a `}
-                      <span className="title-underline-red">{`\u0639\u064f\u0645\u0627\u0646`}</span>
-                      {` \u0648`}
-                      <span className="title-underline-green">{`\u0627\u0644\u0633\u0639\u0648\u062f\u064a\u0629`}</span>
-                    </>
-                  ) : (
-                    currentSlideData.title
-                  )}
-                </h1>
-              )}
+              <div className="hero-promo-card">
+                <div className="slide-badge">
+                  <Sparkles aria-hidden="true" size={17} strokeWidth={1.8} />
+                  <span>{language === 'ar' ? '\u0642\u0647\u0648\u0629 \u0645\u062e\u062a\u0635\u0629' : 'SPECIALTY COFFEE'}</span>
+                </div>
 
-              {/* CTA Button */}
-              <div className="slide-cta flex justify-center">
-                <Link
-                  to="/products"
-                  className={`hero-cta-button inline-block text-white font-semibold px-6 py-3 rounded-md transition-all duration-300 text-base uppercase tracking-wide ${
-                    isMobile
-                      ? 'bg-red-500/60 hover:bg-red-500/70 backdrop-blur-[1px] border border-white/15'
-                      : 'bg-red-500 hover:bg-red-600'
-                  }`}
-                  onClick={(e) => e.stopPropagation()}
-                  onMouseEnter={() => setOverInteractive(true)}
-                  onMouseLeave={() => setOverInteractive(false)}
-                >
-                  {currentSlideData.cta}
-                </Link>
-              </div>
-
-              {/* Subtitle */}
-              <div className="slide-subtitle">
-                {Array.isArray(currentSlideData.subtitle) ? (
-                  currentSlideData.subtitle.map((line, index) => (
-                    <div key={index} className="subtitle-line">
-                      {line}
-                    </div>
-                  ))
-                ) : (
-                  currentSlideData.subtitle
+                {!isNewHarvestMobileImage && (
+                  <h1 className="slide-title">
+                    {currentSlideData.title}
+                  </h1>
                 )}
-              </div>
 
+                <div className="slide-subtitle">
+                  {Array.isArray(currentSlideData.subtitle) ? (
+                    currentSlideData.subtitle.map((line, index) => (
+                      <div key={index} className="subtitle-line">{line}</div>
+                    ))
+                  ) : (
+                    currentSlideData.subtitle || currentSlideData.description
+                  )}
+                </div>
+
+                <div className="slide-features" aria-label={language === 'ar' ? '\u0627\u0644\u0645\u0645\u064a\u0632\u0627\u062a' : 'Highlights'}>
+                  {currentSlideData.features.map((feature) => (
+                    <span key={feature} className="feature-item">{feature}</span>
+                  ))}
+                </div>
+
+                <div className="slide-cta">
+                  <Link
+                    to="/products"
+                    className="hero-cta-button"
+                    onClick={(e) => e.stopPropagation()}
+                    onMouseEnter={() => setOverInteractive(true)}
+                    onMouseLeave={() => setOverInteractive(false)}
+                  >
+                    <span>{currentSlideData.cta}</span>
+                    <ArrowRight className="hero-cta-arrow" aria-hidden="true" size={20} />
+                  </Link>
+                </div>
+              </div>
             </div>
           </div>
         </div>
