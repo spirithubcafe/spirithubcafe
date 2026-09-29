@@ -132,9 +132,6 @@ export const BestSellers: React.FC = () => {
           <h2 className="text-2xl font-extrabold text-stone-900 sm:text-4xl">
             {t('sections.bestSellers')}
           </h2>
-          <p className="mt-2 text-sm text-stone-500 sm:max-w-xl sm:text-base">
-            {t('sections.bestSellersDescription')}
-          </p>
         </div>
 
         {/* Products Grid */}

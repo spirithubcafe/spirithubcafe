@@ -86,8 +86,11 @@ const ReviewAvatar: React.FC<{ name: string; src?: string }> = ({ name, src }) =
 
 const ReviewText: React.FC<{ text: string; isArabic: boolean }> = ({ text, isArabic }) => {
   const [expanded, setExpanded] = useState(false);
-  const isLong = text.length > MAX_PREVIEW_LENGTH;
-  const body = text || (isArabic ? 'لا يوجد نص للمراجعة.' : 'No review text provided.');
+  const body = text.trim();
+
+  if (!body) return null;
+
+  const isLong = body.length > MAX_PREVIEW_LENGTH;
   const preview = isLong ? `${body.slice(0, MAX_PREVIEW_LENGTH).trimEnd()}...` : body;
 
   return (
@@ -206,9 +209,6 @@ export const GoogleReviewsSection: React.FC = () => {
           <h2 className="text-2xl font-extrabold text-stone-900 sm:text-4xl">
             {isArabic ? 'ماذا يقول عملاؤنا' : 'What Our Friends Are Saying'}
           </h2>
-          <p className="mt-2 text-sm text-stone-500 sm:max-w-xl sm:text-base">
-            {isArabic ? 'آراء حقيقية من عملاء سبيريت هب على Google' : 'Real reviews from Spirit Hub customers on Google'}
-          </p>
         </div>
 
         {isLoading ? (
@@ -226,8 +226,8 @@ export const GoogleReviewsSection: React.FC = () => {
             </div>
           </div>
         ) : (
-          <>
-            <div className="mb-4 rounded-2xl bg-[#FFFDF9] p-4 sm:mb-5 sm:p-5 lg:mx-auto lg:max-w-[1320px]" style={{ boxShadow: '0 16px 42px rgba(0,0,0,0.06)', border: '1px solid rgba(77, 91, 84, 0.12)' }}>
+          <div className="review-unified-mobile">
+            <div className="review-summary mb-4 rounded-2xl bg-[#FFFDF9] p-4 sm:mb-5 sm:p-5 lg:mx-auto lg:max-w-[1320px]" style={{ boxShadow: '0 16px 42px rgba(0,0,0,0.06)', border: '1px solid rgba(77, 91, 84, 0.12)' }}>
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className={isArabic ? 'order-2 sm:order-2 sm:text-right' : 'order-2 sm:order-1'}>
                   <div dir="ltr" className={`mb-1.5 flex items-center gap-2.5 ${isArabic ? 'justify-end' : ''}`}>
@@ -252,7 +252,7 @@ export const GoogleReviewsSection: React.FC = () => {
                     href={payload.reviewWriteUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`inline-flex min-h-[38px] items-center justify-center gap-2 rounded-full bg-[#cf4a35] px-5 py-1.5 text-xs font-semibold tracking-[0.04em] text-white transition-colors hover:bg-[#b63f2d] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b63f2d] focus-visible:ring-offset-2 focus-visible:ring-offset-[#fbfbf9] ${isArabic ? 'order-1 w-full sm:order-1 sm:w-auto' : 'order-1 w-full sm:w-auto uppercase tracking-[0.08em]'}`}
+                    className={`hidden min-h-[38px] items-center justify-center gap-2 rounded-full bg-[#cf4a35] px-5 py-1.5 text-xs font-semibold tracking-[0.04em] text-white transition-colors hover:bg-[#b63f2d] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b63f2d] focus-visible:ring-offset-2 focus-visible:ring-offset-[#fbfbf9] md:inline-flex ${isArabic ? 'md:order-1 md:w-auto' : 'md:order-1 md:w-auto uppercase tracking-[0.08em]'}`}
                   >
                     <GoogleGIcon className="h-4 w-4 shrink-0" />
                     {isArabic ? 'قيّمنا على Google' : 'Review us on Google'}
@@ -261,7 +261,7 @@ export const GoogleReviewsSection: React.FC = () => {
               </div>
             </div>
 
-            <div className="relative mx-auto max-w-[1320px] px-10 md:px-12">
+            <div className="review-carousel relative mx-auto max-w-[1320px] px-12">
               <div className="review-edge review-edge-left" />
               <div className="review-edge review-edge-right" />
               <button type="button" onClick={() => scrollByPage('left')} disabled={!canScrollPrev} aria-label="Scroll left" className="gr-nav gr-nav-left">
@@ -272,44 +272,52 @@ export const GoogleReviewsSection: React.FC = () => {
               </button>
 
               <div ref={emblaRef} className="reviews-viewport overflow-hidden">
-                <div className="reviews-rail flex pb-1">
+                <div className="reviews-rail flex items-start pb-1 md:items-stretch">
                   {cards.map((review, index) => {
                     const displayTime =
                       formatReviewDateTime(review.time, isArabic) ||
                       `${review.relativeTimeDescription} on Google`;
+                    const reviewText = (review.text ?? '').trim();
 
                     return (
-                    <article
+                    <div
                       key={`${review.authorName}-${review.time}-${index}`}
-                      className={`reviews-slide flex h-full min-w-0 shrink-0 flex-col rounded-2xl bg-[#FFFDF9] p-4 md:p-5 ${isArabic ? 'text-right' : 'text-left'}`}
-                      style={{ boxShadow: '0 10px 30px rgba(0,0,0,0.04)', border: '1px solid rgba(77, 91, 84, 0.12)' }}
+                      className="reviews-slide min-w-0 shrink-0"
                     >
-                      <div className={`mb-2.5 flex items-center gap-2.5 ${isArabic ? 'flex-row-reverse justify-start' : 'justify-start'}`}>
-                        <ReviewAvatar name={review.authorName} src={review.profilePhotoUrl} />
-                        <div className={isArabic ? 'min-h-[40px] text-right' : 'min-h-[40px] text-left'}>
-                          <h3 className="truncate text-[15px] font-medium leading-5 text-[#2e3b3b]">{review.authorName}</h3>
-                          <p
-                            dir="ltr"
-                            className="mt-1 text-[11px] tracking-[0.02em] text-[#5f6b66]"
-                            style={{ unicodeBidi: 'plaintext' }}
-                          >
-                            <bdi>{displayTime}</bdi>
-                          </p>
+                      <article
+                        className={`review-card h-auto rounded-2xl bg-[#FFFDF9] md:h-full ${isArabic ? 'text-right' : 'text-left'}`}
+                        style={{ boxShadow: '0 10px 30px rgba(0,0,0,0.04)', border: '1px solid rgba(77, 91, 84, 0.12)' }}
+                      >
+                        <div className={`flex items-start gap-2.5 px-6 py-4 md:px-8 md:py-5 ${isArabic ? 'flex-row-reverse justify-start' : 'justify-start'}`}>
+                          <ReviewAvatar name={review.authorName} src={review.profilePhotoUrl} />
+                          <div className={`min-w-0 flex-1 ${isArabic ? 'text-right' : 'text-left'}`}>
+                            <h3 className="truncate text-[15px] font-medium leading-5 text-[#2e3b3b]">{review.authorName}</h3>
+                            <p
+                              dir="ltr"
+                              className="mt-1 text-[11px] tracking-[0.02em] text-[#5f6b66]"
+                              style={{ unicodeBidi: 'plaintext' }}
+                            >
+                              <bdi>{displayTime}</bdi>
+                            </p>
+                            <div className={`mt-3 ${isArabic ? 'flex justify-end' : ''}`}>
+                              <StarRow rating={review.rating} size={13} />
+                            </div>
+                            {reviewText && (
+                              <div className="mt-3">
+                                <ReviewText text={reviewText} isArabic={isArabic} />
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                      <div className={`mb-3 ${isArabic ? 'flex justify-end' : ''}`}>
-                        <StarRow rating={review.rating} size={13} />
-                      </div>
-                      <div className="mt-auto">
-                        <ReviewText text={review.text || ''} isArabic={isArabic} />
-                      </div>
-                    </article>
+                      </article>
+                    </div>
                     );
                   })}
                 </div>
               </div>
             </div>
-          </>
+
+          </div>
         )}
 
         {!isLoading && isError && <p className="mt-4 text-center text-sm text-[#5c6f66]">Reviews are temporarily unavailable.</p>}
@@ -332,7 +340,6 @@ export const GoogleReviewsSection: React.FC = () => {
         .reviews-slide {
           flex: 0 0 100%;
           margin-left: 16px;
-          min-height: 220px;
         }
 
         .review-edge {
@@ -394,12 +401,36 @@ export const GoogleReviewsSection: React.FC = () => {
         }
 
         @media (max-width: 768px) {
+          .review-unified-mobile {
+            border: 1px solid rgba(77, 91, 84, 0.12);
+            border-radius: 18px;
+            background: #fffdf9;
+            padding: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+          }
+
+          .review-summary {
+            margin-bottom: 8px;
+            padding: 0 0 12px;
+            border: 0 !important;
+            border-bottom: 1px solid rgba(77, 91, 84, 0.1) !important;
+            border-radius: 0;
+            box-shadow: none !important;
+          }
+
           .reviews-rail {
             margin-left: -12px;
           }
 
           .reviews-slide {
             margin-left: 12px;
+          }
+
+          .review-card {
+            border: 0 !important;
+            border-radius: 0;
+            background: transparent;
+            box-shadow: none !important;
           }
 
           .gr-nav {

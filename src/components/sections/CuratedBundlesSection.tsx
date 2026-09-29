@@ -51,9 +51,6 @@ export const CuratedBundlesSection: React.FC = () => {
               <Arrow className="h-4 w-4 transition-transform group-hover:translate-x-1 rtl:group-hover:-translate-x-1" />
             </Link>
           </div>
-          <p className="mt-2 text-sm text-stone-500 sm:max-w-xl sm:text-base">
-            {isArabic ? 'تشكيلات قهوة مدروسة بعناية، جاهزة للاستمتاع.' : 'Thoughtfully paired coffees, ready to enjoy.'}
-          </p>
         </div>
 
         <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">

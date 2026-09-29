@@ -97,9 +97,6 @@ export const FeaturedProducts: React.FC = () => {
           <h2 className="text-2xl font-extrabold text-stone-900 sm:text-4xl">
             {t('sections.featuredProducts')}
           </h2>
-          <p className="mt-2 text-sm text-stone-500 sm:max-w-xl sm:text-base">
-            {t('sections.featuredProductsDescription')}
-          </p>
         </div>
 
         <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 lg:grid-cols-6">

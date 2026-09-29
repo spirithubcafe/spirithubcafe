@@ -155,7 +155,7 @@ export const UnifiedCategoriesSection: React.FC = () => {
   }
 
   return (
-    <section className="bg-[#fbfbf9] pt-10 pb-6">
+    <section className="bg-[#fbfbf9] pt-8 pb-4 sm:pt-10 sm:pb-6">
       <div className="mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:px-8">
         <div className="mb-6">
           <p className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.22em] text-amber-600">
@@ -199,7 +199,7 @@ export const UnifiedCategoriesSection: React.FC = () => {
                   className="categories-slide group block min-w-0 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/60"
                 >
                 <div className="h-full overflow-hidden rounded-2xl border border-[#dfe4dd] bg-[#fffdf9] shadow-[0_10px_30px_rgba(0,0,0,0.035)] transition-all duration-300 hover:-translate-y-1 hover:border-[#d2d8d1] hover:shadow-[0_16px_34px_rgba(0,0,0,0.075)] flex flex-col">
-                  <div className="relative overflow-hidden aspect-[4/5]">
+                  <div className="relative aspect-square overflow-hidden sm:aspect-[4/5]">
                     <img
                       src={item.image}
                       srcSet={buildResponsiveSrcSet(item.image, [160, 240, 320, 480])}

@@ -210,9 +210,9 @@ export const InstagramSection: React.FC = () => {
     (document.documentElement.dir === 'rtl' || document.documentElement.lang?.toLowerCase().startsWith('ar'));
 
   return (
-    <section className="bg-[#fbfbf9] pb-12 pt-8 sm:pb-14 sm:pt-10 lg:pb-16 lg:pt-11">
+    <section className="bg-[#fbfbf9] pb-10 pt-8 sm:pb-14 sm:pt-10 lg:pb-16 lg:pt-11">
       <div className="mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:px-8">
-        <div className="mb-8 sm:mb-10">
+        <div className="mb-5 sm:mb-10">
           <p className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.22em] text-amber-600">
             <span className="h-px w-6 bg-amber-500/60" aria-hidden="true" />
             {isArabic ? 'تابعونا' : 'Follow Along'}
@@ -310,7 +310,7 @@ export const InstagramSection: React.FC = () => {
             </p>
           )}
 
-          <div className="mt-5 text-center sm:mt-6">
+          <div className="mt-3 text-center sm:mt-6">
             <a
               href="https://www.instagram.com/spirithubcafe/"
               target="_blank"
@@ -403,7 +403,7 @@ export const InstagramSection: React.FC = () => {
 
         @media (max-width: 640px) {
           .instagram-card {
-            flex-basis: min(40vw, 170px);
+            flex-basis: calc((100% - 16px) / 3);
           }
 
           .ig-nav {
