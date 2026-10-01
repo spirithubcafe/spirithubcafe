@@ -41,6 +41,7 @@ import { AramexPickupInfo } from '../components/admin/AramexPickupInfo';
 const statusConfig = {
   Pending: { label: 'Pending', color: 'bg-yellow-100 text-yellow-800 border-yellow-200', icon: Clock },
   Processing: { label: 'Processing', color: 'bg-blue-100 text-blue-800 border-blue-200', icon: Package },
+  Ready: { label: 'Ready for collection', color: 'bg-teal-100 text-teal-800 border-teal-200', icon: CheckCircle },
   Shipped: { label: 'Shipped', color: 'bg-purple-100 text-purple-800 border-purple-200', icon: Truck },
   Delivered: { label: 'Delivered', color: 'bg-green-100 text-green-800 border-green-200', icon: CheckCircle },
   Cancelled: { label: 'Cancelled', color: 'bg-red-100 text-red-800 border-red-200', icon: XCircle },
@@ -265,6 +266,7 @@ export const OrderDetailPage: React.FC = () => {
                   {isArabic ? (
                     order.status === 'Pending' ? 'قيد الانتظار'
                     : order.status === 'Processing' ? 'قيد المعالجة'
+                    : order.status === 'Ready' ? 'جاهز للاستلام'
                     : order.status === 'Shipped' ? 'تم الشحن'
                     : order.status === 'Delivered' ? 'تم التوصيل'
                     : order.status === 'Cancelled' ? 'ملغى'

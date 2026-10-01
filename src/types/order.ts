@@ -247,6 +247,7 @@ export interface PaymentRecord {
 export type OrderStatus = 
   | 'Pending'      // Order placed, awaiting processing
   | 'Processing'   // Order is being prepared
+  | 'Ready'        // Order is ready for customer collection
   | 'Shipped'      // Order has been shipped
   | 'Delivered'    // Order delivered to customer
   | 'Redeemed'     // Order/gift card has been redeemed

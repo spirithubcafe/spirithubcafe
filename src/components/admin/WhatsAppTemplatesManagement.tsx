@@ -23,6 +23,7 @@ import { Badge } from '../ui/badge';
 /* ------------------------------------------------------------------ */
 
 const TEMPLATE_ICONS: Record<string, string> = {
+  OrderReadyForCollection: '🛍️',
   OrderConfirmation: '🛒',
   OrderStatusUpdate: '📦',
   PaymentStatusUpdate: '💳',

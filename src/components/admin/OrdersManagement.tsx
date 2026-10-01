@@ -2463,6 +2463,8 @@ export const OrdersManagement: React.FC = () => {
         return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       case 'processing':
         return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'ready':
+        return 'bg-teal-100 text-teal-800 border-teal-200';
       case 'shipped':
         return 'bg-purple-100 text-purple-800 border-purple-200';
       case 'delivered':
@@ -3465,6 +3467,7 @@ export const OrdersManagement: React.FC = () => {
                 <SelectContent position="popper" className="z-[200]">
                   <SelectItem value="Pending">{isArabic ? 'قيد الانتظار' : 'Pending'}</SelectItem>
                   <SelectItem value="Processing">{isArabic ? 'قيد المعالجة' : 'Processing'}</SelectItem>
+                  <SelectItem value="Ready">{isArabic ? 'جاهز للاستلام' : 'Ready'}</SelectItem>
                   <SelectItem value="Shipped">{isArabic ? 'تم الشحن' : 'Shipped'}</SelectItem>
                   <SelectItem value="Delivered">{isArabic ? 'تم التسليم' : 'Delivered'}</SelectItem>
                   <SelectItem value="Redeemed">{isArabic ? 'تم الاسترداد' : 'Redeemed'}</SelectItem>

@@ -1012,6 +1012,7 @@ const ProfilePage: React.FC = () => {
                             switch(status) {
                               case 'Delivered': return 'text-green-700 bg-green-100';
                               case 'Processing': return 'text-blue-700 bg-blue-100';
+                              case 'Ready': return 'text-teal-700 bg-teal-100';
                               case 'Shipped': return 'text-purple-700 bg-purple-100';
                               case 'Pending': return 'text-yellow-700 bg-yellow-100';
                               case 'Cancelled': return 'text-red-700 bg-red-100';
@@ -1050,6 +1051,7 @@ const ProfilePage: React.FC = () => {
                                     {isArabic 
                                       ? order.status === 'Delivered' ? 'تم التوصيل'
                                         : order.status === 'Processing' ? 'قيد المعالجة'
+                                        : order.status === 'Ready' ? 'جاهز للاستلام'
                                         : order.status === 'Shipped' ? 'تم الشحن'
                                         : order.status === 'Pending' ? 'قيد الانتظار'
                                         : order.status === 'Cancelled' ? 'ملغي'
