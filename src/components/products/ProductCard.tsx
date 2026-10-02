@@ -1,6 +1,6 @@
 import React, { lazy, memo, Suspense, useState, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { ShoppingCart, Eye, Heart } from 'lucide-react';
 import { Card, CardContent, CardFooter } from '../ui/card';
 import { Button } from '../ui/button';
@@ -29,12 +29,12 @@ interface ProductCardProps {
 const ProductCardComponent: React.FC<ProductCardProps> = ({ product, prioritizeImage = false, variant = 'default' }) => {
   const isHomepage = variant === 'homepage';
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const { language } = useApp();
   const isArabic = language === 'ar';
   const { addToCart, openCart } = useCart();
   const { toggleFavorite, isFavorite } = useFavorites();
   const { currentRegion } = useRegion();
+  const productUrl = `/${currentRegion.code}/products/${product.slug || product.id}`;
   const [isAnimating, setIsAnimating] = useState(false);
   const [showQuickView, setShowQuickView] = useState(false);
   const [isClosingQuickView, setIsClosingQuickView] = useState(false);
@@ -128,14 +128,15 @@ const ProductCardComponent: React.FC<ProductCardProps> = ({ product, prioritizeI
     return null;
   }
 
-  const handleCardClick = () => {
+  const handleProductLinkClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
     // Don't navigate if quick view modal is open or in the process of closing
     if (showQuickView || isClosingQuickView) {
+      event.preventDefault();
       return;
     }
-    // Scroll to top before navigation
-    window.scrollTo({ top: 0, behavior: 'instant' });
-    navigate(`/products/${product.slug || product.id}`);
+    if (event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) {
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }
   };
 
   const handleQuickView = (e: React.MouseEvent) => {
@@ -165,7 +166,6 @@ const ProductCardComponent: React.FC<ProductCardProps> = ({ product, prioritizeI
           ? 'group flex h-full flex-col overflow-hidden border border-stone-100 bg-white py-0 shadow-sm transition-all duration-300 hover:shadow-md relative cursor-pointer'
           : 'group overflow-hidden hover:shadow-xl transition-all duration-300 bg-white border-0 shadow-md py-0 relative cursor-pointer'
       }
-      onClick={handleCardClick}
     >
       {/* Wishlist Button - Positioned absolutely in top-right corner */}
       <Button
@@ -182,7 +182,12 @@ const ProductCardComponent: React.FC<ProductCardProps> = ({ product, prioritizeI
       </Button>
 
       {/* Product Image - Square aspect ratio */}
-      <div className="relative overflow-hidden aspect-square bg-[#fbf8f3]">
+      <Link
+        to={productUrl}
+        onClick={handleProductLinkClick}
+        aria-label={productName}
+        className="relative block overflow-hidden aspect-square bg-[#fbf8f3] focus-visible:outline-2! focus-visible:outline-amber-600! focus-visible:-outline-offset-2"
+      >
         <img
           src={productImage}
           srcSet={productImageSrcSet}
@@ -226,7 +231,7 @@ const ProductCardComponent: React.FC<ProductCardProps> = ({ product, prioritizeI
         
         {/* Gradient Overlay on hover */}
         <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-      </div>
+      </Link>
 
       {/* Product Content - Compact */}
       <CardContent className={isHomepage ? 'flex flex-1 flex-col p-3 pt-1' : 'p-3 pt-1'}>
@@ -250,7 +255,13 @@ const ProductCardComponent: React.FC<ProductCardProps> = ({ product, prioritizeI
             ? 'font-extrabold text-sm text-stone-900 line-clamp-2 mb-1 group-hover:text-amber-700 transition-colors min-h-10'
             : 'font-bold text-sm text-gray-900 line-clamp-2 mb-1 group-hover:text-amber-600 transition-colors min-h-10'
         }>
-          {productName}
+          <Link
+            to={productUrl}
+            onClick={handleProductLinkClick}
+            className="block focus-visible:outline-2! focus-visible:outline-amber-600! focus-visible:-outline-offset-2"
+          >
+            {productName}
+          </Link>
         </h3>
         <p className={isHomepage ? 'text-xs text-stone-500 mb-2 line-clamp-1' : 'text-xs text-amber-600 mb-2 line-clamp-1'}>
           {productTastingNotes || '---'}
