@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { detectSsrRegion, fetchProductsBootstrap, isProductsListPath } from '../ssrProductsBootstrap.js';
+import { detectSsrRegion, fetchProductsBootstrap, fetchShopBootstrap, getShopCategorySlug, isProductsListPath } from '../ssrProductsBootstrap.js';
 
 const SEO_HOSTS = {
   om: 'https://www.spirithubcafe.com',
@@ -665,14 +665,12 @@ export default async function handler(req, res) {
     const ssrProductScript = ssrProduct
       ? `<script>window.__SSR_PRODUCT__=${serializeForInlineScript(ssrProduct)};window.__SSR_PRODUCT_ID__=${serializeForInlineScript(productIdentifier)};</script>`
       : '';
-    // Products-list bootstrap: only fetched for the /products route, so other
-    // pages never pay this extra request. Failure returns null and SSR simply
-    // falls back to today's client-side fetch/retry/error UI (Phase A).
+    const shopCategorySlug = getShopCategorySlug(urlPathOnly);
     const productsBootstrap = isProductsListPath(urlPathOnly)
       ? await fetchProductsBootstrap(region, requestLanguage)
-      : null;
+      : shopCategorySlug !== null ? await fetchShopBootstrap(region, requestLanguage, shopCategorySlug) : null;
     const ssrProductsScript = productsBootstrap
-      ? `<script>window.__SSR_PRODUCTS__=${serializeForInlineScript(productsBootstrap.products)};window.__SSR_PRODUCTS_REGION__=${serializeForInlineScript(productsBootstrap.region)};window.__SSR_CATEGORIES__=${serializeForInlineScript(productsBootstrap.categories)};</script>`
+      ? `<script>window.__SSR_PRODUCTS__=${serializeForInlineScript(productsBootstrap.products)};window.__SSR_PRODUCTS_REGION__=${serializeForInlineScript(productsBootstrap.region)};window.__SSR_CATEGORIES__=${serializeForInlineScript(productsBootstrap.categories)};window.__SSR_SHOP__=${serializeForInlineScript(productsBootstrap.shop ?? null)};</script>`
       : '';
     const ssrBootstrapScript = `${ssrLanguageScript}${ssrProductScript}${ssrProductsScript}`;
     
@@ -714,6 +712,7 @@ export default async function handler(req, res) {
             region: productsBootstrap?.region ?? null,
             products: productsBootstrap?.products ?? null,
             categories: productsBootstrap?.categories ?? null,
+            shop: productsBootstrap?.shop ?? null,
           });
 
           if (typeof previousProduct === 'undefined') {

@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
+import type { ComponentType } from 'react';
 import { Routes, Route, useLocation, useSearchParams, Navigate } from 'react-router-dom';
 import { Toaster } from './components/ui/sonner';
 import { AppProvider } from './contexts/AppContext';
@@ -59,8 +60,12 @@ const WholesaleOrderDetailsPage = lazy(() => import('./pages/WholesaleOrderDetai
 const AdminRoutes = lazy(() => import('./components/admin/AdminRoutes'));
 const ProductsPage = lazy(() => import('./pages/ProductsPage').then((m) => ({ default: m.ProductsPage })));
 const ProductDetailPage = lazy(() => import('./pages/ProductDetailPage').then((m) => ({ default: m.ProductDetailPage })));
-const ShopPage = lazy(() => import('./pages/Shop/ShopPage'));
-const ShopCategoryPage = lazy(() => import('./pages/Shop/ShopCategoryPage'));
+const LazyShopPage = lazy(() => import('./pages/Shop/ShopPage'));
+const LazyShopCategoryPage = lazy(() => import('./pages/Shop/ShopCategoryPage'));
+export interface ShopRouteComponents {
+  page?: ComponentType;
+  category?: ComponentType;
+}
 const NotFound = lazy(() => import('./components/pages/NotFound').then((m) => ({ default: m.NotFound })));
 const MobileBottomNav = lazy(() => import('./components/layout/MobileBottomNav').then((m) => ({ default: m.MobileBottomNav })));
 const CartDrawer = lazy(() => import('./components/cart/CartDrawer').then((m) => ({ default: m.CartDrawer })));
@@ -206,7 +211,9 @@ const useDeferredChatBotReady = (enabled: boolean) => {
   return ready;
 };
 
-function AppContent() {
+function AppContent({ shopRoutes }: { shopRoutes?: ShopRouteComponents }) {
+  const ShopPage = shopRoutes?.page ?? LazyShopPage;
+  const ShopCategoryPage = shopRoutes?.category ?? LazyShopCategoryPage;
   const location = useLocation();
   const [isBrowserReady, setIsBrowserReady] = useState(false);
   const isAdminPage = location.pathname.includes('/admin');
@@ -474,7 +481,7 @@ function AppContent() {
   );
 }
 
-function App({ bootstrapData }: { bootstrapData?: ProductsSsrBootstrap }) {
+function App({ bootstrapData, shopRoutes }: { bootstrapData?: ProductsSsrBootstrap; shopRoutes?: ShopRouteComponents }) {
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
   // If this is missing at *build time*, Google Sign-In will not work in production.
@@ -494,7 +501,7 @@ function App({ bootstrapData }: { bootstrapData?: ProductsSsrBootstrap }) {
         <AuthProvider>
           <AppProvider bootstrapData={bootstrapData}>
             <CartProvider>
-              <AppContent />
+              <AppContent shopRoutes={shopRoutes} />
             </CartProvider>
           </AppProvider>
         </AuthProvider>

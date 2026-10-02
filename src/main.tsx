@@ -9,24 +9,27 @@ import 'overlayscrollbars/overlayscrollbars.css'
 import './index.css'
 import './styles/color-overrides.css'
 import App from './App.tsx'
+import type { ShopRouteComponents } from './App';
 import type { ProductsSsrBootstrap } from './lib/productTransform';
+import { readShopBootstrap } from './lib/shopBootstrap';
 
 const rootElement = document.getElementById('root')!;
 const CHUNK_RELOAD_GUARD_KEY = 'spirithub_chunk_reload_once';
 const CHUNK_RELOAD_COOLDOWN_MS = 5 * 60 * 1000;
 
-// Read the request's product/category snapshot before the first hydration render.
-// Both SSR handlers inject it only for product listing routes.
+// Read the request's catalog snapshot before the first hydration render.
 const ssrGlobals = window as unknown as {
   __SSR_PRODUCTS__?: unknown;
   __SSR_PRODUCTS_REGION__?: unknown;
   __SSR_CATEGORIES__?: unknown;
+  __SSR_SHOP__?: unknown;
 };
-const productsBootstrap: ProductsSsrBootstrap | undefined = ssrGlobals.__SSR_PRODUCTS__
+const productsBootstrap: ProductsSsrBootstrap | undefined = ssrGlobals.__SSR_PRODUCTS__ || ssrGlobals.__SSR_SHOP__
   ? {
       products: Array.isArray(ssrGlobals.__SSR_PRODUCTS__) ? ssrGlobals.__SSR_PRODUCTS__ : null,
       categories: Array.isArray(ssrGlobals.__SSR_CATEGORIES__) ? ssrGlobals.__SSR_CATEGORIES__ : null,
       region: typeof ssrGlobals.__SSR_PRODUCTS_REGION__ === 'string' ? ssrGlobals.__SSR_PRODUCTS_REGION__ : null,
+      shop: readShopBootstrap(ssrGlobals.__SSR_SHOP__),
     }
   : undefined;
 
@@ -83,27 +86,42 @@ if (typeof window !== 'undefined') {
 
 }
 
-// Check if the app was server-rendered
-if (rootElement.hasChildNodes()) {
-  // Hydrate the server-rendered HTML
-  hydrateRoot(
-    rootElement,
-    <StrictMode>
-      <BrowserRouter>
-        <App bootstrapData={productsBootstrap} />
-      </BrowserRouter>
-    </StrictMode>
-  );
-} else {
-  // Client-side render if not server-rendered
-  createRoot(rootElement).render(
-    <StrictMode>
-      <BrowserRouter>
-        <App bootstrapData={productsBootstrap} />
-      </BrowserRouter>
-    </StrictMode>,
-  );
-}
+const mountApp = async () => {
+  const shopRoutes: ShopRouteComponents = {};
+  // Warm only the SSR shop route before hydration, so early provider updates
+  // cannot replace its visible snapshot with the lazy-route fallback.
+  if (rootElement.hasChildNodes() && productsBootstrap?.shop) {
+    if (productsBootstrap.shop.categorySlug) {
+      shopRoutes.category = (await import('./pages/Shop/ShopCategoryPage')).default;
+    } else {
+      shopRoutes.page = (await import('./pages/Shop/ShopPage')).default;
+    }
+  }
+
+  if (rootElement.hasChildNodes()) {
+    hydrateRoot(
+      rootElement,
+      <StrictMode>
+        <BrowserRouter>
+          <App bootstrapData={productsBootstrap} shopRoutes={shopRoutes} />
+        </BrowserRouter>
+      </StrictMode>
+    );
+  } else {
+    createRoot(rootElement).render(
+      <StrictMode>
+        <BrowserRouter>
+          <App bootstrapData={productsBootstrap} />
+        </BrowserRouter>
+      </StrictMode>,
+    );
+  }
+};
+
+void mountApp().catch((error: unknown) => {
+  console.error('[Shop] Unable to load the SSR route for hydration:', error);
+  throw error;
+});
 
 if (typeof window !== 'undefined') {
   const scheduleLowPriorityWork = (task: () => void, timeout = 2000) => {

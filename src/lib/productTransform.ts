@@ -2,6 +2,7 @@ import type { Product } from '../contexts/AppContextDefinition';
 import type { Product as ApiProduct } from '../types/product';
 import { getProductImageUrl, resolveProductImagePath } from './imageUtils.ts';
 import { normalizeProductTags } from './productTagUtils.ts';
+import type { ShopSsrBootstrap } from '../types/shop';
 
 /** Region code as used across the storefront (om/sa). */
 export type SsrBootstrapRegion = 'om' | 'sa';
@@ -11,6 +12,7 @@ export interface ProductsSsrBootstrap {
   region: string | null;
   products: unknown[] | null;
   categories?: unknown[] | null;
+  shop?: ShopSsrBootstrap | null;
 }
 
 const hasValue = (value: unknown): boolean => value !== null && value !== undefined && value !== '';

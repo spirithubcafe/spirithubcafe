@@ -3,7 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import express from 'express';
 import compression from 'compression';
-import { detectSsrRegion, fetchProductsBootstrap, isProductsListPath, serializeForInlineScript } from './ssrProductsBootstrap.js';
+import { detectSsrRegion, fetchProductsBootstrap, fetchShopBootstrap, getShopCategorySlug, isProductsListPath, serializeForInlineScript } from './ssrProductsBootstrap.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -414,14 +414,12 @@ app.use(async (req, res, next) => {
     // initialize with the same value and avoid a React #418 hydration mismatch.
     const ssrLanguageScript = `<script>window.__SSR_LANGUAGE__="${requestLanguage === 'ar' ? 'ar' : 'en'}";</script>`;
 
-    // Products-list bootstrap: only fetched for the /products route, so other
-    // pages never pay this extra request. Failure returns null and SSR simply
-    // falls back to today's client-side fetch/retry/error UI (Phase A).
+    const shopCategorySlug = getShopCategorySlug(url);
     const productsBootstrap = isProductsListPath(url)
       ? await fetchProductsBootstrap(region, requestLanguage)
-      : null;
+      : shopCategorySlug !== null ? await fetchShopBootstrap(region, requestLanguage, shopCategorySlug) : null;
     const ssrProductsScript = productsBootstrap
-      ? `<script>window.__SSR_PRODUCTS__=${serializeForInlineScript(productsBootstrap.products)};window.__SSR_PRODUCTS_REGION__=${serializeForInlineScript(productsBootstrap.region)};window.__SSR_CATEGORIES__=${serializeForInlineScript(productsBootstrap.categories)};</script>`
+      ? `<script>window.__SSR_PRODUCTS__=${serializeForInlineScript(productsBootstrap.products)};window.__SSR_PRODUCTS_REGION__=${serializeForInlineScript(productsBootstrap.region)};window.__SSR_CATEGORIES__=${serializeForInlineScript(productsBootstrap.categories)};window.__SSR_SHOP__=${serializeForInlineScript(productsBootstrap.shop ?? null)};</script>`
       : '';
 
     // Keep the fallback tags in index.html for plain SPA/static serving, but
@@ -459,6 +457,7 @@ app.use(async (req, res, next) => {
            region: productsBootstrap?.region ?? null,
            products: productsBootstrap?.products ?? null,
            categories: productsBootstrap?.categories ?? null,
+           shop: productsBootstrap?.shop ?? null,
          });
         if (appHtml && !error) {
           if (appHtml.includes('data-not-found-page="true"')) {

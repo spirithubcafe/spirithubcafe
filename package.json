@@ -16,6 +16,7 @@
     "test:products-ssr": "node --experimental-strip-types --test src/lib/productTransform.test.ts",
     "test:category-ssr": "node --experimental-strip-types --test src/lib/categoryTransform.test.ts ssrProductsBootstrap.test.js",
     "test:category-ssr-render": "node --test src/lib/categorySsrRender.test.js",
+    "test:shop-ssr": "node --test ssrShopBootstrap.test.js src/lib/shopSsrRender.test.js",
     "preview": "vite preview"
   },
   "dependencies": {

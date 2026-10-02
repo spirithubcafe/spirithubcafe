@@ -4,6 +4,13 @@ export interface ShopPage {
   totalProducts: number;
 }
 
+export interface ShopSsrBootstrap {
+  page: ShopPage | null;
+  categorySlug: string;
+  category: ShopCategory | null;
+  categoryProducts: PaginatedResponse<ShopProduct> | null;
+}
+
 export interface ShopCategory {
   id: number;
   slug: string;

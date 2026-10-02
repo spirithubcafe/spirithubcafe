@@ -26,3 +26,24 @@ Run `npm run build` followed by `npm run test:category-ssr-render` to verify act
 server-rendered product sets for slug, numeric, invalid, and regional filters.
 Existing catalog checks are `npm run test:products-ssr` and
 `npm run test:products-resilience`.
+
+## Shop SSR
+
+Shop routes use the same request-scoped bootstrap/hydration handoff. `/shop`
+fetches `/api/shop`; category routes fetch the shop page and category-by-slug
+in parallel, then fetch the category's first product page using its regional ID.
+The paginated endpoint remains authoritative for product ordering and counts.
+The coffee category lookup above excludes shop categories and is not substituted
+for the dedicated shop response.
+
+Successful snapshots are cached for 60 seconds by region, language, and slug.
+Failed category/product snapshots are not cached as missing categories. Hooks
+hydrate from the snapshot and retain their three-attempt background retry and
+15-minute session cache, keeping snapshot content visible if refresh fails.
+Obsolete client requests cannot replace a different region/category/page/sort.
+The initial shop route module is loaded before hydration so existing provider
+effects do not replace the snapshot with a lazy-route fallback.
+No HTTP status handling is changed.
+
+Run `npm run build` then `npm run test:shop-ssr` for bootstrap and actual
+SSR regression coverage, including concurrent Oman/Saudi requests.
