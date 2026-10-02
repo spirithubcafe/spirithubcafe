@@ -3,6 +3,7 @@ import test from 'node:test';
 import { createSsrHandler } from './api/ssr.js';
 import { fetchSsrJson, renderSsrOutcome } from './ssrHttp.js';
 import { render } from './dist/server/entry-server.js';
+import { OMAN_LEGACY_PRODUCT_REDIRECTS } from './legacyProductRedirects.js';
 
 const productFor = (region, slug) => ({
   id: region === 'om' ? 9001 : 9101, slug, name: `${region} status test coffee`,
@@ -40,6 +41,62 @@ const assertErrorResponse = (response, status) => {
   assert.doesNotMatch(response.body, /rel=["']canonical|application\/ld\+json|property=["']product:|og:type["'] content=["']product/);
   assert.match(response.body, /noindex/);
 };
+
+test('all approved aliases redirect before any API or renderer access, even during outages', async (t) => {
+  let fetches = 0;
+  let imports = 0;
+  t.mock.method(globalThis, 'fetch', async () => { fetches++; throw new TypeError('API unavailable'); });
+  const handler = createSsrHandler({ loadRenderer: async () => { imports++; throw new Error('Renderer unavailable'); } });
+  for (const { source, destination } of OMAN_LEGACY_PRODUCT_REDIRECTS) {
+    for (const suffix of ['', '/', '?utm_source=test', '/?utm_source=test&variant=10']) {
+      const response = await request(source + suffix, handler);
+      const query = suffix.includes('?') ? suffix.slice(suffix.indexOf('?')) : '';
+      assert.equal(response.statusCode, 301);
+      assert.equal(response.headers.location, destination + query);
+      assert.equal(response.headers['cache-control'], 'public, max-age=3600, s-maxage=86400');
+      assert.equal(response.body, '');
+    }
+  }
+  assert.equal(fetches, 0);
+  assert.equal(imports, 0);
+});
+
+test('approved destinations render 200 while Saudi old slugs retain their regional content/status', async (t) => {
+  t.mock.method(globalThis, 'fetch', async (url, { headers }) => {
+    const slug = decodeURIComponent(url.split('/').at(-1));
+    if (slug === 'completely-invented-product' || (headers['X-Branch'] === 'sa' && slug === 'costa-rica-ohban-gesha-anaerobic-honey-163')) {
+      return new Response('', { status: 404 });
+    }
+    return Response.json({ success: true, data: productFor(headers['X-Branch'], slug) });
+  });
+  for (const { source, destination } of OMAN_LEGACY_PRODUCT_REDIRECTS) {
+    const [om, sa] = await Promise.all([request(destination), request(source.replace('/om/', '/sa/'))]);
+    assert.equal(om.statusCode, 200);
+    assert.match(om.body, /om status test coffee/);
+    assert.equal(om.headers.location, undefined);
+    if (source.includes('costa-rica-ohban')) assertErrorResponse(sa, 404);
+    else {
+      assert.equal(sa.statusCode, 200);
+      assert.match(sa.body, /sa status test coffee/);
+      assert.doesNotMatch(sa.body, /om status test coffee/);
+    }
+    assert.equal(sa.headers.location, undefined);
+  }
+  assertErrorResponse(await request('/om/products/completely-invented-product'), 404);
+});
+
+test('unapproved product API failure retains 503 and regionless routing remains unchanged', async (t) => {
+  t.mock.method(console, 'warn', () => {});
+  let fetches = 0;
+  t.mock.method(globalThis, 'fetch', async () => { fetches++; throw new TypeError('API unavailable'); });
+  const failed = await request('/om/products/unapproved-redirect-outage');
+  assertErrorResponse(failed, 503);
+  assert.equal(failed.headers.location, undefined);
+  assert.equal(fetches, 3);
+  const regionless = await request('/products/spirithub-experience-box-ufo-drip-coffee-collection');
+  assert.equal(regionless.statusCode, 301);
+  assert.equal(regionless.headers.location, '/om/products/spirithub-experience-box-ufo-drip-coffee-collection');
+});
 
 test('existing products render 200 with regional request-scoped product content', async (t) => {
   t.mock.method(globalThis, 'fetch', async (url, { headers }) => {

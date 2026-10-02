@@ -3,6 +3,7 @@ import path from 'path';
 import { pathToFileURL } from 'node:url';
 import { detectSsrRegion, prepareSsrRequest } from '../ssrProductsBootstrap.js';
 import { errorMetaTags, renderSsrOutcome, replaceErrorHead, sendSsrUnavailable, setErrorHeaders } from '../ssrHttp.js';
+import { getLegacyProductRedirect } from '../legacyProductRedirects.js';
 
 const SEO_HOSTS = {
   om: 'https://www.spirithubcafe.com',
@@ -468,6 +469,13 @@ export const createSsrHandler = ({
   try {
     const url = req.url || '/';
     const urlPathOnly = url.split('?')[0].split('#')[0];
+
+    const legacyProductRedirect = getLegacyProductRedirect(url);
+    if (legacyProductRedirect) {
+      res.setHeader('Location', legacyProductRedirect);
+      res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=86400');
+      return res.status(301).end();
+    }
 
     // Redirect bare root to the canonical Oman home page
     if (urlPathOnly === '/') {

@@ -78,3 +78,17 @@ Run `npm run build` followed by `npm run test:ssr-http` for response-level
 regressions using the actual SSR renderer and simulated upstream failures.
 The suite also starts an isolated standalone production server against a local
 test upstream and verifies both regions over HTTP; it closes both on completion.
+
+## Oman legacy product redirects
+
+`legacyProductRedirects.js` contains nine approved, immutable exact-path Oman
+product aliases shared by the Vercel and standalone handlers. Both handlers
+return 301 before API/bootstrap lookup, metadata, or rendering. A single
+trailing slash is accepted, and the original query string is preserved verbatim.
+Redirect destinations use the current `/om/products/...` path.
+
+Saudi, unapproved/inactive products, and regionless routing are unchanged.
+No fuzzy matching or missing-product fallback redirects are used. Regionless
+old URLs retain their existing routing, including the Vercel `/om` redirect.
+Run `npm run test:ssr-http` after building to validate the approved map, prevent
+loops/chains, and exercise both handlers and regional isolation.

@@ -5,6 +5,7 @@ import express from 'express';
 import compression from 'compression';
 import { detectSsrRegion, prepareSsrRequest, serializeForInlineScript } from './ssrProductsBootstrap.js';
 import { errorMetaTags, renderSsrOutcome, replaceErrorHead, sendSsrUnavailable, setErrorHeaders } from './ssrHttp.js';
+import { getLegacyProductRedirect } from './legacyProductRedirects.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -133,6 +134,13 @@ const getPerformanceHintsForRoute = (url) => {
 
 // Create http server
 const app = express();
+
+app.use((req, res, next) => {
+  const destination = getLegacyProductRedirect(req.originalUrl);
+  if (!destination) return next();
+  res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=86400');
+  return res.redirect(301, destination);
+});
 // Respect reverse-proxy headers (e.g., Vercel/NGINX) when constructing absolute URLs.
 app.set('trust proxy', true);
 
