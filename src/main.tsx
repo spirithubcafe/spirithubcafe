@@ -15,16 +15,17 @@ const rootElement = document.getElementById('root')!;
 const CHUNK_RELOAD_GUARD_KEY = 'spirithub_chunk_reload_once';
 const CHUNK_RELOAD_COOLDOWN_MS = 5 * 60 * 1000;
 
-// Read the SSR products bootstrap once at startup - window.__SSR_PRODUCTS__/
-// __SSR_PRODUCTS_REGION__ are injected by server.js/api/ssr.js only when the
-// requested route pre-fetched the product list server-side.
+// Read the request's product/category snapshot before the first hydration render.
+// Both SSR handlers inject it only for product listing routes.
 const ssrGlobals = window as unknown as {
   __SSR_PRODUCTS__?: unknown;
   __SSR_PRODUCTS_REGION__?: unknown;
+  __SSR_CATEGORIES__?: unknown;
 };
 const productsBootstrap: ProductsSsrBootstrap | undefined = ssrGlobals.__SSR_PRODUCTS__
   ? {
       products: Array.isArray(ssrGlobals.__SSR_PRODUCTS__) ? ssrGlobals.__SSR_PRODUCTS__ : null,
+      categories: Array.isArray(ssrGlobals.__SSR_CATEGORIES__) ? ssrGlobals.__SSR_CATEGORIES__ : null,
       region: typeof ssrGlobals.__SSR_PRODUCTS_REGION__ === 'string' ? ssrGlobals.__SSR_PRODUCTS_REGION__ : null,
     }
   : undefined;

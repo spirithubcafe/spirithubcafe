@@ -11,3 +11,18 @@ Our passion goes beyond appreciation we emphasize the science of coffee. From ro
 As a business exclusively operated by an Omani team, SPIRIT HUB proudly supports the local economy and community, helping strengthen the foundation of specialty coffee in Oman.
 
 SPIRIT HUB is more than a roastery it is a commitment to quality, sustainability, and community. Every cup reflects dedication to excellence, the farmers who make it possible, and the spirit of Oman.
+
+## Product category SSR
+
+Product listings bootstrap products and public coffee categories together, using
+the same branch and language headers as the client. The existing bootstrap cache
+is keyed by region and language; each render receives its own snapshot argument.
+Categories are also serialized for the client's first hydration render so category
+slugs resolve to IDs before filtering. Background client fetching and retries
+remain enabled. A failed category refresh preserves valid same-region categories.
+
+Run `npm run test:category-ssr` for category mapping and bootstrap regressions.
+Run `npm run build` followed by `npm run test:category-ssr-render` to verify actual
+server-rendered product sets for slug, numeric, invalid, and regional filters.
+Existing catalog checks are `npm run test:products-ssr` and
+`npm run test:products-resilience`.

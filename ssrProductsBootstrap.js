@@ -29,15 +29,16 @@ export const detectSsrRegion = (urlPathOnly, hostHint) => {
 
 /** Whether a (region-prefixed or bare) URL path is the products listing route. */
 export const isProductsListPath = (urlPathOnly) => {
-  const stripped = urlPathOnly.replace(/^\/(om|sa)(?=\/|$)/, '') || '/';
+  const pathname = urlPathOnly.split('?')[0].split('#')[0];
+  const stripped = pathname.replace(/^\/(om|sa)(?=\/|$)/, '') || '/';
   return stripped === '/products' || stripped === '/products/';
 };
 
 /**
- * Fetch the initial product list for SSR, using the same query params and
- * X-Branch/Accept-Language headers the client's productService.getAll() sends.
- * Never throws - returns null on any failure so SSR always falls back to the
- * existing client-side fetch/retry/error UI (Phase A is unaffected either way).
+ * Fetch the initial products and category lookup for SSR, using the same
+ * query params and region/language headers as the client's catalog services.
+ * Product failure retains the existing null fallback. Category failure is
+ * logged without discarding products or caching an incomplete lookup.
  */
 export const fetchProductsBootstrap = async (region, language) => {
   const normalizedRegion = region === 'sa' ? 'sa' : 'om';
@@ -49,33 +50,43 @@ export const fetchProductsBootstrap = async (region, language) => {
   }
 
   const apiBase = getApiBaseUrlForRegion(normalizedRegion);
-  const url = `${apiBase}/api/Products?page=1&pageSize=100&includeInactive=false&excludeShop=true`;
+  const fetchArray = async (resource) => {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 6000);
+    try {
+      const response = await fetch(`${apiBase}/api/${resource}`, {
+        headers: {
+          Accept: 'application/json',
+          'X-Branch': normalizedRegion,
+          'Accept-Language': normalizedLanguage,
+        },
+        signal: controller.signal,
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 6000);
-  try {
-    const response = await fetch(url, {
-      headers: {
-        Accept: 'application/json',
-        'X-Branch': normalizedRegion,
-        'Accept-Language': normalizedLanguage,
-      },
-      signal: controller.signal,
-    });
-    if (!response.ok) return null;
+      const body = await response.json();
+      const items = Array.isArray(body?.data) ? body.data : Array.isArray(body) ? body : null;
+      if (body?.success === false || !items) throw new Error('Invalid catalog response');
+      return items;
+    } catch (error) {
+      console.warn(`[SSR] ${resource} bootstrap failed (region=${normalizedRegion}, language=${normalizedLanguage}):`, error.message);
+      return null;
+    } finally {
+      clearTimeout(timeout);
+    }
+  };
 
-    const body = await response.json();
-    const products = Array.isArray(body?.data) ? body.data : null;
-    if (!products) return null;
+  const [products, categories] = await Promise.all([
+    fetchArray('Products?page=1&pageSize=100&includeInactive=false&excludeShop=true'),
+    fetchArray('Categories?includeInactive=false&excludeShop=true'),
+  ]);
+  if (!products) return null;
 
-    const result = { region: normalizedRegion, products };
+  const result = { region: normalizedRegion, products, categories };
+  if (categories) {
     productsBootstrapCache.set(cacheKey, { data: result, timestamp: Date.now() });
-    return result;
-  } catch {
-    return null;
-  } finally {
-    clearTimeout(timeout);
   }
+  return result;
 };
 
 /** Safe inline-script JSON serialization - escapes `<` to prevent `</script>` breakout. */

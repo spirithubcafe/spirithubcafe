@@ -6,10 +6,10 @@ import { RegionContext } from './RegionContextDefinition';
 import { categoryService } from '../services/categoryService';
 import { productService } from '../services/productService';
 import type { Category as ApiCategory, Product as ApiProduct } from '../types/product';
-import { getCategoryImageUrl } from '../lib/imageUtils';
 import { cacheUtils } from '../lib/cacheUtils';
 import { isRetryableProductFetchError, productsBelongToRegion, shouldClearProductsOnFetchError } from '../lib/productFetchRetry';
 import { resolveBootstrapProducts, transformApiProductsToProducts, type ProductsSsrBootstrap } from '../lib/productTransform';
+import { resolveBootstrapCategories, transformApiCategories } from '../lib/categoryTransform';
 import { safeStorage } from '../lib/safeStorage';
 
 export interface User {
@@ -59,8 +59,6 @@ const getSessionArrayCache = <T,>(key: string): T[] | null => {
   return Array.isArray(cached) ? (cached as T[]) : null;
 };
 
-const hasValue = (value: unknown): boolean => value !== null && value !== undefined && value !== '';
-
 const isInitialHomepagePath = (): boolean => {
   if (typeof window === 'undefined') return false;
   return /^\/(?:om|sa)?\/?$/.test(window.location.pathname);
@@ -94,8 +92,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children, bootstrapDat
   // the server-rendered markup; the normal fetchProducts() effect below still
   // runs afterward as a background revalidation.
   const [products, setProducts] = useState<Product[]>(() => resolveBootstrapProducts(bootstrapData, currentRegionCode));
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [allCategories, setAllCategories] = useState<Category[]>([]);
+  const [initialCategories] = useState(() => resolveBootstrapCategories(bootstrapData, currentRegionCode));
+  const [categories, setCategories] = useState<Category[]>(initialCategories.categories);
+  const [allCategories, setAllCategories] = useState<Category[]>(initialCategories.allCategories);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -122,6 +121,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children, bootstrapDat
   // Which region the products currently in state were fetched for - prevents
   // preserving another region's stale list across a region switch that fails.
   const productsRegionRef = React.useRef(currentRegionCode);
+  const allCategoriesRef = React.useRef(allCategories);
+  const categoriesRegionRef = React.useRef(currentRegionCode);
   
   // Update refs when values change
   useEffect(() => {
@@ -132,6 +133,10 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children, bootstrapDat
   useEffect(() => {
     productsRef.current = products;
   }, [products]);
+
+  useEffect(() => {
+    allCategoriesRef.current = allCategories;
+  }, [allCategories]);
 
   const beginLoading = useCallback(() => {
     pendingRequestsRef.current += 1;
@@ -399,6 +404,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children, bootstrapDat
     if (!forceRefresh && cachedData && cachedAllCategories) {
       setCategories(cachedData);
       setAllCategories(cachedAllCategories);
+      allCategoriesRef.current = cachedAllCategories;
+      categoriesRegionRef.current = regionCode;
     }
 
     if (!hasCachedCategories || forceRefresh) {
@@ -425,32 +432,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children, bootstrapDat
         break;
       }
       
-      // Sort all categories by displayOrder
-      const sortedCategories = apiCategories
-        .filter((cat) => hasValue(cat.id))
-        .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
-      
-      // Transform all categories
-      const transformedAllCategories: Category[] = sortedCategories.map((cat: ApiCategory) => {
-        const imageUrl = getCategoryImageUrl(cat.imagePath);
-        return {
-          id: String(cat.id),
-          slug: typeof cat.slug === 'string' ? cat.slug : undefined,
-          name: String(cat.name || cat.nameAr || ''),
-          nameAr: cat.nameAr ? String(cat.nameAr) : undefined,
-          description: String(cat.description || cat.descriptionAr || ''),
-          descriptionAr: cat.descriptionAr ? String(cat.descriptionAr) : undefined,
-          image: imageUrl,
-          displayOrder: typeof cat.displayOrder === 'number' ? cat.displayOrder : 0,
-          taxPercentage: typeof cat.taxPercentage === 'number' ? cat.taxPercentage : 0,
-        };
-      });
-      
-      // Filter categories for homepage display
-      const homepageCategories = transformedAllCategories.filter((_cat, index) => {
-        const apiCat = sortedCategories[index];
-        return apiCat.isDisplayedOnHomepage;
-      });
+      const { categories: homepageCategories, allCategories: transformedAllCategories } = transformApiCategories(apiCategories);
 
       // Ignore stale responses (region/language switched while request in flight).
       if (!isMountedRef.current || requestId !== latestCategoriesRequestRef.current) {
@@ -459,6 +441,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children, bootstrapDat
       
       setCategories(homepageCategories);
       setAllCategories(transformedAllCategories);
+      allCategoriesRef.current = transformedAllCategories;
+      categoriesRegionRef.current = regionCode;
       fetchSucceeded = true;
       
       // Cache both datasets
@@ -467,7 +451,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children, bootstrapDat
       
     } catch (err) {
       console.error('❌ Error fetching categories:', err);
-      if (!hasCachedCategories) {
+      if (!hasCachedCategories && !(categoriesRegionRef.current === regionCode && allCategoriesRef.current.length > 0)) {
         setError('Failed to fetch categories');
         setCategories([]);
         setAllCategories([]);

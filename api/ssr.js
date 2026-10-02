@@ -672,7 +672,7 @@ export default async function handler(req, res) {
       ? await fetchProductsBootstrap(region, requestLanguage)
       : null;
     const ssrProductsScript = productsBootstrap
-      ? `<script>window.__SSR_PRODUCTS__=${serializeForInlineScript(productsBootstrap.products)};window.__SSR_PRODUCTS_REGION__=${serializeForInlineScript(productsBootstrap.region)};</script>`
+      ? `<script>window.__SSR_PRODUCTS__=${serializeForInlineScript(productsBootstrap.products)};window.__SSR_PRODUCTS_REGION__=${serializeForInlineScript(productsBootstrap.region)};window.__SSR_CATEGORIES__=${serializeForInlineScript(productsBootstrap.categories)};</script>`
       : '';
     const ssrBootstrapScript = `${ssrLanguageScript}${ssrProductScript}${ssrProductsScript}`;
     
@@ -713,6 +713,7 @@ export default async function handler(req, res) {
           const { html: appHtml, error } = await render(url, requestLanguage, {
             region: productsBootstrap?.region ?? null,
             products: productsBootstrap?.products ?? null,
+            categories: productsBootstrap?.categories ?? null,
           });
 
           if (typeof previousProduct === 'undefined') {

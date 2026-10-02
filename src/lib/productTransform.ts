@@ -10,6 +10,7 @@ export type SsrBootstrapRegion = 'om' | 'sa';
 export interface ProductsSsrBootstrap {
   region: string | null;
   products: unknown[] | null;
+  categories?: unknown[] | null;
 }
 
 const hasValue = (value: unknown): boolean => value !== null && value !== undefined && value !== '';
