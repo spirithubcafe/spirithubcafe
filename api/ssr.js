@@ -442,8 +442,6 @@ async function getMetaTagsForRoute(url, baseUrl, preloadedProduct = null, hostHi
     <link rel="canonical" href="${canonicalUrl}" />
     <link rel="alternate" hreflang="en-OM" href="${omUrl}" />
     <link rel="alternate" hreflang="ar-OM" href="${omUrl}" />
-    <link rel="alternate" hreflang="en-SA" href="${saUrl}" />
-    <link rel="alternate" hreflang="ar-SA" href="${saUrl}" />
     <link rel="alternate" hreflang="x-default" href="${omUrl}" />
     <meta property="og:type" content="${ogType}" />
     <meta property="og:title" content="${title}" />

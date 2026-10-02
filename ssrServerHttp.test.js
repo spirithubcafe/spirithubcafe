@@ -39,6 +39,16 @@ test('standalone production server preserves empty 200, confirmed 404, and non-c
         images: [], variants: [], price: region === 'om' ? 5 : 25,
       } }));
     }
+    if (req.url === '/api/shop/category/slug/hreflang-category') {
+      return res.end(JSON.stringify({ success: true, data: {
+        id: 54, slug: 'hreflang-category', name: 'Head test category', products: [],
+      } }));
+    }
+    if (req.url.startsWith('/api/shop/category/54/products?')) {
+      return res.end(JSON.stringify({ success: true, data: [], pagination: {
+        currentPage: 1, pageSize: 20, totalCount: 0, totalPages: 0,
+      } }));
+    }
     const body = req.url === '/api/shop'
       ? { success: true, data: { categories: [], totalCategories: 0, totalProducts: 0 } }
       : { success: true, data: [] };
@@ -75,6 +85,18 @@ test('standalone production server preserves empty 200, confirmed 404, and non-c
     const response = await fetch(`http://127.0.0.1:${serverPort}${path}`, { headers: { 'Accept-Language': language } });
     const html = await response.text();
     assert.equal(response.status, expected, path);
+    if (expected === 200 && path.startsWith('/om')) {
+      const canonical = `https://www.spirithubcafe.com${path}`;
+      const links = [...html.matchAll(/<link\b[^>]*>/g)].map(([tag]) => tag);
+      assert.deepEqual(links.filter(tag => /rel="canonical"/.test(tag)), [
+        `<link rel="canonical" href="${canonical}" />`,
+      ]);
+      assert.deepEqual(links.filter(tag => /hreflang=/.test(tag)), [
+        `<link rel="alternate" hreflang="en-OM" href="${canonical}" />`,
+        `<link rel="alternate" hreflang="ar-OM" href="${canonical}" />`,
+        `<link rel="alternate" hreflang="x-default" href="${canonical}" />`,
+      ]);
+    }
     if (expected !== 200) {
       assert.equal(response.headers.get('cache-control'), 'no-store, max-age=0');
       assert.equal(response.headers.get('vercel-cdn-cache-control'), 'no-store');
@@ -103,6 +125,7 @@ test('standalone production server preserves empty 200, confirmed 404, and non-c
     if (saStatus === 200) assert.match(saHtml, /sa redirect test coffee/);
   }
   await check('/om/products/completely-invented-product', 404);
+  await check('/om/shop/hreflang-category', 200);
   for (const region of ['om', 'sa']) {
     await check(`/${region}`, 200);
     await check(`/${region}/products`, 200);

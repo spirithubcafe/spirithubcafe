@@ -42,6 +42,36 @@ const assertErrorResponse = (response, status) => {
   assert.match(response.body, /noindex/);
 };
 
+test('five Oman page types retain one canonical and only unique Oman/default SSR alternates', async (t) => {
+  t.mock.method(globalThis, 'fetch', async (url, { headers }) => {
+    const region = headers['X-Branch'];
+    if (url.includes('/Products/slug/')) return Response.json({
+      success: true, data: productFor(region, decodeURIComponent(url.split('/').at(-1))),
+    });
+    if (url.includes('/shop/category/slug/')) return Response.json({
+      success: true, data: categoryFor(region, 'hreflang-category'),
+    });
+    if (url.includes('/shop/category/')) return Response.json({ success: true, data: [], pagination });
+    if (url.endsWith('/shop')) return Response.json({ success: true, data: pageFor(region) });
+    return Response.json({ success: true, data: [] });
+  });
+  for (const path of ['/om', '/om/products', '/om/products/hreflang-product', '/om/shop', '/om/shop/hreflang-category']) {
+    const response = await request(path);
+    assert.equal(response.statusCode, 200, path);
+    const canonical = `https://www.spirithubcafe.com${path}`;
+    const links = [...response.body.matchAll(/<link\b[^>]*>/g)].map(([tag]) => tag);
+    assert.deepEqual(links.filter(tag => /rel="canonical"/.test(tag)), [
+      `<link rel="canonical" href="${canonical}" />`,
+    ], path);
+    assert.deepEqual(links.filter(tag => /hreflang=/.test(tag)), [
+      `<link rel="alternate" hreflang="en-OM" href="${canonical}" />`,
+      `<link rel="alternate" hreflang="ar-OM" href="${canonical}" />`,
+      `<link rel="alternate" hreflang="x-default" href="${canonical}" />`,
+    ], path);
+    assert.doesNotMatch(response.body, /hreflang="(?:en-SA|ar-SA)"/);
+  }
+});
+
 test('all approved aliases redirect before any API or renderer access, even during outages', async (t) => {
   let fetches = 0;
   let imports = 0;

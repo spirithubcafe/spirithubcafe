@@ -79,6 +79,12 @@ regressions using the actual SSR renderer and simulated upstream failures.
 The suite also starts an isolated standalone production server against a local
 test upstream and verifies both regions over HTTP; it closes both on completion.
 
+SSR and the hydrated SEO component emit only the existing `en-OM`, `ar-OM`,
+and `x-default` alternates. No Saudi hreflang is generated without a verified
+page-level equivalence map and reciprocal implementation. The client also removes
+stale `en-SA`/`ar-SA` alternate tags. Canonicals, legacy Saudi routing, regional
+API behavior, and the external Saudi country-switcher destination are unchanged.
+
 ## Oman legacy product redirects
 
 `legacyProductRedirects.js` contains nine approved, immutable exact-path Oman

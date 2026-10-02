@@ -165,7 +165,6 @@ export const Seo: React.FC<SeoProps> = ({
   const normalizedPath = ensureLeadingSlash(stripRegionPrefix(location.pathname));
   const canonicalForRegion = normalizeCanonicalForRegion(resolvedCanonical, location.pathname, region);
   const omUrl = buildRegionalUrl('om', normalizedPath);
-  const saUrl = buildRegionalUrl('sa', normalizedPath);
   const keywordsContent = Array.isArray(keywords)
     ? keywords.join(', ')
     : keywords ?? siteMetadata.defaultKeywords.join(', ');
@@ -251,11 +250,13 @@ export const Seo: React.FC<SeoProps> = ({
 
     ensureLink('canonical', canonicalForRegion);
     
-    // Language/market alternates
+    document.head.querySelectorAll(
+      'link[rel="alternate"][hreflang="en-SA"], link[rel="alternate"][hreflang="ar-SA"]'
+    ).forEach((element) => element.remove());
+
+    // Saudi alternates require verified page equivalence and reciprocal tags.
     ensureLink('alternate', omUrl, 'en-OM');
     ensureLink('alternate', omUrl, 'ar-OM');
-    ensureLink('alternate', saUrl, 'en-SA');
-    ensureLink('alternate', saUrl, 'ar-SA');
     ensureLink('alternate', omUrl, 'x-default');
   }, [
     canonicalForRegion,
@@ -269,7 +270,6 @@ export const Seo: React.FC<SeoProps> = ({
     region,
     robots,
     omUrl,
-    saUrl,
     type,
     suppressDiscoveryMetadata,
   ]);

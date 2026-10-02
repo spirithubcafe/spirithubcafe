@@ -831,7 +831,6 @@ async function getMetaTagsForRoute(url, requestBaseUrl, requestLanguage = 'en', 
   const safeDesc = escapeHtmlAttr(description);
   const safeCanonical = escapeHtmlAttr(canonicalUrl);
   const safeOmUrl = escapeHtmlAttr(omUrl);
-  const safeSaUrl = escapeHtmlAttr(saUrl);
 
   const structuredDataTag = structuredDataJson ? buildStructuredDataTag(structuredDataJson) : '';
 
@@ -842,8 +841,6 @@ async function getMetaTagsForRoute(url, requestBaseUrl, requestLanguage = 'en', 
     <link rel="canonical" href="${safeCanonical}" />
     <link rel="alternate" hreflang="en-OM" href="${safeOmUrl}" />
     <link rel="alternate" hreflang="ar-OM" href="${safeOmUrl}" />
-    <link rel="alternate" hreflang="en-SA" href="${safeSaUrl}" />
-    <link rel="alternate" hreflang="ar-SA" href="${safeSaUrl}" />
     <link rel="alternate" hreflang="x-default" href="${safeOmUrl}" />
     <meta property="og:type" content="${ogType}" />
     <meta property="og:title" content="${safeTitle}" />
