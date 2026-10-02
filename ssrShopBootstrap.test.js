@@ -23,9 +23,9 @@ test('shop/category bootstrap runs independent requests in parallel and isolates
       if (firstPhaseRequests === 4) release();
       await bothRegionsStarted;
     }
-    const category = { id, slug: 'bundles', products: [{ id: id + 100, minPrice: id }] };
+    const category = { id, slug: 'bundles', name: 'Bundles', products: [{ id: id + 100, name: 'Preview coffee', minPrice: id }] };
     const body = url.includes('/products?')
-      ? { data: [{ id: id + 200, categoryId: id }], pagination: { currentPage: 1, totalPages: 2 } }
+      ? { data: [{ id: id + 200, name: 'Paginated coffee', categoryId: id }], pagination: { currentPage: 1, totalPages: 2 } }
       : { data: url.endsWith('/shop') ? { categories: [category] } : category };
     return Response.json({ success: true, ...body });
   });
@@ -53,8 +53,8 @@ test('partial failures are logged, preserve shop content, and retry rather than 
     if (url.endsWith('/shop')) return Response.json({ success: true, data: { categories: [] } });
     if (url.includes('/slug/')) {
       attempts++;
-      if (attempts === 1) return new Response('', { status: 503 });
-      return Response.json({ success: true, data: { id: 54, slug: 'bundles', products: [] } });
+      if (attempts <= 3) return new Response('', { status: 503 });
+      return Response.json({ success: true, data: { id: 54, slug: 'bundles', name: 'Bundles', products: [] } });
     }
     return Response.json({ success: true, data: [], pagination: { currentPage: 1 } });
   });
@@ -65,7 +65,7 @@ test('partial failures are logged, preserve shop content, and retry rather than 
   assert.equal(warnings.mock.callCount(), 1);
   const second = await fetchShopBootstrap('om', 'en', 'bundles');
   assert.equal(second.shop.category.id, 54);
-  assert.equal(attempts, 2);
+  assert.equal(attempts, 4);
 });
 
 test('malformed successful category responses are logged and never resolved to another category', async (t) => {
@@ -88,7 +88,7 @@ test('invalid categories never borrow products and serialization escapes script 
   t.mock.method(globalThis, 'fetch', async (url) => {
     calls.push(url);
     return url.endsWith('/shop')
-      ? Response.json({ success: true, data: { categories: [{ id: 54, slug: 'real', products: [] }] } })
+      ? Response.json({ success: true, data: { categories: [{ id: 54, slug: 'real', name: 'Real', products: [] }] } })
       : new Response('', { status: 404 });
   });
   const result = await fetchShopBootstrap('om', 'en', 'nonexistent');

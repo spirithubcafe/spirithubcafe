@@ -15,6 +15,7 @@ export const NotFound: React.FC = () => {
         title={language === 'ar' ? 'الصفحة غير موجودة' : 'Page Not Found'}
         description={language === 'ar' ? 'الصفحة المطلوبة غير متوفرة حالياً.' : 'The requested page could not be found.'}
         noindex
+        suppressDiscoveryMetadata
       />
       <div className="max-w-2xl mx-auto text-center">
         {/* 404 Number */}

@@ -1,6 +1,7 @@
 import { createContext } from 'react';
 import type { ProductTagInfoDto } from '../types/productTag';
 import type { ShopSsrBootstrap } from '../types/shop';
+import type { ProductsSsrBootstrap } from '../lib/productTransform';
 
 export interface Product {
   id: string;
@@ -52,6 +53,7 @@ export interface Category {
 }
 
 export interface AppContextType {
+  resourceBootstrap?: ProductsSsrBootstrap;
   shopBootstrap?: { region: string; data: ShopSsrBootstrap } | null;
   language: string;
   toggleLanguage: () => void;

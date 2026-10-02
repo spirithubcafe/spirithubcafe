@@ -23,15 +23,16 @@ const ssrGlobals = window as unknown as {
   __SSR_PRODUCTS_REGION__?: unknown;
   __SSR_CATEGORIES__?: unknown;
   __SSR_SHOP__?: unknown;
+  __SSR_BOOTSTRAP__?: ProductsSsrBootstrap;
 };
-const productsBootstrap: ProductsSsrBootstrap | undefined = ssrGlobals.__SSR_PRODUCTS__ || ssrGlobals.__SSR_SHOP__
+const productsBootstrap: ProductsSsrBootstrap | undefined = ssrGlobals.__SSR_BOOTSTRAP__ ?? (ssrGlobals.__SSR_PRODUCTS__ || ssrGlobals.__SSR_SHOP__
   ? {
       products: Array.isArray(ssrGlobals.__SSR_PRODUCTS__) ? ssrGlobals.__SSR_PRODUCTS__ : null,
       categories: Array.isArray(ssrGlobals.__SSR_CATEGORIES__) ? ssrGlobals.__SSR_CATEGORIES__ : null,
       region: typeof ssrGlobals.__SSR_PRODUCTS_REGION__ === 'string' ? ssrGlobals.__SSR_PRODUCTS_REGION__ : null,
       shop: readShopBootstrap(ssrGlobals.__SSR_SHOP__),
     }
-  : undefined;
+  : undefined);
 
 if (typeof window !== 'undefined') {
   const isChunkLoadError = (error: unknown): boolean => {

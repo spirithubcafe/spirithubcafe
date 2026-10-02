@@ -545,6 +545,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children, bootstrapDat
   }, []);
 
   const value: AppContextType = useMemo(() => ({
+    resourceBootstrap: bootstrapData?.region === currentRegionCode ? bootstrapData : undefined,
     shopBootstrap: bootstrapData?.region && bootstrapData.shop
       ? { region: bootstrapData.region, data: bootstrapData.shop }
       : null,
@@ -558,7 +559,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children, bootstrapDat
     fetchProducts,
     fetchCategories,
     t
-  }), [bootstrapData, language, toggleLanguage, products, categories, allCategories, loading, error, fetchProducts, fetchCategories, t]);
+  }), [bootstrapData, currentRegionCode, language, toggleLanguage, products, categories, allCategories, loading, error, fetchProducts, fetchCategories, t]);
 
   return (
     <AppContext.Provider value={value}>

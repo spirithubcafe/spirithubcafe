@@ -48,11 +48,11 @@ test('category failures preserve successful products, are logged, and do not cac
   t.mock.method(globalThis, 'fetch', async (url) => {
     if (url.includes('/Categories')) {
       categoryRequests += 1;
-      return categoryRequests === 1
+      return categoryRequests <= 3
         ? new Response('', { status: 503 })
-        : Response.json({ data: [{ id: 2, slug: 'filter-pour-over-coffee' }] });
+        : Response.json({ data: [{ id: 2, slug: 'filter-pour-over-coffee', name: 'Filter' }] });
     }
-    return Response.json({ data: [{ id: 100, categoryId: 2 }] });
+    return Response.json({ data: [{ id: 100, categoryId: 2, name: 'Coffee' }] });
   });
   const first = await fetchProductsBootstrap('om', 'en');
   assert.equal(first.products[0].categoryId, 2);
@@ -61,7 +61,7 @@ test('category failures preserve successful products, are logged, and do not cac
   assert.match(warnings.mock.calls[0].arguments[0], /Categories.*region=om/);
   const second = await fetchProductsBootstrap('om', 'en');
   assert.equal(second.categories[0].id, 2);
-  assert.equal(categoryRequests, 2);
+  assert.equal(categoryRequests, 4);
 });
 
 test('product bootstrap failure retains the existing null fallback', async (t) => {

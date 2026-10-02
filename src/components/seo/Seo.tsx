@@ -17,6 +17,7 @@ export interface SeoProps {
   robots?: string;
   structuredData?: StructuredData;
   locale?: string;
+  suppressDiscoveryMetadata?: boolean;
 }
 
 const REGION_HOSTS = {
@@ -143,6 +144,7 @@ export const Seo: React.FC<SeoProps> = ({
   robots,
   structuredData,
   locale,
+  suppressDiscoveryMetadata = false,
 }) => {
   const { language } = useApp();
   const location = useLocation();
@@ -196,6 +198,13 @@ export const Seo: React.FC<SeoProps> = ({
     document.documentElement.lang = resolvedLocale.split('-')[0]; // Set html lang attribute
     
     ensureMeta('meta[name="description"]', { name: 'description' }, resolvedDescription);
+    if (suppressDiscoveryMetadata) {
+      ensureMeta('meta[name="robots"]', { name: 'robots' }, 'noindex, follow');
+      document.head.querySelectorAll(
+        'link[rel="canonical"], link[rel="alternate"][hreflang], script[type="application/ld+json"], meta[property^="product:"], meta[property^="og:"], meta[name^="twitter:"]'
+      ).forEach((element) => element.remove());
+      return;
+    }
     ensureMeta('meta[name="keywords"]', { name: 'keywords' }, keywordsContent);
     
     const finalOgDesc = ogDescription || resolvedDescription;
@@ -262,10 +271,11 @@ export const Seo: React.FC<SeoProps> = ({
     omUrl,
     saUrl,
     type,
+    suppressDiscoveryMetadata,
   ]);
 
   useEffect(() => {
-    if (typeof document === 'undefined' || !structuredPayload) {
+    if (typeof document === 'undefined' || !structuredPayload || suppressDiscoveryMetadata) {
       return;
     }
 
@@ -289,7 +299,7 @@ export const Seo: React.FC<SeoProps> = ({
         // Already detached — ignore.
       }
     };
-  }, [structuredPayload]);
+  }, [structuredPayload, suppressDiscoveryMetadata]);
 
   return null;
 };

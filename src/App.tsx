@@ -212,6 +212,7 @@ const useDeferredChatBotReady = (enabled: boolean) => {
 };
 
 function AppContent({ shopRoutes }: { shopRoutes?: ShopRouteComponents }) {
+  const { resourceBootstrap } = useApp();
   const ShopPage = shopRoutes?.page ?? LazyShopPage;
   const ShopCategoryPage = shopRoutes?.category ?? LazyShopCategoryPage;
   const location = useLocation();
@@ -294,6 +295,7 @@ function AppContent({ shopRoutes }: { shopRoutes?: ShopRouteComponents }) {
       <RouteErrorBoundary>
       <Suspense fallback={routeFallback}>
       <Routes>
+        {resourceBootstrap?.resourceNotFound && resourceBootstrap.resourcePath === location.pathname ? <Route path="*" element={<NotFound />} /> : <>
         <Route path="/invoice/:orderNumber" element={<InvoicePage />} />
 
         {/* Wholesale panel routes */}
@@ -472,6 +474,7 @@ function AppContent({ shopRoutes }: { shopRoutes?: ShopRouteComponents }) {
         <Route path="/payment/cancelled" element={<PaymentCancelledPage />} />
         
         <Route path="*" element={<NotFound />} />
+        </>}
       </Routes>
       </Suspense>
       </RouteErrorBoundary>

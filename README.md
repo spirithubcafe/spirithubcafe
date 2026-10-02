@@ -43,7 +43,38 @@ hydrate from the snapshot and retain their three-attempt background retry and
 Obsolete client requests cannot replace a different region/category/page/sort.
 The initial shop route module is loaded before hydration so existing provider
 effects do not replace the snapshot with a lazy-route fallback.
-No HTTP status handling is changed.
+HTTP responses use the explicit SSR outcomes described below.
 
 Run `npm run build` then `npm run test:shop-ssr` for bootstrap and actual
 SSR regression coverage, including concurrent Oman/Saudi requests.
+
+## SSR HTTP status handling
+
+Production SSR uses `FOUND`, `NOT_FOUND`, and `TEMPORARY_FAILURE` outcomes.
+Only an upstream 404/410 from the requested individual product/category endpoint
+confirms absence. Empty successful collections are valid 200 responses; empty
+individual payloads, malformed responses, network/timeout errors, 408/429/5xx,
+and incomplete required bootstraps produce 503 rather than a false 404 or 200.
+Transient upstream errors use at most three attempts with 300/600ms backoff and
+a six-second per-attempt timeout. Successful snapshots alone enter the existing
+region/language-scoped caches; failure and absence outcomes are not cached.
+
+Both SSR handlers return 503 for renderer/import/stream failures or empty output.
+Product content is handed to rendering through request-scoped context rather
+than mutable server globals. Confirmed resource 404s use the existing NotFound UI.
+Error responses omit sales schema and canonical/hreflang metadata. Successful
+page cache policy remains unchanged; 404 and 503 responses send:
+
+```text
+Cache-Control: no-store, max-age=0
+CDN-Cache-Control: no-store
+Vercel-CDN-Cache-Control: no-store
+X-Robots-Tag: noindex, follow
+```
+
+No `Retry-After` is sent because the upstream recovery time is unknown.
+Intentional development SPA mode (`VITE_DEV_SSR` disabled) remains SPA mode.
+Run `npm run build` followed by `npm run test:ssr-http` for response-level
+regressions using the actual SSR renderer and simulated upstream failures.
+The suite also starts an isolated standalone production server against a local
+test upstream and verifies both regions over HTTP; it closes both on completion.

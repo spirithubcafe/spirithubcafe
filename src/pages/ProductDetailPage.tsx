@@ -247,13 +247,16 @@ const readSsrProductBootstrap = (productId?: string): ApiProduct | null => {
 export const ProductDetailPage = () => {
   const { productId } = useParams<{ productId: string }>();
   const location = useLocation();
-  const { language, t } = useApp();
+  const { language, t, resourceBootstrap } = useApp();
   const isArabic = language === 'ar';
   const { currentRegion } = useRegion();
   const isShopRoute = location.pathname.includes('/shop/');
   const { isAuthenticated, user } = useAuth();
   const cart = useCart();
-  const [initialSsrProduct] = useState<ApiProduct | null>(() => readSsrProductBootstrap(productId));
+  const [initialSsrProduct] = useState<ApiProduct | null>(() =>
+    resourceBootstrap && resourceBootstrap.productIdentifier === productId && resourceBootstrap.product
+      ? resourceBootstrap.product
+      : typeof window !== 'undefined' ? readSsrProductBootstrap(productId) : null);
 
   const [state, setState] = useState<LoadState>(() => (initialSsrProduct ? 'ready' : 'idle'));
   const [product, setProduct] = useState<ApiProduct | null>(() => initialSsrProduct);

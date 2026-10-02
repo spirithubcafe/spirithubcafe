@@ -1,97 +1,73 @@
-// Shared between server.js (dev SSR) and api/ssr.js (Vercel production SSR)
-// so both entry points fetch/serialize catalog snapshots the same region-aware way.
+import { fetchSsrJson, getProductIdentifier, temporaryFailure } from './ssrHttp.js';
 
-const PRODUCTS_BOOTSTRAP_CACHE_TTL_MS = 60 * 1000; // 1 minute - list changes more often than a single product
+const PRODUCTS_BOOTSTRAP_CACHE_TTL_MS = 60 * 1000;
 const catalogBootstrapCache = new Map();
 
 const getApiBaseUrlForRegion = (region) => {
-  if (region === 'sa') {
-    return process.env.VITE_API_BASE_URL_SA || 'https://api.spirithubcafe.com';
-  }
-  return (
-    process.env.VITE_API_BASE_URL_OM ||
-    process.env.VITE_API_BASE_URL ||
-    'https://api.spirithubcafe.com'
-  );
+  const base = region === 'sa'
+    ? process.env.VITE_API_BASE_URL_SA
+    : process.env.VITE_API_BASE_URL_OM || process.env.VITE_API_BASE_URL;
+  return (base || process.env.VITE_API_URL?.replace(/\/api\/?$/, '') || 'https://api.spirithubcafe.com').replace(/\/+$/, '');
 };
 
-const normalizeSsrLanguage = (language) => (language === 'ar' ? 'ar' : 'en');
+const fetchCatalogResponse = (region, language, resource, options) =>
+  fetchSsrJson(`${getApiBaseUrlForRegion(region)}/api/${resource}`, {
+    Accept: 'application/json', 'X-Branch': region, 'Accept-Language': language,
+  }, options);
 
-const fetchCatalogResponse = async (region, language, resource) => {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 6000);
-  try {
-    const response = await fetch(`${getApiBaseUrlForRegion(region)}/api/${resource}`, {
-      headers: {
-        Accept: 'application/json',
-        'X-Branch': region,
-        'Accept-Language': language,
-      },
-      signal: controller.signal,
-    });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const body = await response.json();
-    if (body?.success === false) throw new Error(body.message || 'Catalog request failed');
-    return body;
-  } catch (error) {
-    console.warn(`[SSR] ${resource} bootstrap failed (region=${region}, language=${language}):`, error.message);
-    return null;
-  } finally {
-    clearTimeout(timeout);
-  }
-};
-
-/** Detect om/sa from a clean URL path, falling back to the SA hostname. */
 export const detectSsrRegion = (urlPathOnly, hostHint) => {
-  if (urlPathOnly === '/om' || urlPathOnly.startsWith('/om/')) return 'om';
-  if (urlPathOnly === '/sa' || urlPathOnly.startsWith('/sa/')) return 'sa';
+  const pathname = urlPathOnly.split('?')[0].split('#')[0];
+  if (pathname === '/om' || pathname.startsWith('/om/')) return 'om';
+  if (pathname === '/sa' || pathname.startsWith('/sa/')) return 'sa';
   if (hostHint && (hostHint === 'spirithub.sa' || hostHint.endsWith('.spirithub.sa'))) return 'sa';
   return 'om';
 };
 
-/** Whether a (region-prefixed or bare) URL path is the products listing route. */
-export const isProductsListPath = (urlPathOnly) => {
-  const pathname = urlPathOnly.split('?')[0].split('#')[0];
-  const stripped = pathname.replace(/^\/(om|sa)(?=\/|$)/, '') || '/';
-  return stripped === '/products' || stripped === '/products/';
+export const isProductsListPath = (url) => {
+  const pathname = url.split('?')[0].split('#')[0].replace(/^\/(om|sa)(?=\/|$)/, '');
+  return pathname === '/products' || pathname === '/products/';
 };
 
-/**
- * Fetch the initial products and category lookup for SSR, using the same
- * query params and region/language headers as the client's catalog services.
- * Product failure retains the existing null fallback. Category failure is
- * logged without discarding products or caching an incomplete lookup.
- */
-export const fetchProductsBootstrap = async (region, language) => {
-  const normalizedRegion = region === 'sa' ? 'sa' : 'om';
-  const normalizedLanguage = normalizeSsrLanguage(language);
-  const cacheKey = `products:${normalizedRegion}:${normalizedLanguage}`;
-  const cached = catalogBootstrapCache.get(cacheKey);
-  if (cached && Date.now() - cached.timestamp < PRODUCTS_BOOTSTRAP_CACHE_TTL_MS) {
-    return cached.data;
-  }
+const getCached = (key, ttl = PRODUCTS_BOOTSTRAP_CACHE_TTL_MS) => {
+  const cached = catalogBootstrapCache.get(key);
+  return cached && Date.now() - cached.timestamp < ttl ? cached.data : null;
+};
+const cacheFound = (key, data) => catalogBootstrapCache.set(key, { data, timestamp: Date.now() });
+const arrayPayload = (body) => Array.isArray(body?.data) ? body.data : Array.isArray(body) ? body : null;
+const isProductItem = (product) => typeof product?.id === 'number' && typeof product?.name === 'string' && !!product.name.trim();
+const isCategoryItem = (category) => typeof category?.id === 'number' && typeof category?.slug === 'string' &&
+  typeof category?.name === 'string';
+const isShopCategory = (category) => isCategoryItem(category) && Array.isArray(category.products) && category.products.every(isProductItem);
 
-  const fetchArray = async (resource) => {
-    const body = await fetchCatalogResponse(normalizedRegion, normalizedLanguage, resource);
-    if (!body) return null;
-    const items = Array.isArray(body?.data) ? body.data : Array.isArray(body) ? body : null;
-    if (!items) {
-      console.warn(`[SSR] ${resource} bootstrap returned invalid catalog data (region=${normalizedRegion})`);
-    }
-    return items;
-  };
-
+export const fetchProductsBootstrapOutcome = async (region, language) => {
+  const key = `products:${region}:${language}`;
+  const cached = getCached(key);
+  if (cached) return { kind: 'FOUND', data: cached };
   const [products, categories] = await Promise.all([
-    fetchArray('Products?page=1&pageSize=100&includeInactive=false&excludeShop=true'),
-    fetchArray('Categories?includeInactive=false&excludeShop=true'),
+    fetchCatalogResponse(region, language, 'Products?page=1&pageSize=100&includeInactive=false&excludeShop=true', {
+      validate: (body) => arrayPayload(body)?.every(isProductItem) === true,
+    }),
+    fetchCatalogResponse(region, language, 'Categories?includeInactive=false&excludeShop=true', {
+      validate: (body) => arrayPayload(body)?.every(isCategoryItem) === true,
+    }),
   ]);
-  if (!products) return null;
-
-  const result = { region: normalizedRegion, products, categories };
-  if (categories) {
-    catalogBootstrapCache.set(cacheKey, { data: result, timestamp: Date.now() });
+  const snapshot = {
+    region,
+    products: products.kind === 'FOUND' ? arrayPayload(products.data) : null,
+    categories: categories.kind === 'FOUND' ? arrayPayload(categories.data) : null,
+  };
+  if (products.kind !== 'FOUND' || categories.kind !== 'FOUND') {
+    return { ...temporaryFailure('Products/category bootstrap incomplete'), data: snapshot };
   }
-  return result;
+  cacheFound(key, snapshot);
+  return { kind: 'FOUND', data: snapshot };
+};
+
+// Compatibility for callers that inspect partial snapshots; HTTP handlers use
+// the explicit outcome, never these nullable convenience exports.
+export const fetchProductsBootstrap = async (region, language) => {
+  const outcome = await fetchProductsBootstrapOutcome(region === 'sa' ? 'sa' : 'om', language === 'ar' ? 'ar' : 'en');
+  return outcome.data?.products ? outcome.data : null;
 };
 
 export const getShopCategorySlug = (url) => {
@@ -101,50 +77,82 @@ export const getShopCategorySlug = (url) => {
   return match ? decodeURIComponent(match[1]) : null;
 };
 
-export const fetchShopBootstrap = async (region, language, categorySlug = '') => {
-  const normalizedRegion = region === 'sa' ? 'sa' : 'om';
-  const normalizedLanguage = normalizeSsrLanguage(language);
-  const cacheKey = `shop:${normalizedRegion}:${normalizedLanguage}:${categorySlug}`;
-  const cached = catalogBootstrapCache.get(cacheKey);
-  if (cached && Date.now() - cached.timestamp < PRODUCTS_BOOTSTRAP_CACHE_TTL_MS) return cached.data;
-
-  const pageKey = `shop:${normalizedRegion}:${normalizedLanguage}:`;
-  const cachedPage = catalogBootstrapCache.get(pageKey);
-  const pageRequest = cachedPage && Date.now() - cachedPage.timestamp < PRODUCTS_BOOTSTRAP_CACHE_TTL_MS
-    ? Promise.resolve({ data: cachedPage.data.shop.page })
-    : fetchCatalogResponse(normalizedRegion, normalizedLanguage, 'shop');
-  const [pageResponse, categoryResponse] = await Promise.all([
-    pageRequest,
-    categorySlug
-      ? fetchCatalogResponse(normalizedRegion, normalizedLanguage, `shop/category/slug/${encodeURIComponent(categorySlug)}`)
-      : Promise.resolve(null),
+export const fetchShopBootstrapOutcome = async (region, language, categorySlug = '') => {
+  const key = `shop:${region}:${language}:${categorySlug}`;
+  const cached = getCached(key);
+  if (cached) return { kind: 'FOUND', data: cached };
+  const pageKey = `shop:${region}:${language}:`;
+  const cachedPage = getCached(pageKey);
+  const [pageResult, categoryResult] = await Promise.all([
+    cachedPage ? { kind: 'FOUND', data: { data: cachedPage.shop.page } }
+      : fetchCatalogResponse(region, language, 'shop', {
+        validate: (body) => Array.isArray(body?.data?.categories) && body.data.categories.every(isShopCategory),
+      }),
+    categorySlug ? fetchCatalogResponse(region, language, `shop/category/slug/${encodeURIComponent(categorySlug)}`, {
+      individual: true,
+      validate: (body) => isShopCategory(body?.data) && body.data.slug === categorySlug,
+    }) : null,
   ]);
-  const page = Array.isArray(pageResponse?.data?.categories) ? pageResponse.data : null;
-  const category = categoryResponse?.data && typeof categoryResponse.data.id === 'number' &&
-    categoryResponse.data.slug === categorySlug && Array.isArray(categoryResponse.data.products)
-    ? categoryResponse.data : null;
-  if (pageResponse && !page) console.warn(`[SSR] shop bootstrap returned invalid page data (region=${normalizedRegion})`);
-  if (categoryResponse && !category) console.warn(`[SSR] shop bootstrap returned invalid category data (region=${normalizedRegion}, slug=${categorySlug})`);
-  // Embedded products do not define the paginated endpoint's first-page ordering.
-  const productsResponse = category
-    ? await fetchCatalogResponse(normalizedRegion, normalizedLanguage, `shop/category/${category.id}/products?page=1&pageSize=20&ascending=true`)
-    : null;
-  const categoryProducts = Array.isArray(productsResponse?.data) && productsResponse.pagination
-    ? productsResponse : null;
-  if (productsResponse && !categoryProducts) console.warn(`[SSR] shop bootstrap returned invalid product data (region=${normalizedRegion}, slug=${categorySlug})`);
-  const shop = { page, categorySlug, category, categoryProducts };
-  const result = { region: normalizedRegion, products: null, categories: null, shop };
-  if (page) {
-    catalogBootstrapCache.set(pageKey, {
-      timestamp: Date.now(),
-      data: { region: normalizedRegion, products: null, categories: null, shop: { page, categorySlug: '', category: null, categoryProducts: null } },
-    });
+  const page = pageResult.kind === 'FOUND' ? pageResult.data.data : null;
+  const category = categoryResult?.kind === 'FOUND' ? categoryResult.data.data : null;
+  const productsResult = category
+    ? await fetchCatalogResponse(region, language, `shop/category/${category.id}/products?page=1&pageSize=20&ascending=true`, {
+      validate: (body) => Array.isArray(body?.data) && body.data.every(isProductItem) && typeof body?.pagination?.currentPage === 'number',
+    }) : null;
+  const snapshot = {
+    region, products: null, categories: null,
+    shop: { page, categorySlug, category, categoryProducts: productsResult?.kind === 'FOUND' ? productsResult.data : null },
+  };
+  if (page) cacheFound(pageKey, { ...snapshot, shop: { page, categorySlug: '', category: null, categoryProducts: null } });
+  // Direct resource absence takes precedence over unrelated collection failure.
+  if (categoryResult?.kind === 'NOT_FOUND') return { ...categoryResult, data: snapshot };
+  if (pageResult.kind !== 'FOUND' || (categorySlug && (categoryResult?.kind !== 'FOUND' || productsResult?.kind !== 'FOUND'))) {
+    return { ...temporaryFailure('Shop bootstrap incomplete'), data: snapshot };
   }
-  if (page && (!categorySlug || (category && categoryProducts))) {
-    catalogBootstrapCache.set(cacheKey, { data: result, timestamp: Date.now() });
-  }
-  return result;
+  cacheFound(key, snapshot);
+  return { kind: 'FOUND', data: snapshot };
 };
 
-/** Safe inline-script JSON serialization - escapes `<` to prevent `</script>` breakout. */
+export const fetchShopBootstrap = async (region, language, slug = '') =>
+  (await fetchShopBootstrapOutcome(region === 'sa' ? 'sa' : 'om', language === 'ar' ? 'ar' : 'en', slug)).data;
+
+export const fetchProductOutcome = async (identifier, region, language) => {
+  const key = `product:${region}:${language}:${identifier}`;
+  const cached = getCached(key, 5 * 60 * 1000);
+  if (cached) return { kind: 'FOUND', data: cached };
+  const resource = /^\d+$/.test(identifier) ? `Products/${identifier}` : `Products/slug/${encodeURIComponent(identifier)}`;
+  const outcome = await fetchCatalogResponse(region, language, resource, {
+    individual: true,
+    validate: (body) => {
+      const product = body?.data ?? body;
+      return isProductItem(product) &&
+        (/^\d+$/.test(identifier) ? product.id === Number(identifier) : product.slug === identifier) &&
+        Array.isArray(product.variants) && Array.isArray(product.images) && product.isActive !== false;
+    },
+  });
+  if (outcome.kind !== 'FOUND') return outcome;
+  const product = outcome.data.data ?? outcome.data;
+  cacheFound(key, product);
+  return { kind: 'FOUND', data: product };
+};
+
+export const prepareSsrRequest = async (url, region, language) => {
+  const identifier = getProductIdentifier(url);
+  if (identifier !== null) {
+    const product = await fetchProductOutcome(identifier, region, language);
+    if (product.kind !== 'FOUND') return product;
+    let bootstrap = { region, products: null, product: product.data, productIdentifier: identifier };
+    if (url.split('?')[0].includes('/shop/product/')) {
+      const shop = await fetchShopBootstrapOutcome(region, language);
+      if (shop.kind !== 'FOUND') return shop;
+      bootstrap = { ...shop.data, ...bootstrap };
+    }
+    return { kind: 'FOUND', data: bootstrap };
+  }
+  if (isProductsListPath(url)) return fetchProductsBootstrapOutcome(region, language);
+  const slug = getShopCategorySlug(url);
+  if (slug !== null) return fetchShopBootstrapOutcome(region, language, slug);
+  return { kind: 'FOUND', data: { region, products: null } };
+};
+
 export const serializeForInlineScript = (value) => JSON.stringify(value).replace(/</g, '\\u003c');

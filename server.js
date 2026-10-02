@@ -3,7 +3,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import express from 'express';
 import compression from 'compression';
-import { detectSsrRegion, fetchProductsBootstrap, fetchShopBootstrap, getShopCategorySlug, isProductsListPath, serializeForInlineScript } from './ssrProductsBootstrap.js';
+import { detectSsrRegion, prepareSsrRequest, serializeForInlineScript } from './ssrProductsBootstrap.js';
+import { errorMetaTags, renderSsrOutcome, replaceErrorHead, sendSsrUnavailable, setErrorHeaders } from './ssrHttp.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -42,10 +43,6 @@ const templateHtml = isProduction && prodIndexPath
   ? fs.readFileSync(prodIndexPath, 'utf-8')
   : '';
 
-// ---- Product meta cache (avoid hitting API on every crawler request) ----
-const productMetaCache = new Map();
-const PRODUCT_META_TTL = 5 * 60 * 1000; // 5 minutes
-
 const getApiBaseUrlForRegion = (region) => {
   if (region === 'sa') {
     return process.env.VITE_API_BASE_URL_SA || 'https://api.spirithubcafe.com';
@@ -71,83 +68,6 @@ const getRequestApiLanguage = (req) => {
   if (!raw) return 'en';
   const first = String(raw).split(',')[0]?.trim() || '';
   return normalizeLocaleToApiLanguage(first);
-};
-
-const unwrapApiResponse = (payload) => {
-  if (!payload) return null;
-  if (typeof payload === 'object' && payload !== null && 'success' in payload && 'data' in payload) {
-    return payload.data ?? null;
-  }
-  return payload;
-};
-
-const fetchJsonWithTimeout = async (url, options = {}, timeoutMs = 6500) => {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    const response = await fetch(url, { ...options, signal: controller.signal });
-    if (!response.ok) {
-      return { ok: false, status: response.status, data: null };
-    }
-    const data = await response.json();
-    return { ok: true, status: response.status, data };
-  } finally {
-    clearTimeout(timeout);
-  }
-};
-
-const fetchProductDetails = async (identifier, region, language = 'en') => {
-  const cacheKey = `${region}:product:${identifier}`;
-  const cached = productMetaCache.get(cacheKey);
-  if (cached && Date.now() - cached.timestamp < PRODUCT_META_TTL) {
-    return cached.data;
-  }
-
-  const apiBase = getApiBaseUrlForRegion(region);
-  const headers = {
-    Accept: 'application/json',
-    'X-Branch': region,
-    'Accept-Language': normalizeLocaleToApiLanguage(language),
-  };
-
-  // Try numeric ID endpoint first when applicable.
-  const isNumeric = /^\d+$/.test(String(identifier));
-  if (isNumeric) {
-    const byIdUrl = `${apiBase}/api/Products/${identifier}`;
-    try {
-      const res = await fetchJsonWithTimeout(byIdUrl, { headers });
-      if (res.ok) {
-        const data = unwrapApiResponse(res.data);
-        if (data) {
-          productMetaCache.set(cacheKey, { data, timestamp: Date.now() });
-          return data;
-        }
-      }
-    } catch {
-      // ignore and fallback
-    }
-  }
-
-  // Fallback to slug endpoint.
-  const bySlugUrl = `${apiBase}/api/Products/slug/${encodeURIComponent(String(identifier))}`;
-  try {
-    const res = await fetchJsonWithTimeout(bySlugUrl, { headers });
-    if (res.ok) {
-      const data = unwrapApiResponse(res.data);
-      if (data) {
-        productMetaCache.set(cacheKey, { data, timestamp: Date.now() });
-        return data;
-      }
-      console.warn(`[SEO] Slug endpoint returned ok but empty data for: ${bySlugUrl}`);
-    } else {
-      console.warn(`[SEO] Slug endpoint returned ${res.status} for: ${bySlugUrl}`);
-    }
-  } catch (err) {
-    console.warn(`[SEO] Slug endpoint fetch failed for ${bySlugUrl}:`, err?.message || err);
-  }
-
-  console.warn(`[SEO] fetchProductDetails: could not resolve product "${identifier}" (region=${region})`);
-  return null;
 };
 
 const guessMimeType = (urlStr) => {
@@ -407,20 +327,22 @@ app.use(async (req, res, next) => {
 
     // Get meta tags based on route (async because product routes may call the API)
     const requestLanguage = getRequestApiLanguage(req);
-    const metaTags = await getMetaTagsForRoute(url, requestBaseUrl, requestLanguage);
+    const ssrEnabled = isProduction || enableDevSsr;
+    const outcome = ssrEnabled ? await prepareSsrRequest(url, region, requestLanguage)
+      : { kind: 'FOUND', data: { region, products: null } };
+    if (outcome.kind === 'TEMPORARY_FAILURE') return sendSsrUnavailable(res);
+    const bootstrap = outcome.kind === 'NOT_FOUND'
+      ? { region, products: null, resourceNotFound: true, resourcePath: url.split('?')[0].split('#')[0] }
+      : outcome.data;
+    const metaTags = outcome.kind === 'NOT_FOUND' ? errorMetaTags(404)
+      : await getMetaTagsForRoute(url, requestBaseUrl, requestLanguage, bootstrap.product);
     const performanceHints = getPerformanceHintsForRoute(url);
 
     // Inject the server-detected language as a global so the React client can
     // initialize with the same value and avoid a React #418 hydration mismatch.
     const ssrLanguageScript = `<script>window.__SSR_LANGUAGE__="${requestLanguage === 'ar' ? 'ar' : 'en'}";</script>`;
 
-    const shopCategorySlug = getShopCategorySlug(url);
-    const productsBootstrap = isProductsListPath(url)
-      ? await fetchProductsBootstrap(region, requestLanguage)
-      : shopCategorySlug !== null ? await fetchShopBootstrap(region, requestLanguage, shopCategorySlug) : null;
-    const ssrProductsScript = productsBootstrap
-      ? `<script>window.__SSR_PRODUCTS__=${serializeForInlineScript(productsBootstrap.products)};window.__SSR_PRODUCTS_REGION__=${serializeForInlineScript(productsBootstrap.region)};window.__SSR_CATEGORIES__=${serializeForInlineScript(productsBootstrap.categories)};window.__SSR_SHOP__=${serializeForInlineScript(productsBootstrap.shop ?? null)};</script>`
-      : '';
+    const ssrProductsScript = `<script>window.__SSR_BOOTSTRAP__=${serializeForInlineScript(bootstrap)};</script>`;
 
     // Keep the fallback tags in index.html for plain SPA/static serving, but
     // remove them when SSR supplies route-specific metadata.
@@ -431,11 +353,9 @@ app.use(async (req, res, next) => {
     // Replace the meta tags in the template
     let html = templateWithRouteMetadata.replace('<!--app-head-->', `${ssrLanguageScript}${ssrProductsScript}${performanceHints}${metaTags}`);
 
-    let responseStatus = 200;
+    let responseStatus = outcome.kind === 'NOT_FOUND' ? 404 : 200;
 
     // ── Attempt SSR (inject rendered HTML into <div id="root">) ────
-    // Wrapped in try/catch so a render failure never breaks the site;
-    // users will just get the SPA shell (current behaviour) instead.
     try {
       let render;
       if (!isProduction && enableDevSsr) {
@@ -452,27 +372,16 @@ app.use(async (req, res, next) => {
         }
       }
 
-      if (typeof render === 'function') {
-         const { html: appHtml, error } = await render(url, requestLanguage === 'ar' ? 'ar' : 'en', {
-           region: productsBootstrap?.region ?? null,
-           products: productsBootstrap?.products ?? null,
-           categories: productsBootstrap?.categories ?? null,
-           shop: productsBootstrap?.shop ?? null,
-         });
-        if (appHtml && !error) {
-          if (appHtml.includes('data-not-found-page="true"')) {
-            responseStatus = 404;
-          }
-          // Inject the server-rendered markup inside <div id="root"> - the
-          // data-ssr flag lets the client know its first hydration pass must
-          // match real SSR content (e.g. rendering all product groups eagerly).
-          html = html.replace('<div id="root"></div>', `<div id="root" data-ssr="true">${appHtml}</div>`);
-        }
-        // If error, we just serve the SPA shell – no impact on users
+      if (ssrEnabled) {
+        const rendered = await renderSsrOutcome(render, url, requestLanguage, bootstrap);
+        if (rendered.kind === 'TEMPORARY_FAILURE') return sendSsrUnavailable(res);
+        if (rendered.kind === 'NOT_FOUND') responseStatus = 404;
+        if (!html.includes('<div id="root"></div>')) throw new Error('SSR root placeholder missing');
+        html = html.replace('<div id="root"></div>', `<div id="root" data-ssr="true">${rendered.data}</div>`);
       }
     } catch (ssrError) {
-      // SSR failed – serve the SPA shell as before.  Log for debugging.
-      console.warn('[SSR] render skipped:', ssrError?.message || ssrError);
+      console.warn('[SSR] render failed:', ssrError?.message || ssrError);
+      return sendSsrUnavailable(res);
     }
 
     // Set Cache-Control headers for HTML: short-lived cache to receive updates quickly
@@ -484,13 +393,17 @@ app.use(async (req, res, next) => {
     res.status(responseStatus);
     res.setHeader('Content-Type', 'text/html');
     res.setHeader('Cache-Control', htmlCacheControl);
+    if (responseStatus === 404) {
+      html = replaceErrorHead(html, 404);
+      setErrorHeaders(res);
+    }
     res.send(html);
   } catch (e) {
     if (!isProduction && vite) {
       vite.ssrFixStacktrace(e);
     }
     console.error(e.stack);
-    res.status(500).end(e.stack);
+    return sendSsrUnavailable(res);
   }
 });
 
@@ -628,7 +541,7 @@ const buildMerchantPolicySchema = (siteUrl) => {
 };
 
 // Helper function to generate meta tags based on route
-async function getMetaTagsForRoute(url, requestBaseUrl, requestLanguage = 'en') {
+async function getMetaTagsForRoute(url, requestBaseUrl, requestLanguage = 'en', preloadedProduct = null) {
   const baseUrl = (requestBaseUrl || process.env.VITE_SITE_URL || process.env.SITE_URL || 'https://www.spirithubcafe.com')
     .toString()
     .replace(/\/+$/, '');
@@ -679,7 +592,7 @@ async function getMetaTagsForRoute(url, requestBaseUrl, requestLanguage = 'en') 
       : `View our premium specialty coffee products at Spirit Hub Cafe`;
     ogType = 'product';
 
-    const product = await fetchProductDetails(identifier, region, requestLanguage);
+    const product = preloadedProduct;
     if (product) {
       const productName = (isAr && product.nameAr) ? product.nameAr : (product.name || 'Product');
       title = isAr ? `${productName} | سبيريت هب` : `${productName} | Spirit Hub Cafe`;

@@ -1,6 +1,8 @@
 import fs from 'fs';
 import path from 'path';
-import { detectSsrRegion, fetchProductsBootstrap, fetchShopBootstrap, getShopCategorySlug, isProductsListPath } from '../ssrProductsBootstrap.js';
+import { pathToFileURL } from 'node:url';
+import { detectSsrRegion, prepareSsrRequest } from '../ssrProductsBootstrap.js';
+import { errorMetaTags, renderSsrOutcome, replaceErrorHead, sendSsrUnavailable, setErrorHeaders } from '../ssrHttp.js';
 
 const SEO_HOSTS = {
   om: 'https://www.spirithubcafe.com',
@@ -48,80 +50,7 @@ const getPerformanceHintsForRoute = (url) => {
 // API base URL
 const API_BASE_URL = process.env.VITE_API_URL || 'https://api.spirithubcafe.com/api';
 
-// Cache for product data (valid for 5 minutes)
-const productCache = new Map();
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 const staticFileCache = new Map();
-
-// Fetch product details from API (by ID or slug)
-async function fetchProductDetails(identifier) {
-  const cacheKey = `product_${identifier}`;
-  const cached = productCache.get(cacheKey);
-  
-  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-    return cached.data;
-  }
-  
-  try {
-    let response;
-    let result = null;
-    
-    // If identifier is a number, try by ID
-    if (!isNaN(identifier)) {
-      console.log(`Fetching product by ID: ${API_BASE_URL}/Products/${identifier}`);
-      response = await fetch(`${API_BASE_URL}/Products/${identifier}`);
-      if (response.ok) {
-        result = await response.json();
-      }
-    }
-    
-    // If not found or identifier is a slug, try by slug endpoint
-    if (!result) {
-      console.log(`Fetching product by slug: ${API_BASE_URL}/Products/slug/${identifier}`);
-      response = await fetch(`${API_BASE_URL}/Products/slug/${identifier}`);
-      
-      if (response.ok) {
-        result = await response.json();
-      }
-    }
-    
-    if (!result || !result.success) {
-      console.log(`Product not found: ${identifier}`);
-      return null;
-    }
-    
-    const data = result.data;
-    console.log(`Product found:`, data.name);
-    
-    // Cache the result
-    productCache.set(cacheKey, {
-      data,
-      timestamp: Date.now()
-    });
-    
-    return data;
-  } catch (error) {
-    console.error('Error fetching product:', error.message);
-    return null;
-  }
-}
-
-function getProductIdentifierFromUrl(url) {
-  const originalPath = (url || '/').split('?')[0].split('#')[0];
-  let cleanUrl = originalPath.startsWith('/') ? originalPath : `/${originalPath}`;
-
-  if (cleanUrl === '/om' || cleanUrl.startsWith('/om/')) {
-    cleanUrl = cleanUrl.slice(3) || '/';
-  } else if (cleanUrl === '/sa' || cleanUrl.startsWith('/sa/')) {
-    cleanUrl = cleanUrl.slice(3) || '/';
-  }
-
-  if (!cleanUrl.startsWith('/products/') || cleanUrl.length <= 10) {
-    return null;
-  }
-
-  return cleanUrl.split('/products/')[1].split('/')[0] || null;
-}
 
 const serializeForInlineScript = (value) => JSON.stringify(value).replace(/</g, '\\u003c');
 
@@ -275,10 +204,7 @@ async function getMetaTagsForRoute(url, baseUrl, preloadedProduct = null, hostHi
   // Customize based on route
   if (normalizedPath.startsWith('/products/') && normalizedPath.length > 10) {
     // Extract product identifier (can be ID or slug)
-    const identifier = normalizedPath.split('/products/')[1].split('/')[0];
-    
-    // Fetch product details (works with both ID and slug)
-    const product = preloadedProduct || await fetchProductDetails(identifier);
+    const product = preloadedProduct;
     
     if (product) {
       productForStructuredData = product;
@@ -536,7 +462,9 @@ async function getMetaTagsForRoute(url, baseUrl, preloadedProduct = null, hostHi
   `;
 }
 
-export default async function handler(req, res) {
+export const createSsrHandler = ({
+  loadRenderer = () => import(pathToFileURL(path.join(process.cwd(), 'dist/server/entry-server.js')).href),
+} = {}) => async function handler(req, res) {
   try {
     const url = req.url || '/';
     const urlPathOnly = url.split('?')[0].split('#')[0];
@@ -588,9 +516,6 @@ export default async function handler(req, res) {
       res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=86400');
       return res.status(301).end();
     }
-
-    const productIdentifier = getProductIdentifierFromUrl(urlPathOnly);
-    const ssrProduct = productIdentifier ? await fetchProductDetails(productIdentifier) : null;
 
     const forwardedProto = (req.headers?.['x-forwarded-proto'] || '').toString().split(',')[0].trim();
     const forwardedHost = (req.headers?.['x-forwarded-host'] || '').toString().split(',')[0].trim();
@@ -656,22 +581,21 @@ export default async function handler(req, res) {
     const indexPath = path.join(process.cwd(), 'dist/index.html');
     let html = fs.readFileSync(indexPath, 'utf-8');
     
-    // Get meta tags based on route (async)
-    const metaTags = await getMetaTagsForRoute(url, requestBaseUrl, ssrProduct, host);
-    const performanceHints = getPerformanceHintsForRoute(url);
     const acceptLanguage = (req.headers?.['accept-language'] || '').toString().split(',')[0].trim().toLowerCase();
     const requestLanguage = acceptLanguage.startsWith('ar') ? 'ar' : 'en';
+    const outcome = await prepareSsrRequest(url, region, requestLanguage);
+    if (outcome.kind === 'TEMPORARY_FAILURE') return sendSsrUnavailable(res);
+    const bootstrap = outcome.kind === 'NOT_FOUND'
+      ? { region, products: null, resourceNotFound: true, resourcePath: urlPathOnly }
+      : outcome.data;
+    const metaTags = outcome.kind === 'NOT_FOUND' ? errorMetaTags(404)
+      : await getMetaTagsForRoute(url, requestBaseUrl, bootstrap.product, host);
+    const performanceHints = getPerformanceHintsForRoute(url);
     const ssrLanguageScript = `<script>window.__SSR_LANGUAGE__=${serializeForInlineScript(requestLanguage)};</script>`;
-    const ssrProductScript = ssrProduct
-      ? `<script>window.__SSR_PRODUCT__=${serializeForInlineScript(ssrProduct)};window.__SSR_PRODUCT_ID__=${serializeForInlineScript(productIdentifier)};</script>`
+    const ssrProductScript = bootstrap.product
+      ? `<script>window.__SSR_PRODUCT__=${serializeForInlineScript(bootstrap.product)};window.__SSR_PRODUCT_ID__=${serializeForInlineScript(bootstrap.productIdentifier)};</script>`
       : '';
-    const shopCategorySlug = getShopCategorySlug(urlPathOnly);
-    const productsBootstrap = isProductsListPath(urlPathOnly)
-      ? await fetchProductsBootstrap(region, requestLanguage)
-      : shopCategorySlug !== null ? await fetchShopBootstrap(region, requestLanguage, shopCategorySlug) : null;
-    const ssrProductsScript = productsBootstrap
-      ? `<script>window.__SSR_PRODUCTS__=${serializeForInlineScript(productsBootstrap.products)};window.__SSR_PRODUCTS_REGION__=${serializeForInlineScript(productsBootstrap.region)};window.__SSR_CATEGORIES__=${serializeForInlineScript(productsBootstrap.categories)};window.__SSR_SHOP__=${serializeForInlineScript(productsBootstrap.shop ?? null)};</script>`
-      : '';
+    const ssrProductsScript = `<script>window.__SSR_BOOTSTRAP__=${serializeForInlineScript(bootstrap)};</script>`;
     const ssrBootstrapScript = `${ssrLanguageScript}${ssrProductScript}${ssrProductsScript}`;
     
     // Keep the fallback tags in index.html for plain SPA/static serving, but
@@ -688,61 +612,28 @@ export default async function handler(req, res) {
       html = html.replace('</head>', `${ssrBootstrapScript}${performanceHints}${metaTags}\n  </head>`);
     }
 
-    let responseStatus = 200;
+    let responseStatus = outcome.kind === 'NOT_FOUND' ? 404 : 200;
 
     // ── Attempt SSR (inject rendered HTML into <div id="root">) ────
-    // Wrapped in try/catch so a render failure never breaks the site.
     try {
-      const ssrBundlePath = path.join(process.cwd(), 'dist/server/entry-server.js');
-      if (fs.existsSync(ssrBundlePath)) {
-        const { render } = await import(ssrBundlePath);
-        if (typeof render === 'function') {
-          const previousProduct = globalThis.__SSR_PRODUCT__;
-          const previousProductId = globalThis.__SSR_PRODUCT_ID__;
-
-          if (ssrProduct) {
-            globalThis.__SSR_PRODUCT__ = ssrProduct;
-            globalThis.__SSR_PRODUCT_ID__ = productIdentifier;
-          } else {
-            delete globalThis.__SSR_PRODUCT__;
-            delete globalThis.__SSR_PRODUCT_ID__;
-          }
-
-          const { html: appHtml, error } = await render(url, requestLanguage, {
-            region: productsBootstrap?.region ?? null,
-            products: productsBootstrap?.products ?? null,
-            categories: productsBootstrap?.categories ?? null,
-            shop: productsBootstrap?.shop ?? null,
-          });
-
-          if (typeof previousProduct === 'undefined') {
-            delete globalThis.__SSR_PRODUCT__;
-          } else {
-            globalThis.__SSR_PRODUCT__ = previousProduct;
-          }
-
-          if (typeof previousProductId === 'undefined') {
-            delete globalThis.__SSR_PRODUCT_ID__;
-          } else {
-            globalThis.__SSR_PRODUCT_ID__ = previousProductId;
-          }
-
-          if (appHtml && !error) {
-            if (appHtml.includes('data-not-found-page="true"')) {
-              responseStatus = 404;
-            }
-            html = html.replace('<div id="root"></div>', `<div id="root" data-ssr="true">${appHtml}</div>`);
-          }
-        }
-      }
+      const { render } = await loadRenderer();
+      const rendered = await renderSsrOutcome(render, url, requestLanguage, bootstrap);
+      if (rendered.kind === 'TEMPORARY_FAILURE') return sendSsrUnavailable(res);
+      if (rendered.kind === 'NOT_FOUND') responseStatus = 404;
+      if (!html.includes('<div id="root"></div>')) throw new Error('SSR root placeholder missing');
+      html = html.replace('<div id="root"></div>', `<div id="root" data-ssr="true">${rendered.data}</div>`);
     } catch (ssrError) {
-      // SSR failed – serve the SPA shell as before
-      console.warn('[SSR] render skipped:', ssrError?.message || ssrError);
+      console.warn('[SSR] render failed:', ssrError?.message || ssrError);
+      return sendSsrUnavailable(res);
     }
     
     // Set headers
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=300, stale-while-revalidate=86400');
+    if (responseStatus === 404) {
+      html = replaceErrorHead(html, 404);
+      setErrorHeaders(res);
+    }
     
     // Send response
     res.status(responseStatus).send(html);
@@ -750,6 +641,8 @@ export default async function handler(req, res) {
     console.error('SSR Error:', error);
     console.error('Error details:', error.message);
     console.error('Working directory:', process.cwd());
-    res.status(500).send('Internal Server Error: ' + error.message);
+    return sendSsrUnavailable(res);
   }
-}
+};
+
+export default createSsrHandler();
