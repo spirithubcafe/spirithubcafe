@@ -5,6 +5,15 @@ import { spawn } from 'node:child_process';
 import { once } from 'node:events';
 import { OMAN_LEGACY_PRODUCT_REDIRECTS } from './legacyProductRedirects.js';
 
+const getProductSchema = (html) => {
+  const scripts = [...html.matchAll(/<script type="application\/ld\+json" data-generated="seo">([\s\S]*?)<\/script>/g)];
+  const nodes = scripts.flatMap(([, payload]) => {
+    const parsed = JSON.parse(payload);
+    return Array.isArray(parsed) ? parsed : [parsed];
+  });
+  return nodes.find((node) => node?.['@type'] === 'Product');
+};
+
 const listen = async (server) => {
   server.listen(0, '127.0.0.1');
   await once(server, 'listening');
@@ -36,7 +45,14 @@ test('standalone production server preserves empty 200, confirmed 404, and non-c
       return res.end(JSON.stringify({ success: true, data: {
         id: region === 'om' ? 9201 : 9301, slug, name: `${region} redirect test coffee`,
         description: `${region} description`, isActive: true, sku: `${region}-redirect`,
-        images: [], variants: [], price: region === 'om' ? 5 : 25,
+        images: [],
+        variants: slug === 'status-product-seo'
+          ? [
+              { id: 1, isActive: true, isDefault: true, stockQuantity: 0, price: region === 'om' ? 7 : 27, weight: 200, weightUnit: 'g', displayOrder: 0 },
+              { id: 2, isActive: true, isDefault: false, stockQuantity: 10, price: region === 'om' ? 28 : 108, weight: 1000, weightUnit: 'g', displayOrder: 1 },
+            ]
+          : [{ id: 1, isActive: true, isDefault: true, stockQuantity: 10, price: region === 'om' ? 5 : 25, weight: 250, weightUnit: 'g', displayOrder: 0 }],
+        price: region === 'om' ? 5 : 25,
       } }));
     }
     if (req.url === '/api/shop/category/slug/hreflang-category') {
@@ -161,6 +177,10 @@ test('standalone production server preserves empty 200, confirmed 404, and non-c
   const productPage = await assertIndexable('/om/products/status-product-seo');
   assert.match(productPage, /<meta property="og:type" content="product"/);
   assert.match(productPage, /<script type="application\/ld\+json" data-generated="seo">/);
+  const productSchema = getProductSchema(productPage);
+  assert.equal(productSchema.offers.priceCurrency, 'OMR');
+  assert.equal(productSchema.offers.price, '7.000');
+  assert.equal(productSchema.offers.availability, 'https://schema.org/OutOfStock');
   for (const region of ['om', 'sa']) {
     await check(`/${region}`, 200);
     await check(`/${region}/products`, 200);

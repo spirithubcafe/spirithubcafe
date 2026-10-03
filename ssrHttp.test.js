@@ -34,6 +34,14 @@ const request = async (url, handler = createSsrHandler({ loadRenderer: async () 
   return response;
 };
 const noindexMeta = /<meta name="robots" content="noindex, follow"/;
+const getProductSchema = (html) => {
+  const scripts = [...html.matchAll(/<script type="application\/ld\+json" data-generated="seo">([\s\S]*?)<\/script>/g)];
+  const nodes = scripts.flatMap(([, payload]) => {
+    const parsed = JSON.parse(payload);
+    return Array.isArray(parsed) ? parsed : [parsed];
+  });
+  return nodes.find((node) => node?.['@type'] === 'Product');
+};
 const assertErrorResponse = (response, status) => {
   assert.equal(response.statusCode, status);
   assert.equal(response.headers['cache-control'], 'no-store, max-age=0');
@@ -182,6 +190,63 @@ test('existing products render 200 with regional request-scoped product content'
     assert.match(response.body, /<meta property="og:type" content="product"/);
     assert.match(response.body, /<script type="application\/ld\+json" data-generated="seo">/);
   }
+});
+
+test('initial SSR product JSON-LD uses the representative active variant price and availability', async (t) => {
+  const productsBySlug = new Map([
+    ['status-schema-instock', productFor('om', 'status-schema-instock')],
+    ['status-schema-outstock', {
+      ...productFor('om', 'status-schema-outstock'),
+      variants: [
+        { id: 1, isActive: true, isDefault: true, stockQuantity: 0, price: 7, weight: 200, weightUnit: 'g', displayOrder: 0 },
+        { id: 2, isActive: true, isDefault: false, stockQuantity: 10, price: 28, weight: 1000, weightUnit: 'g', displayOrder: 1 },
+      ],
+    }],
+    ['status-schema-no-default', {
+      ...productFor('om', 'status-schema-no-default'),
+      variants: [
+        { id: 3, isActive: true, isDefault: false, stockQuantity: 4, price: 8, weight: 250, weightUnit: 'g', displayOrder: 0 },
+        { id: 4, isActive: true, isDefault: false, stockQuantity: 2, price: 12, weight: 500, weightUnit: 'g', displayOrder: 1 },
+      ],
+    }],
+    ['status-schema-ignore-inactive-default', {
+      ...productFor('om', 'status-schema-ignore-inactive-default'),
+      variants: [
+        { id: 5, isActive: false, isDefault: true, stockQuantity: 8, price: 7, weight: 200, weightUnit: 'g', displayOrder: 0 },
+        { id: 6, isActive: true, isDefault: false, stockQuantity: 3, price: 11, weight: 250, weightUnit: 'g', displayOrder: 1 },
+      ],
+    }],
+    ['status-schema-no-active-variants', {
+      ...productFor('om', 'status-schema-no-active-variants'),
+      variants: [
+        { id: 7, isActive: false, isDefault: true, stockQuantity: 5, price: 9, weight: 250, weightUnit: 'g', displayOrder: 0 },
+      ],
+    }],
+  ]);
+  t.mock.method(globalThis, 'fetch', async (url, { headers }) => {
+    const slug = decodeURIComponent(url.split('/').at(-1));
+    return Response.json({ success: true, data: productsBySlug.get(slug) || productFor(headers['X-Branch'], slug) });
+  });
+
+  const inStock = getProductSchema((await request('/om/products/status-schema-instock')).body);
+  assert.equal(inStock.offers.priceCurrency, 'OMR');
+  assert.equal(inStock.offers.price, '5.000');
+  assert.equal(inStock.offers.availability, 'https://schema.org/InStock');
+
+  const outOfStock = getProductSchema((await request('/om/products/status-schema-outstock')).body);
+  assert.equal(outOfStock.offers.price, '7.000');
+  assert.equal(outOfStock.offers.availability, 'https://schema.org/OutOfStock');
+
+  const noDefault = getProductSchema((await request('/om/products/status-schema-no-default')).body);
+  assert.equal(noDefault.offers.price, '8.000');
+  assert.equal(noDefault.offers.availability, 'https://schema.org/InStock');
+
+  const ignoreInactiveDefault = getProductSchema((await request('/om/products/status-schema-ignore-inactive-default')).body);
+  assert.equal(ignoreInactiveDefault.offers.price, '11.000');
+  assert.equal(ignoreInactiveDefault.offers.availability, 'https://schema.org/InStock');
+
+  const noActiveVariants = getProductSchema((await request('/om/products/status-schema-no-active-variants')).body);
+  assert.equal(noActiveVariants.offers, undefined);
 });
 
 test('private utility pages return noindex, follow in SSR while representative public pages stay indexable', async () => {

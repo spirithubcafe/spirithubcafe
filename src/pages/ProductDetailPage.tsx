@@ -47,6 +47,7 @@ import { safeStorage } from '../lib/safeStorage';
 import { formatPrice, getRegionFromPath } from '../lib/regionUtils';
 import { OmaniRialPrice } from '../components/ui/OmaniRialPrice';
 import { personalizationService } from '../services/personalizationService';
+import { getRepresentativeProductSeoOffer } from '../lib/productSeoOffer';
 
 const RelatedProducts = lazy(() =>
   import('../components/products/RelatedProducts').then((module) => ({
@@ -801,7 +802,7 @@ export const ProductDetailPage = () => {
     return language === 'ar'
       ? `${slugLabel ? 'اشتري ' + slugLabel + ' – ' : ''}قهوة مختصة محمصة طازجة من سبيريت هب في ${regionCityAr}. اكتشف ملاحظات التذوق والأصل واطلب أونلاين مع توصيل سريع.`
       : `${slugLabel ? 'Buy ' + slugLabel + ' – ' : ''}specialty coffee freshly roasted by SpiritHub Roastery in ${regionCity}. Discover tasting notes, origin, and order online with fast delivery.`;
-  }, [displayName, language, plainDescription, product, price, currentRegion.currency]);
+  }, [displayName, language, plainDescription, product, price, productId, currentRegion.code, currentRegion.currency, currentRegion.nameAr]);
 
   const structuredData = useMemo(() => {
     if (!product) {
@@ -816,7 +817,7 @@ export const ProductDetailPage = () => {
       .map((img) => resolveAbsoluteUrl(img))
       .filter((src): src is string => Boolean(src));
 
-    const offerPrice = price > 0 ? price.toFixed(3) : undefined;
+    const seoOffer = getRepresentativeProductSeoOffer(product);
     const aggregate = approvedCount > 0
       ? {
           '@type': 'AggregateRating',
@@ -882,14 +883,12 @@ export const ProductDetailPage = () => {
         name: siteMetadata.siteName,
       },
       category: product.category?.name || undefined,
-      offers: offerPrice
+      offers: seoOffer
         ? {
             '@type': 'Offer',
             priceCurrency: currentRegion.currency,
-            price: offerPrice,
-            availability: product.isActive
-              ? 'https://schema.org/InStock'
-              : 'https://schema.org/OutOfStock',
+            price: seoOffer.priceText,
+            availability: seoOffer.availabilityUrl,
             itemCondition: 'https://schema.org/NewCondition',
             url: canonicalUrl,
             seller: {
@@ -910,7 +909,7 @@ export const ProductDetailPage = () => {
 
     // Return both schemas as array
     return [breadcrumbList, productSchema, merchantPolicies.organization];
-  }, [canonicalUrl, displayName, images, price, product, seoDescription, language, currentRegion.code, currentRegion.currency, approvedReviewStatsLocal, approvedReviewStatsRemote]);
+  }, [canonicalUrl, displayName, images, product, seoDescription, language, currentRegion.code, currentRegion.currency, approvedReviewStatsLocal, approvedReviewStatsRemote]);
 
   const isAvailable = product?.isActive ?? false;
   // Top badge: consider selected variant stock (if variant exists), otherwise fall back to product availability

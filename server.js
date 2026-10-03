@@ -7,6 +7,7 @@ import { detectSsrRegion, prepareSsrRequest, serializeForInlineScript } from './
 import { errorMetaTags, renderSsrOutcome, replaceErrorHead, sendSsrUnavailable, setErrorHeaders } from './ssrHttp.js';
 import { getLegacyProductRedirect } from './legacyProductRedirects.js';
 import { PRIVATE_ROBOTS_TAG, shouldNoindexRoute } from './ssrRobots.js';
+import { getRepresentativeProductSeoOffer } from './src/lib/productSeoOffer.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -655,7 +656,7 @@ async function getMetaTagsForRoute(url, requestBaseUrl, requestLanguage = 'en', 
       const omProductUrl = `${SEO_HOSTS.om}/om${normalizedPath}`;
       const saProductUrl = `${SEO_HOSTS.sa}${normalizedPath}`;
       const productUrl = region === 'sa' ? saProductUrl : omProductUrl;
-      const priceValue = product.price || product.minPrice || product.basePrice || null;
+      const productSeoOffer = getRepresentativeProductSeoOffer(product);
       const currency = region === 'sa' ? 'SAR' : 'OMR';
       const approvedReviews = getApprovedProductReviews(product);
       const productReviews = approvedReviews
@@ -687,12 +688,12 @@ async function getMetaTagsForRoute(url, requestBaseUrl, requestLanguage = 'en', 
           category: product.category?.name || undefined,
           aggregateRating,
           review: productReviews.length ? productReviews : undefined,
-          ...(priceValue ? {
+          ...(productSeoOffer ? {
             offers: {
               '@type': 'Offer',
               priceCurrency: currency,
-              price: String(Number(priceValue).toFixed(3)),
-              availability: product.isActive ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+              price: productSeoOffer.priceText,
+              availability: productSeoOffer.availabilityUrl,
               url: productUrl,
               seller: { '@type': 'Organization', name: 'Spirit Hub Cafe' },
               shippingDetails: {

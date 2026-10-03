@@ -5,6 +5,7 @@ import { detectSsrRegion, prepareSsrRequest } from '../ssrProductsBootstrap.js';
 import { errorMetaTags, renderSsrOutcome, replaceErrorHead, sendSsrUnavailable, setErrorHeaders } from '../ssrHttp.js';
 import { getLegacyProductRedirect } from '../legacyProductRedirects.js';
 import { PRIVATE_ROBOTS_TAG, shouldNoindexRoute } from '../ssrRobots.js';
+import { getRepresentativeProductSeoOffer } from '../src/lib/productSeoOffer.js';
 
 const SEO_HOSTS = {
   om: 'https://www.spirithubcafe.com',
@@ -193,9 +194,8 @@ async function getMetaTagsForRoute(url, baseUrl, preloadedProduct = null, hostHi
     : 'Shop fresh specialty coffee from SpiritHub Roastery. Explore roasted beans, filter coffee, and capsules with fast delivery across Oman and Saudi Arabia.';
   let image = `${resolvedBaseUrl}/images/icon-512x512.png`;
   let ogType = 'website';
-  let productPrice = null;
+  let productSeoOffer = null;
   const productCurrency = region === 'sa' ? 'SAR' : 'OMR';
-  let productAvailability = 'in stock';
   let productForStructuredData = null;
   const noindex = shouldNoindexRoute(url);
 
@@ -241,16 +241,7 @@ async function getMetaTagsForRoute(url, baseUrl, preloadedProduct = null, hostHi
         description = `Buy ${productName}${detailsStr} from Spirit Hub Cafe - Premium specialty coffee in ${regionName}`;
       }
       
-      // Get product price for structured data
-      const availablePrice = product.price || product.minPrice || product.basePrice;
-      if (availablePrice) {
-        productPrice = availablePrice;
-      }
-      
-      // Check product availability
-      if (product.inStock === false || product.stock === 0) {
-        productAvailability = 'out of stock';
-      }
+      productSeoOffer = getRepresentativeProductSeoOffer(product);
       
       // Use product main image with better error handling
       if (product.images && Array.isArray(product.images) && product.images.length > 0) {
@@ -275,7 +266,7 @@ async function getMetaTagsForRoute(url, baseUrl, preloadedProduct = null, hostHi
       console.log(`Generated meta for product: ${productName} (${region || 'default'})`);
       console.log(`Image: ${image}`);
       console.log(`Description: ${description.substring(0, 50)}...`);
-      console.log(`Price: ${productPrice} ${productCurrency}`);
+      console.log(`Price: ${productSeoOffer?.priceText || 'n/a'} ${productCurrency}`);
     } else {
       // Product not found — use slug to generate a unique fallback description
       const slugLabel = identifier
@@ -377,12 +368,12 @@ async function getMetaTagsForRoute(url, baseUrl, preloadedProduct = null, hostHi
 
   // Build product-specific meta tags if it's a product page
   let productMetaTags = '';
-  if (ogType === 'product' && productPrice) {
+  if (ogType === 'product' && productSeoOffer) {
     productMetaTags = `
-    <meta property="product:price:amount" content="${productPrice}" />
+    <meta property="product:price:amount" content="${productSeoOffer.priceText}" />
     <meta property="product:price:currency" content="${productCurrency}" />
-    <meta property="product:availability" content="${productAvailability}" />
-    <meta property="og:availability" content="${productAvailability}" />`;
+    <meta property="product:availability" content="${productSeoOffer.availabilityText}" />
+    <meta property="og:availability" content="${productSeoOffer.availabilityText}" />`;
   }
 
   const approvedReviews = getApprovedProductReviews(productForStructuredData);
@@ -392,7 +383,7 @@ async function getMetaTagsForRoute(url, baseUrl, preloadedProduct = null, hostHi
     .slice(0, 5);
   const aggregateRating = buildProductAggregateRating(productForStructuredData, approvedReviews);
 
-  const productStructuredDataTag = productForStructuredData && productPrice
+  const productStructuredDataTag = productForStructuredData
     ? buildStructuredDataTag({
         '@context': 'https://schema.org',
         '@type': 'Product',
@@ -404,23 +395,23 @@ async function getMetaTagsForRoute(url, baseUrl, preloadedProduct = null, hostHi
         url: canonicalUrl,
         aggregateRating,
         review: productReviews.length ? productReviews : undefined,
-        offers: {
-          '@type': 'Offer',
-          priceCurrency: productCurrency,
-          price: String(productPrice),
-          availability: productAvailability === 'out of stock'
-            ? 'https://schema.org/OutOfStock'
-            : 'https://schema.org/InStock',
-          itemCondition: 'https://schema.org/NewCondition',
-          url: canonicalUrl,
-          seller: {
-            '@type': 'Organization',
-            name: 'Spirit Hub Cafe',
-            url: resolvedBaseUrl,
+        ...(productSeoOffer ? {
+          offers: {
+            '@type': 'Offer',
+            priceCurrency: productCurrency,
+            price: productSeoOffer.priceText,
+            availability: productSeoOffer.availabilityUrl,
+            itemCondition: 'https://schema.org/NewCondition',
+            url: canonicalUrl,
+            seller: {
+              '@type': 'Organization',
+              name: 'Spirit Hub Cafe',
+              url: resolvedBaseUrl,
+            },
+            shippingDetails: buildOfferShippingDetails(),
+            hasMerchantReturnPolicy: buildOfferReturnPolicy(),
           },
-          shippingDetails: buildOfferShippingDetails(),
-          hasMerchantReturnPolicy: buildOfferReturnPolicy(),
-        },
+        } : {}),
       })
     : '';
 
