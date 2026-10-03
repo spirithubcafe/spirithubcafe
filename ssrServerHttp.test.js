@@ -104,6 +104,21 @@ test('standalone production server preserves empty 200, confirmed 404, and non-c
     }
     return html;
   };
+  const assertNoindex = async (path) => {
+    const response = await fetch(`http://127.0.0.1:${serverPort}${path}`);
+    const html = await response.text();
+    assert.equal(response.status, 200, path);
+    assert.equal(response.headers.get('x-robots-tag'), 'noindex, follow', path);
+    assert.match(html, /<meta name="robots" content="noindex, follow"/, path);
+  };
+  const assertIndexable = async (path) => {
+    const response = await fetch(`http://127.0.0.1:${serverPort}${path}`);
+    const html = await response.text();
+    assert.equal(response.status, 200, path);
+    assert.equal(response.headers.get('x-robots-tag'), null, path);
+    assert.doesNotMatch(html, /<meta name="robots" content="noindex, follow"/, path);
+    return html;
+  };
   for (const { source, destination } of OMAN_LEGACY_PRODUCT_REDIRECTS) {
     const before = [...counts.entries()];
     for (const suffix of ['', '/', '?utm_source=test', '/?utm_source=test&variant=10']) {
@@ -126,6 +141,26 @@ test('standalone production server preserves empty 200, confirmed 404, and non-c
   }
   await check('/om/products/completely-invented-product', 404);
   await check('/om/shop/hreflang-category', 200);
+  for (const path of [
+    '/om/profile',
+    '/om/order/123',
+    '/om/orders',
+    '/om/payment/success',
+    '/payment/success',
+    '/forgot-password',
+    '/om/reset-password',
+    '/om/loyalty/signup',
+    '/om/wholesale',
+    '/om/admin',
+  ]) {
+    await assertNoindex(path);
+  }
+  for (const path of ['/om', '/om/about', '/om/contact', '/om/loyalty', '/om/faq', '/om/products', '/om/shop']) {
+    await assertIndexable(path);
+  }
+  const productPage = await assertIndexable('/om/products/status-product-seo');
+  assert.match(productPage, /<meta property="og:type" content="product"/);
+  assert.match(productPage, /<script type="application\/ld\+json" data-generated="seo">/);
   for (const region of ['om', 'sa']) {
     await check(`/${region}`, 200);
     await check(`/${region}/products`, 200);

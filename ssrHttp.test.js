@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import test from 'node:test';
 import { createSsrHandler } from './api/ssr.js';
 import { fetchSsrJson, renderSsrOutcome } from './ssrHttp.js';
@@ -32,6 +33,7 @@ const request = async (url, handler = createSsrHandler({ loadRenderer: async () 
   await handler({ url, headers: { host: 'localhost', 'accept-language': language } }, response);
   return response;
 };
+const noindexMeta = /<meta name="robots" content="noindex, follow"/;
 const assertErrorResponse = (response, status) => {
   assert.equal(response.statusCode, status);
   assert.equal(response.headers['cache-control'], 'no-store, max-age=0');
@@ -41,6 +43,37 @@ const assertErrorResponse = (response, status) => {
   assert.doesNotMatch(response.body, /rel=["']canonical|application\/ld\+json|property=["']product:|og:type["'] content=["']product/);
   assert.match(response.body, /noindex/);
 };
+
+test('robots.txt declares one crawler group, one sitemap, and keeps private paths blocked for every bot', () => {
+  const robots = fs.readFileSync(new URL('./public/robots.txt', import.meta.url), 'utf8');
+  assert.equal((robots.match(/^User-agent:/gm) || []).length, 1);
+  assert.match(robots, /^User-agent: \*$/m);
+  for (const disallow of [
+    'Disallow: /admin',
+    'Disallow: /profile',
+    'Disallow: /my-account',
+    'Disallow: /orders',
+    'Disallow: /order',
+    'Disallow: /favorites',
+    'Disallow: /checkout',
+    'Disallow: /payment',
+    'Disallow: /login',
+    'Disallow: /register',
+    'Disallow: /forgot-password',
+    'Disallow: /reset-password',
+    'Disallow: /wholesale',
+    'Disallow: /api/',
+    'Disallow: /*.json$',
+    'Disallow: /loyalty/signup',
+  ]) {
+    assert.match(robots, new RegExp(`^${disallow.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'm'));
+  }
+  assert.doesNotMatch(robots, /^User-agent: (Googlebot|Googlebot-Image|Bingbot)$/m);
+  assert.doesNotMatch(robots, /Crawl-delay:/);
+  assert.equal((robots.match(/^Sitemap:/gm) || []).length, 1);
+  assert.match(robots, /^Sitemap: https:\/\/www\.spirithubcafe\.com\/sitemap\.xml$/m);
+  assert.doesNotMatch(robots, /products-feed\.xml/);
+});
 
 test('five Oman page types retain one canonical and only unique Oman/default SSR alternates', async (t) => {
   t.mock.method(globalThis, 'fetch', async (url, { headers }) => {
@@ -145,7 +178,62 @@ test('existing products render 200 with regional request-scoped product content'
     assert.match(response.body, /data-ssr="true"/);
     assert.doesNotMatch(response.body, new RegExp(`${region === 'om' ? 'sa' : 'om'} status test coffee`));
     assert.match(response.headers['cache-control'], /s-maxage=300/);
+    assert.doesNotMatch(response.body, noindexMeta);
+    assert.match(response.body, /<meta property="og:type" content="product"/);
+    assert.match(response.body, /<script type="application\/ld\+json" data-generated="seo">/);
   }
+});
+
+test('private utility pages return noindex, follow in SSR while representative public pages stay indexable', async () => {
+  for (const url of [
+    '/om/profile',
+    '/om/order/123',
+    '/om/orders',
+    '/om/payment/success',
+    '/payment/success',
+    '/forgot-password',
+    '/om/reset-password',
+    '/om/loyalty/signup',
+    '/om/wholesale',
+    '/om/admin',
+  ]) {
+    const response = await request(url);
+    assert.equal(response.statusCode, 200, url);
+    assert.equal(response.headers['x-robots-tag'], 'noindex, follow', url);
+    assert.match(response.body, /<meta name="robots" content="noindex, follow"/, url);
+  }
+
+  for (const url of ['/om', '/om/about', '/om/contact', '/om/loyalty', '/om/faq']) {
+    const response = await request(url);
+    assert.equal(response.statusCode, 200, url);
+    assert.equal(response.headers['x-robots-tag'], undefined, url);
+    assert.doesNotMatch(response.body, noindexMeta, url);
+  }
+});
+
+test('public collection pages stay indexable while product pages keep normal SEO metadata', async (t) => {
+  t.mock.method(globalThis, 'fetch', async (url, { headers }) => {
+    const region = headers['X-Branch'];
+    if (url.endsWith('/shop')) return Response.json({ success: true, data: pageFor(region) });
+    if (url.includes('/Products/slug/')) {
+      return Response.json({ success: true, data: productFor(region, decodeURIComponent(url.split('/').at(-1))) });
+    }
+    if (url.includes('/shop/category/slug/')) {
+      return Response.json({ success: true, data: categoryFor(region, 'status-public-category') });
+    }
+    if (url.includes('/shop/category/')) return Response.json({ success: true, data: [], pagination });
+    return Response.json({ success: true, data: [] });
+  });
+
+  for (const url of ['/om/products', '/om/shop', '/om/products/status-public-seo']) {
+    const response = await request(url);
+    assert.equal(response.statusCode, 200, url);
+    assert.equal(response.headers['x-robots-tag'], undefined, url);
+    assert.doesNotMatch(response.body, noindexMeta, url);
+  }
+  const product = await request('/om/products/status-public-seo');
+  assert.match(product.body, /<meta property="og:type" content="product"/);
+  assert.match(product.body, /<script type="application\/ld\+json" data-generated="seo">/);
 });
 
 for (const status of [404, 410]) {

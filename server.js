@@ -6,6 +6,7 @@ import compression from 'compression';
 import { detectSsrRegion, prepareSsrRequest, serializeForInlineScript } from './ssrProductsBootstrap.js';
 import { errorMetaTags, renderSsrOutcome, replaceErrorHead, sendSsrUnavailable, setErrorHeaders } from './ssrHttp.js';
 import { getLegacyProductRedirect } from './legacyProductRedirects.js';
+import { PRIVATE_ROBOTS_TAG, shouldNoindexRoute } from './ssrRobots.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -302,7 +303,7 @@ app.use((req, res, next) => {
 });
 
 // Serve HTML - Catch all routes with meta tag injection
-app.use(async (req, res, next) => {
+app.use(async (req, res) => {
   try {
     // Normalize URL path for meta generation.
     // Keep a leading slash because downstream logic expects it.
@@ -318,6 +319,9 @@ app.use(async (req, res, next) => {
     const proto = forwardedProto || req.protocol || 'https';
     const requestBaseUrl = host ? `${proto}://${host}`.replace(/\/+$/, '') : undefined;
     const region = detectSsrRegion(url, host);
+    if (shouldNoindexRoute(url)) {
+      res.setHeader('X-Robots-Tag', PRIVATE_ROBOTS_TAG);
+    }
 
     let template;
     if (!isProduction) {
@@ -606,7 +610,7 @@ async function getMetaTagsForRoute(url, requestBaseUrl, requestLanguage = 'en', 
       title = isAr ? `${productName} | سبيريت هب` : `${productName} | Spirit Hub Cafe`;
 
       const rawDesc = (isAr && product.descriptionAr) ? product.descriptionAr : (product.description || '');
-      let productDesc = String(rawDesc)
+      const productDesc = String(rawDesc)
         .replace(/<[^>]*>/g, ' ')
         .replace(/&[^;]+;/g, '')
         .replace(/\s+/g, ' ')
@@ -800,10 +804,6 @@ async function getMetaTagsForRoute(url, requestBaseUrl, requestLanguage = 'en', 
       : 'Complete your order from Spirit Hub Cafe - Oman\'s premier specialty coffee roastery.';
   }
 
-  // Private/transactional pages — should not be indexed
-  const noindexPaths = ['/login', '/register', '/checkout', '/favorites', '/orders', '/profile', '/payment'];
-  const isNoindex = noindexPaths.some(p => pathKey === p || pathKey.startsWith(p + '/'));
-
   // Always proxy through wsrv.nl: enforces 1200×630, converts any format to JPEG,
   // and uses attention-based smart crop so the product stays centred in the frame.
   // WhatsApp, Facebook, and Twitter all require JPEG and a minimum of 200×200.
@@ -833,11 +833,12 @@ async function getMetaTagsForRoute(url, requestBaseUrl, requestLanguage = 'en', 
   const safeOmUrl = escapeHtmlAttr(omUrl);
 
   const structuredDataTag = structuredDataJson ? buildStructuredDataTag(structuredDataJson) : '';
+  const isNoindex = shouldNoindexRoute(url);
 
   return `
     <title>${safeTitle}</title>
     <meta name="description" content="${safeDesc}" />
-    ${isNoindex ? '<meta name="robots" content="noindex,nofollow" />' : ''}
+    ${isNoindex ? `<meta name="robots" content="${PRIVATE_ROBOTS_TAG}" />` : ''}
     <link rel="canonical" href="${safeCanonical}" />
     <link rel="alternate" hreflang="en-OM" href="${safeOmUrl}" />
     <link rel="alternate" hreflang="ar-OM" href="${safeOmUrl}" />

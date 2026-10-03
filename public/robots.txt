@@ -1,21 +1,27 @@
 # Spirit Hub Cafe - Robots.txt
-# Updated: 2026-05-15
+# Updated: 2026-10-03
 
 User-agent: *
 Allow: /
 # Private / user-specific pages
-Disallow: /admin/
-Disallow: /om/admin/
-Disallow: /sa/admin/
+Disallow: /admin
+Disallow: /om/admin
+Disallow: /sa/admin
 Disallow: /profile
 Disallow: /om/profile
 Disallow: /sa/profile
+Disallow: /my-account
+Disallow: /om/my-account
+Disallow: /sa/my-account
 Disallow: /orders
 Disallow: /om/orders
 Disallow: /sa/orders
-Disallow: /order/
-Disallow: /om/order/
-Disallow: /sa/order/
+Disallow: /order
+Disallow: /om/order
+Disallow: /sa/order
+Disallow: /order-detail
+Disallow: /om/order-detail
+Disallow: /sa/order-detail
 Disallow: /favorites
 Disallow: /om/favorites
 Disallow: /sa/favorites
@@ -43,6 +49,9 @@ Disallow: /sa/reset-password
 Disallow: /wholesale/
 Disallow: /om/wholesale/
 Disallow: /sa/wholesale/
+Disallow: /wholesale
+Disallow: /om/wholesale
+Disallow: /sa/wholesale
 # Internal API and raw JSON
 Disallow: /api/
 Disallow: /*.json$
@@ -51,19 +60,5 @@ Disallow: /loyalty/signup
 Disallow: /om/loyalty/signup
 Disallow: /sa/loyalty/signup
 
-# Google: no crawl delay
-User-agent: Googlebot
-Allow: /
-Crawl-delay: 0
-
-User-agent: Googlebot-Image
-Allow: /images/
-Allow: /
-
-User-agent: Bingbot
-Allow: /
-Crawl-delay: 0
-
 # Sitemaps
 Sitemap: https://www.spirithubcafe.com/sitemap.xml
-Sitemap: https://www.spirithubcafe.com/products-feed.xml

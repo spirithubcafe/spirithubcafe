@@ -4,6 +4,7 @@ import { pathToFileURL } from 'node:url';
 import { detectSsrRegion, prepareSsrRequest } from '../ssrProductsBootstrap.js';
 import { errorMetaTags, renderSsrOutcome, replaceErrorHead, sendSsrUnavailable, setErrorHeaders } from '../ssrHttp.js';
 import { getLegacyProductRedirect } from '../legacyProductRedirects.js';
+import { PRIVATE_ROBOTS_TAG, shouldNoindexRoute } from '../ssrRobots.js';
 
 const SEO_HOSTS = {
   om: 'https://www.spirithubcafe.com',
@@ -196,7 +197,7 @@ async function getMetaTagsForRoute(url, baseUrl, preloadedProduct = null, hostHi
   const productCurrency = region === 'sa' ? 'SAR' : 'OMR';
   let productAvailability = 'in stock';
   let productForStructuredData = null;
-  let noindex = false;
+  const noindex = shouldNoindexRoute(url);
 
   if (normalizedPath === '/' || normalizedPath === '') {
     image = `${resolvedBaseUrl}/logo.png`;
@@ -330,30 +331,18 @@ async function getMetaTagsForRoute(url, baseUrl, preloadedProduct = null, hostHi
   } else if (normalizedPath === '/favorites' || normalizedPath === '/favorites/') {
     title = `My Favorites | Spirit Hub Cafe`;
     description = `View your favorite products from Spirit Hub Cafe`;
-    noindex = true;
   } else if (normalizedPath === '/orders' || normalizedPath === '/orders/') {
     title = `My Orders | Spirit Hub Cafe`;
     description = `Track and manage your orders from Spirit Hub Cafe`;
-    noindex = true;
   } else if (normalizedPath === '/checkout' || normalizedPath === '/checkout/') {
     title = `Checkout | Spirit Hub Cafe`;
     description = `Complete your order from Spirit Hub Cafe`;
-    noindex = true;
   } else if (normalizedPath === '/login' || normalizedPath === '/login/') {
     title = `Login | Spirit Hub Cafe`;
     description = 'Sign in to your Spirit Hub Cafe account';
-    noindex = true;
   } else if (normalizedPath === '/register' || normalizedPath === '/register/') {
     title = `Create Account | Spirit Hub Cafe`;
     description = 'Join Spirit Hub Cafe community and enjoy exclusive benefits';
-    noindex = true;
-  } else if (
-    normalizedPath === '/profile' || normalizedPath === '/profile/' ||
-    normalizedPath.startsWith('/profile/') ||
-    normalizedPath === '/payment' || normalizedPath.startsWith('/payment/') ||
-    normalizedPath === '/order-detail' || normalizedPath.startsWith('/order-detail/')
-  ) {
-    noindex = true;
   }
 
   const guessMimeType = (urlStr) => {
@@ -438,7 +427,7 @@ async function getMetaTagsForRoute(url, baseUrl, preloadedProduct = null, hostHi
   return `
     <title>${title}</title>
     <meta name="description" content="${description}" />
-    ${noindex ? '<meta name="robots" content="noindex,nofollow" />' : ''}
+    ${noindex ? `<meta name="robots" content="${PRIVATE_ROBOTS_TAG}" />` : ''}
     <link rel="canonical" href="${canonicalUrl}" />
     <link rel="alternate" hreflang="en-OM" href="${omUrl}" />
     <link rel="alternate" hreflang="ar-OM" href="${omUrl}" />
@@ -514,6 +503,9 @@ export const createSsrHandler = ({
     if (isLegacyBadPath) {
       // Let the SPA render the 404 component but tell crawlers not to index it.
       res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+    }
+    if (shouldNoindexRoute(urlPathOnly)) {
+      res.setHeader('X-Robots-Tag', PRIVATE_ROBOTS_TAG);
     }
 
     const legacyPolicyRedirect = getLegacyPolicyRedirect(urlPathOnly);
