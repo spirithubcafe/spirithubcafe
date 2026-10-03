@@ -6,6 +6,7 @@ import { useApp } from '../../hooks/useApp';
 import { useShopPage } from '../../hooks/useShop';
 import { useRegion } from '../../hooks/useRegion';
 import { buildResponsiveSrcSet, getCategoryImageUrl, handleImageError } from '../../lib/imageUtils';
+import { homepageSectionClassName } from './homepageSectionSpacing';
 
 type UnifiedCategoryItem = {
   id: string;
@@ -126,7 +127,7 @@ export const UnifiedCategoriesSection: React.FC = () => {
 
   if (appLoading && shopLoading) {
     return (
-      <section className="py-12 bg-white">
+      <section className={homepageSectionClassName('bg-white')}>
         <div className="mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8">
             <div className="h-8 w-56 mx-auto animate-pulse rounded-lg bg-gray-200" />
@@ -155,7 +156,7 @@ export const UnifiedCategoriesSection: React.FC = () => {
   }
 
   return (
-    <section className="bg-[#fbfbf9] pt-8 pb-4 sm:pt-10 sm:pb-6">
+    <section className={homepageSectionClassName('bg-white pt-10 sm:pt-12 lg:pt-14')}>
       <div className="mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:px-8">
         <div className="mb-6">
           <p className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.22em] text-amber-600">

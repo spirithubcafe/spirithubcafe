@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, ArrowLeft } from 'lucide-react';
 import { useApp } from '../../hooks/useApp';
+import { homepageSectionClassName } from './homepageSectionSpacing';
 
 export const SustainabilitySection: React.FC = () => {
   const { language } = useApp();
@@ -10,7 +11,10 @@ export const SustainabilitySection: React.FC = () => {
   const Arrow = isArabic ? ArrowLeft : ArrowRight;
 
   return (
-    <section className="-mt-2 bg-white pt-0 pb-4 sm:mt-0 sm:pt-3" dir={isArabic ? 'rtl' : 'ltr'}>
+    <section
+      className={homepageSectionClassName('bg-[#fbfbf9] pt-10 sm:pt-12 lg:pt-14')}
+      dir={isArabic ? 'rtl' : 'ltr'}
+    >
       <div className="mx-auto max-w-6xl px-4">
         <div className="flex flex-col gap-6 sm:gap-9 lg:flex-row lg:items-center lg:gap-12">
           {/* Story image linking to the About page */}

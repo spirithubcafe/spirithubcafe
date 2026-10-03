@@ -6,6 +6,7 @@ import { productService } from '../../services/productService';
 import { getProductImageUrl } from '../../lib/imageUtils';
 import { normalizeProductTags } from '../../lib/productTagUtils';
 import type { Product } from '../../contexts/AppContextDefinition';
+import { homepageSectionClassName } from './homepageSectionSpacing';
 
 export const BestSellers: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -90,7 +91,7 @@ export const BestSellers: React.FC = () => {
 
   if (loading) {
     return (
-      <section className="pt-6 pb-5 bg-white sm:pt-8 sm:pb-10">
+      <section className={homepageSectionClassName('bg-white')}>
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           {/* Section Header Skeleton */}
           <div className="flex flex-col gap-3 mb-8 sm:mb-10">
@@ -121,7 +122,7 @@ export const BestSellers: React.FC = () => {
   }
 
   return (
-    <section className="pt-6 pb-5 bg-white sm:pt-8 sm:pb-10">
+    <section className={homepageSectionClassName('bg-white')}>
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="mb-8 sm:mb-10">

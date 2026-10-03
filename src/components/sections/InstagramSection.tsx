@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight, Play } from 'lucide-react';
 import useEmblaCarousel from 'embla-carousel-react';
+import { homepageSectionClassName } from './homepageSectionSpacing';
 
 type InstagramMediaType = 'IMAGE' | 'VIDEO' | 'CAROUSEL_ALBUM';
 
@@ -210,7 +211,7 @@ export const InstagramSection: React.FC = () => {
     (document.documentElement.dir === 'rtl' || document.documentElement.lang?.toLowerCase().startsWith('ar'));
 
   return (
-    <section className="bg-[#fbfbf9] pb-10 pt-8 sm:pb-14 sm:pt-10 lg:pb-16 lg:pt-11">
+    <section className={homepageSectionClassName('bg-white pt-10 sm:pt-12 lg:pt-14')}>
       <div className="mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:px-8">
         <div className="mb-5 sm:mb-10">
           <p className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.22em] text-amber-600">

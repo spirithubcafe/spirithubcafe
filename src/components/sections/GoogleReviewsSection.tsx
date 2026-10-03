@@ -4,6 +4,7 @@ import useEmblaCarousel from 'embla-carousel-react';
 import { googleReviewsService, type GoogleReviewsData } from '@/services/googleReviewsService';
 import { Spinner } from '@/components/ui/spinner';
 import { Skeleton } from '@/components/ui/skeleton';
+import { homepageSectionClassName } from './homepageSectionSpacing';
 
 const MAX_PREVIEW_LENGTH = 160;
 
@@ -199,7 +200,7 @@ export const GoogleReviewsSection: React.FC = () => {
   if (!isLoading && (!payload || cards.length === 0)) return null;
 
   return (
-    <section className="bg-[#fbfbf9] pt-6 pb-0 sm:pt-8 sm:pb-0 lg:pt-10 lg:pb-0" dir={isArabic ? 'rtl' : 'ltr'}>
+    <section className={homepageSectionClassName('bg-[#fbfbf9]')} dir={isArabic ? 'rtl' : 'ltr'}>
       <div className="mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:px-8">
         <div className="mb-6 sm:mb-7">
           <p className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.22em] text-amber-600">

@@ -4,6 +4,7 @@ import { ProductCard } from '../products/ProductCard';
 import { useApp } from '../../hooks/useApp';
 import { useRegion } from '../../hooks/useRegion';
 import { Coffee } from 'lucide-react';
+import { homepageSectionClassName } from './homepageSectionSpacing';
 
 export const FeaturedProducts: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -27,7 +28,7 @@ export const FeaturedProducts: React.FC = () => {
 
   if (loading) {
     return (
-      <section className="pt-10 pb-16 bg-[#faf7f2]">
+      <section className={homepageSectionClassName('bg-[#faf7f2]')}>
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           {/* Section Header Skeleton */}
           <div className="flex flex-col gap-3 mb-12">
@@ -54,7 +55,7 @@ export const FeaturedProducts: React.FC = () => {
 
   if (!latestProducts || latestProducts.length === 0) {
     return (
-      <section id="products" className="pt-10 pb-16 bg-[#faf7f2]">
+      <section id="products" className={homepageSectionClassName('bg-[#faf7f2]')}>
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mb-12">
             <p className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.22em] text-amber-600">
@@ -86,7 +87,7 @@ export const FeaturedProducts: React.FC = () => {
   }
 
   return (
-    <section id="products" className="pt-10 pb-16 bg-[#faf7f2]">
+    <section id="products" className={homepageSectionClassName('bg-[#faf7f2]')}>
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="mb-8 sm:mb-10">

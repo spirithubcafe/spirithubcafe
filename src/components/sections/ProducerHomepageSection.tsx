@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { getImageUrl, handleImageError } from '../../lib/imageUtils';
 import { producerService, type Producer, type ProducerSectionSettings } from '../../services/producerService';
 import { useApp } from '../../hooks/useApp';
+import { homepageSectionClassName } from './homepageSectionSpacing';
 
 const fallbackSettings: ProducerSectionSettings = {
   isEnabled: true,
@@ -110,7 +111,7 @@ export const ProducerHomepageSection: React.FC = () => {
   );
 
   return (
-    <div className="bg-[#fbfbf9] pt-8 sm:pt-10 lg:pt-12">
+    <div className={homepageSectionClassName('bg-[#fbfbf9]')}>
     <section
       className="overflow-hidden py-8 sm:py-9"
       style={{ backgroundColor, color: textColor }}
