@@ -9,6 +9,8 @@
  * Deployed as a Vercel serverless function at /api/sitemap.
  */
 
+import { buildOmanSitemapXml } from '../src/lib/omanSitemapBuilder.js';
+
 const API_BASE_URL = process.env.VITE_API_URL || process.env.VITE_API_BASE_URL || 'https://api.spirithubcafe.com';
 const SITE_URL = (process.env.VITE_SITE_URL || process.env.SITE_URL || 'https://www.spirithubcafe.com').replace(/\/+$/, '');
 
@@ -16,38 +18,6 @@ const SITE_URL = (process.env.VITE_SITE_URL || process.env.SITE_URL || 'https://
 let cachedXml = null;
 let cacheTimestamp = 0;
 const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
-
-// ── Static pages (always included) ──────────────────────────────────
-// Oman pages (canonical region)
-const STATIC_PAGES_OM = [
-  { loc: '/om',             changefreq: 'daily',   priority: '1.0' },
-  { loc: '/om/products',    changefreq: 'daily',   priority: '0.9' },
-  { loc: '/om/shop',        changefreq: 'daily',   priority: '0.8' },
-  { loc: '/om/about',       changefreq: 'monthly', priority: '0.7' },
-  { loc: '/om/contact',     changefreq: 'monthly', priority: '0.6' },
-  { loc: '/om/faq',         changefreq: 'monthly', priority: '0.5' },
-  { loc: '/om/loyalty',     changefreq: 'monthly', priority: '0.5' },
-  { loc: '/om/delivery',    changefreq: 'monthly', priority: '0.4' },
-  { loc: '/om/refund',      changefreq: 'monthly', priority: '0.4' },
-  { loc: '/om/privacy',     changefreq: 'yearly',  priority: '0.3' },
-  { loc: '/om/terms',       changefreq: 'yearly',  priority: '0.3' },
-];
-
-// ── Helpers ─────────────────────────────────────────────────────────
-
-function today() {
-  return new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-}
-
-function escapeXml(str) {
-  if (!str) return '';
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;');
-}
 
 function parseProductResponse(json) {
   let items = null;
@@ -76,12 +46,12 @@ async function fetchAllProducts() {
   let totalPages = 1;
 
   do {
-    const url = `${API_BASE_URL}/api/Products?page=${page}&pageSize=100`;
+    const url = `${API_BASE_URL}/api/Products?page=${page}&pageSize=100&includeInactive=false`;
     try {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 8000);
       const res = await fetch(url, {
-        headers: { Accept: 'application/json' },
+        headers: { Accept: 'application/json', 'X-Branch': 'om', 'Accept-Language': 'en' },
         signal: controller.signal,
       });
       clearTimeout(timeout);
@@ -114,14 +84,14 @@ async function fetchAllProducts() {
 }
 
 /**
- * Fetch all categories from the API.
+ * Fetch shop categories from the shop API.
  */
-async function fetchAllCategories() {
+async function fetchShopCategories() {
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 8000);
-    const res = await fetch(`${API_BASE_URL}/api/Categories`, {
-      headers: { Accept: 'application/json' },
+    const res = await fetch(`${API_BASE_URL}/api/shop`, {
+      headers: { Accept: 'application/json', 'X-Branch': 'om', 'Accept-Language': 'en' },
       signal: controller.signal,
     });
     clearTimeout(timeout);
@@ -129,12 +99,9 @@ async function fetchAllCategories() {
     if (!res.ok) return [];
 
     const json = await res.json();
-    let items = null;
-    if (Array.isArray(json)) items = json;
-    else if (json?.data && Array.isArray(json.data)) items = json.data;
-    else if (json?.items && Array.isArray(json.items)) items = json.items;
-
-    return items || [];
+    if (Array.isArray(json?.data?.categories)) return json.data.categories;
+    if (Array.isArray(json?.categories)) return json.categories;
+    return [];
   } catch {
     return [];
   }
@@ -144,63 +111,12 @@ async function fetchAllCategories() {
  * Build the full sitemap XML string.
  */
 async function buildSitemap() {
-  const todayStr = today();
-
-  // Fetch products and categories in parallel
-  const [products, categories] = await Promise.all([
+  // Fetch Oman products and real shop categories in parallel
+  const [products, shopCategories] = await Promise.all([
     fetchAllProducts(),
-    fetchAllCategories(),
+    fetchShopCategories(),
   ]);
-
-  const buildUrl = (loc, lastmod, changefreq, priority) => {
-    return `  <url>\n    <loc>${escapeXml(loc)}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <changefreq>${changefreq}</changefreq>\n    <priority>${priority}</priority>\n  </url>\n`;
-  };
-
-  let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
-  xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"\n`;
-  xml += `        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"\n`;
-  xml += `        xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9\n`;
-  xml += `        http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">\n\n`;
-
-  // ── Static Oman pages (canonical) ───────────────────────────────
-  xml += `  <!-- Oman static pages -->\n`;
-  for (const page of STATIC_PAGES_OM) {
-    xml += buildUrl(SITE_URL + page.loc, todayStr, page.changefreq, page.priority);
-  }
-
-  // ── Category pages (Oman) ───────────────────────────────────────
-  if (categories.length > 0) {
-    xml += `\n  <!-- Shop categories (Oman) -->\n`;
-    for (const cat of categories) {
-      const slug = cat.slug || cat.categorySlug;
-      if (!slug) continue;
-      xml += buildUrl(SITE_URL + '/om/shop/' + slug, todayStr, 'weekly', '0.8');
-    }
-
-  }
-
-  // ── Product pages ───────────────────────────────────────────────
-  if (products.length > 0) {
-    xml += `\n  <!-- Products (Oman) -->\n`;
-    for (const product of products) {
-      const slug = product.slug || product.productSlug;
-      if (!slug) continue;
-
-      let lastmod = todayStr;
-      const updatedAt = product.updatedAt || product.modifiedDate || product.createdAt;
-      if (updatedAt) {
-        try {
-          lastmod = new Date(updatedAt).toISOString().split('T')[0];
-        } catch { /* keep todayStr */ }
-      }
-
-      xml += buildUrl(SITE_URL + '/om/products/' + slug, lastmod, 'weekly', '0.7');
-    }
-
-  }
-
-  xml += `\n</urlset>\n`;
-  return xml;
+  return buildOmanSitemapXml(SITE_URL, shopCategories, products).xml;
 }
 
 // ── Vercel handler ──────────────────────────────────────────────────
