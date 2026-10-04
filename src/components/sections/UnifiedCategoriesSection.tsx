@@ -17,34 +17,7 @@ type UnifiedCategoryItem = {
   group: 'coffee' | 'shop';
 };
 
-const CARD_WIDTH = 212;
-
-const GIFT_HINT_EN = '❤️ Gift Someone Special';
-const GIFT_HINT_AR = '❤️ أهدي شخص مميز';
-const LIMITED_HINT_EN = '✨ Limited Release';
-const LIMITED_HINT_AR = '✨ إصدار محدود';
-
-const isGiftOrBundleCategory = (item: UnifiedCategoryItem): boolean => {
-  const haystack = `${item.name} ${item.href}`.toLowerCase();
-  return (
-    haystack.includes('bundle') ||
-    haystack.includes('gift') ||
-    haystack.includes('هدية') ||
-    haystack.includes('هدايا') ||
-    haystack.includes('أهدي')
-  );
-};
-
-const isCompetitionPremiumCategory = (item: UnifiedCategoryItem): boolean => {
-  const haystack = `${item.name} ${item.href}`.toLowerCase();
-  return (
-    haystack.includes('competition premium') ||
-    haystack.includes('premium series') ||
-    haystack.includes('series') ||
-    haystack.includes('منافسة') ||
-    haystack.includes('محدود')
-  );
-};
+const CARD_WIDTH = 220;
 
 export const UnifiedCategoriesSection: React.FC = () => {
   const { categories, loading: appLoading, language, t } = useApp();
@@ -156,14 +129,14 @@ export const UnifiedCategoriesSection: React.FC = () => {
   }
 
   return (
-    <section className={homepageSectionClassName('bg-white pt-10 sm:pt-12 lg:pt-14')}>
+    <section className={homepageSectionClassName('bg-white')}>
       <div className="mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:px-8">
-        <div className="mb-6">
+        <div className="mb-7 sm:mb-8">
           <p className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.22em] text-amber-600">
             <span className="h-px w-6 bg-amber-500/60" aria-hidden="true" />
             {isArabic ? 'تسوق حسب الفئة' : 'Explore Our Range'}
           </p>
-          <h2 className="text-2xl font-extrabold text-stone-900 sm:text-4xl">
+          <h2 className="text-[2rem] font-extrabold leading-tight text-stone-900 sm:text-[2.55rem]">
             {t('sections.categories') || 'Categories'}
           </h2>
         </div>
@@ -199,8 +172,8 @@ export const UnifiedCategoriesSection: React.FC = () => {
                   to={item.href}
                   className="categories-slide group block min-w-0 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/60"
                 >
-                <div className="h-full overflow-hidden rounded-2xl border border-[#dfe4dd] bg-[#fffdf9] shadow-[0_10px_30px_rgba(0,0,0,0.035)] transition-all duration-300 hover:-translate-y-1 hover:border-[#d2d8d1] hover:shadow-[0_16px_34px_rgba(0,0,0,0.075)] flex flex-col">
-                  <div className="relative aspect-square overflow-hidden sm:aspect-[4/5]">
+                <div className="flex h-full flex-col overflow-hidden rounded-[24px] border border-[#d8ded6] bg-[#fffdf9] shadow-[0_12px_30px_rgba(33,30,24,0.04)] transition-all duration-300 hover:-translate-y-1 hover:border-[#c9d1c7] hover:shadow-[0_18px_36px_rgba(33,30,24,0.08)]">
+                  <div className="relative aspect-square overflow-hidden sm:aspect-[5/6]">
                     <img
                       src={item.image}
                       srcSet={buildResponsiveSrcSet(item.image, [160, 240, 320, 480])}
@@ -213,20 +186,10 @@ export const UnifiedCategoriesSection: React.FC = () => {
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                   </div>
-                  <div className="flex flex-1 flex-col items-center justify-center p-3.5">
-                    <h3 className="line-clamp-2 min-h-[2.6rem] text-center text-[0.92rem] font-semibold leading-5 text-gray-900 transition-colors duration-200 group-hover:text-amber-700">
+                  <div className="flex flex-1 flex-col items-center justify-center p-4 sm:p-[18px]">
+                    <h3 className="line-clamp-1 min-h-[1.45rem] text-center text-[0.92rem] font-semibold leading-[1.45] text-stone-900 transition-colors duration-200 group-hover:text-amber-700">
                       {item.name}
                     </h3>
-                    {isCompetitionPremiumCategory(item) ? (
-                      <p className="mt-1 text-center text-[0.72rem] font-semibold leading-4 text-rose-600">
-                        {isArabic ? LIMITED_HINT_AR : LIMITED_HINT_EN}
-                      </p>
-                    ) : null}
-                    {!isCompetitionPremiumCategory(item) && isGiftOrBundleCategory(item) ? (
-                      <p className="mt-1 text-center text-[0.72rem] font-semibold leading-4 text-rose-600">
-                        {isArabic ? GIFT_HINT_AR : GIFT_HINT_EN}
-                      </p>
-                    ) : null}
                   </div>
                 </div>
                 </Link>
@@ -261,17 +224,17 @@ export const UnifiedCategoriesSection: React.FC = () => {
           z-index: 10;
           display: none;
           height: 100%;
-          width: 26px;
+          width: 34px;
         }
 
         .category-edge-left {
           left: 0;
-          background: linear-gradient(90deg, rgba(251, 251, 249, 0.78), rgba(251, 251, 249, 0));
+          background: linear-gradient(90deg, rgba(255, 253, 249, 0.94), rgba(255, 253, 249, 0));
         }
 
         .category-edge-right {
           right: 0;
-          background: linear-gradient(270deg, rgba(251, 251, 249, 0.78), rgba(251, 251, 249, 0));
+          background: linear-gradient(270deg, rgba(255, 253, 249, 0.94), rgba(255, 253, 249, 0));
         }
 
         .category-nav {
@@ -279,22 +242,22 @@ export const UnifiedCategoriesSection: React.FC = () => {
           top: 50%;
           z-index: 20;
           display: none;
-          height: 36px;
-          width: 36px;
+          height: 40px;
+          width: 40px;
           transform: translateY(-50%);
           align-items: center;
           justify-content: center;
-          border: 1px solid rgba(77, 91, 84, 0.14);
+          border: 1px solid rgba(77, 91, 84, 0.2);
           border-radius: 999px;
-          background: rgba(255, 253, 249, 0.88);
-          color: #4b5a58;
-          box-shadow: 0 10px 24px rgba(0, 0, 0, 0.1);
+          background: rgba(255, 253, 249, 0.97);
+          color: #445250;
+          box-shadow: 0 14px 28px rgba(28, 27, 25, 0.14);
           backdrop-filter: blur(10px);
           transition: transform 0.2s ease, background 0.2s ease, opacity 0.2s ease;
         }
 
         .category-nav:not(:disabled):hover {
-          background: #fffdf9;
+          background: #ffffff;
           transform: translateY(-50%) scale(1.04);
         }
 

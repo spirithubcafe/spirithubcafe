@@ -211,14 +211,14 @@ export const InstagramSection: React.FC = () => {
     (document.documentElement.dir === 'rtl' || document.documentElement.lang?.toLowerCase().startsWith('ar'));
 
   return (
-    <section className={homepageSectionClassName('bg-white pt-10 sm:pt-12 lg:pt-14')}>
+    <section className={homepageSectionClassName('bg-white')}>
       <div className="mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:px-8">
-        <div className="mb-5 sm:mb-10">
+        <div className="mb-6 sm:mb-8">
           <p className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.22em] text-amber-600">
             <span className="h-px w-6 bg-amber-500/60" aria-hidden="true" />
             {isArabic ? 'تابعونا' : 'Follow Along'}
           </p>
-          <h2 className="text-2xl font-extrabold text-stone-900 sm:text-4xl">
+          <h2 className="text-[2rem] font-extrabold leading-tight text-stone-900 sm:text-[2.55rem]">
             {isArabic ? 'زوروا إنستغرامنا' : 'Visit Our Instagram'}
           </h2>
         </div>
@@ -279,7 +279,7 @@ export const InstagramSection: React.FC = () => {
                     href={post.permalink}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="instagram-card group relative min-w-0 shrink-0 overflow-hidden rounded-xl bg-[#dedbd5] shadow-[0_10px_30px_rgba(0,0,0,0.04)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#69736f] focus-visible:ring-offset-2 focus-visible:ring-offset-[#fbfbf9]"
+                    className="instagram-card group relative min-w-0 shrink-0 overflow-hidden rounded-[18px] bg-[#dedbd5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#69736f] focus-visible:ring-offset-2 focus-visible:ring-offset-[#fbfbf9]"
                     aria-label="Open Instagram post"
                   >
                     <img
@@ -291,6 +291,7 @@ export const InstagramSection: React.FC = () => {
                       width={252}
                       height={420}
                     />
+                    <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/28 via-black/8 to-transparent opacity-80 transition-opacity duration-300 group-hover:opacity-100" />
                     {post.mediaType === 'VIDEO' && (
                       <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/15">
                         <span className="flex h-10 w-10 items-center justify-center rounded-full bg-black/55 text-white">
@@ -311,17 +312,6 @@ export const InstagramSection: React.FC = () => {
             </p>
           )}
 
-          <div className="mt-3 text-center sm:mt-6">
-            <a
-              href="https://www.instagram.com/spirithubcafe/"
-              target="_blank"
-              rel="noopener noreferrer"
-              dir="ltr"
-              className="inline-block text-[15px] text-[#3f4d4c] underline underline-offset-4 transition-colors hover:text-[#2e3b3b]"
-            >
-              @spirithubcafe
-            </a>
-          </div>
         </div>
       </div>
 
@@ -352,17 +342,17 @@ export const InstagramSection: React.FC = () => {
           z-index: 10;
           display: none;
           height: 100%;
-          width: 26px;
+          width: 32px;
         }
 
         .ig-edge-left {
           left: 0;
-          background: linear-gradient(90deg, rgba(251, 251, 249, 0.78), rgba(251, 251, 249, 0));
+          background: linear-gradient(90deg, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0));
         }
 
         .ig-edge-right {
           right: 0;
-          background: linear-gradient(270deg, rgba(251, 251, 249, 0.78), rgba(251, 251, 249, 0));
+          background: linear-gradient(270deg, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0));
         }
 
         .ig-nav {
@@ -370,16 +360,16 @@ export const InstagramSection: React.FC = () => {
           top: 50%;
           transform: translateY(-50%);
           z-index: 20;
-          height: 36px;
-          width: 36px;
-          border: 1px solid rgba(77, 91, 84, 0.14);
+          height: 40px;
+          width: 40px;
+          border: 1px solid rgba(77, 91, 84, 0.18);
           border-radius: 999px;
-          background: rgba(255, 253, 249, 0.88);
-          color: #4b5a58;
+          background: rgba(255, 253, 249, 0.97);
+          color: #445250;
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          box-shadow: 0 10px 24px rgba(0, 0, 0, 0.1);
+          box-shadow: 0 14px 28px rgba(28, 27, 25, 0.14);
           backdrop-filter: blur(10px);
           transition: all 0.2s ease;
         }

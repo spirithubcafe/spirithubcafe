@@ -12,7 +12,7 @@ export const SustainabilitySection: React.FC = () => {
 
   return (
     <section
-      className={homepageSectionClassName('bg-[#fbfbf9] pt-10 sm:pt-12 lg:pt-14')}
+      className={homepageSectionClassName('bg-[#fbfbf9]')}
       dir={isArabic ? 'rtl' : 'ltr'}
     >
       <div className="mx-auto max-w-6xl px-4">
