@@ -18,6 +18,7 @@ import type {
 } from './personalizationService';
 import { selectFruityFilterCoffees } from '../lib/chatbotProductResults';
 import { resolveCoffeeOrigin } from '../lib/chatbotOriginSearch';
+import { buildFallbackSearchQueries } from '../lib/chatbotSearchFallback';
 import type { CoffeePassportProfile } from './coffeePassportService';
 
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY as string;
@@ -311,6 +312,8 @@ function buildSearchQueries(query: string): string[] {
     queries.add(replacement);
     queries.add(normalizedQuery.replace(pattern, replacement).trim());
   }
+
+  for (const fallback of buildFallbackSearchQueries(normalizedQuery)) queries.add(fallback);
 
   return Array.from(queries).filter(Boolean);
 }
