@@ -282,7 +282,7 @@ export const GoogleReviewsSection: React.FC = () => {
                   {Array.from({ length: 3 }).map((_, idx) => (
                     <div
                       key={`review-skeleton-${idx}`}
-                      className="min-h-[230px] rounded-[22px] border border-[rgba(93,67,45,0.08)] bg-[rgba(255,252,247,0.78)] p-5 shadow-[0_8px_24px_rgba(59,42,32,0.06)] backdrop-blur-[10px]"
+                      className="min-h-[230px] rounded-[22px] border border-[rgba(93,67,45,0.08)] bg-[rgba(255,252,247,0.68)] p-5 shadow-[0_8px_24px_rgba(59,42,32,0.06)] backdrop-blur-[10px]"
                     >
                       <div className="mb-6 flex items-start justify-between gap-3">
                         <Skeleton className="h-12 w-12 rounded-2xl bg-[#efe6d8]" />
@@ -394,7 +394,7 @@ export const GoogleReviewsSection: React.FC = () => {
                             key={`${review.authorName}-${review.time}-${index}`}
                             className="reviews-slide min-w-0 shrink-0"
                           >
-                            <article className="review-card flex h-full flex-col rounded-[22px] border border-[rgba(93,67,45,0.1)] bg-[rgba(252,247,240,0.84)] p-5 lg:p-[18px] shadow-[0_10px_28px_rgba(59,42,32,0.08)] backdrop-blur-[14px]">
+                            <article className="review-card flex h-full flex-col rounded-[22px] border border-[rgba(93,67,45,0.1)] bg-[rgba(252,247,240,0.68)] p-5 lg:p-[18px] shadow-[0_10px_28px_rgba(59,42,32,0.08)] backdrop-blur-[14px]">
                               <div className={`flex items-start gap-2.5 ${isArabic ? 'flex-row-reverse' : ''}`}>
                                 <div className="-mt-1 w-9 shrink-0 font-serif text-[56px] font-bold leading-none text-[#d8c4a7] lg:w-8 lg:text-[48px]" aria-hidden="true">
                                   “
