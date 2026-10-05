@@ -134,7 +134,7 @@ export async function runProductLookup<P extends LookupProduct>(
     return unavailable();
   }
 
-  const target = resolveProductTarget(results, productQuery);
+  const target = resolveProductTarget(results, productQuery, { preferClearLeadingMatch: kind === 'brewing' });
   if (target.kind === 'empty') {
     return { status: 'not_found', text: messages.notFound(productQuery, isAr), products: [] };
   }

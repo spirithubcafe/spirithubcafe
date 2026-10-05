@@ -82,6 +82,14 @@ test('price: ambiguous matches show the cards without picking one', async () => 
   assert.equal(result.products.length, 2);
 });
 
+test('price: a plain coffee and its own alternate format (UFO drip bag) still ask to disambiguate (format-leading selection is brewing-only)', async () => {
+  const plain = { id: 701, name: 'Ethiopia - Moon Bloom Natural', nameAr: 'إثيوبيا - زهرة القمر طبيعي', slug: 'ethiopia-moon-bloom-natural', price: 8, minPrice: 8, maxPrice: 8 };
+  const result = await runProductLookup('price', 'Moon Bloom', false, makeDeps({ search: async () => [plain, moonBloom] }));
+
+  assert.equal(result.status, 'ambiguous');
+  assert.equal(result.products.length, 2);
+});
+
 test('price: an alias-only match is labelled as the closest match', async () => {
   const result = await runProductLookup('price', 'moon flower', false, makeDeps());
 
@@ -181,6 +189,45 @@ test('brewing: another-language instructions carry a note', async () => {
 
   assert.match(result.text, /استخدم 15 جرام\./);
   assert.match(result.text, /available in Arabic only/);
+});
+
+test('brewing: a plain coffee leading the Phase 1 ranking wins over its own alternate formats (e.g. a UFO drip bag), no disambiguation asked', async () => {
+  const plain = { id: 701, name: 'Ethiopia - Moon Bloom Natural', nameAr: 'إثيوبيا - زهرة القمر طبيعي', slug: 'ethiopia-moon-bloom-natural', price: 8, minPrice: 8, maxPrice: 8 };
+  const result = await runProductLookup('brewing', 'Moon Bloom', false, makeDeps({
+    search: async () => [plain, moonBloom],
+    getProduct: async (id) => {
+      calls.product.push(id);
+      return { found: true, product: { id, brewingInstructions: 'Use 18g coffee and 300ml water at 94C.' } };
+    },
+  }));
+
+  assert.deepEqual(calls.product, [701]);
+  assert.equal(result.status, 'answered');
+  assert.equal(result.products[0].id, 701);
+  assert.match(result.text, /Brewing instructions for \*\*Ethiopia - Moon Bloom Natural\*\*/);
+  assert.match(result.text, /Use 18g coffee and 300ml water at 94C\./);
+});
+
+test('brewing: the same plain coffee without catalog instructions falls back to the deterministic "not listed" response, still without asking to disambiguate', async () => {
+  const plain = { id: 701, name: 'Ethiopia - Moon Bloom Natural', nameAr: 'إثيوبيا - زهرة القمر طبيعي', slug: 'ethiopia-moon-bloom-natural', price: 8, minPrice: 8, maxPrice: 8 };
+  const result = await runProductLookup('brewing', 'Moon Bloom', false, makeDeps({
+    search: async () => [plain, moonBloom],
+    getProduct: async (id) => ({ found: true, product: { id } }),
+  }));
+
+  assert.equal(result.status, 'brewing_missing');
+  assert.equal(result.products[0].id, 701);
+  assert.match(result.text, /Brewing instructions are not listed for this product yet\./);
+});
+
+test('brewing: two genuinely distinct coffees that both fully match still ask to disambiguate', async () => {
+  const blend = { id: 701, name: 'Moon Bloom Blend', nameAr: 'مزيج زهرة القمر', slug: 'moon-bloom-blend', price: 8, minPrice: 8, maxPrice: 8 };
+  const reserve = { id: 702, name: 'Moon Bloom Reserve', nameAr: 'زهرة القمر الخاصة', slug: 'moon-bloom-reserve', price: 11, minPrice: 11, maxPrice: 11 };
+  const result = await runProductLookup('brewing', 'Moon Bloom', false, makeDeps({ search: async () => [blend, reserve] }));
+
+  assert.equal(result.status, 'ambiguous');
+  assert.equal(result.products.length, 2);
+  assert.deepEqual(calls.product, []);
 });
 
 // ---------- not found ----------

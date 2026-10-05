@@ -134,17 +134,56 @@ const containsAll = (product: ProductTargetCandidate, tokens: string[]): boolean
 };
 
 /**
- * Picks the product a price/availability/brewing question is about from Phase 1 search results.
- * confident: exactly one result names every query word. unverified: none does, so the best-ranked result is
- * only a closest match. ambiguous: several results name every query word.
+ * Packaging/format words that describe *how* a coffee is sold (drip bags, pods, samples, gift sets, ...)
+ * rather than *which* coffee it is. A result whose name only adds one of these to the query is treated as an
+ * alternate format of the plain coffee, not a different product.
  */
-export const resolveProductTarget = <T extends ProductTargetCandidate>(products: T[], productQuery: string): ProductTarget<T> => {
+const FORMAT_VARIANT_WORDS = new Set([
+  'ufo', 'drip', 'bag', 'bags', 'pod', 'pods', 'capsule', 'capsules', 'sachet', 'sachets',
+  'sample', 'samples', 'trial', 'kit', 'kits', 'bundle', 'bundles', 'set', 'sets', 'box', 'boxes',
+  'gift', 'pack', 'packs',
+]);
+
+const isFormatVariant = (product: ProductTargetCandidate): boolean => {
+  for (const form of productTokenForms(product)) {
+    if (FORMAT_VARIANT_WORDS.has(form)) return true;
+  }
+  return false;
+};
+
+/**
+ * True only when a single clear "plain coffee" leads a fully-matching Phase 1 ranking and every other
+ * fully-matching result is merely an alternate packaging/format of that same coffee (UFO drip bag, pods,
+ * sample, ...). Keeps genuinely different products (e.g. a mug, or two distinct blends) ambiguous.
+ */
+const hasClearLeadingMatch = <T extends ProductTargetCandidate>(full: T[]): boolean => {
+  const [leading, ...rest] = full;
+  return !isFormatVariant(leading) && rest.every(isFormatVariant);
+};
+
+/**
+ * Picks the product a price/availability/brewing question is about from Phase 1 search results.
+ * confident: exactly one result names every query word, or (when `preferClearLeadingMatch` is set) several
+ * do but the top-ranked Phase 1 result is clearly the plain coffee and the rest are alternate formats of it.
+ * unverified: none does, so the best-ranked result is only a closest match. ambiguous: several results name
+ * every query word with no sufficiently clear leading match.
+ */
+export const resolveProductTarget = <T extends ProductTargetCandidate>(
+  products: T[],
+  productQuery: string,
+  options: { preferClearLeadingMatch?: boolean } = {},
+): ProductTarget<T> => {
   const tokens = queryTokens(productQuery);
   if (products.length === 0 || tokens.length === 0) return { kind: 'empty', candidates: [] };
 
   const full = products.filter((product) => containsAll(product, tokens));
   if (full.length === 1) return { kind: 'confident', product: full[0], candidates: products };
-  if (full.length > 1) return { kind: 'ambiguous', candidates: full.slice(0, MAX_AMBIGUOUS_CANDIDATES) };
+  if (full.length > 1) {
+    if (options.preferClearLeadingMatch && hasClearLeadingMatch(full)) {
+      return { kind: 'confident', product: full[0], candidates: full.slice(0, MAX_AMBIGUOUS_CANDIDATES) };
+    }
+    return { kind: 'ambiguous', candidates: full.slice(0, MAX_AMBIGUOUS_CANDIDATES) };
+  }
   return { kind: 'unverified', product: products[0], candidates: products };
 };
 
