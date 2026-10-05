@@ -5,6 +5,7 @@ import {
   SchemaType,
   type FunctionDeclaration,
   type Content,
+  type GenerateContentResult,
   type Part,
 } from '@google/generative-ai';
 import { mcpService } from './mcpService';
@@ -19,7 +20,9 @@ import type {
 import { selectFruityFilterCoffees } from '../lib/chatbotProductResults';
 import { resolveCoffeeOrigin } from '../lib/chatbotOriginSearch';
 import { buildFallbackSearchQueries } from '../lib/chatbotSearchFallback';
-import type { CoffeePassportProfile } from './coffeePassportService';
+import { findNonProductWord, isProductLikeQuery, sanitizeToolResultForModel } from '../lib/chatbotProductIntents';
+import { buildClarifyMessage, buildToolLimitMessage } from '../lib/chatbotBusinessMessages';
+import { runToolLoop, ToolLoopLimitError, type ToolCall, type ToolLoopStep } from '../lib/chatbotToolLoop';import type { CoffeePassportProfile } from './coffeePassportService';
 
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY as string;
 const MODEL_NAME = (import.meta.env.VITE_GEMINI_MODEL as string | undefined) || 'gemini-2.5-flash-lite';
@@ -87,7 +90,13 @@ Product rules:
 - Never use dollars or the "$" symbol
 - Be friendly and concise
 - When product cards are returned, keep the text to one short intro sentence and do not duplicate the product list
-- Show 3-4 products maximum`;
+- Show 3-4 products maximum
+
+Safety rules:
+- Never state exact stock numbers; you may only say whether a product is in stock or out of stock.
+- Never invent product-specific brewing instructions. Use only the brewingInstructions returned by get_product_details; if they are missing, say they are not listed yet.
+- Never invent delivery, opening-hours, refund, payment, cancellation or allergy policies. For those questions tell the customer to contact SpiritHub support.
+- Do not search for products when the customer is not asking about products.`;
 
 const functionDeclarations: FunctionDeclaration[] = [
   {
@@ -346,16 +355,31 @@ async function sendWithRetry<T>(operation: () => Promise<T>): Promise<T> {
   throw lastError;
 }
 
-async function executeTool(name: string, args: Record<string, unknown>): Promise<{ data: unknown; products: ChatProduct[] }> {
+export interface ExecuteToolOptions {
+  /** Skip product search when the query is a business/policy question (used for model-initiated searches). */
+  guardNonProduct?: boolean;
+}
+
+export async function executeTool(
+  name: string,
+  args: Record<string, unknown>,
+  region?: RegionCode,
+  options: ExecuteToolOptions = {},
+): Promise<{ data: unknown; products: ChatProduct[] }> {
   let data: unknown;
+  const mcpOptions = { region };
 
   switch (name) {
     case 'search_products': {
       const pageSize = Number(args.pageSize ?? 8);
       const searchResults: unknown[] = [];
 
+      if (options.guardNonProduct && !isProductLikeQuery(String(args.query ?? '')).allowed) {
+        return { data: { products: [], skipped: 'non_product_query' }, products: [] };
+      }
+
       for (const query of buildSearchQueries(String(args.query ?? ''))) {
-        const result = await mcpService.searchProducts(query, { pageSize });
+        const result = await mcpService.searchProducts(query, { pageSize }, mcpOptions);
         searchResults.push(result);
 
         if (extractProducts(result).length > 0) {
@@ -368,28 +392,28 @@ async function executeTool(name: string, args: Record<string, unknown>): Promise
       break;
     }
     case 'list_categories':
-      data = await mcpService.listCategories();
+      data = await mcpService.listCategories(undefined, mcpOptions);
       break;
     case 'list_products_by_category':
       data = await mcpService.listProducts({
         categoryId: Number(args.categoryId),
         pageSize: Number(args.pageSize ?? 8),
-      });
+      }, mcpOptions);
       break;
     case 'get_featured_products':
-      data = await mcpService.getFeaturedProducts(Number(args.count ?? 6));
+      data = await mcpService.getFeaturedProducts(Number(args.count ?? 6), mcpOptions);
       break;
     case 'get_best_sellers':
-      data = await mcpService.getBestSellers(Number(args.count ?? 6));
+      data = await mcpService.getBestSellers(Number(args.count ?? 6), mcpOptions);
       break;
     case 'get_latest_products':
-      data = await mcpService.getLatestProducts(Number(args.count ?? 6));
+      data = await mcpService.getLatestProducts(Number(args.count ?? 6), mcpOptions);
       break;
     case 'get_product_details':
       data = await mcpService.getProduct({
         id: args.id ? Number(args.id) : undefined,
         slug: args.slug ? String(args.slug) : undefined,
-      });
+      }, mcpOptions);
       break;
     default:
       data = null;
@@ -402,7 +426,7 @@ export async function getFallbackChatResponse(
   userText: string,
   language: string,
   region: RegionCode = 'om'
-): Promise<{ text: string; products: ChatProduct[] } | null> {
+): Promise<{ text: string; products: ChatProduct[]; needsClarification?: boolean } | null> {
   const rawQuery = userText.trim().toLowerCase();
   const translatedOrigin = resolveCoffeeOrigin(rawQuery);
   const query = translatedOrigin ?? rawQuery;
@@ -431,42 +455,51 @@ export async function getFallbackChatResponse(
     };
   }
 
+  // Business, policy and support questions are never product searches.
+  if (findNonProductWord(rawQuery)) {
+    return { text: buildClarifyMessage(isAr), products: [], needsClarification: true };
+  }
+
   if (bundleBoxPattern.test(query)) {
     products = [
-      ...(await executeTool('search_products', { query: 'bundle', pageSize: 8 })).products,
-      ...(await executeTool('search_products', { query: 'gift box', pageSize: 8 })).products,
-      ...(await executeTool('search_products', { query: 'coffee bundle', pageSize: 8 })).products,
-      ...(await executeTool('search_products', { query: 'gift', pageSize: 4 })).products,
+      ...(await executeTool('search_products', { query: 'bundle', pageSize: 8 }, region)).products,
+      ...(await executeTool('search_products', { query: 'gift box', pageSize: 8 }, region)).products,
+      ...(await executeTool('search_products', { query: 'coffee bundle', pageSize: 8 }, region)).products,
+      ...(await executeTool('search_products', { query: 'gift', pageSize: 4 }, region)).products,
     ];
   } else if (giftPattern.test(query)) {
     products = [
-      ...(await executeTool('search_products', { query: 'gift', pageSize: 8 })).products,
-      ...(await executeTool('search_products', { query: 'capsule collection', pageSize: 4 })).products,
+      ...(await executeTool('search_products', { query: 'gift', pageSize: 8 }, region)).products,
+      ...(await executeTool('search_products', { query: 'capsule collection', pageSize: 4 }, region)).products,
     ];
   } else if (bestPattern.test(query)) {
-    products = (await executeTool('get_best_sellers', { count: 6 })).products;
+    products = (await executeTool('get_best_sellers', { count: 6 }, region)).products;
   } else if (latestPattern.test(query)) {
-    products = (await executeTool('get_latest_products', { count: 6 })).products;
+    products = (await executeTool('get_latest_products', { count: 6 }, region)).products;
   } else if (fruityPattern.test(query)) {
     attemptedProductSearch = true;
     products = [
-      ...(await executeTool('search_products', { query: 'fruity', pageSize: 8 })).products,
-      ...(await executeTool('search_products', { query: 'fruit', pageSize: 8 })).products,
-      ...(await executeTool('search_products', { query: 'citrus', pageSize: 6 })).products,
-      ...(await executeTool('search_products', { query: 'natural coffee', pageSize: 6 })).products,
-      ...(await executeTool('search_products', { query: 'ethiopia coffee', pageSize: 6 })).products,
+      ...(await executeTool('search_products', { query: 'fruity', pageSize: 8 }, region)).products,
+      ...(await executeTool('search_products', { query: 'fruit', pageSize: 8 }, region)).products,
+      ...(await executeTool('search_products', { query: 'citrus', pageSize: 6 }, region)).products,
+      ...(await executeTool('search_products', { query: 'natural coffee', pageSize: 6 }, region)).products,
+      ...(await executeTool('search_products', { query: 'ethiopia coffee', pageSize: 6 }, region)).products,
     ];
   } else if (query.length >= 2 && !greetingPattern.test(query)) {
+    if (!isProductLikeQuery(rawQuery).allowed) {
+      return { text: buildClarifyMessage(isAr), products: [], needsClarification: true };
+    }
+
     attemptedProductSearch = true;
-    products = (await executeTool('search_products', { query, pageSize: 8 })).products;
+    products = (await executeTool('search_products', { query, pageSize: 8 }, region)).products;
   }
 
   if (products.length === 0 && (bundleBoxPattern.test(query) || giftPattern.test(query) || bestPattern.test(query) || latestPattern.test(query) || fruityPattern.test(query))) {
-    products = (await executeTool('get_best_sellers', { count: 6 })).products;
+    products = (await executeTool('get_best_sellers', { count: 6 }, region)).products;
   }
 
   if (products.length === 0 && (bundleBoxPattern.test(query) || giftPattern.test(query) || bestPattern.test(query) || latestPattern.test(query) || fruityPattern.test(query))) {
-    products = (await executeTool('get_featured_products', { count: 6 })).products;
+    products = (await executeTool('get_featured_products', { count: 6 }, region)).products;
   }
 
   let matchingProducts = fruityPattern.test(query) && filterPattern.test(query)
@@ -504,12 +537,13 @@ export async function getFallbackChatResponse(
 export async function getResolvedIntentChatResponse(
   productSearchTerms: string[],
   language: string,
+  region?: RegionCode,
 ): Promise<{ text: string; products: ChatProduct[] }> {
   const searches = await Promise.all(
     productSearchTerms
       .map((term) => term.trim())
       .filter(Boolean)
-      .map((query) => executeTool('search_products', { query, pageSize: 8 })),
+      .map((query) => executeTool('search_products', { query, pageSize: 8 }, region)),
   );
   const products = searches
     .flatMap((result) => result.products)
@@ -528,6 +562,8 @@ export async function getResolvedIntentChatResponse(
   };
 }
 
+type GeminiStep = ToolLoopStep & { text: () => string };
+
 export class GeminiChatSession {
   private history: Content[] = [];
   private collectedProducts: ChatProduct[] = [];
@@ -536,6 +572,7 @@ export class GeminiChatSession {
     userText: string,
     region: RegionCode = 'om',
     personalizationContext?: string,
+    language = 'en',
   ): Promise<{ text: string; products: ChatProduct[] }> {
     if (!API_KEY || API_KEY === 'your_gemini_api_key_here') {
       throw new Error('GEMINI_API_KEY_NOT_SET');
@@ -567,45 +604,40 @@ export class GeminiChatSession {
       `Customer message: ${userText}`,
     ].filter(Boolean).join('\n');
 
-    let response = await sendWithRetry(() => chat.sendMessage(messageWithContext));
-    let candidate = response.response.candidates?.[0];
+    const toStep = (result: GenerateContentResult): GeminiStep => {
+      const parts = result.response.candidates?.[0]?.content?.parts ?? [];
+      const calls: ToolCall[] = parts
+        .filter((part: Part) => 'functionCall' in part)
+        .map((part: Part) => {
+          const { name, args } = (part as { functionCall: { name: string; args?: Record<string, unknown> } }).functionCall;
+          return { name, args: args ?? {} };
+        });
+      return { calls, text: () => result.response.text() };
+    };
 
-    // Agentic loop: handle function calls
-    while (candidate?.content?.parts?.some((p: Part) => 'functionCall' in p)) {
-      const functionParts = candidate.content.parts.filter((p: Part) => 'functionCall' in p);
-      const functionResponses: Part[] = [];
+    // Agentic loop with fixed limits (rounds, calls per round, total calls).
+    const outcome = await runToolLoop<GeminiStep>({
+      first: toStep(await sendWithRetry(() => chat.sendMessage(messageWithContext))),
+      execute: async (call) => {
+        const { data, products } = await executeTool(call.name, call.args, region, { guardNonProduct: true });
+        this.collectedProducts.push(...products.filter(
+          (p) => !this.collectedProducts.some((existing) => existing.id === p.id)
+        ));
+        // Exact stock numbers never reach the model.
+        return sanitizeToolResultForModel(data);
+      },
+      send: async (responses) => toStep(await sendWithRetry(() => chat.sendMessage(
+        responses.map((item): Part => ({ functionResponse: { name: item.name, response: item.response } })),
+      ))),
+    });
 
-      for (const part of functionParts) {
-        if (!('functionCall' in part)) continue;
-        const { name, args } = part.functionCall as { name: string; args: Record<string, unknown> };
-
-        try {
-          const { data, products } = await executeTool(name, args ?? {});
-          this.collectedProducts.push(...products.filter(
-            (p) => !this.collectedProducts.some((existing) => existing.id === p.id)
-          ));
-          functionResponses.push({
-            functionResponse: {
-              name,
-              response: { result: data },
-            },
-          });
-        } catch (err) {
-          functionResponses.push({
-            functionResponse: {
-              name,
-              response: { error: String(err) },
-            },
-          });
-        }
-      }
-
-      response = await sendWithRetry(() => chat.sendMessage(functionResponses));
-      candidate = response.response.candidates?.[0];
+    let text: string;
+    if (outcome.limitReached) {
+      if (this.collectedProducts.length === 0) throw new ToolLoopLimitError();
+      text = buildToolLimitMessage(language === 'ar', true);
+    } else {
+      text = outcome.step.text();
     }
-
-    const text = response.response.text();
-
     // Update history for next turn
     this.history.push({ role: 'user', parts: [{ text: messageWithContext }] });
     this.history.push({ role: 'model', parts: [{ text }] });

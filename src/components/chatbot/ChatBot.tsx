@@ -6,7 +6,8 @@ import { useApp } from '../../hooks/useApp';
 import { useAuth } from '../../hooks/useAuth';
 import { useCart } from '../../hooks/useCart';
 import { REGION_INFO } from '../../config/regionInfo';
-import { GeminiChatSession, getFallbackChatResponse, getResolvedIntentChatResponse, type ChatMessage } from '../../services/geminiChatService';
+import { GeminiChatSession, executeTool, getFallbackChatResponse, getResolvedIntentChatResponse, type ChatMessage, type ChatProduct } from '../../services/geminiChatService';
+import { mcpService } from '../../services/mcpService';
 import {
   personalizationService,
   type AIBundleResponse,
@@ -18,11 +19,16 @@ import {
 } from '../../services/personalizationService';
 import { coffeePassportService, type CoffeePassportProfile } from '../../services/coffeePassportService';
 import { chatbotIntentService } from '../../services/chatbotIntentService';
-import { chatbotAssistantService } from '../../services/chatbotAssistantService';
+import { chatbotAssistantService, type ChatbotAssistantAction } from '../../services/chatbotAssistantService';
+import { planAssistantAction } from '../../services/chatbotAssistantResolver';
 import { ChatMessageComponent } from './ChatMessage';
 import { TypingIndicator } from './TypingIndicator';
 import { cleanCustomerEmail } from '../../lib/chatbotProductResults';
 import { getBundleRefinementPrompt } from '../../lib/chatbotProductResults';
+import { buildHoursMessage, buildLocationMessage, buildSupportPrefix, buildToolLimitMessage } from '../../lib/chatbotBusinessMessages';
+import { runProductLookup, type ProductLookupKind } from '../../lib/chatbotProductLookup';
+import { ToolLoopLimitError } from '../../lib/chatbotToolLoop';
+import { formatPrice as formatRegionalPrice } from '../../lib/regionUtils';
 
 const session = new GeminiChatSession();
 const RATE_LIMIT_COOLDOWN_MS = 60_000;
@@ -578,6 +584,24 @@ export const ChatBot: React.FC = () => {
       const fallback = await getFallbackChatResponse(messageText, language, currentRegion.code);
       if (!fallback) return false;
 
+      if (fallback.needsClarification) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: 'model',
+            text: fallback.text,
+            openingActions: [
+              { key: 'clarify-find', label: isAr ? 'اختر قهوتي' : 'Find my coffee', intent: '__assistant_find_coffee__', primary: true },
+              { key: 'clarify-support', label: isAr ? 'تواصل مع الدعم' : 'Contact support', intent: '__assistant_contact_support__' },
+            ],
+            timestamp: new Date(),
+          },
+        ]);
+        chatbotIntentService.trackUnknown({ customerId: isAuthenticated ? user?.id : undefined, message: messageText, language, confidenceScore: 0 });
+        awaitingRephraseRef.current = true;
+        return true;
+      }
+
       setMessages((prev) => [
         ...prev,
         {
@@ -602,7 +626,7 @@ export const ChatBot: React.FC = () => {
     } catch {
       return false;
     }
-  }, [language, currentRegion.code, isAuthenticated, user?.id]);
+  }, [language, currentRegion.code, isAuthenticated, user?.id, isAr]);
 
   const addCartReadyItems = useCallback(async (
     items: Array<{ productId: number; productVariantId: number | null; quantity: number }>,
@@ -842,8 +866,49 @@ export const ChatBot: React.FC = () => {
     }
   }, [addCartReadyItems, isAr, localizedText, user]);
 
-  const handleSend = useCallback(async (text?: string) => {
-    const messageText = (text ?? input).trim();
+  // Phase 2A: deterministic price / availability / brewing answers for a named product.
+  // Product facts come from Phase 1 search and the catalog; stock is reduced to in_stock/out_of_stock.
+  // The user bubble has already been added by handleSend.
+  const runProductIntent = useCallback(async (actionName: ChatbotAssistantAction, productQuery: string, messageText: string) => {
+    const kind: ProductLookupKind = actionName === 'lookup_product_price'
+      ? 'price'
+      : actionName === 'lookup_product_availability' ? 'availability' : 'brewing';
+    const region = currentRegion.code;
+    setIsLoading(true);
+
+    try {
+      const result = await runProductLookup<ChatProduct>(kind, productQuery, isAr, {
+        search: async (query) => (await executeTool('search_products', { query, pageSize: 5 }, region)).products,
+        getVariants: (productId) => mcpService.getProductVariants(productId, { region }),
+        getProduct: (productId) => mcpService.getProduct({ id: productId }, { region }),
+        formatPrice: (value) => formatRegionalPrice(value, region, isAr),
+      });
+
+      setMessages((prev) => [...prev, {
+        role: 'model',
+        text: result.text,
+        products: result.products.length > 0 ? result.products : undefined,
+        openingActions: result.products.length > 0 ? undefined : [
+          { key: 'lookup-best', label: isAr ? 'تسوق الأكثر مبيعاً' : 'Shop best sellers', intent: '__assistant_best_sellers__', primary: true },
+          { key: 'lookup-support', label: isAr ? 'تواصل مع الدعم' : 'Contact support', intent: '__assistant_contact_support__' },
+        ],
+        timestamp: new Date(),
+      }]);
+
+      if (result.products.length > 0) {
+        chatbotIntentService.trackRecommendationShown(result.products.map((product) => product.id), language, region, messageText);
+      } else if (result.status === 'not_found') {
+        chatbotIntentService.trackUnknown({ customerId: isAuthenticated ? user?.id : undefined, message: messageText, language, confidenceScore: 0 });
+        awaitingRephraseRef.current = true;
+      }
+    } catch {
+      setMessages((prev) => [...prev, { role: 'model', text: localizedText('genericError'), timestamp: new Date() }]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [currentRegion.code, isAr, isAuthenticated, language, localizedText, user?.id]);
+
+  const handleSend = useCallback(async (text?: string) => {    const messageText = (text ?? input).trim();
     if (!messageText || isLoading) return;
 
     if (awaitingRephraseRef.current) {
@@ -907,7 +972,9 @@ export const ChatBot: React.FC = () => {
     }
 
     const routed = await chatbotAssistantService.resolve(messageText, language);
-    if (routed && routed.intent !== 'unknown' && routed.confidence >= 0.72) {
+    // Only actions with a handler here are acted on; anything else continues down the pipeline without a user bubble.
+    const plan = planAssistantAction(routed);
+    if (routed && plan.kind !== 'passthrough') {
       setInput('');
       setMessages((prev) => [...prev, { role: 'user', text: messageText, timestamp: new Date() }]);
 
@@ -942,7 +1009,46 @@ export const ChatBot: React.FC = () => {
         return;
       }
       if (routed.action === 'contact_support') {
-        setMessages((prev) => [...prev, { role: 'model', text: buildContactMessage(currentRegion.code, isAr), timestamp: new Date() }]);
+        const supportPrefix = buildSupportPrefix(routed.intent, isAr);
+        const contactText = buildContactMessage(currentRegion.code, isAr);
+        setMessages((prev) => [...prev, { role: 'model', text: supportPrefix ? `${supportPrefix}\n\n${contactText}` : contactText, timestamp: new Date() }]);
+        return;
+      }
+      if (routed.action === 'show_delivery_info') {
+        setMessages((prev) => [...prev, {
+          role: 'model',
+          text: buildDeliveryTimeMessage(currentRegion.code, isAr),
+          openingActions: [{ key: 'delivery-support', label: isAr ? 'تواصل مع الدعم' : 'Contact support', intent: '__assistant_contact_support__' }],
+          timestamp: new Date(),
+        }]);
+        return;
+      }
+      if (routed.action === 'show_store_hours') {
+        setMessages((prev) => [...prev, {
+          role: 'model',
+          text: buildHoursMessage(currentRegion.code, isAr),
+          openingActions: [
+            { key: 'hours-location', label: isAr ? 'موقعنا' : 'Our location', intent: '__assistant_store_location__' },
+            { key: 'hours-support', label: isAr ? 'تواصل مع الدعم' : 'Contact support', intent: '__assistant_contact_support__' },
+          ],
+          timestamp: new Date(),
+        }]);
+        return;
+      }
+      if (routed.action === 'show_store_location') {
+        setMessages((prev) => [...prev, {
+          role: 'model',
+          text: buildLocationMessage(currentRegion.code, isAr),
+          openingActions: [
+            { key: 'location-hours', label: isAr ? 'ساعات العمل' : 'Opening hours', intent: '__assistant_store_hours__' },
+            { key: 'location-support', label: isAr ? 'تواصل مع الدعم' : 'Contact support', intent: '__assistant_contact_support__' },
+          ],
+          timestamp: new Date(),
+        }]);
+        return;
+      }
+      if (plan.kind === 'product') {
+        await runProductIntent(plan.action, plan.productQuery, messageText);
         return;
       }
       if (routed.action === 'show_passport') {
@@ -1001,6 +1107,10 @@ export const ChatBot: React.FC = () => {
         setIsLoading(false);
         return;
       }
+
+      // Every handled action returns above; this keeps the user bubble single even if a handler is ever missing.
+      setMessages((prev) => [...prev, { role: 'model', text: routedText, openingActions: routedActions, timestamp: new Date() }]);
+      return;
     }
 
     const resolvedIntent = await chatbotIntentService.resolve(messageText, language);
@@ -1014,12 +1124,13 @@ export const ChatBot: React.FC = () => {
       return;
     }
 
-    if (resolvedIntent?.matched) {
+    // A matched intent without product search terms has nothing to search for; the normal conversational path continues.
+    if (resolvedIntent?.matched && (resolvedIntent.productSearchTerms?.length ?? 0) > 0) {
       setInput('');
       setMessages((prev) => [...prev, { role: 'user', text: messageText, timestamp: new Date() }]);
       setIsLoading(true);
       try {
-        const resolvedResponse = await getResolvedIntentChatResponse(resolvedIntent.productSearchTerms, language);
+        const resolvedResponse = await getResolvedIntentChatResponse(resolvedIntent.productSearchTerms, language, currentRegion.code);
         setMessages((prev) => [...prev, {
           role: 'model',
           text: resolvedResponse.text,
@@ -1102,6 +1213,7 @@ export const ChatBot: React.FC = () => {
         messageText,
         currentRegion.code,
         buildProfileContext(profile, isAr),
+        language,
       );
 
       if (products.length === 0 && NO_PRODUCTS_RESPONSE_PATTERN.test(responseText)) {
@@ -1126,6 +1238,20 @@ export const ChatBot: React.FC = () => {
         { role: 'model', text: responseText, products: products.length > 0 ? products : undefined, timestamp: new Date() },
       ]);
     } catch (err) {
+      if (err instanceof ToolLoopLimitError) {
+        setMessages((prev) => [...prev, {
+          role: 'model',
+          text: buildToolLimitMessage(isAr, false),
+          openingActions: [
+            { key: 'limit-support', label: isAr ? 'تواصل مع الدعم' : 'Contact support', intent: '__assistant_contact_support__', primary: true },
+            { key: 'limit-find', label: isAr ? 'اختر قهوتي' : 'Find my coffee', intent: '__assistant_find_coffee__' },
+          ],
+          timestamp: new Date(),
+        }]);
+        chatbotIntentService.trackUnknown({ customerId: isAuthenticated ? user?.id : undefined, message: messageText, language, confidenceScore: 0 });
+        return;
+      }
+
       const errorText = String(err);
       const isKeyError = errorText.includes('GEMINI_API_KEY_NOT_SET');
       const isRateLimitError = errorText.includes('429') || errorText.toLowerCase().includes('quota');
@@ -1173,6 +1299,7 @@ export const ChatBot: React.FC = () => {
     localizedText,
     profile,
     retryAfter,
+    runProductIntent,
     startQuiz,
     user,
   ]);
@@ -1248,6 +1375,21 @@ export const ChatBot: React.FC = () => {
       return;
     }
 
+    if (intent === '__assistant_store_location__') {
+      setMessages((prev) => [...prev, { role: 'model', text: buildLocationMessage(currentRegion.code, isAr), timestamp: new Date() }]);
+      return;
+    }
+
+    if (intent === '__assistant_store_hours__') {
+      setMessages((prev) => [...prev, { role: 'model', text: buildHoursMessage(currentRegion.code, isAr), timestamp: new Date() }]);
+      return;
+    }
+
+    if (intent === '__assistant_delivery_info__') {
+      setMessages((prev) => [...prev, { role: 'model', text: buildDeliveryTimeMessage(currentRegion.code, isAr), timestamp: new Date() }]);
+      return;
+    }
+
     if (intent === '__assistant_start_quiz__' || intent === '__assistant_find_coffee__') {
       await startQuiz();
       return;
@@ -1320,7 +1462,7 @@ export const ChatBot: React.FC = () => {
     }
 
     await handleSend(intent);
-  }, [continueQuiz, createBundle, handleSend, handleSupportClick, isAr, regionPrefix, startQuiz]);
+  }, [continueQuiz, createBundle, currentRegion.code, handleSend, handleSupportClick, isAr, regionPrefix, startQuiz]);
 
   const suggestions = useMemo(() => (isAr ? QUICK_SUGGESTIONS.ar : QUICK_SUGGESTIONS.en), [isAr]);
   const showSuggestions = messages.length <= 1 && !isLoading;

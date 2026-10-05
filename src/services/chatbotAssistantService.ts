@@ -1,5 +1,5 @@
 import { publicHttp } from './apiClient';
-import { resolveChatbotAssistantLocally } from './chatbotAssistantResolver';
+import { ASSISTANT_CAPABILITIES, resolveChatbotAssistantLocally } from './chatbotAssistantResolver';
 
 export type ChatbotAssistantAction =
   | 'clarify'
@@ -9,7 +9,13 @@ export type ChatbotAssistantAction =
   | 'show_passport'
   | 'contact_support'
   | 'recommend_products'
-  | 'start_quiz';
+  | 'start_quiz'
+  | 'show_delivery_info'
+  | 'show_store_hours'
+  | 'show_store_location'
+  | 'lookup_product_price'
+  | 'lookup_product_availability'
+  | 'show_brewing_guidance';
 
 export interface ChatbotAssistantQuickAction {
   id: string;
@@ -27,6 +33,10 @@ export interface ChatbotAssistantResult {
   endpoint?: string | null;
   httpMethod: string;
   quickActions: ChatbotAssistantQuickAction[];
+  /** Phase 2A: product portion of price / availability / brewing questions. */
+  productQuery?: string | null;
+  language?: string;
+  branch?: string;
 }
 
 const unwrap = (payload: unknown): ChatbotAssistantResult | null => {
@@ -41,7 +51,7 @@ const unwrap = (payload: unknown): ChatbotAssistantResult | null => {
 export const chatbotAssistantService = {
   resolve: async (message: string, language: string): Promise<ChatbotAssistantResult | null> => {
     try {
-      const response = await publicHttp.post('/api/chatbot-assistant/resolve', { message, language }, { timeout: 4000 });
+      const response = await publicHttp.post('/api/chatbot-assistant/resolve', { message, language, capabilities: [...ASSISTANT_CAPABILITIES] }, { timeout: 4000 });
       return unwrap(response.data);
     } catch {
       // Keep transactional storefront jobs deterministic even when the additive
