@@ -26,7 +26,8 @@
     "profile": "Profile",
     "favorites": "Favorites",
     "orders": "Orders",
-    "settings": "Settings"
+    "settings": "Settings",
+    "openMenu": "Open menu"
   },
   "hero": {
     "title": "Spirit Hub Cafe",

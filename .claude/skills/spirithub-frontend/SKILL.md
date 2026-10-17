@@ -17,16 +17,16 @@ Read `CLAUDE.md` first; this skill expands its UI rules into a procedure.
 
 ## 2. Components and icons (shadcn + Animate UI)
 
-- The shadcn MCP server is configured in `.mcp.json`; use it to search registries and view items before installing.
-- Install with the CLI so files land in the configured aliases (`components.json`):
+- The shadcn MCP server is configured in `.mcp.json`; use it to search and view items before adding them.
+- Animate UI code is **vendored** in `src/components/animate-ui/` — the site has no runtime or config dependency on animate-ui.com, and `components.json` has no `@animate-ui` registry entry. Keep it that way. To add a new icon/component, install it once by URL without registering the registry, then commit the generated files:
   ```bash
-  npx shadcn@latest view @animate-ui/<item>    # inspect first
-  npx shadcn@latest add @animate-ui/<item>     # then install
+  npx shadcn@latest add https://animate-ui.com/r/icons-<name>.json
   ```
-  Animate UI items are namespaced (e.g. `components-…`, `icons-…`); confirm exact names with the MCP search or `view`.
+  Remove any unused `import * as React` the generator adds (strict `tsc` fails on it).
 - After installing, read the generated file: check its imports (`motion/react`, Radix), props, and that `npm run build` passes.
 - **Icons:**
   - Animate UI animated icons for interactive or prominent UI: header actions, cart, wishlist, CTAs, empty states, success/error feedback.
+  - Use them through `<AnimatedIcon name="…" className="size-5" />` (`src/components/icons/AnimatedIcon.tsx`), never by importing `src/components/animate-ui/icons/*` directly in app code. It renders the identical lucide icon for SSR/first paint, loads the animated version (and `motion`) after idle, animates on hover/focus of the closest button/link, and stays static under reduced motion — so the initial bundle does not grow. New icons: add them to both maps (`AnimatedIcon.tsx` and `animatedIconRegistry.ts`).
   - Trigger animation on hover/tap or on a state change — never loop continuously in view (battery, distraction, INP).
   - `lucide-react` stays for static, decorative, dense lists and the admin panel. Do not mix both styles inside one control group.
   - Sizes: `size-4` inline text, `size-5` buttons and nav, `size-6` hero/feature. Icon-only buttons need a translated `aria-label`.

@@ -45,8 +45,8 @@ These rules are mandatory. Task-specific playbooks live in `.claude/skills/`:
 8. Respect `prefers-reduced-motion` for every animation.
 
 ### UI
-9. Use the design tokens in `src/index.css` and the shadcn primitives in `src/components/ui`. Add components with the shadcn CLI / shadcn MCP (`.mcp.json`), including the `@animate-ui` registry. Never paste component code from websites.
-10. Icons: Animate UI animated icons for interactive or prominent icons; `lucide-react` remains allowed for static, decorative and admin icons. One size scale everywhere.
+9. Use the design tokens in `src/index.css` and the shadcn primitives in `src/components/ui`. Add components with the shadcn CLI / shadcn MCP (`.mcp.json`). Animate UI is vendored in `src/components/animate-ui/` with no runtime or registry dependency on animate-ui.com (see `spirithub-frontend`). Never paste component code from websites.
+10. Icons: Animate UI animated icons (via `AnimatedIcon`) for interactive or prominent icons; `lucide-react` remains allowed for static, decorative and admin icons. One size scale everywhere.
 11. Every user-facing string goes through i18n (`src/i18n/locales/en.json` **and** `ar.json`). Layouts must work in RTL; use logical utilities (`ms-`, `me-`, `ps-`, `pe-`, `start-`, `end-`).
 12. Accessible by default: semantic elements, labels on icon-only buttons, visible focus, AA contrast.
 

@@ -1,7 +1,8 @@
 import React, { Suspense, lazy, useMemo, useCallback, useEffect, useState, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Globe, ShoppingCart, Menu, ChevronDown, User, Heart, ShoppingBag, Shield, Coffee, Gift, Star, Home as HomeIcon, Package, Info, Mail, LogOut, LogIn, UserPlus } from 'lucide-react';
+import { Globe, ShoppingCart, ChevronDown, User, Heart, ShoppingBag, Shield, Coffee, Gift, Star, Home as HomeIcon, Package, Info, Mail, UserPlus, LogIn } from 'lucide-react';
+import { AnimatedIcon } from '@/components/icons/AnimatedIcon';
 import { Button } from '../ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetClose, SheetTitle, SheetDescription } from '../ui/sheet';
 import {
@@ -459,7 +460,7 @@ export const Navigation: React.FC = () => {
                   onClick={() => setAuthModal('login')}
                   className="text-xs"
                 >
-                  <LogIn className="h-4 w-4" />
+                  <AnimatedIcon name="log-in" className="size-4 rtl:-scale-x-100" />
                   <span className="mr-2">{t('auth.login')}</span>
                 </Button>
               )}
@@ -517,7 +518,7 @@ export const Navigation: React.FC = () => {
                   className="p-2.5"
                   aria-label={t('auth.login')}
                 >
-                  <LogIn className="h-4 w-4" />
+                  <AnimatedIcon name="log-in" className="size-4 rtl:-scale-x-100" />
                 </Button>
               )}
             </div>
@@ -594,13 +595,14 @@ export const Navigation: React.FC = () => {
                 <Button
                   variant="ghost"
                   size="sm"
+                  aria-label={t('nav.openMenu')}
                   className={`transition-colors p-2.5 ${
                     isHomePage 
                       ? 'text-white hover:text-amber-200 hover:bg-white/10' 
                       : 'text-gray-900 hover:text-amber-600 hover:bg-gray-100'
                   }`}
                 >
-                  <Menu className="w-6 h-6" />
+                  <AnimatedIcon name="menu" className="size-6" />
                 </Button>
               </SheetTrigger>
               <SheetContent
@@ -943,7 +945,7 @@ export const Navigation: React.FC = () => {
                                     onClick={() => logout()}
                                     className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] font-medium text-red-400/80 rounded-lg transition-colors hover:bg-red-500/[0.06] hover:text-red-300"
                                   >
-                                    <LogOut className="h-3.5 w-3.5" />
+                                    <AnimatedIcon name="log-out" className="size-3.5 rtl:-scale-x-100" />
                                     {language === 'ar' ? 'تسجيل الخروج' : 'Log out'}
                                   </button>
                                 </SheetClose>
