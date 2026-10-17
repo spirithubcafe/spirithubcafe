@@ -23,7 +23,7 @@ export const RequireAuth: React.FC<Props> = ({ children }) => {
 
   if (isLoading) {
     return (
-      <div className="min-h-[50vh] flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <Spinner className="w-8 h-8" />
       </div>
     );
@@ -33,7 +33,10 @@ export const RequireAuth: React.FC<Props> = ({ children }) => {
     const region = getRegionFromPathname(location.pathname) || currentRegion.code;
     const loginPath = `/${region}/login`;
 
+    // Keep the page one screen tall during the redirect frame (no footer jump).
     return (
+      <>
+      <div className="min-h-screen" aria-hidden="true" />
       <Navigate
         to={loginPath}
         replace
@@ -44,6 +47,7 @@ export const RequireAuth: React.FC<Props> = ({ children }) => {
             : 'Please login to continue to checkout.',
         }}
       />
+      </>
     );
   }
 
