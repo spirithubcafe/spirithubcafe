@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ChevronLeft, ChevronRight, Play } from 'lucide-react';
+import { Play } from 'lucide-react';
+import { AnimatedIcon } from '@/components/icons/AnimatedIcon';
 import useEmblaCarousel from 'embla-carousel-react';
 import { HOMEPAGE_HEADER_SPACING, HOMEPAGE_HEADING, homepageContainerClassName, homepageSectionClassName } from './homepageSectionSpacing';
 
@@ -234,19 +235,19 @@ export const InstagramSection: React.FC = () => {
                   type="button"
                   onClick={() => scrollByPage('prev')}
                   disabled={!canScrollPrev}
-                  aria-label="Scroll left"
+                  aria-label={isArabic ? 'التمرير لليسار' : 'Scroll left'}
                   className="ig-nav ig-nav-left"
                 >
-                  <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" />
+                  <AnimatedIcon name="chevron-left" className="size-4 sm:size-5" />
                 </button>
                 <button
                   type="button"
                   onClick={() => scrollByPage('next')}
                   disabled={!canScrollNext}
-                  aria-label="Scroll right"
+                  aria-label={isArabic ? 'التمرير لليمين' : 'Scroll right'}
                   className="ig-nav ig-nav-right"
                 >
-                  <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5" />
+                  <AnimatedIcon name="chevron-right" className="size-4 sm:size-5" />
                 </button>
               </>
             )}

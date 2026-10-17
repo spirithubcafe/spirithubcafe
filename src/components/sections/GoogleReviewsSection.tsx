@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ChevronLeft, ChevronRight, MapPin, Star } from 'lucide-react';
+import { MapPin, Star } from 'lucide-react';
+import { AnimatedIcon } from '@/components/icons/AnimatedIcon';
 import useEmblaCarousel from 'embla-carousel-react';
 import { googleReviewsService, type GoogleReviewsData } from '@/services/googleReviewsService';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -340,7 +341,7 @@ export const GoogleReviewsSection: React.FC = () => {
                         >
                           <GoogleGIcon className="h-4 w-4 shrink-0" />
                           {isArabic ? 'قيّمنا على Google' : 'Review Us on Google'}
-                          <ChevronRight className={`h-4 w-4 ${isArabic ? 'rotate-180' : ''}`} />
+                          <AnimatedIcon name="chevron-right" className={`size-4 ${isArabic ? 'rotate-180' : ''}`} />
                         </a>
                       )}
                     </div>
@@ -368,7 +369,7 @@ export const GoogleReviewsSection: React.FC = () => {
                   aria-label={isArabic ? 'التمرير لليسار' : 'Scroll left'}
                   className="gr-nav gr-nav-left"
                 >
-                  <ChevronLeft className="h-4 w-4" />
+                  <AnimatedIcon name="chevron-left" className="size-4" />
                 </button>
                 <button
                   type="button"
@@ -377,7 +378,7 @@ export const GoogleReviewsSection: React.FC = () => {
                   aria-label={isArabic ? 'التمرير لليمين' : 'Scroll right'}
                   className="gr-nav gr-nav-right"
                 >
-                  <ChevronRight className="h-4 w-4" />
+                  <AnimatedIcon name="chevron-right" className="size-4" />
                 </button>
 
                 <div className="reviews-stage flex h-full flex-col justify-center">

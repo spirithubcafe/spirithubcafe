@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, ArrowLeft } from 'lucide-react';
+import { AnimatedIcon } from '@/components/icons/AnimatedIcon';
 import { useApp } from '../../hooks/useApp';
 import { useRegion } from '../../hooks/useRegion';
 import { useShopCategory, useCategoryProducts } from '../../hooks/useShop';
@@ -21,7 +21,6 @@ export const CuratedBundlesSection: React.FC = () => {
   const { language } = useApp();
   const { currentRegion } = useRegion();
   const isArabic = language === 'ar';
-  const Arrow = isArabic ? ArrowLeft : ArrowRight;
 
   const { category, loading: categoryLoading } = useShopCategory(BUNDLE_CATEGORY_SLUG);
   const { products, loading: productsLoading } = useCategoryProducts(category?.id ?? 0);
@@ -49,7 +48,7 @@ export const CuratedBundlesSection: React.FC = () => {
               className="group inline-flex shrink-0 items-center gap-1.5 text-sm font-bold text-stone-900 hover:text-amber-700"
             >
               {isArabic ? 'عرض كل الحزم' : 'View all bundles'}
-              <Arrow className="h-4 w-4 transition-transform group-hover:translate-x-1 rtl:group-hover:-translate-x-1" />
+              <AnimatedIcon name="arrow-right" className="size-4 rtl:-scale-x-100" />
             </Link>
           </div>
         </div>
@@ -103,7 +102,7 @@ export const CuratedBundlesSection: React.FC = () => {
                         {priceLabel && <p className="text-sm font-bold text-stone-900 sm:text-base">{priceLabel}</p>}
                         <span className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-stone-900 px-3 py-2 text-xs font-bold text-white transition group-hover:bg-amber-600">
                           {isArabic ? 'التفاصيل' : 'View details'}
-                          <Arrow className="h-3.5 w-3.5" />
+                          <AnimatedIcon name="arrow-right" className="size-3.5 rtl:-scale-x-100" />
                         </span>
                       </div>
                     </div>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ArrowRight, ArrowLeft } from 'lucide-react';
+import { AnimatedIcon } from '@/components/icons/AnimatedIcon';
 import { useApp } from '../../hooks/useApp';
 import { HOMEPAGE_EYEBROW, HOMEPAGE_HEADING, homepageContainerClassName, homepageSectionClassName } from './homepageSectionSpacing';
 
@@ -10,7 +10,6 @@ export const SustainabilitySection: React.FC = () => {
   const location = useLocation();
   const regionPrefix = location.pathname.startsWith('/sa') ? '/sa' : '/om';
 
-  const Arrow = isArabic ? ArrowLeft : ArrowRight;
 
   return (
     <section
@@ -59,7 +58,7 @@ export const SustainabilitySection: React.FC = () => {
               className="group mt-4 inline-flex items-center gap-2 rounded-full border border-stone-900 bg-white px-6 py-2.5 text-sm font-bold text-stone-900 shadow-sm transition hover:bg-stone-900 hover:text-white sm:mt-6"
             >
               {isArabic ? 'اعرف المزيد' : 'Our Story'}
-              <Arrow className="h-4 w-4 transition-transform group-hover:translate-x-1 rtl:group-hover:-translate-x-1" />
+              <AnimatedIcon name="arrow-right" className="size-4 rtl:-scale-x-100" />
             </Link>
           </div>
         </div>

@@ -1,7 +1,8 @@
 import React, { lazy, memo, Suspense, useState, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import { ShoppingCart, Eye, Heart } from 'lucide-react';
+import { ShoppingCart, Eye } from 'lucide-react';
+import { AnimatedIcon } from '@/components/icons/AnimatedIcon';
 import { Card, CardContent, CardFooter } from '../ui/card';
 import { Button } from '../ui/button';
 import { useCart } from '../../hooks/useCart';
@@ -177,8 +178,10 @@ const ProductCardComponent: React.FC<ProductCardProps> = ({ product, prioritizeI
             : 'text-gray-400 hover:text-red-500'
         }`}
         onClick={handleToggleWishlist}
+        aria-label={isArabic ? (isWishlisted ? 'إزالة من المفضلة' : 'أضف إلى المفضلة') : (isWishlisted ? 'Remove from favorites' : 'Add to favorites')}
+        aria-pressed={isWishlisted}
       >
-        <Heart className={`w-4 h-4 ${isWishlisted ? 'fill-current' : ''}`} />
+        <AnimatedIcon name="heart" className={`size-4 ${isWishlisted ? 'fill-current' : ''}`} />
       </Button>
 
       {/* Product Image - Square aspect ratio */}

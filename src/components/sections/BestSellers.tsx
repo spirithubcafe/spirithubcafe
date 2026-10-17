@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ArrowRight, ArrowLeft } from 'lucide-react';
+import { AnimatedIcon } from '@/components/icons/AnimatedIcon';
 import { Link, useLocation } from 'react-router-dom';
 import { ProductCard } from '../products/ProductCard';
 import { ProductGridSkeleton } from './ProductGridSkeleton';
@@ -11,9 +11,7 @@ import type { Product } from '../../contexts/AppContextDefinition';
 import { HOMEPAGE_CONTAINER, homepageSectionClassName } from './homepageSectionSpacing';
 
 export const BestSellers: React.FC = () => {
-  const { t, i18n } = useTranslation();
-  const isArabic = i18n.language === 'ar';
-  const Arrow = isArabic ? ArrowLeft : ArrowRight;
+  const { t } = useTranslation();
   const location = useLocation();
   const regionPrefix = location.pathname.startsWith('/sa') ? '/sa' : '/om';
   const [bestSellerProducts, setBestSellerProducts] = useState<Product[]>([]);
@@ -138,7 +136,7 @@ export const BestSellers: React.FC = () => {
             className="group inline-flex items-center gap-2 rounded-full bg-stone-900 px-8 py-3 text-sm font-bold text-white transition hover:bg-amber-600"
           >
             {t('sections.viewAllProducts')}
-            <Arrow className="h-4 w-4 transition-transform group-hover:translate-x-1 rtl:group-hover:-translate-x-1" />
+            <AnimatedIcon name="arrow-right" className="size-4 rtl:-scale-x-100" />
           </Link>
         </div>
       </div>

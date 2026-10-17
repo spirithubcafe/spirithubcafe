@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { AnimatedIcon } from '@/components/icons/AnimatedIcon';
 import useEmblaCarousel from 'embla-carousel-react';
 import { useApp } from '../../hooks/useApp';
 import { useShopPage } from '../../hooks/useShop';
@@ -154,7 +154,7 @@ export const UnifiedCategoriesSection: React.FC = () => {
             disabled={!canScrollLeft}
             className="category-nav category-nav-left"
           >
-            <ChevronLeft className="h-5 w-5" />
+            <AnimatedIcon name="chevron-left" className="size-5" />
           </button>
           <button
             type="button"
@@ -163,7 +163,7 @@ export const UnifiedCategoriesSection: React.FC = () => {
             disabled={!canScrollRight}
             className="category-nav category-nav-right"
           >
-            <ChevronRight className="h-5 w-5" />
+            <AnimatedIcon name="chevron-right" className="size-5" />
           </button>
 
           <div ref={emblaRef} dir="ltr" className="categories-viewport overflow-hidden">

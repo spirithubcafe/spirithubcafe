@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ArrowRight, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
+import { AnimatedIcon } from '@/components/icons/AnimatedIcon';
 import { useApp } from '../../hooks/useApp';
 import { homepageContainerClassName } from '../sections/homepageSectionSpacing';
 import './ProfessionalHeroSlider.css';
@@ -39,6 +40,8 @@ const USE_MOBILE_HERO_VIDEO = false;
 export const ProfessionalHeroSlider: React.FC = () => {
   // const { t } = useTranslation(); // Removed unused import
   const { language } = useApp();
+  const location = useLocation();
+  const regionPrefix = location.pathname.startsWith('/sa') ? '/sa' : '/om';
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPlaying] = useState(true);
   const [isHovered, setIsHovered] = useState(false);
@@ -526,14 +529,14 @@ export const ProfessionalHeroSlider: React.FC = () => {
 
                 <div className="slide-cta">
                   <Link
-                    to="/products"
+                    to={`${regionPrefix}/products`}
                     className="hero-cta-button"
                     onClick={(e) => e.stopPropagation()}
                     onMouseEnter={() => setOverInteractive(true)}
                     onMouseLeave={() => setOverInteractive(false)}
                   >
                     <span>{currentSlideData.cta}</span>
-                    <ArrowRight className="hero-cta-arrow" aria-hidden="true" size={20} />
+                    <AnimatedIcon name="arrow-right" className="size-5 shrink-0 rtl:-scale-x-100" />
                   </Link>
                 </div>
               </div>
