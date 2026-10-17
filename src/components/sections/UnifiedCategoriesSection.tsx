@@ -6,7 +6,7 @@ import { useApp } from '../../hooks/useApp';
 import { useShopPage } from '../../hooks/useShop';
 import { useRegion } from '../../hooks/useRegion';
 import { buildResponsiveSrcSet, getCategoryImageUrl, handleImageError } from '../../lib/imageUtils';
-import { HOMEPAGE_HEADER_SPACING, HOMEPAGE_HEADING, homepageContainerClassName, homepageSectionClassName } from './homepageSectionSpacing';
+import { HOMEPAGE_CARD, HOMEPAGE_CARD_HOVER, HOMEPAGE_HEADER_SPACING, HOMEPAGE_HEADING, homepageContainerClassName, homepageSectionClassName } from './homepageSectionSpacing';
 
 type UnifiedCategoryItem = {
   id: string;
@@ -37,26 +37,6 @@ const CATEGORY_STYLES = `
         .categories-slide {
           flex: 0 0 min(58vw, ${CARD_WIDTH}px);
           margin-left: 12px;
-        }
-
-        .category-edge {
-          pointer-events: none;
-          position: absolute;
-          top: 0;
-          z-index: 10;
-          display: none;
-          height: 100%;
-          width: 34px;
-        }
-
-        .category-edge-left {
-          left: 0;
-          background: linear-gradient(90deg, rgba(255, 253, 249, 0.94), rgba(255, 253, 249, 0));
-        }
-
-        .category-edge-right {
-          right: 0;
-          background: linear-gradient(270deg, rgba(255, 253, 249, 0.94), rgba(255, 253, 249, 0));
         }
 
         .category-nav {
@@ -108,7 +88,6 @@ const CATEGORY_STYLES = `
         }
 
         @media (min-width: 768px) {
-          .category-edge,
           .category-nav {
             display: flex;
           }
@@ -218,7 +197,7 @@ export const UnifiedCategoriesSection: React.FC = () => {
               // Mirrors the loaded card: same width, image ratio, radius and title row.
               <div
                 key={i}
-                className="categories-slide overflow-hidden rounded-[24px] border border-[#d8ded6] bg-[#fffdf9]"
+                className={`categories-slide ${HOMEPAGE_CARD}`}
                 aria-hidden="true"
               >
                 <div className="aspect-square w-full animate-pulse bg-gray-100 sm:aspect-[5/6]" />
@@ -253,9 +232,6 @@ export const UnifiedCategoriesSection: React.FC = () => {
         </div>
 
         <div className="relative">
-          <div className="category-edge category-edge-left" />
-          <div className="category-edge category-edge-right" />
-
           <button
             type="button"
             aria-label={isArabic ? 'التمرير لليسار' : 'Scroll left'}
@@ -283,7 +259,7 @@ export const UnifiedCategoriesSection: React.FC = () => {
                   to={item.href}
                   className="categories-slide group block min-w-0 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/60"
                 >
-                <div className="flex h-full flex-col overflow-hidden rounded-[24px] border border-[#d8ded6] bg-[#fffdf9] shadow-[0_12px_30px_rgba(33,30,24,0.04)] transition-all duration-300 hover:-translate-y-1 hover:border-[#c9d1c7] hover:shadow-[0_18px_36px_rgba(33,30,24,0.08)]">
+                <div className={`flex h-full flex-col ${HOMEPAGE_CARD} ${HOMEPAGE_CARD_HOVER}`}>
                   <div className="relative aspect-square overflow-hidden sm:aspect-[5/6]">
                     <img
                       src={item.image}

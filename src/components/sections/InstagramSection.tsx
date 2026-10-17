@@ -285,7 +285,7 @@ export const InstagramSection: React.FC = () => {
                     href={post.permalink}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="instagram-card group relative min-w-0 shrink-0 overflow-hidden rounded-[18px] bg-[#dedbd5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#69736f] focus-visible:ring-offset-2 focus-visible:ring-offset-[#fbfbf9]"
+                    className="instagram-card group relative min-w-0 shrink-0 overflow-hidden rounded-xl bg-[#dedbd5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#69736f] focus-visible:ring-offset-2 focus-visible:ring-offset-[#fbfbf9]"
                     aria-label="Open Instagram post"
                   >
                     <img

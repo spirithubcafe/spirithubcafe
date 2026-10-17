@@ -18,3 +18,10 @@ export const homepageContainerClassName = (...classNames: Array<string | false |
 export const HOMEPAGE_EYEBROW = 'mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.22em] text-amber-600';
 export const HOMEPAGE_HEADING = 'text-2xl font-extrabold text-stone-900 sm:text-4xl';
 export const HOMEPAGE_HEADER_SPACING = 'mb-8 sm:mb-10';
+
+/**
+ * Shared card surface for homepage cards (matches the homepage ProductCard):
+ * solid white, hairline border, soft shadow. No translucency or edge fades.
+ */
+export const HOMEPAGE_CARD = 'overflow-hidden rounded-xl border border-stone-100 bg-white shadow-sm';
+export const HOMEPAGE_CARD_HOVER = 'transition-shadow duration-300 hover:shadow-md';

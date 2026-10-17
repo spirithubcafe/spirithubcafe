@@ -6,7 +6,7 @@ import { useRegion } from '../../hooks/useRegion';
 import { useShopCategory, useCategoryProducts } from '../../hooks/useShop';
 import { getProductImageUrl, handleImageError } from '../../lib/imageUtils';
 import { formatPrice, getCurrencyByRegion, getCurrencySymbolByRegion } from '../../lib/regionUtils';
-import { homepageContainerClassName, homepageSectionClassName } from './homepageSectionSpacing';
+import { HOMEPAGE_CARD, HOMEPAGE_CARD_HOVER, homepageContainerClassName, homepageSectionClassName } from './homepageSectionSpacing';
 
 const BUNDLE_CATEGORY_SLUG = 'coffee-bundles-gift-boxes';
 
@@ -57,7 +57,7 @@ export const CuratedBundlesSection: React.FC = () => {
           {loading
             ? Array.from({ length: 4 }).map((_, index) => (
                 // Same row heights as the loaded card below (skeleton parity).
-                <div key={index} className="flex h-full flex-col overflow-hidden rounded-2xl border border-stone-100 bg-white shadow-sm" aria-hidden="true">
+                <div key={index} className={`flex h-full flex-col ${HOMEPAGE_CARD}`} aria-hidden="true">
                   <div className="aspect-[4/3] w-full animate-pulse bg-stone-100" />
                   <div className="flex flex-1 flex-col gap-1.5 p-4">
                     <div className="h-4 py-0.5"><div className="h-full w-1/3 animate-pulse rounded bg-stone-100" /></div>
@@ -85,7 +85,7 @@ export const CuratedBundlesSection: React.FC = () => {
                   <Link
                     key={product.id}
                     to={`/${currentRegion.code}/shop/product/${productSlug}`}
-                    className="group flex h-full flex-col overflow-hidden rounded-2xl border border-stone-100 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
+                    className={`group flex h-full flex-col ${HOMEPAGE_CARD} ${HOMEPAGE_CARD_HOVER}`}
                   >
                     <div className="aspect-[4/3] w-full overflow-hidden bg-stone-100">
                       <img

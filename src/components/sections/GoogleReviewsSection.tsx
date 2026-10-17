@@ -7,7 +7,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { homepageContainerClassName, homepageSectionClassName } from './homepageSectionSpacing';
 
 const MAX_PREVIEW_LENGTH = 72;
-const REVIEW_PANEL_IMAGE = '/images/slides/rwanda-farm-spirithub-coffee.webp';
 
 const ARABIC_TEXT_REGEX = /[\u0600-\u06FF]/;
 
@@ -228,39 +227,15 @@ export const GoogleReviewsSection: React.FC = () => {
     <section className={homepageSectionClassName('bg-[#fbfbf9]')} dir={isArabic ? 'rtl' : 'ltr'}>
       <div className={homepageContainerClassName()}>
         <div
-          className="relative overflow-hidden rounded-[26px] border border-[rgba(123,96,67,0.14)] bg-[#f7f2e9] shadow-[0_18px_44px_rgba(88,63,34,0.10)] lg:min-h-[396px]"
+          className="relative overflow-hidden rounded-3xl bg-stone-900 shadow-xl lg:min-h-[396px]"
           style={{ direction: isArabic ? 'rtl' : 'ltr' }}
         >
-          <div className="absolute inset-0">
-            <img
-              src={REVIEW_PANEL_IMAGE}
-              alt=""
-              className={`h-full w-full object-cover object-[18%_center] ${isArabic ? 'lg:-scale-x-100' : ''}`}
-              loading="lazy"
-              decoding="async"
-            />
-          </div>
-          <div
-            className={`absolute inset-0 hidden lg:block ${
-              isArabic
-                ? 'bg-[linear-gradient(270deg,rgba(9,19,11,0.84)_0%,rgba(18,29,17,0.74)_23%,rgba(44,40,29,0.44)_38%,rgba(92,79,55,0.20)_47%,rgba(247,242,233,0.52)_58%,rgba(247,242,233,0.92)_74%,rgba(247,242,233,1)_100%)]'
-                : 'bg-[linear-gradient(90deg,rgba(9,19,11,0.84)_0%,rgba(18,29,17,0.74)_23%,rgba(44,40,29,0.44)_38%,rgba(92,79,55,0.20)_47%,rgba(247,242,233,0.52)_58%,rgba(247,242,233,0.92)_74%,rgba(247,242,233,1)_100%)]'
-            }`}
-          />
-          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(9,19,11,0.86)_0%,rgba(18,29,17,0.80)_52%,rgba(44,40,29,0.52)_60%,rgba(247,242,233,0.90)_70%,rgba(247,242,233,1)_100%)] lg:hidden" />
-          <div
-            className={`absolute inset-0 hidden lg:block ${
-              isArabic
-                ? 'bg-[radial-gradient(circle_at_28%_16%,rgba(255,255,255,0.62),rgba(255,255,255,0)_22%),radial-gradient(circle_at_83%_24%,rgba(255,255,255,0.10),rgba(255,255,255,0)_24%)]'
-                : 'bg-[radial-gradient(circle_at_72%_16%,rgba(255,255,255,0.62),rgba(255,255,255,0)_22%),radial-gradient(circle_at_17%_24%,rgba(255,255,255,0.10),rgba(255,255,255,0)_24%)]'
-            }`}
-          />
 
           {/* One layout for loading and loaded: only data-dependent parts swap for
               same-size placeholders, so the section never resizes when reviews arrive. */}
             <div className="relative grid grid-cols-[minmax(0,1fr)] lg:min-h-[396px] lg:grid-cols-[37%_63%]">
               <div className="px-6 py-8 sm:px-8 sm:py-9 lg:flex lg:flex-col lg:justify-center lg:px-8 lg:py-7">
-                <div className="max-w-[400px] rounded-[28px] border border-white/12 bg-[linear-gradient(180deg,rgba(8,15,10,0.52),rgba(17,24,17,0.26))] p-5 shadow-[0_18px_42px_rgba(0,0,0,0.16)] backdrop-blur-[10px] sm:p-6 lg:p-6">
+                <div className="max-w-[400px]">
                   <div className="space-y-5">
                     <div className="space-y-4">
                       <div className="space-y-3">
@@ -298,10 +273,13 @@ export const GoogleReviewsSection: React.FC = () => {
                       )}
                     </div>
 
+                    {/* Both states reserve the row's tallest case: the review count wraps to two lines in narrow panels. */}
                     {isLoading ? (
-                      <Skeleton className="h-10 w-48 bg-white/20 lg:h-[2.2rem]" />
+                      <div className="flex min-h-[51px] items-center lg:min-h-[45px]">
+                        <Skeleton className="h-10 w-48 bg-white/20 lg:h-[2.2rem]" />
+                      </div>
                     ) : (
-                    <div className="flex items-center gap-3 text-white">
+                    <div className="flex min-h-[51px] items-center gap-3 text-white lg:min-h-[45px]">
                       <span className="text-[2.5rem] font-bold leading-none lg:text-[2.2rem]">{payload?.rating.toFixed(1)}</span>
                       <StarRow rating={payload?.rating ?? 0} size={16} />
                       <span className="text-[17px] text-white/84 lg:text-[15px]">
@@ -342,7 +320,7 @@ export const GoogleReviewsSection: React.FC = () => {
                     <div className="reviews-rail flex items-stretch pb-1">
                       {isLoading && Array.from({ length: 3 }).map((_, idx) => (
                         <div key={`review-skeleton-${idx}`} className="reviews-slide min-w-0 shrink-0" aria-hidden="true">
-                          <article className="review-card flex h-full flex-col rounded-[22px] border border-[rgba(93,67,45,0.1)] bg-[rgba(252,247,240,0.68)] p-5 lg:p-[18px] shadow-[0_10px_28px_rgba(59,42,32,0.08)] backdrop-blur-[14px]">
+                          <article className="review-card flex h-full flex-col rounded-xl border border-stone-100 bg-white p-5 lg:p-[18px] shadow-sm">
                             <div className={`flex items-start gap-2.5 ${isArabic ? 'flex-row-reverse' : ''}`}>
                               <div className="-mt-1 w-9 shrink-0 font-serif text-[56px] font-bold leading-none text-[#d8c4a7] lg:w-8 lg:text-[48px]">
                                 “
@@ -351,7 +329,7 @@ export const GoogleReviewsSection: React.FC = () => {
                                 <div className={`flex pt-1 ${isArabic ? 'justify-end' : ''}`}>
                                   <StarRow rating={0} size={14} />
                                 </div>
-                                <div className="mt-3 min-h-[120px] space-y-2.5 lg:min-h-[111px]">
+                                <div className="mt-3 min-h-[124px] space-y-2.5 lg:min-h-[158px] xl:min-h-[116px]">
                                   <Skeleton className="h-4 w-full bg-[#efe6d8]" />
                                   <Skeleton className="h-4 w-5/6 bg-[#efe6d8]" />
                                   <Skeleton className="h-4 w-2/3 bg-[#efe6d8]" />
@@ -381,7 +359,7 @@ export const GoogleReviewsSection: React.FC = () => {
                             key={`${review.authorName}-${review.time}-${index}`}
                             className="reviews-slide min-w-0 shrink-0"
                           >
-                            <article className="review-card flex h-full flex-col rounded-[22px] border border-[rgba(93,67,45,0.1)] bg-[rgba(252,247,240,0.68)] p-5 lg:p-[18px] shadow-[0_10px_28px_rgba(59,42,32,0.08)] backdrop-blur-[14px]">
+                            <article className="review-card flex h-full flex-col rounded-xl border border-stone-100 bg-white p-5 lg:p-[18px] shadow-sm">
                               <div className={`flex items-start gap-2.5 ${isArabic ? 'flex-row-reverse' : ''}`}>
                                 <div className="-mt-1 w-9 shrink-0 font-serif text-[56px] font-bold leading-none text-[#d8c4a7] lg:w-8 lg:text-[48px]" aria-hidden="true">
                                   “
@@ -390,7 +368,7 @@ export const GoogleReviewsSection: React.FC = () => {
                                   <div className={`flex pt-1 ${isArabic ? 'justify-end' : ''}`}>
                                     <StarRow rating={review.rating} size={14} />
                                   </div>
-                                  <div className="mt-3 min-h-[120px] lg:min-h-[111px]">
+                                  <div className="mt-3 min-h-[124px] lg:min-h-[158px] xl:min-h-[116px]">
                                     <ReviewText text={review.text} isArabic={isArabic} />
                                   </div>
                                 </div>
@@ -428,7 +406,7 @@ export const GoogleReviewsSection: React.FC = () => {
                           aria-pressed={selectedIndex === index}
                           onClick={() => emblaApi?.scrollTo(index)}
                           className={`h-2 rounded-full transition-all ${
-                            selectedIndex === index ? 'w-5 bg-[#7a6655]' : 'w-2 bg-[#d5c7b4] hover:bg-[#bda992]'
+                            selectedIndex === index ? 'w-5 bg-amber-400' : 'w-2 bg-white/30 hover:bg-white/50'
                           }`}
                         />
                       ))}
