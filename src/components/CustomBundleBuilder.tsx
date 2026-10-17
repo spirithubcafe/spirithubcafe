@@ -127,6 +127,7 @@ export const CustomBundleBuilder = () => {
       ?? Math.max(...tiers.map((tier) => tier.discountPercentage));
   }, [configuration?.tiers, maxCount]);
 
+  const configurationPending = !configuration && !error;
   const headlineLine2 = topDiscount !== undefined
     ? t('customBundle.headlineLine2WithDiscount', { discount: topDiscount })
     : t('customBundle.headlineLine2NoDiscount');
@@ -171,7 +172,15 @@ export const CustomBundleBuilder = () => {
             <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.22em] text-amber-400"><Sparkles className="h-4 w-4" />{t('customBundle.eyebrow')}</div>
             <h2 className="text-2xl! font-extrabold leading-tight sm:text-4xl!">
               <span className="block">{t('customBundle.headlineLine1')}</span>
-              <span className="block">{renderWithBold(headlineLine2)}</span>
+              <span className="block">
+                {configurationPending ? (
+                  // One headline line: the no-discount fallback wraps to two lines on
+                  // mobile, so showing it while loading made the card shrink (CLS).
+                  <span aria-hidden="true" className="inline-block h-[0.8em] w-[6.5em] animate-pulse rounded-lg bg-white/10 align-middle" />
+                ) : (
+                  renderWithBold(headlineLine2)
+                )}
+              </span>
             </h2>
             {isArabic && <p className="text-sm font-semibold text-amber-300">{t('customBundle.titleTagline')}</p>}
             <p className="max-w-md text-sm text-stone-300 sm:text-base">{simpleSubtitleText}</p>

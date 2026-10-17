@@ -256,58 +256,8 @@ export const GoogleReviewsSection: React.FC = () => {
             }`}
           />
 
-          {isLoading ? (
-            <div className="relative grid lg:min-h-[396px] lg:grid-cols-[37%_63%]">
-              <div className="px-6 py-8 sm:px-8 sm:py-9 lg:px-10 lg:py-10">
-                <div className="space-y-6">
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.24em] text-[#dfbe7a]">
-                      <span className="h-px w-6 bg-[#dfbe7a]/80" aria-hidden="true" />
-                      <Skeleton className="h-3 w-28 bg-white/20" />
-                    </div>
-                    <Skeleton className="h-12 w-4/5 bg-white/20" />
-                    <Skeleton className="h-12 w-2/3 bg-white/20" />
-                    <Skeleton className="h-5 w-full bg-white/15" />
-                    <Skeleton className="h-5 w-4/5 bg-white/15" />
-                  </div>
-                  <Skeleton className="h-12 w-[248px] rounded-full bg-white/20" />
-                </div>
-                <div className="mt-12">
-                  <Skeleton className="h-14 w-48 bg-white/20" />
-                  <Skeleton className="mt-3 h-5 w-40 bg-white/15" />
-                </div>
-              </div>
-
-              <div className="px-4 py-6 sm:px-6 sm:py-7 lg:px-8 lg:py-8">
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-                  {Array.from({ length: 3 }).map((_, idx) => (
-                    <div
-                      key={`review-skeleton-${idx}`}
-                      // The loaded carousel is a single row; don't stack extra
-                      // placeholder cards on narrow screens or the section shrinks on load.
-                      className={`${idx === 1 ? 'hidden md:block ' : idx === 2 ? 'hidden xl:block ' : ''}min-h-[230px] rounded-[22px] border border-[rgba(93,67,45,0.08)] bg-[rgba(255,252,247,0.68)] p-5 shadow-[0_8px_24px_rgba(59,42,32,0.06)] backdrop-blur-[10px]`}
-                    >
-                      <div className="mb-6 flex items-start justify-between gap-3">
-                        <Skeleton className="h-12 w-12 rounded-2xl bg-[#efe6d8]" />
-                        <Skeleton className="h-5 w-24 rounded-full bg-[#efe6d8]" />
-                      </div>
-                      <Skeleton className="mb-3 h-5 w-full bg-[#efe6d8]" />
-                      <Skeleton className="mb-3 h-5 w-5/6 bg-[#efe6d8]" />
-                      <Skeleton className="mb-10 h-5 w-3/4 bg-[#efe6d8]" />
-                      <div className="mt-auto flex items-start gap-3">
-                        <Skeleton className="h-11 w-11 rounded-full bg-[#efe6d8]" />
-                        <div className="flex-1 space-y-2">
-                          <Skeleton className="h-4 w-28 bg-[#efe6d8]" />
-                          <Skeleton className="h-3 w-20 bg-[#efe6d8]" />
-                          <Skeleton className="h-3 w-24 bg-[#efe6d8]" />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          ) : (
+          {/* One layout for loading and loaded: only data-dependent parts swap for
+              same-size placeholders, so the section never resizes when reviews arrive. */}
             <div className="relative grid grid-cols-[minmax(0,1fr)] lg:min-h-[396px] lg:grid-cols-[37%_63%]">
               <div className="px-6 py-8 sm:px-8 sm:py-9 lg:flex lg:flex-col lg:justify-center lg:px-8 lg:py-7">
                 <div className="max-w-[400px] rounded-[28px] border border-white/12 bg-[linear-gradient(180deg,rgba(8,15,10,0.52),rgba(17,24,17,0.26))] p-5 shadow-[0_18px_42px_rgba(0,0,0,0.16)] backdrop-blur-[10px] sm:p-6 lg:p-6">
@@ -332,7 +282,9 @@ export const GoogleReviewsSection: React.FC = () => {
                         </p>
                       </div>
 
-                      {payload?.reviewWriteUrl && (
+                      {isLoading ? (
+                        <Skeleton className="h-12 w-[220px] rounded-full bg-white/20 sm:w-[248px] lg:h-11 lg:w-[224px]" />
+                      ) : payload?.reviewWriteUrl && (
                         <a
                           href={payload.reviewWriteUrl}
                           target="_blank"
@@ -346,6 +298,9 @@ export const GoogleReviewsSection: React.FC = () => {
                       )}
                     </div>
 
+                    {isLoading ? (
+                      <Skeleton className="h-10 w-48 bg-white/20 lg:h-[2.2rem]" />
+                    ) : (
                     <div className="flex items-center gap-3 text-white">
                       <span className="text-[2.5rem] font-bold leading-none lg:text-[2.2rem]">{payload?.rating.toFixed(1)}</span>
                       <StarRow rating={payload?.rating ?? 0} size={16} />
@@ -355,6 +310,7 @@ export const GoogleReviewsSection: React.FC = () => {
                           : `(${payload?.userRatingsTotal ?? 0} reviews)`}
                       </span>
                     </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -384,6 +340,34 @@ export const GoogleReviewsSection: React.FC = () => {
                 <div className="reviews-stage flex h-full flex-col justify-center">
                   <div ref={emblaRef} className="reviews-viewport -mb-6 -mt-4 overflow-hidden pb-6 pt-4">
                     <div className="reviews-rail flex items-stretch pb-1">
+                      {isLoading && Array.from({ length: 3 }).map((_, idx) => (
+                        <div key={`review-skeleton-${idx}`} className="reviews-slide min-w-0 shrink-0" aria-hidden="true">
+                          <article className="review-card flex h-full flex-col rounded-[22px] border border-[rgba(93,67,45,0.1)] bg-[rgba(252,247,240,0.68)] p-5 lg:p-[18px] shadow-[0_10px_28px_rgba(59,42,32,0.08)] backdrop-blur-[14px]">
+                            <div className={`flex items-start gap-2.5 ${isArabic ? 'flex-row-reverse' : ''}`}>
+                              <div className="-mt-1 w-9 shrink-0 font-serif text-[56px] font-bold leading-none text-[#d8c4a7] lg:w-8 lg:text-[48px]">
+                                “
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className={`flex pt-1 ${isArabic ? 'justify-end' : ''}`}>
+                                  <StarRow rating={0} size={14} />
+                                </div>
+                                <div className="mt-3 min-h-[120px] space-y-2.5 lg:min-h-[111px]">
+                                  <Skeleton className="h-4 w-full bg-[#efe6d8]" />
+                                  <Skeleton className="h-4 w-5/6 bg-[#efe6d8]" />
+                                  <Skeleton className="h-4 w-2/3 bg-[#efe6d8]" />
+                                </div>
+                              </div>
+                            </div>
+                            <div className={`mt-auto flex items-start gap-3 pt-4 lg:pt-3 ${isArabic ? 'flex-row-reverse' : ''}`}>
+                              <Skeleton className="size-[46px] shrink-0 rounded-full bg-[#efe6d8] lg:size-10" />
+                              <div className="min-h-[41px] space-y-2 pt-1">
+                                <Skeleton className="h-3.5 w-28 bg-[#efe6d8]" />
+                                <Skeleton className="h-3 w-20 bg-[#efe6d8]" />
+                              </div>
+                            </div>
+                          </article>
+                        </div>
+                      ))}
                       {cards.map((review, index) => {
                         const displayDate =
                           formatReviewDateLabel(review.time, isArabic) ||
@@ -406,7 +390,7 @@ export const GoogleReviewsSection: React.FC = () => {
                                   <div className={`flex pt-1 ${isArabic ? 'justify-end' : ''}`}>
                                     <StarRow rating={review.rating} size={14} />
                                   </div>
-                                  <div className="mt-3">
+                                  <div className="mt-3 min-h-[120px] lg:min-h-[111px]">
                                     <ReviewText text={review.text} isArabic={isArabic} />
                                   </div>
                                 </div>
@@ -434,9 +418,9 @@ export const GoogleReviewsSection: React.FC = () => {
                     </div>
                   </div>
 
-                  {scrollSnaps.length > 1 && (
-                    <div className="mt-[23px] lg:mt-[18px] flex items-center justify-center gap-2">
-                      {scrollSnaps.map((_, index) => (
+                  {/* Always reserves the dots row; snaps are only known after Embla measures. */}
+                  <div className="mt-[23px] lg:mt-[18px] flex h-2 items-center justify-center gap-2">
+                      {scrollSnaps.length > 1 && scrollSnaps.map((_, index) => (
                         <button
                           key={`review-dot-${index}`}
                           type="button"
@@ -448,12 +432,10 @@ export const GoogleReviewsSection: React.FC = () => {
                           }`}
                         />
                       ))}
-                    </div>
-                  )}
+                  </div>
                 </div>
               </div>
             </div>
-          )}
         </div>
 
         {!isLoading && isError && (

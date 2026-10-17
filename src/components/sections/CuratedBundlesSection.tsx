@@ -56,12 +56,17 @@ export const CuratedBundlesSection: React.FC = () => {
         <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
           {loading
             ? Array.from({ length: 4 }).map((_, index) => (
-                <div key={index} className="overflow-hidden rounded-2xl border border-stone-100 bg-white shadow-sm">
+                // Same row heights as the loaded card below (skeleton parity).
+                <div key={index} className="flex h-full flex-col overflow-hidden rounded-2xl border border-stone-100 bg-white shadow-sm" aria-hidden="true">
                   <div className="aspect-[4/3] w-full animate-pulse bg-stone-100" />
-                  <div className="space-y-2 p-4">
-                    <div className="h-4 w-3/4 animate-pulse rounded bg-stone-100" />
-                    <div className="h-3 w-1/2 animate-pulse rounded bg-stone-50" />
-                    <div className="h-8 w-full animate-pulse rounded-lg bg-stone-100" />
+                  <div className="flex flex-1 flex-col gap-1.5 p-4">
+                    <div className="h-4 py-0.5"><div className="h-full w-1/3 animate-pulse rounded bg-stone-100" /></div>
+                    <div className="h-10 py-1 sm:h-12"><div className="h-4 w-3/4 animate-pulse rounded bg-stone-100 sm:h-5" /></div>
+                    <div className="h-4 py-0.5"><div className="h-full w-1/2 animate-pulse rounded bg-stone-50" /></div>
+                    <div className="mt-auto flex flex-col gap-1.5 pt-2">
+                      <div className="h-5 py-0.5 sm:h-6"><div className="h-full w-1/3 animate-pulse rounded bg-stone-100" /></div>
+                      <div className="h-8 w-full animate-pulse rounded-lg bg-stone-100" />
+                    </div>
                   </div>
                 </div>
               ))
@@ -93,14 +98,14 @@ export const CuratedBundlesSection: React.FC = () => {
                       />
                     </div>
                     <div className="flex flex-1 flex-col gap-1.5 p-4">
-                      <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-600">
+                      <p className="h-4 text-[10px] font-bold uppercase leading-4 tracking-[0.2em] text-amber-600">
                         {isArabic ? 'حزمة مختارة' : 'Curated Bundle'}
                       </p>
-                      <h3 className="text-sm font-bold text-stone-900 sm:text-base">{name}</h3>
-                      {notes && <p className="line-clamp-1 text-xs text-stone-500">{notes}</p>}
+                      <h3 className="line-clamp-2 h-10 text-sm font-bold leading-5 text-stone-900 sm:h-12 sm:text-base sm:leading-6">{name}</h3>
+                      <p className="line-clamp-1 h-4 text-xs leading-4 text-stone-500">{notes}</p>
                       <div className="mt-auto flex flex-col gap-1.5 pt-2">
-                        {priceLabel && <p className="text-sm font-bold text-stone-900 sm:text-base">{priceLabel}</p>}
-                        <span className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-stone-900 px-3 py-2 text-xs font-bold text-white transition group-hover:bg-amber-600">
+                        <p className="h-5 text-sm font-bold leading-5 text-stone-900 sm:h-6 sm:text-base sm:leading-6">{priceLabel}</p>
+                        <span className="inline-flex h-8 items-center justify-center gap-1.5 rounded-lg bg-stone-900 px-3 text-xs font-bold text-white transition group-hover:bg-amber-600">
                           {isArabic ? 'التفاصيل' : 'View details'}
                           <AnimatedIcon name="arrow-right" className={`size-3.5 ${isArabic ? '-scale-x-100' : ''}`} />
                         </span>
