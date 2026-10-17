@@ -102,10 +102,8 @@ export const UnifiedCategoriesSection: React.FC = () => {
     return (
       <section className={homepageSectionClassName('bg-white')}>
         <div className="mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:px-8">
-          {/* Mirrors the loaded header (eyebrow + heading) so the section keeps its height. */}
-          <div className="mb-7 sm:mb-8">
-            <div className="mb-2 h-4 w-40 animate-pulse rounded bg-gray-200" />
-            <div className="h-10 w-56 animate-pulse rounded-lg bg-gray-200 sm:h-[3.2rem]" />
+          <div className="text-center mb-8">
+            <div className="h-8 w-56 mx-auto animate-pulse rounded-lg bg-gray-200" />
           </div>
           <div className="flex gap-4 overflow-hidden">
             {Array.from({ length: 5 }).map((_, i) => (

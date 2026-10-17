@@ -12,25 +12,6 @@ As a business exclusively operated by an Omani team, SPIRIT HUB proudly supports
 
 SPIRIT HUB is more than a roastery it is a commitment to quality, sustainability, and community. Every cup reflects dedication to excellence, the farmers who make it possible, and the spirit of Oman.
 
-## Project structure
-
-```
-api/       Vercel serverless entry points (SSR, sitemap, Instagram feed) — must stay at the root
-server/    Node SSR server (index.js) and shared SSR modules; nginx config; .NET reference code
-src/       React application
-public/    Static assets served as-is
-tests/     All automated tests, mirroring the source layout (lib/, services/, hooks/, server/, api/)
-docs/      Project documentation and implementation notes
-tools/     One-off build and maintenance scripts
-```
-
-| Command | Purpose |
-| --- | --- |
-| `npm run dev` | Start the SSR dev server (`server/index.js`) with Vite middleware |
-| `npm run build` | Type-check and build the client and SSR bundles |
-| `npm run serve` | Run the production SSR server against `dist/` |
-| `npm test` | Run every test suite (SSR suites need `npm run build` first) |
-
 ## Product category SSR
 
 Product listings bootstrap products and public coffee categories together, using
@@ -106,7 +87,7 @@ API behavior, and the external Saudi country-switcher destination are unchanged.
 
 ## Oman legacy product redirects
 
-`server/legacyProductRedirects.js` contains nine approved, immutable exact-path Oman
+`legacyProductRedirects.js` contains nine approved, immutable exact-path Oman
 product aliases shared by the Vercel and standalone handlers. Both handlers
 return 301 before API/bootstrap lookup, metadata, or rendering. A single
 trailing slash is accepted, and the original query string is preserved verbatim.
