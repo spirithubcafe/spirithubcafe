@@ -157,7 +157,7 @@ export const OrderDetailPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 pt-24 pb-12">
+      <div className="min-h-screen bg-gray-50 pt-[calc(var(--nav-height)+var(--region-banner-height)+var(--announcement-bar-height,0px)+1.75rem)] pb-12">
         <div className="container mx-auto px-4 py-8 max-w-5xl">
           <div className="mb-8">
             <Skeleton className="h-10 w-32 mb-4" />
@@ -177,7 +177,7 @@ export const OrderDetailPage: React.FC = () => {
 
   if (error || !order) {
     return (
-      <div className="min-h-screen bg-gray-50 pt-24 pb-12">
+      <div className="min-h-screen bg-gray-50 pt-[calc(var(--nav-height)+var(--region-banner-height)+var(--announcement-bar-height,0px)+1.75rem)] pb-12">
         <div className="container mx-auto px-4 max-w-2xl">
           <Card className="shadow-lg">
             <CardContent className="py-16">
@@ -233,7 +233,7 @@ export const OrderDetailPage: React.FC = () => {
         description={`${isArabic ? 'تفاصيل الطلب رقم' : 'Details for order'} ${order.orderNumber}`}
       />
 
-      <div className="min-h-screen bg-linear-to-br from-stone-50 to-amber-50/30 pt-24 pb-12">
+      <div className="min-h-screen bg-linear-to-br from-stone-50 to-amber-50/30 pt-[calc(var(--nav-height)+var(--region-banner-height)+var(--announcement-bar-height,0px)+1.75rem)] pb-12">
         <div className="container mx-auto px-4 py-8 max-w-5xl">
           {/* Header */}
           <motion.div 
