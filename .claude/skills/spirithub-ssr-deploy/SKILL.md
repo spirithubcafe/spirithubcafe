@@ -26,6 +26,7 @@ description: Change SSR/server code or ship to production safely. Use when touch
    await handler({ url: "/om", method: "GET", headers: { host: "www.spirithubcafe.com" } }, res);'
    ```
 3. Run `npm run test:ssr-http`, `npm run test:shop-ssr`, `npm run test:category-ssr-render`.
+   - **Dependency externals:** packages listed in `ssr.external` (`vite.config.ts`) are loaded from `node_modules` at runtime, and Vercel packages only the files its tracer finds. Packages whose `exports` use the `module-sync` condition (react-router, react-router-dom) were traced as `.mjs` but resolved as `.js` at runtime → every page 503'd on 2026-10-17. Keep such packages in `ssr.noExternal`, and check new externals' `exports` before adding them.
 4. Deploy to a **Vercel preview** (push a branch or open a PR) and verify the preview URL (§3) before merging to `main`.
 
 ## 3. Verify production (after every push to main)
