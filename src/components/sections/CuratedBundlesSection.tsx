@@ -48,7 +48,7 @@ export const CuratedBundlesSection: React.FC = () => {
               className="group inline-flex shrink-0 items-center gap-1.5 text-sm font-bold text-stone-900 hover:text-amber-700"
             >
               {isArabic ? 'عرض كل الحزم' : 'View all bundles'}
-              <AnimatedIcon name="arrow-right" className="size-4 rtl:-scale-x-100" />
+              <AnimatedIcon name="arrow-right" className={`size-4 ${isArabic ? '-scale-x-100' : ''}`} />
             </Link>
           </div>
         </div>
@@ -102,7 +102,7 @@ export const CuratedBundlesSection: React.FC = () => {
                         {priceLabel && <p className="text-sm font-bold text-stone-900 sm:text-base">{priceLabel}</p>}
                         <span className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-stone-900 px-3 py-2 text-xs font-bold text-white transition group-hover:bg-amber-600">
                           {isArabic ? 'التفاصيل' : 'View details'}
-                          <AnimatedIcon name="arrow-right" className="size-3.5 rtl:-scale-x-100" />
+                          <AnimatedIcon name="arrow-right" className={`size-3.5 ${isArabic ? '-scale-x-100' : ''}`} />
                         </span>
                       </div>
                     </div>

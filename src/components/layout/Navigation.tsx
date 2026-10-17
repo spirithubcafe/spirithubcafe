@@ -460,7 +460,7 @@ export const Navigation: React.FC = () => {
                   onClick={() => setAuthModal('login')}
                   className="text-xs"
                 >
-                  <AnimatedIcon name="log-in" className="size-4 rtl:-scale-x-100" />
+                  <AnimatedIcon name="log-in" className="size-4" />
                   <span className="mr-2">{t('auth.login')}</span>
                 </Button>
               )}
@@ -518,7 +518,7 @@ export const Navigation: React.FC = () => {
                   className="p-2.5"
                   aria-label={t('auth.login')}
                 >
-                  <AnimatedIcon name="log-in" className="size-4 rtl:-scale-x-100" />
+                  <AnimatedIcon name="log-in" className="size-4" />
                 </Button>
               )}
             </div>
@@ -945,7 +945,7 @@ export const Navigation: React.FC = () => {
                                     onClick={() => logout()}
                                     className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] font-medium text-red-400/80 rounded-lg transition-colors hover:bg-red-500/[0.06] hover:text-red-300"
                                   >
-                                    <AnimatedIcon name="log-out" className="size-3.5 rtl:-scale-x-100" />
+                                    <AnimatedIcon name="log-out" className="size-3.5" />
                                     {language === 'ar' ? 'تسجيل الخروج' : 'Log out'}
                                   </button>
                                 </SheetClose>

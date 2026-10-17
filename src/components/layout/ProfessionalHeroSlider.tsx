@@ -536,7 +536,7 @@ export const ProfessionalHeroSlider: React.FC = () => {
                     onMouseLeave={() => setOverInteractive(false)}
                   >
                     <span>{currentSlideData.cta}</span>
-                    <AnimatedIcon name="arrow-right" className="size-5 shrink-0 rtl:-scale-x-100" />
+                    <AnimatedIcon name="arrow-right" className={`size-5 shrink-0 ${language === 'ar' ? '-scale-x-100' : ''}`} />
                   </Link>
                 </div>
               </div>

@@ -52,7 +52,7 @@ A skeleton has **the same outer size** as the loaded content at every breakpoint
 
 - Strings: `t('key')` with the key added to **both** `src/i18n/locales/en.json` and `ar.json`. Inline `isArabic ? … : …` only where the file already uses that pattern.
 - Arabic uses Cairo (`font-cairo`), English uses Inter.
-- Logical utilities (`ms-/me-/ps-/pe-/start-/end-`, `text-start`); flip directional icons (`rtl:-scale-x-100`).
+- Logical utilities (`ms-/me-/ps-/pe-/start-/end-`, `text-start`); flip directional icons with `isArabic ? '-scale-x-100' : ''`. `<html dir>` is not set on first load (only after a language switch), so `rtl:` variants work only inside an element that sets `dir` itself.
 - Check every UI change in both `en` and `ar`.
 
 ## 6. Links and navigation

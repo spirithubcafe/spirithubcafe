@@ -11,7 +11,8 @@ import type { Product } from '../../contexts/AppContextDefinition';
 import { HOMEPAGE_CONTAINER, homepageSectionClassName } from './homepageSectionSpacing';
 
 export const BestSellers: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isArabic = i18n.language === 'ar';
   const location = useLocation();
   const regionPrefix = location.pathname.startsWith('/sa') ? '/sa' : '/om';
   const [bestSellerProducts, setBestSellerProducts] = useState<Product[]>([]);
@@ -136,7 +137,7 @@ export const BestSellers: React.FC = () => {
             className="group inline-flex items-center gap-2 rounded-full bg-stone-900 px-8 py-3 text-sm font-bold text-white transition hover:bg-amber-600"
           >
             {t('sections.viewAllProducts')}
-            <AnimatedIcon name="arrow-right" className="size-4 rtl:-scale-x-100" />
+            <AnimatedIcon name="arrow-right" className={`size-4 ${isArabic ? '-scale-x-100' : ''}`} />
           </Link>
         </div>
       </div>

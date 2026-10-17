@@ -58,7 +58,7 @@ export const SustainabilitySection: React.FC = () => {
               className="group mt-4 inline-flex items-center gap-2 rounded-full border border-stone-900 bg-white px-6 py-2.5 text-sm font-bold text-stone-900 shadow-sm transition hover:bg-stone-900 hover:text-white sm:mt-6"
             >
               {isArabic ? 'اعرف المزيد' : 'Our Story'}
-              <AnimatedIcon name="arrow-right" className="size-4 rtl:-scale-x-100" />
+              <AnimatedIcon name="arrow-right" className={`size-4 ${isArabic ? '-scale-x-100' : ''}`} />
             </Link>
           </div>
         </div>

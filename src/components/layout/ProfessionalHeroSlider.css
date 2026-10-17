@@ -431,10 +431,6 @@
   box-shadow: 0 10px 22px rgba(245, 164, 0, 0.3);
 }
 
-.hero-cta-arrow {
-  flex: 0 0 auto;
-}
-
 .cta-button {
   background: linear-gradient(135deg, #d97706 0%, #92400e 100%);
   border: none;
@@ -997,10 +993,6 @@
 [dir="rtl"] .hero-promo-card,
 [dir="rtl"] .hero-promo-card .slide-subtitle {
   text-align: right;
-}
-
-[dir="rtl"] .hero-cta-arrow {
-  transform: rotate(180deg);
 }
 
 [dir="rtl"] .nav-button.prev {
