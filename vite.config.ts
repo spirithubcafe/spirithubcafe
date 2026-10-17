@@ -207,16 +207,19 @@ export default defineConfig(({ isSsrBuild }) => ({
     external: [
       'react',
       'react-dom',
-      'react-router-dom',
-      'react-router',
       'react/jsx-runtime',
       'react/jsx-dev-runtime',
       'react-i18next',
       'use-sync-external-store',
       'use-sync-external-store/shim',
     ],
-    // Only bundle packages that need Vite transforms during SSR.
-    noExternal: /^(quill|react-quill|react-quill-new|swiper|overlayscrollbars|overlayscrollbars-react)(\/|$)/
+    // Bundle packages that need Vite transforms during SSR, plus react-router(-dom):
+    // their package exports point Node at dist/index.mjs ("module-sync") or
+    // dist/index.js ("default"). Vercel's file tracer packaged only the .mjs file
+    // while the runtime resolved the .js one, so every SSR request failed with
+    // "Cannot find module .../react-router-dom/dist/index.js" (503). Bundling them
+    // removes the runtime lookup entirely.
+    noExternal: /^(quill|react-quill|react-quill-new|swiper|overlayscrollbars|overlayscrollbars-react|react-router|react-router-dom)(\/|$)/
   },
   optimizeDeps: {
     // Pre-bundle these dependencies
