@@ -90,6 +90,6 @@ test('complimentary gifts retain zero charged display semantics', () => {
 test('English and Arabic bundle localization keys are present', () => {
   const en = JSON.parse(readFileSync(new URL('../i18n/locales/en.json', import.meta.url), 'utf8'));
   const ar = JSON.parse(readFileSync(new URL('../i18n/locales/ar.json', import.meta.url), 'utf8'));
-  assert.equal(en.customBundle.title, 'Choose your coffees');
-  assert.equal(ar.customBundle.title, 'اختر قهوتك');
+  assert.equal(en.customBundle.title, 'Build Your Own Bundle');
+  assert.equal(ar.customBundle.title, 'اصنع حزمتك الخاصة');
 });
