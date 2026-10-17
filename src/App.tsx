@@ -99,7 +99,6 @@ const ProductsRoute = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <AnnouncementBar />
       <PageHeader
         variant="products"
         title={currentCategory?.name || 'Shop Specialty Coffee'}
@@ -222,9 +221,9 @@ function AppContent({ shopRoutes }: { shopRoutes?: ShopRouteComponents }) {
   const isInvoicePage = location.pathname.startsWith('/invoice/');
   const normalizedPath = location.pathname.replace(/\/+$/, '') || '/';
   const isProductsPage = /^\/(?:(?:om|sa)\/)?products$/.test(normalizedPath);
-  const hasAnnouncementBar =
-    isProductsPage ||
-    ['/', '/om', '/sa', '/shop', '/om/shop', '/sa/shop'].includes(normalizedPath);
+  // One announcement bar on every storefront page, so the fixed header sits at the
+  // same height everywhere (it used to jump 40px when moving between pages).
+  const hasAnnouncementBar = !isAdminPage && !isInvoicePage;
   const routeFallback = <div className="min-h-screen bg-white" />;
   const chatBotEnabled =
     !isInvoicePage && !isAdminPage && (import.meta.env.VITE_CHATBOT_ENABLED ?? 'false') === 'true';
@@ -269,6 +268,7 @@ function AppContent({ shopRoutes }: { shopRoutes?: ShopRouteComponents }) {
       }`}
     >
       {!isInvoicePage && <RegionRedirect />}
+      {hasAnnouncementBar && <AnnouncementBar />}
       {!isInvoicePage && <Navigation />}
       {!isInvoicePage && (
         <>

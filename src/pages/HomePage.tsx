@@ -2,7 +2,6 @@ import React, { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'rea
 import { Compass, Coffee, Truck } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { ProfessionalHeroSlider } from '../components/layout/ProfessionalHeroSlider';
-import { AnnouncementBar } from '../components/layout/AnnouncementBar';
 import { TrustBadgesBar } from '../components/sections/TrustBadgesBar';
 import { Seo } from '../components/seo/Seo';
 import { useApp } from '../hooks/useApp';
@@ -305,7 +304,6 @@ const HomePage: React.FC = () => {
         ]}
         structuredData={structuredData}
       />
-      <AnnouncementBar />
       <ProfessionalHeroSlider />
       <TrustBadgesBar />
 

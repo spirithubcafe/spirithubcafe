@@ -65,8 +65,11 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
 
   return (
     <div
-      className={`relative bg-gradient-to-br from-stone-50 via-white to-stone-100 page-padding-top overflow-hidden ${
-        isProductsHeader ? 'page-header-products' : 'pb-16'
+      className={`relative bg-gradient-to-br from-stone-50 via-white to-stone-100 overflow-hidden ${
+        isProductsHeader
+          ? 'page-padding-top page-header-products'
+          : // Header offset plus breathing room, so the title never sits against the fixed header.
+            'pt-[calc(var(--nav-height)+var(--region-banner-height)+var(--announcement-bar-height,0px)+3.5rem)] pb-16'
       }`}
     >
       {/* Background Image - Brighter and Clearer */}

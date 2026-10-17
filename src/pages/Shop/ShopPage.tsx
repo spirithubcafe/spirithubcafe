@@ -7,7 +7,6 @@ import { useRegion } from '../../hooks/useRegion';
 import { Seo } from '../../components/seo/Seo';
 import { siteMetadata } from '../../config/siteMetadata';
 import { PageHeader } from '../../components/layout/PageHeader';
-import { AnnouncementBar } from '../../components/layout/AnnouncementBar';
 import type { ShopCategory } from '../../types/shop';
 
 export const ShopPage = () => {
@@ -158,7 +157,6 @@ export const ShopPage = () => {
 
   return (
     <div className={`min-h-screen bg-stone-50 ${isArabic ? 'rtl' : 'ltr'}`}>
-      <AnnouncementBar />
       <Seo
         title={isArabic ? 'المتجر | SpiritHub' : 'Shop | SpiritHub'}
         description={

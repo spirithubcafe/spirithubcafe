@@ -1,428 +1,194 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { Play } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Images, Instagram, Play } from 'lucide-react';
 import { AnimatedIcon } from '@/components/icons/AnimatedIcon';
-import useEmblaCarousel from 'embla-carousel-react';
-import { HOMEPAGE_HEADER_SPACING, HOMEPAGE_HEADING, homepageContainerClassName, homepageSectionClassName } from './homepageSectionSpacing';
+import { Button } from '../ui/button';
+import { Card, CardContent, CardFooter } from '../ui/card';
+import { REGION_INFO } from '../../config/regionInfo';
+import { useApp } from '../../hooks/useApp';
+import { useRegion } from '../../hooks/useRegion';
+import {
+  parsePinnedPermalinks,
+  selectInstagramPosts,
+  type InstagramMediaType,
+  type InstagramPost,
+} from '../../lib/instagramFeed.ts';
+import { ProductCardSkeleton } from './ProductGridSkeleton';
+import {
+  HOMEPAGE_CONTAINER,
+  HOMEPAGE_HEADER_SPACING,
+  HOMEPAGE_HEADING,
+  homepageSectionClassName,
+} from './homepageSectionSpacing';
 
-type InstagramMediaType = 'IMAGE' | 'VIDEO' | 'CAROUSEL_ALBUM';
+const POST_COUNT = 6;
+// Latest posts, live, from the official Instagram Graph API (api/instagram/feed.js).
+const LIVE_FEED_URL = '/api/instagram/feed?postLimit=25';
+const FALLBACK_PROFILE = 'https://www.instagram.com/spirithubcafe/';
 
-type InstagramPost = {
-  id: string;
-  mediaType: InstagramMediaType;
-  mediaUrl?: string;
-  thumbnailUrl?: string;
-  permalink: string;
-  caption?: string;
-  timestamp?: string;
-  isPinned?: boolean;
-};
+type FeedState = { status: 'loading' | 'ready' | 'failed'; posts: InstagramPost[] };
 
-type FeedResponse = {
-  success?: boolean;
-  data?: {
-    posts?: InstagramPost[];
-    fromCacheFallback?: boolean;
-  };
-  message?: string;
-};
-
-const MAX_POSTS = 12;
-const FETCH_POSTS = 25;
-const DEBUG_INSTAGRAM = import.meta.env.DEV && import.meta.env.VITE_DEBUG_INSTAGRAM === 'true';
-
-const getPinnedPermalinkSet = (): Set<string> => {
-  const configured = import.meta.env.VITE_INSTAGRAM_PINNED_PERMALINKS;
-  if (typeof configured !== 'string' || configured.trim().length === 0) {
-    return new Set();
-  }
-  return new Set(
-    configured
-      .split(',')
-      .map((item) => item.trim())
-      .filter(Boolean),
-  );
-};
-
-const isValidMediaType = (value: unknown): value is InstagramMediaType =>
-  value === 'IMAGE' || value === 'VIDEO' || value === 'CAROUSEL_ALBUM';
-
-const normalizePosts = (payload: unknown): InstagramPost[] => {
-  const items: unknown[] = Array.isArray(payload) ? payload : [];
-  const skipped: Array<{ id: string; reason: string }> = [];
-
-  const normalized = items
-    .map((raw) => {
-      if (!raw || typeof raw !== 'object') {
-        skipped.push({ id: 'unknown', reason: 'invalid item shape' });
-        return null;
-      }
-      const item = raw as Record<string, unknown>;
-      const mediaType = item.mediaType;
-      const permalink = typeof item.permalink === 'string' ? item.permalink : '';
-      const id = String(item.id ?? permalink ?? 'unknown');
-
-      if (!isValidMediaType(mediaType) || !permalink) {
-        skipped.push({
-          id,
-          reason: !isValidMediaType(mediaType) ? `unsupported mediaType: ${String(mediaType)}` : 'missing permalink',
-        });
-        return null;
-      }
-
-      return {
-        id,
-        mediaType,
-        mediaUrl: typeof item.mediaUrl === 'string' ? item.mediaUrl : undefined,
-        thumbnailUrl: typeof item.thumbnailUrl === 'string' ? item.thumbnailUrl : undefined,
-        permalink,
-        caption: typeof item.caption === 'string' ? item.caption : undefined,
-        timestamp: typeof item.timestamp === 'string' ? item.timestamp : undefined,
-        isPinned: typeof item.isPinned === 'boolean' ? item.isPinned : undefined,
-      } as InstagramPost;
-    })
-    .filter((post): post is InstagramPost => post !== null);
-
-  if (DEBUG_INSTAGRAM && skipped.length > 0) {
-    console.info('[InstagramSection] Skipped posts during normalize', skipped);
-  }
-
-  const configuredPinnedPermalinks = getPinnedPermalinkSet();
-  const sorted = normalized
-    .sort((a, b) => {
-      const aPinned = Boolean(a.isPinned) || configuredPinnedPermalinks.has(a.permalink);
-      const bPinned = Boolean(b.isPinned) || configuredPinnedPermalinks.has(b.permalink);
-      if (aPinned !== bPinned) {
-        return aPinned ? -1 : 1;
-      }
-      const aTs = a.timestamp ? Date.parse(a.timestamp) : 0;
-      const bTs = b.timestamp ? Date.parse(b.timestamp) : 0;
-      return bTs - aTs;
-    });
-
-  if (DEBUG_INSTAGRAM && configuredPinnedPermalinks.size > 0) {
-    const matchedConfiguredPins = sorted.filter((post) => configuredPinnedPermalinks.has(post.permalink)).length;
-    console.info('[InstagramSection] Pinned post matching', {
-      configuredCount: configuredPinnedPermalinks.size,
-      matchedConfiguredPins,
-    });
-  }
-
-  return sorted.slice(0, MAX_POSTS);
-};
-
-export const InstagramSection: React.FC = () => {
-  const [posts, setPosts] = useState<InstagramPost[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [hasError, setHasError] = useState(false);
-  const [canScrollPrev, setCanScrollPrev] = useState(false);
-  const [canScrollNext, setCanScrollNext] = useState(false);
-  const [emblaRef, emblaApi] = useEmblaCarousel({
-    align: 'start',
-    containScroll: 'trimSnaps',
-    dragFree: true,
-  });
-
-  const updateScrollState = React.useCallback(() => {
-    if (!emblaApi) return;
-    setCanScrollPrev(emblaApi.canScrollPrev());
-    setCanScrollNext(emblaApi.canScrollNext());
-  }, [emblaApi]);
-
-  const scrollByPage = React.useCallback((direction: 'prev' | 'next') => {
-    if (!emblaApi) return;
-    if (direction === 'prev') {
-      emblaApi.scrollPrev();
-      return;
-    }
-    emblaApi.scrollNext();
-  }, [emblaApi]);
+function useInstagramPosts(): FeedState {
+  const [state, setState] = useState<FeedState>({ status: 'loading', posts: [] });
 
   useEffect(() => {
     const controller = new AbortController();
-
-    const loadFeed = async () => {
-      try {
-        const response = await fetch(`/api/instagram/feed?postLimit=${FETCH_POSTS}`, {
-          method: 'GET',
-          headers: { Accept: 'application/json' },
-          signal: controller.signal,
+    fetch(LIVE_FEED_URL, { headers: { Accept: 'application/json' }, signal: controller.signal })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((payload: { data?: { posts?: unknown } } | null) => {
+        const posts = selectInstagramPosts(payload?.data?.posts, {
+          limit: POST_COUNT,
+          pinnedPermalinks: parsePinnedPermalinks(import.meta.env.VITE_INSTAGRAM_PINNED_PERMALINKS),
         });
-
-        if (!response.ok) {
-          throw new Error(`Feed request failed with status ${response.status}`);
-        }
-
-        const payload = (await response.json()) as FeedResponse;
-        const parsedPosts = normalizePosts(payload?.data?.posts);
-        const apiCount = Array.isArray(payload?.data?.posts) ? payload.data.posts.length : 0;
-        if (DEBUG_INSTAGRAM) {
-          console.info('[InstagramSection] API count', { apiCount });
-        }
-        setPosts(parsedPosts);
-        setHasError(payload?.success === false);
-      } catch (error) {
-        if ((error as Error).name === 'AbortError') {
-          return;
-        }
-        setHasError(true);
-        setPosts([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    void loadFeed();
-
+        setState(posts.length > 0 ? { status: 'ready', posts } : { status: 'failed', posts: [] });
+      })
+      .catch((error: unknown) => {
+        if ((error as Error).name !== 'AbortError') setState({ status: 'failed', posts: [] });
+      });
     return () => controller.abort();
   }, []);
 
-  useEffect(() => {
-    if (!emblaApi) return;
-    updateScrollState();
-    emblaApi.on('select', updateScrollState);
-    emblaApi.on('reInit', updateScrollState);
+  return state;
+}
 
-    return () => {
-      emblaApi.off('select', updateScrollState);
-      emblaApi.off('reInit', updateScrollState);
-    };
-  }, [emblaApi, updateScrollState]);
+const MEDIA_LABELS: Record<InstagramMediaType, { en: string; ar: string }> = {
+  IMAGE: { en: 'Post', ar: 'منشور' },
+  VIDEO: { en: 'Reel', ar: 'ريلز' },
+  CAROUSEL_ALBUM: { en: 'Album', ar: 'ألبوم' },
+};
 
-  useEffect(() => {
-    emblaApi?.reInit();
-    updateScrollState();
-  }, [posts.length, isLoading, emblaApi, updateScrollState]);
-
-  useEffect(() => {
-    if (isLoading) return;
-    const renderedCount = posts.filter((post) => {
-      const imageUrl = post.mediaType === 'VIDEO' ? (post.thumbnailUrl || post.mediaUrl) : post.mediaUrl;
-      return Boolean(imageUrl);
-    }).length;
-    if (DEBUG_INSTAGRAM) {
-      console.info('[InstagramSection] Rendered count', { renderedCount, totalNormalized: posts.length });
-    }
-  }, [posts, isLoading]);
-
-  const showFallback = hasError || (!isLoading && posts.length === 0);
-
-  const skeletonCards = useMemo(() => Array.from({ length: 7 }), []);
-  const isArabic =
-    typeof document !== 'undefined' &&
-    (document.documentElement.dir === 'rtl' || document.documentElement.lang?.toLowerCase().startsWith('ar'));
+/**
+ * Instagram post in the same card as the homepage ProductCard (same frame,
+ * rows and heights), so the grid reads as one family with the product grids
+ * and ProductCardSkeleton (without the notes row) matches it exactly while loading.
+ */
+const InstagramPostCard: React.FC<{ post: InstagramPost; handle: string; isArabic: boolean }> = ({
+  post,
+  handle,
+  isArabic,
+}) => {
+  const typeLabel = MEDIA_LABELS[post.mediaType][isArabic ? 'ar' : 'en'];
+  const date = post.timestamp
+    ? new Intl.DateTimeFormat(isArabic ? 'ar' : 'en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).format(post.timestamp)
+    : '';
+  const title = post.title || (isArabic ? 'منشور على إنستغرام' : 'Instagram post');
+  const openLabel = isArabic ? 'شاهد على إنستغرام' : 'View on Instagram';
 
   return (
-    <section className={homepageSectionClassName('bg-white')}>
-      <div className={homepageContainerClassName()}>
-        <div className={HOMEPAGE_HEADER_SPACING}>
-          <p className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.22em] text-amber-600">
-            <span className="h-px w-6 bg-amber-500/60" aria-hidden="true" />
-            {isArabic ? 'تابعونا' : 'Follow Along'}
-          </p>
-          <h2 className={HOMEPAGE_HEADING}>
-            {isArabic ? 'زوروا إنستغرامنا' : 'Visit Our Instagram'}
-          </h2>
+    <Card className="group relative flex h-full flex-col overflow-hidden border border-stone-100 bg-white py-0 shadow-sm transition-all duration-300 hover:shadow-md">
+      <a
+        href={post.permalink}
+        target="_blank"
+        rel="noopener noreferrer"
+        tabIndex={-1}
+        aria-hidden="true"
+        className="relative block aspect-square overflow-hidden bg-[#fbf8f3]"
+      >
+        <img
+          src={post.imageUrl}
+          alt=""
+          width={480}
+          height={480}
+          loading="lazy"
+          decoding="async"
+          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105 motion-reduce:transition-none motion-reduce:group-hover:scale-100"
+        />
+        <span className="absolute end-2 top-2 flex size-8 items-center justify-center rounded-full bg-white/90 text-stone-700 shadow-md backdrop-blur-sm">
+          <Instagram className="size-4" />
+        </span>
+        {post.mediaType !== 'IMAGE' && (
+          <span className="absolute bottom-2 start-2 flex items-center gap-1 rounded-full bg-black/60 px-2.5 py-1 text-xs font-bold text-white backdrop-blur-sm">
+            {post.mediaType === 'VIDEO' ? <Play className="size-3 fill-white" /> : <Images className="size-3" />}
+            {typeLabel}
+          </span>
+        )}
+      </a>
+
+      <CardContent className="flex flex-1 flex-col p-3 pt-1">
+        <div className="mb-1 flex min-h-6 items-center">
+          <span className="max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-[10px] font-bold uppercase tracking-[0.14em] text-stone-400">
+            {date ? `${typeLabel} · ${date}` : typeLabel}
+          </span>
         </div>
+        <h3 className="mb-2 line-clamp-2 min-h-10 text-sm font-extrabold text-stone-900 transition-colors group-hover:text-amber-700" dir="auto">
+          <a
+            href={post.permalink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block focus-visible:outline-2! focus-visible:-outline-offset-2 focus-visible:outline-amber-600!"
+          >
+            {title}
+          </a>
+        </h3>
+        <div className="mt-auto flex items-center justify-between border-t border-stone-100 pt-2">
+          <span className="text-sm font-bold leading-6 text-stone-900" dir="ltr">{handle}</span>
+        </div>
+      </CardContent>
 
-        <div className="w-full">
-          <div className="relative">
-            <div className="ig-edge ig-edge-left" />
-            <div className="ig-edge ig-edge-right" />
-            {/* No arrows over an empty feed. */}
-            {!showFallback && (
-              <>
-                <button
-                  type="button"
-                  onClick={() => scrollByPage('prev')}
-                  disabled={!canScrollPrev}
-                  aria-label={isArabic ? 'التمرير لليسار' : 'Scroll left'}
-                  className="ig-nav ig-nav-left"
-                >
-                  <AnimatedIcon name="chevron-left" className="size-4 sm:size-5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => scrollByPage('next')}
-                  disabled={!canScrollNext}
-                  aria-label={isArabic ? 'التمرير لليمين' : 'Scroll right'}
-                  className="ig-nav ig-nav-right"
-                >
-                  <AnimatedIcon name="chevron-right" className="size-4 sm:size-5" />
-                </button>
-              </>
-            )}
+      <CardFooter className="p-3 pt-0">
+        <Button
+          asChild
+          size="sm"
+          className="w-full bg-amber-600 text-white shadow-md transition-all hover:bg-amber-700 hover:shadow-lg"
+        >
+          <a href={post.permalink} target="_blank" rel="noopener noreferrer" aria-label={`${openLabel}: ${title}`}>
+            <Instagram className="size-3.5" aria-hidden="true" />
+            <span className="text-xs font-semibold">{openLabel}</span>
+          </a>
+        </Button>
+      </CardFooter>
+    </Card>
+  );
+};
 
-            <div ref={emblaRef} className="instagram-viewport overflow-hidden">
-              <div className="instagram-strip flex pb-2">
-            {isLoading &&
-              skeletonCards.map((_, index) => (
-                <div
-                  key={`instagram-skeleton-${index}`}
-                  className="instagram-card relative min-w-0 shrink-0 overflow-hidden rounded-xl bg-[#dfddd8] animate-pulse"
-                  aria-hidden="true"
-                />
-              ))}
+export const InstagramSection: React.FC = () => {
+  const { language } = useApp();
+  const { currentRegion } = useRegion();
+  const isArabic = language === 'ar';
+  const feed = useInstagramPosts();
 
-            {!isLoading &&
-              posts.map((post) => {
-                const imageUrl = post.mediaType === 'VIDEO'
-                  ? (post.thumbnailUrl || post.mediaUrl)
-                  : post.mediaUrl;
-                if (!imageUrl) {
-                  if (DEBUG_INSTAGRAM) {
-                    console.info('[InstagramSection] Skipped post during render', {
-                      id: post.id,
-                      mediaType: post.mediaType,
-                      reason: 'missing image source (mediaUrl/thumbnailUrl)',
-                    });
-                  }
-                  return null;
-                }
+  const profileUrl = REGION_INFO[currentRegion.code]?.social.instagram || FALLBACK_PROFILE;
+  const handle = `@${profileUrl.split('/').filter(Boolean).pop()}`;
 
-                return (
-                  <a
-                    key={post.id}
-                    href={post.permalink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="instagram-card group relative min-w-0 shrink-0 overflow-hidden rounded-xl bg-[#dedbd5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#69736f] focus-visible:ring-offset-2 focus-visible:ring-offset-[#fbfbf9]"
-                    aria-label="Open Instagram post"
-                  >
-                    <img
-                      src={imageUrl}
-                      alt={post.caption || 'Instagram post'}
-                      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
-                      loading="lazy"
-                      decoding="async"
-                      width={252}
-                      height={420}
-                    />
-                    <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/28 via-black/8 to-transparent opacity-80 transition-opacity duration-300 group-hover:opacity-100" />
-                    {post.mediaType === 'VIDEO' && (
-                      <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/15">
-                        <span className="flex h-10 w-10 items-center justify-center rounded-full bg-black/55 text-white">
-                          <Play className="h-5 w-5 fill-white" />
-                        </span>
-                      </div>
-                    )}
-                  </a>
-                );
-              })}
-              </div>
-            </div>
-          </div>
-
-          {showFallback && (
-            <p className="mt-4 text-center text-sm text-[#65706d]">
-              Instagram posts are temporarily unavailable. Please check back shortly.
+  return (
+    <section className={homepageSectionClassName('bg-white')} dir={isArabic ? 'rtl' : 'ltr'}>
+      <div className={HOMEPAGE_CONTAINER}>
+        <div className={`${HOMEPAGE_HEADER_SPACING} flex flex-wrap items-end justify-between gap-4`}>
+          <div>
+            <p className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.22em] text-amber-600">
+              <span className="h-px w-6 bg-amber-500/60" aria-hidden="true" />
+              {isArabic ? 'تابعونا' : 'Follow Along'}
             </p>
-          )}
-
+            <h2 className={HOMEPAGE_HEADING}>
+              {isArabic ? 'زوروا إنستغرامنا' : 'Visit Our Instagram'}
+            </h2>
+          </div>
+          <a
+            href={profileUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group inline-flex shrink-0 items-center gap-1.5 text-sm font-bold text-stone-900 hover:text-amber-700"
+          >
+            {isArabic ? 'تابعنا' : 'Follow'} <span dir="ltr">{handle}</span>
+            <AnimatedIcon name="arrow-right" className={`size-4 ${isArabic ? '-scale-x-100' : ''}`} />
+          </a>
         </div>
+
+        {/* Same grid as the product sections. While loading, ProductCardSkeleton reserves the
+            exact card size, so nothing moves when posts arrive. If the feed is unavailable,
+            only the header and the Follow link remain. */}
+        {feed.status !== 'failed' && (
+          <div
+            className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 lg:grid-cols-6"
+            aria-busy={feed.status === 'loading'}
+          >
+            {feed.status === 'loading'
+              ? Array.from({ length: POST_COUNT }).map((_, index) => <ProductCardSkeleton key={index} showNotes={false} />)
+              : feed.posts.map((post) => (
+                  <InstagramPostCard key={post.id} post={post} handle={handle} isArabic={isArabic} />
+                ))}
+          </div>
+        )}
       </div>
-
-      <style>{`
-        .instagram-viewport {
-          cursor: grab;
-        }
-
-        .instagram-viewport:active {
-          cursor: grabbing;
-        }
-
-        .instagram-strip {
-          direction: ltr;
-          margin-left: -8px;
-        }
-
-        .instagram-card {
-          flex: 0 0 clamp(140px, 17.2vw, 208px);
-          margin-left: 8px;
-          aspect-ratio: 3 / 5;
-        }
-
-        .ig-edge {
-          pointer-events: none;
-          position: absolute;
-          top: 0;
-          z-index: 10;
-          display: none;
-          height: 100%;
-          width: 32px;
-        }
-
-        .ig-edge-left {
-          left: 0;
-          background: linear-gradient(90deg, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0));
-        }
-
-        .ig-edge-right {
-          right: 0;
-          background: linear-gradient(270deg, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0));
-        }
-
-        .ig-nav {
-          position: absolute;
-          top: 50%;
-          transform: translateY(-50%);
-          z-index: 20;
-          height: 40px;
-          width: 40px;
-          border: 1px solid rgba(77, 91, 84, 0.18);
-          border-radius: 999px;
-          background: rgba(255, 253, 249, 0.97);
-          color: #445250;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          box-shadow: 0 14px 28px rgba(28, 27, 25, 0.14);
-          backdrop-filter: blur(10px);
-          transition: all 0.2s ease;
-        }
-
-        .ig-nav:hover:not(:disabled) {
-          background: #fffdf9;
-          transform: translateY(-50%) scale(1.03);
-        }
-
-        .ig-nav:disabled {
-          opacity: 0.35;
-          cursor: not-allowed;
-        }
-
-        .ig-nav-left {
-          left: -10px;
-        }
-
-        .ig-nav-right {
-          right: -10px;
-        }
-
-        @media (max-width: 640px) {
-          .instagram-card {
-            flex-basis: calc((100% - 16px) / 3);
-          }
-
-          .ig-nav {
-            height: 32px;
-            width: 32px;
-          }
-
-          .ig-nav-left {
-            left: 2px;
-          }
-
-          .ig-nav-right {
-            right: 2px;
-          }
-        }
-
-        @media (min-width: 768px) {
-          .ig-edge {
-            display: block;
-          }
-        }
-      `}</style>
     </section>
   );
 };
