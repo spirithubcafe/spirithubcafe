@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 import { X, Send, RotateCcw, Minimize2, Truck, Headphones } from 'lucide-react';
 import { useRegion } from '../../hooks/useRegion';
 import { useApp } from '../../hooks/useApp';
@@ -386,7 +386,8 @@ export const ChatBot: React.FC = () => {
   const [quizIndex, setQuizIndex] = useState(0);
   const [localQuizAnswers, setLocalQuizAnswers] = useState<string[]>([]);
 
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const wasVisibleRef = useRef(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const openPersonalizationLoadedRef = useRef(false);
   const awaitingRephraseRef = useRef(false);
@@ -411,12 +412,22 @@ export const ChatBot: React.FC = () => {
     });
   }, [isAr]);
 
-  const scrollToBottom = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  // Scrolls only the messages list (scrollIntoView also scrolled the panel/page).
+  const scrollToBottom = useCallback((behavior: ScrollBehavior) => {
+    const container = messagesContainerRef.current;
+    if (container) container.scrollTo({ top: container.scrollHeight, behavior });
   }, []);
 
   useEffect(() => {
-    if (isOpen && !isMinimized) scrollToBottom();
+    const visible = isOpen && !isMinimized;
+    const justOpened = visible && !wasVisibleRef.current;
+    wasVisibleRef.current = visible;
+    if (!visible) return;
+    // Opening content (welcome, quick actions, personalisation) snaps into place;
+    // a smooth scroll there made the panel visibly jump. Smooth only for the
+    // conversation itself.
+    const hasUserMessage = messages.some((message) => message.role === 'user');
+    scrollToBottom(justOpened || !hasUserMessage ? 'auto' : 'smooth');
   }, [messages, isOpen, isMinimized, scrollToBottom]);
 
   useEffect(() => {
@@ -1567,6 +1578,7 @@ export const ChatBot: React.FC = () => {
             {!isMinimized && (
               <>
                 <div
+                  ref={messagesContainerRef}
                   className="chatbot-messages flex-1 overflow-y-auto overscroll-contain bg-[radial-gradient(circle_at_top_left,rgba(228,112,101,0.10),transparent_34%),linear-gradient(180deg,#fffaf7_0%,#fbf5f1_100%)] px-3 py-3 md:px-0 md:py-3 sm:px-2"
                   style={{ minHeight: 0 }}
                   role="log"
@@ -1605,7 +1617,6 @@ export const ChatBot: React.FC = () => {
                     </div>
                   )}
 
-                  <div ref={messagesEndRef} />
                 </div>
 
                 <div
