@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { ArrowRight, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useApp } from '../../hooks/useApp';
+import { homepageContainerClassName } from '../sections/homepageSectionSpacing';
 import './ProfessionalHeroSlider.css';
 
 interface SlideData {
@@ -486,7 +487,8 @@ export const ProfessionalHeroSlider: React.FC = () => {
 
       {/* Main Content Container */}
       <div className="slider-content-container">
-        <div className="container mx-auto px-4 h-full flex items-center">
+        {/* Same content edges as every homepage section and the header. */}
+        <div className={homepageContainerClassName('h-full flex items-center')}>
           <div className="w-full items-center">
             
             {/* Consistent promotional content used across every hero slide */}

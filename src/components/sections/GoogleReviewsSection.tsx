@@ -318,7 +318,7 @@ export const GoogleReviewsSection: React.FC = () => {
                           {isArabic ? 'حب عملائنا' : 'Customer Love'}
                         </p>
                         <h2
-                          className={`text-[2.2rem] leading-[1.02] text-[#fffdf8] sm:text-[2.4rem] lg:text-[2rem] xl:text-[2.25rem] ${
+                          className={`text-2xl leading-[1.05] text-[#fffdf8] sm:text-4xl lg:text-[2rem] xl:text-[2.25rem] ${
                             isArabic ? 'max-w-[11ch] font-bold' : 'max-w-[350px] font-extrabold tracking-[-0.03em]'
                           }`}
                         >

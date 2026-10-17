@@ -227,24 +227,29 @@ export const InstagramSection: React.FC = () => {
           <div className="relative">
             <div className="ig-edge ig-edge-left" />
             <div className="ig-edge ig-edge-right" />
-            <button
-              type="button"
-              onClick={() => scrollByPage('prev')}
-              disabled={!canScrollPrev}
-              aria-label="Scroll left"
-              className="ig-nav ig-nav-left"
-            >
-              <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" />
-            </button>
-            <button
-              type="button"
-              onClick={() => scrollByPage('next')}
-              disabled={!canScrollNext}
-              aria-label="Scroll right"
-              className="ig-nav ig-nav-right"
-            >
-              <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5" />
-            </button>
+            {/* No arrows over an empty feed. */}
+            {!showFallback && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => scrollByPage('prev')}
+                  disabled={!canScrollPrev}
+                  aria-label="Scroll left"
+                  className="ig-nav ig-nav-left"
+                >
+                  <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => scrollByPage('next')}
+                  disabled={!canScrollNext}
+                  aria-label="Scroll right"
+                  className="ig-nav ig-nav-right"
+                >
+                  <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5" />
+                </button>
+              </>
+            )}
 
             <div ref={emblaRef} className="instagram-viewport overflow-hidden">
               <div className="instagram-strip flex pb-2">
