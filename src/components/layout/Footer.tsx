@@ -135,10 +135,13 @@ export const Footer: React.FC = () => {
   ];
 
   return (
+    // Mobile: .app-layout reserves 96px under the page for the fixed bottom nav. The
+    // footer extends its dark background through that space (negative margin + equal
+    // padding) so no white strip shows under it. No content-visibility: when the
+    // footer is already on screen (short pages) its placeholder size made it jump.
     <footer
       ref={footerRef}
-      className="relative text-white overflow-hidden md:mt-0"
-      style={{ contentVisibility: 'auto', containIntrinsicSize: 'auto 700px' }}
+      className="relative text-white overflow-hidden md:mt-0 max-md:-mb-[calc(96px+env(safe-area-inset-bottom,0px))] max-md:pb-[calc(96px+env(safe-area-inset-bottom,0px))]"
     >
       {/* Video Background */}
       <div className="absolute inset-0 w-full h-full bg-neutral-900">
