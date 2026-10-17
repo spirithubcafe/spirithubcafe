@@ -6,6 +6,24 @@ import { useRegion } from '../../hooks/useRegion';
 import { newsletterService } from '../../services';
 import { REGION_INFO } from '../../config/regionInfo';
 
+export const SbcCredit: React.FC<{ className?: string }> = ({ className = 'text-gray-400' }) => {
+  const { language } = useApp();
+
+  return (
+    <p className={`mt-2 text-xs ${className}`}>
+      {language === 'ar' ? 'تصميم وتطوير ' : 'Designed & built by '}
+      <a
+        href="https://sbc.om/?utm_source=www.spirithubcafe.com&utm_medium=referral&utm_campaign=footer-credit"
+        target="_blank"
+        rel="noopener"
+        className="hover:underline focus-visible:underline"
+      >
+        SBC
+      </a>
+    </p>
+  );
+};
+
 export const Footer: React.FC = () => {
   const { language } = useApp();
   const { currentRegion } = useRegion();
@@ -302,6 +320,7 @@ export const Footer: React.FC = () => {
                 <p className="text-gray-400 text-xs md:text-sm">
                   © 2026 SPIRITHUB ROASTERY
                 </p>
+                <SbcCredit />
               </div>
               
               {/* Newsletter - Right Side */}

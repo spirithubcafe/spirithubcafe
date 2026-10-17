@@ -165,6 +165,12 @@ export default defineConfig(({ isSsrBuild }) => ({
               return 'motion-vendor';
             }
 
+            // 3D is loaded on demand by CoffeeBeansCanvas; keep it isolated so it
+            // never joins the initial bundle.
+            if (id.includes('/node_modules/three/')) {
+              return 'three-vendor';
+            }
+
             if (
               id.includes('/src/components/admin/') ||
               id.includes('/src/pages/CategoryAddPage') ||

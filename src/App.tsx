@@ -9,7 +9,7 @@ import { RegionProvider } from './contexts/RegionContext';
 import { Navigation } from './components/layout/Navigation';
 import { ScrollToTop } from './components/layout/ScrollToTop';
 import { RegionRedirect } from './components/layout/RegionRedirect';
-import { Footer } from './components/layout/Footer';
+import { Footer, SbcCredit } from './components/layout/Footer';
 import { AnnouncementBar } from './components/layout/AnnouncementBar';
 import { PageHeader } from './components/layout/PageHeader';
 import HomePage from './pages/HomePage';
@@ -479,7 +479,11 @@ function AppContent({ shopRoutes }: { shopRoutes?: ShopRouteComponents }) {
       </Suspense>
       </RouteErrorBoundary>
 
-      {!isAdminPage && !isInvoicePage && <Footer />}
+      {isAdminPage || isInvoicePage ? (
+        <footer className="p-4 text-center">
+          <SbcCredit className="text-gray-600" />
+        </footer>
+      ) : <Footer />}
     </div>
   );
 }
