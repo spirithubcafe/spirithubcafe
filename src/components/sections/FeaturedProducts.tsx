@@ -27,7 +27,9 @@ export const FeaturedProducts: React.FC = () => {
       .slice(0, 6);
   }, [products]);
 
-  if (loading) {
+  // `loading` is shared with category fetches and background refreshes; only show
+  // the skeleton when there is nothing to display yet, never over loaded products.
+  if (loading && latestProducts.length === 0) {
     return <ProductGridSkeleton count={6} />;
   }
 

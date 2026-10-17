@@ -22,8 +22,9 @@ const SHOW_EDITORIAL_CONTENT = import.meta.env.VITE_SHOW_HOME_EDITORIAL === 'tru
 // Mount deferred sections about one screen before they scroll into view so their
 // data and final height settle off-screen; mounting at the viewport edge made the
 // page grow under the visitor's finger (very visible on iOS, which has no scroll
-// anchoring). Kept small enough that nothing mounts during the initial mobile load.
-const DEFERRED_SECTION_ROOT_MARGIN = '0px 0px 800px 0px';
+// anchoring). Viewport-relative and kept below one screen so nothing mounts during
+// the initial load, preserving the deferred-loading mobile performance budget.
+const DEFERRED_SECTION_ROOT_MARGIN = '0px 0px 75% 0px';
 
 const HomePage: React.FC = () => {
   const { language, fetchProducts, fetchCategories } = useApp();
