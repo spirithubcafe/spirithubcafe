@@ -216,6 +216,21 @@ app.get('/sa/email-templates.html', (_req, res) => {
 // Instagram feed API – proxies the Instagram Graph API so the frontend
 // can fetch posts without exposing the access token to the client.
 app.get('/api/instagram/feed', async (req, res) => {
+  // Local machines usually only have the .env.example placeholder token. Read the
+  // live site's feed instead so the homepage shows real posts locally. On Vercel
+  // this file is not used: api/instagram/feed.js serves the route directly.
+  const token = process.env.INSTAGRAM_ACCESS_TOKEN || '';
+  if (!token || token.startsWith('your-')) {
+    try {
+      const upstream = await fetch(
+        `https://www.spirithubcafe.com/api/instagram/feed?postLimit=${encodeURIComponent(String(req.query.postLimit ?? '25'))}`,
+        { headers: { Accept: 'application/json' }, signal: AbortSignal.timeout(8000) },
+      );
+      return res.status(upstream.status).type('application/json').send(await upstream.text());
+    } catch {
+      return res.status(502).json({ success: false, message: 'Live Instagram feed unavailable' });
+    }
+  }
   const { default: instagramFeedHandler } = await import('./api/instagram/feed.js');
   return instagramFeedHandler(req, res);
 });

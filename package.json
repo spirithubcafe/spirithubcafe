@@ -10,6 +10,7 @@
     "serve": "NODE_ENV=production node server.js",
     "lint": "eslint .",
     "test:chatbot": "node --experimental-strip-types --test src/services/chatbotAssistantResolver.test.ts src/services/chatbotAssistantPhase2A.test.ts src/services/mcpService.test.ts src/lib/chatbotProductResults.test.ts src/lib/chatbotSearchFallback.test.ts src/lib/chatbotProductIntents.test.ts src/lib/chatbotProductLookup.test.ts src/lib/chatbotBusinessMessages.test.ts src/lib/chatbotToolLoop.test.ts src/lib/chatbotSecurityContract.test.ts",
+    "test:instagram": "node --experimental-strip-types --test src/lib/instagramFeed.test.ts",
     "test:custom-bundle": "node --experimental-strip-types --test src/lib/customBundle.test.ts",
     "test:bundle-admin": "node --experimental-strip-types --test src/lib/bundleAdminUtils.test.ts",
     "test:products-resilience": "node --experimental-strip-types --test src/lib/productFetchRetry.test.ts src/lib/productsPageState.test.ts",

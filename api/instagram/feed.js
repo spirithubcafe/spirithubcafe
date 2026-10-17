@@ -18,6 +18,9 @@ const MEDIA_FIELDS = 'id,media_type,media_url,thumbnail_url,permalink,caption,ti
 let cachedPosts = null;
 let cacheTimestamp = 0;
 const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+// Always fetch (and cache) the maximum, then slice per request: caching whatever
+// postLimit came first made later requests get too few posts for 10 minutes.
+const MAX_POSTS = 50;
 
 function mapMediaType(mt) {
   if (mt === 'IMAGE' || mt === 'VIDEO' || mt === 'CAROUSEL_ALBUM') return mt;
@@ -60,17 +63,17 @@ export default async function handler(req, res) {
     return res.status(503).json({ success: false, message: 'Instagram feed not configured' });
   }
 
+  const postLimit = Math.min(parseInt(String(req.query?.postLimit ?? '25'), 10) || 25, MAX_POSTS);
+
   // Serve from cache if still valid
   if (cachedPosts && Date.now() - cacheTimestamp < CACHE_TTL) {
     res.setHeader('Cache-Control', 'public, max-age=300, stale-while-revalidate=600');
-    return res.status(200).json({ success: true, data: { posts: cachedPosts, fromCacheFallback: false } });
+    return res.status(200).json({ success: true, data: { posts: cachedPosts.slice(0, postLimit), fromCacheFallback: false } });
   }
-
-  const postLimit = Math.min(parseInt(String(req.query?.postLimit ?? '25'), 10) || 25, 50);
 
   const apiUrl = new URL(`${INSTAGRAM_API_BASE}/${encodeURIComponent(userId)}/media`);
   apiUrl.searchParams.set('fields', MEDIA_FIELDS);
-  apiUrl.searchParams.set('limit', String(postLimit));
+  apiUrl.searchParams.set('limit', String(MAX_POSTS));
   apiUrl.searchParams.set('access_token', accessToken);
 
   const controller = new AbortController();
@@ -111,7 +114,7 @@ export default async function handler(req, res) {
     cacheTimestamp = Date.now();
 
     res.setHeader('Cache-Control', 'public, max-age=300, stale-while-revalidate=600');
-    return res.status(200).json({ success: true, data: { posts, fromCacheFallback: false } });
+    return res.status(200).json({ success: true, data: { posts: posts.slice(0, postLimit), fromCacheFallback: false } });
   } catch (err) {
     if (err?.name === 'AbortError') {
       console.error('[Instagram] Graph API request timed out');

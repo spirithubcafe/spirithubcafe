@@ -27,7 +27,6 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFo
 import { Button } from '../components/ui/button';
 import { Seo } from '../components/seo/Seo';
 import { siteMetadata } from '../config/siteMetadata';
-import { AnnouncementBar } from '../components/layout/AnnouncementBar';
 import { useShopPage } from '../hooks/useShop';
 import { useRegion } from '../hooks/useRegion';
 import { getCategoryImageUrl } from '../lib/imageUtils';
@@ -1318,7 +1317,6 @@ export const ProductsPage = ({ hidePageChrome = false }: ProductsPageProps) => {
 
   return (
     <div className={`min-h-screen bg-gray-50 ${isArabic ? 'rtl' : 'ltr'}`}>
-      {!hidePageChrome && <AnnouncementBar />}
       <Seo
         title={seoContent.title}
         description={seoContent.description}
