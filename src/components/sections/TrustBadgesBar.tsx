@@ -1,6 +1,7 @@
 import React from 'react';
 import { Leaf, Globe, Flame, Coffee } from 'lucide-react';
 import { useApp } from '../../hooks/useApp';
+import { homepageContainerClassName } from './homepageSectionSpacing';
 
 export const TrustBadgesBar: React.FC = () => {
   const { language } = useApp();
@@ -31,7 +32,7 @@ export const TrustBadgesBar: React.FC = () => {
 
   return (
     <section className="bg-white" dir={isArabic ? 'rtl' : 'ltr'}>
-      <div className="mx-auto max-w-6xl px-4 py-4 sm:py-8">
+      <div className={homepageContainerClassName('py-4 sm:py-8')}>
         <div className="grid grid-cols-2 gap-x-4 gap-y-4 sm:grid-cols-4 sm:gap-y-0 sm:divide-x sm:divide-stone-200 rtl:sm:divide-x-reverse">
           {items.map((item) => (
             <div key={item.title} className="flex items-center gap-3 sm:justify-center sm:px-4">

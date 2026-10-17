@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { motion, useReducedMotion } from 'motion/react';
 import { useApp } from '../../hooks/useApp';
 import { CoffeeBeansCanvas } from '../three/CoffeeBeansCanvas';
+import { homepageContainerClassName } from './homepageSectionSpacing';
 
 export const CoffeeSelectionSection: React.FC = () => {
   const { language } = useApp();
@@ -32,10 +33,10 @@ export const CoffeeSelectionSection: React.FC = () => {
         aria-hidden="true"
       />
 
-      <div className="relative z-10 container mx-auto px-4 py-32">
+      <div className={homepageContainerClassName('relative z-10 py-32')}>
         <div className="max-w-5xl mx-auto text-center text-white">
           <motion.h2
-            className="text-4xl md:text-5xl font-bold mb-8 uppercase tracking-wide"
+            className="text-3xl sm:text-5xl font-extrabold mb-8 uppercase tracking-wide"
             {...reveal(0)}
           >
             {language === 'ar' ? 'اختيار القهوة' : 'COFFEE SELECTION'}

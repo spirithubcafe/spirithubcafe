@@ -8,7 +8,7 @@ import { productService } from '../../services/productService';
 import { getProductImageUrl } from '../../lib/imageUtils';
 import { normalizeProductTags } from '../../lib/productTagUtils';
 import type { Product } from '../../contexts/AppContextDefinition';
-import { homepageSectionClassName } from './homepageSectionSpacing';
+import { HOMEPAGE_CONTAINER, homepageSectionClassName } from './homepageSectionSpacing';
 
 export const BestSellers: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -103,7 +103,7 @@ export const BestSellers: React.FC = () => {
 
   return (
     <section className={homepageSectionClassName('bg-white')}>
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className={HOMEPAGE_CONTAINER}>
         {/* Section Header */}
         <div className="mb-8 sm:mb-10">
           <p className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.22em] text-amber-600">

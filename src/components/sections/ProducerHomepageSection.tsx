@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { getImageUrl, handleImageError } from '../../lib/imageUtils';
 import { producerService, type Producer, type ProducerSectionSettings } from '../../services/producerService';
 import { useApp } from '../../hooks/useApp';
-import { homepageSectionClassName } from './homepageSectionSpacing';
+import { homepageContainerClassName, homepageSectionClassName } from './homepageSectionSpacing';
 
 const fallbackSettings: ProducerSectionSettings = {
   isEnabled: true,
@@ -118,7 +118,7 @@ export const ProducerHomepageSection: React.FC = () => {
       dir={isArabic ? 'rtl' : 'ltr'}
       aria-label={settings.title || fallbackSettings.title}
     >
-      <div className="mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:px-8">
+      <div className={homepageContainerClassName()}>
         <div className="mb-5 text-center">
           <p
             className="text-xs font-semibold uppercase tracking-[0.28em] sm:text-sm"
@@ -131,7 +131,7 @@ export const ProducerHomepageSection: React.FC = () => {
             style={{ backgroundColor: accentColor }}
             aria-hidden="true"
           />
-          <h2 className="mt-2 text-[21px] font-semibold uppercase tracking-[0.08em] sm:text-[26px]">
+          <h2 className="mt-2 text-2xl font-extrabold sm:text-4xl">
             {isArabic ? 'شركاء سبيريت هَب حول العالم' : settings.title || sectionCopy.title}
           </h2>
         </div>

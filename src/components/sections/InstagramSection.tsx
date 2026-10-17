@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight, Play } from 'lucide-react';
 import useEmblaCarousel from 'embla-carousel-react';
-import { homepageSectionClassName } from './homepageSectionSpacing';
+import { HOMEPAGE_HEADER_SPACING, HOMEPAGE_HEADING, homepageContainerClassName, homepageSectionClassName } from './homepageSectionSpacing';
 
 type InstagramMediaType = 'IMAGE' | 'VIDEO' | 'CAROUSEL_ALBUM';
 
@@ -212,18 +212,18 @@ export const InstagramSection: React.FC = () => {
 
   return (
     <section className={homepageSectionClassName('bg-white')}>
-      <div className="mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:px-8">
-        <div className="mb-6 sm:mb-8">
+      <div className={homepageContainerClassName()}>
+        <div className={HOMEPAGE_HEADER_SPACING}>
           <p className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.22em] text-amber-600">
             <span className="h-px w-6 bg-amber-500/60" aria-hidden="true" />
             {isArabic ? 'تابعونا' : 'Follow Along'}
           </p>
-          <h2 className="text-[2rem] font-extrabold leading-tight text-stone-900 sm:text-[2.55rem]">
+          <h2 className={HOMEPAGE_HEADING}>
             {isArabic ? 'زوروا إنستغرامنا' : 'Visit Our Instagram'}
           </h2>
         </div>
 
-        <div className="mx-auto w-full max-w-[1320px]">
+        <div className="w-full">
           <div className="relative">
             <div className="ig-edge ig-edge-left" />
             <div className="ig-edge ig-edge-right" />

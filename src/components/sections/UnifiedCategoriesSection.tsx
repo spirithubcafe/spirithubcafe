@@ -6,7 +6,7 @@ import { useApp } from '../../hooks/useApp';
 import { useShopPage } from '../../hooks/useShop';
 import { useRegion } from '../../hooks/useRegion';
 import { buildResponsiveSrcSet, getCategoryImageUrl, handleImageError } from '../../lib/imageUtils';
-import { homepageSectionClassName } from './homepageSectionSpacing';
+import { HOMEPAGE_HEADER_SPACING, HOMEPAGE_HEADING, homepageContainerClassName, homepageSectionClassName } from './homepageSectionSpacing';
 
 type UnifiedCategoryItem = {
   id: string;
@@ -101,11 +101,11 @@ export const UnifiedCategoriesSection: React.FC = () => {
   if (appLoading && shopLoading) {
     return (
       <section className={homepageSectionClassName('bg-white')}>
-        <div className="mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:px-8">
+        <div className={homepageContainerClassName()}>
           {/* Mirrors the loaded header (eyebrow + heading) so the section keeps its height. */}
-          <div className="mb-7 sm:mb-8">
+          <div className={HOMEPAGE_HEADER_SPACING}>
             <div className="mb-2 h-4 w-40 animate-pulse rounded bg-gray-200" />
-            <div className="h-10 w-56 animate-pulse rounded-lg bg-gray-200 sm:h-[3.2rem]" />
+            <div className="h-8 w-56 animate-pulse rounded-lg bg-gray-200 sm:h-10" />
           </div>
           <div className="flex gap-4 overflow-hidden">
             {Array.from({ length: 5 }).map((_, i) => (
@@ -132,18 +132,18 @@ export const UnifiedCategoriesSection: React.FC = () => {
 
   return (
     <section className={homepageSectionClassName('bg-white')}>
-      <div className="mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:px-8">
-        <div className="mb-7 sm:mb-8">
+      <div className={homepageContainerClassName()}>
+        <div className={HOMEPAGE_HEADER_SPACING}>
           <p className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.22em] text-amber-600">
             <span className="h-px w-6 bg-amber-500/60" aria-hidden="true" />
             {isArabic ? 'تسوق حسب الفئة' : 'Explore Our Range'}
           </p>
-          <h2 className="text-[2rem] font-extrabold leading-tight text-stone-900 sm:text-[2.55rem]">
+          <h2 className={HOMEPAGE_HEADING}>
             {t('sections.categories') || 'Categories'}
           </h2>
         </div>
 
-        <div className="relative mx-auto max-w-[1320px]">
+        <div className="relative">
           <div className="category-edge category-edge-left" />
           <div className="category-edge category-edge-right" />
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { homepageSectionClassName } from './homepageSectionSpacing';
+import { HOMEPAGE_CONTAINER, homepageSectionClassName } from './homepageSectionSpacing';
 
 interface ProductGridSkeletonProps {
   /** Number of placeholder cards; should match the number of products the section renders. */
@@ -17,7 +17,7 @@ interface ProductGridSkeletonProps {
  */
 export const ProductGridSkeleton: React.FC<ProductGridSkeletonProps> = ({ count = 6, withCta = false }) => (
   <section className={homepageSectionClassName('bg-white')} aria-busy="true">
-    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <div className={HOMEPAGE_CONTAINER}>
       {/* Header: eyebrow (text-xs + mb-2) and h2 (text-2xl / sm:text-4xl). */}
       <div className="mb-8 sm:mb-10">
         <div className="mb-2 flex h-4 items-center">

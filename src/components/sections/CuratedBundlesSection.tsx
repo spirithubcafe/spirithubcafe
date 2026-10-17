@@ -6,7 +6,7 @@ import { useRegion } from '../../hooks/useRegion';
 import { useShopCategory, useCategoryProducts } from '../../hooks/useShop';
 import { getProductImageUrl, handleImageError } from '../../lib/imageUtils';
 import { formatPrice, getCurrencyByRegion, getCurrencySymbolByRegion } from '../../lib/regionUtils';
-import { homepageSectionClassName } from './homepageSectionSpacing';
+import { homepageContainerClassName, homepageSectionClassName } from './homepageSectionSpacing';
 
 const BUNDLE_CATEGORY_SLUG = 'coffee-bundles-gift-boxes';
 
@@ -34,7 +34,7 @@ export const CuratedBundlesSection: React.FC = () => {
 
   return (
     <section className={homepageSectionClassName('bg-[#fbfbf9]')} dir={isArabic ? 'rtl' : 'ltr'}>
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div className={homepageContainerClassName()}>
         <div className="mb-8 sm:mb-10">
           <p className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.22em] text-amber-600">
             <span className="h-px w-6 bg-amber-500/60" aria-hidden="true" />

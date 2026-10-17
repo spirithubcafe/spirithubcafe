@@ -6,7 +6,7 @@ import { AnnouncementBar } from '../components/layout/AnnouncementBar';
 import { TrustBadgesBar } from '../components/sections/TrustBadgesBar';
 import { Seo } from '../components/seo/Seo';
 import { useApp } from '../hooks/useApp';
-import { homepageSectionClassName } from '../components/sections/homepageSectionSpacing';
+import { homepageContainerClassName, homepageSectionClassName } from '../components/sections/homepageSectionSpacing';
 
 const CustomBundleBuilder = lazy(() => import('@/components/CustomBundleBuilder').then((m) => ({ default: m.CustomBundleBuilder })));
 const CuratedBundlesSection = lazy(() => import('../components/sections/CuratedBundlesSection').then((m) => ({ default: m.CuratedBundlesSection })));
@@ -309,8 +309,8 @@ const HomePage: React.FC = () => {
       <ProfessionalHeroSlider />
       <TrustBadgesBar />
 
-      <section className={homepageSectionClassName('bg-white px-4')}>
-        <div className="mx-auto max-w-6xl">
+      <section className={homepageSectionClassName('bg-white')}>
+        <div className={homepageContainerClassName()}>
           <Suspense fallback={<div className="h-24" aria-hidden="true" />}>
             <CustomBundleBuilder />
           </Suspense>

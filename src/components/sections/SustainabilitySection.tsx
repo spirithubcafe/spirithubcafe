@@ -1,12 +1,14 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { ArrowRight, ArrowLeft } from 'lucide-react';
 import { useApp } from '../../hooks/useApp';
-import { homepageSectionClassName } from './homepageSectionSpacing';
+import { HOMEPAGE_EYEBROW, HOMEPAGE_HEADING, homepageContainerClassName, homepageSectionClassName } from './homepageSectionSpacing';
 
 export const SustainabilitySection: React.FC = () => {
   const { language } = useApp();
   const isArabic = language === 'ar';
+  const location = useLocation();
+  const regionPrefix = location.pathname.startsWith('/sa') ? '/sa' : '/om';
 
   const Arrow = isArabic ? ArrowLeft : ArrowRight;
 
@@ -15,11 +17,11 @@ export const SustainabilitySection: React.FC = () => {
       className={homepageSectionClassName('bg-[#fbfbf9]')}
       dir={isArabic ? 'rtl' : 'ltr'}
     >
-      <div className="mx-auto max-w-6xl px-4">
+      <div className={homepageContainerClassName()}>
         <div className="flex flex-col gap-6 sm:gap-9 lg:flex-row lg:items-center lg:gap-12">
           {/* Story image linking to the About page */}
           <Link
-            to="/about"
+            to={`${regionPrefix}/about`}
             className="group relative block h-[clamp(280px,82vw,320px)] w-full overflow-hidden rounded-3xl bg-white [box-shadow:0_10px_24px_rgba(0,0,0,0.10)] sm:aspect-[4/3] sm:h-auto sm:shadow-lg lg:w-1/2"
           >
             <img
@@ -33,11 +35,11 @@ export const SustainabilitySection: React.FC = () => {
 
           {/* Copy */}
           <div className="lg:w-1/2">
-            <div className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.22em] text-amber-600">
+            <div className={HOMEPAGE_EYEBROW}>
               <span className="h-px w-6 bg-amber-500/60" aria-hidden="true" />
               {isArabic ? 'فلسفتنا' : 'Our Philosophy'}
             </div>
-            <h2 className="text-2xl font-bold leading-tight text-stone-900 sm:text-4xl">
+            <h2 className={HOMEPAGE_HEADING}>
               {isArabic ? (
                 'الاستدامة، الجودة، الالتزام'
               ) : (
@@ -53,7 +55,7 @@ export const SustainabilitySection: React.FC = () => {
                 : 'We believe exceptional coffee begins with responsible sourcing. From carefully selected origins to the people behind every harvest, we are committed to quality, sustainability and lasting relationships.'}
             </p>
             <Link
-              to="/about"
+              to={`${regionPrefix}/about`}
               className="group mt-4 inline-flex items-center gap-2 rounded-full border border-stone-900 bg-white px-6 py-2.5 text-sm font-bold text-stone-900 shadow-sm transition hover:bg-stone-900 hover:text-white sm:mt-6"
             >
               {isArabic ? 'اعرف المزيد' : 'Our Story'}

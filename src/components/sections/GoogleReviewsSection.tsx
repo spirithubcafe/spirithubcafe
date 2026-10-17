@@ -3,7 +3,7 @@ import { ChevronLeft, ChevronRight, MapPin, Star } from 'lucide-react';
 import useEmblaCarousel from 'embla-carousel-react';
 import { googleReviewsService, type GoogleReviewsData } from '@/services/googleReviewsService';
 import { Skeleton } from '@/components/ui/skeleton';
-import { homepageSectionClassName } from './homepageSectionSpacing';
+import { homepageContainerClassName, homepageSectionClassName } from './homepageSectionSpacing';
 
 const MAX_PREVIEW_LENGTH = 72;
 const REVIEW_PANEL_IMAGE = '/images/slides/rwanda-farm-spirithub-coffee.webp';
@@ -225,7 +225,7 @@ export const GoogleReviewsSection: React.FC = () => {
 
   return (
     <section className={homepageSectionClassName('bg-[#fbfbf9]')} dir={isArabic ? 'rtl' : 'ltr'}>
-      <div className="mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:px-8">
+      <div className={homepageContainerClassName()}>
         <div
           className="relative overflow-hidden rounded-[26px] border border-[rgba(123,96,67,0.14)] bg-[#f7f2e9] shadow-[0_18px_44px_rgba(88,63,34,0.10)] lg:min-h-[396px]"
           style={{ direction: isArabic ? 'rtl' : 'ltr' }}

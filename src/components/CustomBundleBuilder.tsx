@@ -169,7 +169,7 @@ export const CustomBundleBuilder = () => {
         <button type="button" onClick={() => setOpen((value) => !value)} className="group relative flex w-full flex-col items-start gap-5 overflow-hidden px-5 py-2 text-start sm:flex-row sm:items-stretch sm:gap-x-[8%] sm:px-10 sm:py-7">
           <div className="relative z-10 flex min-w-0 flex-col items-start justify-center gap-2 pe-9 sm:flex-none sm:basis-[42%] sm:gap-3 sm:pe-0">
             <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.22em] text-amber-400"><Sparkles className="h-4 w-4" />{t('customBundle.eyebrow')}</div>
-            <h2 className="text-xl! font-extrabold leading-tight sm:text-4xl!">
+            <h2 className="text-2xl! font-extrabold leading-tight sm:text-4xl!">
               <span className="block">{t('customBundle.headlineLine1')}</span>
               <span className="block">{renderWithBold(headlineLine2)}</span>
             </h2>

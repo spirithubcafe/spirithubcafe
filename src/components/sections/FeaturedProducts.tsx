@@ -5,7 +5,7 @@ import { ProductGridSkeleton } from './ProductGridSkeleton';
 import { useApp } from '../../hooks/useApp';
 import { useRegion } from '../../hooks/useRegion';
 import { Coffee } from 'lucide-react';
-import { homepageSectionClassName } from './homepageSectionSpacing';
+import { HOMEPAGE_CONTAINER, homepageSectionClassName } from './homepageSectionSpacing';
 
 export const FeaturedProducts: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -36,7 +36,7 @@ export const FeaturedProducts: React.FC = () => {
   if (!latestProducts || latestProducts.length === 0) {
     return (
       <section id="products" className={homepageSectionClassName('bg-white')}>
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className={HOMEPAGE_CONTAINER}>
           <div className="mb-12">
             <p className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.22em] text-amber-600">
               <span className="h-px w-6 bg-amber-500/60" aria-hidden="true" />
@@ -68,7 +68,7 @@ export const FeaturedProducts: React.FC = () => {
 
   return (
     <section id="products" className={homepageSectionClassName('bg-white')}>
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className={HOMEPAGE_CONTAINER}>
         {/* Section Header */}
         <div className="mb-8 sm:mb-10">
           <p className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.22em] text-amber-600">
