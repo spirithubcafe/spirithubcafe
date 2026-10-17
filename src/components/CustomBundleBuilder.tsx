@@ -53,6 +53,18 @@ export const CustomBundleBuilder = () => {
   }, [isArabic]);
 
   const selectedCount = selections.reduce((sum, item) => sum + item.quantity, 0);
+
+  // While the builder is open, its action bar is fixed above the mobile bottom nav.
+  // Flag it on <html> so the chat launcher moves above the bar instead of covering
+  // the "Add bundle" button (see .chatbot-launcher in index.css).
+  useEffect(() => {
+    if (!open) return;
+    const root = document.documentElement;
+    root.dataset.bundleBarOpen = '';
+    return () => {
+      delete root.dataset.bundleBarOpen;
+    };
+  }, [open]);
   useEffect(() => {
     if (!configuration || selectedCount < configuration.minimumQuantity) {
       setQuote(undefined);
@@ -328,7 +340,7 @@ export const CustomBundleBuilder = () => {
             <div className="flex items-center gap-2 font-bold"><Gift className="h-5 w-5 text-amber-700" />{t('customBundle.benefit', { discount: quote.discountPercentage, gifts: quote.complimentaryGift.quantity })}</div>
             <div className="mt-3 grid grid-cols-3 gap-2 text-sm"><div><span className="block text-stone-500">{t('customBundle.coffeeSubtotal')}</span>{money(quote.coffeeSubtotal)}</div><div><span className="block text-stone-500">{t('customBundle.savings')}</span>-{money(quote.bundleDiscountAmount)}</div><div><span className="block text-stone-500">{t('customBundle.bundleSubtotal')}</span><strong>{money(quote.postDiscountBundleSubtotal)}</strong></div></div>
           </div>}
-          <div className="fixed inset-x-4 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-30 flex items-center justify-between gap-2 rounded-2xl bg-white p-3 shadow-lg ring-1 ring-stone-200 sm:gap-4 md:static md:inset-x-auto md:sticky md:bottom-3 md:z-auto md:mt-5">
+          <div className="fixed inset-x-4 bottom-[calc(6rem+env(safe-area-inset-bottom))] z-40 flex items-center justify-between gap-2 rounded-2xl bg-white p-3 shadow-lg ring-1 ring-stone-200 sm:gap-4 md:static md:inset-x-auto md:sticky md:bottom-3 md:z-auto md:mt-5">
             <span className={`text-xs font-bold sm:text-sm ${isComplete ? 'text-emerald-600' : 'text-stone-700'}`}>
               <span className="hidden sm:inline">
                 {hasRange ? t('customBundle.chooseBagsRange', { min: minCount, max: maxCount }) : t('customBundle.chooseBags', { max: maxCount })}

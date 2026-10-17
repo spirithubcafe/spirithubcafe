@@ -767,3 +767,13 @@ pre {
 .html-editor-content hr { border: none; border-top: 1px solid #e7e5e4; margin: 1em 0; }
 .html-editor-content sub { vertical-align: sub; font-size: 0.8em; }
 .html-editor-content sup { vertical-align: super; font-size: 0.8em; }
+
+/* Mobile: while the custom bundle builder is open its action bar sits fixed above
+   the bottom nav (bottom 6rem, ~60px tall). Lift the chat launcher above the bar
+   so it never covers the "Add bundle" button. */
+@media (max-width: 767px) {
+  html[data-bundle-bar-open] .chatbot-launcher {
+    bottom: calc(10.5rem + env(safe-area-inset-bottom));
+    transition: bottom 0.2s ease;
+  }
+}
