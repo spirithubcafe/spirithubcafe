@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { getLegacyProductRedirect, OMAN_LEGACY_PRODUCT_REDIRECTS } from './legacyProductRedirects.js';
+import { getLegacyProductRedirect, OMAN_LEGACY_PRODUCT_REDIRECTS } from '../../server/legacyProductRedirects.js';
 
 const approved = [
   ['spirithub-experience-box-ufo-drip-coffee-collection', 'ufo-drip-coffee-spirithub-experience-box-7-disk-collection'],

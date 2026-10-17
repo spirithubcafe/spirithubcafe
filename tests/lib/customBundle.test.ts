@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
-import { aggregateBundleItems, canAddBundleSelection, createQuoteRequestGuard, getUnbundledOrderItems, parseStoredBundles, toOrderCustomBundles } from './customBundle.ts';
-import type { CartCustomBundle } from '../types/customBundle.ts';
-import type { Order } from '../types/order.ts';
+import { aggregateBundleItems, canAddBundleSelection, createQuoteRequestGuard, getUnbundledOrderItems, parseStoredBundles, toOrderCustomBundles } from '../../src/lib/customBundle.ts';
+import type { CartCustomBundle } from '../../src/types/customBundle.ts';
+import type { Order } from '../../src/types/order.ts';
 
 const bundle = (quantity: number): CartCustomBundle => ({
   id: `bundle-${quantity}`,
@@ -88,8 +88,8 @@ test('complimentary gifts retain zero charged display semantics', () => {
   assert.equal(gift.displayPrice, 'FREE');
 });
 test('English and Arabic bundle localization keys are present', () => {
-  const en = JSON.parse(readFileSync(new URL('../i18n/locales/en.json', import.meta.url), 'utf8'));
-  const ar = JSON.parse(readFileSync(new URL('../i18n/locales/ar.json', import.meta.url), 'utf8'));
-  assert.equal(en.customBundle.title, 'Choose your coffees');
-  assert.equal(ar.customBundle.title, 'اختر قهوتك');
+  const en = JSON.parse(readFileSync(new URL('../../src/i18n/locales/en.json', import.meta.url), 'utf8'));
+  const ar = JSON.parse(readFileSync(new URL('../../src/i18n/locales/ar.json', import.meta.url), 'utf8'));
+  assert.equal(en.customBundle.title, 'Build Your Own Bundle');
+  assert.equal(ar.customBundle.title, 'اصنع حزمتك الخاصة');
 });

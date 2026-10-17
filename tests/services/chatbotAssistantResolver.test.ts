@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { resolveChatbotAssistantLocally } from './chatbotAssistantResolver.ts';
+import { resolveChatbotAssistantLocally } from '../../src/services/chatbotAssistantResolver.ts';
 
 const flows = [
   ['Start and finish the coffee quiz', 'start_quiz'],

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { getShopCategorySlug, serializeForInlineScript } from './ssrProductsBootstrap.js';
+import { getShopCategorySlug, serializeForInlineScript } from '../../server/ssrProductsBootstrap.js';
 
 test('shop detection accepts regional queries but excludes product-detail routes', () => {
   for (const path of ['/om/shop', '/sa/shop/', '/shop?filter=all']) assert.equal(getShopCategorySlug(path), '');
@@ -9,7 +9,7 @@ test('shop detection accepts regional queries but excludes product-detail routes
 });
 
 test('shop/category bootstrap runs independent requests in parallel and isolates regional IDs and languages', async (t) => {
-  const { fetchShopBootstrap } = await import('./ssrProductsBootstrap.js?shop=isolation');
+  const { fetchShopBootstrap } = await import('../../server/ssrProductsBootstrap.js?shop=isolation');
   const calls = [];
   let firstPhaseRequests = 0;
   let release;
@@ -46,7 +46,7 @@ test('shop/category bootstrap runs independent requests in parallel and isolates
 });
 
 test('partial failures are logged, preserve shop content, and retry rather than cache category absence', async (t) => {
-  const { fetchShopBootstrap } = await import('./ssrProductsBootstrap.js?shop=failure');
+  const { fetchShopBootstrap } = await import('../../server/ssrProductsBootstrap.js?shop=failure');
   let attempts = 0;
   const warnings = t.mock.method(console, 'warn', () => {});
   t.mock.method(globalThis, 'fetch', async (url) => {
@@ -69,7 +69,7 @@ test('partial failures are logged, preserve shop content, and retry rather than 
 });
 
 test('malformed successful category responses are logged and never resolved to another category', async (t) => {
-  const { fetchShopBootstrap } = await import('./ssrProductsBootstrap.js?shop=malformed');
+  const { fetchShopBootstrap } = await import('../../server/ssrProductsBootstrap.js?shop=malformed');
   const warnings = t.mock.method(console, 'warn', () => {});
   t.mock.method(globalThis, 'fetch', async (url) => Response.json({
     success: true,
@@ -82,7 +82,7 @@ test('malformed successful category responses are logged and never resolved to a
 });
 
 test('invalid categories never borrow products and serialization escapes script termination', async (t) => {
-  const { fetchShopBootstrap } = await import('./ssrProductsBootstrap.js?shop=invalid');
+  const { fetchShopBootstrap } = await import('../../server/ssrProductsBootstrap.js?shop=invalid');
   t.mock.method(console, 'warn', () => {});
   const calls = [];
   t.mock.method(globalThis, 'fetch', async (url) => {

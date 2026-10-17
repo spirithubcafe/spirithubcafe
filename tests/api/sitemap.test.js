@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { buildSitemap } from './sitemap.js';
+import { buildSitemap } from '../../api/sitemap.js';
 
 const productPayload = {
   success: true,

@@ -7,12 +7,12 @@ import { detectSsrRegion, prepareSsrRequest, serializeForInlineScript } from './
 import { errorMetaTags, renderSsrOutcome, replaceErrorHead, sendSsrUnavailable, setErrorHeaders } from './ssrHttp.js';
 import { getLegacyProductRedirect } from './legacyProductRedirects.js';
 import { PRIVATE_ROBOTS_TAG, shouldNoindexRoute } from './ssrRobots.js';
-import { getRepresentativeProductSeoOffer } from './src/lib/productSeoOffer.js';
+import { getRepresentativeProductSeoOffer } from '../src/lib/productSeoOffer.js';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 // Load .env in development (Vercel injects env vars automatically in production)
-const envPath = path.resolve(__dirname, '.env');
+const envPath = path.resolve(rootDir, '.env');
 if (fs.existsSync(envPath)) {
   const lines = fs.readFileSync(envPath, 'utf-8').split('\n');
   for (const line of lines) {
@@ -34,8 +34,8 @@ const base = process.env.BASE || '/';
 // Vite's default build output is `dist/index.html`.
 // Some SSR setups use `dist/client/index.html`, so we support both.
 const prodIndexCandidates = [
-  path.resolve(__dirname, 'dist/index.html'),
-  path.resolve(__dirname, 'dist/client/index.html'),
+  path.resolve(rootDir, 'dist/index.html'),
+  path.resolve(rootDir, 'dist/client/index.html'),
 ];
 
 const prodIndexPath = isProduction
@@ -152,7 +152,7 @@ app.set('trust proxy', true);
 // public/sitemap.xml when the API is unreachable.
 app.get('/sitemap.xml', async (_req, res) => {
   try {
-    const { buildSitemap } = await import('./api/sitemap.js');
+    const { buildSitemap } = await import('../api/sitemap.js');
     const xml = await buildSitemap();
     res.setHeader('Content-Type', 'application/xml; charset=utf-8');
     res.setHeader('Cache-Control', 'public, max-age=600');
@@ -160,7 +160,7 @@ app.get('/sitemap.xml', async (_req, res) => {
   } catch (err) {
     console.error('Dynamic sitemap failed, serving static fallback:', err.message);
     try {
-      const staticPath = path.resolve(__dirname, 'public/sitemap.xml');
+      const staticPath = path.resolve(rootDir, 'public/sitemap.xml');
       if (fs.existsSync(staticPath)) {
         const content = fs.readFileSync(staticPath, 'utf-8');
         res.setHeader('Content-Type', 'application/xml; charset=utf-8');
@@ -216,7 +216,7 @@ app.get('/sa/email-templates.html', (_req, res) => {
 // Instagram feed API – proxies the Instagram Graph API so the frontend
 // can fetch posts without exposing the access token to the client.
 app.get('/api/instagram/feed', async (req, res) => {
-  const { default: instagramFeedHandler } = await import('./api/instagram/feed.js');
+  const { default: instagramFeedHandler } = await import('../api/instagram/feed.js');
   return instagramFeedHandler(req, res);
 });
 
@@ -225,6 +225,7 @@ let vite;
 if (!isProduction) {
   const { createServer } = await import('vite');
   vite = await createServer({
+    root: rootDir,
     server: { middlewareMode: true },
     appType: 'custom',
     base,
@@ -236,7 +237,7 @@ if (!isProduction) {
   // Images in public/ are not fingerprinted, so we cache them for 1 week
   app.use(
     '/images',
-    express.static(path.resolve(__dirname, 'public/images'), {
+    express.static(path.resolve(rootDir, 'public/images'), {
       maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
       setHeaders(res) {
         res.setHeader('Cache-Control', 'public, max-age=604800, immutable'); // 1 week
@@ -246,7 +247,7 @@ if (!isProduction) {
 
   // Serve other public files (favicons, manifest, robots.txt, sitemap)
   app.use(
-    express.static(path.resolve(__dirname, 'public'), {
+    express.static(path.resolve(rootDir, 'public'), {
       maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
       setHeaders(res, filePath) {
         const fp = (filePath || '').replace(/\\/g, '/');
@@ -261,9 +262,9 @@ if (!isProduction) {
   );
 
   // Serve static assets from Vite build output.
-  const prodStaticRoot = fs.existsSync(path.resolve(__dirname, 'dist'))
-    ? path.resolve(__dirname, 'dist')
-    : path.resolve(__dirname, 'dist/client');
+  const prodStaticRoot = fs.existsSync(path.resolve(rootDir, 'dist'))
+    ? path.resolve(rootDir, 'dist')
+    : path.resolve(rootDir, 'dist/client');
 
   // NOTE: Express' default static caching is conservative. For a SPA/PWA we want:
   // - long-lived caching for fingerprinted assets + images
@@ -327,7 +328,7 @@ app.use(async (req, res) => {
     let template;
     if (!isProduction) {
       // Always read fresh template in development
-      template = fs.readFileSync(path.resolve(__dirname, 'index.html'), 'utf-8');
+      template = fs.readFileSync(path.resolve(rootDir, 'index.html'), 'utf-8');
       template = await vite.transformIndexHtml(url, template);
     } else {
       if (!templateHtml) {
@@ -377,7 +378,7 @@ app.use(async (req, res) => {
         render = mod.render;
       } else if (isProduction) {
         // In production, import the pre-built SSR bundle using file:// URL
-        const ssrBundlePath = path.resolve(__dirname, 'dist/server/entry-server.js');
+        const ssrBundlePath = path.resolve(rootDir, 'dist/server/entry-server.js');
         if (fs.existsSync(ssrBundlePath)) {
           const fileUrl = `file://${ssrBundlePath.replace(/\\/g, '/')}`;
           const mod = await import(fileUrl);

@@ -8,7 +8,7 @@ import {
   resolveProductTarget,
   sanitizeToolResultForModel,
   selectBrewingText,
-} from './chatbotProductIntents.ts';
+} from '../../src/lib/chatbotProductIntents.ts';
 
 const moonBloom = {
   id: 583,

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { isRetryableProductFetchError, productsBelongToRegion, shouldClearProductsOnFetchError } from './productFetchRetry.ts';
+import { isRetryableProductFetchError, productsBelongToRegion, shouldClearProductsOnFetchError } from '../../src/lib/productFetchRetry.ts';
 
 // --- isRetryableProductFetchError ---------------------------------------
 

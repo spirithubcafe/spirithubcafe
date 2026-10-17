@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { buildOmanSitemapXml } from './omanSitemapBuilder.js';
+import { buildOmanSitemapXml } from '../../src/lib/omanSitemapBuilder.js';
 
 const shopCategories = [
   { id: 10, slug: 'coffee-bundles-gift-boxes' },

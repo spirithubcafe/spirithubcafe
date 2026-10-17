@@ -3,7 +3,10 @@ import test from 'node:test';
 import { createServer } from 'node:http';
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
-import { OMAN_LEGACY_PRODUCT_REDIRECTS } from './legacyProductRedirects.js';
+import { fileURLToPath } from 'node:url';
+import { OMAN_LEGACY_PRODUCT_REDIRECTS } from '../../server/legacyProductRedirects.js';
+
+const repoRoot = fileURLToPath(new URL('../../', import.meta.url));
 
 const getProductSchema = (html) => {
   const scripts = [...html.matchAll(/<script type="application\/ld\+json" data-generated="seo">([\s\S]*?)<\/script>/g)];
@@ -76,7 +79,8 @@ test('standalone production server preserves empty 200, confirmed 404, and non-c
   const serverPort = await listen(reservation);
   await new Promise((resolve) => reservation.close(resolve));
   const base = `http://127.0.0.1:${upstreamPort}`;
-  const child = spawn(process.execPath, ['server.js'], {
+  const child = spawn(process.execPath, ['server/index.js'], {
+    cwd: repoRoot,
     env: { ...process.env, NODE_ENV: 'production', PORT: String(serverPort), VITE_API_BASE_URL_OM: base, VITE_API_BASE_URL_SA: base },
     stdio: ['ignore', 'pipe', 'pipe'],
   });

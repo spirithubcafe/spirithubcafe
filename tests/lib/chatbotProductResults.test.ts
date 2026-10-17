@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { cleanCustomerEmail, dedupeProductsById, formatBundleTotal, getBundleBudget, getBundleRefinementPrompt, getMeaningfulMatchLabel, selectFruityFilterCoffees } from './chatbotProductResults.ts';
-import { resolveCoffeeOrigin } from './chatbotOriginSearch.ts';
+import { cleanCustomerEmail, dedupeProductsById, formatBundleTotal, getBundleBudget, getBundleRefinementPrompt, getMeaningfulMatchLabel, selectFruityFilterCoffees } from '../../src/lib/chatbotProductResults.ts';
+import { resolveCoffeeOrigin } from '../../src/lib/chatbotOriginSearch.ts';
 
 test('fruity V60 results are stocked coffees only, deduplicated, and explained', () => {
   const results = selectFruityFilterCoffees([

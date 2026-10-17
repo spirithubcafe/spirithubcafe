@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ProductCard } from '../products/ProductCard';
+import { ProductGridSkeleton } from './ProductGridSkeleton';
 import { useApp } from '../../hooks/useApp';
 import { useRegion } from '../../hooks/useRegion';
 import { Coffee } from 'lucide-react';
@@ -27,30 +28,7 @@ export const FeaturedProducts: React.FC = () => {
   }, [products]);
 
   if (loading) {
-    return (
-      <section className={homepageSectionClassName('bg-white')}>
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          {/* Section Header Skeleton */}
-          <div className="flex flex-col gap-3 mb-12">
-            <div className="h-3 w-40 animate-pulse rounded bg-gray-200" />
-            <div className="h-8 w-56 animate-pulse rounded-lg bg-gray-200" />
-          </div>
-          {/* Product Cards Skeleton */}
-          <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 lg:grid-cols-6">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
-                <div className="aspect-square w-full animate-pulse bg-gray-100" />
-                <div className="space-y-2 p-3">
-                  <div className="h-3.5 w-3/4 animate-pulse rounded bg-gray-100" />
-                  <div className="h-3 w-1/2 animate-pulse rounded bg-gray-50" />
-                  <div className="h-4 w-20 animate-pulse rounded-md bg-gray-100" />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-    );
+    return <ProductGridSkeleton count={6} />;
   }
 
   if (!latestProducts || latestProducts.length === 0) {

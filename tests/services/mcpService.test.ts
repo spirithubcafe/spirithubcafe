@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { createMcpClient, resolveMcpBranch } from './mcpService.ts';
+import { createMcpClient, resolveMcpBranch } from '../../src/services/mcpService.ts';
 
 interface CapturedRequest {
   url: string;

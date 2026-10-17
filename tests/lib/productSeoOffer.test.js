@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { getRepresentativeProductSeoOffer } from './productSeoOffer.js';
+import { getRepresentativeProductSeoOffer } from '../../src/lib/productSeoOffer.js';
 
 const productWithVariants = (variants) => ({
   id: 1,

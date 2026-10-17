@@ -5,7 +5,7 @@
  * 
  * Usage:
  *   npm install sharp
- *   node convert-logos-to-webp.js
+ *   node tools/convert-logos-to-webp.js
  * 
  * This script converts PNG logo files to WebP format for better performance.
  * Expected savings: 11-20 KB per page load (15-20% of current weight)

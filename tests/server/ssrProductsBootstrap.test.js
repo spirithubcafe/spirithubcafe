@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { isProductsListPath } from './ssrProductsBootstrap.js';
+import { isProductsListPath } from '../../server/ssrProductsBootstrap.js';
 
 test('listing detection accepts regional category queries and excludes detail routes', () => {
   for (const path of ['/om/products', '/om/products?category=filter-pour-over-coffee', '/sa/products/?category=50', '/products?category=2']) {
@@ -12,7 +12,7 @@ test('listing detection accepts regional category queries and excludes detail ro
 });
 
 test('parallel regional bootstraps use matching branch/language headers and isolated cache keys', async (t) => {
-  const { fetchProductsBootstrap } = await import('./ssrProductsBootstrap.js?test=isolation');
+  const { fetchProductsBootstrap } = await import('../../server/ssrProductsBootstrap.js?test=isolation');
   const calls = [];
   t.mock.method(globalThis, 'fetch', async (url, options) => {
     calls.push({ url, headers: options.headers });
@@ -42,7 +42,7 @@ test('parallel regional bootstraps use matching branch/language headers and isol
 });
 
 test('category failures preserve successful products, are logged, and do not cache an incomplete lookup', async (t) => {
-  const { fetchProductsBootstrap } = await import('./ssrProductsBootstrap.js?test=category-failure');
+  const { fetchProductsBootstrap } = await import('../../server/ssrProductsBootstrap.js?test=category-failure');
   let categoryRequests = 0;
   const warnings = t.mock.method(console, 'warn', () => {});
   t.mock.method(globalThis, 'fetch', async (url) => {
@@ -65,7 +65,7 @@ test('category failures preserve successful products, are logged, and do not cac
 });
 
 test('product bootstrap failure retains the existing null fallback', async (t) => {
-  const { fetchProductsBootstrap } = await import('./ssrProductsBootstrap.js?test=product-failure');
+  const { fetchProductsBootstrap } = await import('../../server/ssrProductsBootstrap.js?test=product-failure');
   t.mock.method(console, 'warn', () => {});
   t.mock.method(globalThis, 'fetch', async (url) =>
     url.includes('/Products') ? new Response('', { status: 503 }) : Response.json({ data: [] }),

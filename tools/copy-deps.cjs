@@ -3,7 +3,7 @@ const { execSync } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 
-const distPath = path.join(__dirname, 'dist');
+const distPath = path.join(__dirname, '..', 'dist');
 const distPackageJson = path.join(distPath, 'package.json');
 
 console.log('📦 Installing production dependencies in dist folder...\n');

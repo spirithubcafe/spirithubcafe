@@ -4,7 +4,7 @@ import {
   createShopCategoryLookup,
   getOmanSitemapCategoryPath,
   getOmanSitemapProductPath,
-} from './sitemapRouteClassifier.js';
+} from '../../src/lib/sitemapRouteClassifier.js';
 
 const shopCategories = [
   { id: 10, slug: 'coffee-bundles-gift-boxes' },

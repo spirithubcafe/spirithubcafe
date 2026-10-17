@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { CustomBundleApiError, unwrapCustomBundleResult } from './customBundleResponse.ts';
+import { CustomBundleApiError, unwrapCustomBundleResult } from '../../src/services/customBundleResponse.ts';
 
 test('accepts the backend success wrapper', () => {
   const data = { definitionId: 7 };

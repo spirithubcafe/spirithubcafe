@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { runProductLookup, type LookupProduct, type ProductLookupDeps } from './chatbotProductLookup.ts';
+import { runProductLookup, type LookupProduct, type ProductLookupDeps } from '../../src/lib/chatbotProductLookup.ts';
 
 const moonBloom: LookupProduct = {
   id: 583,

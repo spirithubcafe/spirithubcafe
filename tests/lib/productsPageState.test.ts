@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { resolveProductsViewState } from './productsPageState.ts';
+import { resolveProductsViewState } from '../../src/lib/productsPageState.ts';
 
 const base = {
   loading: false,

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { buildFallbackSearchQueries } from './chatbotSearchFallback.ts';
+import { buildFallbackSearchQueries } from '../../src/lib/chatbotSearchFallback.ts';
 
 test('drops filler words so the product name is searched alone', () => {
   const queries = buildFallbackSearchQueries('قهوه زهرة القمر');

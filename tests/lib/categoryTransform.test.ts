@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { resolveBootstrapCategories, transformApiCategories } from './categoryTransform.ts';
-import type { Category } from '../types/product';
+import { resolveBootstrapCategories, transformApiCategories } from '../../src/lib/categoryTransform.ts';
+import type { Category } from '../../src/types/product';
 
 const category = (id: number, slug: string, overrides: Partial<Category> = {}): Category => ({
   id,

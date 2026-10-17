@@ -1,11 +1,17 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it } from 'node:test';
+import assert from 'node:assert/strict';
 import {
   getVariantStock,
   clampQuantity,
   canAddToCart,
   remainingStock,
   DEFAULT_MAX_QUANTITY,
-} from './stockUtils';
+} from '../../src/lib/stockUtils.ts';
+
+const expect = (actual: unknown) => ({
+  toBe: (expected: unknown) => assert.strictEqual(actual, expected),
+  toBeUndefined: () => assert.strictEqual(actual, undefined),
+});
 
 describe('stockUtils', () => {
   // ---------- getVariantStock ----------

@@ -8,10 +8,10 @@ import {
   groupVariantsByProduct,
   toggleVariantSelection,
   validateBundlePayload,
-} from './bundleAdminUtils.ts';
-import type { BundleSettingsDraft } from './bundleAdminUtils.ts';
-import type { BundleDefinitionDto } from '../types/bundleAdmin.ts';
-import type { VariantStockOverviewItem } from '../types/product.ts';
+} from '../../src/lib/bundleAdminUtils.ts';
+import type { BundleSettingsDraft } from '../../src/lib/bundleAdminUtils.ts';
+import type { BundleDefinitionDto } from '../../src/types/bundleAdmin.ts';
+import type { VariantStockOverviewItem } from '../../src/types/product.ts';
 
 const definition = (overrides: Partial<BundleDefinitionDto> = {}): BundleDefinitionDto => ({
   id: 7,

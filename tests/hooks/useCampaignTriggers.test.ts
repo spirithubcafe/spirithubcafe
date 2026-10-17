@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { getCampaignTriggerConfiguration } from './useCampaignTriggers.ts';
-import { isMarketingCampaignRouteEligible } from '../types/publicMarketingCampaign.ts';
+import { getCampaignTriggerConfiguration } from '../../src/hooks/useCampaignTriggers.ts';
+import { isMarketingCampaignRouteEligible } from '../../src/types/publicMarketingCampaign.ts';
 
 test('campaign route allowlist accepts only regional storefront commerce routes', () => {
   for (const path of ['/om', '/sa/', '/om/shop', '/sa/shop/gifts', '/om/products', '/sa/products/42']) {

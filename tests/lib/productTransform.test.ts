@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { resolveBootstrapProducts, transformApiProductsToProducts } from './productTransform.ts';
+import { resolveBootstrapProducts, transformApiProductsToProducts } from '../../src/lib/productTransform.ts';
 
 const rawProduct = (overrides: Record<string, unknown> = {}) => ({
   id: 725,

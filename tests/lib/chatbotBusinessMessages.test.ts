@@ -1,14 +1,14 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
-import { REGION_INFO } from '../config/regionInfo.ts';
+import { REGION_INFO } from '../../src/config/regionInfo.ts';
 import {
   buildClarifyMessage,
   buildHoursMessage,
   buildLocationMessage,
   buildSupportPrefix,
   buildToolLimitMessage,
-} from './chatbotBusinessMessages.ts';
+} from '../../src/lib/chatbotBusinessMessages.ts';
 
 const regions = ['om', 'sa'] as const;
 
@@ -35,7 +35,7 @@ test('Oman and Saudi answers differ because they use different business data', (
 });
 
 test('the message builders hard-code no business facts', () => {
-  const source = readFileSync(new URL('./chatbotBusinessMessages.ts', import.meta.url), 'utf8');
+  const source = readFileSync(new URL('../../src/lib/chatbotBusinessMessages.ts', import.meta.url), 'utf8');
   assert.doesNotMatch(source, /https?:\/\//, 'no URL literal');
   assert.doesNotMatch(source, /\+?\d{3}[\s-]?\d{4}/, 'no phone number literal');
   assert.doesNotMatch(source, /\d\s?(AM|PM|am|pm)/, 'no opening-hours literal');

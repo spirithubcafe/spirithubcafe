@@ -6,8 +6,8 @@ import {
   isHandledAssistantAction,
   planAssistantAction,
   resolveChatbotAssistantLocally,
-} from './chatbotAssistantResolver.ts';
-import type { ChatbotAssistantResult } from './chatbotAssistantService.ts';
+} from '../../src/services/chatbotAssistantResolver.ts';
+import type { ChatbotAssistantResult } from '../../src/services/chatbotAssistantService.ts';
 
 const result = (overrides: Partial<ChatbotAssistantResult>): ChatbotAssistantResult => ({
   intent: 'delivery_info',

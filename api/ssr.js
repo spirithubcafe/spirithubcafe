@@ -1,10 +1,10 @@
 import fs from 'fs';
 import path from 'path';
 import { pathToFileURL } from 'node:url';
-import { detectSsrRegion, prepareSsrRequest } from '../ssrProductsBootstrap.js';
-import { errorMetaTags, renderSsrOutcome, replaceErrorHead, sendSsrUnavailable, setErrorHeaders } from '../ssrHttp.js';
-import { getLegacyProductRedirect } from '../legacyProductRedirects.js';
-import { PRIVATE_ROBOTS_TAG, shouldNoindexRoute } from '../ssrRobots.js';
+import { detectSsrRegion, prepareSsrRequest } from '../server/ssrProductsBootstrap.js';
+import { errorMetaTags, renderSsrOutcome, replaceErrorHead, sendSsrUnavailable, setErrorHeaders } from '../server/ssrHttp.js';
+import { getLegacyProductRedirect } from '../server/legacyProductRedirects.js';
+import { PRIVATE_ROBOTS_TAG, shouldNoindexRoute } from '../server/ssrRobots.js';
 import { getRepresentativeProductSeoOffer } from '../src/lib/productSeoOffer.js';
 
 const SEO_HOSTS = {

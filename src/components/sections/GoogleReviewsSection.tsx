@@ -282,7 +282,9 @@ export const GoogleReviewsSection: React.FC = () => {
                   {Array.from({ length: 3 }).map((_, idx) => (
                     <div
                       key={`review-skeleton-${idx}`}
-                      className="min-h-[230px] rounded-[22px] border border-[rgba(93,67,45,0.08)] bg-[rgba(255,252,247,0.68)] p-5 shadow-[0_8px_24px_rgba(59,42,32,0.06)] backdrop-blur-[10px]"
+                      // The loaded carousel is a single row; don't stack extra
+                      // placeholder cards on narrow screens or the section shrinks on load.
+                      className={`${idx === 1 ? 'hidden md:block ' : idx === 2 ? 'hidden xl:block ' : ''}min-h-[230px] rounded-[22px] border border-[rgba(93,67,45,0.08)] bg-[rgba(255,252,247,0.68)] p-5 shadow-[0_8px_24px_rgba(59,42,32,0.06)] backdrop-blur-[10px]`}
                     >
                       <div className="mb-6 flex items-start justify-between gap-3">
                         <Skeleton className="h-12 w-12 rounded-2xl bg-[#efe6d8]" />

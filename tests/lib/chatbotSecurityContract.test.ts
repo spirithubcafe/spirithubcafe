@@ -7,9 +7,9 @@ import test from 'node:test';
 
 const read = (relativePath: string): string => readFileSync(new URL(relativePath, import.meta.url), 'utf8');
 
-const gemini = read('../services/geminiChatService.ts');
-const mcp = read('../services/mcpService.ts');
-const chatBot = read('../components/chatbot/ChatBot.tsx');
+const gemini = read('../../src/services/geminiChatService.ts');
+const mcp = read('../../src/services/mcpService.ts');
+const chatBot = read('../../src/components/chatbot/ChatBot.tsx');
 
 test('Gemini tool results are sanitized and the loop is bounded', () => {
   assert.match(gemini, /return sanitizeToolResultForModel\(data\);/);
@@ -41,8 +41,8 @@ test('order and customer data never goes through MCP or Gemini code', () => {
   for (const [name, source] of [
     ['geminiChatService', gemini],
     ['mcpService', mcp],
-    ['chatbotProductLookup', read('./chatbotProductLookup.ts')],
-    ['chatbotProductIntents', read('./chatbotProductIntents.ts')],
+    ['chatbotProductLookup', read('../../src/lib/chatbotProductLookup.ts')],
+    ['chatbotProductIntents', read('../../src/lib/chatbotProductIntents.ts')],
   ] as const) {
     assert.ok(!/api\/Orders|my-order|orderService|getOrders|OrderDto|smart-reorder/i.test(source), `${name} must not touch order endpoints`);
   }

@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import test from 'node:test';
-import { createSsrHandler } from './api/ssr.js';
-import { fetchSsrJson, renderSsrOutcome } from './ssrHttp.js';
-import { render } from './dist/server/entry-server.js';
-import { OMAN_LEGACY_PRODUCT_REDIRECTS } from './legacyProductRedirects.js';
+import { createSsrHandler } from '../../api/ssr.js';
+import { fetchSsrJson, renderSsrOutcome } from '../../server/ssrHttp.js';
+import { render } from '../../dist/server/entry-server.js';
+import { OMAN_LEGACY_PRODUCT_REDIRECTS } from '../../server/legacyProductRedirects.js';
 
 const productFor = (region, slug) => ({
   id: region === 'om' ? 9001 : 9101, slug, name: `${region} status test coffee`,
@@ -53,7 +53,7 @@ const assertErrorResponse = (response, status) => {
 };
 
 test('robots.txt declares one crawler group, one sitemap, and keeps private paths blocked for every bot', () => {
-  const robots = fs.readFileSync(new URL('./public/robots.txt', import.meta.url), 'utf8');
+  const robots = fs.readFileSync(new URL('../../public/robots.txt', import.meta.url), 'utf8');
   assert.equal((robots.match(/^User-agent:/gm) || []).length, 1);
   assert.match(robots, /^User-agent: \*$/m);
   for (const disallow of [

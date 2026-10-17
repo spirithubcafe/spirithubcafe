@@ -9,7 +9,7 @@ import {
   type ToolCall,
   type ToolLoopStep,
   type ToolResponse,
-} from './chatbotToolLoop.ts';
+} from '../../src/lib/chatbotToolLoop.ts';
 
 const callOf = (name: string): ToolCall => ({ name, args: {} });
 const done: ToolLoopStep = { calls: [] };
