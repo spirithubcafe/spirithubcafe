@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { X, Send, RotateCcw, Minimize2, Truck, Headphones } from 'lucide-react';
+import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
+import { X, RotateCcw, Minimize2, Truck, Headphones } from 'lucide-react';
+import { AnimatedIcon } from '../icons/AnimatedIcon';
 import { useRegion } from '../../hooks/useRegion';
 import { useApp } from '../../hooks/useApp';
 import { useAuth } from '../../hooks/useAuth';
@@ -1478,6 +1479,7 @@ export const ChatBot: React.FC = () => {
   const suggestions = useMemo(() => (isAr ? QUICK_SUGGESTIONS.ar : QUICK_SUGGESTIONS.en), [isAr]);
   const showSuggestions = messages.length <= 1 && !isLoading;
   const isSendDisabled = !input.trim() || isLoading;
+  const reduceMotion = useReducedMotion() ?? false;
 
   return (
     <>
@@ -1485,21 +1487,22 @@ export const ChatBot: React.FC = () => {
         {!isOpen && (
           <motion.button
             key="chat-button"
-            initial={{ scale: 0, opacity: 0 }}
+            type="button"
+            initial={reduceMotion ? { opacity: 0 } : { scale: 0.6, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0, opacity: 0 }}
-            whileHover={{ scale: 1.05, y: -2 }}
-            whileTap={{ scale: 0.94 }}
+            exit={reduceMotion ? { opacity: 0 } : { scale: 0.6, opacity: 0 }}
+            whileHover={reduceMotion ? undefined : { scale: 1.04, y: -2 }}
+            whileTap={reduceMotion ? undefined : { scale: 0.94 }}
+            transition={{ type: 'spring', damping: 24, stiffness: 360 }}
             onClick={() => { setIsOpen(true); setIsMinimized(false); }}
-            className="fixed bottom-[calc(6.25rem+env(safe-area-inset-bottom))] z-50 flex h-16 w-16 items-center justify-center rounded-full bg-white/90 shadow-2xl shadow-rose-900/10 ring-1 ring-rose-100 backdrop-blur transition-colors hover:bg-white md:bottom-8"
+            className="fixed bottom-[calc(6.25rem+env(safe-area-inset-bottom))] z-50 flex size-14 items-center justify-center rounded-full bg-stone-950/90 shadow-[0_12px_32px_-8px_rgba(28,25,23,0.55)] ring-1 ring-white/10 backdrop-blur-xl outline-none focus-visible:ring-2 focus-visible:ring-[#c69c6d] focus-visible:ring-offset-2 md:bottom-8"
             style={{ [isAr ? 'left' : 'right']: '1.25rem' }}
-            aria-label="Open SpiritHub Helper"
-            dir="ltr"
+            aria-label={isAr ? 'افتح مساعد سبيريت هب' : 'Open SpiritHub AI'}
           >
-            <img src={CHATBOT_LOGO} alt="SpiritHub Roastery" loading="lazy" decoding="async" className="relative z-10 h-12 w-12 object-contain drop-shadow-sm" />
-            <span className="absolute bottom-1 right-1 z-20 flex h-3 w-3 items-center justify-center rounded-full bg-white shadow-sm">
-              <span className="h-2 w-2 rounded-full bg-emerald-400" />
+            <span className="flex size-11 items-center justify-center rounded-full bg-white p-1.5">
+              <img src={CHATBOT_LOGO} alt="" loading="lazy" decoding="async" className="h-full w-full object-contain" />
             </span>
+            <span className="absolute bottom-0.5 end-0.5 size-3.5 rounded-full bg-emerald-400 ring-[3px] ring-stone-950" />
           </motion.button>
         )}
       </AnimatePresence>
@@ -1508,70 +1511,66 @@ export const ChatBot: React.FC = () => {
         {isOpen && (
           <motion.div
             key="chat-panel"
-            initial={{ opacity: 0, y: 32, scale: 0.96 }}
+            role="dialog"
+            aria-label={assistantTitle}
+            initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 24, scale: 0.97 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 32, scale: 0.96 }}
-            transition={{ type: 'spring', damping: 28, stiffness: 320 }}
-            className={`chatbot-panel fixed z-50 flex flex-col overflow-hidden border border-[#f2ddd8] bg-[#fffaf7] shadow-2xl shadow-rose-950/15${isMinimized ? ' chatbot-panel--minimized' : ''}`}
+            exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 24, scale: 0.97 }}
+            transition={{ type: 'spring', damping: 30, stiffness: 340 }}
+            className={`chatbot-panel flex flex-col overflow-hidden bg-white shadow-[0_24px_64px_-16px_rgba(28,25,23,0.45)] ring-1 ring-stone-900/[0.06]${isMinimized ? ' chatbot-panel--minimized' : ''}`}
             style={{
               bottom: !isMobileViewport ? (isMinimized ? '5.5rem' : '2rem') : 'auto',
               [isAr ? 'left' : 'right']: isMobileViewport ? 'max(8px, env(safe-area-inset-left))' : '1rem',
               [isAr ? 'right' : 'left']: isMobileViewport ? 'max(8px, env(safe-area-inset-right))' : 'auto',
               top: isMobileViewport && isOpen && !isMinimized ? 'calc(var(--chatbot-viewport-offset-top, 0px) + max(8px, env(safe-area-inset-top)))' : 'auto',
-              width: isMobileViewport ? 'calc(var(--chatbot-viewport-width, 100vw) - max(8px, env(safe-area-inset-left)) - max(8px, env(safe-area-inset-right)))' : 'min(390px, calc(100vw - 1.25rem))',
+              width: isMobileViewport ? 'calc(var(--chatbot-viewport-width, 100vw) - max(8px, env(safe-area-inset-left)) - max(8px, env(safe-area-inset-right)))' : 'min(400px, calc(100vw - 2rem))',
               height: isMinimized
                 ? 68
                 : isMobileViewport
                   ? 'calc(var(--chatbot-viewport-height, 100dvh) - max(8px, env(safe-area-inset-top)) - max(8px, env(safe-area-inset-bottom)))'
-                  : 'min(620px, calc(100dvh - 7rem))',
+                  : 'min(640px, calc(100dvh - 7rem))',
               transition: 'height 0.25s cubic-bezier(0.4,0,0.2,1)',
-              borderRadius: isMobileViewport ? '18px' : '1.6rem',
-              padding: '0px',
+              borderRadius: isMobileViewport ? '24px' : '28px',
+              transformOrigin: isAr ? 'bottom left' : 'bottom right',
             }}
-            dir="ltr"
+            dir={isAr ? 'rtl' : 'ltr'}
           >
-            <div className="relative flex flex-shrink-0 items-center justify-between overflow-hidden px-4 py-3.5 md:px-4 md:py-3.5">
-              <div className="absolute inset-0 bg-[linear-gradient(135deg,#fffaf7_0%,#fff1ec_48%,#f8dfd8_100%)]" />
-              <div className="absolute inset-x-0 bottom-0 h-px bg-[#f2ddd8]" />
-
+            {/* Header: espresso band, like the mobile drawer */}
+            <div className="relative flex h-[68px] flex-shrink-0 items-center justify-between gap-3 bg-stone-950 px-4 text-white">
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_140%_at_0%_0%,rgba(198,156,109,0.22),transparent_55%)] rtl:bg-[radial-gradient(120%_140%_at_100%_0%,rgba(198,156,109,0.22),transparent_55%)]"
+              />
               <div className="relative flex min-w-0 items-center gap-3">
-                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-2xl bg-white/95 p-1.5 shadow-lg shadow-rose-900/10 ring-1 ring-rose-100 md:h-11 md:w-11">
-                  <img src={CHATBOT_LOGO} alt="SpiritHub Roastery" loading="lazy" decoding="async" className="h-full w-full rounded-full object-contain" />
+                <div className="relative flex size-10 flex-shrink-0 items-center justify-center rounded-full bg-white p-1.5">
+                  <img src={CHATBOT_LOGO} alt="" loading="lazy" decoding="async" className="h-full w-full object-contain" />
+                  <span className="absolute -bottom-0.5 -end-0.5 size-3 rounded-full bg-emerald-400 ring-2 ring-stone-950" />
                 </div>
-                <div className="min-w-0 text-left" dir="ltr">
-                  <p className="truncate text-sm font-bold leading-tight tracking-normal text-[#3f2d2a] md:text-[15px]">
-                    {assistantTitle}
+                <div className="min-w-0">
+                  <p className="truncate text-[15px] font-semibold leading-tight">{assistantTitle}</p>
+                  <p className="mt-0.5 truncate text-[12px] leading-tight text-white/55">
+                    {isAr ? 'متصل · يرد فورًا' : 'Online · replies instantly'}
                   </p>
-                  <div className="mt-1 flex items-center gap-1.5">
-                    <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_0_3px_rgba(52,211,153,0.18)]" />
-                    <p className="text-xs font-medium text-[#7b625d]">Online</p>
-                  </div>
                 </div>
               </div>
 
-              <div className="relative flex items-center gap-1">
-                <button
-                  onClick={handleReset}
-                  className="rounded-xl p-2 text-[#9b625b] transition-colors hover:bg-white/80 hover:text-[#c75049]"
-                  title={isAr ? '\u0645\u062d\u0627\u062f\u062b\u0629 \u062c\u062f\u064a\u062f\u0629' : 'New chat'}
-                >
-                  <RotateCcw className="h-4 w-4" />
-                </button>
-                <button
-                  onClick={() => setIsMinimized((m) => !m)}
-                  className="rounded-xl p-2 text-[#9b625b] transition-colors hover:bg-white/80 hover:text-[#c75049] md:block"
-                  title={isAr ? '\u062a\u0635\u063a\u064a\u0631' : 'Minimize'}
-                  style={{ display: isMobileViewport ? 'none' : 'block' }}
-                >
-                  <Minimize2 className="h-4 w-4" />
-                </button>
-                <button
-                  onClick={() => setIsOpen(false)}
-                  className="rounded-xl p-2 text-[#9b625b] transition-colors hover:bg-white/80 hover:text-[#c75049]"
-                  title={isAr ? '\u0625\u063a\u0644\u0627\u0642' : 'Close'}
-                >
-                  <X className="h-4 w-4" />
-                </button>
+              <div className="relative flex items-center gap-0.5">
+                {[
+                  { key: 'reset', label: isAr ? 'محادثة جديدة' : 'New chat', icon: <RotateCcw className="size-[18px]" />, onClick: handleReset, show: true },
+                  { key: 'min', label: isAr ? (isMinimized ? 'توسيع' : 'تصغير') : (isMinimized ? 'Expand' : 'Minimize'), icon: <Minimize2 className="size-[18px]" />, onClick: () => setIsMinimized((m) => !m), show: !isMobileViewport },
+                  { key: 'close', label: isAr ? 'إغلاق' : 'Close', icon: <X className="size-5" />, onClick: () => setIsOpen(false), show: true },
+                ].filter((b) => b.show).map((b) => (
+                  <button
+                    key={b.key}
+                    type="button"
+                    onClick={b.onClick}
+                    aria-label={b.label}
+                    title={b.label}
+                    className="inline-flex size-9 items-center justify-center rounded-full text-white/70 outline-none transition-colors duration-200 hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:ring-[#c69c6d]"
+                  >
+                    {b.icon}
+                  </button>
+                ))}
               </div>
             </div>
 
@@ -1579,112 +1578,110 @@ export const ChatBot: React.FC = () => {
               <>
                 <div
                   ref={messagesContainerRef}
-                  className="chatbot-messages flex-1 overflow-y-auto overscroll-contain bg-[radial-gradient(circle_at_top_left,rgba(228,112,101,0.10),transparent_34%),linear-gradient(180deg,#fffaf7_0%,#fbf5f1_100%)] px-3 py-3 md:px-0 md:py-3 sm:px-2"
+                  className="chatbot-messages flex-1 overflow-y-auto overscroll-contain bg-[#faf8f6] py-4"
                   style={{ minHeight: 0 }}
                   role="log"
                   aria-live="polite"
-                  dir={isAr ? 'rtl' : 'ltr'}
                 >
-                  {messages.map((message, index) => (
-                    <ChatMessageComponent
-                      key={index}
-                      message={message}
-                      regionPrefix={regionPrefix}
-                      language={language}
-                      onQuizAnswer={handleQuizAnswer}
-                      onBundleRefine={handleBundleRefine}
-                      onBundleAddToCart={handleBundleAddToCart}
-                      onReorderAction={handleReorderAction}
-                      onOpeningAction={handleOpeningAction}
-                    />
-                  ))}
+                  <div className="flex flex-col gap-1.5">
+                    {messages.map((message, index) => (
+                      <ChatMessageComponent
+                        key={index}
+                        message={message}
+                        regionPrefix={regionPrefix}
+                        language={language}
+                        onQuizAnswer={handleQuizAnswer}
+                        onBundleRefine={handleBundleRefine}
+                        onBundleAddToCart={handleBundleAddToCart}
+                        onReorderAction={handleReorderAction}
+                        onOpeningAction={handleOpeningAction}
+                      />
+                    ))}
 
-                  {isLoading && <TypingIndicator language={language} />}
+                    {isLoading && <TypingIndicator language={language} />}
+                  </div>
 
                   {showSuggestions && (
-                    <div className="px-2 pt-3 md:px-3 md:pt-3 sm:px-2" dir={isAr ? 'rtl' : 'ltr'}>
-                      <div className="grid grid-cols-2 gap-1.5">
-                        {suggestions.map((s) => (
-                          <button
-                            key={s}
-                            onClick={() => handleSend(s)}
-                            className="min-w-0 truncate rounded-full border border-[#f2ddd8] bg-white/85 px-2 py-1.5 text-[10px] font-semibold text-[#8e4e47] shadow-sm transition-all hover:-translate-y-0.5 hover:border-[#e9b8b0] hover:bg-[#fff1ed] md:px-2.5 md:py-2 md:text-[11px]"
-                          >
-                            {s}
-                          </button>
-                        ))}
-                      </div>
+                    <div className="flex flex-wrap gap-2 pe-4 ps-[3.625rem] pt-3">
+                      {suggestions.map((s) => (
+                        <button
+                          key={s}
+                          type="button"
+                          onClick={() => handleSend(s)}
+                          className="h-9 max-w-full truncate rounded-full bg-white px-3.5 text-[13px] font-medium text-stone-700 ring-1 ring-stone-200/80 transition-colors hover:bg-stone-50 hover:text-stone-900 hover:ring-stone-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c69c6d]"
+                        >
+                          {s}
+                        </button>
+                      ))}
                     </div>
                   )}
-
                 </div>
 
-                <div
-                  className="flex-shrink-0 border-t border-[#f2ddd8] bg-white/75 px-2 py-2 backdrop-blur md:px-3 md:py-2"
-                  dir={isAr ? 'rtl' : 'ltr'}
-                >
-                  <div className="grid grid-cols-2 gap-1.5">
+                <div className="chatbot-input flex-shrink-0 border-t border-stone-100 bg-white px-3 pt-2.5">
+                  <div className="flex items-end gap-2">
+                    <div className="flex min-w-0 flex-1 rounded-[22px] bg-stone-100 ring-1 ring-transparent transition-[background-color,box-shadow] duration-200 focus-within:bg-white focus-within:shadow-[0_0_0_4px_rgba(198,156,109,0.15)] focus-within:ring-[#c69c6d]/60">
+                      <textarea
+                        ref={inputRef}
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        placeholder={localizedText('placeholder')}
+                        aria-label={localizedText('placeholder')}
+                        disabled={isLoading}
+                        rows={1}
+                        className="chatbot-input-field w-full resize-none bg-transparent px-4 py-3 text-base leading-6 text-stone-900 outline-none placeholder:text-stone-400 disabled:opacity-60"
+                        style={{ maxHeight: 120 }}
+                        onInput={(e) => {
+                          const el = e.currentTarget;
+                          el.style.height = 'auto';
+                          el.style.height = `${Math.min(el.scrollHeight, 120)}px`;
+                        }}
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleSend()}
+                      disabled={isSendDisabled}
+                      className="inline-flex size-12 flex-shrink-0 items-center justify-center rounded-full bg-stone-900 text-white outline-none transition-[background-color,transform] duration-200 hover:bg-stone-800 focus-visible:ring-2 focus-visible:ring-[#c69c6d] focus-visible:ring-offset-2 active:scale-[0.94] disabled:pointer-events-none disabled:bg-stone-200 disabled:text-stone-400 motion-reduce:active:scale-100"
+                      aria-label={isAr ? 'إرسال' : 'Send'}
+                    >
+                      {/* Flex, not inline, so no baseline gap; the 1px nudge
+                          centres the plane's visual weight (it leans up-right).
+                          The flip mirrors the nudge too in RTL. */}
+                      <span className={`flex items-center justify-center ${isAr ? '-scale-x-100' : ''}`}>
+                        <AnimatedIcon name="send" className="size-5 -translate-x-px translate-y-px" />
+                      </span>
+                    </button>
+                  </div>
+
+                  {/* Trust line: one readable row instead of two cramped tiles */}
+                  <div className="flex items-center justify-center gap-4 py-2 text-[12px] text-stone-500">
                     {TRUST_ITEMS.map((item) => {
                       const Icon = item.icon;
                       const isSupport = item.enTitle === 'Customer support';
-                      const TileComponent = isSupport ? 'button' : 'div';
-                      return (
-                        <TileComponent
+                      const content = (
+                        <>
+                          <Icon className="size-3.5 text-[#8b6f47]" strokeWidth={2} />
+                          <span className="font-medium text-stone-600">{isAr ? item.arTitle : item.enTitle}</span>
+                        </>
+                      );
+                      return isSupport ? (
+                        <button
                           key={item.enTitle}
-                          type={isSupport ? 'button' : undefined}
-                          onClick={isSupport ? handleSupportClick : undefined}
-                          className="flex min-h-[44px] items-center gap-1 rounded-xl border border-[#e7f0df] bg-[#fbfdf8] px-2 py-1.5 shadow-sm md:min-h-[48px] md:gap-1.5 md:px-2 sm:px-1.5"
+                          type="button"
+                          onClick={handleSupportClick}
+                          title={isAr ? item.arSubtitle : item.enSubtitle}
+                          className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2 py-1 transition-colors hover:bg-stone-100 hover:text-stone-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c69c6d]"
                         >
-                          <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-white text-[#5f9b54] shadow-sm ring-1 ring-[#dfead6]">
-                            <Icon className="h-3.5 w-3.5 md:h-4 md:w-4" strokeWidth={2} />
-                          </div>
-                          <div className="min-w-0 leading-tight">
-                            <p className="text-[9px] font-bold text-[#36543a] md:text-[10px]">
-                              {isAr ? item.arTitle : item.enTitle}
-                            </p>
-                            <p className="mt-0.5 text-[8px] font-medium leading-snug text-[#6d806d] md:text-[9px]">
-                              {isAr ? item.arSubtitle : item.enSubtitle}
-                            </p>
-                          </div>
-                        </TileComponent>
+                          {content}
+                        </button>
+                      ) : (
+                        <span key={item.enTitle} title={isAr ? item.arSubtitle : item.enSubtitle} className="inline-flex items-center gap-1.5 whitespace-nowrap px-2 py-1">
+                          {content}
+                        </span>
                       );
                     })}
                   </div>
-                </div>
-
-                <div
-                  className="chatbot-input flex flex-shrink-0 items-end gap-2 border-t border-[#f2ddd8] bg-white/92 p-3 shadow-[0_-10px_30px_rgba(127,58,49,0.05)] backdrop-blur md:p-3 sm:p-2.5"
-                  dir={isAr ? 'rtl' : 'ltr'}
-                >
-                  <textarea
-                    ref={inputRef}
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    placeholder={localizedText('placeholder')}
-                    disabled={isLoading}
-                    rows={1}
-                    className="chatbot-input-field flex-1 resize-none rounded-2xl border border-[#f2ddd8] bg-[#fffaf7] px-3 py-2.5 text-sm text-stone-800 outline-none transition-colors placeholder:text-stone-400 focus:border-[#e39c94] focus:bg-white disabled:opacity-50 md:px-4 md:py-3 md:text-base"
-                    style={{ maxHeight: 96, lineHeight: '1.5' }}
-                    onInput={(e) => {
-                      const el = e.currentTarget;
-                      el.style.height = 'auto';
-                      el.style.height = `${Math.min(el.scrollHeight, 96)}px`;
-                    }}
-                  />
-                  <button
-                    onClick={() => handleSend()}
-                    disabled={isSendDisabled}
-                    className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-2xl text-white shadow-lg shadow-rose-900/15 transition-all hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:translate-y-0 md:h-12 md:w-12"
-                    style={{
-                      background: !isSendDisabled
-                        ? 'linear-gradient(135deg, #f08a7f 0%, #df6d64 55%, #c75049 100%)'
-                        : '#e6ddd9',
-                    }}
-                    aria-label={isAr ? '\u0625\u0631\u0633\u0627\u0644' : 'Send'}
-                  >
-                    <Send className="h-4 w-4 md:h-4 md:w-4" style={{ transform: isAr ? 'scaleX(-1)' : 'none' }} />
-                  </button>
                 </div>
               </>
             )}

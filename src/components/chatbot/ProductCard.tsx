@@ -111,13 +111,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, regionPrefix,
 
   return (
     <div
-      className="group overflow-hidden rounded-2xl border border-[#f2ddd8] bg-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-[#e9b8b0] hover:shadow-lg"
+      className="group overflow-hidden rounded-2xl border border-stone-200/80 bg-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-stone-300 hover:shadow-lg"
       dir={isAr ? 'rtl' : 'ltr'}
     >
       <div className="grid grid-cols-[78px_minmax(0,1fr)] gap-2.5 p-2.5">
         <Link
           to={productUrl}
-          className="relative block aspect-square overflow-hidden rounded-xl bg-[#f8f1ed]"
+          className="relative block aspect-square overflow-hidden rounded-xl bg-stone-100"
           aria-label={displayName}
           onClick={handleRecommendationClick}
         >
@@ -129,7 +129,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, regionPrefix,
               onError={() => setImgError(true)}
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#faf5f1] to-[#fff1ed] text-[#c75049]">
+            <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-stone-50 to-stone-100 text-[#8b6f47]">
               <ShoppingBag className="h-7 w-7 opacity-55" />
             </div>
           )}
@@ -138,7 +138,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, regionPrefix,
         <div className="min-w-0">
           <Link
             to={productUrl}
-            className="line-clamp-2 text-sm font-bold leading-snug text-stone-900 transition-colors hover:text-[#c75049]"
+            className="line-clamp-2 text-sm font-bold leading-snug text-stone-900 transition-colors hover:text-[#8b6f47]"
             onClick={handleRecommendationClick}
           >
             {displayName}
@@ -146,17 +146,17 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, regionPrefix,
 
           <div className="mt-1 flex min-w-0 flex-wrap items-center gap-1.5">
             {displayCategory && (
-              <span className="min-w-0 max-w-[150px] truncate rounded-full bg-[#f8f1ed] px-2 py-1 text-[11px] font-medium text-stone-600">
+              <span className="min-w-0 max-w-[150px] truncate rounded-full bg-stone-100 px-2 py-1 text-[11px] font-medium text-stone-600">
                 {displayCategory}
               </span>
             )}
             {product.matchPercentage && product.matchPercentage > 0 && (
-              <span className="inline-flex shrink-0 items-center rounded-full bg-[#eef7e9] px-2 py-1 text-[11px] font-extrabold text-[#5f9b54]">
+              <span className="inline-flex shrink-0 items-center rounded-full bg-emerald-50 px-2 py-1 text-[11px] font-bold text-emerald-700">
                 {getMeaningfulMatchLabel(product.matchPercentage, isAr)}
               </span>
             )}
             {product.rating && product.rating > 0 && (
-              <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#fff1ed] px-2 py-1 text-[11px] font-semibold text-[#c75049]">
+              <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#c69c6d]/10 px-2 py-1 text-[11px] font-semibold text-[#8b6f47]">
                 <Star className="h-3 w-3 fill-[#f4b15f] text-[#f4b15f]" />
                 {product.rating.toFixed(1)}
               </span>
@@ -169,17 +169,17 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, regionPrefix,
             </p>
           )}
           {(isAr ? product.matchReasonAr || product.matchReason : product.matchReason) && (
-            <p className="mt-1.5 text-[11px] font-semibold leading-snug text-[#5f7f55]">
+            <p className="mt-1.5 text-[11px] font-semibold leading-snug text-emerald-700">
               {isAr ? product.matchReasonAr || product.matchReason : product.matchReason}
             </p>
           )}
 
-          <div className="mt-2 rounded-xl bg-[#fff1ed] px-3 py-2">
+          <div className="mt-2 rounded-xl bg-[#c69c6d]/10 px-3 py-2">
             <div className="flex items-baseline justify-between gap-2">
-              <span className="shrink-0 text-[10px] font-semibold uppercase text-[#c75049]/70">
+              <span className="shrink-0 text-[10px] font-semibold uppercase text-[#8b6f47]/70">
                 {isAr ? AR_LABELS.price : 'Price'}
               </span>
-              <span className="min-w-0 text-sm font-extrabold leading-tight text-[#8e4e47]">
+              <span className="min-w-0 text-sm font-extrabold leading-tight text-[#5a432d]">
                 {priceText ?? (isAr ? AR_LABELS.priceOnRequest : 'Price on request')}
               </span>
             </div>
@@ -195,7 +195,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, regionPrefix,
       </div>
 
       {isExplicitlyOutOfStock && (
-        <div className="border-t border-[#f4e6e1] bg-[#fffaf7]/90 px-3 py-2">
+        <div className="border-t border-stone-100 bg-stone-50/90 px-3 py-2">
           <BackInStockAlertButton
             productId={product.id}
             productName={displayName}
@@ -205,10 +205,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, regionPrefix,
         </div>
       )}
 
-      <div className="flex items-center justify-between border-t border-[#f4e6e1] bg-[#fffaf7]/90 px-3 py-1.5">
+      <div className="flex items-center justify-between border-t border-stone-100 bg-stone-50/90 px-3 py-1.5">
         <Link
           to={productUrl}
-          className="inline-flex min-h-8 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-stone-700 transition-colors hover:bg-white hover:text-[#c75049]"
+          className="inline-flex min-h-8 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-stone-700 transition-colors hover:bg-white hover:text-[#8b6f47]"
           onClick={handleRecommendationClick}
         >
           <Eye className="h-3.5 w-3.5" />
@@ -221,7 +221,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, regionPrefix,
               onClick={handleAddToCart}
               title={isAr ? AR_LABELS.addToCart : 'Add to cart'}
               aria-label={isAr ? AR_LABELS.addToCart : 'Add to cart'}
-              className="inline-flex min-h-8 items-center justify-center gap-1.5 rounded-lg bg-white px-2.5 text-xs font-bold text-[#5f9b54] shadow-sm ring-1 ring-[#dfead6] transition-colors hover:bg-[#5f9b54] hover:text-white"
+              className="inline-flex min-h-8 items-center justify-center gap-1.5 rounded-lg bg-white px-2.5 text-xs font-bold text-stone-900 shadow-sm ring-1 ring-stone-200 transition-colors hover:bg-stone-900 hover:text-white"
             >
               <ShoppingCart className="h-4 w-4" />
               <span>{isAr ? '\u0623\u0636\u0641' : 'Add'}</span>
@@ -231,7 +231,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, regionPrefix,
               to={productUrl}
               title={isAr ? AR_LABELS.selectOptions : 'Select options'}
               aria-label={isAr ? AR_LABELS.selectOptions : 'Select options'}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-white text-[#5f9b54] shadow-sm ring-1 ring-[#dfead6] transition-colors hover:bg-[#5f9b54] hover:text-white"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-white text-stone-900 shadow-sm ring-1 ring-stone-200 transition-colors hover:bg-stone-900 hover:text-white"
               onClick={handleRecommendationClick}
             >
               <ShoppingCart className="h-4 w-4" />
@@ -239,7 +239,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, regionPrefix,
           )}
           <Link
             to={productUrl}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-white text-[#c75049] shadow-sm ring-1 ring-[#f2ddd8] transition-colors hover:bg-[#df6d64] hover:text-white"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-white text-[#8b6f47] shadow-sm ring-1 ring-stone-200/80 transition-colors hover:bg-stone-900 hover:text-white"
             aria-label={displayName}
             onClick={handleRecommendationClick}
           >

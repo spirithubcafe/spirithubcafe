@@ -515,81 +515,42 @@ html.os-edge-reveal body > .os-scrollbar-vertical.os-theme-custom:not(.os-scroll
    CHATBOT MOBILE RESPONSIVE STYLES
    ============================================ */
 
-/* Ensure chatbot panel respects safe areas on mobile */
+/* Position and size come from inline styles in ChatBot.tsx, which track the
+   visual viewport so the on-screen keyboard never covers the input. These
+   rules only add what inline styles cannot. */
 .chatbot-panel {
   position: fixed;
   z-index: 50;
+  max-width: calc(var(--chatbot-viewport-width, 100vw) - 16px);
+  max-height: calc(var(--chatbot-viewport-height, 100dvh) - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  overscroll-behavior: contain;
+  touch-action: manipulation;
 }
 
-/* Mobile-specific chatbot adjustments */
-@media (max-width: 640px) {
-  .chatbot-panel {
-    width: calc(var(--chatbot-viewport-width, 100vw) - max(8px, env(safe-area-inset-left)) - max(8px, env(safe-area-inset-right))) !important;
-    height: calc(var(--chatbot-viewport-height, 100dvh) - max(8px, env(safe-area-inset-top)) - max(8px, env(safe-area-inset-bottom))) !important;
-    max-width: calc(100vw - 16px) !important;
-    max-height: calc(100dvh - 16px) !important;
-    top: calc(var(--chatbot-viewport-offset-top, 0px) + max(8px, env(safe-area-inset-top))) !important;
-    bottom: auto !important;
-    left: max(8px, env(safe-area-inset-left)) !important;
-    right: max(8px, env(safe-area-inset-right)) !important;
-    border-radius: 18px !important;
-    padding: 0;
-  }
+.chatbot-panel,
+.chatbot-panel * {
+  min-width: 0;
+}
 
-  /* Optimize header for mobile */
-  .chatbot-panel > div:first-child {
-    padding-left: max(1rem, env(safe-area-inset-left));
-    padding-right: max(1rem, env(safe-area-inset-right));
-  }
+.chatbot-messages {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  scroll-padding-block: 0.5rem;
+}
 
-  /* Optimize messages container for mobile */
+@media (prefers-reduced-motion: reduce) {
   .chatbot-messages {
-    min-height: 0;
-    padding-left: max(0.75rem, env(safe-area-inset-left));
-    padding-right: max(0.75rem, env(safe-area-inset-right));
-    -webkit-overflow-scrolling: touch;
-    scroll-behavior: smooth;
-    scroll-padding-top: 0.5rem;
-    scroll-padding-bottom: 0.5rem;
-  }
-
-  /* Optimize input area for mobile */
-  .chatbot-input {
-    padding-left: max(0.75rem, env(safe-area-inset-left));
-    padding-right: max(0.75rem, env(safe-area-inset-right));
-    padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
-    gap: 0.5rem;
-  }
-
-  /* Slightly smaller input field on mobile */
-  .chatbot-input-field {
-    font-size: 14px;
-    padding: 0.625rem 0.75rem;
-  }
-
-  /* Hide minimize button on mobile */
-  [aria-label="Minimize"],
-  [title*="Minimize"],
-  [title*="تصغير"] {
-    display: none !important;
+    scroll-behavior: auto;
   }
 }
 
-/* Tablet and up - desktop layout */
-@media (min-width: 641px) {
-  .chatbot-panel {
-    border-radius: 1.6rem;
-    width: min(390px, calc(100vw - 1.25rem)) !important;
-    height: min(620px, calc(100dvh - 7rem)) !important;
-    box-shadow: 0 20px 25px -5px rgba(127, 58, 49, 0.15);
-  }
+.chatbot-input {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
-/* Landscape mobile - adjust height */
-@media (max-width: 640px) and (orientation: landscape) {
-  .chatbot-panel {
-    height: calc(var(--chatbot-viewport-height, 100dvh) - max(8px, env(safe-area-inset-top)) - max(8px, env(safe-area-inset-bottom))) !important;
-  }
+/* 16px stops iOS from zooming into the field on focus. */
+.chatbot-input-field {
+  font-size: 16px;
 }
 
 /* Prevent iOS zoom on input focus */
@@ -599,39 +560,6 @@ html.os-edge-reveal body > .os-scrollbar-vertical.os-theme-custom:not(.os-scroll
   select {
     font-size: 16px;
   }
-
-  .chatbot-input-field {
-    font-size: 16px;
-  }
-}
-
-/* Better chatbot touch targets on mobile */
-@media (max-width: 640px) {
-  .chatbot-panel button {
-    min-height: 40px;
-    min-width: 40px;
-  }
-}
-
-/* Smooth transitions for viewport changes */
-.chatbot-panel {
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Minimized state must win over the fixed-height rules above (which use
-   !important), regardless of viewport width. Higher specificity (two
-   classes) beats the single-class `!important` rules so the panel actually
-   collapses instead of staying open and blank. */
-.chatbot-panel.chatbot-panel--minimized {
-  height: 68px !important;
-  max-height: 68px !important;
-}
-
-/* Prevent layout shift on scroll */
-.chatbot-panel > div:nth-child(2) {
-  -webkit-transform: translateZ(0);
-  transform: translateZ(0);
-  will-change: scroll-position;
 }
 
 /* Optimize for notch devices */
@@ -645,47 +573,7 @@ html.os-edge-reveal body > .os-scrollbar-vertical.os-theme-custom:not(.os-scroll
 /* ChatBot animations */
 @keyframes chatbot-bounce {
   0%, 60%, 100% { transform: translateY(0); }
-  30% { transform: translateY(-6px); }
-}
-
-@keyframes chatbot-pulse {
-  0% { transform: scale(1); opacity: 0.4; }
-  100% { transform: scale(1.6); opacity: 0; }
-}
-
-.chatbot-panel {
-  max-width: calc(var(--chatbot-viewport-width, 100vw) - max(1.25rem, env(safe-area-inset-left)) - max(1.25rem, env(safe-area-inset-right)));
-  max-height: calc(var(--chatbot-viewport-height, 100dvh) - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
-  overscroll-behavior: contain;
-  touch-action: manipulation;
-}
-
-.chatbot-panel,
-.chatbot-panel * {
-  min-width: 0;
-}
-
-.chatbot-input,
-.chatbot-input input,
-.chatbot-input textarea,
-.chatbot-input-field {
-  font-size: 16px !important;
-}
-
-.chatbot-trust-scroll {
-  scrollbar-width: none;
-}
-
-.chatbot-trust-scroll::-webkit-scrollbar {
-  display: none;
-}
-
-@media (max-width: 640px) {
-  .chatbot-panel {
-    max-width: calc(100vw - 16px);
-    max-height: calc(100dvh - 16px);
-    border-radius: 18px;
-  }
+  30% { transform: translateY(-5px); }
 }
 
 /* Marquee scrolling animation */

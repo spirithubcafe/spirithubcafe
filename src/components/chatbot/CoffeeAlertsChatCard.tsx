@@ -98,13 +98,13 @@ export const CoffeeReleaseAlertsCard: React.FC<{
   }, [isAr, language, regionPrefix]);
 
   return (
-    <div className="rounded-2xl border border-[#eadfd9] bg-[#fffaf7] p-2.5 shadow-sm" dir={isAr ? 'rtl' : 'ltr'}>
+    <div className="rounded-2xl border border-stone-200/80 bg-stone-50 p-2.5 shadow-sm" dir={isAr ? 'rtl' : 'ltr'}>
       <button
         type="button"
         onClick={() => setExpanded((value) => !value)}
         className="flex w-full items-center gap-2 text-left"
       >
-        <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl bg-white text-[#c75049] shadow-sm ring-1 ring-[#f2ddd8]">
+        <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl bg-white text-[#8b6f47] shadow-sm ring-1 ring-stone-200/80">
           <Bell className="h-4 w-4" />
         </span>
         <span className={`min-w-0 flex-1 ${isAr ? 'text-right' : ''}`}>
@@ -115,11 +115,11 @@ export const CoffeeReleaseAlertsCard: React.FC<{
             {isAr ? 'اختر ما تريد وسنرسل لك رسالة واتساب فقط عند وجود جديد.' : 'Choose what to follow and we will WhatsApp you only when there is something new.'}
           </span>
         </span>
-        <BellRing className="h-4 w-4 flex-shrink-0 text-[#8e4e47]" />
+        <BellRing className="h-4 w-4 flex-shrink-0 text-[#5a432d]" />
       </button>
 
       {expanded && (
-        <div className="mt-2.5 border-t border-[#f2ddd8] pt-2.5">
+        <div className="mt-2.5 border-t border-stone-200/80 pt-2.5">
           <div className="grid grid-cols-2 gap-1.5">
             {releaseOptions.map((option) => {
               const active = activeValues.has(option.value);
@@ -131,8 +131,8 @@ export const CoffeeReleaseAlertsCard: React.FC<{
                   onClick={() => subscribe(option.value)}
                   disabled={busy || active}
                   className={`min-h-9 rounded-xl px-2 py-1.5 text-[11px] font-bold transition-colors ${active
-                    ? 'border border-[#d9ead4] bg-[#f2f8ef] text-[#4e8146]'
-                    : 'border border-[#f2ddd8] bg-white text-[#8e4e47] hover:bg-[#fff1ed]'} disabled:cursor-default`}
+                    ? 'border border-emerald-200 bg-emerald-50 text-emerald-700'
+                    : 'border border-stone-200/80 bg-white text-[#5a432d] hover:bg-stone-100'} disabled:cursor-default`}
                 >
                   <span className="inline-flex items-center justify-center gap-1">
                     {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : active ? <Check className="h-3 w-3" /> : null}
@@ -147,7 +147,7 @@ export const CoffeeReleaseAlertsCard: React.FC<{
             type="button"
             onClick={loadSubscriptions}
             disabled={busyValue === 'manage'}
-            className="mt-2 w-full rounded-xl border border-[#f2ddd8] bg-white px-2.5 py-2 text-[11px] font-bold text-stone-600 hover:bg-[#fffaf7]"
+            className="mt-2 w-full rounded-xl border border-stone-200/80 bg-white px-2.5 py-2 text-[11px] font-bold text-stone-600 hover:bg-stone-50"
           >
             {busyValue === 'manage' ? <Loader2 className="mx-auto h-3.5 w-3.5 animate-spin" /> : (isAr ? 'إدارة تنبيهاتي' : 'Manage my alerts')}
           </button>
@@ -159,14 +159,14 @@ export const CoffeeReleaseAlertsCard: React.FC<{
                   ? (isAr ? item.productNameAr || item.productName || 'تنبيه توفر منتج' : item.productName || 'Back-in-stock alert')
                   : releaseOptions.find((option) => option.value === (item.followValue || 'all'))?.[isAr ? 'ar' : 'en'] || item.followValue || 'New releases';
                 return (
-                  <div key={item.key} className="flex items-center gap-2 rounded-lg bg-white px-2 py-1.5 ring-1 ring-[#f3e6e1]">
-                    <Check className="h-3.5 w-3.5 flex-shrink-0 text-[#5f9b54]" />
+                  <div key={item.key} className="flex items-center gap-2 rounded-lg bg-white px-2 py-1.5 ring-1 ring-stone-100">
+                    <Check className="h-3.5 w-3.5 flex-shrink-0 text-stone-900" />
                     <span className={`min-w-0 flex-1 truncate text-[10px] font-semibold text-stone-700 ${isAr ? 'text-right' : ''}`}>{label}</span>
                     <button
                       type="button"
                       onClick={() => removeSubscription(item)}
                       disabled={busyValue === item.key}
-                      className="flex h-6 w-6 items-center justify-center rounded-lg text-stone-400 hover:bg-rose-50 hover:text-[#c75049]"
+                      className="flex h-6 w-6 items-center justify-center rounded-lg text-stone-400 hover:bg-rose-50 hover:text-[#8b6f47]"
                       aria-label={isAr ? 'إيقاف التنبيه' : 'Stop alert'}
                     >
                       {busyValue === item.key ? <Loader2 className="h-3 w-3 animate-spin" /> : <X className="h-3 w-3" />}
@@ -237,8 +237,8 @@ export const BackInStockAlertButton: React.FC<{
         onClick={subscribe}
         disabled={state === 'busy' || state === 'done'}
         className={`flex min-h-9 w-full items-center justify-center gap-1.5 rounded-xl px-2.5 py-2 text-[11px] font-bold transition-colors ${state === 'done'
-          ? 'border border-[#d9ead4] bg-[#f2f8ef] text-[#4e8146]'
-          : 'border border-[#f2ddd8] bg-white text-[#8e4e47] hover:bg-[#fff1ed]'}`}
+          ? 'border border-emerald-200 bg-emerald-50 text-emerald-700'
+          : 'border border-stone-200/80 bg-white text-[#5a432d] hover:bg-stone-100'}`}
       >
         {state === 'busy' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : state === 'done' ? <Check className="h-3.5 w-3.5" /> : <Bell className="h-3.5 w-3.5" />}
         {state === 'done'

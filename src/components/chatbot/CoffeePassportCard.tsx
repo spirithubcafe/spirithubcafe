@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 import { Globe, Coffee, Trophy, Award, Flame, ArrowRight } from 'lucide-react';
 import type { CoffeePassportProfile } from '../../services/coffeePassportService';
 

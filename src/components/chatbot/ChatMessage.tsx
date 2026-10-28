@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Eye, PackageCheck, RotateCcw, ShoppingCart } from 'lucide-react';
 import { ProductCard } from './ProductCard';
 import { CoffeePassportCard } from './CoffeePassportCard';
@@ -66,7 +66,7 @@ function getDisplayText(text: string, hasProducts: boolean, isAr: boolean): stri
     .filter((line) => !/\b(from|to)\b.*(?:OMR|ر\.ع|\$)|(?:OMR|ر\.ع|\$).*\d/i.test(line));
 
   const result = keptLines.join('\n').trim();
-  if (isAr && (!result || (/^[\x00-\x7F\s:.,!?'-]+$/.test(result) && /products?|suggestions?/i.test(result)))) {
+  if (isAr && (!result || (/^[ -~\s]+$/.test(result) && /products?|suggestions?/i.test(result)))) {
     return '\u0625\u0644\u064a\u0643 \u0628\u0639\u0636 \u0627\u0644\u0645\u0646\u062a\u062c\u0627\u062a \u0627\u0644\u0645\u0646\u0627\u0633\u0628\u0629:';
   }
   return result || (isAr
@@ -101,7 +101,7 @@ function renderMarkdownText(text: string, isAr: boolean): React.ReactNode {
         elements.push(
           <div
             key={i}
-            className={`my-1 flex flex-wrap gap-x-2 gap-y-0.5 rounded-lg bg-[#fffaf7] px-2.5 py-1.5 ring-1 ring-[#f6e9e4] ${isAr ? 'items-start justify-between text-right' : 'items-baseline'}`}
+            className="my-1 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 rounded-xl bg-stone-50 px-3 py-2 ring-1 ring-stone-100"
             dir={isAr ? 'rtl' : 'ltr'}
           >
             <strong className="shrink-0 text-stone-800">{label}</strong>
@@ -119,8 +119,8 @@ function renderMarkdownText(text: string, isAr: boolean): React.ReactNode {
       }
 
       elements.push(
-        <div key={i} className={`flex gap-2 py-0.5 ${isAr ? 'flex-row-reverse text-right' : ''}`}>
-          <span className="mt-1 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[#df6d64]" />
+        <div key={i} className="flex gap-2 py-0.5">
+          <span className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[#c69c6d]" />
           <span>{rendered}</span>
         </div>
       );
@@ -143,6 +143,7 @@ export const ChatMessageComponent: React.FC<ChatMessageProps> = ({
   onReorderAction,
   onOpeningAction,
 }) => {
+  const navigate = useNavigate();
   const isUser = message.role === 'user';
   const isAr = language === 'ar';
   const uniqueProducts = dedupeProductsById(message.products ?? []);
@@ -156,15 +157,8 @@ export const ChatMessageComponent: React.FC<ChatMessageProps> = ({
 
   if (isUser) {
     return (
-      <div className={`flex ${isAr ? 'flex-row-reverse' : 'flex-row'} items-end gap-2 px-3 py-0.5 sm:px-4 sm:py-1`}>
-        <div
-          className="max-w-[80%] rounded-2xl px-3.5 py-2 text-sm leading-relaxed shadow-sm sm:px-4 sm:py-2.5"
-          style={{
-            background: 'linear-gradient(135deg, #f08a7f 0%, #df6d64 55%, #c75049 100%)',
-            color: 'white',
-            borderRadius: isAr ? '1rem 1rem 0 1rem' : '1rem 1rem 1rem 0',
-          }}
-        >
+      <div className="flex justify-end px-4 py-1">
+        <div className="max-w-[82%] whitespace-pre-wrap break-words rounded-[20px] rounded-ee-md bg-stone-900 px-4 py-2.5 text-[14px] leading-6 text-white">
           {message.text}
         </div>
       </div>
@@ -172,18 +166,15 @@ export const ChatMessageComponent: React.FC<ChatMessageProps> = ({
   }
 
   return (
-    <div className="px-3 py-0.5 sm:px-4 sm:py-1">
-      <div className={`flex items-start gap-2 ${isAr ? 'flex-row-reverse' : 'flex-row'}`}>
-        <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-white p-1 shadow-sm ring-1 ring-[#f2ddd8] sm:h-8 sm:w-8">
+    <div className="px-4 py-1">
+      <div className="flex items-start gap-2.5">
+        <div className="flex size-8 flex-shrink-0 items-center justify-center rounded-full bg-white p-1 ring-1 ring-stone-200/80">
           <img src={CHATBOT_LOGO} alt="SpiritHub Roastery" loading="lazy" decoding="async" className="h-full w-full rounded-full object-contain" />
         </div>
 
-        <div className="flex max-w-[calc(100%-2.25rem)] flex-1 flex-col gap-1.5 sm:max-w-[calc(100%-2.5rem)] sm:gap-2">
+        <div className="flex min-w-0 max-w-[calc(100%-2.625rem)] flex-1 flex-col gap-2">
           {shouldShowTextBubble && (
-            <div
-              className={`break-words rounded-2xl border border-[#f2ddd8] bg-white px-3 py-2 text-sm leading-normal text-stone-800 shadow-sm shadow-rose-950/5 sm:px-3.5 sm:py-2.5 ${isAr ? 'text-right' : ''}`}
-              style={{ borderRadius: isAr ? '0 1rem 1rem 1rem' : '1rem 1rem 1rem 0' }}
-            >
+            <div className="w-fit max-w-full break-words rounded-[20px] rounded-ss-md bg-white px-4 py-2.5 text-[14px] leading-6 text-stone-800 ring-1 ring-stone-200/70">
               {renderMarkdownText(displayText, isAr)}
             </div>
           )}
@@ -244,9 +235,7 @@ export const ChatMessageComponent: React.FC<ChatMessageProps> = ({
             <CoffeePassportCard
               profile={message.coffeePassportCard as CoffeePassportProfile}
               isArabic={isAr}
-              onViewPassport={() => {
-                window.location.href = '/my-account?tab=coffee-passport';
-              }}
+              onViewPassport={() => navigate(`${regionPrefix}/my-account?tab=coffee-passport`)}
             />
           )}
         </div>
@@ -264,17 +253,17 @@ const QuizQuestionCard = ({
   isAr: boolean;
   onAnswer: (option: CoffeeQuizOption) => void;
 }) => (
-  <div className="rounded-xl border border-[#f2ddd8] bg-white p-2.5 shadow-sm sm:rounded-2xl sm:p-3" dir={isAr ? 'rtl' : 'ltr'}>
-    <p className={`text-[13px] font-bold leading-snug text-stone-900 sm:text-sm ${isAr ? 'text-right' : ''}`}>
+  <div className="rounded-[20px] bg-white p-3.5 ring-1 ring-stone-200/70" dir={isAr ? 'rtl' : 'ltr'}>
+    <p className="text-[14px] font-semibold leading-snug text-stone-900">
       {isAr ? question.textAr : question.textEn}
     </p>
-    <div className="mt-2 grid grid-cols-2 gap-1.5 sm:mt-3 sm:gap-2">
+    <div className="mt-3 grid grid-cols-2 gap-2">
       {question.options.map((option) => (
         <button
           key={option.value}
           type="button"
           onClick={() => onAnswer(option)}
-          className={`min-h-9 rounded-lg border border-[#f2ddd8] bg-[#fffaf7] px-2.5 py-1.5 text-[13px] font-semibold leading-tight text-[#8e4e47] transition-colors hover:border-[#e9b8b0] hover:bg-[#fff1ed] sm:rounded-xl sm:px-3 sm:py-2 sm:text-sm ${isAr ? 'text-right' : 'text-left'}`}
+          className="min-h-11 rounded-xl bg-stone-50 px-3 py-2 text-start text-[13px] font-medium leading-tight text-stone-700 ring-1 ring-stone-200/80 transition-colors hover:bg-[#c69c6d]/10 hover:text-[#5a432d] hover:ring-[#c69c6d]/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c69c6d]"
         >
           {isAr ? option.labelAr : option.labelEn}
         </button>
@@ -292,17 +281,17 @@ const OpeningActionsCard = ({
   isAr: boolean;
   onAction?: (intent: string) => void;
 }) => (
-  <div className="rounded-2xl border border-[#f2ddd8] bg-white p-2.5 shadow-sm" dir={isAr ? 'rtl' : 'ltr'}>
-    <div className="grid grid-cols-2 gap-1.5">
+  <div dir={isAr ? 'rtl' : 'ltr'}>
+    <div className="grid grid-cols-2 gap-2">
       {actions.map((action) => (
         <button
           key={action.key}
           type="button"
           onClick={() => onAction?.(action.intent)}
-          className={`min-h-9 rounded-xl px-2.5 py-2 text-[12px] font-bold transition-colors ${action.primary ? 'col-span-2 ' : ''}${
+          className={`rounded-full text-[13px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c69c6d] focus-visible:ring-offset-1 ${action.primary ? 'col-span-2 ' : ''}${
             action.primary
-              ? 'bg-[#5f9b54] text-white hover:bg-[#528948]'
-              : 'border border-[#f2ddd8] bg-[#fffaf7] text-[#8e4e47] hover:bg-[#fff1ed]'
+              ? 'h-11 bg-[#c69c6d] font-semibold text-stone-950 hover:bg-[#d4ad80]'
+              : 'h-10 bg-white px-3 font-medium text-stone-700 ring-1 ring-stone-200/80 hover:bg-stone-50 hover:text-stone-900 hover:ring-stone-300'
           }`}
         >
           {action.label}
@@ -370,10 +359,10 @@ const BundleCard = ({
   };
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-[#f2ddd8] bg-white shadow-sm" dir={isAr ? 'rtl' : 'ltr'}>
-      <div className="border-b border-[#f4e6e1] bg-[#fffaf7] px-3 py-3">
+    <div className="overflow-hidden rounded-2xl border border-stone-200/80 bg-white shadow-sm" dir={isAr ? 'rtl' : 'ltr'}>
+      <div className="border-b border-stone-100 bg-stone-50 px-3 py-3">
         <div className={`flex items-center gap-2 ${isAr ? 'flex-row-reverse' : ''}`}>
-          <PackageCheck className="h-4 w-4 flex-shrink-0 text-[#c75049]" />
+          <PackageCheck className="h-4 w-4 flex-shrink-0 text-[#8b6f47]" />
           <p className={`min-w-0 flex-1 text-sm font-extrabold text-stone-900 ${isAr ? 'text-right' : ''}`}>{title}</p>
         </div>
         {summary && <p className={`mt-1 text-xs leading-relaxed text-stone-600 ${isAr ? 'text-right' : ''}`}>{summary}</p>}
@@ -387,9 +376,9 @@ const BundleCard = ({
           return (
             <div
               key={`${product.productId}-${product.productVariantId}`}
-              className="grid grid-cols-[64px_minmax(0,1fr)_32px] items-center gap-2 rounded-xl bg-[#fffaf7] p-2.5 ring-1 ring-[#f6e9e4]"
+              className="grid grid-cols-[64px_minmax(0,1fr)_32px] items-center gap-2 rounded-xl bg-stone-50 p-2.5 ring-1 ring-stone-100"
             >
-              <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white ring-1 ring-[#f2ddd8]">
+              <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white ring-1 ring-stone-200/80">
                 <img
                   src={product.image || PRODUCT_FALLBACK_IMAGE}
                   alt={name}
@@ -402,7 +391,7 @@ const BundleCard = ({
                 <p className="line-clamp-2 text-[13px] font-bold leading-snug text-stone-900">{name}</p>
                 <div className={`mt-1 flex min-w-0 items-center gap-2 ${isAr ? 'flex-row-reverse justify-start' : 'justify-between'}`}>
                   {role && <p className="min-w-0 flex-1 truncate text-[11px] text-stone-500">{role}</p>}
-                  {product.price && <p className="shrink-0 text-xs font-extrabold text-[#8e4e47]">{product.price}</p>}
+                  {product.price && <p className="shrink-0 text-xs font-extrabold text-[#5a432d]">{product.price}</p>}
                 </div>
               </div>
               <div className="flex flex-col gap-1.5">
@@ -410,7 +399,7 @@ const BundleCard = ({
                   to={productUrl}
                   title={isAr ? '\u0639\u0631\u0636 \u0627\u0644\u0645\u0646\u062a\u062c' : 'View product'}
                   aria-label={isAr ? '\u0639\u0631\u0636 \u0627\u0644\u0645\u0646\u062a\u062c' : 'View product'}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-white text-stone-600 shadow-sm ring-1 ring-[#f2ddd8] transition-colors hover:bg-[#fff1ed] hover:text-[#c75049]"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-white text-stone-600 shadow-sm ring-1 ring-stone-200/80 transition-colors hover:bg-stone-100 hover:text-[#8b6f47]"
                   onClick={() => chatbotIntentService.trackProductClick(
                     product.productId, language, region, { bundleId: bundle.bundleId, bundleProduct: true },
                   )}
@@ -422,7 +411,7 @@ const BundleCard = ({
                   title={isAr ? '\u0625\u0636\u0627\u0641\u0629 \u0625\u0644\u0649 \u0627\u0644\u0633\u0644\u0629' : 'Add to cart'}
                   aria-label={isAr ? '\u0625\u0636\u0627\u0641\u0629 \u0625\u0644\u0649 \u0627\u0644\u0633\u0644\u0629' : 'Add to cart'}
                   onClick={() => handleBundleProductAdd(product)}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-white text-[#5f9b54] shadow-sm ring-1 ring-[#dfead6] transition-colors hover:bg-[#5f9b54] hover:text-white"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-white text-stone-900 shadow-sm ring-1 ring-stone-200 transition-colors hover:bg-stone-900 hover:text-white"
                 >
                   <ShoppingCart className="h-4 w-4" />
                 </button>
@@ -432,14 +421,14 @@ const BundleCard = ({
         })}
       </div>
 
-      <div className="border-t border-[#f4e6e1] bg-[#fffaf7]/75 px-3 py-2">
+      <div className="border-t border-stone-100 bg-stone-50/75 px-3 py-2">
         <div className={`mb-1.5 flex items-center justify-end gap-3 px-0.5 text-[13px] ${isAr ? 'flex-row-reverse' : ''}`}>
-          <span className="shrink-0 font-extrabold text-[#8e4e47]">{isAr ? formatBundleTotal(bundle.totalPrice, region).replace('Total:', '\u0627\u0644\u0625\u062c\u0645\u0627\u0644\u064a:') : formatBundleTotal(bundle.totalPrice, region)}</span>
+          <span className="shrink-0 font-extrabold text-[#5a432d]">{isAr ? formatBundleTotal(bundle.totalPrice, region).replace('Total:', '\u0627\u0644\u0625\u062c\u0645\u0627\u0644\u064a:') : formatBundleTotal(bundle.totalPrice, region)}</span>
         </div>
         <button
           type="button"
           onClick={onAddToCart}
-          className="inline-flex min-h-8 w-full items-center justify-center gap-2 rounded-xl bg-[#5f9b54] px-3 py-1 text-[13px] font-extrabold text-white transition-colors hover:bg-[#528948]"
+          className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-stone-900 px-3 py-2 text-[14px] font-semibold text-white transition-colors hover:bg-stone-800"
         >
           <ShoppingCart className="h-3.5 w-3.5" />
           {isAr ? 'أضف الباقة إلى السلة' : 'Add Bundle to Cart'}
@@ -451,7 +440,7 @@ const BundleCard = ({
                 key={action}
                 type="button"
                 onClick={() => onRefine(action)}
-                className="min-h-7 rounded-full border border-[#f2ddd8] bg-white px-1.5 py-1 text-center text-[10px] font-bold leading-tight text-[#8e4e47] transition-colors hover:bg-[#fff1ed] [overflow-wrap:anywhere]"
+                className="min-h-9 rounded-full bg-white px-2 py-1.5 text-center text-[12px] font-medium leading-tight text-stone-700 ring-1 ring-stone-200/80 transition-colors hover:bg-stone-50 hover:ring-stone-300 [overflow-wrap:anywhere]"
               >
                 {action}
               </button>
@@ -476,31 +465,31 @@ const ReorderCard = ({
   const reason = isAr ? suggestion.reasonAr || suggestion.reasonEn : suggestion.reasonEn;
 
   return (
-    <div className="rounded-2xl border border-[#f2ddd8] bg-white p-3 shadow-sm" dir={isAr ? 'rtl' : 'ltr'}>
+    <div className="rounded-2xl border border-stone-200/80 bg-white p-3 shadow-sm" dir={isAr ? 'rtl' : 'ltr'}>
       <div className={`flex gap-2 ${isAr ? 'flex-row-reverse text-right' : ''}`}>
         <img
           src={suggestion.image || PRODUCT_FALLBACK_IMAGE}
           alt={name}
-          className="h-14 w-14 flex-shrink-0 rounded-xl bg-white object-cover ring-1 ring-[#f2ddd8]"
+          className="h-14 w-14 flex-shrink-0 rounded-xl bg-white object-cover ring-1 ring-stone-200/80"
           loading="lazy"
           onError={(event) => handleImageError(event, PRODUCT_FALLBACK_IMAGE)}
         />
         <div className="min-w-0 flex-1">
           <div className={`flex items-center gap-1.5 ${isAr ? 'flex-row-reverse' : ''}`}>
-            <RotateCcw className="h-3.5 w-3.5 text-[#c75049]" />
+            <RotateCcw className="h-3.5 w-3.5 text-[#8b6f47]" />
             <p className="line-clamp-1 text-sm font-extrabold text-stone-900">{name}</p>
           </div>
           {reason && <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-stone-600">{reason}</p>}
         </div>
       </div>
       <div className="mt-3 grid grid-cols-3 gap-1.5">
-        <button type="button" onClick={() => onAction('reorder')} className="rounded-xl bg-[#5f9b54] px-2 py-2 text-[11px] font-bold text-white">
+        <button type="button" onClick={() => onAction('reorder')} className="rounded-xl bg-stone-900 min-h-10 px-2 py-2 text-[12px] font-semibold text-white">
           {isAr ? 'إعادة الطلب' : 'Reorder'}
         </button>
-        <button type="button" onClick={() => onAction('snooze')} className="rounded-xl border border-[#f2ddd8] bg-[#fffaf7] px-2 py-2 text-[11px] font-bold text-[#8e4e47]">
+        <button type="button" onClick={() => onAction('snooze')} className="rounded-xl border border-stone-200/80 bg-stone-50 min-h-10 px-2 py-2 text-[12px] font-semibold text-[#5a432d]">
           {isAr ? 'ذكرني لاحقا' : 'Remind me later'}
         </button>
-        <button type="button" onClick={() => onAction('dismiss')} className="rounded-xl border border-[#f2ddd8] bg-white px-2 py-2 text-[11px] font-bold text-stone-500">
+        <button type="button" onClick={() => onAction('dismiss')} className="rounded-xl border border-stone-200/80 bg-white min-h-10 px-2 py-2 text-[12px] font-semibold text-stone-500">
           {isAr ? 'ليس الآن' : 'Not now'}
         </button>
       </div>
