@@ -169,7 +169,7 @@ export const CustomBundleBuilder = () => {
       <div className="relative">
         <button type="button" onClick={() => setOpen((value) => !value)} className="group relative flex w-full flex-col items-start gap-5 overflow-hidden px-5 py-2 text-start sm:flex-row sm:items-stretch sm:gap-x-[8%] sm:px-10 sm:py-7">
           <div className="relative z-10 flex min-w-0 flex-col items-start justify-center gap-2 pe-9 sm:flex-none sm:basis-[42%] sm:gap-3 sm:pe-0">
-            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.22em] text-amber-400"><Sparkles className="h-4 w-4" />{t('customBundle.eyebrow')}</div>
+            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.22em] text-[#e3c196]"><Sparkles className="h-4 w-4" />{t('customBundle.eyebrow')}</div>
             <h2 className="text-2xl! font-extrabold leading-tight sm:text-4xl!">
               <span className="block">{t('customBundle.headlineLine1')}</span>
               <span className="block">
@@ -182,7 +182,7 @@ export const CustomBundleBuilder = () => {
                 )}
               </span>
             </h2>
-            {isArabic && <p className="text-sm font-semibold text-amber-300">{t('customBundle.titleTagline')}</p>}
+            {isArabic && <p className="text-sm font-semibold text-[#e3c196]">{t('customBundle.titleTagline')}</p>}
             <p className="max-w-md text-sm text-stone-300 sm:text-base">{simpleSubtitleText}</p>
             <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs font-semibold text-stone-400 sm:text-sm">
               <span>{benefitBagsText}</span>
@@ -191,7 +191,7 @@ export const CustomBundleBuilder = () => {
               <span aria-hidden="true" className="text-stone-600">·</span>
               <span>{t('customBundle.benefitMixSizes')}</span>
             </div>
-            <span className={`relative z-10 mt-1 h-12 w-[88%] items-center justify-center gap-2 self-center whitespace-nowrap rounded-full bg-amber-500 px-6 py-3 text-sm font-extrabold text-stone-950 shadow-lg shadow-amber-500/20 transition-all group-hover:-translate-y-0.5 group-hover:shadow-xl group-hover:shadow-amber-500/30 sm:h-12 sm:w-auto sm:self-auto sm:px-8 sm:text-base ${open ? 'hidden sm:inline-flex' : 'inline-flex'}`}>
+            <span className={`relative z-10 mt-1 h-12 w-[88%] items-center justify-center gap-2 self-center whitespace-nowrap rounded-full bg-[#c69c6d] px-6 py-3 text-sm font-extrabold text-stone-950 shadow-lg shadow-[#c69c6d]/30 transition-all group-hover:-translate-y-0.5 group-hover:shadow-xl group-hover:shadow-[#c69c6d]/30 sm:h-12 sm:w-auto sm:self-auto sm:px-8 sm:text-base ${open ? 'hidden sm:inline-flex' : 'inline-flex'}`}>
               {open ? t('customBundle.close') : t('customBundle.open')}
               {!open && <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1 sm:h-5 sm:w-5" />}
             </span>
@@ -249,7 +249,7 @@ export const CustomBundleBuilder = () => {
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder={t('customBundle.searchPlaceholder')}
-              className="w-full rounded-xl border border-stone-200 bg-white py-2.5 ps-9 pe-3 text-sm text-stone-900 placeholder:text-stone-400 focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-200"
+              className="w-full rounded-xl border border-stone-200 bg-white py-2.5 ps-9 pe-3 text-sm text-stone-900 placeholder:text-stone-400 focus:border-[#c69c6d] focus:outline-none focus:ring-2 focus:ring-[#c69c6d]/20"
             />
           </div>
 
@@ -261,21 +261,21 @@ export const CustomBundleBuilder = () => {
             <button
               type="button"
               onClick={() => setBrewFilter('all')}
-              className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-semibold transition ${brewFilter === 'all' ? 'border-amber-500 bg-amber-500 text-stone-950' : 'border-stone-200 bg-white text-stone-600 hover:bg-stone-100'}`}
+              className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-semibold transition ${brewFilter === 'all' ? 'border-[#c69c6d] bg-[#c69c6d] text-stone-950' : 'border-stone-200 bg-white text-stone-600 hover:bg-stone-100'}`}
             >
               {t('customBundle.filterAll')}
             </button>
             <button
               type="button"
               onClick={() => setBrewFilter('filter')}
-              className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-semibold transition ${brewFilter === 'filter' ? 'border-amber-500 bg-amber-500 text-stone-950' : 'border-stone-200 bg-white text-stone-600 hover:bg-stone-100'}`}
+              className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-semibold transition ${brewFilter === 'filter' ? 'border-[#c69c6d] bg-[#c69c6d] text-stone-950' : 'border-stone-200 bg-white text-stone-600 hover:bg-stone-100'}`}
             >
               {t('customBundle.filterFilter')}
             </button>
             <button
               type="button"
               onClick={() => setBrewFilter('espresso')}
-              className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-semibold transition ${brewFilter === 'espresso' ? 'border-amber-500 bg-amber-500 text-stone-950' : 'border-stone-200 bg-white text-stone-600 hover:bg-stone-100'}`}
+              className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-semibold transition ${brewFilter === 'espresso' ? 'border-[#c69c6d] bg-[#c69c6d] text-stone-950' : 'border-stone-200 bg-white text-stone-600 hover:bg-stone-100'}`}
             >
               {t('customBundle.filterEspresso')}
             </button>
@@ -341,7 +341,7 @@ export const CustomBundleBuilder = () => {
               type="button"
               disabled={!quote || loading}
               onClick={addBundle}
-              className={quote && !loading ? 'bg-amber-500 text-stone-950 hover:bg-amber-400 font-bold shadow-md' : ''}
+              className={quote && !loading ? 'bg-[#c69c6d] text-stone-950 hover:bg-[#d4ad80] font-bold shadow-md' : ''}
             >
               <ShoppingBag className="me-2 h-4 w-4" />{t('customBundle.add')}
             </Button>

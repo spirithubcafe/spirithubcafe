@@ -4,6 +4,7 @@ import { motion, useReducedMotion } from 'motion/react';
 import { useApp } from '../../hooks/useApp';
 import { CoffeeBeansCanvas } from '../three/CoffeeBeansCanvas';
 import { homepageContainerClassName } from './homepageSectionSpacing';
+import { AnimatedIcon } from '@/components/icons/AnimatedIcon';
 
 export const CoffeeSelectionSection: React.FC = () => {
   const { language } = useApp();
@@ -33,17 +34,24 @@ export const CoffeeSelectionSection: React.FC = () => {
         aria-hidden="true"
       />
 
-      <div className={homepageContainerClassName('relative z-10 py-32')}>
+      <div className={homepageContainerClassName('relative z-10 py-24 sm:py-32')}>
         <div className="max-w-5xl mx-auto text-center text-white">
-          <motion.h2
-            className="text-3xl sm:text-5xl font-extrabold mb-8 uppercase tracking-wide"
+          <motion.p
+            className={`mb-4 inline-flex items-center gap-2 text-[12px] font-semibold text-[#e3c196] ${language === 'ar' ? '' : 'uppercase tracking-[0.18em]'}`}
             {...reveal(0)}
           >
-            {language === 'ar' ? 'اختيار القهوة' : 'COFFEE SELECTION'}
+            <span aria-hidden="true" className="size-1.5 rounded-full bg-[#c69c6d]" />
+            {language === 'ar' ? 'محمصة سبيريت هب' : 'SpiritHub Roastery'}
+          </motion.p>
+          <motion.h2
+            className={`mb-6 text-[34px] font-semibold leading-[1.1] sm:text-[56px] ${language === 'ar' ? '' : 'tracking-[-0.02em]'}`}
+            {...reveal(0.06)}
+          >
+            {language === 'ar' ? 'اختيار القهوة' : 'Coffee Selection'}
           </motion.h2>
 
           <motion.p
-            className="text-lg md:text-xl leading-relaxed mb-10 text-gray-100"
+            className="mx-auto mb-10 max-w-3xl text-[16px] leading-7 text-white/75 md:text-lg md:leading-8"
             {...reveal(0.12)}
           >
             {language === 'ar'
@@ -55,9 +63,10 @@ export const CoffeeSelectionSection: React.FC = () => {
           <motion.div {...reveal(0.24)}>
             <Link
               to={`${regionPrefix}/products`}
-              className="inline-block bg-red-500 hover:bg-red-600 text-white font-semibold px-6 py-3 rounded-md transition-all duration-300 text-base uppercase tracking-wide hover:-translate-y-0.5 hover:shadow-[0_12px_30px_rgba(239,68,68,0.35)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              className="group inline-flex h-12 items-center gap-2 rounded-full bg-[#c69c6d] px-6 text-[15px] font-semibold text-stone-950 transition-[background-color,transform] duration-200 hover:bg-[#d4ad80] active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white motion-reduce:active:scale-100"
             >
-              {language === 'ar' ? 'تسوق الآن' : 'SHOP NOW'}
+              {language === 'ar' ? 'تسوق الآن' : 'Shop now'}
+              <AnimatedIcon name="arrow-right" className={`size-4 ${language === 'ar' ? '-scale-x-100' : ''}`} />
             </Link>
           </motion.div>
         </div>

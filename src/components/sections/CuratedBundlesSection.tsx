@@ -7,6 +7,7 @@ import { useShopCategory, useCategoryProducts } from '../../hooks/useShop';
 import { getProductImageUrl, handleImageError } from '../../lib/imageUtils';
 import { formatPrice, getCurrencyByRegion, getCurrencySymbolByRegion } from '../../lib/regionUtils';
 import { HOMEPAGE_CARD, HOMEPAGE_CARD_HOVER, homepageContainerClassName, homepageSectionClassName } from './homepageSectionSpacing';
+import { HomeSectionHeader } from './HomeSectionHeader';
 
 const BUNDLE_CATEGORY_SLUG = 'coffee-bundles-gift-boxes';
 
@@ -34,24 +35,14 @@ export const CuratedBundlesSection: React.FC = () => {
   return (
     <section className={homepageSectionClassName('bg-[#fbfbf9]')} dir={isArabic ? 'rtl' : 'ltr'}>
       <div className={homepageContainerClassName()}>
-        <div className="mb-8 sm:mb-10">
-          <p className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.22em] text-amber-600">
-            <span className="h-px w-6 bg-amber-500/60" aria-hidden="true" />
-            {isArabic ? 'تفضل تشكيلة جاهزة؟' : 'Prefer a ready-made selection?'}
-          </p>
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <h2 className="text-2xl font-extrabold text-stone-900 sm:text-4xl">
-              {isArabic ? 'حزم قهوة مختارة' : 'Curated Coffee Bundles'}
-            </h2>
-            <Link
-              to={`/${currentRegion.code}/shop/${BUNDLE_CATEGORY_SLUG}`}
-              className="group inline-flex shrink-0 items-center gap-1.5 text-sm font-bold text-stone-900 hover:text-amber-700"
-            >
-              {isArabic ? 'عرض كل الحزم' : 'View all bundles'}
-              <AnimatedIcon name="arrow-right" className={`size-4 ${isArabic ? '-scale-x-100' : ''}`} />
-            </Link>
-          </div>
-        </div>
+        <HomeSectionHeader
+          eyebrow={isArabic ? 'تفضل تشكيلة جاهزة؟' : 'Prefer a ready-made selection?'}
+          title={isArabic ? 'حزم قهوة مختارة' : 'Curated Coffee Bundles'}
+          action={{
+            label: isArabic ? 'عرض كل الحزم' : 'View all bundles',
+            to: `/${currentRegion.code}/shop/${BUNDLE_CATEGORY_SLUG}`,
+          }}
+        />
 
         <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
           {loading
@@ -98,14 +89,14 @@ export const CuratedBundlesSection: React.FC = () => {
                       />
                     </div>
                     <div className="flex flex-1 flex-col gap-1.5 p-4">
-                      <p className="h-4 text-[10px] font-bold uppercase leading-4 tracking-[0.2em] text-amber-600">
+                      <p className={`h-4 text-[10px] font-semibold leading-4 text-[#8b6f47] ${isArabic ? '' : 'uppercase tracking-[0.18em]'}`}>
                         {isArabic ? 'حزمة مختارة' : 'Curated Bundle'}
                       </p>
-                      <h3 className="line-clamp-2 h-10 text-sm font-bold leading-5 text-stone-900 sm:h-12 sm:text-base sm:leading-6">{name}</h3>
+                      <h3 className="line-clamp-2 h-10 text-sm font-semibold leading-5 text-stone-900 sm:h-12 sm:text-base sm:leading-6">{name}</h3>
                       <p className="line-clamp-1 h-4 text-xs leading-4 text-stone-500">{notes}</p>
                       <div className="mt-auto flex flex-col gap-1.5 pt-2">
                         <p className="h-5 text-sm font-bold leading-5 text-stone-900 sm:h-6 sm:text-base sm:leading-6">{priceLabel}</p>
-                        <span className="inline-flex h-8 items-center justify-center gap-1.5 rounded-lg bg-stone-900 px-3 text-xs font-bold text-white transition group-hover:bg-amber-600">
+                        <span className="inline-flex h-8 items-center justify-center gap-1.5 rounded-lg bg-stone-900 px-3 text-xs font-semibold text-white transition-colors group-hover:bg-stone-800">
                           {isArabic ? 'التفاصيل' : 'View details'}
                           <AnimatedIcon name="arrow-right" className={`size-3.5 ${isArabic ? '-scale-x-100' : ''}`} />
                         </span>

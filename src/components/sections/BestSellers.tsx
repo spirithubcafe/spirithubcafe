@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AnimatedIcon } from '@/components/icons/AnimatedIcon';
-import { Link, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { ProductCard } from '../products/ProductCard';
 import { ProductGridSkeleton } from './ProductGridSkeleton';
 import { productService } from '../../services/productService';
@@ -9,10 +8,10 @@ import { getProductImageUrl } from '../../lib/imageUtils';
 import { normalizeProductTags } from '../../lib/productTagUtils';
 import type { Product } from '../../contexts/AppContextDefinition';
 import { HOMEPAGE_CONTAINER, homepageSectionClassName } from './homepageSectionSpacing';
+import { HomeSectionHeader } from './HomeSectionHeader';
 
 export const BestSellers: React.FC = () => {
-  const { t, i18n } = useTranslation();
-  const isArabic = i18n.language === 'ar';
+  const { t } = useTranslation();
   const location = useLocation();
   const regionPrefix = location.pathname.startsWith('/sa') ? '/sa' : '/om';
   const [bestSellerProducts, setBestSellerProducts] = useState<Product[]>([]);
@@ -93,7 +92,7 @@ export const BestSellers: React.FC = () => {
   }, [fetchBestSellers]);
 
   if (loading) {
-    return <ProductGridSkeleton count={6} withCta />;
+    return <ProductGridSkeleton count={6} />;
   }
 
   if (bestSellerProducts.length === 0) {
@@ -103,61 +102,18 @@ export const BestSellers: React.FC = () => {
   return (
     <section className={homepageSectionClassName('bg-white')}>
       <div className={HOMEPAGE_CONTAINER}>
-        {/* Section Header */}
-        <div className="mb-8 sm:mb-10">
-          <p className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.22em] text-amber-600">
-            <span className="h-px w-6 bg-amber-500/60" aria-hidden="true" />
-            {t('sections.bestSellersEyebrow')}
-          </p>
-          <h2 className="text-2xl font-extrabold text-stone-900 sm:text-4xl">
-            {t('sections.bestSellers')}
-          </h2>
-        </div>
+        <HomeSectionHeader
+          eyebrow={t('sections.bestSellersEyebrow')}
+          title={t('sections.bestSellers')}
+          action={{ label: t('sections.viewAllProducts'), to: `${regionPrefix}/products` }}
+        />
 
-        {/* Products Grid */}
         <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 lg:grid-cols-6">
-          {bestSellerProducts.map((product, index) => (
-            <div
-              key={product.id}
-              className="h-full transform transition-all duration-300 hover:scale-[1.02] animate-fade-in"
-              style={{ animationDelay: `${index * 100}ms` }}
-            >
-              <div className="relative h-full">
-                {/* Badges are now handled by ProductCard component */}
-                <ProductCard product={product} variant="homepage" />
-              </div>
-            </div>
+          {bestSellerProducts.map((product) => (
+            <ProductCard key={product.id} product={product} variant="homepage" />
           ))}
         </div>
-
-        {/* Call to Action */}
-        <div className="text-center mt-12">
-          <Link
-            to={`${regionPrefix}/products`}
-            className="group inline-flex items-center gap-2 rounded-full bg-stone-900 px-8 py-3 text-sm font-bold text-white transition hover:bg-amber-600"
-          >
-            {t('sections.viewAllProducts')}
-            <AnimatedIcon name="arrow-right" className={`size-4 ${isArabic ? '-scale-x-100' : ''}`} />
-          </Link>
-        </div>
       </div>
-
-      <style>{`
-        @keyframes fade-in {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        .animate-fade-in {
-          animation: fade-in 0.6s ease-out forwards;
-          opacity: 0;
-        }
-      `}</style>
     </section>
   );
 };

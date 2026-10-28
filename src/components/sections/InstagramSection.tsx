@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { Images, Instagram, Play } from 'lucide-react';
-import { AnimatedIcon } from '@/components/icons/AnimatedIcon';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardFooter } from '../ui/card';
 import { REGION_INFO } from '../../config/regionInfo';
@@ -13,12 +12,8 @@ import {
   type InstagramPost,
 } from '../../lib/instagramFeed.ts';
 import { ProductCardSkeleton } from './ProductGridSkeleton';
-import {
-  HOMEPAGE_CONTAINER,
-  HOMEPAGE_HEADER_SPACING,
-  HOMEPAGE_HEADING,
-  homepageSectionClassName,
-} from './homepageSectionSpacing';
+import { HOMEPAGE_CONTAINER, homepageSectionClassName } from './homepageSectionSpacing';
+import { HomeSectionHeader } from './HomeSectionHeader';
 
 const POST_COUNT = 6;
 // Latest posts, live, from the official Instagram Graph API (api/instagram/feed.js).
@@ -152,26 +147,11 @@ export const InstagramSection: React.FC = () => {
   return (
     <section className={homepageSectionClassName('bg-white')} dir={isArabic ? 'rtl' : 'ltr'}>
       <div className={HOMEPAGE_CONTAINER}>
-        <div className={`${HOMEPAGE_HEADER_SPACING} flex flex-wrap items-end justify-between gap-4`}>
-          <div>
-            <p className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.22em] text-amber-600">
-              <span className="h-px w-6 bg-amber-500/60" aria-hidden="true" />
-              {isArabic ? 'تابعونا' : 'Follow Along'}
-            </p>
-            <h2 className={HOMEPAGE_HEADING}>
-              {isArabic ? 'زوروا إنستغرامنا' : 'Visit Our Instagram'}
-            </h2>
-          </div>
-          <a
-            href={profileUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group inline-flex shrink-0 items-center gap-1.5 text-sm font-bold text-stone-900 hover:text-amber-700"
-          >
-            {isArabic ? 'تابعنا' : 'Follow'} <span dir="ltr">{handle}</span>
-            <AnimatedIcon name="arrow-right" className={`size-4 ${isArabic ? '-scale-x-100' : ''}`} />
-          </a>
-        </div>
+        <HomeSectionHeader
+          eyebrow={isArabic ? 'تابعونا' : 'Follow Along'}
+          title={isArabic ? 'زوروا إنستغرامنا' : 'Visit Our Instagram'}
+          action={{ label: `${isArabic ? 'تابعنا' : 'Follow'} ${handle}`, to: profileUrl, external: true }}
+        />
 
         {/* Same grid as the product sections. While loading, ProductCardSkeleton reserves the
             exact card size, so nothing moves when posts arrive. If the feed is unavailable,

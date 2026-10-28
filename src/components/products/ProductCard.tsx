@@ -164,7 +164,7 @@ const ProductCardComponent: React.FC<ProductCardProps> = ({ product, prioritizeI
       ref={cardRef}
       className={
         isHomepage
-          ? 'group flex h-full flex-col overflow-hidden border border-stone-100 bg-white py-0 shadow-sm transition-all duration-300 hover:shadow-md relative cursor-pointer'
+          ? 'group relative flex h-full cursor-pointer flex-col overflow-hidden rounded-2xl border border-stone-200/70 bg-white py-0 shadow-none transition-shadow duration-300 hover:shadow-[0_16px_36px_-16px_rgba(28,25,23,0.22)]'
           : 'group overflow-hidden hover:shadow-xl transition-all duration-300 bg-white border-0 shadow-md py-0 relative cursor-pointer'
       }
     >
@@ -207,12 +207,12 @@ const ProductCardComponent: React.FC<ProductCardProps> = ({ product, prioritizeI
         {(product.isPremium || product.isLimited || (product.topTags && product.topTags.length > 0)) && (
           <div className={`absolute bottom-2 z-10 flex flex-col gap-1 ${isArabic ? 'right-2 items-end' : 'left-2 items-start'}`}>
             {product.isPremium ? (
-              <div className="bg-linear-to-r from-orange-500 to-red-500 text-white px-2.5 py-1 rounded-full text-xs font-bold shadow-lg">
+              <div className="rounded-full bg-[#c69c6d] px-2.5 py-1 text-xs font-bold text-stone-950 shadow-sm">
                 {t('sections.bestSellerBadge')}
               </div>
             ) : null}
             {product.isLimited ? (
-              <div className="bg-linear-to-r from-purple-500 to-pink-500 text-white px-2.5 py-1 rounded-full text-xs font-bold shadow-lg">
+              <div className="rounded-full bg-stone-900 px-2.5 py-1 text-xs font-bold text-white shadow-sm">
                 {t('sections.limitedBadge')}
               </div>
             ) : null}
@@ -242,7 +242,7 @@ const ProductCardComponent: React.FC<ProductCardProps> = ({ product, prioritizeI
         {productCategory && (
           <div className="mb-1 min-h-6 flex items-center">
             {isHomepage ? (
-              <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-stone-400 whitespace-nowrap overflow-hidden text-ellipsis max-w-full">
+              <span className={`max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-[10px] font-semibold text-stone-400 ${isArabic ? '' : 'uppercase tracking-[0.14em]'}`}>
                 {productCategory}
               </span>
             ) : (
@@ -255,7 +255,7 @@ const ProductCardComponent: React.FC<ProductCardProps> = ({ product, prioritizeI
         
         <h3 className={
           isHomepage
-            ? 'font-extrabold text-sm text-stone-900 line-clamp-2 mb-1 group-hover:text-amber-700 transition-colors min-h-10'
+            ? 'mb-1 line-clamp-2 min-h-10 text-sm font-semibold text-stone-900 transition-colors group-hover:text-[#8b6f47]'
             : 'font-bold text-sm text-gray-900 line-clamp-2 mb-1 group-hover:text-amber-600 transition-colors min-h-10'
         }>
           <Link
@@ -314,7 +314,10 @@ const ProductCardComponent: React.FC<ProductCardProps> = ({ product, prioritizeI
           <Button
             size="sm"
             variant="outline"
-            className="border-amber-600 text-amber-600 hover:bg-amber-50 hover:border-amber-700 hover:text-amber-700 shadow-sm hover:shadow-md transition-all disabled:opacity-50"
+            aria-label={isArabic ? 'عرض سريع' : 'Quick view'}
+            className={isHomepage
+              ? 'w-9 shrink-0 rounded-lg border-stone-200 px-0 text-stone-600 shadow-none transition-colors hover:bg-stone-50 hover:text-stone-900 disabled:opacity-50'
+              : 'border-amber-600 text-amber-600 hover:bg-amber-50 hover:border-amber-700 hover:text-amber-700 shadow-sm hover:shadow-md transition-all disabled:opacity-50'}
             onClick={handleQuickView}
             disabled={isAnimating || product.price <= 0}
           >
@@ -322,16 +325,26 @@ const ProductCardComponent: React.FC<ProductCardProps> = ({ product, prioritizeI
           </Button>
           <Button
             size="sm"
-            className="flex-1 bg-amber-600 hover:bg-amber-700 text-white shadow-md hover:shadow-lg transition-all disabled:opacity-50"
+            className={isHomepage
+              ? 'min-w-0 flex-1 rounded-lg bg-stone-900 px-2 text-white shadow-none transition-colors hover:bg-stone-800 disabled:opacity-50'
+              : 'flex-1 bg-amber-600 hover:bg-amber-700 text-white shadow-md hover:shadow-lg transition-all disabled:opacity-50'}
             onClick={handleAddToCart}
             disabled={isAnimating || product.price <= 0}
           >
-            <ShoppingCart className="w-3.5 h-3.5 mr-1.5" />
-            <span className="text-xs font-semibold">
-              {isAnimating 
-                ? (isArabic ? 'جاري الإضافة...' : 'Adding...') 
-                : (isArabic ? 'إضافة للسلة' : 'Add to Cart')}
-            </span>
+            <ShoppingCart className="w-3.5 h-3.5 me-1.5" />
+            {isHomepage && !isAnimating ? (
+              // Narrow phone cards get the short label; it never truncates.
+              <span className="truncate text-xs font-semibold">
+                <span className="sm:hidden">{isArabic ? 'أضف' : 'Add'}</span>
+                <span className="hidden sm:inline">{isArabic ? 'إضافة للسلة' : 'Add to Cart'}</span>
+              </span>
+            ) : (
+              <span className={isHomepage ? 'truncate text-xs font-semibold' : 'text-xs font-semibold'}>
+                {isAnimating
+                  ? (isArabic ? 'جاري الإضافة...' : 'Adding...')
+                  : (isArabic ? 'إضافة للسلة' : 'Add to Cart')}
+              </span>
+            )}
           </Button>
         </div>
       </CardFooter>

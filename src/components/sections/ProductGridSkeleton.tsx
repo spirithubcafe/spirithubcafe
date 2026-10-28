@@ -1,16 +1,19 @@
 import React from 'react';
 import { HOMEPAGE_CONTAINER, homepageSectionClassName } from './homepageSectionSpacing';
+import { HomeSectionHeaderSkeleton } from './HomeSectionHeader';
 
 interface ProductGridSkeletonProps {
   /** Number of placeholder cards; should match the number of products the section renders. */
   count?: number;
   /** Reserve space for the "View all" button rendered under the grid. */
   withCta?: boolean;
+  /** The loaded header has a one-line description under its title. */
+  withDescription?: boolean;
 }
 
 /** One placeholder card with the exact size of the homepage `ProductCard` (also used by other product-style cards). */
 export const ProductCardSkeleton: React.FC<{ showNotes?: boolean }> = ({ showNotes = true }) => (
-  <div className="flex h-full flex-col gap-3 overflow-hidden rounded-xl border border-stone-100 bg-white shadow-sm">
+  <div className="flex h-full flex-col gap-3 overflow-hidden rounded-2xl border border-stone-200/70 bg-white">
     <div className="aspect-square w-full animate-pulse bg-[#fbf8f3]" />
     <div className="flex flex-1 flex-col p-3 pt-1">
       <div className="mb-1 flex min-h-6 items-center">
@@ -44,18 +47,10 @@ export const ProductCardSkeleton: React.FC<{ showNotes?: boolean }> = ({ showNot
  * `ProductCard` "homepage" variant, including the Card's gap-3 and button footer) so swapping the skeleton for real cards
  * does not change the section height and push the page around while scrolling.
  */
-export const ProductGridSkeleton: React.FC<ProductGridSkeletonProps> = ({ count = 6, withCta = false }) => (
+export const ProductGridSkeleton: React.FC<ProductGridSkeletonProps> = ({ count = 6, withCta = false, withDescription = false }) => (
   <section className={homepageSectionClassName('bg-white')} aria-busy="true">
     <div className={HOMEPAGE_CONTAINER}>
-      {/* Header: eyebrow (text-xs + mb-2) and h2 (text-2xl / sm:text-4xl). */}
-      <div className="mb-8 sm:mb-10">
-        <div className="mb-2 flex h-4 items-center">
-          <div className="h-3 w-40 animate-pulse rounded bg-gray-200" />
-        </div>
-        <div className="flex h-8 items-center sm:h-10">
-          <div className="h-7 w-56 animate-pulse rounded-lg bg-gray-200 sm:h-9" />
-        </div>
-      </div>
+      <HomeSectionHeaderSkeleton withDescription={withDescription} />
 
       <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 lg:grid-cols-6">
         {Array.from({ length: count }).map((_, i) => (

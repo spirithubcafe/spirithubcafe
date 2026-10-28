@@ -186,7 +186,7 @@
 .hero-promo-card {
   width: 100%;
   padding: 0;
-  text-align: left;
+  text-align: start;
   filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.72));
 }
 
@@ -195,11 +195,16 @@
   align-items: center;
   gap: 0.55rem;
   padding: 0;
-  font-size: 0.78rem;
-  font-weight: 700;
-  color: #a99170;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #e3c196;
   letter-spacing: 0.18em;
   margin-bottom: 0.95rem;
+}
+
+/* Tracking breaks Arabic letter joining. */
+[dir='rtl'] .slide-badge {
+  letter-spacing: 0;
 }
 
 .badge-flag {
@@ -209,8 +214,9 @@
 
 .slide-title {
   font-size: clamp(2rem, 3.25vw, 3.25rem);
-  font-weight: 800;
-  line-height: 1.12;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
   margin: 0 0 1rem;
   color: #ffffff;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.5);
@@ -413,22 +419,36 @@
   gap: 0.85rem;
   min-height: 3rem;
   padding: 0.75rem 1.75rem;
-  color: #11100e;
-  background: #f5a400;
+  color: #0c0a09;
+  background: #c69c6d;
   border-radius: 999px;
   font-size: 0.98rem;
-  font-weight: 800;
+  font-weight: 600;
   text-transform: none;
   letter-spacing: 0;
-  box-shadow: 0 8px 18px rgba(245, 164, 0, 0.22);
+  box-shadow: 0 10px 24px -8px rgba(198, 156, 109, 0.45);
   transition: transform 180ms ease, background-color 180ms ease, box-shadow 180ms ease;
 }
 
+/* Brand coffee CTA, the same as the mobile drawer and chat. */
 .hero-cta-button:hover {
-  color: #11100e;
-  background: #ffb000;
-  transform: translateY(-2px);
-  box-shadow: 0 10px 22px rgba(245, 164, 0, 0.3);
+  color: #0c0a09;
+  background: #d4ad80;
+  transform: translateY(-1px);
+  box-shadow: 0 14px 28px -10px rgba(198, 156, 109, 0.55);
+}
+
+.hero-cta-button:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-cta-button,
+  .hero-cta-button:hover {
+    transform: none;
+    transition: none;
+  }
 }
 
 .cta-button {
@@ -469,9 +489,6 @@
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
 }
 
-.hero-cta-button:hover {
-  transform: scale(1.03);
-}
 
 /* Stats Section */
 .stats-section {
@@ -750,8 +767,8 @@
 }
 
 .indicator:focus-visible {
-  outline: 1px solid #fbbf24;
-  outline-offset: 1px;
+  outline: 2px solid #c69c6d;
+  outline-offset: 2px;
 }
 
 .indicator-progress {
@@ -773,8 +790,8 @@
 .indicator.active .indicator-progress {
   width: 7px;
   height: 7px;
-  background: #d97706;
-  box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.16);
+  background: #c69c6d;
+  box-shadow: 0 0 0 3px rgba(198, 156, 109, 0.22);
 }
 
 .progress-fill {

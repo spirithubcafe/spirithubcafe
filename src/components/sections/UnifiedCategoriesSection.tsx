@@ -6,7 +6,8 @@ import { useApp } from '../../hooks/useApp';
 import { useShopPage } from '../../hooks/useShop';
 import { useRegion } from '../../hooks/useRegion';
 import { buildResponsiveSrcSet, getCategoryImageUrl, handleImageError } from '../../lib/imageUtils';
-import { HOMEPAGE_CARD, HOMEPAGE_CARD_HOVER, HOMEPAGE_HEADER_SPACING, HOMEPAGE_HEADING, homepageContainerClassName, homepageSectionClassName } from './homepageSectionSpacing';
+import { HOMEPAGE_CARD, HOMEPAGE_CARD_HOVER, homepageContainerClassName, homepageSectionClassName } from './homepageSectionSpacing';
+import { HomeSectionHeader, HomeSectionHeaderSkeleton } from './HomeSectionHeader';
 
 type UnifiedCategoryItem = {
   id: string;
@@ -188,10 +189,7 @@ export const UnifiedCategoriesSection: React.FC = () => {
         <style>{CATEGORY_STYLES}</style>
         <div className={homepageContainerClassName()}>
           {/* Mirrors the loaded header (eyebrow + heading) so the section keeps its height. */}
-          <div className={HOMEPAGE_HEADER_SPACING}>
-            <div className="mb-2 h-4 w-40 animate-pulse rounded bg-gray-200" />
-            <div className="h-8 w-56 animate-pulse rounded-lg bg-gray-200 sm:h-10" />
-          </div>
+          <HomeSectionHeaderSkeleton />
           <div className="categories-track flex overflow-hidden pb-2">
             {Array.from({ length: 6 }).map((_, i) => (
               // Mirrors the loaded card: same width, image ratio, radius and title row.
@@ -221,15 +219,10 @@ export const UnifiedCategoriesSection: React.FC = () => {
   return (
     <section className={homepageSectionClassName('bg-white')}>
       <div className={homepageContainerClassName()}>
-        <div className={HOMEPAGE_HEADER_SPACING}>
-          <p className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.22em] text-amber-600">
-            <span className="h-px w-6 bg-amber-500/60" aria-hidden="true" />
-            {isArabic ? 'تسوق حسب الفئة' : 'Explore Our Range'}
-          </p>
-          <h2 className={HOMEPAGE_HEADING}>
-            {t('sections.categories') || 'Categories'}
-          </h2>
-        </div>
+        <HomeSectionHeader
+          eyebrow={isArabic ? 'تسوق حسب الفئة' : 'Explore Our Range'}
+          title={t('sections.categories') || 'Categories'}
+        />
 
         <div className="relative">
           <button
@@ -257,7 +250,7 @@ export const UnifiedCategoriesSection: React.FC = () => {
                 <Link
                   key={item.id}
                   to={item.href}
-                  className="categories-slide group block min-w-0 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/60"
+                  className="categories-slide group block min-w-0 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c69c6d]"
                 >
                 <div className={`flex h-full flex-col ${HOMEPAGE_CARD} ${HOMEPAGE_CARD_HOVER}`}>
                   <div className="relative aspect-square overflow-hidden sm:aspect-[5/6]">

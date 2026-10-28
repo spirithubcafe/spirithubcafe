@@ -227,7 +227,7 @@ export const GoogleReviewsSection: React.FC = () => {
     <section className={homepageSectionClassName('bg-[#fbfbf9]')} dir={isArabic ? 'rtl' : 'ltr'}>
       <div className={homepageContainerClassName()}>
         <div
-          className="relative overflow-hidden rounded-3xl bg-stone-900 shadow-xl lg:min-h-[396px]"
+          className="relative overflow-hidden rounded-3xl bg-stone-950 ring-1 ring-white/5 lg:min-h-[396px]"
           style={{ direction: isArabic ? 'rtl' : 'ltr' }}
         >
 
@@ -239,13 +239,13 @@ export const GoogleReviewsSection: React.FC = () => {
                   <div className="space-y-5">
                     <div className="space-y-4">
                       <div className="space-y-3">
-                        <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.24em] text-[#dfbe7a]">
-                          <span className="h-px w-6 bg-[#dfbe7a]/80" aria-hidden="true" />
+                        <p className={`flex h-5 items-center gap-2 text-[12px] font-semibold text-[#e3c196] ${isArabic ? '' : 'uppercase tracking-[0.18em]'}`}>
+                          <span className="size-1.5 rounded-full bg-[#c69c6d]" aria-hidden="true" />
                           {isArabic ? 'حب عملائنا' : 'Customer Love'}
                         </p>
                         <h2
                           className={`text-2xl leading-[1.05] text-[#fffdf8] sm:text-4xl lg:text-[2rem] xl:text-[2.25rem] ${
-                            isArabic ? 'max-w-[11ch] font-bold' : 'max-w-[350px] font-extrabold tracking-[-0.03em]'
+                            isArabic ? 'max-w-[11ch] font-semibold' : 'max-w-[350px] font-semibold tracking-[-0.02em]'
                           }`}
                         >
                           {isArabic ? 'ماذا يقول عملاؤنا' : 'What Our Friends Are Saying'}

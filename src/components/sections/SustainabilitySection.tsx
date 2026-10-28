@@ -2,7 +2,8 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { AnimatedIcon } from '@/components/icons/AnimatedIcon';
 import { useApp } from '../../hooks/useApp';
-import { HOMEPAGE_EYEBROW, HOMEPAGE_HEADING, homepageContainerClassName, homepageSectionClassName } from './homepageSectionSpacing';
+import { homepageContainerClassName, homepageSectionClassName } from './homepageSectionSpacing';
+import { HomeSectionHeader } from './HomeSectionHeader';
 
 export const SustainabilitySection: React.FC = () => {
   const { language } = useApp();
@@ -21,7 +22,7 @@ export const SustainabilitySection: React.FC = () => {
           {/* Story image linking to the About page */}
           <Link
             to={`${regionPrefix}/about`}
-            className="group relative block h-[clamp(280px,82vw,320px)] w-full overflow-hidden rounded-3xl bg-white [box-shadow:0_10px_24px_rgba(0,0,0,0.10)] sm:aspect-[4/3] sm:h-auto sm:shadow-lg lg:w-1/2"
+            className="group relative block h-[clamp(280px,82vw,320px)] w-full overflow-hidden rounded-3xl bg-white ring-1 ring-stone-200/70 sm:aspect-[4/3] sm:h-auto lg:w-1/2"
           >
             <img
               src="/images/about/specialty-coffee-beans-roastery-oman-spirithub-oman-transparent.webp"
@@ -34,28 +35,19 @@ export const SustainabilitySection: React.FC = () => {
 
           {/* Copy */}
           <div className="lg:w-1/2">
-            <div className={HOMEPAGE_EYEBROW}>
-              <span className="h-px w-6 bg-amber-500/60" aria-hidden="true" />
-              {isArabic ? 'فلسفتنا' : 'Our Philosophy'}
-            </div>
-            <h2 className={HOMEPAGE_HEADING}>
-              {isArabic ? (
-                'الاستدامة، الجودة، الالتزام'
-              ) : (
-                <>
-                  <span className="block">Sustainability, Quality,</span>
-                  <span className="block">Commitment</span>
-                </>
-              )}
-            </h2>
-            <p className="mt-4 max-w-xl text-sm leading-relaxed text-stone-600 sm:text-base">
+            <HomeSectionHeader
+              className="mb-0 sm:mb-0"
+              eyebrow={isArabic ? 'فلسفتنا' : 'Our Philosophy'}
+              title={isArabic ? 'الاستدامة، الجودة، الالتزام' : 'Sustainability, Quality, Commitment'}
+            />
+            <p className="mt-4 max-w-xl text-[15px] leading-7 text-stone-600 sm:text-base sm:leading-7">
               {isArabic
                 ? 'نؤمن بأن للقهوة المختصة أثرًا يتجاوز جودة المذاق، بدءًا من اختيار حبوب من مصادر مسؤولة، وصولًا إلى دعم المزارعين والمجتمعات التي تقف وراء كل فنجان.'
                 : 'We believe exceptional coffee begins with responsible sourcing. From carefully selected origins to the people behind every harvest, we are committed to quality, sustainability and lasting relationships.'}
             </p>
             <Link
               to={`${regionPrefix}/about`}
-              className="group mt-4 inline-flex items-center gap-2 rounded-full border border-stone-900 bg-white px-6 py-2.5 text-sm font-bold text-stone-900 shadow-sm transition hover:bg-stone-900 hover:text-white sm:mt-6"
+              className="group mt-6 inline-flex h-11 items-center gap-2 rounded-full bg-stone-900 px-5 text-[14px] font-semibold text-white transition-colors duration-200 hover:bg-stone-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c69c6d] focus-visible:ring-offset-2"
             >
               {isArabic ? 'اعرف المزيد' : 'Our Story'}
               <AnimatedIcon name="arrow-right" className={`size-4 ${isArabic ? '-scale-x-100' : ''}`} />

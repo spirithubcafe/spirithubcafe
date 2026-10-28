@@ -174,6 +174,35 @@ export const Navigation: React.FC = () => {
   
   // Check if we're on the home page
   const isHomePage = location.pathname === '/' || location.pathname === '/om' || location.pathname === '/om/' || location.pathname === '/sa' || location.pathname === '/sa/';
+
+  // Over the home hero the header is dark glass; once the hero has scrolled
+  // under it, it turns into the light header so it stays readable over content.
+  // Starts false on server and client alike (no hydration mismatch).
+  const [pastHero, setPastHero] = useState(false);
+  useEffect(() => {
+    if (!isHomePage) {
+      setPastHero(false);
+      return;
+    }
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const hero = document.querySelector('.professional-hero-slider');
+      const navBottom = document.querySelector('nav[data-site-header]')?.getBoundingClientRect().bottom ?? 0;
+      setPastHero(hero ? hero.getBoundingClientRect().bottom <= navBottom : window.scrollY > window.innerHeight);
+    };
+    const onScroll = () => {
+      if (!frame) frame = window.requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+      if (frame) window.cancelAnimationFrame(frame);
+    };
+  }, [isHomePage]);
   
   // Memoize navItems to prevent recreation on every render
   const navItems = useMemo(() => [
@@ -208,7 +237,7 @@ export const Navigation: React.FC = () => {
 
   // Header styles: the same language as the mobile bottom nav and drawer.
   // Over the home hero the bar is dark glass; elsewhere light glass.
-  const onDark = isHomePage;
+  const onDark = isHomePage && !pastHero;
   const linkBase = `group inline-flex h-9 items-center gap-1 whitespace-nowrap rounded-full px-3 text-[13px] font-medium transition-colors duration-200 xl:px-3.5 xl:text-[14px] ${DRAWER_FOCUS}`;
   const linkIdle = onDark
     ? 'text-white/80 hover:bg-white/10 hover:text-white data-[state=open]:bg-white/10 data-[state=open]:text-white'
@@ -373,8 +402,9 @@ export const Navigation: React.FC = () => {
 
   return (
     <nav
-      className={`z-50 fixed left-0 right-0 border-b backdrop-blur-xl backdrop-saturate-150 ${
-        isHomePage
+      data-site-header
+      className={`z-50 fixed left-0 right-0 border-b backdrop-blur-xl backdrop-saturate-150 transition-[background-color,border-color,box-shadow] duration-300 motion-reduce:transition-none ${
+        onDark
           ? 'bg-stone-950/35 border-white/10'
           : 'bg-white/95 border-stone-200/70 shadow-[0_1px_0_rgba(28,25,23,0.02),0_8px_24px_-16px_rgba(28,25,23,0.18)]'
       }`}
@@ -394,11 +424,11 @@ export const Navigation: React.FC = () => {
           >
             <picture>
               <source
-                srcSet={isHomePage ? "/images/logo/logo-light.webp" : "/images/logo/logo-dark.webp"}
+                srcSet={onDark ? "/images/logo/logo-light.webp" : "/images/logo/logo-dark.webp"}
                 type="image/webp"
               />
               <img
-                src={isHomePage ? "/images/logo/logo-light.webp" : "/images/logo/logo-dark.webp"}
+                src={onDark ? "/images/logo/logo-light.webp" : "/images/logo/logo-dark.webp"}
                 alt="Spirit Hub Cafe"
                 width={180}
                 height={48}
@@ -416,7 +446,7 @@ export const Navigation: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-1.5">
-              <RegionSwitcher isHomePage={isHomePage} />
+              <RegionSwitcher isHomePage={onDark} />
 
               <button type="button" onClick={toggleLanguage} aria-label={languageLabel} className={pillButton}>
                 <Globe className="size-4" />
@@ -456,7 +486,7 @@ export const Navigation: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-1">
-              <RegionSwitcher isHomePage={isHomePage} />
+              <RegionSwitcher isHomePage={onDark} />
 
               <button type="button" onClick={toggleLanguage} aria-label={languageLabel} title={languageLabel} className={iconButton}>
                 <Globe className="size-5" />
@@ -489,7 +519,7 @@ export const Navigation: React.FC = () => {
           {/* Mobile: brand, region, language and the menu. Cart lives in the
               bottom nav; wholesale and loyalty live in the drawer. */}
           <div data-nav-mobile className="flex md:hidden items-center gap-1.5">
-            <RegionSwitcher isHomePage={isHomePage} />
+            <RegionSwitcher isHomePage={onDark} />
 
             <button
               type="button"
