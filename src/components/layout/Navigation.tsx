@@ -1,7 +1,7 @@
 import React, { Suspense, lazy, useMemo, useCallback, useEffect, useState, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Globe, ShoppingCart, ChevronDown, User, Heart, ShoppingBag, Shield, Coffee, Gift, Star, Home as HomeIcon, Package, Info, Mail, UserPlus, LogIn } from 'lucide-react';
+import { Globe, ShoppingCart, ChevronDown, User, Heart, ShoppingBag, Shield, Coffee, Gift, Home as HomeIcon, Package, Info, Mail, UserPlus, LogIn } from 'lucide-react';
 import { AnimatedIcon } from '@/components/icons/AnimatedIcon';
 import { isNavPathActive } from '@/lib/bottomNavigation';
 import { Button } from '../ui/button';
@@ -206,10 +206,42 @@ export const Navigation: React.FC = () => {
     return null;
   }
 
+  // Header styles: the same language as the mobile bottom nav and drawer.
+  // Over the home hero the bar is dark glass; elsewhere light glass.
+  const onDark = isHomePage;
+  const linkBase = `group inline-flex h-9 items-center gap-1 whitespace-nowrap rounded-full px-3 text-[13px] font-medium transition-colors duration-200 xl:px-3.5 xl:text-[14px] ${DRAWER_FOCUS}`;
+  const linkIdle = onDark
+    ? 'text-white/80 hover:bg-white/10 hover:text-white data-[state=open]:bg-white/10 data-[state=open]:text-white'
+    : 'text-stone-600 hover:bg-stone-100 hover:text-stone-900 data-[state=open]:bg-stone-100 data-[state=open]:text-stone-900';
+  const linkActive = onDark ? 'bg-white/15 text-white' : 'bg-[#c69c6d]/15 text-[#5a432d]';
+  const iconButton = `relative inline-flex size-10 shrink-0 items-center justify-center rounded-full transition-[background-color,color,transform] duration-200 active:scale-[0.94] motion-reduce:active:scale-100 ${DRAWER_FOCUS} ${
+    onDark ? 'text-white/85 hover:bg-white/10 hover:text-white' : 'text-stone-700 hover:bg-stone-100 hover:text-stone-900'
+  }`;
+  const pillButton = `inline-flex h-10 shrink-0 items-center gap-2 rounded-full px-3.5 text-[14px] font-medium ring-1 ring-inset transition-colors duration-200 ${DRAWER_FOCUS} ${
+    onDark ? 'text-white ring-white/20 hover:bg-white/10' : 'text-stone-700 ring-stone-200 hover:bg-stone-100 hover:text-stone-900'
+  }`;
+  const loginButton = `inline-flex h-10 shrink-0 items-center gap-2 rounded-full px-4 text-[14px] font-semibold transition-[background-color,transform] duration-200 active:scale-[0.97] motion-reduce:active:scale-100 ${DRAWER_FOCUS} ${
+    onDark ? 'bg-white text-stone-900 hover:bg-white/90' : 'bg-stone-900 text-white hover:bg-stone-800'
+  }`;
+  const menuContent = 'w-max min-w-[15rem] max-w-xs rounded-2xl border-0 bg-white/95 p-1.5 shadow-[0_16px_40px_-12px_rgba(28,25,23,0.3)] ring-1 ring-stone-900/[0.06] backdrop-blur-xl';
+  const menuItemMain = 'w-full cursor-pointer whitespace-nowrap rounded-xl px-3 py-2.5 text-start text-[14px] font-semibold text-[#5a432d] focus:bg-[#c69c6d]/12 focus:text-[#5a432d]';
+  const menuItem = 'w-full cursor-pointer whitespace-nowrap rounded-xl px-3 py-2.5 text-start text-[14px] text-stone-600 focus:bg-stone-100 focus:text-stone-900';
+  const menuDivider = <div className="mx-2 my-1 h-px bg-stone-100" />;
+  const chevron = <ChevronDown className="size-3.5 opacity-60 transition-transform duration-200 group-data-[state=open]:rotate-180 motion-reduce:transition-none" />;
+  const cartBadge = totalItems > 0 ? (
+    <span className={`absolute -top-0.5 end-0 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[#c69c6d] px-1 text-[10px] font-bold tabular-nums text-stone-950 ring-2 ${onDark ? 'ring-stone-900' : 'ring-white'}`}>
+      {totalItems > 99 ? '99+' : totalItems}
+    </span>
+  ) : null;
+  const languageLabel = language === 'ar' ? 'تغيير اللغة' : 'Switch language';
+
   // Render navigation items inline to avoid re-mounting issues with dropdown
   const renderNavItems = () => (
     <>
       {navItems.map((item) => {
+        const active = isDrawerSectionActive(item.key);
+        const triggerClass = `${linkBase} ${active ? linkActive : linkIdle}`;
+
         // "Our Coffee" products dropdown
         if (item.hasDropdown && item.key === 'products') {
           return (
@@ -221,45 +253,27 @@ export const Navigation: React.FC = () => {
               }}
             >
               <DropdownMenuTrigger asChild>
-                <button
-                  className={`flex items-center gap-1 transition-colors duration-200 font-medium text-xs md:text-xs lg:text-sm whitespace-nowrap ${
-                    isHomePage 
-                      ? 'text-white hover:text-amber-200' 
-                      : 'text-gray-900 hover:text-amber-600'
-                  } ${language === 'ar' ? 'flex-row-reverse' : ''}`}
-                >
+                <button type="button" className={triggerClass}>
                   {item.label}
-                  <ChevronDown className="w-4 h-4" />
+                  {chevron}
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent 
-                align={language === 'ar' ? 'end' : 'start'} 
+              <DropdownMenuContent
+                align="start"
+                sideOffset={10}
                 dir={language === 'ar' ? 'rtl' : 'ltr'}
-                className="min-w-[16rem] w-max max-w-xs bg-white border border-gray-200 shadow-lg"
+                className={menuContent}
                 onCloseAutoFocus={(e) => e.preventDefault()}
               >
-                {/* All Products Link */}
                 <DropdownMenuItem asChild>
-                  <Link
-                    to={getRegionalUrl('/products')}
-                    className={`w-full px-4 py-2 whitespace-nowrap ${language === 'ar' ? 'text-right' : 'text-left'} text-gray-900 hover:bg-amber-50 hover:text-amber-600 font-medium`}
-                  >
+                  <Link to={getRegionalUrl('/products')} className={menuItemMain}>
                     {language === 'ar' ? 'جميع المنتجات' : 'All Products'}
                   </Link>
                 </DropdownMenuItem>
-                
-                {/* Divider */}
-                {coffeeCategories.length > 0 && (
-                  <div className="h-px bg-gray-200 my-1" />
-                )}
-                
-                {/* Coffee Categories List */}
+                {coffeeCategories.length > 0 && menuDivider}
                 {coffeeCategories.map((category) => (
                   <DropdownMenuItem key={category.id} asChild>
-                    <Link
-                      to={getRegionalUrl(`/products?category=${category.slug}`)}
-                      className={`w-full px-4 py-2 whitespace-nowrap ${language === 'ar' ? 'text-right' : 'text-left'} text-gray-700 hover:bg-amber-50 hover:text-amber-600`}
-                    >
+                    <Link to={getRegionalUrl(`/products?category=${category.slug}`)} className={menuItem}>
                       {language === 'ar' ? category.nameAr || category.name : category.name}
                     </Link>
                   </DropdownMenuItem>
@@ -280,45 +294,27 @@ export const Navigation: React.FC = () => {
               }}
             >
               <DropdownMenuTrigger asChild>
-                <button
-                  className={`flex items-center gap-1 transition-colors duration-200 font-medium text-xs md:text-xs lg:text-sm whitespace-nowrap ${
-                    isHomePage 
-                      ? 'text-white hover:text-amber-200' 
-                      : 'text-gray-900 hover:text-amber-600'
-                  } ${language === 'ar' ? 'flex-row-reverse' : ''}`}
-                >
+                <button type="button" className={triggerClass}>
                   {item.label}
-                  <ChevronDown className="w-4 h-4" />
+                  {chevron}
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent 
-                align={language === 'ar' ? 'end' : 'start'} 
+              <DropdownMenuContent
+                align="start"
+                sideOffset={10}
                 dir={language === 'ar' ? 'rtl' : 'ltr'}
-                className="min-w-[16rem] w-max max-w-xs bg-white border border-gray-200 shadow-lg"
+                className={menuContent}
                 onCloseAutoFocus={(e) => e.preventDefault()}
-               >
-                {/* Shop Main Link */}
+              >
                 <DropdownMenuItem asChild>
-                  <Link
-                    to={getRegionalUrl('/shop/coffee-bundles-gift-boxes')}
-                    className={`w-full px-4 py-2 whitespace-nowrap ${language === 'ar' ? 'text-right' : 'text-left'} text-gray-900 hover:bg-amber-50 hover:text-amber-600 font-medium`}
-                  >
+                  <Link to={getRegionalUrl('/shop/coffee-bundles-gift-boxes')} className={menuItemMain}>
                     {language === 'ar' ? 'أرسل هدية' : 'Send a Gift'}
                   </Link>
                 </DropdownMenuItem>
-                
-                {/* Divider */}
-                {shopCategories.length > 0 && (
-                  <div className="h-px bg-gray-200 my-1" />
-                )}
-                
-                {/* Categories List */}
+                {shopCategories.length > 0 && menuDivider}
                 {shopCategories.map((category) => (
                   <DropdownMenuItem key={category.id} asChild>
-                    <Link
-                      to={getRegionalUrl(`/shop/${category.slug}`)}
-                      className={`w-full px-4 py-2 whitespace-nowrap ${language === 'ar' ? 'text-right' : 'text-left'} text-gray-700 hover:bg-amber-50 hover:text-amber-600`}
-                    >
+                    <Link to={getRegionalUrl(`/shop/${category.slug}`)} className={menuItem}>
                       {language === 'ar' ? category.nameAr || category.name : category.name}
                     </Link>
                   </DropdownMenuItem>
@@ -333,37 +329,26 @@ export const Navigation: React.FC = () => {
           return (
             <DropdownMenu key={`${item.key}-${dropdownKey}`} modal={false}>
               <DropdownMenuTrigger asChild>
-                <button
-                  className={`flex items-center gap-1 transition-colors duration-200 font-medium text-xs md:text-xs lg:text-sm whitespace-nowrap ${
-                    isHomePage 
-                      ? 'text-white hover:text-amber-200' 
-                      : 'text-gray-900 hover:text-amber-600'
-                  } ${language === 'ar' ? 'flex-row-reverse' : ''}`}
-                >
+                <button type="button" className={triggerClass}>
                   {item.label}
-                  <ChevronDown className="w-4 h-4" />
+                  {chevron}
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent 
-                align={language === 'ar' ? 'end' : 'start'} 
+              <DropdownMenuContent
+                align="start"
+                sideOffset={10}
                 dir={language === 'ar' ? 'rtl' : 'ltr'}
-                className="min-w-[14rem] w-max max-w-xs bg-white border border-gray-200 shadow-lg"
+                className={`${menuContent} min-w-[13rem]`}
                 onCloseAutoFocus={(e) => e.preventDefault()}
               >
                 <DropdownMenuItem asChild>
-                  <Link
-                    to={getRegionalUrl('/contact')}
-                    className={`w-full px-4 py-2 whitespace-nowrap ${language === 'ar' ? 'text-right' : 'text-left'} text-gray-900 hover:bg-amber-50 hover:text-amber-600 font-medium`}
-                  >
+                  <Link to={getRegionalUrl('/contact')} className={menuItemMain}>
                     {language === 'ar' ? 'اتصل بنا' : 'Contact Us'}
                   </Link>
                 </DropdownMenuItem>
-                <div className="h-px bg-gray-200 my-1" />
+                {menuDivider}
                 <DropdownMenuItem asChild>
-                  <Link
-                    to={getRegionalUrl('/loyalty')}
-                    className={`w-full px-4 py-2 whitespace-nowrap ${language === 'ar' ? 'text-right' : 'text-left'} text-gray-700 hover:bg-amber-50 hover:text-amber-600`}
-                  >
+                  <Link to={getRegionalUrl('/loyalty')} className={menuItem}>
                     {language === 'ar' ? 'برنامج الولاء' : 'Loyalty Program'}
                   </Link>
                 </DropdownMenuItem>
@@ -371,16 +356,13 @@ export const Navigation: React.FC = () => {
             </DropdownMenu>
           );
         }
-        
+
         return (
           <Link
             key={item.key}
             to={item.href}
-            className={`transition-colors duration-200 font-medium text-xs md:text-xs lg:text-sm whitespace-nowrap ${
-              isHomePage 
-                ? 'text-white hover:text-amber-200' 
-                : 'text-gray-900 hover:text-amber-600'
-            }`}
+            aria-current={active ? 'page' : undefined}
+            className={triggerClass}
           >
             {item.label}
           </Link>
@@ -390,11 +372,11 @@ export const Navigation: React.FC = () => {
   );
 
   return (
-    <nav 
-      className={`z-50 fixed left-0 right-0 ${
-        isHomePage 
-          ? 'bg-black/30 backdrop-blur-sm border-b border-white/10' 
-          : 'bg-white shadow-md border-b border-gray-200'
+    <nav
+      className={`z-50 fixed left-0 right-0 border-b backdrop-blur-xl backdrop-saturate-150 ${
+        isHomePage
+          ? 'bg-stone-950/35 border-white/10'
+          : 'bg-white/95 border-stone-200/70 shadow-[0_1px_0_rgba(28,25,23,0.02),0_8px_24px_-16px_rgba(28,25,23,0.18)]'
       }`}
       style={{
         height: 'var(--nav-height)',
@@ -403,230 +385,128 @@ export const Navigation: React.FC = () => {
       dir={language === 'ar' ? 'rtl' : 'ltr'}
     >
       <div className="container mx-auto px-3 sm:px-4 h-full">
-        <div className="flex items-center justify-between h-full">
+        <div className="flex items-center justify-between gap-3 h-full">
           {/* Logo */}
-          <Link to={getRegionalUrl('/')} className="flex items-center hover:opacity-80 transition-opacity flex-shrink-0">
+          <Link
+            to={getRegionalUrl('/')}
+            aria-label={language === 'ar' ? 'سبيريت هب - الصفحة الرئيسية' : 'SpiritHub home'}
+            className={`flex flex-shrink-0 items-center rounded-lg transition-opacity hover:opacity-80 ${DRAWER_FOCUS}`}
+          >
             <picture>
-              <source 
-                srcSet={isHomePage ? "/images/logo/logo-light.webp" : "/images/logo/logo-dark.webp"} 
+              <source
+                srcSet={isHomePage ? "/images/logo/logo-light.webp" : "/images/logo/logo-dark.webp"}
                 type="image/webp"
               />
-              <img 
+              <img
                 src={isHomePage ? "/images/logo/logo-light.webp" : "/images/logo/logo-dark.webp"}
                 alt="Spirit Hub Cafe"
                 width={180}
                 height={48}
                 fetchPriority="high"
                 decoding="async"
-                className="h-9 sm:h-10 md:h-11 lg:h-12 w-auto"
+                className="h-9 sm:h-10 md:h-10 lg:h-11 w-auto"
               />
             </picture>
           </Link>
 
           {/* Desktop Navigation - Hidden on tablet and below */}
-          <div data-nav-desktop className="hidden lg:flex items-center space-x-6 xl:space-x-8">
-            {renderNavItems()}
-            
-            {/* Region Switcher */}
-            <RegionSwitcher isHomePage={isHomePage} />
-            
-            {/* Language Toggle */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={toggleLanguage}
-              className={`transition-colors text-sm ${
-                isHomePage 
-                  ? 'text-white hover:text-amber-200 hover:bg-white/10' 
-                  : 'text-gray-900 hover:text-amber-600 hover:bg-gray-100'
-              }`}
-            >
-              <Globe className="w-4 h-4 mr-1" />
-              {t('language.switch')}
-            </Button>
+          <div data-nav-desktop className="hidden lg:flex min-w-0 flex-1 items-center justify-between gap-4">
+            <div className="flex min-w-0 flex-1 items-center justify-center gap-0.5">
+              {renderNavItems()}
+            </div>
 
-            {/* Cart */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={openCart}
-              className={`relative transition-colors text-xs ${
-                isHomePage 
-                  ? 'text-white hover:text-amber-200 hover:bg-white/10' 
-                  : 'text-gray-900 hover:text-amber-600 hover:bg-gray-100'
-              }`}
-            >
-              <ShoppingCart className="w-4 h-4 mr-1" />
-              {totalItems > 0 && (
-                <span className="absolute -top-1 -right-1 bg-amber-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                  {totalItems}
-                </span>
-              )}
-              {t('nav.cart')}
-            </Button>
+            <div className="flex items-center gap-1.5">
+              <RegionSwitcher isHomePage={isHomePage} />
 
-            {/* Authentication */}
-            <div className="flex items-center space-x-2">
+              <button type="button" onClick={toggleLanguage} aria-label={languageLabel} className={pillButton}>
+                <Globe className="size-4" />
+                {t('language.switch')}
+              </button>
+
+              <button
+                type="button"
+                onClick={openCart}
+                aria-label={totalItems > 0 ? t('nav.cartWithCount', { count: totalItems }) : t('nav.cart')}
+                className={iconButton}
+              >
+                <AnimatedIcon name="shopping-cart" className="size-5" />
+                {cartBadge}
+              </button>
+
+              {/* Authentication: the skeleton keeps the button's size while auth resolves */}
               {isLoading ? (
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse"></div>
-                  <div className="w-16 h-4 bg-gray-200 rounded animate-pulse hidden md:block"></div>
-                </div>
+                <div className={`h-10 w-24 rounded-full animate-pulse ${onDark ? 'bg-white/15' : 'bg-stone-200'}`} />
               ) : isAuthenticated ? (
                 <Suspense fallback={<div className="h-10 w-10 rounded-full bg-white/20" />}>
                   <MinimalUserProfile />
                 </Suspense>
               ) : (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setAuthModal('login')}
-                  className="text-xs"
-                >
+                <button type="button" onClick={() => setAuthModal('login')} className={loginButton}>
                   <AnimatedIcon name="log-in" className="size-4" />
-                  <span className="mr-2">{t('auth.login')}</span>
-                </Button>
+                  {t('auth.login')}
+                </button>
               )}
             </div>
           </div>
 
           {/* Tablet Navigation - Show on medium screens */}
-          <div data-nav-tablet className="hidden md:flex lg:hidden items-center space-x-3">
-            <div className="flex items-center space-x-4">
+          <div data-nav-tablet className="hidden md:flex lg:hidden min-w-0 flex-1 items-center justify-end gap-1">
+            <div className="flex min-w-0 items-center gap-0.5">
               {renderNavItems()}
             </div>
-            
-            {/* Tablet Actions */}
-            <div className="flex items-center space-x-2">
-              {/* Region Switcher - Tablet */}
-              <RegionSwitcher isHomePage={isHomePage} />
-              
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={toggleLanguage}
-                className={`transition-colors p-2.5 ${
-                  isHomePage 
-                    ? 'text-white hover:text-amber-200 hover:bg-white/10' 
-                    : 'text-gray-900 hover:text-amber-600 hover:bg-gray-100'
-                }`}
-              >
-                <Globe className="w-5 h-5" />
-              </Button>
 
-              <Button
-                variant="ghost"
-                size="sm"
+            <div className="flex items-center gap-1">
+              <RegionSwitcher isHomePage={isHomePage} />
+
+              <button type="button" onClick={toggleLanguage} aria-label={languageLabel} title={languageLabel} className={iconButton}>
+                <Globe className="size-5" />
+              </button>
+
+              <button
+                type="button"
                 onClick={openCart}
-                className={`transition-colors p-2.5 ${
-                  isHomePage 
-                    ? 'text-white hover:text-amber-200 hover:bg-white/10' 
-                    : 'text-gray-900 hover:text-amber-600 hover:bg-gray-100'
-                }`}
+                aria-label={totalItems > 0 ? t('nav.cartWithCount', { count: totalItems }) : t('nav.cart')}
+                className={iconButton}
               >
-                <ShoppingCart className="w-5 h-5" />
-              </Button>
+                <AnimatedIcon name="shopping-cart" className="size-5" />
+                {cartBadge}
+              </button>
 
               {isLoading ? (
-                <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse"></div>
+                <div className={`size-10 rounded-full animate-pulse ${onDark ? 'bg-white/15' : 'bg-stone-200'}`} />
               ) : isAuthenticated ? (
                 <Suspense fallback={<div className="h-10 w-10 rounded-full bg-white/20" />}>
                   <MinimalUserProfile />
                 </Suspense>
               ) : (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setAuthModal('login')}
-                  className="p-2.5"
-                  aria-label={t('auth.login')}
-                >
-                  <AnimatedIcon name="log-in" className="size-4" />
-                </Button>
+                <button type="button" onClick={() => setAuthModal('login')} aria-label={t('auth.login')} className={iconButton}>
+                  <AnimatedIcon name="log-in" className="size-5" />
+                </button>
               )}
             </div>
           </div>
 
-          {/* Mobile Navigation */}
-          <div data-nav-mobile className="flex md:hidden items-center space-x-2">
-            {/* Region Switcher - Mobile */}
+          {/* Mobile: brand, region, language and the menu. Cart lives in the
+              bottom nav; wholesale and loyalty live in the drawer. */}
+          <div data-nav-mobile className="flex md:hidden items-center gap-1.5">
             <RegionSwitcher isHomePage={isHomePage} />
-            
-            {/* Language Toggle */}
-            <Button
-              variant="ghost"
-              size="sm"
+
+            <button
+              type="button"
               onClick={toggleLanguage}
-              aria-label={language === 'ar' ? 'تغيير اللغة' : 'Switch language'}
-              title={language === 'ar' ? 'تغيير اللغة' : 'Switch language'}
-              className={`transition-colors p-2.5 ${
-                isHomePage 
-                  ? 'text-white hover:text-amber-200 hover:bg-white/10' 
-                  : 'text-gray-900 hover:text-amber-600 hover:bg-gray-100'
-              }`}
+              aria-label={languageLabel}
+              title={languageLabel}
+              className={`${pillButton} h-10 px-3 text-[13px] ${language === 'ar' ? '' : 'font-cairo'}`}
             >
-              <Globe className="w-5 h-5" />
-            </Button>
-
-            {/* Loyalty - Mobile */}
-            <Link
-              to={getRegionalUrl('/loyalty')}
-              aria-label={language === 'ar' ? 'برنامج الولاء' : 'Loyalty Program'}
-              title={language === 'ar' ? 'برنامج الولاء' : 'Loyalty Program'}
-              className={`inline-flex items-center justify-center transition-colors p-2.5 rounded-md ${
-                isHomePage
-                  ? 'text-white hover:text-amber-200 hover:bg-white/10'
-                  : 'text-gray-900 hover:text-amber-600 hover:bg-gray-100'
-              }`}
-            >
-              <Star className="w-5 h-5" />
-            </Link>
-
-            {/* Wholesale - Mobile */}
-            <Link
-              to={getRegionalUrl('/wholesale')}
-              aria-label={t('nav.wholesale')}
-              title={t('nav.wholesale')}
-              className={`inline-flex items-center justify-center transition-colors p-2.5 rounded-md ${
-                isHomePage
-                  ? 'text-white hover:text-amber-200 hover:bg-white/10'
-                  : 'text-gray-900 hover:text-amber-600 hover:bg-gray-100'
-              }`}
-            >
-              <Package className="w-5 h-5" />
-            </Link>
-
-            {/* Cart */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={openCart}
-              aria-label={language === 'ar' ? 'السلة' : 'Cart'}
-              title={language === 'ar' ? 'السلة' : 'Cart'}
-              className={`transition-colors p-2.5 ${
-                isHomePage 
-                  ? 'text-white hover:text-amber-200 hover:bg-white/10' 
-                  : 'text-gray-900 hover:text-amber-600 hover:bg-gray-100'
-              }`}
-            >
-              <ShoppingCart className="w-5 h-5" />
-            </Button>
+              {language === 'ar' ? 'EN' : 'عربي'}
+            </button>
 
             {/* Mobile Menu */}
             <Drawer side={language === 'ar' ? 'left' : 'right'} open={mobileMenuOpen} onOpenChange={(open) => { setMobileMenuOpen(open); if (open) void loadNavCategories(); if (!open) setMobileAccordion(null); }}>
               <DrawerTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  aria-label={t('nav.openMenu')}
-                  className={`transition-colors p-2.5 ${
-                    isHomePage 
-                      ? 'text-white hover:text-amber-200 hover:bg-white/10' 
-                      : 'text-gray-900 hover:text-amber-600 hover:bg-gray-100'
-                  }`}
-                >
-                  <AnimatedIcon name="menu" className="size-6" />
-                </Button>
+                <button type="button" aria-label={t('nav.openMenu')} className={`${iconButton} ring-1 ring-inset ${onDark ? 'ring-white/20' : 'ring-stone-200'}`}>
+                  <AnimatedIcon name="menu" className="size-5" />
+                </button>
               </DrawerTrigger>
               <DrawerContent
                 dir={language === 'ar' ? 'rtl' : 'ltr'}
