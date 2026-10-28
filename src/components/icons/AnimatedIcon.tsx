@@ -6,7 +6,10 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  Coffee,
+  Gift,
   Heart,
+  House,
   LogIn,
   LogOut,
   Menu,
@@ -14,6 +17,7 @@ import {
   Plus,
   Search,
   Send,
+  ShoppingCart,
   Sparkles,
   Star,
   Trash2,
@@ -29,7 +33,10 @@ const staticIcons = {
   'chevron-down': ChevronDown,
   'chevron-left': ChevronLeft,
   'chevron-right': ChevronRight,
+  coffee: Coffee,
+  gift: Gift,
   heart: Heart,
+  house: House,
   'log-in': LogIn,
   'log-out': LogOut,
   menu: Menu,
@@ -37,6 +44,7 @@ const staticIcons = {
   plus: Plus,
   search: Search,
   send: Send,
+  'shopping-cart': ShoppingCart,
   sparkles: Sparkles,
   star: Star,
   'trash-2': Trash2,
@@ -79,6 +87,8 @@ const TRIGGER_SELECTOR = 'button, a, [role="button"], [role="menuitem"]';
 type AnimatedIconProps = {
   name: AnimatedIconName;
   className?: string;
+  /** Plays the animation while true, in addition to hover/focus. */
+  animate?: boolean;
 };
 
 /**
@@ -86,7 +96,7 @@ type AnimatedIconProps = {
  * focused. Renders the static lucide icon until the animation chunk has
  * loaded after idle, and stays static under `prefers-reduced-motion`.
  */
-export function AnimatedIcon({ name, className }: AnimatedIconProps) {
+export function AnimatedIcon({ name, className, animate = false }: AnimatedIconProps) {
   const ref = useRef<HTMLSpanElement>(null);
   const [Animated, setAnimated] = useState<AnimatedComponent | null>(null);
   const [active, setActive] = useState(false);
@@ -136,7 +146,7 @@ export function AnimatedIcon({ name, className }: AnimatedIconProps) {
   return (
     <span ref={ref} className="inline-flex shrink-0" aria-hidden="true">
       {Animated ? (
-        <Animated className={className} animate={active} aria-hidden />
+        <Animated className={className} animate={active || animate} aria-hidden />
       ) : (
         <Static className={className} aria-hidden />
       )}

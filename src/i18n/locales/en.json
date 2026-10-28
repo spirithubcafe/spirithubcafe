@@ -27,7 +27,10 @@
     "favorites": "Favorites",
     "orders": "Orders",
     "settings": "Settings",
-    "openMenu": "Open menu"
+    "openMenu": "Open menu",
+    "mobileNavigation": "Main navigation",
+    "cartWithCount": "Cart ({{count}})",
+    "loginShort": "Login"
   },
   "hero": {
     "title": "Spirit Hub Cafe",

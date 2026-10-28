@@ -320,44 +320,78 @@ pre {
   background: var(--scrollbar-thumb-hover);
 }
 
-/* OverlayScrollbars theme: drive the official OS size variables, and style the
-   track/handle directly (a custom theme name doesn't inherit OS's built-in
-   color rules). Sizing is axis-specific so the vertical bar keeps full height. */
-.os-theme-custom {
-  --os-size: 10px;
-  --os-padding-perpendicular: 2px;
-  --os-padding-axis: 2px;
-  --os-handle-min-size: 33px;
-  --os-handle-interactive-area-offset: 4px;
+/* OverlayScrollbars theme, set through the library's own variables. An
+   overlay bar: no visible track, a slim pill handle that widens when the
+   pointer is on it. The handle has a faint light edge so it stays readable
+   over the dark hero and footer as well as white pages. It auto-hides (see
+   src/lib/scrollbars.ts and OverlayScroll.tsx). */
+.os-scrollbar.os-theme-custom {
+  --os-size: 14px;
+  --os-padding-perpendicular: 3px;
+  --os-padding-axis: 4px;
+  --os-track-border-radius: 9999px;
+  --os-track-bg: transparent;
+  --os-track-bg-hover: rgba(28, 25, 23, 0.06);
+  --os-track-bg-active: rgba(28, 25, 23, 0.08);
+  --os-handle-border-radius: 9999px;
+  --os-handle-bg: rgba(28, 25, 23, 0.38);
+  --os-handle-bg-hover: rgba(28, 25, 23, 0.56);
+  --os-handle-bg-active: rgba(28, 25, 23, 0.64);
+  --os-handle-min-size: 44px;
+  --os-handle-perpendicular-size: 5px;
+  --os-handle-perpendicular-size-hover: 8px;
+  --os-handle-perpendicular-size-active: 8px;
+  --os-handle-interactive-area-offset: 6px;
+  transition:
+    opacity 0.3s ease,
+    visibility 0.3s ease;
 }
 
-.os-theme-custom.os-scrollbar-vertical,
-.os-theme-custom .os-scrollbar-vertical {
-  width: 10px;
+.os-scrollbar.os-theme-custom .os-scrollbar-handle {
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.45);
+  transition:
+    background-color 0.2s ease,
+    width 0.2s ease,
+    height 0.2s ease;
 }
 
-.os-theme-custom.os-scrollbar-horizontal,
-.os-theme-custom .os-scrollbar-horizontal {
-  height: 10px;
+/* Grow from the outer edge, not towards it. */
+.os-scrollbar-vertical.os-theme-custom .os-scrollbar-handle {
+  right: 0;
 }
 
-.os-theme-custom .os-scrollbar-track {
-  background: var(--scrollbar-track);
-  border-radius: 9999px;
+.os-scrollbar-vertical.os-theme-custom.os-scrollbar-rtl .os-scrollbar-handle {
+  right: auto;
+  left: 0;
 }
 
-.os-theme-custom .os-scrollbar-handle {
-  background: var(--scrollbar-thumb);
-  border-radius: 9999px;
-  transition: background 0.2s ease;
+.os-scrollbar-horizontal.os-theme-custom .os-scrollbar-handle {
+  top: auto;
+  bottom: 0;
 }
 
-.os-theme-custom .os-scrollbar-handle:hover {
-  background: var(--scrollbar-thumb-hover);
+/* The page bar: below modals and sheets (z-60), and gone while one of them
+   locks the page scroll, so it never sits on top of the cart or a menu. */
+body > .os-scrollbar.os-theme-custom {
+  z-index: 55;
 }
 
-.os-theme-custom .os-scrollbar-handle:active {
-  background: var(--scrollbar-thumb-hover);
+body[data-scroll-locked] > .os-scrollbar.os-theme-custom {
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
+
+/* Revealed when the mouse comes near it (set by src/lib/scrollbars.ts). */
+html.os-edge-reveal body > .os-scrollbar-vertical.os-theme-custom:not(.os-scrollbar-unusable) {
+  opacity: 1;
+  visibility: visible;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .os-scrollbar.os-theme-custom,
+  .os-scrollbar.os-theme-custom .os-scrollbar-handle {
+    transition: none;
+  }
 }
 
 .admin-scrollbar {

@@ -3,8 +3,9 @@ import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Globe, ShoppingCart, ChevronDown, User, Heart, ShoppingBag, Shield, Coffee, Gift, Star, Home as HomeIcon, Package, Info, Mail, UserPlus, LogIn } from 'lucide-react';
 import { AnimatedIcon } from '@/components/icons/AnimatedIcon';
+import { isNavPathActive } from '@/lib/bottomNavigation';
 import { Button } from '../ui/button';
-import { Sheet, SheetContent, SheetTrigger, SheetClose, SheetTitle, SheetDescription } from '../ui/sheet';
+import { Drawer, DrawerContent, DrawerTrigger, DrawerClose, DrawerTitle, DrawerDescription } from '@/components/animate-ui/primitives/radix/drawer';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,6 +29,14 @@ import type { Category as ApiCategory } from '../../types/product';
 
 const AuthModal = lazy(() => import('../auth/AuthModal').then((m) => ({ default: m.AuthModal })));
 const MinimalUserProfile = lazy(() => import('../auth/MinimalUserProfile').then((m) => ({ default: m.MinimalUserProfile })));
+
+// Mobile drawer styles, matched to the mobile bottom nav (MobileBottomNav.tsx):
+// dark glass, white/70 items, the coffee highlight for the current page.
+const DRAWER_FOCUS = 'outline-none focus-visible:ring-2 focus-visible:ring-[#c69c6d]';
+const DRAWER_ITEM = `flex h-11 w-full items-center gap-3 rounded-2xl px-3.5 text-[14px] font-medium transition-colors duration-200 ${DRAWER_FOCUS}`;
+const DRAWER_ITEM_IDLE = 'text-white/70 hover:bg-white/[0.06] hover:text-white';
+const DRAWER_ITEM_ACTIVE = 'bg-[#c69c6d]/20 text-[#e3c196] ring-1 ring-inset ring-[#c69c6d]/25';
+const DRAWER_SUBITEM = `flex h-10 items-center rounded-xl px-3 text-[13px] transition-colors duration-200 hover:bg-white/[0.06] ${DRAWER_FOCUS}`;
 
 export const Navigation: React.FC = () => {
   const { t } = useTranslation();
@@ -175,6 +184,20 @@ export const Navigation: React.FC = () => {
     { key: 'about', label: t('nav.about'), href: getRegionalUrl('/about'), isRoute: true, hasDropdown: false },
     { key: 'contact', label: t('nav.contact'), href: getRegionalUrl('/contact'), isRoute: true, hasDropdown: true }
   ], [t, getRegionalUrl]);
+
+  // Which drawer section holds the current page (Loyalty sits under Contact).
+  const isDrawerSectionActive = (key: string) => {
+    const at = (path: string) => isNavPathActive(location.pathname, getRegionalUrl(path));
+    switch (key) {
+      case 'home': return at('/');
+      case 'products': return at('/products');
+      case 'shop': return at('/shop');
+      case 'wholesale': return at('/wholesale');
+      case 'about': return at('/about');
+      case 'contact': return at('/contact') || at('/loyalty');
+      default: return false;
+    }
+  };
 
   // Hide navigation on admin pages
   const isAdminPage = location.pathname.includes('/admin');
@@ -590,8 +613,8 @@ export const Navigation: React.FC = () => {
             </Button>
 
             {/* Mobile Menu */}
-            <Sheet open={mobileMenuOpen} onOpenChange={(open) => { setMobileMenuOpen(open); if (open) void loadNavCategories(); if (!open) setMobileAccordion(null); }}>
-              <SheetTrigger asChild>
+            <Drawer side={language === 'ar' ? 'left' : 'right'} open={mobileMenuOpen} onOpenChange={(open) => { setMobileMenuOpen(open); if (open) void loadNavCategories(); if (!open) setMobileAccordion(null); }}>
+              <DrawerTrigger asChild>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -604,21 +627,38 @@ export const Navigation: React.FC = () => {
                 >
                   <AnimatedIcon name="menu" className="size-6" />
                 </Button>
-              </SheetTrigger>
-              <SheetContent
-                side={language === 'ar' ? 'left' : 'right'}
+              </DrawerTrigger>
+              <DrawerContent
                 dir={language === 'ar' ? 'rtl' : 'ltr'}
-                className="bg-[#120804] p-0 text-white flex flex-col"
+                className="mb-[calc(0.5rem+env(safe-area-inset-bottom))] w-[min(86vw,22rem)] overflow-hidden rounded-3xl bg-stone-950/90 text-white ring-1 ring-white/10 backdrop-blur-xl backdrop-saturate-150"
               >
-                <SheetTitle className="sr-only">
+                <DrawerTitle className="sr-only">
                   {language === 'ar' ? 'القائمة الرئيسية' : 'Main menu'}
-                </SheetTitle>
-                <SheetDescription className="sr-only">
+                </DrawerTitle>
+                <DrawerDescription className="sr-only">
                   {language === 'ar' ? 'استخدم هذه القائمة للتنقل في الموقع.' : 'Use this menu to navigate the site.'}
-                </SheetDescription>
+                </DrawerDescription>
                 <div className="flex h-full flex-col">
+                  {/* Brand + close: the close button has its own row, clear of the account buttons */}
+                  <div className="flex flex-shrink-0 items-center justify-between ps-4 pe-3 pt-3">
+                    <img
+                      src="/images/logo/logo-light.webp"
+                      alt=""
+                      width={180}
+                      height={48}
+                      decoding="async"
+                      className="h-8 w-auto"
+                    />
+                    <DrawerClose
+                      aria-label={language === 'ar' ? 'إغلاق القائمة' : 'Close menu'}
+                      className="inline-flex size-10 items-center justify-center rounded-full bg-white/[0.06] text-white/75 ring-1 ring-white/10 outline-none transition-[transform,color,background-color] duration-200 hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:ring-[#c69c6d] active:scale-[0.94] motion-reduce:active:scale-100"
+                    >
+                      <AnimatedIcon name="x" className="size-5" />
+                    </DrawerClose>
+                  </div>
+
                   {/* Compact Profile Header */}
-                  <div className="border-b border-white/[0.03] px-4 py-2 flex-shrink-0">
+                  <div className="flex-shrink-0 px-3 pb-3 pt-3">
                     {isLoading ? (
                       <div className="flex items-center gap-2.5">
                         <div className="w-8 h-8 rounded-full bg-white/10 animate-pulse flex-shrink-0"></div>
@@ -648,12 +688,12 @@ export const Navigation: React.FC = () => {
                       </div>
                     ) : (
                       <div className="flex gap-2">
-                        <Button variant="default" size="sm" className="flex-1 h-8 text-xs" onClick={() => { setMobileMenuOpen(false); setAuthModal('login'); }}>
-                          <LogIn className="mr-2 h-4 w-4" />
+                        <Button variant="default" size="sm" className={`flex-1 h-11 rounded-full bg-[#c69c6d] text-[14px] font-semibold text-stone-950 hover:bg-[#d4ad80] ${DRAWER_FOCUS}`} onClick={() => { setMobileMenuOpen(false); setAuthModal('login'); }}>
+                          <LogIn className="me-2 h-4 w-4" />
                           {t('auth.login')}
                         </Button>
-                        <Button variant="default" size="sm" className="flex-1 h-8 text-xs" onClick={() => { setMobileMenuOpen(false); setAuthModal('register'); }}>
-                          <UserPlus className="mr-2 h-4 w-4" />
+                        <Button variant="default" size="sm" className={`flex-1 h-11 rounded-full bg-white/[0.06] text-[14px] font-semibold text-white ring-1 ring-white/10 hover:bg-white/10 ${DRAWER_FOCUS}`} onClick={() => { setMobileMenuOpen(false); setAuthModal('register'); }}>
+                          <UserPlus className="me-2 h-4 w-4" />
                           {t('auth.register')}
                         </Button>
                       </div>
@@ -663,10 +703,10 @@ export const Navigation: React.FC = () => {
                   {/* Scrollable Menu Content */}
                   <div className="flex-1 min-h-0 overflow-hidden">
                     <ScrollArea className="h-full">
-                      <div className="px-4 py-3">
+                      <div className="border-t border-white/[0.06] px-3 py-3">
                         <nav>
                           {/* Navigation Items */}
-                          <ul className="space-y-0.5">
+                          <ul className="space-y-1">
                             {navItems.map((item) => {
                               // "Our Coffee" accordion
                               if (item.hasDropdown && item.key === 'products') {
@@ -675,18 +715,17 @@ export const Navigation: React.FC = () => {
                                   <li key={item.key}>
                                     <button
                                       onClick={() => setMobileAccordion(isOpen ? null : 'products')}
-                                      className={`w-full flex items-center justify-between px-3 py-2.5 text-[13px] font-medium rounded-lg transition-all duration-200 border-l-2 ${
-                                        isOpen
-                                          ? 'text-amber-300 bg-amber-500/[0.06] border-amber-400/40'
-                                          : 'text-white/90 bg-white/[0.02] border-amber-400/20 hover:bg-white/[0.04] hover:text-white hover:border-amber-400/30'
+                                      aria-expanded={isOpen}
+                                      className={`${DRAWER_ITEM} justify-between ${
+                                        isDrawerSectionActive('products') ? DRAWER_ITEM_ACTIVE : isOpen ? 'bg-white/[0.06] text-white' : DRAWER_ITEM_IDLE
                                       }`}
                                     >
-                                      <span className="flex items-center gap-2.5">
-                                        <Coffee className={`h-3.5 w-3.5 transition-colors duration-200 ${isOpen ? 'text-amber-400/80' : 'text-amber-400/60'}`} />
+                                      <span className="flex items-center gap-3">
+                                        <Coffee className="size-[18px] shrink-0" />
                                         {item.label}
                                       </span>
                                       <ChevronDown
-                                        className={`h-3 w-3 transition-transform duration-300 ease-out ${isOpen ? 'rotate-180 text-amber-400/40' : 'text-white/20'}`}
+                                        className={`size-4 opacity-50 transition-transform duration-300 ease-out motion-reduce:transition-none ${isOpen ? 'rotate-180' : ''}`}
                                       />
                                     </button>
                                     <div
@@ -694,29 +733,29 @@ export const Navigation: React.FC = () => {
                                       className="overflow-hidden transition-all duration-250 ease-out"
                                       style={{
                                         maxHeight: isOpen
-                                          ? `${(coffeeCategories.length + 1) * 38 + 8}px`
+                                          ? `${(coffeeCategories.length + 1) * 42 + 8}px`
                                           : '0px',
                                         opacity: isOpen ? 1 : 0,
                                       }}
                                     >
-                                      <div className={`pt-1 pb-1 ${language === 'ar' ? 'pr-6 border-r border-white/[0.04] mr-4' : 'pl-6 border-l border-white/[0.04] ml-4'}`}>
-                                        <SheetClose asChild>
+                                      <div className="space-y-0.5 pb-1 pt-1 ps-9">
+                                        <DrawerClose asChild>
                                           <Link
                                             to={getRegionalUrl('/products')}
-                                            className="flex items-center px-3 py-2 text-[12px] text-amber-200/80 rounded-md transition-colors hover:bg-white/[0.05] hover:text-amber-200"
+                                            className={`${DRAWER_SUBITEM} font-medium text-[#e3c196]/90 hover:text-[#e3c196]`}
                                           >
                                             {language === 'ar' ? 'جميع المنتجات' : 'All Products'}
                                           </Link>
-                                        </SheetClose>
+                                        </DrawerClose>
                                         {coffeeCategories.map((category) => (
-                                          <SheetClose asChild key={category.id}>
+                                          <DrawerClose asChild key={category.id}>
                                             <Link
                                               to={getRegionalUrl(`/products?category=${category.slug}`)}
-                                              className="flex items-center px-3 py-2 text-[12px] text-white/50 rounded-md transition-colors hover:bg-white/[0.05] hover:text-white/80"
+                                              className={`${DRAWER_SUBITEM} text-white/55 hover:text-white`}
                                             >
                                               {language === 'ar' ? category.nameAr || category.name : category.name}
                                             </Link>
-                                          </SheetClose>
+                                          </DrawerClose>
                                         ))}
                                       </div>
                                     </div>
@@ -731,18 +770,17 @@ export const Navigation: React.FC = () => {
                                   <li key={item.key}>
                                     <button
                                       onClick={() => setMobileAccordion(isOpen ? null : 'shop')}
-                                      className={`w-full flex items-center justify-between px-3 py-2.5 text-[13px] font-medium rounded-lg transition-all duration-200 border-l-2 ${
-                                        isOpen
-                                          ? 'text-amber-300 bg-amber-500/[0.06] border-amber-400/40'
-                                          : 'text-white/90 bg-white/[0.02] border-amber-400/20 hover:bg-white/[0.04] hover:text-white hover:border-amber-400/30'
+                                      aria-expanded={isOpen}
+                                      className={`${DRAWER_ITEM} justify-between ${
+                                        isDrawerSectionActive('shop') ? DRAWER_ITEM_ACTIVE : isOpen ? 'bg-white/[0.06] text-white' : DRAWER_ITEM_IDLE
                                       }`}
                                     >
-                                      <span className="flex items-center gap-2.5">
-                                        <Gift className={`h-3.5 w-3.5 transition-colors duration-200 ${isOpen ? 'text-amber-400/80' : 'text-amber-400/60'}`} />
+                                      <span className="flex items-center gap-3">
+                                        <Gift className="size-[18px] shrink-0" />
                                         {item.label}
                                       </span>
                                       <ChevronDown
-                                        className={`h-3 w-3 transition-transform duration-300 ease-out ${isOpen ? 'rotate-180 text-amber-400/40' : 'text-white/20'}`}
+                                        className={`size-4 opacity-50 transition-transform duration-300 ease-out motion-reduce:transition-none ${isOpen ? 'rotate-180' : ''}`}
                                       />
                                     </button>
                                     <div
@@ -750,29 +788,29 @@ export const Navigation: React.FC = () => {
                                       className="overflow-hidden transition-all duration-250 ease-out"
                                       style={{
                                         maxHeight: isOpen
-                                          ? `${(shopCategories.length + 1) * 38 + 8}px`
+                                          ? `${(shopCategories.length + 1) * 42 + 8}px`
                                           : '0px',
                                         opacity: isOpen ? 1 : 0,
                                       }}
                                     >
-                                      <div className={`pt-1 pb-1 ${language === 'ar' ? 'pr-6 border-r border-white/[0.04] mr-4' : 'pl-6 border-l border-white/[0.04] ml-4'}`}>
-                                        <SheetClose asChild>
+                                      <div className="space-y-0.5 pb-1 pt-1 ps-9">
+                                        <DrawerClose asChild>
                                           <Link
                                             to={getRegionalUrl('/shop/coffee-bundles-gift-boxes')}
-                                            className="flex items-center px-3 py-2 text-[12px] text-amber-200/80 rounded-md transition-colors hover:bg-white/[0.05] hover:text-amber-200"
+                                            className={`${DRAWER_SUBITEM} font-medium text-[#e3c196]/90 hover:text-[#e3c196]`}
                                           >
                                             {language === 'ar' ? 'أرسل هدية' : 'Send a Gift'}
                                           </Link>
-                                        </SheetClose>
+                                        </DrawerClose>
                                         {shopCategories.map((category) => (
-                                          <SheetClose asChild key={category.id}>
+                                          <DrawerClose asChild key={category.id}>
                                             <Link
                                               to={getRegionalUrl(`/shop/${category.slug}`)}
-                                              className="flex items-center px-3 py-2 text-[12px] text-white/50 rounded-md transition-colors hover:bg-white/[0.05] hover:text-white/80"
+                                              className={`${DRAWER_SUBITEM} text-white/55 hover:text-white`}
                                             >
                                               {language === 'ar' ? category.nameAr || category.name : category.name}
                                             </Link>
-                                          </SheetClose>
+                                          </DrawerClose>
                                         ))}
                                       </div>
                                     </div>
@@ -787,45 +825,44 @@ export const Navigation: React.FC = () => {
                                   <li key={item.key}>
                                     <button
                                       onClick={() => setMobileAccordion(isOpen ? null : 'contact')}
-                                      className={`w-full flex items-center justify-between px-3 py-2.5 text-[13px] font-medium rounded-lg transition-all duration-200 border-l-2 ${
-                                        isOpen
-                                          ? 'text-amber-300 bg-amber-500/[0.06] border-amber-400/40'
-                                          : 'text-white/90 bg-white/[0.02] border-amber-400/20 hover:bg-white/[0.04] hover:text-white hover:border-amber-400/30'
+                                      aria-expanded={isOpen}
+                                      className={`${DRAWER_ITEM} justify-between ${
+                                        isDrawerSectionActive('contact') ? DRAWER_ITEM_ACTIVE : isOpen ? 'bg-white/[0.06] text-white' : DRAWER_ITEM_IDLE
                                       }`}
                                     >
-                                      <span className="flex items-center gap-2.5">
-                                        <Mail className={`h-3.5 w-3.5 transition-colors duration-200 ${isOpen ? 'text-amber-400/80' : 'text-amber-400/60'}`} />
+                                      <span className="flex items-center gap-3">
+                                        <Mail className="size-[18px] shrink-0" />
                                         {item.label}
                                       </span>
                                       <ChevronDown
-                                        className={`h-3 w-3 transition-transform duration-300 ease-out ${isOpen ? 'rotate-180 text-amber-400/40' : 'text-white/20'}`}
+                                        className={`size-4 opacity-50 transition-transform duration-300 ease-out motion-reduce:transition-none ${isOpen ? 'rotate-180' : ''}`}
                                       />
                                     </button>
                                     <div
                                       ref={contactAccordionRef}
                                       className="overflow-hidden transition-all duration-250 ease-out"
                                       style={{
-                                        maxHeight: isOpen ? '84px' : '0px',
+                                        maxHeight: isOpen ? '92px' : '0px',
                                         opacity: isOpen ? 1 : 0,
                                       }}
                                     >
-                                      <div className={`pt-1 pb-1 ${language === 'ar' ? 'pr-6 border-r border-white/[0.04] mr-4' : 'pl-6 border-l border-white/[0.04] ml-4'}`}>
-                                        <SheetClose asChild>
+                                      <div className="space-y-0.5 pb-1 pt-1 ps-9">
+                                        <DrawerClose asChild>
                                           <Link
                                             to={getRegionalUrl('/contact')}
-                                            className="flex items-center px-3 py-2 text-[12px] text-amber-200/80 rounded-md transition-colors hover:bg-white/[0.05] hover:text-amber-200"
+                                            className={`${DRAWER_SUBITEM} font-medium text-[#e3c196]/90 hover:text-[#e3c196]`}
                                           >
                                             {language === 'ar' ? 'اتصل بنا' : 'Contact Us'}
                                           </Link>
-                                        </SheetClose>
-                                        <SheetClose asChild>
+                                        </DrawerClose>
+                                        <DrawerClose asChild>
                                           <Link
                                             to={getRegionalUrl('/loyalty')}
-                                            className="flex items-center px-3 py-2 text-[12px] text-white/50 rounded-md transition-colors hover:bg-white/[0.05] hover:text-white/80"
+                                            className={`${DRAWER_SUBITEM} text-white/55 hover:text-white`}
                                           >
                                             {language === 'ar' ? 'برنامج الولاء' : 'Loyalty Program'}
                                           </Link>
-                                        </SheetClose>
+                                        </DrawerClose>
                                       </div>
                                     </div>
                                   </li>
@@ -834,121 +871,122 @@ export const Navigation: React.FC = () => {
 
                               // Simple nav items (Home, Wholesale, About)
                               const iconMap: Record<string, React.ReactNode> = {
-                                home: <HomeIcon className="h-3.5 w-3.5 text-amber-400/60" />,
-                                wholesale: <Package className="h-3.5 w-3.5 text-amber-400/60" />,
-                                about: <Info className="h-3.5 w-3.5 text-amber-400/60" />,
+                                home: <HomeIcon className="size-[18px] shrink-0" />,
+                                wholesale: <Package className="size-[18px] shrink-0" />,
+                                about: <Info className="size-[18px] shrink-0" />,
                               };
                               return (
                                 <li key={item.key}>
-                                  <SheetClose asChild>
+                                  <DrawerClose asChild>
                                     <Link
                                       to={item.href}
-                                      className="flex items-center gap-2.5 px-3 py-2.5 text-[13px] font-medium text-white/90 rounded-lg transition-colors duration-150 hover:bg-white/[0.04] hover:text-white"
+                                      aria-current={isDrawerSectionActive(item.key) ? 'page' : undefined}
+                                      className={`${DRAWER_ITEM} ${isDrawerSectionActive(item.key) ? DRAWER_ITEM_ACTIVE : DRAWER_ITEM_IDLE}`}
                                     >
                                       {iconMap[item.key]}
                                       {item.label}
                                     </Link>
-                                  </SheetClose>
+                                  </DrawerClose>
                                 </li>
                               );
                             })}
                           </ul>
 
                           {/* Subtle separator */}
-                          <div className="my-3 h-px bg-gradient-to-r from-transparent via-white/[0.05] to-transparent" />
+                          <div className="mx-2 my-3 h-px bg-white/[0.06]" />
 
                           {/* Quick Actions */}
-                          <p className="px-3 mb-1.5 text-[10px] uppercase tracking-[0.2em] text-amber-200/30 font-medium">
+                          <p className="mb-1.5 px-3.5 text-[11px] font-medium tracking-wide text-white/35">
                             {language === 'ar' ? 'إجراءات سريعة' : 'Quick actions'}
                           </p>
-                          <ul className="space-y-0.5">
+                          <ul className="space-y-1">
                             <li>
-                              <SheetClose asChild>
+                              <DrawerClose asChild>
                                 <Button
                                   variant="ghost"
                                   onClick={handleMobileCartOpen}
-                                  className="w-full justify-between h-auto px-3 py-2.5 text-[13px] font-medium text-white/90 rounded-lg hover:bg-white/[0.04] hover:text-white"
+                                  className={`${DRAWER_ITEM} h-11 justify-between ${DRAWER_ITEM_IDLE}`}
                                 >
-                                  <span className="flex items-center gap-2.5">
-                                    <ShoppingCart className="h-3.5 w-3.5 text-amber-400/60" />
+                                  <span className="flex items-center gap-3">
+                                    <ShoppingCart className="size-[18px] shrink-0" />
                                     {language === 'ar' ? 'عرض السلة' : 'View cart'}
                                   </span>
                                   {totalItems > 0 && (
-                                    <span className="text-[11px] bg-amber-600/80 text-white px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+                                    <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[#c69c6d] px-1.5 text-[11px] font-bold tabular-nums text-stone-950">
                                       {totalItems}
                                     </span>
                                   )}
                                 </Button>
-                              </SheetClose>
+                              </DrawerClose>
                             </li>
                           </ul>
                           
                           {/* Account Section */}
                           {isAuthenticated && !isLoading && (
                             <>
-                              <div className="my-3 h-px bg-gradient-to-r from-transparent via-white/[0.05] to-transparent" />
-                              <p className="px-3 mb-1.5 text-[10px] uppercase tracking-[0.2em] text-amber-200/30 font-medium">
+                              <div className="mx-2 my-3 h-px bg-white/[0.06]" />
+                              <p className="mb-1.5 px-3.5 text-[11px] font-medium tracking-wide text-white/35">
                                 {language === 'ar' ? 'حسابي' : 'My Account'}
                               </p>
-                              <ul className="space-y-0.5">
+                              <ul className="space-y-1">
                                 <li>
-                                  <SheetClose asChild>
+                                  <DrawerClose asChild>
                                     <Link
-                                      to="/profile"
-                                      className="flex items-center gap-2.5 px-3 py-2.5 text-[13px] font-medium text-white/90 rounded-lg transition-colors hover:bg-white/[0.04] hover:text-white"
+                                      to={getRegionalUrl('/profile')}
+                                      className={`${DRAWER_ITEM} ${isNavPathActive(location.pathname, getRegionalUrl('/profile')) ? DRAWER_ITEM_ACTIVE : DRAWER_ITEM_IDLE}`}
                                     >
-                                      <User className="h-3.5 w-3.5 text-amber-400/60" />
+                                      <User className="size-[18px] shrink-0" />
                                       {language === 'ar' ? 'الملف الشخصي' : 'Profile'}
                                     </Link>
-                                  </SheetClose>
+                                  </DrawerClose>
                                 </li>
                                 <li>
-                                  <SheetClose asChild>
+                                  <DrawerClose asChild>
                                     <Link
-                                      to="/favorites"
-                                      className="flex items-center gap-2.5 px-3 py-2.5 text-[13px] font-medium text-white/90 rounded-lg transition-colors hover:bg-white/[0.04] hover:text-white"
+                                      to={getRegionalUrl('/favorites')}
+                                      className={`${DRAWER_ITEM} ${isNavPathActive(location.pathname, getRegionalUrl('/favorites')) ? DRAWER_ITEM_ACTIVE : DRAWER_ITEM_IDLE}`}
                                     >
-                                      <Heart className="h-3.5 w-3.5 text-amber-400/60" />
+                                      <Heart className="size-[18px] shrink-0" />
                                       {language === 'ar' ? 'المفضلة' : 'Favorites'}
                                     </Link>
-                                  </SheetClose>
+                                  </DrawerClose>
                                 </li>
                                 <li>
-                                  <SheetClose asChild>
+                                  <DrawerClose asChild>
                                     <Link
-                                      to="/orders"
-                                      className="flex items-center gap-2.5 px-3 py-2.5 text-[13px] font-medium text-white/90 rounded-lg transition-colors hover:bg-white/[0.04] hover:text-white"
+                                      to={getRegionalUrl('/orders')}
+                                      className={`${DRAWER_ITEM} ${isNavPathActive(location.pathname, getRegionalUrl('/orders')) ? DRAWER_ITEM_ACTIVE : DRAWER_ITEM_IDLE}`}
                                     >
-                                      <ShoppingBag className="h-3.5 w-3.5 text-amber-400/60" />
+                                      <ShoppingBag className="size-[18px] shrink-0" />
                                       {language === 'ar' ? 'طلباتي' : 'My Orders'}
                                     </Link>
-                                  </SheetClose>
+                                  </DrawerClose>
                                 </li>
                                 {user && (user.roles?.includes('Admin') || user.roles?.includes('admin') || user.roles?.includes('Administrator')) && (
                                   <li>
-                                    <SheetClose asChild>
+                                    <DrawerClose asChild>
                                       <Link
                                         to={getAdminBasePath(getPreferredAdminRegion())}
-                                        className="flex items-center gap-2.5 px-3 py-2.5 text-[13px] font-medium text-blue-300/80 rounded-lg transition-colors hover:bg-blue-600/10 hover:text-blue-200"
+                                        className={`${DRAWER_ITEM} text-sky-300/85 hover:bg-sky-400/10 hover:text-sky-200`}
                                       >
-                                        <Shield className="h-3.5 w-3.5 text-blue-400/60" />
+                                        <Shield className="size-[18px] shrink-0" />
                                         {language === 'ar' ? 'لوحة الإدارة' : 'Admin Panel'}
                                       </Link>
-                                    </SheetClose>
+                                    </DrawerClose>
                                   </li>
                                 )}
                               </ul>
 
-                              <div className="mt-2 pt-2 border-t border-white/[0.04]">
-                                <SheetClose asChild>
+                              <div className="mt-3 border-t border-white/[0.06] pt-3">
+                                <DrawerClose asChild>
                                   <button
                                     onClick={() => logout()}
-                                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] font-medium text-red-400/80 rounded-lg transition-colors hover:bg-red-500/[0.06] hover:text-red-300"
+                                    className={`${DRAWER_ITEM} text-red-300/85 hover:bg-red-500/10 hover:text-red-200`}
                                   >
-                                    <AnimatedIcon name="log-out" className="size-3.5" />
+                                    <AnimatedIcon name="log-out" className="size-[18px]" />
                                     {language === 'ar' ? 'تسجيل الخروج' : 'Log out'}
                                   </button>
-                                </SheetClose>
+                                </DrawerClose>
                               </div>
                             </>
                           )}
@@ -958,30 +996,30 @@ export const Navigation: React.FC = () => {
                   </div>
 
                   {/* Compact Footer */}
-                  <div className="border-t border-white/[0.03] px-4 py-2 flex-shrink-0">
+                  <div className="flex-shrink-0 border-t border-white/[0.06] px-4 py-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-[11px] text-white/30">
+                      <span className="text-[12px] text-white/40">
                         {language === 'ar' ? 'اللغة' : 'Language'}
                       </span>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={toggleLanguage}
-                        className="h-7 px-3 text-[12px] text-white/60 hover:text-white hover:bg-white/[0.04] rounded-md"
+                        className={`h-9 rounded-full bg-white/[0.06] px-3.5 text-[13px] font-medium text-white/80 ring-1 ring-white/10 hover:bg-white/10 hover:text-white ${DRAWER_FOCUS}`}
                       >
-                        <Globe className="h-3 w-3 mr-1.5" />
+                        <Globe className="size-4 me-1.5" />
                         {t('language.switch')}
                       </Button>
                     </div>
                   </div>
                 </div>
-              </SheetContent>
-            </Sheet>
+              </DrawerContent>
+            </Drawer>
           </div>
         </div>
       </div>
 
-      {/* Standalone auth modal for mobile menu - rendered outside Sheet so it isn't unmounted when menu closes */}
+      {/* Standalone auth modal for mobile menu - rendered outside the Drawer so it isn't unmounted when menu closes */}
       {authModal !== null && (
         <Suspense fallback={null}>
           <AuthModal

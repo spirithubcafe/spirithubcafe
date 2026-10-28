@@ -1,0 +1,89 @@
+/* Motion for ./bottom-navigation.tsx. Transform and opacity only, so nothing
+   here moves the page layout. The springs of Animate UI's Bottom Navigation
+   (mass 1) are sampled into linear() curves where supported, with an
+   ease-out cubic-bezier otherwise. */
+[data-slot='bottom-navigation'] {
+  --bn-ease-highlight: cubic-bezier(0.22, 1, 0.36, 1);
+  --bn-ease-minimize: cubic-bezier(0.22, 1, 0.36, 1);
+  transform-origin: 50% 100%;
+  transition: transform 500ms var(--bn-ease-minimize);
+}
+
+@supports (transition-timing-function: linear(0, 1)) {
+  [data-slot='bottom-navigation'] {
+    /* stiffness 300, damping 30 */
+    --bn-ease-highlight: linear(0, 0.045, 0.149, 0.278, 0.41, 0.534, 0.642, 0.732, 0.805, 0.862, 0.906, 0.938, 0.962, 0.978, 0.989, 0.996, 1.001, 1.003, 1.004, 1.004, 1.004, 1.004, 1.003, 1.003, 1);
+    /* stiffness 300, damping 35 */
+    --bn-ease-minimize: linear(0, 0.052, 0.164, 0.295, 0.423, 0.537, 0.635, 0.716, 0.781, 0.832, 0.872, 0.903, 0.927, 0.945, 0.959, 0.969, 0.977, 0.983, 0.988, 0.991, 0.993, 0.995, 0.996, 0.997, 1);
+  }
+}
+
+[data-slot='bottom-navigation'][data-minimized] {
+  transform: scale(var(--bn-minimized-scale, 0.86));
+}
+
+[data-slot='bottom-navigation-highlight'] {
+  transition: opacity 200ms ease-out;
+}
+
+[data-slot='bottom-navigation-highlight'][data-glides] {
+  transition:
+    transform 460ms var(--bn-ease-highlight),
+    opacity 200ms ease-out;
+}
+
+[data-slot='bottom-navigation-item'] {
+  transition:
+    transform 160ms ease-out,
+    color 200ms ease-out,
+    background-color 200ms ease-out;
+}
+
+[data-slot='bottom-navigation-item']:active {
+  transform: scale(0.97);
+}
+
+[data-slot='bottom-navigation-icon'] {
+  transition: transform 500ms var(--bn-ease-minimize);
+}
+
+[data-slot='bottom-navigation-icon'][data-minimized] {
+  transform: translateY(var(--bn-icon-offset, 0px));
+}
+
+[data-slot='bottom-navigation-label'] {
+  transition:
+    opacity 200ms ease-out,
+    filter 200ms ease-out;
+}
+
+[data-slot='bottom-navigation-label'][data-minimized] {
+  opacity: 0;
+  filter: blur(4px);
+  transition-duration: 100ms;
+}
+
+@keyframes bn-pop {
+  0% { transform: scale(1.4); }
+  60% { transform: scale(0.92); }
+  100% { transform: scale(1); }
+}
+
+[data-slot='bottom-navigation'] [data-pop] {
+  animation: bn-pop 360ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-slot^='bottom-navigation'],
+  [data-slot^='bottom-navigation'][data-glides] {
+    transition: none;
+  }
+
+  [data-slot='bottom-navigation-item']:active {
+    transform: none;
+  }
+
+  [data-slot='bottom-navigation'] [data-pop] {
+    animation: none;
+  }
+}

@@ -53,14 +53,24 @@ const SheetContent = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof SheetPrimitive.Content> & {
     side?: "top" | "right" | "bottom" | "left"
   }
->(({ className, children, side = "right", ...props }, ref) => (
+>(({ className, children, side = "right", onOpenAutoFocus, ...props }, ref) => (
   <SheetPortal>
     <SheetOverlay />
     <SheetPrimitive.Content
       ref={ref}
       data-slot="sheet-content"
+      // Radix focuses the first control (the close button) on open, which
+      // paints its focus ring the moment the sheet appears. Focus the sheet
+      // itself instead: screen readers still land in the dialog and Tab
+      // still reaches every control.
+      onOpenAutoFocus={(event) => {
+        onOpenAutoFocus?.(event)
+        if (event.defaultPrevented) return
+        event.preventDefault()
+        ;(event.target as HTMLElement | null)?.focus({ preventScroll: true })
+      }}
       className={cn(
-        "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out fixed z-[60] flex flex-col gap-4 shadow-lg transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500",
+        "bg-background outline-none data-[state=open]:animate-in data-[state=closed]:animate-out fixed z-[60] flex flex-col gap-4 shadow-lg transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500",
         side === "right" &&
           "data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right inset-y-0 right-0 h-full w-3/4 sm:max-w-sm",
         side === "left" &&
@@ -74,8 +84,10 @@ const SheetContent = React.forwardRef<
       {...props}
     >
       {children}
-      <SheetPrimitive.Close className="ring-offset-background focus:ring-ring data-[state=open]:bg-secondary absolute top-4 ltr:right-4 rtl:left-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none">
-        <XIcon className="size-4" />
+      {/* Borderless round button tinted from the sheet's own text colour, so
+          it suits light and dark sheets; the ring shows for keyboard focus only. */}
+      <SheetPrimitive.Close className="absolute top-3 ltr:right-3 rtl:left-3 inline-flex size-9 items-center justify-center rounded-full border-0 bg-transparent text-current opacity-60 outline-none transition-[opacity,background-color] duration-200 hover:bg-current/10 hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-current/40 active:bg-current/15 disabled:pointer-events-none">
+        <XIcon className="size-5" strokeWidth={1.75} />
         <span className="sr-only">Close</span>
       </SheetPrimitive.Close>
     </SheetPrimitive.Content>

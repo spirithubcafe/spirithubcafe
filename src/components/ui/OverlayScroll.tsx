@@ -33,8 +33,10 @@ const OverlayScroll = React.forwardRef<
     options={{
       scrollbars: {
         theme: "os-theme-custom",
-        autoHide: "leave",
-        autoHideDelay: 600,
+        // Shown while the pointer moves over the area or it scrolls; fades
+        // out shortly after, matching the page bar (src/lib/scrollbars.ts).
+        autoHide: "move",
+        autoHideDelay: 900,
         clickScroll: true,
       },
       overflow: {

@@ -7,7 +7,10 @@ import { Check } from '@/components/animate-ui/icons/check';
 import { ChevronDown } from '@/components/animate-ui/icons/chevron-down';
 import { ChevronLeft } from '@/components/animate-ui/icons/chevron-left';
 import { ChevronRight } from '@/components/animate-ui/icons/chevron-right';
+import { Coffee } from '@/components/animate-ui/icons/coffee';
+import { Gift } from '@/components/animate-ui/icons/gift';
 import { Heart } from '@/components/animate-ui/icons/heart';
+import { House } from '@/components/animate-ui/icons/house';
 import { LogIn } from '@/components/animate-ui/icons/log-in';
 import { LogOut } from '@/components/animate-ui/icons/log-out';
 import { Menu } from '@/components/animate-ui/icons/menu';
@@ -15,6 +18,7 @@ import { MessageCircle } from '@/components/animate-ui/icons/message-circle';
 import { Plus } from '@/components/animate-ui/icons/plus';
 import { Search } from '@/components/animate-ui/icons/search';
 import { Send } from '@/components/animate-ui/icons/send';
+import { ShoppingCart } from '@/components/animate-ui/icons/shopping-cart';
 import { Sparkles } from '@/components/animate-ui/icons/sparkles';
 import { Star } from '@/components/animate-ui/icons/star';
 import { Trash2 } from '@/components/animate-ui/icons/trash-2';
@@ -27,7 +31,10 @@ export const animatedIcons = {
   'chevron-down': ChevronDown,
   'chevron-left': ChevronLeft,
   'chevron-right': ChevronRight,
+  coffee: Coffee,
+  gift: Gift,
   heart: Heart,
+  house: House,
   'log-in': LogIn,
   'log-out': LogOut,
   menu: Menu,
@@ -35,6 +42,7 @@ export const animatedIcons = {
   plus: Plus,
   search: Search,
   send: Send,
+  'shopping-cart': ShoppingCart,
   sparkles: Sparkles,
   star: Star,
   'trash-2': Trash2,
