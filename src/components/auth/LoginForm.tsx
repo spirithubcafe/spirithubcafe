@@ -2,17 +2,18 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useAuth } from '../../hooks/useAuth';
-import { Button } from '../ui/button';
+import { useRegion } from '../../hooks/useRegion';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Checkbox } from '../ui/checkbox';
 import { GoogleLoginButton } from './GoogleLoginButton';
 import { PhoneLoginForm } from './PhoneLoginForm';
-import { Alert, AlertDescription } from '../ui/alert';
 import { Spinner } from '../ui/spinner';
-import { Eye, EyeOff, LogIn, AlertCircle, Phone, Mail } from 'lucide-react';
+import { Mail, MessageCircle } from 'lucide-react';
 import { useApp } from '../../hooks/useApp';
 import { whatsAppProductReminderService } from '../../services/whatsAppProductReminderService';
+import { AuthDivider, AuthError, AuthSegmented, PasswordInput } from './AuthUi';
+import { authFieldClass, authLabelClass, authLinkClass, authPrimaryButtonClass } from './authStyles';
 
 type LoginMethod = 'email' | 'phone';
 
@@ -22,23 +23,23 @@ interface LoginFormProps {
   onClose?: () => void;
 }
 
-export const LoginForm: React.FC<LoginFormProps> = ({ 
-  onSuccess, 
+export const LoginForm: React.FC<LoginFormProps> = ({
+  onSuccess,
   onSwitchToRegister,
   onClose
 }) => {
   const { login } = useAuth();
   const { t, language } = useApp();
-  
+  const { currentRegion } = useRegion();
+
   const isRTL = language === 'ar';
-  
+
   const [loginMethod, setLoginMethod] = useState<LoginMethod>('email');
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
-  
-  const [showPassword, setShowPassword] = useState(false);
+
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>('');
   // Optional, unchecked by default. Leaving it unchecked never disables an
@@ -76,7 +77,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
       ...prev,
       [name]: value
     }));
-    
+
     // Clear error when user starts typing
     if (error) {
       setError('');
@@ -85,7 +86,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.email.trim() || !formData.password) {
       setError(t('auth.loginFailed'));
       return;
@@ -96,7 +97,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
 
     try {
       const response = await login(formData);
-      
+
       if (response.success) {
         optInToWhatsAppReminders();
         onSuccess?.();
@@ -112,183 +113,122 @@ export const LoginForm: React.FC<LoginFormProps> = ({
   };
 
   return (
-    <div className={`w-full ${isRTL ? 'rtl' : 'ltr'}`} dir={isRTL ? 'rtl' : 'ltr'}>
-      {/* Login Method Toggle */}
-      <div className="flex gap-2 mb-6">
-        <Button
-          type="button"
-          variant={loginMethod === 'email' ? 'default' : 'outline'}
-          className={`flex-1 ${loginMethod === 'email' ? 'bg-amber-600 hover:bg-amber-700' : ''}`}
-          onClick={() => setLoginMethod('email')}
-        >
-          <Mail className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
-          {isRTL ? 'البريد الإلكتروني' : 'Email'}
-        </Button>
-        <Button
-          type="button"
-          variant={loginMethod === 'phone' ? 'default' : 'outline'}
-          className="flex-1 bg-green-600 hover:bg-green-700 text-white border-green-600"
-          onClick={() => setLoginMethod('phone')}
-        >
-          <Phone className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
-          {isRTL ? 'واتساب' : 'WhatsApp'}
-        </Button>
-      </div>
+    <div className="w-full space-y-5" dir={isRTL ? 'rtl' : 'ltr'}>
+      {/* Fastest path first */}
+      <GoogleLoginButton mode="login" onSuccess={handleGoogleLoginSuccess} />
 
-      {/* WhatsApp reminders opt-in */}
-      <div className="flex items-start gap-3 mb-6 rounded-lg border border-green-200 bg-green-50 p-3">
-        <Checkbox
-          id="whatsapp-reminders-optin"
-          checked={whatsAppRemindersOptIn}
-          onCheckedChange={(checked) => setWhatsAppRemindersOptIn(checked === true)}
-          className="mt-0.5"
-        />
-        <div>
-          <Label
-            htmlFor="whatsapp-reminders-optin"
-            className={`text-sm font-medium cursor-pointer ${isRTL ? 'font-cairo text-right' : 'text-left'}`}
-          >
-            {isRTL ? 'تذكيرات واتساب' : 'WhatsApp reminders'}
-          </Label>
-          <p className={`mt-1 text-xs text-gray-600 ${isRTL ? 'font-cairo text-right' : 'text-left'}`}>
-            {isRTL
-              ? 'استلم تحديثات حول القهوة والمنتجات الجديدة.'
-              : 'Receive reminders about new coffee.'}
-          </p>
-        </div>
-      </div>
+      <AuthDivider>{isRTL ? 'أو' : 'or'}</AuthDivider>
 
-      {/* Phone Login Form */}
+      <AuthSegmented
+        size="sm"
+        value={loginMethod}
+        onChange={setLoginMethod}
+        label={isRTL ? 'طريقة تسجيل الدخول' : 'Sign-in method'}
+        options={[
+          { value: 'email', label: isRTL ? 'البريد الإلكتروني' : 'Email', icon: <Mail className="size-4" /> },
+          { value: 'phone', label: isRTL ? 'واتساب' : 'WhatsApp', icon: <MessageCircle className="size-4" /> },
+        ]}
+      />
+
       {loginMethod === 'phone' ? (
-        <PhoneLoginForm
-          onSuccess={handlePhoneLoginSuccess}
-          onSwitchToEmail={() => setLoginMethod('email')}
-        />
+        <PhoneLoginForm onSuccess={handlePhoneLoginSuccess} />
       ) : (
-        /* Email Login Form */
-      <form onSubmit={handleSubmit} className="space-y-4">
-          {error && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-          
-          <div className="space-y-2">
-            <Label 
-              htmlFor="email" 
-              className={`block text-sm font-medium ${isRTL ? 'text-right font-cairo' : 'text-left'}`}
-            >
+        <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+          {error && <AuthError>{error}</AuthError>}
+
+          <div className="space-y-1.5">
+            <Label htmlFor="email" className={authLabelClass}>
               {t('auth.emailOrUsername')}
             </Label>
             <Input
               id="email"
               name="email"
               type="text"
+              inputMode="email"
               value={formData.email}
               onChange={handleInputChange}
               placeholder={t('auth.enterEmailOrUsername')}
               disabled={isLoading}
-              className={`w-full ${isRTL ? 'font-cairo' : ''} text-left`}
+              aria-invalid={error ? true : undefined}
+              className={`${authFieldClass} text-start`}
               dir="ltr"
               autoComplete="username"
+              autoCapitalize="none"
+              spellCheck={false}
             />
           </div>
-          
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label 
-                htmlFor="password" 
-                className={`block text-sm font-medium ${isRTL ? 'text-right font-cairo' : 'text-left'}`}
-              >
+
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between gap-3">
+              <Label htmlFor="password" className={authLabelClass}>
                 {t('auth.password')}
               </Label>
-              <Link 
-                to="/forgot-password" 
-                className="text-sm text-amber-600 hover:text-amber-700 hover:underline"
+              <Link
+                to={`/${currentRegion.code}/forgot-password`}
+                className={authLinkClass}
                 onClick={onClose}
               >
                 {t('auth.forgotPassword')}
               </Link>
             </div>
-            <div className="relative">
-              <Input
-                id="password"
-                name="password"
-                type={showPassword ? 'text' : 'password'}
-                value={formData.password}
-                onChange={handleInputChange}
-                placeholder={t('auth.enterPassword')}
-                disabled={isLoading}
-                className={`w-full ${isRTL ? 'text-right font-cairo placeholder:text-right pl-10 pr-3' : 'text-left pr-10 pl-3'}`}
-                dir={isRTL ? 'rtl' : 'ltr'}
-                autoComplete="current-password"
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className={`absolute ${isRTL ? 'left-0' : 'right-0'} top-0 h-full px-3 py-2 hover:bg-transparent`}
-                onClick={() => setShowPassword(!showPassword)}
-                disabled={isLoading}
-              >
-                {showPassword ? (
-                  <EyeOff className="h-4 w-4" />
-                ) : (
-                  <Eye className="h-4 w-4" />
-                )}
-              </Button>
-            </div>
+            <PasswordInput
+              id="password"
+              name="password"
+              value={formData.password}
+              onChange={handleInputChange}
+              placeholder={t('auth.enterPassword')}
+              disabled={isLoading}
+              aria-invalid={error ? true : undefined}
+              autoComplete="current-password"
+              showLabel={isRTL ? 'إظهار كلمة المرور' : 'Show password'}
+              hideLabel={isRTL ? 'إخفاء كلمة المرور' : 'Hide password'}
+            />
           </div>
-          
-          <Button
+
+          <button
             type="submit"
-            className={`w-full bg-amber-600 hover:bg-amber-700 text-white ${isRTL ? 'font-cairo' : ''}`}
+            className={`${authPrimaryButtonClass} mt-2`}
             disabled={isLoading || !formData.email || !formData.password}
           >
             {isLoading ? (
               <>
-                <Spinner className={`${isRTL ? 'ml-2' : 'mr-2'} h-4 w-4`} />
+                <Spinner className="size-4" />
                 {t('auth.loggingIn')}
               </>
             ) : (
-              <>
-                <LogIn className="mr-2 h-4 w-4" />
-                {t('auth.login')}
-              </>
+              t('auth.login')
             )}
-          </Button>
+          </button>
 
-          {/* Divider */}
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-gray-500">
-                {isRTL ? 'أو' : 'OR'}
-              </span>
-            </div>
-          </div>
-
-          {/* Google Login Button */}
-          <GoogleLoginButton mode="login" onSuccess={handleGoogleLoginSuccess} />
-          
           {onSwitchToRegister && (
-            <div className="text-center">
-              <Button
-                type="button"
-                variant="link"
-                onClick={onSwitchToRegister}
-                disabled={isLoading}
-                className="text-sm"
-              >
-                {t('auth.dontHaveAccount')} {t('auth.signUp')}
-              </Button>
-            </div>
+            <p className="text-center text-[13px] text-stone-500">
+              {t('auth.dontHaveAccount')}{' '}
+              <button type="button" onClick={onSwitchToRegister} disabled={isLoading} className={authLinkClass}>
+                {t('auth.signUp')}
+              </button>
+            </p>
           )}
         </form>
       )}
+
+      {/* WhatsApp reminders opt-in: optional, one quiet line */}
+      <label
+        htmlFor="whatsapp-reminders-optin"
+        className="flex cursor-pointer items-start gap-3 rounded-xl px-1 py-1 text-start"
+      >
+        <Checkbox
+          id="whatsapp-reminders-optin"
+          checked={whatsAppRemindersOptIn}
+          onCheckedChange={(checked) => setWhatsAppRemindersOptIn(checked === true)}
+          className="mt-0.5 size-[18px] rounded-[5px] border-stone-300 data-[state=checked]:border-stone-900 data-[state=checked]:bg-stone-900"
+        />
+        <span className="text-[13px] leading-5 text-stone-600">
+          <span className="font-medium text-stone-800">{isRTL ? 'تذكيرات واتساب' : 'WhatsApp reminders'}</span>
+          <span className="block text-stone-500">
+            {isRTL ? 'استلم تحديثات حول القهوة والمنتجات الجديدة.' : 'Hear about new coffee and restocks.'}
+          </span>
+        </span>
+      </label>
     </div>
   );
 };

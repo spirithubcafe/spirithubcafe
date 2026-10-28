@@ -1,0 +1,74 @@
+/* Motion for ./AuthModal.tsx. The overlay holds the panel, so it animates its
+   tint and blur (not opacity, which would fade the panel with it). Phones:
+   a sheet that rises from the bottom edge. From 640px: a card that settles in.
+   The overlay's exit lasts as long as the panel's, since it unmounts both. */
+[data-slot='auth-overlay'][data-state='open'] {
+  animation: auth-overlay-in 300ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+[data-slot='auth-overlay'][data-state='closed'] {
+  animation: auth-overlay-out 240ms cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+@keyframes auth-overlay-in {
+  from {
+    background-color: rgb(12 10 9 / 0);
+    -webkit-backdrop-filter: blur(0);
+    backdrop-filter: blur(0);
+  }
+}
+
+@keyframes auth-overlay-out {
+  to {
+    background-color: rgb(12 10 9 / 0);
+    -webkit-backdrop-filter: blur(0);
+    backdrop-filter: blur(0);
+  }
+}
+
+[data-slot='auth-modal'][data-state='open'] {
+  animation: auth-sheet-in 460ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+[data-slot='auth-modal'][data-state='closed'] {
+  animation: auth-sheet-out 220ms cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+@keyframes auth-sheet-in {
+  from { transform: translate3d(0, 100%, 0); }
+}
+
+@keyframes auth-sheet-out {
+  to { transform: translate3d(0, 100%, 0); }
+}
+
+@media (min-width: 640px) {
+  [data-slot='auth-modal'][data-state='open'] {
+    animation: auth-card-in 320ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  [data-slot='auth-modal'][data-state='closed'] {
+    animation: auth-card-out 180ms cubic-bezier(0.4, 0, 1, 1) forwards;
+  }
+}
+
+@keyframes auth-card-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 12px, 0) scale(0.96);
+  }
+}
+
+@keyframes auth-card-out {
+  to {
+    opacity: 0;
+    transform: translate3d(0, 8px, 0) scale(0.97);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-slot='auth-overlay'][data-state],
+  [data-slot='auth-modal'][data-state] {
+    animation: none;
+  }
+}

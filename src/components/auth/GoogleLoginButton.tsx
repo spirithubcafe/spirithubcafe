@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useLayoutEffect, useRef, useState } from 'react';
 import { GoogleLogin, GoogleOAuthProvider } from '@react-oauth/google';
 import type { CredentialResponse } from '@react-oauth/google';
 import { useAuth } from '../../hooks/useAuth';
@@ -16,6 +16,23 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({ mode = 'lo
   const { language } = useApp();
   const isArabic = language === 'ar';
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+  // Google renders its button in a fixed-width iframe (max 400px); match it to
+  // the form so it lines up with the fields instead of floating at 200-odd px.
+  const boxRef = useRef<HTMLDivElement | null>(null);
+  const [buttonWidth, setButtonWidth] = useState<number | null>(null);
+
+  useLayoutEffect(() => {
+    const box = boxRef.current;
+    if (!box) return;
+    const measure = () => {
+      const next = Math.min(400, Math.max(200, Math.floor(box.clientWidth)));
+      setButtonWidth((prev) => (prev !== null && Math.abs(prev - next) < 8 ? prev : next));
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(box);
+    return () => observer.disconnect();
+  }, []);
 
   const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
     try {
@@ -70,8 +87,8 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({ mode = 'lo
   if (!googleClientId) {
     return (
       <div className="w-full flex justify-center">
-        <div className="w-full max-w-sm">
-          <Button type="button" variant="outline" className="w-full" disabled>
+        <div className="w-full">
+          <Button type="button" variant="outline" className="h-12 w-full rounded-xl" disabled>
             {isArabic ? 'تسجيل الدخول عبر Google غير متاح' : 'Google sign-in unavailable'}
           </Button>
         </div>
@@ -80,8 +97,9 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({ mode = 'lo
   }
 
   return (
-    <div className="w-full flex justify-center">
-      <div className="w-full max-w-sm">
+    // Height reserved for Google's 44px button so nothing shifts when it loads.
+    <div ref={boxRef} className="flex min-h-[44px] w-full justify-center">
+      <div className="w-full" style={buttonWidth ? { width: buttonWidth } : undefined}>
         <GoogleOAuthProvider
           clientId={googleClientId}
           onScriptLoadSuccess={() => {
@@ -106,6 +124,8 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({ mode = 'lo
             shape="rectangular"
             theme="outline"
             size="large"
+            logo_alignment="center"
+            width={buttonWidth ?? undefined}
             locale={isArabic ? 'ar' : 'en'}
           />
         </GoogleOAuthProvider>

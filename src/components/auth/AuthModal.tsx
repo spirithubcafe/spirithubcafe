@@ -1,10 +1,14 @@
-import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '../ui/dialog';
+import React, { useRef, useState } from 'react';
+import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { Button } from '../ui/button';
+import { OverlayScroll } from '../ui/OverlayScroll';
 import { LoginForm } from './LoginForm';
 import { RegisterForm } from './RegisterForm';
+import { AuthSegmented } from './AuthUi';
+import { AnimatedIcon } from '../icons/AnimatedIcon';
 import { LogIn, UserPlus } from 'lucide-react';
 import { useApp } from '../../hooks/useApp';
+import './auth-modal.css';
 
 interface AuthModalProps {
   children?: React.ReactNode;
@@ -16,8 +20,15 @@ interface AuthModalProps {
   onOpenChange?: (open: boolean) => void;
 }
 
-export const AuthModal: React.FC<AuthModalProps> = ({ 
-  children, 
+type Mode = 'login' | 'register';
+
+/**
+ * Sign in / sign up. A bottom sheet on phones (thumb-reachable, slides up) and
+ * a centred card from `sm` up. It owns its header, so the close button and the
+ * scrollbar never sit over the form. Motion lives in ./auth-modal.css.
+ */
+export const AuthModal: React.FC<AuthModalProps> = ({
+  children,
   defaultView = 'login',
   onSuccess,
   onOpen,
@@ -26,7 +37,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 }) => {
   const { t, language } = useApp();
   const [internalOpen, setInternalOpen] = useState(false);
-  
+  const contentRef = useRef<HTMLDivElement | null>(null);
+
   const isControlled = controlledOpen !== undefined;
   const isOpen = isControlled ? controlledOpen : internalOpen;
   const setIsOpen = (open: boolean) => {
@@ -37,8 +49,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }
   };
 
-  const [mode, setMode] = useState<'login' | 'register'>(defaultView);
-  
+  const [mode, setMode] = useState<Mode>(defaultView);
+
   const isRTL = language === 'ar';
 
   // Reset mode when controlled open changes
@@ -51,58 +63,101 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     onSuccess?.();
   };
 
+  const title = mode === 'login'
+    ? (isRTL ? 'مرحبًا بعودتك' : 'Welcome back')
+    : (isRTL ? 'أنشئ حسابك' : 'Create your account');
+  const description = mode === 'login'
+    ? (isRTL ? 'سجّل الدخول لمتابعة طلباتك ومفضلاتك ونقاط الولاء.' : 'Sign in to track orders, keep favourites and earn loyalty points.')
+    : (isRTL ? 'انضم إلى مجتمع سبيريت هب واحصل على عروض حصرية.' : 'Join the SpiritHub community for members-only offers.');
+
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => { setIsOpen(open); if (open) onOpen?.(); }}>
+    <DialogPrimitive.Root open={isOpen} onOpenChange={(open) => { setIsOpen(open); if (open) onOpen?.(); }}>
       {!isControlled && (
-        <DialogTrigger asChild>
+        <DialogPrimitive.Trigger asChild>
           {children || (
             <Button variant="outline" size="sm">
-              <LogIn className="mr-2 h-4 w-4" />
+              <LogIn className="me-2 h-4 w-4" />
               {t('auth.login')}
             </Button>
           )}
-        </DialogTrigger>
+        </DialogPrimitive.Trigger>
       )}
-      
-            <DialogContent className={`w-full max-w-md mx-auto ${isRTL ? 'rtl' : 'ltr'}`} dir={isRTL ? 'rtl' : 'ltr'}>
-        <DialogHeader className={isRTL ? 'text-right' : 'text-left'}>
-          <DialogTitle className={`text-xl font-semibold ${isRTL ? 'text-right font-cairo' : 'text-left'}`}>
-            {mode === 'login' ? t('auth.signin') : t('auth.signup')}
-          </DialogTitle>
-          <DialogDescription className={`text-sm text-muted-foreground ${isRTL ? 'text-right font-cairo' : 'text-left'}`}>
-            {mode === 'login' 
-              ? (isRTL ? 'قم بتسجيل الدخول إلى حسابك للوصول إلى الميزات الحصرية' : 'Sign in to your account to access exclusive features')
-              : (isRTL ? 'أنشئ حسابًا جديدًا للانضمام إلى مجتمع القهوة لدينا' : 'Create a new account to join our coffee community')
-            }
-          </DialogDescription>
-        </DialogHeader>
 
-        <div className={`flex items-center justify-center gap-4 mb-6 ${isRTL ? 'flex-row-reverse' : 'flex-row'}`}>
-          <Button
-            variant={mode === 'login' ? 'default' : 'ghost'}
-            onClick={() => setMode('login')}
-            className={`${mode === 'login' ? 'bg-amber-600 hover:bg-amber-700 text-white' : ''} ${isRTL ? 'font-cairo' : ''} min-w-[100px]`}
+      <DialogPrimitive.Portal>
+        {/* The overlay holds the panel so it can centre it (desktop) or seat it
+            at the bottom (phone) without transforms the animations need. */}
+        <DialogPrimitive.Overlay
+          data-slot="auth-overlay"
+          className="fixed inset-0 z-[70] flex items-end justify-center bg-stone-950/50 backdrop-blur-[3px] sm:items-center sm:p-6"
+        >
+          <DialogPrimitive.Content
+            ref={contentRef}
+            data-slot="auth-modal"
+            dir={isRTL ? 'rtl' : 'ltr'}
+            // Focus the panel, not its first control: no focus ring on the close
+            // button and no keyboard popping up on phones the moment it opens.
+            onOpenAutoFocus={(event) => {
+              event.preventDefault();
+              contentRef.current?.focus({ preventScroll: true });
+            }}
+            className={`relative flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-[28px] bg-white text-stone-900 shadow-[0_-12px_40px_-12px_rgba(28,25,23,0.35)] outline-none sm:max-h-[min(780px,calc(100dvh-3rem))] sm:w-[440px] sm:rounded-[28px] sm:shadow-[0_24px_64px_-16px_rgba(28,25,23,0.45)] ${isRTL ? 'font-cairo' : ''}`}
           >
-            {t('auth.signin')}
-          </Button>
-          <Button
-            variant={mode === 'register' ? 'default' : 'ghost'}
-            onClick={() => setMode('register')}
-            className={`${mode === 'register' ? 'bg-amber-600 hover:bg-amber-700 text-white' : ''} ${isRTL ? 'font-cairo' : ''} min-w-[100px]`}
-          >
-            {t('auth.signup')}
-          </Button>
-        </div>
+            {/* Grab bar: phones only, signals a sheet */}
+            <span aria-hidden="true" className="mx-auto mt-2.5 h-1 w-10 shrink-0 rounded-full bg-stone-200 sm:hidden" />
 
-        {mode === 'login' && <LoginForm onSuccess={handleSuccess} onClose={() => setIsOpen(false)} />}
-        {mode === 'register' && <RegisterForm onSuccess={handleSuccess} />}
-      </DialogContent>
-    </Dialog>
+            <div className="flex shrink-0 items-center justify-between px-6 pt-3 sm:px-8 sm:pt-7">
+              <img
+                src="/images/logo/logo-dark.webp"
+                alt="SpiritHub Roastery"
+                width={180}
+                height={48}
+                decoding="async"
+                className="h-7 w-auto"
+              />
+              <DialogPrimitive.Close
+                aria-label={isRTL ? 'إغلاق' : 'Close'}
+                className="inline-flex size-10 items-center justify-center rounded-full bg-stone-100 text-stone-600 outline-none transition-[background-color,color,transform] duration-200 hover:bg-stone-200 hover:text-stone-900 focus-visible:ring-4 focus-visible:ring-[#c69c6d]/25 active:scale-[0.94] motion-reduce:active:scale-100"
+              >
+                <AnimatedIcon name="x" className="size-5" />
+              </DialogPrimitive.Close>
+            </div>
+
+            <div className="shrink-0 px-6 pt-5 sm:px-8 sm:pt-6">
+              <DialogPrimitive.Title className="text-[26px] font-semibold leading-tight tracking-tight text-stone-900">
+                {title}
+              </DialogPrimitive.Title>
+              <DialogPrimitive.Description className="mt-1.5 text-[14px] leading-6 text-stone-500">
+                {description}
+              </DialogPrimitive.Description>
+              <div className="mt-5">
+                <AuthSegmented
+                  value={mode}
+                  onChange={setMode}
+                  label={isRTL ? 'تسجيل الدخول أو إنشاء حساب' : 'Sign in or sign up'}
+                  options={[
+                    { value: 'login', label: t('auth.signin') },
+                    { value: 'register', label: t('auth.signup') },
+                  ]}
+                />
+              </div>
+            </div>
+
+            <OverlayScroll className="min-h-0 flex-1">
+              <div className="px-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-5 sm:px-8 sm:pb-8">
+                {mode === 'login'
+                  ? <LoginForm onSuccess={handleSuccess} onClose={() => setIsOpen(false)} />
+                  : <RegisterForm onSuccess={handleSuccess} />}
+              </div>
+            </OverlayScroll>
+          </DialogPrimitive.Content>
+        </DialogPrimitive.Overlay>
+      </DialogPrimitive.Portal>
+    </DialogPrimitive.Root>
   );
 };
 
 // Separate login and register buttons for convenience
-export const LoginButton: React.FC<{ 
+export const LoginButton: React.FC<{
   variant?: 'default' | 'outline' | 'ghost';
   size?: 'default' | 'sm' | 'lg' | 'icon' | 'icon-sm' | 'icon-lg';
   onSuccess?: () => void;
@@ -110,18 +165,18 @@ export const LoginButton: React.FC<{
   className?: string;
 }> = ({ variant = 'outline', size = 'sm', onSuccess, onOpen }) => {
   const { t } = useApp();
-  
+
   return (
     <AuthModal defaultView="login" onSuccess={onSuccess} onOpen={onOpen}>
       <Button variant={variant} size={size}>
-        <LogIn className="mr-2 h-4 w-4" />
+        <LogIn className="me-2 h-4 w-4" />
         {t('auth.login')}
       </Button>
     </AuthModal>
   );
 };
 
-export const RegisterButton: React.FC<{ 
+export const RegisterButton: React.FC<{
   variant?: 'default' | 'outline' | 'ghost';
   size?: 'default' | 'sm' | 'lg' | 'icon' | 'icon-sm' | 'icon-lg';
   onSuccess?: () => void;
@@ -129,11 +184,11 @@ export const RegisterButton: React.FC<{
   className?: string;
 }> = ({ variant = 'default', size = 'sm', onSuccess, onOpen }) => {
   const { t } = useApp();
-  
+
   return (
     <AuthModal defaultView="register" onSuccess={onSuccess} onOpen={onOpen}>
       <Button variant={variant} size={size}>
-        <UserPlus className="mr-2 h-4 w-4" />
+        <UserPlus className="me-2 h-4 w-4" />
         {t('auth.register')}
       </Button>
     </AuthModal>

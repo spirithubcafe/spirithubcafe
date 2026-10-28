@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
-import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { GoogleLoginButton } from './GoogleLoginButton';
-import { Alert, AlertDescription } from '../ui/alert';
 import { Spinner } from '../ui/spinner';
-import { Eye, EyeOff, UserPlus, AlertCircle } from 'lucide-react';
 import { useApp } from '../../hooks/useApp';
+import { AuthDivider, AuthError, PasswordInput } from './AuthUi';
+import { authErrorTextClass, authFieldClass, authLabelClass, authLinkClass, authPrimaryButtonClass } from './authStyles';
 
 interface RegisterFormProps {
   onSuccess?: () => void;
@@ -41,8 +40,6 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
     confirmPassword: ''
   });
   
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>('');
   const [fieldErrors, setFieldErrors] = useState<FormErrors>({});
@@ -127,176 +124,111 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
     }
   };
 
+  const showLabel = isRTL ? 'إظهار كلمة المرور' : 'Show password';
+  const hideLabel = isRTL ? 'إخفاء كلمة المرور' : 'Hide password';
+
   return (
-    <div className={`w-full ${isRTL ? 'rtl' : 'ltr'}`} dir={isRTL ? 'rtl' : 'ltr'}>
-      <div className="space-y-1 mb-6">
-        <h2 className={`text-xl font-bold ${isRTL ? 'text-right font-cairo' : 'text-center'}`}>
-          {t('auth.register')}
-        </h2>
-        <p className={`text-sm text-muted-foreground ${isRTL ? 'text-right font-cairo' : 'text-center'}`}>
-          {t('auth.registerDescription')}
-        </p>
-      </div>
-      
-      <form onSubmit={handleSubmit} className="space-y-4">
-          {error && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
+    <div className="w-full space-y-5" dir={isRTL ? 'rtl' : 'ltr'}>
+      {/* Fastest path first */}
+      <GoogleLoginButton mode="register" onSuccess={onSuccess} />
 
-          <div className="space-y-2">
-            <Label 
-              htmlFor="email"
-              className={`block text-sm font-medium ${isRTL ? 'text-right font-cairo' : 'text-left'}`}
-            >
-              {t('auth.email')}
-            </Label>
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              value={formData.email}
-              onChange={handleInputChange}
-              placeholder={t('auth.enterEmail')}
-              disabled={isLoading}
-              className={`w-full ${fieldErrors.email ? 'border-red-500' : ''} ${isRTL ? 'text-right font-cairo placeholder:text-right' : 'text-left'}`}
-              dir={isRTL ? 'rtl' : 'ltr'}
-              autoComplete="email"
-            />
-            {fieldErrors.email && (
-              <p className={`text-sm text-red-500 ${isRTL ? 'text-right font-cairo' : 'text-left'}`}>{fieldErrors.email}</p>
-            )}
-          </div>
-          
-          <div className="space-y-2">
-            <Label 
-              htmlFor="password"
-              className={`block text-sm font-medium ${isRTL ? 'text-right font-cairo' : 'text-left'}`}
-            >
-              {t('auth.password')}
-            </Label>
-            <div className="relative">
-              <Input
-                id="password"
-                name="password"
-                type={showPassword ? 'text' : 'password'}
-                value={formData.password}
-                onChange={handleInputChange}
-                placeholder={t('auth.enterPassword')}
-                disabled={isLoading}
-                className={`w-full ${isRTL ? 'pl-10 font-cairo placeholder:text-right' : 'pr-10'} ${fieldErrors.password ? 'border-red-500' : ''} ${isRTL ? 'text-right' : 'text-left'}`}
-                dir={isRTL ? 'rtl' : 'ltr'}
-                autoComplete="new-password"
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className={`absolute ${isRTL ? 'left-0' : 'right-0'} top-0 h-full px-3 py-2 hover:bg-transparent`}
-                onClick={() => setShowPassword(!showPassword)}
-                disabled={isLoading}
-              >
-                {showPassword ? (
-                  <EyeOff className="h-4 w-4" />
-                ) : (
-                  <Eye className="h-4 w-4" />
-                )}
-              </Button>
-            </div>
-            {fieldErrors.password && (
-              <p className={`text-sm text-red-500 ${isRTL ? 'text-right font-cairo' : 'text-left'}`}>{fieldErrors.password}</p>
-            )}
-          </div>
+      <AuthDivider>{isRTL ? 'أو بالبريد الإلكتروني' : 'or with email'}</AuthDivider>
 
-          <div className="space-y-2">
-            <Label 
-              htmlFor="confirmPassword"
-              className={`block text-sm font-medium ${isRTL ? 'text-right font-cairo' : 'text-left'}`}
-            >
-              {t('auth.confirmPassword')}
-            </Label>
-            <div className="relative">
-              <Input
-                id="confirmPassword"
-                name="confirmPassword"
-                type={showConfirmPassword ? 'text' : 'password'}
-                value={formData.confirmPassword}
-                onChange={handleInputChange}
-                placeholder={t('auth.confirmPasswordPlaceholder')}
-                disabled={isLoading}
-                className={`w-full ${isRTL ? 'pl-10 font-cairo placeholder:text-right' : 'pr-10'} ${fieldErrors.confirmPassword ? 'border-red-500' : ''} ${isRTL ? 'text-right' : 'text-left'}`}
-                dir={isRTL ? 'rtl' : 'ltr'}
-                autoComplete="new-password"
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className={`absolute ${isRTL ? 'left-0' : 'right-0'} top-0 h-full px-3 py-2 hover:bg-transparent`}
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                disabled={isLoading}
-              >
-                {showConfirmPassword ? (
-                  <EyeOff className="h-4 w-4" />
-                ) : (
-                  <Eye className="h-4 w-4" />
-                )}
-              </Button>
-            </div>
-            {fieldErrors.confirmPassword && (
-              <p className="text-sm text-red-500">{fieldErrors.confirmPassword}</p>
-            )}
-          </div>
-          
-          <Button
-            type="submit"
-            className="w-full"
+      <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+        {error && <AuthError>{error}</AuthError>}
+
+        <div className="space-y-1.5">
+          <Label htmlFor="register-email" className={authLabelClass}>
+            {t('auth.email')}
+          </Label>
+          <Input
+            id="register-email"
+            name="email"
+            type="email"
+            inputMode="email"
+            value={formData.email}
+            onChange={handleInputChange}
+            placeholder={t('auth.enterEmail')}
             disabled={isLoading}
-          >
-            {isLoading ? (
-              <>
-                <Spinner className="mr-2 h-4 w-4" />
-                {t('auth.registering')}
-              </>
-            ) : (
-              <>
-                <UserPlus className="mr-2 h-4 w-4" />
-                {t('auth.register')}
-              </>
-            )}
-          </Button>
+            aria-invalid={fieldErrors.email ? true : undefined}
+            aria-describedby={fieldErrors.email ? 'register-email-error' : undefined}
+            className={`${authFieldClass} text-start`}
+            dir="ltr"
+            autoComplete="email"
+            autoCapitalize="none"
+            spellCheck={false}
+          />
+          {fieldErrors.email && <p id="register-email-error" className={authErrorTextClass}>{fieldErrors.email}</p>}
+        </div>
 
-          {/* Divider */}
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-gray-500">
-                {isRTL ? 'أو' : 'OR'}
-              </span>
-            </div>
-          </div>
-
-          {/* Google Register Button */}
-          <GoogleLoginButton mode="register" onSuccess={onSuccess} />
-          
-          {onSwitchToLogin && (
-            <div className="text-center">
-              <Button
-                type="button"
-                variant="link"
-                onClick={onSwitchToLogin}
-                disabled={isLoading}
-                className="text-sm"
-              >
-                {t('auth.alreadyHaveAccount')} {t('auth.login')}
-              </Button>
-            </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="register-password" className={authLabelClass}>
+            {t('auth.password')}
+          </Label>
+          <PasswordInput
+            id="register-password"
+            name="password"
+            value={formData.password}
+            onChange={handleInputChange}
+            placeholder={t('auth.enterPassword')}
+            disabled={isLoading}
+            aria-invalid={fieldErrors.password ? true : undefined}
+            aria-describedby={fieldErrors.password ? 'register-password-error' : 'register-password-hint'}
+            autoComplete="new-password"
+            showLabel={showLabel}
+            hideLabel={hideLabel}
+          />
+          {fieldErrors.password ? (
+            <p id="register-password-error" className={authErrorTextClass}>{fieldErrors.password}</p>
+          ) : (
+            <p id="register-password-hint" className="text-[12px] text-stone-400">
+              {isRTL ? '6 أحرف على الأقل' : 'At least 6 characters'}
+            </p>
           )}
-        </form>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="register-confirm-password" className={authLabelClass}>
+            {t('auth.confirmPassword')}
+          </Label>
+          <PasswordInput
+            id="register-confirm-password"
+            name="confirmPassword"
+            value={formData.confirmPassword}
+            onChange={handleInputChange}
+            placeholder={t('auth.confirmPasswordPlaceholder')}
+            disabled={isLoading}
+            aria-invalid={fieldErrors.confirmPassword ? true : undefined}
+            aria-describedby={fieldErrors.confirmPassword ? 'register-confirm-error' : undefined}
+            autoComplete="new-password"
+            showLabel={showLabel}
+            hideLabel={hideLabel}
+          />
+          {fieldErrors.confirmPassword && (
+            <p id="register-confirm-error" className={authErrorTextClass}>{fieldErrors.confirmPassword}</p>
+          )}
+        </div>
+
+        <button type="submit" className={`${authPrimaryButtonClass} mt-2`} disabled={isLoading}>
+          {isLoading ? (
+            <>
+              <Spinner className="size-4" />
+              {t('auth.registering')}
+            </>
+          ) : (
+            isRTL ? 'إنشاء الحساب' : 'Create account'
+          )}
+        </button>
+
+        {onSwitchToLogin && (
+          <p className="text-center text-[13px] text-stone-500">
+            {t('auth.alreadyHaveAccount')}{' '}
+            <button type="button" onClick={onSwitchToLogin} disabled={isLoading} className={authLinkClass}>
+              {t('auth.login')}
+            </button>
+          </p>
+        )}
+      </form>
     </div>
   );
 };
