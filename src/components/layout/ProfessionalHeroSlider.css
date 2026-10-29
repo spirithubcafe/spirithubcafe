@@ -464,6 +464,33 @@
   letter-spacing: 0;
 }
 
+.mobile-offer-strip__product {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+  margin-top: 0.4rem !important;
+  font-family: 'Inter Variable', 'Inter', system-ui, sans-serif;
+  font-size: clamp(0.625rem, 3.1vw, 0.8125rem);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  line-height: 1.3;
+  color: #e8c28a;
+}
+
+.mobile-offer-strip__product-ar {
+  font-family: 'Cairo', sans-serif;
+  font-size: clamp(0.6875rem, 3.4vw, 0.9375rem);
+  letter-spacing: 0;
+}
+
+/* Very short phones: the Arabic line is dropped so the text never reaches the bottles */
+@media (max-height: 600px) {
+  .mobile-offer-strip__product-ar {
+    display: none;
+  }
+}
+
 /* Features Section */
 .slide-features {
   display: flex;

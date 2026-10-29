@@ -162,7 +162,7 @@ export const ProfessionalHeroSlider: React.FC = () => {
         { value: '0%', label: language === 'ar' ? 'حموضة' : 'Acidity' }
       ],
       features: [
-        language === 'ar' ? 'كولد برو' : 'COLD BREW',
+        language === 'ar' ? 'كولد برو ١ لتر و٢٠٠ مل' : 'COLD BREW 1L & 200ML',
         language === 'ar' ? 'عرض لفترة محدودة' : 'LIMITED-TIME OFFER',
         language === 'ar' ? 'خلال نوفمبر فقط' : 'NOVEMBER ONLY'
       ],
@@ -518,6 +518,10 @@ export const ProfessionalHeroSlider: React.FC = () => {
           <span>NOVEMBER SPECIAL</span>
           <span className="mobile-offer-strip__divider" aria-hidden="true" />
           <span lang="ar" dir="rtl" className="mobile-offer-strip__badge-ar">عرض نوفمبر</span>
+        </p>
+        <p className="mobile-offer-strip__product">
+          <span>COLD BREW OFFER · 1L &amp; 200ML</span>
+          <span lang="ar" dir="rtl" className="mobile-offer-strip__product-ar">عرض كولد برو ١ لتر و٢٠٠ مل</span>
         </p>
       </div>
 
