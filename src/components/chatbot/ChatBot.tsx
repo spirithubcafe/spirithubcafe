@@ -1495,14 +1495,14 @@ export const ChatBot: React.FC = () => {
             whileTap={reduceMotion ? undefined : { scale: 0.94 }}
             transition={{ type: 'spring', damping: 24, stiffness: 360 }}
             onClick={() => { setIsOpen(true); setIsMinimized(false); }}
-            className="fixed bottom-[calc(6.25rem+env(safe-area-inset-bottom))] z-50 flex size-14 items-center justify-center rounded-full bg-stone-950/90 shadow-[0_12px_32px_-8px_rgba(28,25,23,0.55)] ring-1 ring-white/10 backdrop-blur-xl outline-none focus-visible:ring-2 focus-visible:ring-[#c69c6d] focus-visible:ring-offset-2 md:bottom-8"
+            className="fixed bottom-[calc(6.25rem+env(safe-area-inset-bottom))]             z-50 flex size-16 items-center justify-center rounded-full bg-white/90 shadow-2xl shadow-rose-900/10 ring-1 ring-rose-100 backdrop-blur transition-colors hover:bg-white outline-none focus-visible:ring-2 focus-visible:ring-[#c69c6d] focus-visible:ring-offset-2 md:bottom-8"
             style={{ [isAr ? 'left' : 'right']: '1.25rem' }}
             aria-label={isAr ? 'افتح مساعد سبيريت هب' : 'Open SpiritHub AI'}
           >
-            <span className="flex size-11 items-center justify-center rounded-full bg-white p-1.5">
-              <img src={CHATBOT_LOGO} alt="" loading="lazy" decoding="async" className="h-full w-full object-contain" />
-            </span>
-            <span className="absolute bottom-0.5 end-0.5 size-3.5 rounded-full bg-emerald-400 ring-[3px] ring-stone-950" />
+                        <img src={CHATBOT_LOGO} alt="" loading="lazy" decoding="async" className="relative z-10 size-12 object-contain drop-shadow-sm" />
+                        <span className="absolute bottom-1 end-1 z-20 flex size-3 items-center justify-center rounded-full bg-white shadow-sm">
+                          <span className="size-2 rounded-full bg-emerald-400" />
+                        </span>
           </motion.button>
         )}
       </AnimatePresence>
