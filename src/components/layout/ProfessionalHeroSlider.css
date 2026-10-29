@@ -379,6 +379,91 @@
   }
 }
 
+/* Mobile offer text: centered above the bottles (hidden on desktop) */
+.mobile-offer-strip {
+  display: none;
+  position: absolute;
+  inset-inline: 0;
+  /* Clears the site header that overlays the top of the hero */
+  top: calc(max(6.25rem, 15svh) + env(safe-area-inset-top, 0px));
+  z-index: 10;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  padding-inline: 0.75rem;
+  text-align: center;
+  pointer-events: none;
+}
+
+/* Soft dark halo keeps the text readable over the bright light beam */
+.mobile-offer-strip::before {
+  content: '';
+  position: absolute;
+  inset: -1.25rem 1rem;
+  z-index: -1;
+  background: radial-gradient(ellipse at center, rgba(45, 22, 6, 0.55) 0%, rgba(45, 22, 6, 0) 70%);
+}
+
+.mobile-offer-strip p {
+  margin: 0;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.55), 0 4px 14px rgba(0, 0, 0, 0.65);
+}
+
+.mobile-offer-strip__en {
+  font-size: clamp(1.375rem, 7.7vw, 2.25rem);
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  line-height: 1.1;
+  color: #ffffff;
+}
+
+.mobile-offer-strip__ar {
+  font-family: 'Cairo', sans-serif;
+  font-size: clamp(1.125rem, 6.2vw, 1.75rem);
+  font-weight: 700;
+  line-height: 1.3;
+  color: #e8c28a;
+}
+
+.mobile-offer-strip__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: clamp(0.4rem, 2vw, 0.6rem);
+  margin-top: 0.75rem !important;
+  font-family: 'Inter Variable', 'Inter', system-ui, sans-serif;
+  font-size: clamp(0.625rem, 3.1vw, 0.875rem);
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  line-height: 1.2;
+  white-space: nowrap;
+  color: #fff4e4;
+  text-shadow: 0 1px 3px rgba(40, 12, 4, 0.7), 0 2px 12px rgba(40, 12, 4, 0.6) !important;
+}
+
+/* Short red rules on both sides, a nod to the Omani flag */
+.mobile-offer-strip__badge::before,
+.mobile-offer-strip__badge::after {
+  content: '';
+  width: clamp(0.75rem, 4vw, 1.5rem);
+  height: 2px;
+  border-radius: 2px;
+  background: #e5222f;
+  box-shadow: 0 1px 4px rgba(40, 12, 4, 0.5);
+}
+
+.mobile-offer-strip__divider {
+  width: 1px;
+  height: 0.8rem;
+  background: rgba(255, 244, 228, 0.6);
+}
+
+/* Tracking breaks Arabic letter joining. */
+.mobile-offer-strip__badge-ar {
+  font-family: 'Cairo', sans-serif;
+  font-size: clamp(0.6875rem, 3.6vw, 1rem);
+  letter-spacing: 0;
+}
+
 /* Features Section */
 .slide-features {
   display: flex;
@@ -403,6 +488,25 @@
   content: '·';
   padding: 0 0.75rem;
   color: rgba(255, 255, 255, 0.4);
+}
+
+/* November offer slide palette */
+.hero-promo-card--offer .slide-badge,
+.hero-promo-card--offer .feature-item {
+  color: #e8c28a;
+}
+
+.hero-promo-card--offer .slide-title {
+  color: #ffffff;
+}
+
+.hero-promo-card--offer .slide-subtitle {
+  color: #f5ebdd;
+}
+
+.hero-promo-card--offer .feature-item:not(:last-child)::after {
+  content: '•';
+  color: #e8c28a;
 }
 
 /* CTA Section */
@@ -839,6 +943,10 @@
   .professional-hero-slider {
     height: 100svh;
     min-height: 520px;
+  }
+
+  .mobile-offer-strip {
+    display: flex;
   }
 
   .slider-content-container {

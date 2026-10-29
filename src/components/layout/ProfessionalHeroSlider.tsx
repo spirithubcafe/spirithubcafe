@@ -11,27 +11,25 @@ interface SlideData {
   image: string;
   imageClassName?: string;
   overlayClassName?: string;
+  badge?: string;
+  promoClassName?: string;
   title: string;
   subtitle: string | string[];
   description: string;
   stats: { value: string; label: string }[];
   features: string[];
-  cta: string;
+  cta?: string;
 }
 
+// The previous mobile hero images (colombia / ethiopia / indonesia new-harvest) are intentionally unused for now.
 const MOBILE_HERO_IMAGES = [
-  '/images/products/spirithub-mobile-hero-colombia-typica-watermelon-new-harvest.webp',
-  '/images/products/spirithub-mobile-hero-ethiopia-agamosa-gotiti-new-harvest.webp',
-  '/images/products/spirithub-mobile-hero-indonesia-black-orchid-new-harvest.webp',
+  '/images/slides/spirithub-oman-offer-mobile.webp',
 ];
 
 const MOBILE_HERO_IMAGE_ALTS = [
-  'SpiritHub Colombia Typica Watermelon new harvest specialty coffee',
-  'SpiritHub Ethiopia Agamosa Gotiti new harvest specialty coffee',
-  'SpiritHub Indonesia Black Orchid new harvest specialty coffee',
+  'SpiritHub November offer: buy 2, get 1 free',
 ];
 
-const NEW_HARVEST_MOBILE_IMAGE_COUNT = 3;
 
 // Kept for future re-enable of mobile hero video without changing current image-only behavior.
 const MOBILE_HERO_VIDEO_SRC = '/video/spirithub-specialty-coffee-roastery-mobile-banner.mp4';
@@ -143,6 +141,31 @@ export const ProfessionalHeroSlider: React.FC = () => {
         language === 'ar' ? 'شحن خلال 24 ساعة' : 'Ships in 24 Hours'
       ],
       cta: language === 'ar' ? 'تسوّق القهوة' : 'OUR COFFEE'
+    },
+    {
+      id: '1b',
+      image: '/images/slides/spirithub-oman-specialty-coffee-bottles.webp',
+      imageClassName: 'background-image--nitro',
+      overlayClassName: 'background-overlay--nitro',
+      badge: 'NOVEMBER SPECIAL | عرض نوفمبر',
+      promoClassName: 'hero-promo-card--offer',
+      title: language === 'ar' ? 'اشترِ ٢ والثالث مجانًا!' : 'BUY 2, GET 1 FREE',
+      subtitle: language === 'ar'
+        ? 'احتفل بشهر نوفمبر مع كولد برو سبيريت هب. اختر مشروباتك المفضلة واستمتع بزجاجة ثالثة علينا.'
+        : 'Celebrate November with SpiritHub Cold Brew. Pick your favorites and enjoy a third bottle on us.',
+      description: language === 'ar'
+        ? 'اشترِ ٢ والثالث مجانًا مع كولد برو سبيريت هب'
+        : 'Buy 2, get 1 free on SpiritHub Cold Brew',
+      stats: [
+        { value: '2+1', label: language === 'ar' ? 'عرض نوفمبر' : 'November Offer' },
+        { value: '12H+', label: language === 'ar' ? 'وقت التحضير' : 'Steep Time' },
+        { value: '0%', label: language === 'ar' ? 'حموضة' : 'Acidity' }
+      ],
+      features: [
+        language === 'ar' ? 'كولد برو' : 'COLD BREW',
+        language === 'ar' ? 'عرض لفترة محدودة' : 'LIMITED-TIME OFFER',
+        language === 'ar' ? 'خلال نوفمبر فقط' : 'NOVEMBER ONLY'
+      ],
     },
     {
       id: '2',
@@ -357,7 +380,6 @@ export const ProfessionalHeroSlider: React.FC = () => {
     ? MOBILE_HERO_IMAGE_ALTS[safeMobileImageIndex] ?? currentSlideData.title
     : currentSlideData.title;
   const currentHeroImageSrc = isMobile ? currentMobileHeroImage : currentSlideData.image;
-  const isNewHarvestMobileImage = isMobile && safeMobileImageIndex < NEW_HARVEST_MOBILE_IMAGE_COUNT;
 
   // Function to go to next slide - only on desktop
   const nextSlide = () => {
@@ -488,6 +510,17 @@ export const ProfessionalHeroSlider: React.FC = () => {
         </div>
       )}
 
+      {/* Mobile offer text: centered above the bottles */}
+      <div className="mobile-offer-strip">
+        <p className="mobile-offer-strip__en">BUY 2, GET 1 FREE</p>
+        <p className="mobile-offer-strip__ar" lang="ar" dir="rtl">اشترِ ٢ والثالث مجانًا!</p>
+        <p className="mobile-offer-strip__badge">
+          <span>NOVEMBER SPECIAL</span>
+          <span className="mobile-offer-strip__divider" aria-hidden="true" />
+          <span lang="ar" dir="rtl" className="mobile-offer-strip__badge-ar">عرض نوفمبر</span>
+        </p>
+      </div>
+
       {/* Main Content Container */}
       <div className="slider-content-container">
         {/* Same content edges as every homepage section and the header. */}
@@ -499,17 +532,15 @@ export const ProfessionalHeroSlider: React.FC = () => {
               key={`content-${currentSlide}`}
               className="content-section"
             >
-              <div className="hero-promo-card">
+              <div className={`hero-promo-card ${currentSlideData.promoClassName ?? ''}`.trim()}>
                 <div className="slide-badge">
                   <Sparkles aria-hidden="true" size={17} strokeWidth={1.8} />
-                  <span>{language === 'ar' ? '\u0642\u0647\u0648\u0629 \u0645\u062e\u062a\u0635\u0629' : 'SPECIALTY COFFEE'}</span>
+                  <span>{currentSlideData.badge ?? (language === 'ar' ? '\u0642\u0647\u0648\u0629 \u0645\u062e\u062a\u0635\u0629' : 'SPECIALTY COFFEE')}</span>
                 </div>
 
-                {!isNewHarvestMobileImage && (
-                  <h1 className="slide-title">
-                    {currentSlideData.title}
-                  </h1>
-                )}
+                <h1 className="slide-title">
+                  {currentSlideData.title}
+                </h1>
 
                 <div className="slide-subtitle">
                   {Array.isArray(currentSlideData.subtitle) ? (
@@ -527,18 +558,20 @@ export const ProfessionalHeroSlider: React.FC = () => {
                   ))}
                 </div>
 
-                <div className="slide-cta">
-                  <Link
-                    to={`${regionPrefix}/products`}
-                    className="hero-cta-button"
-                    onClick={(e) => e.stopPropagation()}
-                    onMouseEnter={() => setOverInteractive(true)}
-                    onMouseLeave={() => setOverInteractive(false)}
-                  >
-                    <span>{currentSlideData.cta}</span>
-                    <AnimatedIcon name="arrow-right" className={`size-5 shrink-0 ${language === 'ar' ? '-scale-x-100' : ''}`} />
-                  </Link>
-                </div>
+                {currentSlideData.cta && (
+                  <div className="slide-cta">
+                    <Link
+                      to={`${regionPrefix}/products`}
+                      className="hero-cta-button"
+                      onClick={(e) => e.stopPropagation()}
+                      onMouseEnter={() => setOverInteractive(true)}
+                      onMouseLeave={() => setOverInteractive(false)}
+                    >
+                      <span>{currentSlideData.cta}</span>
+                      <AnimatedIcon name="arrow-right" className={`size-5 shrink-0 ${language === 'ar' ? '-scale-x-100' : ''}`} />
+                    </Link>
+                  </div>
+                )}
               </div>
             </div>
           </div>

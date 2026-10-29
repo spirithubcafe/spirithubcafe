@@ -40,7 +40,7 @@ const getPerformanceHintsForRoute = (url) => {
   routePath = routePath.replace(/\/+$/, '') || '/';
 
   if (routePath === '/') {
-    return '<link rel="preload" as="image" href="/images/products/spirithub-mobile-hero-colombia-typica-watermelon-new-harvest.webp" type="image/webp" media="(max-width: 767.98px)" fetchpriority="high" />';
+    return '<link rel="preload" as="image" href="/images/slides/spirithub-oman-offer-mobile.webp" type="image/webp" media="(max-width: 767.98px)" fetchpriority="high" />';
   }
 
   if (routePath === '/products') {
