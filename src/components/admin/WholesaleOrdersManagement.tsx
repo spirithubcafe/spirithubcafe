@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import { RefreshCw, Eye, Loader2, Save, Settings2, MessageCircle, Download } from 'lucide-react';
+import { RefreshCw, Eye, Loader2, Save, Settings2, FileDown, Download, Printer } from 'lucide-react';
 
 import { useApp } from '../../hooks/useApp';
 import { cn } from '../../lib/utils';
@@ -16,12 +16,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Separator } from '../ui/separator';
 
 import { buildCsv, downloadCsv } from '../../lib/csvUtils';
+import { buildWholesaleReceiptHtml } from '../../lib/wholesaleReceipt';
 import { categoryService, wholesaleOrderService } from '../../services';
 import type { Category } from '../../types/product';
 import type { WholesaleOrder, WholesaleOrderStatus, WholesalePaymentStatus } from '../../types/wholesale';
 
 const STATUSES: WholesaleOrderStatus[] = ['New', 'Preparing', 'Shipped'];
 const PAYMENT_STATUSES: WholesalePaymentStatus[] = ['Pending', 'Paid'];
+
+// Thermal receipt paper width; set to 58 for 58mm rolls.
+const RECEIPT_PAPER_WIDTH_MM = 80;
 
 const formatMoney = (value: number | null | undefined) => {
   if (value === null || value === undefined) return '—';
@@ -71,96 +75,6 @@ const csvDate = (iso?: string) => {
   } catch {
     return iso || '';
   }
-};
-
-const sanitizeWhatsappPhone = (raw: string): string => {
-  // WhatsApp expects country code + number, digits only.
-  // Example: +968 9xxxxxxx -> 9689xxxxxxx
-  return (raw || '').replace(/[^0-9]/g, '');
-};
-
-const buildWholesaleWhatsappMessage = (args: {
-  order: WholesaleOrder;
-  status: WholesaleOrderStatus;
-  paymentStatus: WholesalePaymentStatus;
-  manualPrice: number | null;
-  isArabic: boolean;
-}): string => {
-  const { order, status, paymentStatus, manualPrice, isArabic } = args;
-  const shippingLabel = order.shippingMethod === 1
-    ? (isArabic ? 'استلام' : 'Pickup')
-    : (isArabic ? 'نول للتوصيل' : 'Nool Delivery');
-
-  const itemsLines = (order.items || []).map((it) => {
-    const variant = it.variantInfo ? ` (${it.variantInfo})` : '';
-    return `• ${it.productName}${variant} × ${it.quantity}`;
-  });
-
-  const priceLine = manualPrice === null
-    ? null
-    : (isArabic ? `السعر: ${manualPrice}` : `Price: ${manualPrice}`);
-
-  const statusLine = isArabic
-    ? `الحالة: ${status} | الدفع: ${paymentStatus}`
-    : `Status: ${status} | Payment: ${paymentStatus}`;
-
-  const statusHint = (() => {
-    if (isArabic) {
-      if (status === 'New') {
-        return 'سنراجع طلبك وسنتواصل معك قريباً لتأكيد السعر النهائي والتأكيد.';
-      }
-      if (status === 'Preparing') {
-        return 'طلبك قيد التجهيز. سنوافيك بالتحديثات قريباً.';
-      }
-      return order.shippingMethod === 1
-        ? 'طلبك جاهز للاستلام. سنقوم بالتواصل معك للتنسيق.'
-        : 'طلبك في طريقه للتوصيل عبر نول. سنقوم بالتواصل معك للتنسيق.';
-    }
-
-    if (status === 'New') {
-      return "We'll review your request and process it.";
-    }
-    if (status === 'Preparing') {
-      return "Your order is being prepared. We'll update you shortly.";
-    }
-    return order.shippingMethod === 1
-      ? "Your order is ready for pickup. We'll contact you to coordinate."
-      : "Your order is on the way via Nool delivery. We'll contact you to coordinate.";
-  })();
-
-  const addressLines: string[] = [];
-  if (order.shippingMethod === 2) {
-    if (order.address) addressLines.push(isArabic ? `العنوان: ${order.address}` : `Address: ${order.address}`);
-    if (order.city) addressLines.push(isArabic ? `المدينة: ${order.city}` : `City: ${order.city}`);
-  }
-
-  const greeting = isArabic
-    ? `مرحباً ${order.customerName}،`
-    : `Hello ${order.customerName},`;
-
-  const receivedLine = isArabic
-    ? `تم استلام طلب الجملة رقم ${order.wholesaleOrderNumber} ✅`
-    : `We've received your wholesale order ${order.wholesaleOrderNumber} ✅`;
-
-  const lines = [
-    greeting,
-    '',
-    receivedLine,
-    statusLine,
-    ...(priceLine ? [priceLine] : []),
-    (isArabic ? `طريقة الشحن: ${shippingLabel}` : `Shipping: ${shippingLabel}`),
-    ...addressLines,
-    '',
-    (isArabic ? 'العناصر:' : 'Items:'),
-    ...(itemsLines.length ? itemsLines : [isArabic ? '- (لا يوجد عناصر)' : '- (No items)']),
-    '',
-    statusHint,
-    '',
-    (isArabic ? 'شكراً لك!' : 'Thank you!'),
-    'https://spirithubcafe.com',
-  ];
-
-  return lines.join('\n');
 };
 
 const statusBadgeVariant = (status: WholesaleOrderStatus) => {
@@ -217,6 +131,7 @@ export const WholesaleOrdersManagement: React.FC = () => {
   const [editManualPrice, setEditManualPrice] = useState<string>('');
   const [updateLoading, setUpdateLoading] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
+  const [invoiceDownloading, setInvoiceDownloading] = useState(false);
 
   const loadAllowedCategories = async () => {
     setAllowedCategoriesLoading(true);
@@ -373,6 +288,101 @@ export const WholesaleOrdersManagement: React.FC = () => {
   const shippingLabel = (method: WholesaleOrder['shippingMethod']) => {
     if (method === 1) return isArabic ? 'استلام' : 'Pickup';
     return isArabic ? 'نول توصيل' : 'Nool Delivery';
+  };
+
+  const receiptHtml = (order: WholesaleOrder) =>
+    buildWholesaleReceiptHtml(
+      {
+        orderNumber: order.wholesaleOrderNumber,
+        createdAt: safeDate(order.createdAt),
+        status: order.status,
+        paymentStatus: order.paymentStatus,
+        customerName: order.customerName,
+        cafeName: order.cafeName,
+        customerPhone: order.customerPhone,
+        customerEmail: order.customerEmail,
+        shippingLabel: shippingLabel(order.shippingMethod),
+        address: order.address,
+        city: order.city,
+        notes: order.notes,
+        manualPrice: order.manualPrice == null ? null : formatMoney(order.manualPrice),
+        items: order.items.map((it) => ({ name: it.productName, variant: it.variantInfo, quantity: it.quantity })),
+      },
+      { isArabic, paperWidthMm: RECEIPT_PAPER_WIDTH_MM },
+    );
+
+  const downloadInvoice = async (order: WholesaleOrder) => {
+    if (invoiceDownloading) return;
+    setInvoiceDownloading(true);
+
+    const frame = document.createElement('iframe');
+    frame.setAttribute('aria-hidden', 'true');
+    frame.style.cssText = `position:fixed;top:-99999px;left:-99999px;width:${RECEIPT_PAPER_WIDTH_MM}mm;height:2000px;border:0;opacity:0;pointer-events:none;`;
+
+    try {
+      const [{ default: html2canvas }, { jsPDF }] = await Promise.all([import('html2canvas'), import('jspdf')]);
+
+      const loaded = new Promise<void>((resolve, reject) => {
+        const timeoutId = window.setTimeout(() => reject(new Error('Invoice rendering timed out.')), 15000);
+        frame.onload = () => {
+          window.clearTimeout(timeoutId);
+          resolve();
+        };
+      });
+      frame.srcdoc = receiptHtml(order);
+      document.body.appendChild(frame);
+      await loaded;
+
+      const doc = frame.contentDocument;
+      if (!doc) throw new Error('Unable to load invoice document.');
+      await doc.fonts?.ready;
+
+      const canvas = await html2canvas(doc.documentElement, {
+        scale: 3,
+        backgroundColor: '#ffffff',
+        width: doc.documentElement.scrollWidth,
+        height: doc.documentElement.scrollHeight,
+        windowWidth: doc.documentElement.scrollWidth,
+        windowHeight: doc.documentElement.scrollHeight,
+      });
+
+      const pageWidth = RECEIPT_PAPER_WIDTH_MM;
+      const pageHeight = (canvas.height * pageWidth) / canvas.width;
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [pageWidth, pageHeight] });
+      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, pageWidth, pageHeight);
+      pdf.save(`${order.wholesaleOrderNumber || 'wholesale-invoice'}.pdf`);
+    } catch (err) {
+      console.error('Failed to generate wholesale invoice PDF', err);
+      toast.error(isArabic ? 'تعذر تحميل الفاتورة' : 'Unable to download invoice');
+    } finally {
+      frame.remove();
+      setInvoiceDownloading(false);
+    }
+  };
+
+  const printReceipt = (order: WholesaleOrder) => {
+    const html = receiptHtml(order);
+    // Runs inside the popup: Chrome can't size `@page { … auto }`, so set the measured height, then print and close.
+    const printScript = `<script>
+window.addEventListener('load', function () {
+  var px = document.body.scrollHeight;
+  var mm = Math.max(40, Math.ceil(px * 25.4 / 96) + 6);
+  var s = document.createElement('style');
+  s.textContent = '@page { size: ${RECEIPT_PAPER_WIDTH_MM}mm ' + mm + 'mm; margin: 0; }';
+  document.head.appendChild(s);
+  window.addEventListener('afterprint', function () { window.close(); });
+  setTimeout(function () { window.focus(); window.print(); }, 250);
+});
+</script>`;
+
+    const popup = window.open('', 'wholesale-receipt', 'width=420,height=720');
+    if (!popup) {
+      toast.error(isArabic ? 'يرجى السماح بالنوافذ المنبثقة للطباعة' : 'Please allow pop-ups to print');
+      return;
+    }
+    popup.document.open();
+    popup.document.write(html.replace('</body>', `${printScript}</body>`));
+    popup.document.close();
   };
 
   const exportToCSV = async () => {
@@ -909,35 +919,25 @@ export const WholesaleOrdersManagement: React.FC = () => {
                     <div className="text-sm text-muted-foreground break-words">{selectedOrder.customerPhone}</div>
                     <div className="text-sm text-muted-foreground break-all">{selectedOrder.customerEmail}</div>
 
-                    <div className="pt-3">
+                    <div className="pt-3 flex flex-col sm:flex-row gap-2">
                       <Button
                         type="button"
                         variant="outline"
-                        className="gap-2 border-emerald-300 text-emerald-700 hover:bg-emerald-50 w-full sm:w-auto"
-                        onClick={() => {
-                          const phone = sanitizeWhatsappPhone(selectedOrder.customerPhone);
-                          if (!phone || phone.length < 8) {
-                            toast.error(isArabic ? 'رقم واتساب غير صالح' : 'Invalid WhatsApp number');
-                            return;
-                          }
-
-                          const manualPrice = editManualPrice.trim() === '' ? null : Number(editManualPrice);
-                          const safeManualPrice = manualPrice !== null && Number.isFinite(manualPrice) ? manualPrice : null;
-
-                          const message = buildWholesaleWhatsappMessage({
-                            order: selectedOrder,
-                            status: editStatus,
-                            paymentStatus: editPaymentStatus,
-                            manualPrice: safeManualPrice,
-                            isArabic,
-                          });
-
-                          const url = `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(message)}`;
-                          window.open(url, '_blank', 'noopener,noreferrer');
-                        }}
+                        className="gap-2 w-full sm:w-auto"
+                        onClick={() => printReceipt(selectedOrder)}
                       >
-                        <MessageCircle className="h-4 w-4" />
-                        {isArabic ? 'واتساب العميل' : 'WhatsApp customer'}
+                        <Printer className="h-4 w-4" />
+                        {isArabic ? 'طباعة الإيصال' : 'Print receipt'}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="gap-2 w-full sm:w-auto"
+                        disabled={invoiceDownloading}
+                        onClick={() => void downloadInvoice(selectedOrder)}
+                      >
+                        {invoiceDownloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
+                        {isArabic ? 'تحميل الفاتورة' : 'Download invoice'}
                       </Button>
                     </div>
                   </CardContent>
