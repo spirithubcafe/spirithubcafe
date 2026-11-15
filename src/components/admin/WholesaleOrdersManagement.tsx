@@ -17,6 +17,9 @@ import { Separator } from '../ui/separator';
 
 import { buildCsv, downloadCsv } from '../../lib/csvUtils';
 import { buildWholesaleReceiptHtml } from '../../lib/wholesaleReceipt';
+import { REGION_INFO } from '../../config/regionInfo';
+import { siteMetadata } from '../../config/siteMetadata';
+import { useRegion } from '../../hooks/useRegion';
 import { categoryService, wholesaleOrderService } from '../../services';
 import type { Category } from '../../types/product';
 import type { WholesaleOrder, WholesaleOrderStatus, WholesalePaymentStatus } from '../../types/wholesale';
@@ -103,6 +106,7 @@ const paymentBadgeVariant = (status: WholesalePaymentStatus) => {
 
 export const WholesaleOrdersManagement: React.FC = () => {
   const { language } = useApp();
+  const { currentRegion } = useRegion();
   const isArabic = language === 'ar';
 
   const [allowedCategories, setAllowedCategories] = useState<number[]>([]);
@@ -290,26 +294,36 @@ export const WholesaleOrdersManagement: React.FC = () => {
     return isArabic ? 'نول توصيل' : 'Nool Delivery';
   };
 
-  const receiptHtml = (order: WholesaleOrder) =>
-    buildWholesaleReceiptHtml(
+  const receiptHtml = (order: WholesaleOrder) => {
+    const info = REGION_INFO[currentRegion.code] ?? REGION_INFO.om;
+    const instagram = info.social.instagram?.match(/instagram\.com\/([^/?#]+)/i)?.[1];
+    return buildWholesaleReceiptHtml(
       {
         orderNumber: order.wholesaleOrderNumber,
         createdAt: safeDate(order.createdAt),
         status: order.status,
         paymentStatus: order.paymentStatus,
+        shippingMethod: order.shippingMethod,
         customerName: order.customerName,
         cafeName: order.cafeName,
         customerPhone: order.customerPhone,
         customerEmail: order.customerEmail,
-        shippingLabel: shippingLabel(order.shippingMethod),
         address: order.address,
         city: order.city,
         notes: order.notes,
-        manualPrice: order.manualPrice == null ? null : formatMoney(order.manualPrice),
         items: order.items.map((it) => ({ name: it.productName, variant: it.variantInfo, quantity: it.quantity })),
+        store: {
+          name: { en: 'SpiritHub Roastery', ar: 'محمصة سبيريت هب' },
+          address: info.contact.address,
+          hours: info.contact.workingHours,
+          website: siteMetadata.baseUrl.replace(/^https?:\/\//, ''),
+          instagram,
+          phones: [info.contact.phone2, info.contact.phone3].filter((p): p is string => Boolean(p)),
+        },
       },
-      { isArabic, paperWidthMm: RECEIPT_PAPER_WIDTH_MM },
+      { paperWidthMm: RECEIPT_PAPER_WIDTH_MM },
     );
+  };
 
   const downloadInvoice = async (order: WholesaleOrder) => {
     if (invoiceDownloading) return;
@@ -337,13 +351,16 @@ export const WholesaleOrdersManagement: React.FC = () => {
       if (!doc) throw new Error('Unable to load invoice document.');
       await doc.fonts?.ready;
 
+      // The frame is taller than the receipt; crop to the body (incl. its bottom padding) to avoid trailing blank paper.
+      const width = doc.documentElement.scrollWidth;
+      const height = Math.ceil(doc.body.getBoundingClientRect().bottom);
       const canvas = await html2canvas(doc.documentElement, {
         scale: 3,
         backgroundColor: '#ffffff',
-        width: doc.documentElement.scrollWidth,
-        height: doc.documentElement.scrollHeight,
-        windowWidth: doc.documentElement.scrollWidth,
-        windowHeight: doc.documentElement.scrollHeight,
+        width,
+        height,
+        windowWidth: width,
+        windowHeight: height,
       });
 
       const pageWidth = RECEIPT_PAPER_WIDTH_MM;
