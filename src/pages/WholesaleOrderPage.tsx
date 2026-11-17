@@ -19,6 +19,7 @@ import { Input } from '../components/ui/input';
 import { Textarea } from '../components/ui/textarea';
 import { Alert, AlertDescription, AlertTitle } from '../components/ui/alert';
 import { Switch } from '../components/ui/switch';
+import { Checkbox } from '../components/ui/checkbox';
 import {
   Form,
   FormControl,
@@ -46,6 +47,7 @@ const wholesaleSchema = z
     address: z.string().optional(),
     city: z.string().optional(),
     notes: z.string().optional(),
+    whatsAppOptIn: z.boolean(),
     items: z
       .array(
         z.object({
@@ -77,6 +79,7 @@ const defaultValues: WholesaleFormValues = {
   address: '',
   city: '',
   notes: '',
+  whatsAppOptIn: false,
   items: [{ productId: 0, productVariantId: 0, quantity: 1 }],
 };
 
@@ -301,6 +304,7 @@ export const WholesaleOrderPage: React.FC = () => {
             address: values.shippingMethod === 2 && values.address?.trim() ? values.address.trim() : undefined,
             city: values.shippingMethod === 2 && values.city?.trim() ? values.city.trim() : undefined,
             notes: values.notes?.trim() ? values.notes : undefined,
+            whatsAppOptIn: values.whatsAppOptIn === true,
             items: values.items,
           })
         : wholesaleOrderService.create({
@@ -312,6 +316,7 @@ export const WholesaleOrderPage: React.FC = () => {
         address: values.shippingMethod === 2 && values.address?.trim() ? values.address.trim() : undefined,
         city: values.shippingMethod === 2 && values.city?.trim() ? values.city.trim() : undefined,
         notes: values.notes?.trim() ? values.notes : undefined,
+        whatsAppOptIn: values.whatsAppOptIn === true,
         items: values.items,
           }));
 
@@ -869,6 +874,29 @@ export const WholesaleOrderPage: React.FC = () => {
                         )}
                       />
                     </div>
+
+                    <FormField
+                      control={control}
+                      name="whatsAppOptIn"
+                      render={({ field }) => (
+                        <FormItem className="mt-4 flex flex-row items-center gap-2 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value === true}
+                              onCheckedChange={(checked) => field.onChange(checked === true)}
+                              onBlur={field.onBlur}
+                              ref={field.ref}
+                              name={field.name}
+                            />
+                          </FormControl>
+                          <FormLabel className="cursor-pointer font-normal">
+                            {isArabic
+                              ? 'أرغب في استلام تأكيد طلبي عبر واتساب.'
+                              : 'Send me my order confirmation via WhatsApp.'}
+                          </FormLabel>
+                        </FormItem>
+                      )}
+                    />
                   </div>
 
                   <div className="rounded-xl border bg-white p-3 space-y-3 sm:p-4">

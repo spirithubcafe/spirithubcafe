@@ -26,6 +26,8 @@ export interface WholesaleOrderCreate {
   address?: string;
   city?: string;
   notes?: string;
+  // Consent timestamp (WhatsAppOptInAt) is set by the backend only.
+  whatsAppOptIn?: boolean;
   items: WholesaleOrderItemCreate[];
 }
 
