@@ -14,6 +14,7 @@ import { Label } from '../ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Separator } from '../ui/separator';
+import { WholesaleDispatchPanel } from './WholesaleDispatchPanel';
 
 import { buildCsv, downloadCsv } from '../../lib/csvUtils';
 import { buildWholesaleReceiptHtml } from '../../lib/wholesaleReceipt';
@@ -1019,6 +1020,16 @@ window.addEventListener('load', function () {
                   <div className="text-sm text-gray-800 whitespace-pre-wrap">{selectedOrder.notes}</div>
                 </div>
               ) : null}
+
+              <WholesaleDispatchPanel
+                key={selectedOrder.id}
+                orderId={selectedOrder.id}
+                isArabic={isArabic}
+                shippingMethod={selectedOrder.shippingMethod}
+                address={selectedOrder.address}
+                city={selectedOrder.city}
+                whatsAppOptIn={selectedOrder.whatsAppOptIn}
+              />
 
               <div className="rounded-xl border bg-white">
                 <div className="px-3 sm:px-4 py-2 sm:py-3 border-b font-medium text-gray-900">

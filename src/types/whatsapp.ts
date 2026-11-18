@@ -107,6 +107,8 @@ export interface WhatsAppNotificationSettingsDto {
   customerPasswordChangedEnabled: boolean;
   customerOtpEnabled: boolean;
   customerGiftRecipientEnabled: boolean;
+  /** Wholesale shipment dispatched (customer). Optional: omitted/null leaves the stored value unchanged. */
+  customerWholesaleShipmentEnabled?: boolean | null;
   
   // Admin notifications
   adminNewOrderEnabled: boolean;

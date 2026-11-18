@@ -2,6 +2,10 @@ import { http, publicHttp } from './apiClient';
 import type {
   AllowedWholesaleCategoriesResponse,
   WholesaleApiResponse,
+  WholesaleDispatchInfo,
+  WholesaleDispatchRequest,
+  WholesaleDispatchResult,
+  WholesaleDispatchVerifyOutcome,
   WholesaleOrder,
   WholesaleOrderCreate,
   WholesaleOrderQueryParams,
@@ -16,6 +20,43 @@ const unwrap = <T>(payload: WholesaleApiResponse<T> | T | undefined): T | undefi
     return apiPayload.data ?? undefined;
   }
   return payload as T;
+};
+
+/**
+ * Runs a dispatch request. apiClient rejects non-2xx with `{ message, statusCode, rawData }`;
+ * for 400/404/409 the body still carries the server `message` and the latest dispatch info,
+ * so those are returned as `success: false` results instead of being thrown.
+ */
+const dispatchCall = async (
+  request: () => Promise<{ data: WholesaleApiResponse<WholesaleDispatchInfo> }>
+): Promise<WholesaleDispatchResult> => {
+  try {
+    const response = await request();
+    const body = response.data;
+    return {
+      success: body?.success !== false,
+      message: body?.message ?? '',
+      code: body?.code,
+      data: body?.data ?? undefined,
+    };
+  } catch (err) {
+    const apiError = err as { message?: string; statusCode?: number; rawData?: unknown };
+    const raw = apiError?.rawData;
+    if (
+      raw &&
+      typeof raw === 'object' &&
+      (apiError.statusCode === 400 || apiError.statusCode === 404 || apiError.statusCode === 409)
+    ) {
+      const body = raw as WholesaleApiResponse<WholesaleDispatchInfo>;
+      return {
+        success: false,
+        message: body.message || apiError.message || 'Dispatch request failed',
+        code: body.code,
+        data: body.data ?? undefined,
+      };
+    }
+    throw err;
+  }
 };
 
 export const wholesaleOrderService = {
@@ -149,4 +190,36 @@ export const wholesaleOrderService = {
   setAllowedCategories: async (categoryIds: number[]): Promise<void> => {
     await http.put('/api/wholesale-orders/allowed-categories', { categoryIds });
   },
+
+  // Admin: Nool / Genacom dispatch (WhatsApp message to the courier)
+  getDispatchInfo: (id: number): Promise<WholesaleDispatchResult> =>
+    dispatchCall(() => http.get(`/api/wholesale-orders/${id}/dispatch`)),
+
+  updateDeliveryAddress: (id: number, address: string, city?: string): Promise<WholesaleDispatchResult> =>
+    dispatchCall(() =>
+      http.put(`/api/wholesale-orders/${id}/delivery-address`, { address, city: city?.trim() ? city : undefined })
+    ),
+
+  requestDispatch: (id: number, payload: WholesaleDispatchRequest): Promise<WholesaleDispatchResult> =>
+    dispatchCall(() => http.post(`/api/wholesale-orders/${id}/dispatch`, payload)),
+
+  verifyDispatch: (
+    id: number,
+    outcome: WholesaleDispatchVerifyOutcome,
+    note?: string
+  ): Promise<WholesaleDispatchResult> =>
+    dispatchCall(() =>
+      http.post(`/api/wholesale-orders/${id}/dispatch/verify`, { outcome, note: note?.trim() ? note : undefined })
+    ),
+
+  updateDispatchTracking: (id: number, trackingNumber: string, labelUrl?: string | null): Promise<WholesaleDispatchResult> =>
+    dispatchCall(() =>
+      http.put(`/api/wholesale-orders/${id}/dispatch/tracking`, { trackingNumber, labelUrl: labelUrl?.trim() ? labelUrl : null })
+    ),
+
+  markDispatchCollected: (id: number): Promise<WholesaleDispatchResult> =>
+    dispatchCall(() => http.post(`/api/wholesale-orders/${id}/dispatch/collected`)),
+
+  markDispatchDelivered: (id: number): Promise<WholesaleDispatchResult> =>
+    dispatchCall(() => http.post(`/api/wholesale-orders/${id}/dispatch/delivered`)),
 };

@@ -58,6 +58,7 @@ const DEFAULT_SETTINGS: WhatsAppNotificationSettingsDto = {
   customerPasswordChangedEnabled: true,
   customerOtpEnabled: true,
   customerGiftRecipientEnabled: true,
+  customerWholesaleShipmentEnabled: false,
 
   // Admin notifications
   adminNewOrderEnabled: true,
@@ -274,6 +275,14 @@ export const WhatsAppNotificationSettingsManagement: React.FC = () => {
         ? 'إرسال رسالة واتساب لمستلم الهدية عند تقديم طلب هدية'
         : 'Send WhatsApp message to gift recipient when a gift order is placed',
       icon: Gift,
+    },
+    {
+      key: 'customerWholesaleShipmentEnabled',
+      label: isArabic ? 'شحن طلب الجملة (العميل)' : 'Wholesale shipment dispatched (customer)',
+      description: isArabic
+        ? 'إرسال رسالة واتساب للعميل عند شحن طلب الجملة (عند اختيار الإشعار)'
+        : 'Allow notifying the customer on WhatsApp when a wholesale order is dispatched',
+      icon: Truck,
     },
   ];
 
