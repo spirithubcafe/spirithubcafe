@@ -6,6 +6,8 @@ import {
   getAllowedDispatchActions,
   getShipmentStatusBadgeClass,
   getShipmentStatusLabel,
+  getWeightSourceBadgeClass,
+  getWeightSourceLabel,
   isSafeHttpUrl,
   parseWeightKgToGrams,
 } from './wholesaleDispatch.ts';
@@ -52,6 +54,16 @@ test('every shipment status has an EN and AR label and a badge class', () => {
     assert.ok(getShipmentStatusBadgeClass(status).length > 0, status);
   }
   assert.equal(WHOLESALE_SHIPMENT_STATUSES.length, 7);
+});
+
+test('every weight source (including Packing) has distinct EN and AR labels', () => {
+  for (const source of ['Calculated', 'Partial', 'Manual', 'Unavailable', 'Packing'] as const) {
+    assert.ok(getWeightSourceLabel(source, false).length > 0, source);
+    assert.ok(getWeightSourceLabel(source, true).length > 0, source);
+    assert.notEqual(getWeightSourceLabel(source, true), getWeightSourceLabel(source, false), source);
+  }
+  assert.equal(getWeightSourceLabel('Packing', false), 'Packing (box weights)');
+  assert.notEqual(getWeightSourceBadgeClass('Packing'), getWeightSourceBadgeClass('Unavailable'));
 });
 
 test('getAllowedDispatchActions follows the status machine', () => {

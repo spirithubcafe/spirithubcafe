@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Separator } from '../ui/separator';
 import { WholesaleDispatchPanel } from './WholesaleDispatchPanel';
+import { WholesalePackingPanel } from './WholesalePackingPanel';
 
 import { buildCsv, downloadCsv } from '../../lib/csvUtils';
 import { buildWholesaleReceiptHtml } from '../../lib/wholesaleReceipt';
@@ -129,6 +130,9 @@ export const WholesaleOrdersManagement: React.FC = () => {
 
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<WholesaleOrder | null>(null);
+  // Bumped by one panel so the other reloads (packing <-> dispatch).
+  const [dispatchRefreshKey, setDispatchRefreshKey] = useState(0);
+  const [packingRefreshKey, setPackingRefreshKey] = useState(0);
   const [detailsLoading, setDetailsLoading] = useState(false);
 
   const [editStatus, setEditStatus] = useState<WholesaleOrderStatus>('New');
@@ -1021,6 +1025,24 @@ window.addEventListener('load', function () {
                 </div>
               ) : null}
 
+              <WholesalePackingPanel
+                key={`packing-${selectedOrder.id}`}
+                orderId={selectedOrder.id}
+                isArabic={isArabic}
+                shippingMethod={selectedOrder.shippingMethod}
+                items={selectedOrder.items}
+                customerName={selectedOrder.customerName}
+                customerPhone={selectedOrder.customerPhone}
+                recipientName={selectedOrder.recipientName}
+                recipientPhone={selectedOrder.recipientPhone}
+                deliveryLocationType={selectedOrder.deliveryLocationType}
+                refreshKey={packingRefreshKey}
+                onChanged={() => setDispatchRefreshKey((k) => k + 1)}
+                onOrderUpdated={(updated) =>
+                  setSelectedOrder((current) => (current && current.id === updated.id ? { ...current, ...updated } : current))
+                }
+              />
+
               <WholesaleDispatchPanel
                 key={selectedOrder.id}
                 orderId={selectedOrder.id}
@@ -1029,6 +1051,8 @@ window.addEventListener('load', function () {
                 address={selectedOrder.address}
                 city={selectedOrder.city}
                 whatsAppOptIn={selectedOrder.whatsAppOptIn}
+                refreshKey={dispatchRefreshKey}
+                onChanged={() => setPackingRefreshKey((k) => k + 1)}
               />
 
               <div className="rounded-xl border bg-white">

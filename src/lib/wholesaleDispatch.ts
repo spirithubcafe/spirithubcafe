@@ -73,6 +73,7 @@ const WEIGHT_SOURCE_META: Record<WholesaleWeightSource, { label: Bilingual; clas
   Partial: { label: { en: 'Partial', ar: 'جزئي' }, className: 'bg-amber-50 text-amber-800 border-amber-200' },
   Manual: { label: { en: 'Manual', ar: 'يدوي' }, className: 'bg-blue-50 text-blue-700 border-blue-200' },
   Unavailable: { label: { en: 'Unavailable', ar: 'غير متوفر' }, className: 'bg-slate-50 text-slate-700 border-slate-200' },
+  Packing: { label: { en: 'Packing (box weights)', ar: 'التعبئة (أوزان الصناديق)' }, className: 'bg-violet-50 text-violet-700 border-violet-200' },
 };
 
 export const getWeightSourceLabel = (source: string | null | undefined, isArabic: boolean): string => {

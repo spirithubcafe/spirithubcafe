@@ -56,10 +56,16 @@ export interface WholesaleOrder {
   manualPrice?: number | null;
   notes?: string | null;
   whatsAppOptIn?: boolean;
+  /** Optional box-label recipient overrides (fall back to customer name/phone). */
+  recipientName?: string | null;
+  recipientPhone?: string | null;
+  deliveryLocationType?: WholesaleDeliveryLocationType | null;
   createdAt?: string;
   updatedAt?: string;
   items: WholesaleOrderItem[];
 }
+
+export type WholesaleDeliveryLocationType = 'Home' | 'Office';
 
 export type AllowedWholesaleCategoriesResponse = {
   success: boolean;
@@ -100,7 +106,7 @@ export type WholesaleShipmentStatus =
   | 'TrackingAssigned'
   | 'Collected'
   | 'Delivered';
-export type WholesaleWeightSource = 'Calculated' | 'Partial' | 'Manual' | 'Unavailable';
+export type WholesaleWeightSource = 'Calculated' | 'Partial' | 'Manual' | 'Unavailable' | 'Packing';
 
 export interface WholesaleShipmentAuditEntry {
   id: number;
@@ -127,6 +133,9 @@ export interface WholesaleShipment {
   failureReason?: string | null;
   totalWeightGrams?: number | null;
   weightSource: WholesaleWeightSource;
+  packageCount?: number | null;
+  declaredWeightGrams?: number | null;
+  packingPlanVersion?: number | null;
   notifyCustomer: boolean;
   trackingAssignedAt?: string | null;
   collectedAt?: string | null;
@@ -165,6 +174,17 @@ export interface WholesaleDispatchInfo {
   /** True when the order has WhatsApp opt-in AND the admin setting is enabled. */
   customerNotificationAvailable: boolean;
   shipment?: WholesaleShipment | null;
+  packing?: WholesaleDispatchPackingSummary | null;
+  packingWarning?: string | null;
+}
+
+export interface WholesaleDispatchPackingSummary {
+  required: boolean;
+  status: string | null;
+  verified: boolean;
+  boxCount: number;
+  declaredWeightGrams: number | null;
+  isComplete: boolean;
 }
 
 export interface WholesaleDispatchRequest {
@@ -182,4 +202,146 @@ export interface WholesaleDispatchResult {
   /** Machine-readable server code, e.g. 'WholesaleDispatchDisabled' (HTTP 409). */
   code?: string;
   data?: WholesaleDispatchInfo;
+}
+
+// ==================== Packing plan & box labels ====================
+
+export type WholesalePackingStatus = 'Draft' | 'ReadyForVerification' | 'Verified';
+
+export interface WholesalePackingBoxItem {
+  wholesaleOrderItemId: number;
+  quantity: number;
+}
+
+export interface WholesalePackingBox {
+  id: number;
+  uniqueBoxCode: string;
+  boxNumber: number;
+  weightGrams: number | null;
+  verifiedAt: string | null;
+  verifiedBy: string | null;
+  labelPrintCount: number;
+  lastLabelPrintedAt: string | null;
+  items: WholesalePackingBoxItem[];
+}
+
+export interface WholesalePackingPlan {
+  id: number;
+  status: WholesalePackingStatus;
+  version: number;
+  preferredCourier: string | null;
+  createdAt: string;
+  createdBy: string | null;
+  updatedAt: string;
+  updatedBy: string | null;
+  verifiedAt: string | null;
+  verifiedBy: string | null;
+  reopenedAt: string | null;
+  reopenedBy: string | null;
+  reopenReason: string | null;
+  correctionInProgress: boolean;
+  totalWeightGrams: number | null;
+  allBoxesWeighed: boolean;
+  boxes: WholesalePackingBox[];
+}
+
+export interface WholesalePackingItem {
+  wholesaleOrderItemId: number;
+  productName: string | null;
+  variantInfo: string | null;
+  variantSku: string | null;
+  orderedQuantity: number;
+  allocatedQuantity: number;
+  remainingQuantity: number;
+}
+
+export interface WholesalePackingShipmentSummary {
+  provider: string;
+  status: string;
+  packageCount: number | null;
+  declaredWeightGrams: number | null;
+  packingPlanVersion: number | null;
+}
+
+export interface WholesalePackingLabel {
+  orderNumber: string;
+  cafeName: string | null;
+  customerName: string | null;
+  recipientName: string;
+  recipientPhone: string;
+  address: string | null;
+  city: string | null;
+  deliveryLocationType: WholesaleDeliveryLocationType | null;
+  courier: string | null;
+  sender: string;
+}
+
+export interface WholesalePackingAuditEntry {
+  id: number;
+  action: string;
+  performedBy: string | null;
+  performedAt: string;
+  fromStatus: string | null;
+  toStatus: string | null;
+  boxCode: string | null;
+  reason: string | null;
+  details: string | null;
+}
+
+export interface WholesalePackingInfo {
+  orderId: number;
+  wholesaleOrderNumber: string;
+  isAdmin: boolean;
+  plan: WholesalePackingPlan | null;
+  items: WholesalePackingItem[];
+  isComplete: boolean;
+  errors: string[];
+  locked: boolean;
+  lockReason: string | null;
+  canEdit: boolean;
+  canSubmit: boolean;
+  canUnlock: boolean;
+  canVerifyBoxes: boolean;
+  canVerifyPlan: boolean;
+  canReopen: boolean;
+  canCorrect: boolean;
+  canConfirmCourierInformed: boolean;
+  shipment: WholesalePackingShipmentSummary | null;
+  shipmentMismatch: boolean;
+  shipmentMismatchMessage: string | null;
+  label: WholesalePackingLabel;
+  audit: WholesalePackingAuditEntry[];
+}
+
+export interface WholesalePackingUpdateRequest {
+  expectedVersion: number;
+  preferredCourier: WholesaleShipmentProvider | null;
+  boxes: {
+    uniqueBoxCode: string | null;
+    weightGrams: number | null;
+    items: WholesalePackingBoxItem[];
+  }[];
+}
+
+/** Result of a packing call. `success:false` carries the server message and the latest state when available. */
+export interface WholesalePackingResult {
+  success: boolean;
+  message: string;
+  code?: string | null;
+  statusCode?: number;
+  data?: WholesalePackingInfo;
+}
+
+export interface WholesaleRecipientUpdate {
+  recipientName: string | null;
+  recipientPhone: string | null;
+  deliveryLocationType: WholesaleDeliveryLocationType | null;
+}
+
+export interface WholesaleRecipientResult {
+  success: boolean;
+  message: string;
+  code?: string | null;
+  statusCode?: number;
+  data?: WholesaleOrder;
 }

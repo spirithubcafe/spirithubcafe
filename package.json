@@ -13,6 +13,7 @@
     "test:bottom-nav": "node --experimental-strip-types --test src/lib/bottomNavigation.test.ts",
     "test:wholesale-receipt": "node --experimental-strip-types --test src/lib/wholesaleReceipt.test.ts",
     "test:wholesale-dispatch": "node --experimental-strip-types --test src/lib/wholesaleDispatch.test.ts",
+    "test:wholesale-packing": "node --experimental-strip-types --test src/lib/wholesalePacking.test.ts",
     "test:instagram": "node --experimental-strip-types --test src/lib/instagramFeed.test.ts",
     "test:custom-bundle": "node --experimental-strip-types --test src/lib/customBundle.test.ts",
     "test:bundle-admin": "node --experimental-strip-types --test src/lib/bundleAdminUtils.test.ts",

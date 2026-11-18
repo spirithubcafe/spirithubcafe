@@ -27,6 +27,7 @@ import {
   isSafeHttpUrl,
   parseWeightKgToGrams,
 } from '../../lib/wholesaleDispatch';
+import { getPackingStatusLabel } from '../../lib/wholesalePacking';
 import type {
   WholesaleDispatchInfo,
   WholesaleDispatchResult,
@@ -62,6 +63,10 @@ export interface WholesaleDispatchPanelProps {
   address?: string | null;
   city?: string | null;
   whatsAppOptIn?: boolean;
+  /** Changing this value reloads the dispatch info (e.g. after the packing plan changes). */
+  refreshKey?: number;
+  /** Called after a dispatch action returns fresh state (lets the packing panel refresh). */
+  onChanged?: () => void;
 }
 
 const normalizeApiDate = (raw?: string | null): string | undefined => {
@@ -102,6 +107,8 @@ export const WholesaleDispatchPanel: React.FC<WholesaleDispatchPanelProps> = ({
   address: orderAddress,
   city: orderCity,
   whatsAppOptIn,
+  refreshKey,
+  onChanged,
 }) => {
   const t = useCallback((en: string, ar: string) => (isArabic ? ar : en), [isArabic]);
 
@@ -177,6 +184,15 @@ export const WholesaleDispatchPanel: React.FC<WholesaleDispatchPanelProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderId, shippingMethod]);
 
+  const lastRefreshKeyRef = useRef(refreshKey);
+  useEffect(() => {
+    if (lastRefreshKeyRef.current === refreshKey) return;
+    lastRefreshKeyRef.current = refreshKey;
+    if (shippingMethod === PICKUP) return;
+    void load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshKey]);
+
   /** Runs one mutating request; the ref blocks double clicks that state alone cannot. */
   const run = async (action: () => Promise<WholesaleDispatchResult>, successMessage: string) => {
     if (busyRef.current) return;
@@ -189,6 +205,7 @@ export const WholesaleDispatchPanel: React.FC<WholesaleDispatchPanelProps> = ({
         // Never clobber the address the admin is typing when a request fails.
         setInfo(result.data);
         syncDrafts(result.data, { address: result.success });
+        onChanged?.();
       }
       if (result.success) {
         toast.success(result.message || successMessage);
@@ -294,7 +311,9 @@ export const WholesaleDispatchPanel: React.FC<WholesaleDispatchPanelProps> = ({
   const addressDirty =
     addressDraft.trim() !== savedAddress || cityDraft.trim() !== (info.city ?? '').trim();
   const displayedAddress = actions.canEditAddress ? addressDraft.trim() : savedAddress;
-  const weightGrams = parseWeightKgToGrams(weightKg);
+  const packing = info.packing ?? null;
+  const packingWeightDeclared = packing?.declaredWeightGrams !== null && packing?.declaredWeightGrams !== undefined;
+  const weightGrams = packingWeightDeclared ? null : parseWeightKgToGrams(weightKg);
   const weightInvalid = weightGrams === undefined;
 
   const submitDispatch = () =>
@@ -389,6 +408,41 @@ export const WholesaleDispatchPanel: React.FC<WholesaleDispatchPanelProps> = ({
                 {t('Refresh', 'تحديث')}
               </Button>
             ) : null}
+          </div>
+        ) : null}
+
+        {/* Packing summary */}
+        {packing ? (
+          <div className="rounded-lg border p-3 space-y-2">
+            <div className="flex flex-wrap items-center gap-2 text-sm">
+              <PackageCheck className="h-4 w-4" />
+              <span className="font-medium">{t('Packing', 'التعبئة')}</span>
+              <Badge
+                variant="outline"
+                className={packing.verified ? 'bg-green-50 text-green-700 border-green-200' : 'bg-amber-50 text-amber-800 border-amber-200'}
+              >
+                {packing.verified
+                  ? t('Verified', 'تم التحقق')
+                  : packing.status
+                    ? getPackingStatusLabel(packing.status, isArabic)
+                    : t('No packing plan', 'لا توجد خطة تعبئة')}
+              </Badge>
+              {packing.required ? (
+                <span className="text-xs text-muted-foreground">{t('Required for dispatch', 'مطلوبة للشحن')}</span>
+              ) : null}
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Field label={t('Boxes', 'الصناديق')}>{packing.boxCount}</Field>
+              <Field label={t('Declared weight', 'الوزن المصرّح')}>
+                <span dir="ltr">{formatWeightKg(packing.declaredWeightGrams)}</span>
+              </Field>
+            </div>
+          </div>
+        ) : null}
+        {info.packingWarning ? (
+          <div role="alert" className="flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+            <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+            <span className="break-words">{info.packingWarning}</span>
           </div>
         ) : null}
 
@@ -496,6 +550,18 @@ export const WholesaleDispatchPanel: React.FC<WholesaleDispatchPanelProps> = ({
                 ) : null}
               </div>
 
+              {packingWeightDeclared ? (
+                <div className="space-y-1">
+                  <Label>{t('Declared weight (from boxes)', 'الوزن المصرّح (من الصناديق)')}</Label>
+                  <div className="text-sm font-medium" dir="ltr">{formatWeightKg(packing?.declaredWeightGrams)}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {t(
+                      'The weight is taken from the verified packing plan box weights.',
+                      'يتم أخذ الوزن من أوزان صناديق خطة التعبئة المتحقق منها.'
+                    )}
+                  </div>
+                </div>
+              ) : (
               <div className="space-y-1">
                 <Label htmlFor={`dispatch-weight-${orderId}`}>{t('Override weight (kg)', 'تعديل الوزن (كغ)')}</Label>
                 <Input
@@ -513,6 +579,7 @@ export const WholesaleDispatchPanel: React.FC<WholesaleDispatchPanelProps> = ({
                   <div className="text-xs text-red-600">{t('Enter a valid weight greater than 0.', 'أدخل وزناً صالحاً أكبر من 0.')}</div>
                 ) : null}
               </div>
+              )}
             </div>
 
             <div className="text-sm flex flex-wrap items-center gap-2">
@@ -522,7 +589,7 @@ export const WholesaleDispatchPanel: React.FC<WholesaleDispatchPanelProps> = ({
                 {getWeightSourceLabel(info.weight.source, isArabic)}
               </Badge>
             </div>
-            {info.weight.source === 'Unavailable' || info.weight.source === 'Partial' || info.weight.itemsWithoutWeight > 0 ? (
+            {!packingWeightDeclared && (info.weight.source === 'Unavailable' || info.weight.source === 'Partial' || info.weight.itemsWithoutWeight > 0) ? (
               <div className="text-xs text-muted-foreground">
                 {t(
                   `${info.weight.itemsWithoutWeight} item(s) have no weight data. Weight is optional and does not block dispatch; enter an override if needed.`,
@@ -630,6 +697,9 @@ export const WholesaleDispatchPanel: React.FC<WholesaleDispatchPanelProps> = ({
                   </Badge>
                 </span>
               </Field>
+              {shipment.packageCount !== null && shipment.packageCount !== undefined ? (
+                <Field label={t('Boxes declared to courier', 'عدد الصناديق المبلّغ لشركة التوصيل')}>{shipment.packageCount}</Field>
+              ) : null}
               <Field label={t('Customer notification', 'إشعار العميل')}>
                 {shipment.notifyCustomer ? t('Requested', 'مطلوب') : t('Not requested', 'غير مطلوب')}
               </Field>
